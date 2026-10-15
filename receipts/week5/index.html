@@ -262,25 +262,23 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 </style>
 
 <style>
-.sitenav{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--bg,#0f141c) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line,#2b3442);font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif}
-.sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:46px}
-.sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:6px 0}
+.sitenav{position:sticky;top:0;z-index:60;background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
+.sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
+.sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:7px 0}
 .sitenav .brand img{height:32px;width:auto;display:block}
-.sitenav .brand img.ink{display:none}
-@media (prefers-color-scheme:light){ :root:not([data-theme="dark"]) .sitenav .brand img.cream{display:none} :root:not([data-theme="dark"]) .sitenav .brand img.ink{display:block} }
-:root[data-theme="light"] .sitenav .brand img.cream{display:none} :root[data-theme="light"] .sitenav .brand img.ink{display:block}
+.sitenav .brand img.cream{display:none}
 .sitenav .tabs{display:flex;gap:4px;margin-left:auto}
-.sitenav .tabs a{color:var(--mute,#9aa3b2);text-decoration:none;font-weight:600;font-size:15px;letter-spacing:.04em;padding:12px 10px 10px;border-bottom:2px solid transparent}
-.sitenav .tabs a:hover{color:var(--ink,#efe9da)}
-.sitenav .tabs a.on{color:var(--ink,#efe9da);border-bottom-color:var(--red,#d7332a)}
-.sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink,#efe9da);background:none;border:1px solid var(--line,#2b3442);border-radius:4px;padding:6px 10px;cursor:pointer}
+.sitenav .tabs a{color:#4a5260;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;padding:14px 10px 11px;border-bottom:3px solid transparent;margin-bottom:-3px}
+.sitenav .tabs a:hover{color:#141a24}
+.sitenav .tabs a.on{color:#141a24;border-bottom-color:#d7332a}
+.sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
 @media (max-width:760px){
   .sitenav .menu{display:inline-flex;align-items:center;gap:6px}
-  .sitenav .tabs{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:0;background:var(--card,#161d28);border-bottom:2px solid var(--red,#d7332a);box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  .sitenav .tabs{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:0;background:#efe9da;border-bottom:3px solid #d7332a;box-shadow:0 12px 30px rgba(0,0,0,.35)}
   .sitenav.open .tabs{display:flex}
-  .sitenav .tabs a{padding:13px 18px;border-bottom:1px solid var(--line,#2b3442);font-size:17px}
-  .sitenav .tabs a.on{border-left:3px solid var(--red,#d7332a);border-bottom-color:var(--line,#2b3442)}
-  .top{top:46px}
+  .sitenav .tabs a{padding:13px 18px;border-bottom:1px solid #d9d1bf;font-size:17px;margin-bottom:0}
+  .sitenav .tabs a.on{border-left:4px solid #d7332a;border-bottom-color:#d9d1bf}
+  .top{top:50px}
 }
 </style>
 </head>
