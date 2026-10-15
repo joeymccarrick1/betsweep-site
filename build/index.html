@@ -448,8 +448,9 @@ body.compact .storyframe .card > *{display:revert}
 .sitenav .tabs a{color:#4a5260;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;padding:14px 10px 11px;border-bottom:3px solid transparent;margin-bottom:-3px}
 .sitenav .tabs a:hover{color:#141a24}
 .sitenav .tabs a.on{color:#141a24;border-bottom-color:#d7332a}
+@media (max-width:1180px){ .sitenav .tabs{gap:0} .sitenav .tabs a{font-size:13.5px;padding:14px 7px 11px;letter-spacing:.04em} }
 .sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
-@media (max-width:760px){
+@media (max-width:900px){
   .sitenav .menu{display:inline-flex;align-items:center;gap:6px}
   .sitenav .tabs{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:0;background:#efe9da;border-bottom:3px solid #d7332a;box-shadow:0 12px 30px rgba(0,0,0,.35)}
   .sitenav.open .tabs{display:flex}
