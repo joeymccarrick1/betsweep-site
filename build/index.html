@@ -329,7 +329,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
   .slipbar b{font-family:var(--display);font-size:16px}
   .slipbar .n{background:var(--red);color:#fff;border-radius:99px;padding:1px 8px;font-weight:700;font-size:12px}
   body{padding-bottom:64px}
-  .lg{grid-template-columns:auto minmax(0,1fr) auto auto auto;}
+  .lg{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pz who add" "mk mk nums";row-gap:6px}
+  .lg .pz{grid-area:pz} .lg .who{grid-area:who} .lg > button{grid-area:add;align-self:start} .lg .mk{grid-area:mk;text-align:left;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px} .lg .mk small{display:inline;text-align:left} .lg .nums:not(.bk){grid-area:nums;align-self:center}
   .lg .nums.bk{display:none} .lg .mk small.mp{display:block} .lg .who b{white-space:normal}
 }
 
