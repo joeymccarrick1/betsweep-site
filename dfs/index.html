@@ -478,7 +478,7 @@ nav.nav a.played{opacity:.5}
 </style>
 
 <style>
-.sitenav{position:sticky;top:0;z-index:60;padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
+.sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
 .sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:7px 0}
 .sitenav .brand img{height:32px;width:auto;display:block}
@@ -503,8 +503,8 @@ nav.nav a.played{opacity:.5}
 .apptabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#a9a294;text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
 .apptabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .apptabs a.on{color:#fff} .apptabs a.on svg{stroke:#d7332a}
-@media (max-width:760px){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:calc(64px + env(safe-area-inset-bottom))} .dfs .mbar{bottom:calc(76px + env(safe-area-inset-bottom))} }
-@media (display-mode: standalone){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} .sitenav .menu{display:inline-flex} .slipwrap,.bslip{bottom:calc(64px + env(safe-area-inset-bottom))} .dfs .mbar{bottom:calc(76px + env(safe-area-inset-bottom))} }
+@media (max-width:760px){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
+@media (display-mode: standalone){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} .sitenav .menu{display:inline-flex} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
 .installbar{display:none;align-items:center;gap:10px;max-width:1360px;margin:10px auto 0;padding:10px 14px;background:#141a24;color:#f1e8d8;border-radius:8px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px}
 .installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
 .installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
@@ -1233,6 +1233,9 @@ nav.nav a.played{opacity:.5}
 <p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Build</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/team/" class=""><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Fantasy</span></a><a href="/receipts/" class=""><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Receipts</span></a></nav>
 <script>
 (function(){
+  // full-bleed header: inner pages pad/margin the body, so measure the nav's inset and pull it back to the viewport edge
+  function bleed(){ var n = document.getElementById('sitenav'); if(!n) return; document.documentElement.style.setProperty('--bs-inset', '0px'); var l = Math.round(n.getBoundingClientRect().left); if(l > 0) document.documentElement.style.setProperty('--bs-inset', l + 'px'); }
+  bleed(); window.addEventListener('resize', bleed); window.addEventListener('orientationchange', bleed);
   if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
   // install hint: Chrome/Android fire beforeinstallprompt; iOS gets a one-line how-to. Dismissal is remembered for 30 days.
   var bar = document.getElementById('installbar'); if(!bar) return;
