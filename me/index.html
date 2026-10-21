@@ -105,7 +105,7 @@
  <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
  <div class="card"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
  <div class="card"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
- <div class="card"><h2>Fantasy <a href="/team/">Open →</a></h2><ul id="fantasy"></ul></div>
+ <div class="card"><h2>Fantasy teams &amp; DFS lineups <a href="/team/">Fantasy →</a></h2><ul id="fantasy"></ul></div>
  <p class="m">Accounts are optional and free. Sign out from the header at any time; to delete your account and everything saved with it, email support@betsweep.co from the signed-in address.</p>
 </div>
 <script>
@@ -160,8 +160,12 @@
     // fantasy
     var su = g('bs_sleeper_user'), man = null; try{ man = JSON.parse(g('bs_manual')||'null'); }catch(e){}
     var mt = []; if (su) mt.push('<li><b>Sleeper</b><small>@'+esc(su)+(g('bs_sleeper_league')? ' · league remembered' : '')+'</small></li>');
-    if (man && (man.players||man.roster||man.length)) mt.push('<li><b>Hand-built team</b><small>saved on the Fantasy page</small></li>');
-    document.getElementById('fantasy').innerHTML = mt.join('') || '<li class="none">No Sleeper username or hand-built team saved yet.</li>';
+    var tms = []; try{ tms = JSON.parse(g('bs_teams')||'[]')||[]; }catch(e){}
+    tms.forEach(function(t){ mt.push('<li><b>'+esc(t.name)+'</b><small>'+((t.data&&t.data.r)||[]).length+' players · <a href="/team/">open on the Fantasy page</a></small></li>'); });
+    if (!tms.length && man && (man.r||[]).length) mt.push('<li><b>Hand-built team</b><small>'+man.r.length+' players, not saved by name yet - tap Save team on the Fantasy page</small></li>');
+    var lus = []; try{ lus = JSON.parse(g('bs_dfs_saved')||'[]')||[]; }catch(e){}
+    lus.sort(function(a,b){ return (b.week||0)-(a.week||0); }).forEach(function(x){ mt.push('<li><b>'+esc(x.name)+'</b><small>DFS · '+(x.site==='fd'?'FanDuel':x.site==='dk'?'DraftKings':esc(x.site||''))+(x.sg?' showdown':'')+' · Week '+x.week+' · '+(x.lu||[]).length+' players · <a href="/dfs/">open</a></small></li>'); });
+    document.getElementById('fantasy').innerHTML = mt.join('') || '<li class="none">No saved teams or DFS lineups yet. Build one on the Fantasy or DFS page and tap Save.</li>';
   }
   render(); document.addEventListener('bs-account', render);
 })();
