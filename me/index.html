@@ -64,6 +64,17 @@
 .bsdlg .x{float:right;background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:#6b655c;margin:-6px -6px 0 0}
 .bsdlg small.lg{display:block;margin-top:10px;font-size:11.5px;color:#7a7368;line-height:1.4}
 
+/* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
+@media (max-width:760px){
+ body{margin:0 !important;padding-left:5px !important;padding-right:5px !important}
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.1}
+}
+@media (min-width:761px){
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.06}
+}
+@media (max-width:760px){.hero{min-height:0 !important;aspect-ratio:1600/640 !important;background-size:100% auto !important;background-position:center 50% !important}}
+
+
 .sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
 .sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:7px 0}
@@ -94,15 +105,6 @@
 .installbar{display:none;align-items:center;gap:10px;max-width:1360px;margin:10px auto 0;padding:10px 14px;background:#141a24;color:#f1e8d8;border-radius:8px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px}
 .installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
 .installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
-</style>
-<style>/* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
-@media (max-width:760px){
- body{margin:0 !important;padding-left:5px !important;padding-right:5px !important}
- body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.1}
-}
-@media (min-width:761px){
- body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.06}
-}
 </style>
 </head>
 <body>
