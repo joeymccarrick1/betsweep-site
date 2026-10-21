@@ -2237,7 +2237,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function fdUrl(ls){ var ok = ls.filter(function(l){ return l.fd && l.fd.m && l.fd.s && !started(l); }); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&'); }
   function bookUrl(ls, k){ var live = ls.filter(function(l){ return !started(l); }); var ids = live.map(function(l){ return l.bks && l.bks[k] && l.bks[k].s; }).filter(Boolean); if (!ids.length || ids.length !== live.length) return null;
-    return k === 'dk' ? 'https://sportsbook.draftkings.com/?outcomes=' + ids.map(encodeURIComponent).join('+') : 'https://share.hardrock.bet/Pt0T/bet?deep_link_value=hardrock://betslip/' + ids.join(','); }
+    return k === 'dk' ? 'https://sportsbook.draftkings.com/?outcomes=' + ids.map(encodeURIComponent).join('+') : (ids.length > 1 ? 'hardrock://betslip/' + ids.join(',') : 'https://share.hardrock.bet/Pt0T/bet?deep_link_value=hardrock://betslip/' + ids[0]); /* share link carries one selection; the hardrock:// scheme carries a parlay (owner-tested 10/21) */ }
   function bookButton(ls, k, id, name){ var a = $(id); if (!a) return; var url = ls.length ? bookUrl(ls, k) : null, any = ls.some(function(l){ return l.bks && l.bks[k]; });
     a.style.display = any ? '' : 'none'; if (!url){ a.setAttribute('aria-disabled', 'true'); a.href = '#'; a.title = name + ' does not price every leg in this slip'; return; }
     a.removeAttribute('aria-disabled'); a.href = url; a.title = 'Opens ' + name + ' with these legs on the betslip'; }
