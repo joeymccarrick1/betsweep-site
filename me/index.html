@@ -95,6 +95,15 @@
 .installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
 .installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
 </style>
+<style>/* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
+@media (max-width:760px){
+ body{margin:0 !important;padding-left:5px !important;padding-right:5px !important}
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg){zoom:1.1}
+}
+@media (min-width:761px){
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg){zoom:1.06}
+}
+</style>
 </head>
 <body>
 <nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><a href="/" class="">Home</a><a href="/boards/" class="">Matchup Boards</a><a href="/build/" class="">Parlay Builder</a><a href="/live/" class="">Live</a><a href="/team/" class="">Fantasy</a><a href="/trade/" class="">Trade</a><a href="/firsttd/" class="">First TD</a><a href="/dfs/" class="">DFS</a><a href="/receipts/" class="">Receipts</a><a href="/season/" class="">Season</a></div></div></nav>
