@@ -35,6 +35,11 @@
 .me li .legs{flex-basis:100%;font-size:12.5px;color:var(--mute,#6b655c);line-height:1.5}
 .me .cta{display:inline-block;font-weight:700;padding:10px 16px;border-radius:10px;background:#d7332a;color:#fff;text-decoration:none}
 .me .none{color:var(--mute,#6b655c);font-size:13.5px}
+.me .res{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:#e4ddcc;color:#5d574d}
+.me .res.hit{background:#2b6b3a;color:#fff}.me .res.miss{background:#b3261e;color:#fff}
+.me i.g{display:inline-block;width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-style:normal;margin-right:3px;background:#e4ddcc;color:#5d574d}
+.me i.g.hit{background:#2b6b3a;color:#fff}.me i.g.miss{background:#b3261e;color:#fff}
+.me .legs em{font-style:normal;color:#9a9388}
 </style>
 <style>
 .sitenav .acct{display:flex;align-items:center;gap:6px;margin-left:auto}
@@ -96,7 +101,7 @@
 <div class="me">
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
- <div class="card"><h2>Saved betslips <a href="/live/">Live page →</a></h2><p class="m">Slips you saved to track. Grading lands here next: every saved slip scored Tuesday the same way we grade our own legs.</p><ul id="slips"></ul></div>
+ <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Live page, the builder, or Tail on a promoted bet - is graded here from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
  <div class="card"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
  <div class="card"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
  <div class="card"><h2>Fantasy <a href="/team/">Open →</a></h2><ul id="fantasy"></ul></div>
@@ -108,6 +113,25 @@
   function keys(re){ var out = []; try{ for (var i=0;i<localStorage.length;i++){ var k = localStorage.key(i); if (re.test(k)) out.push(k); } }catch(e){} return out.sort(); }
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function odds(o){ o = +o; return isNaN(o) ? '' : (o > 0 ? '+' + o : String(o)); }
+  var NICK = {"Cardinals":"ARI","Falcons":"ATL","Ravens":"BAL","Bills":"BUF","Panthers":"CAR","Bears":"CHI","Bengals":"CIN","Browns":"CLE","Cowboys":"DAL","Broncos":"DEN","Lions":"DET","Packers":"GB","Texans":"HOU","Colts":"IND","Jaguars":"JAX","Chiefs":"KC","Raiders":"LV","Chargers":"LAC","Rams":"LA","Dolphins":"MIA","Vikings":"MIN","Patriots":"NE","Saints":"NO","Giants":"NYG","Jets":"NYJ","Eagles":"PHI","Steelers":"PIT","49ers":"SF","Seahawks":"SEA","Buccaneers":"TB","Titans":"TEN","Commanders":"WAS"};
+  var BOX = {};   // week -> {box, games} once fetched
+  function getBox(w){ if (BOX[w] !== undefined) return Promise.resolve(BOX[w]); return fetch('/data/box-w'+w+'.json').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }).then(function(d){ BOX[w] = d; return d; }); }
+  // grade one slip key against the week's box scores: returns {r: 'HIT'|'MISS'|'PUSH'|'?', a: actual text}
+  function gradeKey(k, d){ if (!d) return {r: '?', a: 'not final'}; var p = String(k).split('|'); if (p.length < 3) return {r: '?', a: ''};
+    var who = p[0], m = p[1], ln = parseFloat(p[2]); var S = {"Passing Yards":0, "Passing TDs":1, "Rushing Yards":3, "Receptions":5, "Receiving Yards":6, "Longest Reception":8};
+    function team(t){ var n = Object.keys(NICK).filter(function(x){ return t.indexOf(x) >= 0; })[0]; return n ? NICK[n] : null; }
+    function gameOf(ab){ var out = null; Object.keys(d.games||{}).forEach(function(g){ var q = g.split('-'); if (q[0]===ab || q[1]===ab) out = {a:q[0], h:q[1], as:d.games[g][0], hs:d.games[g][1]}; }); return out; }
+    if (m === 'Moneyline'){ var t = team(who), gm = t && gameOf(t); if (!gm) return {r:'?', a:'game not final'}; var marg = (t===gm.h ? gm.hs-gm.as : gm.as-gm.hs); return {r: marg>0?'HIT':marg<0?'MISS':'PUSH', a: gm.a+' '+gm.as+' @ '+gm.h+' '+gm.hs}; }
+    if (m === 'Spread'){ var t2 = team(who), gm2 = t2 && gameOf(t2), mm = who.match(/([+-]?\d+(?:\.\d+)?)\s*$/); if (!gm2 || !mm) return {r:'?', a:'game not final'}; var v = (t2===gm2.h ? gm2.hs-gm2.as : gm2.as-gm2.hs) + parseFloat(mm[1]); return {r: v>0?'HIT':v<0?'MISS':'PUSH', a: gm2.a+' '+gm2.as+' @ '+gm2.h+' '+gm2.hs}; }
+    if (m === 'Total') return {r:'?', a:'totals need the game - coming'};
+    if (m === 'First TD') return {r:'?', a:'first TD graded on the receipt'};
+    if (m === 'Either TD'){ var names = who.split(/\s+or\s+/); var hit = names.some(function(n){ var b = d.box[n.trim()]; return b && (b[4]+b[7]) >= 1; }); var any = names.some(function(n){ return !!d.box[n.trim()]; }); return any ? {r: hit?'HIT':'MISS', a: hit?'scored':'no TD'} : {r:'?', a:'no box score'}; }
+    var b = d.box[who]; if (!b) return {r:'?', a:'no box score (did not play?)'};
+    if (m === 'Anytime TD'){ var td = b[4]+b[7]; return {r: td>=1?'HIT':'MISS', a: td+' TD'}; }
+    if (m === 'Rush + Rec Yards'){ var y = b[3]+b[6]; return {r: y>=ln?'HIT':'MISS', a: y+' yds'}; }
+    if (S[m] != null){ var v2 = b[S[m]]; return {r: v2>=ln?'HIT':'MISS', a: String(v2)}; }
+    return {r:'?', a:''}; }
+  function dec(o){ o = +o; if (!o) return null; return o > 0 ? o/100 + 1 : 100/(-o) + 1; }
   function render(){
     var u = window.bsAccount && window.bsAccount.user; var who = document.getElementById('who');
     who.innerHTML = u ? 'Signed in as <b>'+esc(u.email||'')+'</b>. Everything below follows you to any device you sign in on.' : 'Not signed in: this page shows what is saved in this browser only. <button type="button" class="cta" id="mein" style="margin-left:8px;padding:6px 12px;font-size:13px">Sign in to sync it</button>';
@@ -115,7 +139,16 @@
     // saved betslips (live page), by week
     var sl = [], ks = keys(/^bs_slips_w\d+$/); ks.forEach(function(k){ var w = k.replace('bs_slips_w',''); try{ (JSON.parse(g(k))||[]).forEach(function(s){ sl.push({w: +w, s: s}); }); }catch(e){} });
     sl.sort(function(a,b){ return b.w - a.w; });
-    document.getElementById('slips').innerHTML = sl.length ? sl.map(function(x){ var s = x.s; return '<li><b>'+esc(s.name||'Slip')+'</b><small>Week '+x.w+' · '+(s.keys||[]).length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+(s.stake? ' · '+s.stake+'u' : '')+'</small><span class="legs">'+esc((s.keys||[]).map(function(k){ return String(k).split('|').slice(0,3).join(' '); }).join(' · '))+'</span></li>'; }).join('') : '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder and it shows up here.</li>';
+    var el = document.getElementById('slips');
+    if (!sl.length){ el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
+    else { el.innerHTML = '<li class="none">Grading…</li>';
+      Promise.all(sl.map(function(x){ return getBox(x.w); })).then(function(ds){ var W = 0, L = 0, U = 0, P = 0, html = '';
+        sl.forEach(function(x, i){ var s = x.s, d = ds[i], gs = (s.keys||[]).map(function(k){ return {k:k, g: gradeKey(k, d)}; });
+          var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
+          var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
+          if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++;
+          html += '<li><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':'Pending')+'</span><small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
+        el.innerHTML = html; document.getElementById('record').textContent = (W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : ''); }); }
     // builder slip (this week's working slip)
     var bk = keys(/^bs_slipk_w\d+$/).pop(), bl = []; if (bk){ try{ bl = JSON.parse(g(bk))||[]; }catch(e){} }
     document.getElementById('builder').innerHTML = bk && bl.length ? '<li><b>Working slip</b><small>Week '+bk.replace('bs_slipk_w','')+' · '+bl.length+' legs</small><span class="legs">'+esc(bl.map(function(k){ return String(k).split('|').slice(0,3).join(' '); }).join(' · '))+'</span></li>' : '<li class="none">Nothing in the builder slip right now.</li>';
