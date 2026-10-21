@@ -803,15 +803,16 @@ nav.nav a.played{opacity:.5}
       card.querySelectorAll('.addbs').forEach(function(btn){ var ks = (btn.dataset.k || '').split('||'); if(ks.every(function(k){ return sel.indexOf(k) < 0; })){ btn.disabled = true; btn.innerHTML = btn.classList.contains('addmini') ? '–' : 'Locked'; btn.title = 'This game has kicked off'; } });
     });
   }
-  // Other books: a leg goes to DraftKings / Hard Rock at its exact rung when the book posts it (l.bks[b]), otherwise at the book's nearest line (l.alt[b]); the slip stays priced at FanDuel and the note says what was substituted.
+  // Other books: a leg goes to DraftKings / Hard Rock at its exact rung when the book posts it (l.bks[b]), otherwise at the book's nearest line (l.ba[b], hrswap.py / glbooks.py); the slip stays priced at FanDuel and the note says what was substituted.
   var BN = {dk: 'DraftKings', hr: 'Hard Rock'};
-  function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.alt && l.alt[b]) return {s: l.alt[b].s, o: l.alt[b].o, ln: l.alt[b].ln, sub: true}; return null; }
+  function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.ba && l.ba[b]) return {s: l.ba[b].s, o: l.ba[b].o, ln: l.ba[b].ln, sub: true}; return null; }
+  function subName(l, x){ if(l.gl){ var sd = l.gl.side; return l.m === 'Total' ? (sd === 'OVER' ? 'Over ' : 'Under ') + x.ln : sd + ' ' + (x.ln > 0 ? '+' : '') + x.ln; } return l.pl + ' ' + x.ln + '+'; }
   function legName(l){ return l.pl + (l.gl || isTD(l) || l.m === 'First TD' ? '' : ' ' + Math.round(l.ln) + '+'); }
   function bookNote(ls){ var el = $('#bslipBkNote'); if(!el) return; var out = [];
     ['dk', 'hr'].forEach(function(b){ if(!ls.some(function(l){ return bookPick(l, b); })) return;
       var miss = ls.filter(function(l){ return !bookPick(l, b); }), subs = ls.filter(function(l){ var x = bookPick(l, b); return x && x.sub; });
       if(miss.length) out.push(BN[b] + ' doesn\'t price ' + miss.map(legName).join(', ') + ', so the slip can\'t be sent there as built.');
-      else if(subs.length) out.push('Send to ' + BN[b] + ' uses its nearest line where it doesn\'t post ours: ' + subs.map(function(l){ var x = bookPick(l, b); return l.pl + ' ' + x.ln + '+ (' + am(x.o) + ') for ' + Math.round(l.ln) + '+'; }).join(', ') + '. The prices and model % on this slip are FanDuel\'s.'); });
+      else if(subs.length) out.push('Send to ' + BN[b] + ' uses its nearest line where it doesn\'t post ours: ' + subs.map(function(l){ var x = bookPick(l, b); return subName(l, x) + ' (' + am(x.o) + ') for ' + (l.gl ? l.pl : Math.round(l.ln) + '+'); }).join(', ') + '. The prices and model % on this slip are FanDuel\'s.'); });
     el.innerHTML = out.map(esc).join('<br>'); }
   // ---- ladders (‹ › faders): every rung of a slip player's ladder is in D.legs, keyed like the builder ----
   var GROUPS = {}; legs.forEach(function(l){ if(l.gl) return; var gk = l.pl + '|' + l.m; (GROUPS[gk] = GROUPS[gk] || []).push(l); });
