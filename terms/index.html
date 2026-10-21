@@ -152,9 +152,25 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .bslip ul{list-style:none;margin:0;padding:0}
 .bslip li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}
 .bslip li b{display:block;font-weight:600} .bslip li span{color:var(--mute);font-size:11.5px}
-.bslip li .e{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px} .bslip .up{color:var(--good)} .bslip .dn{color:var(--bad)}
+.bslip li .e{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px} .bslip li .hrs{grid-column:1/-1;font-size:12px;color:var(--mute);padding:4px 8px;border-left:3px solid #c9a227;background:rgba(201,162,39,.08)} .bslip li .hrs.on{border-left-color:#1a1a1a} .bslip li .hrs b{display:inline;font-weight:700;color:var(--ink)} .bslip li .hrs button{font:inherit;font-size:11.5px;font-weight:700;margin-left:6px;padding:3px 8px;border:1px solid #c9a227;border-radius:3px;background:#1a1a1a;color:#e8c55a;cursor:pointer} .bslip li small.swl{font-weight:700;color:#8a6d12;margin-left:4px;font-size:11px} .bslip li .hrs.dk{border-left-color:#53d337;background:rgba(83,211,55,.10)} .bslip li .hrs.dk button{background:#53d337;border-color:#53d337;color:#0b1a07} .bslip li .hrs.hr{border-left-color:#5b2d8e;background:rgba(91,45,142,.08)} .bslip li .hrs.hr button{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .bslip li small.swl.dk{color:#2f8f1c} .bslip li small.swl.hr{color:#5b2d8e} .bslip .up{color:var(--good)} .bslip .dn{color:var(--bad)}
 .bslip li .x{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;padding:0 4px}
 .bslip li.empty{display:block;padding:18px 14px;color:var(--mute);font-size:13px}
+.bslip li .wf{display:inline-block;color:var(--warn);cursor:pointer;font-weight:800;width:18px;height:18px;line-height:16px;text-align:center;border:1.5px solid var(--warn);border-radius:50%;font-size:12px;margin-left:4px;vertical-align:middle} .bslip li .wf.ok{color:var(--good);border-color:var(--good)} .bslip li .wf.nt{color:var(--mute);border-color:var(--mute);font-style:italic;font-family:Georgia,serif}
+.bslip .why{grid-column:1/-1;margin:4px 0 0;padding:8px 10px 8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);border-left:3px solid var(--warn);border-radius:0 4px 4px 0;font-size:12.5px;line-height:1.45;color:var(--ink)} .bslip .why[hidden]{display:none}
+.bslip .why > b{display:block;font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px;color:var(--warn);margin-bottom:3px} .bslip .why > b small{font-family:var(--body);font-weight:600;text-transform:none;letter-spacing:0;color:var(--mute);margin-left:6px}
+.bslip .why ul{list-style:none;margin:0;padding:0;display:grid;gap:3px} .bslip .why li{display:block;grid-template-columns:none;padding:3px 0 3px 12px;position:relative;border:0;font-size:12.5px;line-height:1.45;color:var(--ink)} .bslip .why li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:var(--mute)}
+.bslip .why li.bad::before{background:var(--bad)} .bslip .why li.good::before{background:var(--good)} .bslip .why li.watch::before{background:var(--warn)} .bslip .why li b{display:inline;font-weight:700;margin:0 4px 0 0} .bslip .why li.bad b{color:var(--bad)} .bslip .why li.good b{color:var(--good)} .bslip .why li.watch b{color:var(--warn)}
+.bslip .lad{display:inline-flex;align-items:center;gap:2px;vertical-align:middle} .bslip .lad button{font:inherit;width:20px;height:20px;line-height:18px;padding:0;border:1px solid var(--line);border-radius:3px;background:var(--chalk);color:var(--ink);cursor:pointer;font-size:12px} .bslip .lad button:disabled{opacity:.3;cursor:default} .bslip .lad button:hover:not(:disabled){border-color:var(--red)}
+.bslip .lad b{display:inline;min-width:40px;text-align:center;font-family:var(--display);font-weight:600;font-size:13px} .bslip .lad .dots{display:inline-flex;gap:2px;margin-left:4px} .bslip .lad .dots i{width:4px;height:4px;border-radius:50%;background:var(--line)} .bslip .lad .dots i.on{background:var(--red)}
+.bslip .tgt{padding:10px 14px 12px;border-bottom:1px solid var(--line)} .bslip .tgt[hidden]{display:none} .bslip .tgt .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;color:var(--mute)} .bslip .tgt .row b{font-family:var(--display);font-size:18px;color:var(--ink)}
+.bslip .tgt input[type=range]{width:100%;margin:8px 0 2px;accent-color:var(--red)} .bslip .tgt .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mute)} .bslip .tgt .hint{font-size:11.5px;color:var(--mute);margin:6px 0 0}
+.bslip .price .books3{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;flex-direction:row} .bslip .price .books3 small{flex-basis:100%} .bslip .price .books3 span{font-size:13px;color:var(--ink)} .bslip .price .books3 span b{font-size:15px;display:inline} .bslip .price .books3 span.best b{color:var(--good)} .bslip .price .books3 i{font-style:normal;font-size:11px;color:var(--mute);flex-basis:100%}
+.bslip .saved{padding:10px 14px;border-top:1px solid var(--line);overflow-x:auto} .bslip .saved td.nm{min-width:150px} .bslip .saved h3{margin:0 0 6px;font-family:var(--display);font-size:15px;letter-spacing:.04em;text-transform:uppercase} .bslip .saved h3 small{font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;color:var(--mute);font-size:12px;margin-left:6px}
+.bslip .saved .none{font-size:12.5px;color:var(--mute);margin:0} .bslip .saved table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums} .bslip .saved th{text-align:left;font-family:var(--display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:4px 6px;border-bottom:1px solid var(--line)}
+.bslip .saved td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top} .bslip .saved td.r,.bslip .saved th.r{text-align:right;white-space:nowrap} .bslip .saved td.nm b{display:block} .bslip .saved td.nm small{color:var(--mute);display:block;line-height:1.35} .bslip .saved tr.cur td{background:color-mix(in srgb,var(--red) 8%,transparent)}
+.bslip .saved .ops{white-space:nowrap} .bslip .saved .ops button,.bslip .saved .ops a{font:inherit;font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:3px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;text-decoration:none;margin-left:3px} .bslip .saved .ops a.fd{background:#1493ff;border-color:#1493ff;color:#fff} .bslip .saved .ops a.fd.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .bslip .saved .ops a.fd.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .bslip .saved .ops button.del{color:var(--mute)}
+.bslip .saved .e.up{color:var(--good)} .bslip .saved .e.dn{color:var(--bad)} .bslip .saved .namebox{display:flex;gap:6px;margin:6px 0} .bslip .saved .namebox input{flex:1;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)} .bslip .saved .namebox button{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:3px;background:none;color:var(--ink);cursor:pointer} .bslip .saved .namebox button.pri{border-color:var(--red)}
+.bestslip .wf{cursor:pointer} .bestslip .wfnote{flex-basis:100%;font-size:12px;line-height:1.4;color:var(--ink);padding:6px 10px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border-radius:0 4px 4px 0} .bestslip .wfnote b{color:var(--warn)}
 .bslip .price{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12.5px;border-bottom:1px solid var(--line)}
 .bslip .price:empty{display:none}
 .bslip .price div{display:flex;flex-direction:column} .bslip .price small{color:var(--mute);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
@@ -164,9 +180,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .bslip .acts{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
 .bslip .acts button,.bslip .acts a.sec{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer;text-decoration:none}
 .bslip .acts button.pri{border-color:var(--red)} .bslip .acts button:hover,.bslip .acts a.sec:hover{border-color:var(--red)}
-.bslip .acts a.fd{font:inherit;font-size:12px;font-weight:700;color:#fff;background:#1493ff;border:1px solid #1493ff;border-radius:3px;padding:6px 10px;text-decoration:none;white-space:nowrap} .bslip .acts a.fd[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.bslip .acts a.fd{font:inherit;font-size:12px;font-weight:700;color:#fff;background:#1493ff;border:1px solid #1493ff;border-radius:3px;padding:6px 10px;text-decoration:none;white-space:nowrap} .bslip .acts a.fd[aria-disabled="true"]{opacity:.45;pointer-events:none} .bslip .acts a.fd.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .bslip .acts a.fd.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff}
 .bslip .note{margin:0;padding:10px 14px;font-size:11.5px;color:var(--mute);line-height:1.45} .bslip .note:empty{display:none}
-@media (max-width:900px){ .bslip{right:0;width:auto;max-width:none;border-radius:0;border-left:0;border-right:0} }
+@media (max-width:900px){ .bslip{left:0;right:0;width:auto;max-width:none;border-radius:0;border-left:0;border-right:0} }
 body.hasslip{padding-bottom:64px}
 .storyframe .addmini,body.render .addmini,.storyframe .bslip,body.render .bslip{display:none}
 
@@ -533,13 +549,22 @@ nav.nav a.played{opacity:.5}
  <div class="slipbar" id="bslipbar" role="button" tabindex="0" aria-expanded="false"><b>Your slip</b><span class="n">0</span></div>
  <h2>Your slip <span class="n"></span></h2>
  <ul id="bslipLegs"></ul>
+ <div class="tgt" id="btgt" hidden>
+  <div class="row"><span>Target FanDuel price</span><b id="btgtVal">—</b></div>
+  <input type="range" id="btgtRange" min="0" max="1000" step="1" aria-label="target FanDuel price">
+  <div class="ends"><span id="btgtMin"></span><span>drag to re-pick lines</span><span id="btgtMax"></span></div>
+  <p class="hint">Moves the ‹ › faders for you: every leg with a ladder is re-picked so the slip's FanDuel price lands near the target, keeping the best model edge among the ways to get there.</p>
+ </div>
  <div class="price" id="bslipPrice"></div>
  <div class="take" id="bslipTake" hidden></div>
  <div class="flagsx" id="bslipFlags"></div>
- <div class="acts"><a class="fd" id="bslipSend" href="#" target="_blank" rel="noopener" aria-disabled="true">Send to FanDuel</a><button type="button" class="pri" id="bslipCopy">Copy slip</button><button type="button" class="obk" id="bslipBooks" aria-expanded="false">Other books ▾</button><button type="button" id="bslipClear">Clear</button><a class="sec" id="bslipBuild" href="https://betsweep.co/build/">Open in Parlay Builder</a></div>
+ <div class="acts"><a class="fd" id="bslipSend" href="#" target="_blank" rel="noopener" aria-disabled="true">Send to FanDuel</a><a class="fd dk" id="bslipDK" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Send to DraftKings</a><a class="fd hr" id="bslipHR" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Send to Hard Rock</a><button type="button" class="pri" id="bslipSave">Save slip</button><button type="button" class="pri" id="bslipCopy">Copy slip</button><button type="button" class="obk" id="bslipBooks" aria-expanded="false">Other books ▾</button><button type="button" id="bslipClear">Clear</button><a class="sec" id="bslipBuild" href="https://betsweep.co/build/">Open in Parlay Builder</a></div>
  <!--BOOKSHTML-->
  <p class="note" id="bslipNote"></p>
- <p class="note">Model % is the model's history-adjusted hit rate for that line; book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; information only, not a guarantee — 21+, please bet responsibly.</p>
+ <p class="note" id="bslipBkNote"></p>
+ <p class="note">DraftKings and Hard Rock prices come from the same odds pull as FanDuel's; the slip panel prices the same legs at each book. Send to DraftKings and Send to Hard Rock load the legs on that book's betslip, at its nearest line where it doesn't post ours (the note above lists each substitution). The model, the edges and the grading stay against FanDuel.</p>
+ <div class="saved" id="bsaved"><h3>Saved slips <small>build a few, compare, send the one you like</small></h3><div id="bsavedList"></div></div>
+ <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price; book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are correlated the way the boards' best parlays are. Tap a leg's ! ✓ i to read its flags; use ‹ › to move a leg up or down its ladder.</p>
 </aside>
 <script>window.__BSL = /*SLIPDATA*/null;</script>
 <script>/*LIVEJS*/</script>
@@ -701,7 +726,7 @@ nav.nav a.played{opacity:.5}
 (function(){
   // ---- page betslip: the parlay builder's slip, on the boards. Legs are stored by key (player|market|line) so the two pages share one slip. ----
   var D = window.__BSL; if(!D) return;
-  var legs = D.legs || [], byKey = {}; legs.forEach(function(l){ byKey[l.k] = l; });
+  var legs = D.legs || [], byKey = {}; legs.forEach(function(l){ byKey[l.k] = l; if(l.wf && !l.w) l.w = (l.fl || []).filter(function(f){ return f[0] === 'bad'; }).map(function(f){ return f[2]; }).join('; '); });
   var KEY = 'bs_slipk_w' + D.week, sel = [];
   function load(){ try { sel = JSON.parse(localStorage.getItem(KEY) || '[]'); if(!Array.isArray(sel)) sel = []; } catch(e){ sel = []; } }
   function save(){ try { localStorage.setItem(KEY, JSON.stringify(sel)); } catch(e){} }
@@ -780,9 +805,47 @@ nav.nav a.played{opacity:.5}
       card.querySelectorAll('.addbs').forEach(function(btn){ var ks = (btn.dataset.k || '').split('||'); if(ks.every(function(k){ return sel.indexOf(k) < 0; })){ btn.disabled = true; btn.innerHTML = btn.classList.contains('addmini') ? '–' : 'Locked'; btn.title = 'This game has kicked off'; } });
     });
   }
+  // Other books: a leg goes to DraftKings / Hard Rock at its exact rung when the book posts it (l.bks[b]), otherwise at the book's nearest line (l.alt[b]); the slip stays priced at FanDuel and the note says what was substituted.
+  var BN = {dk: 'DraftKings', hr: 'Hard Rock'};
+  function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.alt && l.alt[b]) return {s: l.alt[b].s, o: l.alt[b].o, ln: l.alt[b].ln, sub: true}; return null; }
+  function legName(l){ return l.pl + (l.gl || isTD(l) || l.m === 'First TD' ? '' : ' ' + Math.round(l.ln) + '+'); }
+  function bookNote(ls){ var el = $('#bslipBkNote'); if(!el) return; var out = [];
+    ['dk', 'hr'].forEach(function(b){ if(!ls.some(function(l){ return bookPick(l, b); })) return;
+      var miss = ls.filter(function(l){ return !bookPick(l, b); }), subs = ls.filter(function(l){ var x = bookPick(l, b); return x && x.sub; });
+      if(miss.length) out.push(BN[b] + ' doesn\'t price ' + miss.map(legName).join(', ') + ', so the slip can\'t be sent there as built.');
+      else if(subs.length) out.push('Send to ' + BN[b] + ' uses its nearest line where it doesn\'t post ours: ' + subs.map(function(l){ var x = bookPick(l, b); return l.pl + ' ' + x.ln + '+ (' + am(x.o) + ') for ' + Math.round(l.ln) + '+'; }).join(', ') + '. The prices and model % on this slip are FanDuel\'s.'); });
+    el.innerHTML = out.map(esc).join('<br>'); }
+  // ---- ladders (‹ › faders): every rung of a slip player's ladder is in D.legs, keyed like the builder ----
+  var GROUPS = {}; legs.forEach(function(l){ if(l.gl) return; var gk = l.pl + '|' + l.m; (GROUPS[gk] = GROUPS[gk] || []).push(l); });
+  Object.keys(GROUPS).forEach(function(gk){ GROUPS[gk].sort(function(a,b){ return a.ln - b.ln; }); });
+  function ladderOf(l){ return l.gl ? null : GROUPS[l.pl + '|' + l.m]; }
+  function fader(l){ var g = ladderOf(l); if(!g || g.length < 2 || isTD(l)) return ''; var i = g.indexOf(l);
+    return '<span class="lad" data-k="' + esc(l.k) + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="safer line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>'; }
+  function fade(k, d){ var l = byKey[k]; if(!l) return; var g = ladderOf(l); if(!g) return; var i = Math.max(0, Math.min(g.length-1, g.indexOf(l) + d)); if(g[i] === l) return;
+    sel = sel.map(function(x){ return x === k ? g[i].k : x; }); save(); render(); }
+  function flagsOf(l){ if(l.fl) return l.fl; var g = ladderOf(l) || []; var src = g.filter(function(x){ return x.fl; })[0]; return src ? src.fl.filter(function(f){ return !/line|hit rate|hits? (at|this)/i.test(f[1] + ' ' + f[2]); }) : []; }
+  function flagMark(l){ var fl = flagsOf(l);
+    if(l.w) return ' <span class="wf" role="button" tabindex="0" aria-label="flags on this leg" title="Risk flags - tap to read">!</span>';
+    if(fl.some(function(f){ return f[0] === 'good'; })) return ' <span class="wf ok" role="button" tabindex="0" aria-label="flags on this leg" title="Good flags - tap to read">✓</span>';
+    if(fl.length) return ' <span class="wf nt" role="button" tabindex="0" aria-label="flags on this leg" title="Notes - tap to read">i</span>';
+    return ''; }
+  function whyBlock(l){ var fl = flagsOf(l); if(!fl.length && !l.w) return '';
+    if(!fl.length) fl = l.w.split(';').map(function(t){ return ['bad', 'Risk', t.trim()]; }).filter(function(f){ return f[2]; });
+    var nb = fl.filter(function(f){ return f[0] === 'bad'; }).length, ng = fl.filter(function(f){ return f[0] === 'good'; }).length;
+    return '<div class="why" hidden><b>Flags on this leg <small>' + nb + ' risk · ' + ng + ' plus · this season only</small></b><ul>' + fl.map(function(f){ return '<li class="' + esc(f[0]) + '"><b>' + esc(f[1]) + '</b> ' + esc(f[2]) + '</li>'; }).join('') + '</ul></div>'; }
+  function bookParlay(ls, k){ var d = 1, n = 0; ls.forEach(function(l){ var x = k === 'fd' ? {o: l.o} : bookPick(l, k); if (x && x.o != null){ d *= dec(x.o); n++; } }); return n === ls.length ? d : null; }
+  function bookSubbed(ls, k){ return ls.some(function(l){ var x = bookPick(l, k); return x && x.sub; }); }
+  function bookRow(ls, fdDec){ var dk = bookParlay(ls, 'dk'), hr = bookParlay(ls, 'hr'); if (dk == null && hr == null) return '';
+    var rows = [['FanDuel', fdDec]]; if (dk != null) rows.push(['DraftKings', dk]); if (hr != null) rows.push(['Hard Rock', hr]); var best = rows.reduce(function(b, r){ return r[1] > b[1] ? r : b; });
+    return '<div class="wide books3"><small>Same slip at each book (legs multiplied; SGP quotes differ)</small>' + rows.map(function(r){ var sub = (r[0] === 'DraftKings' && bookSubbed(ls, 'dk')) || (r[0] === 'Hard Rock' && bookSubbed(ls, 'hr')); return '<span class="' + (r[0] === best[0] ? 'best' : '') + '">' + r[0] + ' <b>' + (sub ? '≈' : '') + decToAm(r[1]) + '</b></span>'; }).join('') + (bookSubbed(ls, 'dk') || bookSubbed(ls, 'hr') ? '<i>≈ uses that book\'s nearest line for a leg it doesn\'t post</i>' : '') + '</div>'; }
   function slipLegs(){ return sel.map(function(k){ return byKey[k]; }).filter(Boolean).sort(function(a,b){ return ((D.gsort[a.g]||'9')+a.g).localeCompare((D.gsort[b.g]||'9')+b.g); }); }
   function fdUrl(ls){ var ok = ls.filter(function(l){ return l.fd && l.fd.m && l.fd.s && !started(l); }); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&'); }
+  function bookUrl(ls, k){ var live = ls.filter(function(l){ return !started(l); }); var ids = live.map(function(l){ var x = bookPick(l, k); return x && x.s; }).filter(Boolean); if (!ids.length || ids.length !== live.length) return null;
+    return k === 'dk' ? 'https://sportsbook.draftkings.com/?outcomes=' + ids.map(encodeURIComponent).join('+') : (ids.length > 1 ? 'hardrock://betslip/' + ids.join(',') : 'https://share.hardrock.bet/Pt0T/bet?deep_link_value=hardrock://betslip/' + ids[0]); /* share link carries one selection; the hardrock:// scheme carries a parlay (owner-tested 10/21) */ }
+  function bookButton(ls, k, id, name){ var a = $(id); if (!a) return; var url = ls.length ? bookUrl(ls, k) : null, any = ls.some(function(l){ return bookPick(l, k); });
+    a.style.display = any ? '' : 'none'; if (!url){ a.setAttribute('aria-disabled', 'true'); a.href = '#'; a.title = name + ' does not price every leg in this slip'; return; }
+    a.removeAttribute('aria-disabled'); a.href = url; a.title = 'Opens ' + name + ' with these legs on the betslip'; }
   function markButtons(){
     document.querySelectorAll('.addbs').forEach(function(b){ var ks = (b.dataset.k || '').split('||').filter(Boolean); var all = ks.length && ks.every(function(k){ return sel.indexOf(k) >= 0; }); b.classList.toggle('in', !!all);
       if(b.classList.contains('addmini')) b.textContent = all ? '✓' : '+';
@@ -794,8 +857,8 @@ nav.nav a.played{opacity:.5}
     document.querySelectorAll('#bslip .n').forEach(function(n){ n.textContent = sel.length; });
     markButtons();
     var ul = $('#bslipLegs');
-    if(!ls.length){ ul.innerHTML = '<li class="empty">' + (others ? others + ' leg' + (others>1?'s':'') + ' from the parlay builder are on this slip but not on the boards; open the builder to see them.' : 'Tap Add to betslip on any leg.') + '</li>'; $('#bslipPrice').innerHTML = ''; $('#bslipTake').hidden = true; $('#bslipFlags').innerHTML = ''; $('#bslipbar b').textContent = 'Your slip'; send(ls); return; }
-    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(legText(l)) + '</b><span>' + (started(l) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + (l.w ? ' · ⚠ ' + esc(l.w.split(';')[0]) : '') + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-k="' + esc(l.k) + '" aria-label="remove">×</button></li>'; }).join('')
+    if(!ls.length){ ul.innerHTML = '<li class="empty">' + (others ? others + ' leg' + (others>1?'s':'') + ' from the parlay builder are on this slip but not on the boards; open the builder to see them.' : 'Tap Add to betslip on any leg.') + '</li>'; $('#bslipPrice').innerHTML = ''; $('#bslipTake').hidden = true; $('#bslipFlags').innerHTML = ''; $('#bslipbar b').textContent = 'Your slip'; $('#btgt').hidden = true; send(ls); renderSaved(); return; }
+    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + ' ' + (l.gl ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l) && ladderOf(l).length > 1 ? fader(l) : Math.round(l.ln) + '+')) + flagMark(l) + '</b><span>' + (started(l) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-k="' + esc(l.k) + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('')
       + (others ? '<li class="empty">+ ' + others + ' builder-only leg' + (others>1?'s':'') + ' not shown here (open the builder).</li>' : '');
     var bls = bookLegs(ls), implied = ls.length - bls.length;
     var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1), bookP = 1/bookDec;
@@ -806,7 +869,8 @@ nav.nav a.played{opacity:.5}
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+':'') + '$' + ev.toFixed(2) + '</b></div>' +
-      '<div class="wide"><small>Payout on $10 at the FanDuel price</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>';
+      '<div class="wide"><small>Payout on $10 at the FanDuel price</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>' + bookRow(ls, bookDec);
+    syncTarget(ls, bookDec);
     var tk = $('#bslipTake'); tk.hidden = false; tk.innerHTML = 'Take it at <b>' + toAm(fair*0.95) + '</b> or better' + (sgp.length ? ' — same-game legs are priced with the model\'s correlations, so compare to FanDuel\'s SGP quote.' : '.');
     var flags = [];
     var pls = {}; ls.forEach(function(l){ pls[l.pl] = (pls[l.pl]||0)+1; }); var dupe = Object.keys(pls).filter(function(p){ return pls[p] > 1; }); if(dupe.length) flags.push('same player twice: ' + dupe.join(', '));
@@ -817,9 +881,10 @@ nav.nav a.played{opacity:.5}
     ls.forEach(function(l){ if(l.m === 'First TD' && ls.some(function(x){ return x.m === 'Anytime TD' && x.pl === l.pl; })) flags.push(l.pl + ' first TD already implies his anytime TD - FanDuel will not pay for both'); });
     $('#bslipFlags').innerHTML = flags.map(function(f){ return '⚠ ' + esc(f); }).join('<br>');
     $('#bslipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + decToAm(bookDec) + ' · fair ' + toAm(fair);
-    send(ls);
+    send(ls); renderSaved();
   }
   function send(ls){
+    bookButton(ls, 'dk', '#bslipDK', 'DraftKings'); bookButton(ls, 'hr', '#bslipHR', 'Hard Rock'); bookNote(ls);
     var a = $('#bslipSend'), note = $('#bslipNote'), url = fdUrl(ls), missing = ls.filter(function(l){ return !(l.fd && l.fd.m && l.fd.s); });
     if(!url){ a.setAttribute('aria-disabled', 'true'); a.href = '#'; note.textContent = ls.length ? 'FanDuel IDs are not available for these legs yet.' : ''; return; }
     a.removeAttribute('aria-disabled'); a.href = url;
@@ -831,11 +896,57 @@ nav.nav a.played{opacity:.5}
     if(b){ ev.preventDefault(); ev.stopPropagation(); var ks = (b.dataset.k || '').split('||').filter(Boolean); var all = ks.every(function(k){ return sel.indexOf(k) >= 0; });
       if(all){ sel = sel.filter(function(k){ return ks.indexOf(k) < 0; }); } else { ks.forEach(function(k){ if(sel.indexOf(k) < 0) sel.push(k); }); }
       save(); render(); if(!all){ var bar = $('#bslipbar'); bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse'); } return; }
+    var wf = ev.target.closest('#bslipLegs .wf'); if(wf){ var li = wf.closest('li'), w = li && li.querySelector('.why'); if(w) w.hidden = !w.hidden; return; }
+    var fb = ev.target.closest('#bslipLegs .lad button'); if(fb){ fade(fb.closest('.lad').dataset.k, +fb.dataset.d); return; }
+    var pf = ev.target.closest('.bestslip .wf'); if(pf){ ev.preventDefault(); ev.stopPropagation(); var box = pf.closest('.bestslip'), ex = box.querySelector('.wfnote');
+      if(ex && ex.dataset.for === pf.dataset.p){ ex.remove(); return; } if(ex) ex.remove(); var nd = document.createElement('div'); nd.className = 'wfnote'; nd.dataset.for = pf.dataset.p || ''; nd.innerHTML = '<b>' + esc(pf.dataset.p || 'Flag') + ':</b> ' + esc(pf.dataset.f || pf.title || ''); box.appendChild(nd); return; }
     var x = ev.target.closest('#bslipLegs .x'); if(x){ sel = sel.filter(function(k){ return k !== x.dataset.k; }); save(); render(); }
   });
+  document.addEventListener('keydown', function(ev){ if(ev.key !== 'Enter' && ev.key !== ' ') return; var t = ev.target; if(t && t.classList && t.classList.contains('wf')){ ev.preventDefault(); t.click(); } });
+  // ---- target-price fader (same rule as the builder): one rung per ladder so the slip's FanDuel price lands near the target, best edge among the ways to get there ----
+  var TGT = {min: 1, max: 1, busy: false};
+  function slipGroups(){ return slipLegs().map(function(l){ var g = ladderOf(l); return (g && g.length > 1 && !isTD(l)) ? g : [l]; }); }
+  function priceRange(){ var lo = 1, hi = 1; slipGroups().forEach(function(g){ var ds = g.map(function(l){ return dec(l.o); }); lo *= Math.min.apply(null, ds); hi *= Math.max.apply(null, ds); }); return [lo, hi]; }
+  function sliderToDec(v){ return Math.exp(Math.log(TGT.min) + (v/1000) * (Math.log(TGT.max) - Math.log(TGT.min))); }
+  function decToSlider(d){ return Math.round(1000 * (Math.log(d) - Math.log(TGT.min)) / Math.max(1e-9, Math.log(TGT.max) - Math.log(TGT.min))); }
+  function retarget(targetDec){ var gs = slipGroups(); if(!gs.length) return; var best = null, lt = Math.log(targetDec), cap = gs.map(function(g){ return g.slice(0, 8); });
+    (function walk(i, chosen, ld, ev){ if(i === cap.length){ var dist = Math.abs(ld - lt), score = (dist <= 0.08 ? 0 : dist) * 10 - ev; if(!best || score < best.score) best = {score: score, chosen: chosen.slice()}; return; }
+      cap[i].forEach(function(l){ chosen.push(l); walk(i+1, chosen, ld + Math.log(dec(l.o)), ev + (l.e || 0)); chosen.pop(); }); })(0, [], 0, 0);
+    if(!best) return; var keep = sel.filter(function(k){ return !byKey[k]; }); sel = best.chosen.map(function(l){ return l.k; }).concat(keep); TGT.busy = true; save(); render(); TGT.busy = false; }
+  function syncTarget(ls, bookDec){ var box = $('#btgt'); if(!box) return; var fadeable = ls.some(function(l){ var g = ladderOf(l); return g && g.length > 1 && !isTD(l); });
+    if(!ls.length || !fadeable){ box.hidden = true; return; } box.hidden = false; var r = priceRange(); TGT.min = r[0]; TGT.max = r[1];
+    $('#btgtMin').textContent = 'safest ' + decToAm(TGT.min); $('#btgtMax').textContent = 'longest ' + decToAm(TGT.max); $('#btgtVal').textContent = decToAm(bookDec); if(!TGT.busy) $('#btgtRange').value = decToSlider(bookDec); }
+  (function(){ var t = null, rg = $('#btgtRange'); if(!rg) return; rg.addEventListener('input', function(){ $('#btgtVal').textContent = decToAm(sliderToDec(+rg.value)); clearTimeout(t); t = setTimeout(function(){ retarget(sliderToDec(+rg.value)); }, 120); }); })();
+  // ---- saved slips: the same bs_slips_w<W> list the builder, the Live page and /me/ use ----
+  var SLKEY = 'bs_slips_w' + D.week;
+  function savedSlips(){ try{ var a = JSON.parse(localStorage.getItem(SLKEY)||'[]'); return Array.isArray(a) ? a.filter(function(x){ return x && x.id && Array.isArray(x.keys); }) : []; }catch(e){ return []; } }
+  function writeSlips(a){ try{ localStorage.setItem(SLKEY, JSON.stringify(a)); }catch(e){} }
+  function priceKeys(ks){ var ls = ks.map(function(k){ return byKey[k]; }).filter(Boolean); if(!ls.length) return null; var bookDec = bookLegs(ls).reduce(function(a,l){ return a*dec(l.o); }, 1); return {ls: ls, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
+  function sameSet(a, b){ if(a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
+  function renderSaved(){ var box = $('#bsavedList'); if(!box) return; var all = savedSlips();
+    if(!all.length){ box.innerHTML = '<p class="none">Nothing saved yet. Build a slip, tap <b>Save slip</b>, build another - every saved slip lines up here with its FanDuel price, model chance and edge, and sends from this table whenever you are ready. Saved slips also show on <a href="/me/">My BetSweep</a>, graded after the games' + (window.bsAccount && window.bsAccount.user ? '' : ' (sign in and they follow you to every device)') + '.</p>'; return; }
+    var rows = all.map(function(x){ return {s: x, pr: priceKeys(x.keys)}; }).sort(function(a,b){ var ea = a.pr ? a.pr.fair - 1/a.pr.bookDec : -9, eb = b.pr ? b.pr.fair - 1/b.pr.bookDec : -9; return eb - ea; });
+    box.innerHTML = '<table><thead><tr><th>Slip</th><th class="r">FanDuel</th><th class="r">Model</th><th class="r">Edge</th><th class="r">$10 pays</th><th></th></tr></thead><tbody>' + rows.map(function(r){ var x = r.s, pr = r.pr, isCur = sameSet(x.keys, sel);
+      var legsTxt = x.keys.map(function(k){ var q = String(k).split('|'); return q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : (q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total') ? q[0] : q[0]+' '+q[2]+'+ '+String(q[1]).toLowerCase(); }).join(' · ');
+      var e = pr ? pr.fair - 1/pr.bookDec : null, full = pr && !pr.missing;
+      return '<tr class="' + (isCur ? 'cur' : '') + '"><td class="nm"><b>' + esc(x.name || 'Slip') + (x.promo ? ' <small style="display:inline">· promoted</small>' : '') + '</b><small>' + x.keys.length + ' legs' + (pr && pr.missing ? ' · ' + pr.missing + ' not on the boards (open the builder)' : '') + ' · ' + esc(legsTxt) + '</small></td>'
+        + '<td class="r">' + (full ? decToAm(pr.bookDec) : (x.odds ? am(x.odds) : '—')) + '</td><td class="r">' + (full ? pc(pr.fair) : '—') + '</td><td class="r e ' + (e!=null && e>=0 ? 'up' : 'dn') + '">' + (full && e!=null ? (e>=0?'+':'') + (e*100).toFixed(1) : '—') + '</td><td class="r">' + (full ? '$' + (10*pr.bookDec).toFixed(2) : '—') + '</td>'
+        + '<td class="ops">' + (full && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (x.fd ? '<a class="fd" href="' + esc(x.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (full && bookUrl(pr.ls, 'dk') ? '<a class="fd dk" href="' + esc(bookUrl(pr.ls, 'dk')) + '" target="_blank" rel="noopener">DK</a>' : '') + (full && bookUrl(pr.ls, 'hr') ? '<a class="fd hr" href="' + esc(bookUrl(pr.ls, 'hr')) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(x.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(x.id) + '">×</button></td></tr>'; }).join('') + '</tbody></table>'; }
+  $('#bslipSave').addEventListener('click', function(){ var ks = sel.slice(); if(!ks.length){ $('#bslipNote').textContent = 'Add a leg or two first.'; return; }
+    var all = savedSlips(), dup = all.filter(function(x){ return sameSet(x.keys, ks); })[0]; if(dup){ $('#bslipNote').textContent = 'Already saved as "' + (dup.name||'Slip') + '".'; renderSaved(); return; }
+    var box = $('#bsavedList'), pr = priceKeys(ks), dflt = 'Slip ' + (all.length + 1) + (pr && !pr.missing ? ' · ' + decToAm(pr.bookDec) : '');
+    var nb = document.createElement('div'); nb.className = 'namebox'; nb.innerHTML = '<input type="text" value="' + esc(dflt) + '" aria-label="slip name" maxlength="60"><button type="button" class="pri">Save</button><button type="button" class="cx">Cancel</button>'; box.parentNode.insertBefore(nb, box);
+    var inp = nb.querySelector('input'); inp.focus(); inp.select();
+    function done(){ var name = inp.value.trim() || dflt; all.push({id: 'b' + Date.now().toString(36), name: name, keys: ks, odds: pr && !pr.missing ? +decToAm(pr.bookDec).replace('+','') : null, stake: 1, fd: pr ? pr.fd : null, fair: pr && !pr.missing ? Math.round(pr.fair*10000)/10000 : null, saved: Date.now()}); writeSlips(all); nb.remove(); renderSaved(); $('#bslipNote').textContent = 'Saved. It is on My BetSweep too, graded after the games.'; }
+    nb.querySelector('.pri').addEventListener('click', done); inp.addEventListener('keydown', function(e){ if(e.key==='Enter') done(); if(e.key==='Escape') nb.remove(); }); nb.querySelector('.cx').addEventListener('click', function(){ nb.remove(); }); });
+  $('#bsavedList').addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return;
+    if(b.dataset.load){ var x = savedSlips().filter(function(y){ return y.id === b.dataset.load; })[0]; if(!x) return; sel = x.keys.slice(); save(); render(); $('#bslipLegs').scrollIntoView({block: 'start', behavior: 'smooth'}); }
+    if(b.dataset.del){ writeSlips(savedSlips().filter(function(y){ return y.id !== b.dataset.del; })); renderSaved(); } });
+  document.addEventListener('bs-account', renderSaved);
+  window.addEventListener('storage', function(e){ if(e.key === SLKEY) renderSaved(); });
   $('#bslipbar').addEventListener('click', function(){ var w = $('#bslip'); w.classList.toggle('open'); $('#bslipbar').setAttribute('aria-expanded', String(w.classList.contains('open'))); });
   $('#bslipClear').addEventListener('click', function(){ sel = []; save(); render(); });
-  function bslipText(){ var ls = slipLegs(); return ls.length ? ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ')'; }).join('\n') + '\n' + $('#bslipbar b').textContent + ' — betsweep.co' : ''; }
+  function bslipText(){ var ls = slipLegs(); if(!ls.length) return ''; var bookDec = bookLegs(ls).reduce(function(a,l){ return a*dec(l.o); }, 1), fair = joint(ls); return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + decToAm(bookDec) + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co'; }
   if(window.BSBooks) BSBooks.attach($('#bslipBooks'), $('#bslipBooksPanel'), bslipText);
   $('#bslipCopy').addEventListener('click', function(){ var txt = bslipText();
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function(){ $('#bslipCopy').textContent = 'Copied'; setTimeout(function(){ $('#bslipCopy').textContent = 'Copy slip'; }, 1200); }).catch(function(){ window.prompt('Copy your slip', txt); }); });
