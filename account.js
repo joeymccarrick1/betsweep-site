@@ -4,7 +4,7 @@
   var sb = window.supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
   window.bsAccount = {client: sb, user: null};
   // ---- which browser-storage keys follow the account (everything a person builds; not caches) ----
-  var SYNC = /^bs_(slips?_w\d+|slipk_w\d+|slipmeta_w\d+|trade_\d+|manual|sleeper_user|sleeper_league|team_mode|tip|tracked.*)$/;
+  var SYNC = /^bs_(slips?_w\d+|slipk_w\d+|slipmeta_w\d+|trade_\d+|manual|teams|team_cur|sleeper_user|sleeper_league|team_mode|tip|tracked.*|dfs_saved|dfs_lu_.*|dfs_site|dfs_fmt|dfs_sal_.*)$/;
   var META_KEY = 'bs_sync_meta', meta = {}; try{ meta = JSON.parse(localStorage.getItem(META_KEY)||'{}')||{}; }catch(e){}
   function saveMeta(){ try{ localStorage.setItem(META_KEY, JSON.stringify(meta)); }catch(e){} }
   var user = null, pending = {}, timer = null, ready = false;
