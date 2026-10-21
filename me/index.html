@@ -40,6 +40,7 @@
 .me i.g{display:inline-block;width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-style:normal;margin-right:3px;background:#e4ddcc;color:#5d574d}
 .me i.g.hit{background:#2b6b3a;color:#fff}.me i.g.miss{background:#b3261e;color:#fff}
 .me .legs em{font-style:normal;color:#9a9388}
+.me a.fdl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#1493ff;color:#fff;padding:3px 9px;border-radius:4px;text-decoration:none}
 </style>
 <style>
 .sitenav .acct{display:flex;align-items:center;gap:6px;margin-left:auto}
@@ -101,7 +102,7 @@
 <div class="me">
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
- <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Live page, the builder, or Tail on a promoted bet - is graded here from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
+ <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
  <div class="card"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
  <div class="card"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
  <div class="card"><h2>Fantasy <a href="/team/">Open →</a></h2><ul id="fantasy"></ul></div>
@@ -147,7 +148,8 @@
           var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
           var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
           if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++;
-          html += '<li><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':'Pending')+'</span><small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
+          var bet = (res==='PENDING' && s.fd && !d) ? '<a class="fdl" href="'+esc(s.fd)+'" target="_blank" rel="noopener">Bet on FanDuel</a>' : '';
+          html += '<li><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
         el.innerHTML = html; document.getElementById('record').textContent = (W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : ''); }); }
     // builder slip (this week's working slip)
     var bk = keys(/^bs_slipk_w\d+$/).pop(), bl = []; if (bk){ try{ bl = JSON.parse(g(bk))||[]; }catch(e){} }
