@@ -349,6 +349,14 @@ body.compact .card:not(.expanded) > .vbtns{display:flex;padding:10px 12px}
 .pl .pdetail{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:0 14px 10px 56px} .pl .pdetail[hidden]{display:none} .pl .pdetail .flags{margin:0;grid-area:auto}
 .pl .pdetail > *{grid-column:1} .pl .pdetail .sl{grid-area:auto} .pl .pdetail .leg{grid-area:auto}
 .pl .pdetail .leg{margin-top:2px} .pl .pdetail .leg .fdgo{margin-left:6px;padding:3px 8px;font-size:11.5px}
+.plegs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-size:12px;font-variant-numeric:tabular-nums}
+.plegs .plt,.plegs .pl0{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);flex-basis:100%}
+.plegs .pl0{flex-basis:auto;text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:500;font-size:12px}
+.pleg{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:6px;padding:2px 3px 2px 8px;background:var(--card)}
+.pleg b{font-weight:600} .pleg small{color:var(--mute);font-size:11.5px} .pleg .pp{font-weight:700} .pleg .pp.up{color:var(--good)} .pleg .pp.down{color:var(--bad)}
+.pleg .pw{font-style:normal;color:var(--warn);font-weight:700}
+.pleg .addmini{margin:0;min-width:26px;min-height:26px}
+.plegs .pall{font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:2px;padding:4px 2px;white-space:nowrap}
 .sl{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:2px}
 .sc{display:flex;flex-direction:column;gap:1px;min-width:74px;padding:4px 8px 4px 9px;border-radius:5px;background:color-mix(in srgb,var(--chalk) 72%,transparent);border-left:3px solid var(--c,var(--line));font-variant-numeric:tabular-nums}
 .sc small{font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);line-height:1.2}
@@ -973,7 +981,7 @@ nav.nav a.played{opacity:.5}
     window.BSLive.start(LG, applyLive); }
 })();
 
-// Rotoworld news icon on player rows (owner 10/22): open NBC Sports in a new tab without toggling the row
+// News icon on player rows (owner 10/22; ESPN player news since 10/25): open it in a new tab without toggling the row
 (function(){function go(e){var n=e.target.closest&&e.target.closest('.newsl');if(!n)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();window.open(n.getAttribute('data-href'),'_blank','noopener');}
 document.addEventListener('click',go,true);document.addEventListener('keydown',go,true);})();
 </script>
