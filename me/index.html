@@ -176,6 +176,7 @@ a{color:var(--ink)}
     if (m === 'First TD') return {r:'?', a:'first TD graded on the receipt'};
     if (m === 'Either TD'){ var names = who.split(/\s+or\s+/); var hit = names.some(function(n){ var b = d.box[n.trim()]; return b && (b[4]+b[7]) >= 1; }); var any = names.some(function(n){ return !!d.box[n.trim()]; }); return any ? {r: hit?'HIT':'MISS', a: hit?'scored':'no TD'} : {r:'?', a:'no box score'}; }
     var b = d.box[who]; if (!b) return {r:'?', a:'no box score (did not play?)'};
+    if (/^Under /.test(m)){ var mu = S[m.slice(6)]; if (mu == null) return {r:'?', a:''}; var vu = b[mu]; return {r: vu < ln - 0.5 ? 'HIT' : 'MISS', a: String(vu)}; }   // FanDuel main-line unders (key line = rounded X.5)
     if (m === 'Anytime TD'){ var td = b[4]+b[7]; return {r: td>=1?'HIT':'MISS', a: td+' TD'}; }
     if (m === 'Rush + Rec Yards'){ var y = b[3]+b[6]; return {r: y>=ln?'HIT':'MISS', a: y+' yds'}; }
     if (S[m] != null){ var v2 = b[S[m]]; return {r: v2>=ln?'HIT':'MISS', a: String(v2)}; }
