@@ -620,7 +620,7 @@ nav.nav a.played{opacity:.5}
  <div class="saved" id="bsaved"><h3>Saved slips <small>build a few, compare, send the one you like</small></h3><div id="bsavedList"></div></div>
  <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price; book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are correlated the way the boards' best parlays are. Tap a leg's ! ✓ i to read its flags; use ‹ › to move a leg up or down its ladder.</p>
 </aside>
-<script>window.__BSL = /*SLIPDATA*/null;</script>
+<script>window.__BSL = /*SLIPDATA*/null; window.__BSW = '';</script>
 <script>/*LIVEJS*/</script>
 <script>/*BOOKSJS*/</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -779,7 +779,11 @@ nav.nav a.played{opacity:.5}
 <script>
 (function(){
   // ---- page betslip: the parlay builder's slip, on the boards. Legs are stored by key (player|market|line) so the two pages share one slip. ----
-  var D = window.__BSL; if(!D) return;
+  // owner 10/28: pages with no priced slip data (fantasy, trade, first TD, DFS, season) still show the shared slip by name, so the
+  // count and the legs read the same everywhere; only pages with __BSL price it
+  var D = window.__BSL || {legs: [], week: +((window.__BS || {}).week || window.__BSW)};
+  if(!D.week){ try { var mx = 0; for(var i = 0; i < localStorage.length; i++){ var mw = /^bs_slipk_w(\d+)$/.exec(localStorage.key(i)); if(mw) mx = Math.max(mx, +mw[1]); } D.week = mx; } catch(e){} }   // pages with no week (season): the newest slip
+  if(!D.week) return;
   var legs = D.legs || [], byKey = {}; legs.forEach(function(l){ byKey[l.k] = l; if(l.wf && !l.w) l.w = (l.fl || []).filter(function(f){ return f[0] === 'bad'; }).map(function(f){ return f[2]; }).join('; '); });
   var KEY = 'bs_slipk_w' + D.week, sel = [];
   function load(){ try { sel = JSON.parse(localStorage.getItem(KEY) || '[]'); if(!Array.isArray(sel)) sel = []; } catch(e){ sel = []; } }
@@ -906,15 +910,22 @@ nav.nav a.played{opacity:.5}
       if(b.classList.contains('addmini')) b.textContent = all ? '✓' : '+';
       else { var n = +(b.dataset.n || 1); b.innerHTML = (all ? 'In slip' : '+ Add') + (n > 1 ? ' <small>' + n + ' legs</small>' : ''); } });
   }
+  // a slip key this page has no priced leg for (added in the builder: an under, a game line, a deep rung): shown by name, removable, not priced here
+  function unkRow(k){ var p = k.split('|'), pl = p[0] || k, m = p[1] || '', ln = +p[2]; var txt;
+    if(/^Under /.test(m)) txt = m.slice(6).toLowerCase() + ' under ' + (ln - 0.5);
+    else if(m === 'Anytime TD') txt = 'anytime TD'; else if(m === 'First TD') txt = 'first TD';
+    else if(m === 'Moneyline' || m === 'Spread' || m === 'Total') txt = m.toLowerCase();
+    else txt = m.toLowerCase() + (ln ? ' ' + ln + '+' : '');
+    return '<li class="unk"><div><b>' + esc(pl) + ' <small>' + esc(txt) + '</small></b><span>priced in the <a href="/build/" style="color:var(--ink)">builder</a></span></div><span class="e">—</span><button type="button" class="x" data-k="' + esc(k) + '" aria-label="remove">×</button></li>'; }
   function render(){
     var ls = slipLegs(), others = sel.filter(function(k){ return !byKey[k]; }).length;
     var wrap = $('#bslip'); wrap.hidden = !sel.length; document.body.classList.toggle('hasslip', !!sel.length);
     document.querySelectorAll('#bslip .n').forEach(function(n){ n.textContent = sel.length; });
     markButtons();
     var ul = $('#bslipLegs');
-    if(!ls.length){ ul.innerHTML = '<li class="empty">' + (others ? others + ' leg' + (others>1?'s':'') + ' from the parlay builder are on this slip but not on the boards; open the builder to see them.' : 'Tap Add to betslip on any leg.') + '</li>'; $('#bslipPrice').innerHTML = ''; $('#bslipTake').hidden = true; $('#bslipFlags').innerHTML = ''; $('#bslipbar b').textContent = 'Your slip'; $('#btgt').hidden = true; send(ls); renderSaved(); return; }
+    if(!ls.length){ ul.innerHTML = others ? sel.filter(function(k){ return !byKey[k]; }).map(unkRow).join('') + '<li class="empty">Priced in the builder; this page has no FanDuel price for these.</li>' : '<li class="empty">Tap Add to betslip on any leg.</li>'; $('#bslipPrice').innerHTML = ''; $('#bslipTake').hidden = true; $('#bslipFlags').innerHTML = ''; $('#bslipbar b').textContent = 'Your slip'; $('#btgt').hidden = true; send(ls); renderSaved(); return; }
     ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + ' ' + (l.gl ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l) && ladderOf(l).length > 1 ? fader(l) : Math.round(l.ln) + '+')) + flagMark(l) + '</b><span>' + (started(l) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-k="' + esc(l.k) + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('')
-      + (others ? '<li class="empty">+ ' + others + ' builder-only leg' + (others>1?'s':'') + ' not shown here (open the builder).</li>' : '');
+      + sel.filter(function(k){ return !byKey[k]; }).map(unkRow).join('');   // owner 10/28: builder-only legs are listed by name, so the slip reads the same on every page
     var bls = bookLegs(ls), implied = ls.length - bls.length;
     var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1), bookP = 1/bookDec;
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls), ev = fair*bookDec - 1;
@@ -935,7 +946,7 @@ nav.nav a.played{opacity:.5}
     var fg = {}; ls.forEach(function(l){ if(l.m === 'First TD') fg[l.g] = (fg[l.g]||0)+1; }); if(Object.keys(fg).some(function(g){ return fg[g] > 1; })) flags.push('two First TD legs in the same game can never both hit');
     ls.forEach(function(l){ if(l.m === 'First TD' && ls.some(function(x){ return x.m === 'Anytime TD' && x.pl === l.pl; })) flags.push(l.pl + ' first TD already implies his anytime TD - FanDuel will not pay for both'); });
     $('#bslipFlags').innerHTML = flags.map(function(f){ return '⚠ ' + esc(f); }).join('<br>');
-    $('#bslipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + decToAm(bookDec) + ' · fair ' + toAm(fair);
+    $('#bslipbar b').textContent = sel.length + ' leg' + (sel.length>1?'s':'') + (others ? ' · ' + ls.length + ' priced here' : '') + ' · FD ' + decToAm(bookDec) + ' · fair ' + toAm(fair);
     send(ls); renderSaved();
   }
   function send(ls){
@@ -1011,6 +1022,13 @@ nav.nav a.played{opacity:.5}
   $('#bslipCopy').addEventListener('click', function(){ var txt = bslipText();
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function(){ $('#bslipCopy').textContent = 'Copied'; setTimeout(function(){ $('#bslipCopy').textContent = 'Copy slip'; }, 1200); }).catch(function(){ window.prompt('Copy your slip', txt); }); });
   window.addEventListener('storage', function(e){ if(e.key === KEY){ load(); render(); } });
+  // owner 10/28: the slip must read the same on every page - re-read browser storage whenever this page comes back into view
+  // (a page restored from the back/forward cache keeps its old in-memory slip) and after the account sync pulls a newer copy
+  function resync(){ var before = JSON.stringify(sel); load(); if(JSON.stringify(sel) !== before) render(); }
+  window.addEventListener('pageshow', function(e){ if(e.persisted) resync(); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') resync(); });
+  window.addEventListener('focus', resync);
+  document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.changed) resync(); });
   load(); render(); lockGames(); setInterval(function(){ lockGames(); render(); }, 60000);
   if(window.BSLive){ var LG = [].slice.call(document.querySelectorAll('.card[data-ko]')).map(function(c){ var p = c.id.split('-'); return {gid: c.id, a: p[0], b: p[1], ko: +c.dataset.ko, fin: c.dataset.final || ''}; });
     window.BSLive.start(LG, applyLive); }
