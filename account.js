@@ -12,6 +12,7 @@
   localStorage.setItem = function(k, v){ _set(k, v); if (SYNC.test(k)){ meta[k] = Date.now(); saveMeta(); if (user && ready){ pending[k] = String(v); schedule(); } } };
   localStorage.removeItem = function(k){ _rm(k); if (SYNC.test(k)){ meta[k] = Date.now(); saveMeta(); if (user && ready){ pending[k] = null; schedule(); } } };
   function schedule(){ clearTimeout(timer); timer = setTimeout(flush, 800); }
+  window.addEventListener('pagehide', function(){ if (Object.keys(pending).length) flush(); });   // owner 10/28: push the slip before leaving the page, not 800 ms later
   function flush(){ if(!user) return; var rows = [], dels = []; Object.keys(pending).forEach(function(k){ if (pending[k]===null) dels.push(k); else rows.push({user_id: user.id, key: k, value: {v: pending[k]}, updated_at: new Date(meta[k]||Date.now()).toISOString()}); }); pending = {};
     if (rows.length) sb.from('user_state').upsert(rows, {onConflict: 'user_id,key'}).then(function(r){ if(r.error) console.warn('sync', r.error.message); });
     if (dels.length) sb.from('user_state').delete().eq('user_id', user.id).in('key', dels).then(function(r){ if(r.error) console.warn('sync', r.error.message); }); }

@@ -174,7 +174,7 @@ a{color:var(--ink)}
   function legText(l){
     if(l.gl) return esc(l.pl) + ' <small>' + esc(l.m === 'Total' ? 'game total' : l.m.toLowerCase()) + '</small>';
     if(/TD$/.test(l.m)) return esc(l.pl) + ' <small>' + esc(l.m.toLowerCase()) + '</small>';
-    if(/^Under /.test(l.m)) return esc(l.pl) + ' <small>' + esc((l.ms || l.m).toLowerCase()) + ' ' + l.ln + '</small>';
+    if(/^Under /.test(l.m)) return esc(l.pl) + ' <small>' + esc((l.ms || l.m.slice(6)).toLowerCase()) + ' under ' + l.ln + '</small>';
     return esc(l.pl) + ' <small>' + esc((l.ms || l.m).toLowerCase()) + ' ' + Math.round(l.ln) + '+</small>';
   }
   function fdUrl(ls){ var ok = ls.filter(function(l){ return l.fd && l.fd.m && l.fd.s && !(l.ko && Date.now() >= l.ko); }); if(!ok.length) return null;
