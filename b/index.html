@@ -160,7 +160,7 @@ a{color:var(--ink)}
   box.innerHTML = '<div class="none">Loading the slip…</div>';
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function am(o){ if(o == null) return ''; o = Math.round(o); return o > 0 ? '+' + o : String(o); }
-  function lnTxt(l){ if(l.gl) return l.ms || l.m; if(l.m === 'Anytime TD') return 'anytime TD'; if(l.m === 'First TD') return 'first TD'; var n = l.ln == null ? '' : (l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'); return ((l.ms || l.m || '').replace(/^Under /i, '').toLowerCase() + ' ' + n).trim(); }
+  function lnTxt(l){ if(l.gl) return l.ms || l.m; if(l.m === 'Anytime TD') return 'anytime TD'; if(l.m === 'First TD') return 'first TD'; if(/^\d\+ TD$/.test(l.m)) return l.m; var n = l.ln == null ? '' : (l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'); return ((l.ms || l.m || '').replace(/^Under /i, '').toLowerCase() + ' ' + n).trim(); }
   function render(r){
     var legs = r.legs || [], W = r.week || '';
     var dec = legs.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
