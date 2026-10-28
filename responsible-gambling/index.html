@@ -909,7 +909,7 @@ nav.nav a.played{opacity:.5}
   // a slip key this page has no priced leg for (added in the builder: an under, a game line, a deep rung): shown by name, removable, not priced here
   function unkRow(k){ var p = k.split('|'), pl = p[0] || k, m = p[1] || '', ln = +p[2]; var txt;
     if(/^Under /.test(m)) txt = m.slice(6).toLowerCase() + ' under ' + (ln - 0.5);
-    else if(m === 'Anytime TD') txt = 'anytime TD'; else if(m === 'First TD') txt = 'first TD';
+    else if(m === 'Anytime TD') txt = 'anytime TD'; else if(m === 'First TD') txt = 'first TD'; else if(/^\d\+ TD$/.test(m)) txt = m;
     else if(m === 'Moneyline' || m === 'Spread' || m === 'Total') txt = m.toLowerCase();
     else txt = m.toLowerCase() + (ln ? ' ' + ln + '+' : '');
     return '<li class="unk"><div><b>' + esc(pl) + ' <small>' + esc(txt) + '</small></b><span>priced in the <a href="/build/" style="color:var(--ink)">builder</a></span></div><span class="e">—</span><button type="button" class="x" data-k="' + esc(k) + '" aria-label="remove">×</button></li>'; }

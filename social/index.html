@@ -251,7 +251,7 @@ a{color:var(--ink)}
       if(!fin) return 'open'; var me = x.side === g.a ? sa : sb, them = x.side === g.a ? sb : sa; return (me - them + (l.m === 'Moneyline' ? 0 : ln)) > 0 ? 'hit' : 'dead'; }
     var r = BOX[norm(l.pl)];
     if(l.m === 'First TD'){ var f = FIRST[l.g]; if(!f) return fin ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }
-    if(/TD$/.test(l.m)){ if(r && r.td >= 1) return 'hit'; return fin && r ? 'dead' : 'open'; }
+    if(/TD$/.test(l.m)){ var needT = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : 1; if(r && r.td >= needT) return 'hit'; return fin && r ? 'dead' : 'open'; }
     if(!r) return 'open';
     var v = l.m === 'Passing Yards' ? r.pass : l.m === 'Rushing Yards' ? r.rush : l.m === 'Receiving Yards' ? r.recy : l.m === 'Receptions' ? r.rec : l.m === 'Longest Reception' ? r.long : l.m === 'Rush + Rec Yards' ? r.rush + r.recy : null;
     if(v == null) return 'open'; return v >= Math.round(l.ln) ? 'hit' : (fin ? 'dead' : 'open');
