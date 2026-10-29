@@ -781,6 +781,7 @@ nav.nav a.played{opacity:.5}
   // ---- page betslip: the parlay builder's slip, on the boards. Legs are stored by key (player|market|line) so the two pages share one slip. ----
   // owner 10/28: pages with no priced slip data (fantasy, trade, first TD, DFS, season) still show the shared slip by name, so the
   // count and the legs read the same everywhere; only pages with __BSL price it
+  if(document.querySelector('.slipwrap')){ var own = document.getElementById('bslip'); if(own) own.remove(); return; }   // owner 10/29: the parlay builder has its own slip (prices every leg, sends to FanDuel) - never stack the page slip on top of it
   var D = window.__BSL || {legs: [], week: +((window.__BS || {}).week || window.__BSW)};
   if(!D.week){ try { var mx = 0; for(var i = 0; i < localStorage.length; i++){ var mw = /^bs_slipk_w(\d+)$/.exec(localStorage.key(i)); if(mw) mx = Math.max(mx, +mw[1]); } D.week = mx; } catch(e){} }   // pages with no week (season): the newest slip
   if(!D.week) return;
