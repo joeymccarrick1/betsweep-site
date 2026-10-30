@@ -184,6 +184,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .bslip .acts button.pri{border-color:var(--red)} .bslip .acts button:hover,.bslip .acts a.sec:hover{border-color:var(--red)}
 .bslip .acts a.fd{font:inherit;font-size:12px;font-weight:700;color:#fff;background:#1493ff;border:1px solid #1493ff;border-radius:3px;padding:6px 10px;text-decoration:none;white-space:nowrap} .bslip .acts a.fd[aria-disabled="true"]{opacity:.45;pointer-events:none} .bslip .acts a.fd.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .bslip .acts a.fd.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff}
 .bslip .note{margin:0;padding:10px 14px;font-size:11.5px;color:var(--mute);line-height:1.45} .bslip .note:empty{display:none}
+/* owner 10/30: "I want the betslip to look the same on all pages" - the builder's action area: book pills, Save / Copy / Clear, Post to Social + Short link */
+.bslip .acts.books3{padding-bottom:4px} .bslip .acts.books3 a.fd{text-align:center;font-size:13px;padding:9px 12px;border-radius:8px}
+.bslip .acts.share{padding-top:4px;align-items:stretch}
+.bslip .acts .social{flex:1;display:inline-flex;align-items:center;gap:10px;text-align:left;font:inherit;padding:8px 12px;border-radius:10px;border:1.5px solid var(--red);background:linear-gradient(135deg,color-mix(in srgb,var(--red) 14%,var(--card)),var(--card));color:var(--ink);cursor:pointer}
+.bslip .acts .social img{width:34px;height:34px;border-radius:50%;flex:none} .bslip .acts .social b{display:block;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;line-height:1.1} .bslip .acts .social small{display:block;color:var(--mute);font-size:11px;margin-top:2px}
+.bslip .acts .social:hover{background:linear-gradient(135deg,color-mix(in srgb,var(--red) 24%,var(--card)),var(--card))}
+.bslip .acts.share #shortl{border-radius:10px;padding:8px 12px;align-self:center}
+.bslip .acts.links{padding-top:0;gap:14px} .bslip .acts.links button,.bslip .acts.links a.sec{border:0;padding:2px 0;background:none;color:var(--mute);font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:2px;border-radius:0}
+.bslip .acts.links button:hover,.bslip .acts.links a.sec:hover{color:var(--ink)}
 @media (max-width:900px){ .bslip{left:0;right:0;width:auto;max-width:none;border-radius:0;border-left:0;border-right:0} }
 body.hasslip{padding-bottom:64px}
 .storyframe .addmini,body.render .addmini,.storyframe .bslip,body.render .bslip{display:none}
@@ -622,7 +631,10 @@ nav.nav a.played{opacity:.5}
  <div class="price" id="bslipPrice"></div>
  <div class="take" id="bslipTake" hidden></div>
  <div class="flagsx" id="bslipFlags"></div>
- <div class="acts"><a class="fd" id="bslipSend" href="#" target="_blank" rel="noopener" aria-disabled="true">Send to FanDuel</a><a class="fd dk" id="bslipDK" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Send to DraftKings</a><a class="fd hr" id="bslipHR" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Send to Hard Rock</a><button type="button" class="pri" id="bslipSave">Save slip</button><button type="button" class="pri" id="bslipCopy">Copy slip</button><button type="button" class="obk" id="bslipBooks" aria-expanded="false">Other books ▾</button><button type="button" id="bslipClear">Clear</button><a class="sec" id="bslipBuild" href="https://betsweep.co/build/">Open in Parlay Builder</a></div>
+ <div class="acts books3"><a class="fd" id="bslipSend" href="#" target="_blank" rel="noopener" aria-disabled="true">FanDuel</a><a class="fd dk" id="bslipDK" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">DraftKings</a><a class="fd hr" id="bslipHR" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Hard Rock</a></div>
+ <div class="acts"><button type="button" class="pri" id="bslipSave">Save slip</button><button type="button" class="pri" id="bslipCopy">Copy slip</button><button type="button" id="bslipClear">Clear</button></div>
+ <div class="acts share"><button type="button" class="social" id="postsl" title="Post this slip to BetSweep Social for others to tail and upvote"><img src="/favicon.png" alt=""><span><b>Post to BetSweep Social</b><small>let people tail it · upvotes put it on top</small></span></button><button type="button" class="pri" id="shortl" title="A short betsweep.co link for this slip - paste it on X or an Instagram story">Short link</button></div>
+ <div class="acts links"><button type="button" class="obk" id="bslipBooks" aria-expanded="false">Other books ▾</button><a class="sec" id="bslipBuild" href="https://betsweep.co/build/">Open in Parlay Builder</a></div>
  <!--BOOKSHTML-->
  <p class="note" id="bslipNote"></p>
  <p class="note" id="bslipBkNote"></p>
@@ -909,6 +921,15 @@ nav.nav a.played{opacity:.5}
     var rows = [['FanDuel', fdDec]]; if (dk != null) rows.push(['DraftKings', dk]); if (hr != null) rows.push(['Hard Rock', hr]); var best = rows.reduce(function(b, r){ return r[1] > b[1] ? r : b; });
     return '<div class="wide books3"><small>Same slip at each book (legs multiplied; SGP quotes differ)</small>' + rows.map(function(r){ var sub = (r[0] === 'DraftKings' && bookSubbed(ls, 'dk')) || (r[0] === 'Hard Rock' && bookSubbed(ls, 'hr')); return '<span class="' + (r[0] === best[0] ? 'best' : '') + '">' + r[0] + ' <b>' + (sub ? '≈' : '') + decToAm(r[1]) + '</b></span>'; }).join('') + (bookSubbed(ls, 'dk') || bookSubbed(ls, 'hr') ? '<i>≈ uses that book\'s nearest line for a leg it doesn\'t post</i>' : '') + '</div>'; }
   function slipLegs(){ return sel.map(function(k){ return byKey[k]; }).filter(Boolean).sort(function(a,b){ return ((D.gsort[a.g]||'9')+a.g).localeCompare((D.gsort[b.g]||'9')+b.g); }); }
+  // owner 10/30: Post to BetSweep Social + Short link on every page's slip (social.py POST_JS / shortlinks.py BTN_JS, injected by build_site.py).
+  // They read the slip through these two hooks, exactly as on the Parlay Builder.
+  window.bsSlipLegs = function(){ return slipLegs(); };
+  window.bsGameKo = function(gid){ for(var i = 0; i < legs.length; i++) if(legs[i].g === gid && legs[i].ko) return +legs[i].ko; return null; };
+  // Never post or link a partial slip: legs this page cannot price (added in the builder, or a page with no slip prices) would be dropped silently.
+  ['postsl', 'shortl'].forEach(function(id){ var b = document.getElementById(id); if(!b) return;
+    b.addEventListener('click', function(e){ var others = sel.filter(function(k){ return !byKey[k]; }).length; if(!others) return;
+      e.stopImmediatePropagation(); e.preventDefault();
+      $('#bslipFlags').innerHTML = '⚠ ' + others + ' of these legs ' + (others === 1 ? 'is' : 'are') + ' priced in the builder, not on this page - <a href="/build/" style="color:var(--ink);font-weight:700">open the slip in the Parlay Builder</a> to ' + (id === 'postsl' ? 'post it' : 'make the link') + ' with every leg.'; }, true); });
   function fdUrl(ls){ var ok = ls.filter(function(l){ return l.fd && l.fd.m && l.fd.s && !started(l); }); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&'); }
   function bookUrl(ls, k){ var live = ls.filter(function(l){ return !started(l); }); var ids = live.map(function(l){ var x = bookPick(l, k); return x && x.s; }).filter(Boolean); if (!ids.length || ids.length !== live.length) return null;
@@ -1049,7 +1070,96 @@ nav.nav a.played{opacity:.5}
 (function(){function go(e){var n=e.target.closest&&e.target.closest('.newsl');if(!n)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();window.open(n.getAttribute('data-href'),'_blank','noopener');}
 document.addEventListener('click',go,true);document.addEventListener('keydown',go,true);})();
 </script>
-<p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Build</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a><a href="/team/" class=""><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Fantasy</span></a><a href="/receipts/" class=""><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Receipts</span></a></nav>
+
+<style>
+.sdlg{position:fixed;inset:0;z-index:120;background:rgba(10,12,16,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.sdlg[hidden]{display:none}
+.sdlg .box{background:var(--card,#f7f3e8);color:var(--ink,#141a24);border:1px solid var(--line,#d3cbb8);border-radius:14px;max-width:420px;width:100%;padding:18px 18px 14px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.sdlg h3{margin:0 0 4px;font-family:var(--display,'Barlow Condensed',sans-serif);font-size:22px}
+.sdlg p{margin:0 0 10px;font-size:13px;color:var(--mute,#5d6676);line-height:1.45}
+.sdlg label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
+.sdlg input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--line,#d3cbb8);border-radius:9px;background:var(--bg,#fff);color:var(--ink,#141a24)}
+.sdlg .row{display:flex;gap:8px;margin-top:12px}.sdlg .row button{flex:1;font:inherit;font-weight:700;padding:11px;border-radius:9px;border:1px solid var(--line,#d3cbb8);background:none;color:var(--ink,#141a24);cursor:pointer}
+.sdlg .row button.go{background:#d7332a;border-color:#d7332a;color:#fff}.sdlg .row button[disabled]{opacity:.6}
+.sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
+.sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
+</style>
+<div class="sdlg" id="sdlg" hidden><div class="box" role="dialog" aria-modal="true" aria-labelledby="sdlgT">
+ <h3 id="sdlgT">Post to BetSweep Social</h3>
+ <p>Your slip goes on the Social page for others to tail and upvote. It comes down on its own when a leg loses or every game is over. Keep it clean - posts can be reported and removed.</p>
+ <p class="asn">Posting as <b id="sdH">…</b> <small>(your BetSweep handle - assigned, the same on every post)</small></p>
+ <label for="sdT">Title <small>(optional)</small></label><input id="sdT" maxlength="60" placeholder="e.g. Sunday ladder">
+ <label for="sdO">FanDuel price you got <small>(optional, e.g. +650)</small></label><input id="sdO" inputmode="text" maxlength="9" placeholder="+650">
+ <div class="msg" id="sdM"></div>
+ <div class="row"><button type="button" id="sdX">Cancel</button><button type="button" class="go" id="sdGo">Post</button></div>
+</div></div>
+<script>(function(){
+  var btn = document.getElementById('postsl'), dlg = document.getElementById('sdlg'); if(!btn || !dlg) return;
+  var $ = function(id){ return document.getElementById(id); };
+  function legsNow(){ return (window.bsSlipLegs ? window.bsSlipLegs() : []); }
+  function msg(t, err){ var m = $('sdM'); m.textContent = t || ''; m.className = 'msg' + (err ? ' err' : ''); }
+  btn.addEventListener('click', function(){
+    var A = window.bsAccount; var ls = legsNow();
+    if(!ls.length){ alertish('Add some legs first.'); return; }
+    if(!A || !A.client){ alertish('Accounts are not available right now.'); return; }
+    if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
+    var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });
+    msg(started.length ? 'Remove the legs from games that already kicked off first.' : '', !!started.length);
+    $('sdH').textContent = '…'; A.client.rpc('feed_handle', {u: A.user.id}).then(function(r){ $('sdH').textContent = r.data ? '@' + r.data : '(assigned when you post)'; }, function(){ $('sdH').textContent = '(assigned when you post)'; });
+    $('sdGo').disabled = !!started.length; dlg.hidden = false; $('sdT').focus();
+  });
+  function alertish(t){ var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = '⚠ ' + t; } }
+  // same list and normalisation as feed_clean() in the SQL: instant feedback here, the server has the final say
+  var BAD1 = ['fuck','fck','fuk','fvck','phuck','shit','cunt','bitch','asshole','pussy','whore','slut','nigg','retard','kike','chink','wetback','tranny','dyke','twat','jizz','rape','nazi','hitler','porn','blowjob','handjob','motherf','bastard','douche','wank','bollock','arsehole','pedo','paedo'];
+  var BAD2 = ['ass','damn','piss','tit','hoe','sex','anal','nig','fag','coon','dick','cock','cum','spic','cox'];
+  function clean(t){ if(!t) return true; var n = t.toLowerCase(); var L = {'0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','8':'b','@':'a','$':'s','!':'i','|':'l'}; n = n.replace(/[01345789@$!|]/g, function(c){ return L[c] || c; }).replace(/[^a-z ]/g, '');
+    var j = n.replace(/ /g, ''); for(var i = 0; i < BAD1.length; i++) if(j.indexOf(BAD1[i]) >= 0) return false;
+    for(i = 0; i < BAD2.length; i++) if(new RegExp('(^|\\s)' + BAD2[i] + 's?(\\s|$)').test(n)) return false; return true; }
+  $('sdX').addEventListener('click', function(){ dlg.hidden = true; });
+  dlg.addEventListener('click', function(e){ if(e.target === dlg) dlg.hidden = true; });
+  $('sdGo').addEventListener('click', function(){
+    var A = window.bsAccount, ls = legsNow(); var h = ($('sdH').textContent || '').replace(/^@/, ''), t = $('sdT').value.trim(), o = $('sdO').value.trim().replace(/[^0-9+-]/g, '');
+    if(!/^[A-Za-z0-9_.]{2,20}$/.test(h)) h = 'sweeper';   // the server assigns the real one on insert
+    if(!clean(t)){ msg('Keep the title clean - that one will not post.', true); return; }
+    var odds = o ? parseInt(o, 10) : null; if(o && (isNaN(odds) || Math.abs(odds) < 100)){ msg('Price looks off - use American odds like +650 or -120.', true); return; }
+    var kos = ls.map(function(l){ return window.bsGameKo ? window.bsGameKo(l.g) : null; }).filter(Boolean);
+    if(!kos.length){ msg('Could not read kickoff times for these legs.', true); return; }
+    var legs = ls.map(function(l){ return {k: l.pl + '|' + l.m + '|' + Math.round(l.ln || 1), pl: l.pl, m: l.m, ms: l.ms, ln: l.ln, o: l.o, g: l.g, tm: l.tm, opp: l.opp,
+      fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: window.bsGameKo ? window.bsGameKo(l.g) : null}; });
+    var dec = ls.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
+    var row = {handle: h, title: t || null, week: ((window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), legs: legs, fd_odds: odds != null ? odds : Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)),
+      first_ko: new Date(Math.min.apply(null, kos)).toISOString(), last_ko: new Date(Math.max.apply(null, kos)).toISOString()};
+    $('sdGo').disabled = true; msg('Posting…');
+    A.client.from('feed_posts').insert(row).select('id').then(function(r){
+      $('sdGo').disabled = false;
+      if(r.error){ msg(/relation|does not exist/i.test(r.error.message) ? 'Social is still being set up - try again soon.' : r.error.message, true); return; }
+      msg('Posted! Opening Social…'); setTimeout(function(){ location.href = '/social/#p' + ((r.data && r.data[0] && r.data[0].id) || ''); }, 600);
+    });
+  });
+})();</script>
+<script>(function(){
+  var btn = document.getElementById('shortl'); if(!btn) return;
+  function flags(t){ var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = t; } }
+  function code(){ var a = 'abcdefghjkmnpqrstuvwxyz23456789', s = ''; var r = new Uint32Array(6); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(r) : r.forEach(function(_, i){ r[i] = Math.floor(Math.random() * 1e9); }); for(var i = 0; i < 6; i++) s += a[r[i] % a.length]; return s; }
+  btn.addEventListener('click', function(){
+    var ls = window.bsSlipLegs ? window.bsSlipLegs() : []; if(!ls.length){ flags('⚠ Add some legs first.'); return; }
+    var CFG = window.__BS_ACCOUNT || {}; if(!(window.supabase && CFG.url)){ flags('⚠ Short links are not available right now.'); return; }
+    var sb = (window.bsAccount && window.bsAccount.client) || window.supabase.createClient(CFG.url, CFG.key);
+    var legs = ls.map(function(l){ return {k: l.pl + '|' + l.m + '|' + Math.round(l.ln || 1), pl: l.pl, m: l.m, ms: l.ms, ln: l.ln, u: l.u ? 1 : 0, o: l.o, p: l.p, g: l.g, tm: l.tm, opp: l.opp,
+      fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: window.bsGameKo ? window.bsGameKo(l.g) : null}; });
+    var fdl = legs.every(function(l){ return l.fd; }) ? 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + l.fd.m + '&selectionId[' + i + ']=' + l.fd.s; }).join('&') : null;
+    var dec = ls.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
+    var row = {code: code(), week: ((window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), title: null, legs: legs, fd_odds: Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)), link: fdl};
+    btn.disabled = true; var o = btn.textContent; btn.textContent = 'Making link…';
+    sb.from('short_links').insert(row).then(function(r){
+      btn.disabled = false; btn.textContent = o;
+      if(r.error){ flags('⚠ ' + (/relation|does not exist/i.test(r.error.message) ? 'Short links are still being set up - try again soon.' : r.error.message)); return; }
+      var url = 'https://betsweep.co/b/?s=' + row.code;
+      function show(copied){ flags((copied ? 'Copied: ' : 'Your link: ') + '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--ink);font-weight:700">' + url.replace('https://', '') + '</a>' + (fdl ? '' : ' (no FanDuel button - a leg has no FanDuel id)')); }
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function(){ show(true); }, function(){ show(false); }); else show(false);
+    });
+  });
+})();</script><p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Build</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a><a href="/team/" class=""><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Fantasy</span></a><a href="/receipts/" class=""><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Receipts</span></a></nav>
 <script>
 (function(){
   // full-bleed header: inner pages pad/margin the body, so measure the nav's inset and pull it back to the viewport edge
