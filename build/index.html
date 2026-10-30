@@ -893,6 +893,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <label><input id="fClean" type="checkbox"> clean legs only (hide flagged)</label>
    <label title="Only the Model's Best tier: lines near even money where the model is 8+ pts off FanDuel (mostly unders), TDs the model likes, and 65%+ legs at a fair price"><input id="fTier" type="checkbox"> <b>Model's Best</b> only</label>
    <label title="Opponent ranks top 12 in allowing this stat to this position, both this season and over the last 3 weeks (#1 allows the most). Game lines have no matchup rank and drop out."><input id="fSoft" type="checkbox"> soft matchups only</label>
+   <label title="His offense AND the opposing defense both green for this stat (both top 10), or offense middling (11-21) with the defense top 5. #1 = produces / allows the most. Unders flip it."><input id="fGreen" type="checkbox"> green matchups (off + def)</label>
    <label title="Primary roles only, line at 30–60% of the projection, −130 to −400, model not fading it, no role risk, no cold streak. Ranked by probability - the parlay-anchor strategy, not an edge hunt."><input id="fFloor" type="checkbox"> floor legs (anchors)</label>
    <select id="fSnaps" aria-label="minimum projected snap share" title="Hide legs whose projected offensive snap share (nflverse snaps, recency-weighted, redistributed for same-position absences and returners) is below the threshold. Legs with no snap projection (no 2026 snaps: fill-in starters, returners from 2025, game lines) stay visible under 'any' and are hidden under every threshold."><option value="0">Min snaps: any</option><option value="0.4">Min snaps: 40%</option><option value="0.55">Min snaps: 55%</option><option value="0.7">Min snaps: 70%</option></select>
    <label><input id="fBest" type="checkbox" checked> one box per player (his best line; the slider still reaches every line)</label>
@@ -911,7 +912,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <div class="quick"><button type="button" data-k="anchor">Anchor 3</button><button type="button" data-k="value">Value 4</button><button type="button" data-k="moon">Moonshot 5</button><span class="note" style="padding:4px 0 0;flex-basis:100%">Quick builds use clean legs (player props and game lines), one per player, one per game when "All games" is selected. Edit freely.</span></div>
    <div class="gen" id="gen">
     <div class="grow"><b>Build me a</b><input id="genT" type="text" inputmode="numeric" value="+500" aria-label="target odds"><span class="presets"><button type="button" data-t="+150">+150</button><button type="button" data-t="+300">+300</button><button type="button" data-t="+500">+500</button><button type="button" data-t="+1000">+1000</button><button type="button" data-t="+5000">+5000</button></span></div>
-    <div class="grow opts"><label><input id="genClean" type="checkbox" checked> clean legs</label><label><input id="genSoft" type="checkbox"> soft matchups</label><label>legs <select id="genN"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option></select></label><input id="genX" type="text" placeholder="leave out a player (e.g. Walker)" aria-label="leave out players"></div>
+    <div class="grow opts"><label><input id="genClean" type="checkbox" checked> clean legs</label><label><input id="genSoft" type="checkbox"> soft matchups</label><label title="Only legs with a green matchup on both sides (offense + defense)"><input id="genGreen" type="checkbox"> green matchups</label><label>legs <select id="genN"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option></select></label><input id="genX" type="text" placeholder="leave out a player (e.g. Walker)" aria-label="leave out players"></div>
     <div class="grow"><button type="button" class="btn" id="genGo">Find it</button><span class="note" id="genScope"></span></div>
     <div id="genOut"></div>
    </div>
@@ -1114,7 +1115,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     if(inSlip.length || fromSlip){ inSlip.forEach(function(x){ delete sel[x.i]; }); sel[g[i].i] = true; }
     renderList(); renderSlip();
   }
-  var st = { game: 'all', market: 'all', pos: 'all', odds: 'all', clean: false, best: true, floor: false, soft: false, tier: /[?&]best=1/.test(location.search), snaps: 0, q: '', sort: 'edge', limit: 80, view: 'games' };
+  var st = { game: 'all', market: 'all', pos: 'all', odds: 'all', clean: false, best: true, floor: false, soft: false, green: false, tier: /[?&]best=1/.test(location.search), snaps: 0, q: '', sort: 'edge', limit: 80, view: 'games' };
   // projected snap share chip (projsnaps.py via build_boards.py): sn is a fraction or null (no 2026 snaps / game line), sn3 the last three played games newest first
   function snChip(l){ if(l.sn == null) return ''; var l3 = (l.sn3 || []).map(function(x){ return Math.round(x*100); }).join(' · ');
     return '<span class="snchip" title="Projected offensive snap share for this game; last three games newest first' + (l.snw ? '; ' + esc(l.snw) : '') + '">Snaps ~' + Math.round(l.sn*100) + '%' + (l3 ? ' (' + l3 + ')' : '') + '</span>'; }
@@ -1195,6 +1196,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
       if(st.clean && l.w) return false;
       if(st.floor && !isFloor(l) && !sel[l.i]) return false;
       if(st.soft && !isSoft(l) && !sel[l.i]) return false;
+      if(st.green && !isGreen(l) && !sel[l.i]) return false;
       if(st.snaps && !(l.sn != null && l.sn >= st.snaps) && !sel[l.i]) return false;   // null sn (no 2026 snaps, game lines) hides under any threshold
       if(l.gd.indexOf('CONFIRMED') === 0) return false;
       if(started(l.g) && !sel[l.i]) return false;
@@ -1209,6 +1211,13 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return out;
   }
   // owner 10/26: 'soft matchup' = the opponent ranks top 12 in allowing this stat to this position both on the season and over the last 3 weeks (#1 allows the most)
+  // owner 10/30: "green on both sides of offense and defense, or at least gray on offense and dark green on defense" - an OPT-IN filter.
+  // Overs: off <= 10 and def <= 10, or off 11-21 and def <= 5 (rank 1 = produces / allows the most). Unders mirror it (red both sides).
+  // Not a default gate: 2019-2026 nflverse shows green-both players go OVER an average-based projection ~8 pts less often than the rest
+  // (regression - hot averages meet a matchup bump); Weeks 6-7 graded FanDuel legs lean the other way but not significantly (dev log 10/30).
+  function isGreen(l){ var o = l.or && l.or[0], d = l.dr && l.dr[0]; if(o == null || d == null) return false;
+    if(l.u) return (o >= 23 && d >= 23) || (o >= 12 && o <= 22 && d >= 28);
+    return (o <= 10 && d <= 10) || (o >= 11 && o <= 21 && d <= 5); }
   function isSoft(l){ return !!(l.dr && l.dr[0] != null && l.dr[0] <= 12 && (l.dr[1] == null || l.dr[1] <= 12)); }
   function row(l){
     var ok = l.pl + '|' + l.m, cyc = cycleList(l), ci = 0;
@@ -1589,11 +1598,11 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function genRun(){
     var T = oddsIn($('#genT').value); var out = $('#genOut');
     if(!T){ out.innerHTML = '<p class="note">Type a price like +500.</p>'; return; }
-    var N = +$('#genN').value, clean = $('#genClean').checked, soft = $('#genSoft').checked;
+    var N = +$('#genN').value, clean = $('#genClean').checked, soft = $('#genSoft').checked, green = $('#genGreen') && $('#genGreen').checked;
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04; });
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04; });
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
@@ -1640,6 +1649,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   $('#fSort').addEventListener('change', function(){ st.sort = this.value; renderList(); });
   $('#fClean').addEventListener('change', function(){ st.clean = this.checked; renderList(); });
   $('#fSoft').addEventListener('change', function(){ st.soft = this.checked; renderList(); });
+  $('#fGreen').addEventListener('change', function(){ st.green = this.checked; renderList(); });
   $('#fTier').addEventListener('change', function(){ st.tier = this.checked; renderList(); });
   if(st.tier){ $('#fTier').checked = true; setTimeout(function(){ setView('list'); }, 0); }   // /build/?best=1 opens the leg list on the Model's Best tier
   $('#fFloor').addEventListener('change', function(){ st.floor = this.checked; if(st.floor){ st.sort = 'model'; $('#fSort').value = 'model'; } renderList(); });
@@ -1761,7 +1771,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   });
   $('#tabGames').addEventListener('click', function(){ setView('games'); });
   $('#tabSearch').addEventListener('click', function(){ setView(st.view === 'list' ? 'games' : 'list'); });
-  $('#fReset').addEventListener('click', function(){ st.game = 'all'; st.market = 'all'; st.pos = 'all'; st.odds = 'all'; st.clean = false; st.floor = false; $('#fFloor').checked = false; st.soft = false; $('#fSoft').checked = false; st.tier = false; $('#fTier').checked = false; st.snaps = 0; $('#fSnaps').value = '0'; st.best = true; st.q = ''; st.limit = 80;
+  $('#fReset').addEventListener('click', function(){ st.game = 'all'; st.market = 'all'; st.pos = 'all'; st.odds = 'all'; st.clean = false; st.floor = false; $('#fFloor').checked = false; st.soft = false; $('#fSoft').checked = false; st.green = false; $('#fGreen').checked = false; st.tier = false; $('#fTier').checked = false; st.snaps = 0; $('#fSnaps').value = '0'; st.best = true; st.q = ''; st.limit = 80;
     $('#fGame').value = 'all'; $('#fMarket').value = 'all'; $('#fPos').value = 'all'; $('#fQ').value = ''; $('#fClean').checked = false; $('#fBest').checked = true; $$('#fOdds button').forEach(function(x){ x.classList.toggle('on', x.dataset.v === 'all'); }); renderList(); });
   $('#more').addEventListener('click', function(){ st.limit += 80; renderList(); });
   $('#slipLegs').addEventListener('click', function(ev){
