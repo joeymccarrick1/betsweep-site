@@ -185,13 +185,13 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 </style>
 """
 APP_TABS = [("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
-            ("/build/", "Build", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
-            ("/live/", "Live", '<svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg>'),
-            ("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>'),
+            ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
             ("/team/", "Fantasy", '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'),
-            ("/receipts/", "Receipts", '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>')]
+            ("/live/", "Live", '<svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg>'),
+            ("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>')]
 def apptabs(path):
-    def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/receipts/" and path.startswith("/season/"))
+    # five bottom tabs; Fantasy lights up for every page in the Fantasy group
+    def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/team/" and path.startswith(("/trade/", "/dfs/")))
     return '<nav class="apptabs" aria-label="app tabs">' + "".join(f'<a href="{p}" class="{"on" if on(p) else ""}">{svg}<span>{t}</span></a>' for p, t, svg in APP_TABS) + '</nav>\n'
 APP_JS = """<script>
 (function(){
