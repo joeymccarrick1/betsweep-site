@@ -84,7 +84,8 @@ CSS = """
 .bl .go .bks{display:grid;grid-template-columns:1fr 1fr;gap:8px} .bl .go .bks[hidden]{display:none} .bl .go .bks a:only-child{grid-column:1/-1}
 .bl .go a.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .bl .go a.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff}
 .bl .go .bknote{margin:-2px 0 0;font-size:11.5px;color:var(--mute);line-height:1.4;text-align:center}
-.bl .go .row{display:grid;grid-template-columns:1fr 1fr;gap:8px} .bl .go .row a,.bl .go .row button{font-size:14px;padding:11px 10px}
+.bl .go .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px} .bl .go button.sv{border-color:var(--red)} .bl .go button.sv.on{background:var(--red);color:#fff}
+.bl .svnote{margin:-2px 0 8px;font-size:12.5px;color:var(--mute);text-align:center} .bl .svnote[hidden]{display:none} .bl .go .row a,.bl .go .row button{font-size:14px;padding:11px 10px}
 .bl .cap{color:var(--ink);font-size:14px;line-height:1.5;margin:12px 0}
 .bl .lk{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:13px;color:var(--mute)} .bl .lk code{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--ink);background:var(--chalk);padding:3px 8px;border-radius:6px}
 .bl .lk button{font:inherit;font-size:12px;font-weight:600;padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
@@ -96,6 +97,25 @@ CSS = """
 .bl .st{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-left:auto} .bl .st.live{color:var(--red)}
 .bl .hd{display:flex;align-items:center}
 """
+
+# owner 10/30: "I want to also save betslips on short links" - Save slip writes the same saved-slip list the Parlay Builder uses (bs_slips_w<W>),
+# so the slip shows on My BetSweep (graded after the games), syncs to the account, and gets the slip alerts.
+SAVE_JS = r"""<script>(function(){
+  function sameSet(a, b){ if(a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
+  function get(w){ try { var a = JSON.parse(localStorage.getItem('bs_slips_w' + w) || '[]'); return Array.isArray(a) ? a : []; } catch(e){ return []; } }
+  function paint(b){ var d = JSON.parse(b.getAttribute('data-slip')); var on = get(d.w).some(function(s){ return s && Array.isArray(s.keys) && sameSet(s.keys, d.k); });
+    b.classList.toggle('on', on); b.textContent = on ? 'Saved \u2713' : 'Save slip'; }
+  window.bsPaintSave = function(){ document.querySelectorAll('.bl button.sv[data-slip]').forEach(paint); };
+  document.addEventListener('click', function(ev){ var b = ev.target.closest('.bl button.sv[data-slip]'); if(!b) return;
+    var d = JSON.parse(b.getAttribute('data-slip')); if(!d.w || !d.k || !d.k.length) return;
+    var all = get(d.w), i = -1; all.forEach(function(s, j){ if(s && Array.isArray(s.keys) && sameSet(s.keys, d.k)) i = j; });
+    if(i >= 0){ all.splice(i, 1); } else { all.push({id: 'b' + Date.now().toString(36), name: d.n || 'Slip', keys: d.k, odds: d.o != null ? d.o : null, stake: 1, fd: d.fd || null, saved: Date.now(), from: 'link'}); }
+    try { localStorage.setItem('bs_slips_w' + d.w, JSON.stringify(all)); } catch(e){}
+    paint(b);
+    var n = document.getElementById('svnote'); if(n){ n.hidden = false; n.innerHTML = i >= 0 ? 'Removed from your saved slips.' : 'Saved to <a href="/me/" style="color:var(--ink);font-weight:700">My BetSweep</a> - graded after the games' + (window.bsAccount && window.bsAccount.user ? ', with slip alerts if you turned them on.' : '. Sign in to keep it on every device and get alerts if a player is ruled out.'); }
+  });
+  window.bsPaintSave();
+})();</script>"""
 
 LAND_JS = r"""<script>(function(){
   var root = document.querySelector('.bl'); if(!root) return;
@@ -176,11 +196,12 @@ def promo_page(pr):
 <h1>{E(pr["title"])}</h1><div class="meta">{n} legs · one tap on FanDuel · snapshot at post time, prices move</div>
 <ul class="legs">{leg_rows(pr["legs"])}</ul>
 <div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(pr["fd"])) if pr.get("fd") else '<span style="font-size:16px;font-weight:600">price on FanDuel</span>'}</div><div class="md">{_model_line(pr.get("p"), pr.get("fair"))}</div></div>
-<div class="go">{fdbtn}<div class="row"><a href="{E(build)}">Load into the builder</a><a href="{E(share)}" target="_blank" rel="noopener">Share on X</a></div></div>
+<div class="go">{fdbtn}<div class="row"><button type="button" class="sv" data-slip="{E(json.dumps({"w": int(pr["week"]), "n": pr["title"], "k": keys, "o": pr.get("fd"), "fd": pr.get("link")}))}"{"" if keys and len(keys) == n else " hidden"}>Save slip</button><a href="{E(build)}">Load into the builder</a><a href="{E(share)}" target="_blank" rel="noopener">Share on X</a></div></div>
+<p class="svnote" id="svnote" hidden></p>
 {cap}
 <div class="lk">Short link <code>{E(url.replace("https://", ""))}</code><button type="button" data-copy="{E(url)}">Copy</button></div>
 <p class="fn">Graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> Tuesday like everything else. 21+ · information, not advice · 1-800-GAMBLER.</p>
-</div>{LAND_JS}'''
+</div>{LAND_JS}{SAVE_JS}'''
 
 INDEX_JS = r"""<script>(function(){
   var root = document.querySelector('.bl'); if(!root) return;
@@ -220,10 +241,10 @@ INDEX_JS = r"""<script>(function(){
       + '<ul class="legs">' + legs.map(function(l){ var sub = [lnTxt(l), l.opp && !/\//.test(l.tm || '') ? 'vs ' + l.opp : ''].filter(Boolean).join(' · ');
           return '<li><b>' + esc(l.pl) + '</b><span class="o">' + am(l.o) + '</span><small>' + esc(sub) + '</small>' + (l.p != null ? '<span class="mp">model ' + Math.round(l.p * 100) + '%</span>' : '') + '</li>'; }).join('') + '</ul>'
       + '<div class="pf"><div class="big"><small>FanDuel</small>' + (odds != null ? am(odds) : '<span style="font-size:16px;font-weight:600">price on FanDuel</span>') + '</div><div class="md">' + (p == null ? 'Model price not available for every leg' : p < 0.03 ? '<b>Longshot</b> · model ' + (p < 0.01 ? 'under 1' : Math.round(p * 100)) + '% to hit' : '<b>Model ' + (p * 100).toFixed(1) + '%</b> to hit (legs multiplied)') + '</div></div>'
-      + '<div class="go">' + fd + (last && Date.now() > last ? '' : bookBtns(legs, map)) + '<div class="row"><a href="' + esc(build) + '">Load into the builder</a><a href="' + share + '" target="_blank" rel="noopener">Share on X</a></div></div>'
-      + '<div class="lk">Short link <code>betsweep.co/b/?s=' + esc(code) + '</code><button type="button" data-copy="' + esc(url) + '">Copy</button></div>'
+      + '<div class="go">' + fd + (last && Date.now() > last ? '' : bookBtns(legs, map)) + '<div class="row">' + (keys.length === legs.length ? '<button type="button" class="sv" data-slip="' + esc(JSON.stringify({w: +W, n: r.title || (legs.length + '-leg parlay'), k: keys, o: odds, fd: r.link || null})) + '">Save slip</button>' : '') + '<a href="' + esc(build) + '">Load into the builder</a><a href="' + share + '" target="_blank" rel="noopener">Share on X</a></div></div>'
+      + '<p class="svnote" id="svnote" hidden></p><div class="lk">Short link <code>betsweep.co/b/?s=' + esc(code) + '</code><button type="button" data-copy="' + esc(url) + '">Copy</button></div>'
       + '<p class="fn">Made with the <a href="/build/" style="color:var(--ink)">Parlay Builder</a>. 21+ · information, not advice · 1-800-GAMBLER.</p>';
-    root.dataset.code = code; root.dataset.lastKo = last || '';
+    root.dataset.code = code; root.dataset.lastKo = last || ''; if(window.bsPaintSave) window.bsPaintSave();
     box.querySelectorAll('[data-copy]').forEach(function(b){ b.addEventListener('click', function(){ var t = b.dataset.copy; function done(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1400); }
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function(){ prompt('Copy this link', t); }); else prompt('Copy this link', t); }); });
     try { var CFG = window.__BS_ACCOUNT || {}; if(window.supabase && CFG.url) window.supabase.createClient(CFG.url, CFG.key).rpc('link_hit', {c: code}).then(function(){}, function(){}); } catch(e){}
@@ -246,7 +267,7 @@ def index_page(promos, week):
     static = f'<div class="hd"><span class="tag">Bet links</span><span class="wk">Week {week}</span></div><h1>This week\'s bets</h1><div class="meta">Every bet BetSweep posts has a short link - the legs, the model\'s number and one tap to FanDuel.</div>' \
              + (f'<div class="list">{items}</div>' if items else '<div class="none">Nothing posted for this week yet.</div>') \
              + '<p class="fn">Make your own from the <a href="/build/" style="color:var(--ink)">Parlay Builder</a>: build a slip, tap <b>Short link</b>, paste it anywhere.</p>'
-    return f'<div class="bl" data-code="" data-week="{week}"><div id="blStatic">{static}</div><div id="blDyn" hidden></div></div>{INDEX_JS}'
+    return f'<div class="bl" data-code="" data-week="{week}"><div id="blStatic">{static}</div><div id="blDyn" hidden></div></div>{INDEX_JS}{SAVE_JS}'
 
 # ---- Parlay Builder: "Short link" in the slip panel ----
 BTN_HTML = '<button type="button" class="pri" id="shortl" title="A short betsweep.co link for this slip - paste it on X or an Instagram story">Short link</button>'
