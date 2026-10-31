@@ -286,7 +286,8 @@ a{color:var(--ink)}
     test.disabled = true; say('Sending…');
     client().auth.getSession().then(function(r){ var tok = r.data && r.data.session && r.data.session.access_token;
       return fetch(FN, {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok}, body: JSON.stringify({test: true})}); })
-    .then(function(r){ return r.json(); }).then(function(j){ if(j && j.sent) say('Sent - it should show up in a few seconds.', 'ok'); else say((j && j.error) || 'No alert went out - turn alerts off and on again on this device.', 'err'); })
+    .then(function(r){ return r.text().then(function(t){ var j = null; try { j = JSON.parse(t); } catch(e){} return {s: r.status, j: j, t: t}; }); })
+    .then(function(x){ var j = x.j; if(j && j.sent) say('Sent - it should show up in a few seconds.', 'ok'); else say((j && j.error) || ('The alert service answered ' + x.s + ': ' + String((j && (j.message || j.msg)) || x.t || 'no details').slice(0, 160)), 'err'); })
     .catch(function(){ say('Could not reach the alert service.', 'err'); }).then(function(){ test.disabled = false; });
   });
   off.addEventListener('click', function(){
