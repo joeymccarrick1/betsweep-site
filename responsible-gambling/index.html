@@ -541,10 +541,25 @@ nav.nav a.played{opacity:.5}
 .sitenav .tabs a.on{color:#141a24;border-bottom-color:#d7332a}
 @media (max-width:1180px){ .sitenav .tabs{gap:0} .sitenav .tabs a{font-size:13.5px;padding:14px 7px 11px;letter-spacing:.04em} }
 /* 10/30: Players + Usage made 13 tabs - tighter between 1100 and 1420, the menu button below 1100 */
-@media (max-width:1700px){ .sitenav .tabs{gap:0} .sitenav .tabs a{font-size:13px;padding:14px 5px 11px;letter-spacing:.03em} }
-@media (min-width:1101px){ .sitenav .brand,.sitenav .acct{flex:none} .sitenav .tabs{min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;align-self:stretch} .sitenav .tabs::-webkit-scrollbar{display:none} .sitenav .tabs a{margin-bottom:0;white-space:nowrap;display:flex;align-items:center} }
+.sitenav .dd{position:relative;display:flex;align-items:stretch}
+.sitenav .ddb{font:inherit;color:#4a5260;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-3px;padding:14px 10px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.sitenav .ddb i{font-style:normal;font-size:10px;transition:transform .15s}
+.sitenav .dd:hover .ddb,.sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
+.sitenav .ddm{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:230px;flex-direction:column;background:#efe9da;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 8px 8px;box-shadow:0 14px 30px rgba(0,0,0,.28);padding:6px 0}
+.sitenav .dd:hover .ddm,.sitenav .dd.open .ddm,.sitenav .dd:focus-within .ddm{display:flex}
+.sitenav .dd:hover .ddb i,.sitenav .dd.open .ddb i{transform:rotate(180deg)}
+.sitenav .ddm a{display:block;padding:9px 16px !important;border:0 !important;margin:0 !important;text-transform:none !important;letter-spacing:.01em !important;font-size:16px !important;color:#141a24 !important}
+.sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
+.sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
+.sitenav .ddh{display:none}
+@media (max-width:1240px){
+  .sitenav .dd{display:block} .sitenav .ddb{display:none} .sitenav .ddm{display:flex !important;position:static;box-shadow:none;border:0;border-radius:0;padding:0;min-width:0;background:none}
+  .sitenav .ddh{display:block;padding:12px 18px 4px;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#d7332a;border-top:1px solid #d9d1bf}
+  .sitenav .ddm a{padding:10px 18px 10px 26px !important;border-bottom:1px solid #e4ddcb !important;font-size:17px !important}
+  .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto}
+}
 .sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
-@media (max-width:1100px){
+@media (max-width:1240px){
   .sitenav .menu{display:inline-flex;align-items:center;gap:6px}
   .sitenav .tabs{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;align-items:stretch;gap:0;padding:0;background:#efe9da;border-bottom:3px solid #d7332a;box-shadow:0 12px 30px rgba(0,0,0,.35)}
   .sitenav.open .tabs{display:flex}
@@ -566,7 +581,8 @@ nav.nav a.played{opacity:.5}
 </style>
 </head>
 <body>
-<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><a href="/" class="">Home</a><a href="/boards/" class="">Matchup Boards</a><a href="/build/" class="">Parlay Builder</a><a href="/player/" class="">Players</a><a href="/live/" class="">Live</a><a href="/social/" class="">Social</a><a href="/team/" class="">Fantasy</a><a href="/usage/" class="">Usage</a><a href="/trade/" class="">Trade</a><a href="/firsttd/" class="">First TD</a><a href="/dfs/" class="">DFS</a><a href="/receipts/" class="">Receipts</a><a href="/season/" class="">Season</a></div></div></nav>
+<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><a href="/" class="">Home</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><a href="/social/" class="">Social</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a></div></div></div></div></nav>
+<script>(function(){var n=document.getElementById("sitenav");n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(){n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
 <script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>
 <div class="top">
   <div class="mast">
@@ -1140,12 +1156,13 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   var btn = document.getElementById('shortl'); if(!btn) return;
   function flags(t){ var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = t; } }
   function code(){ var a = 'abcdefghjkmnpqrstuvwxyz23456789', s = ''; var r = new Uint32Array(6); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(r) : r.forEach(function(_, i){ r[i] = Math.floor(Math.random() * 1e9); }); for(var i = 0; i < 6; i++) s += a[r[i] % a.length]; return s; }
+  function bk(l, b){ var x = l.bks && l.bks[b], a = l.ba && l.ba[b]; if(x && x.s) return {s: x.s, o: x.o}; if(a && a.s) return {s: a.s, o: a.o, ln: a.ln}; return null; }   // DraftKings / Hard Rock ids (owner 10/30)
   btn.addEventListener('click', function(){
     var ls = window.bsSlipLegs ? window.bsSlipLegs() : []; if(!ls.length){ flags('⚠ Add some legs first.'); return; }
     var CFG = window.__BS_ACCOUNT || {}; if(!(window.supabase && CFG.url)){ flags('⚠ Short links are not available right now.'); return; }
     var sb = (window.bsAccount && window.bsAccount.client) || window.supabase.createClient(CFG.url, CFG.key);
     var legs = ls.map(function(l){ return {k: l.pl + '|' + l.m + '|' + Math.round(l.ln || 1), pl: l.pl, m: l.m, ms: l.ms, ln: l.ln, u: l.u ? 1 : 0, o: l.o, p: l.p, g: l.g, tm: l.tm, opp: l.opp,
-      fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: window.bsGameKo ? window.bsGameKo(l.g) : null}; });
+      fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, dk: bk(l, 'dk'), hr: bk(l, 'hr'), gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: window.bsGameKo ? window.bsGameKo(l.g) : null}; });
     var fdl = legs.every(function(l){ return l.fd; }) ? 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + l.fd.m + '&selectionId[' + i + ']=' + l.fd.s; }).join('&') : null;
     var dec = ls.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
     var row = {code: code(), week: ((window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), title: null, legs: legs, fd_odds: Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)), link: fdl};

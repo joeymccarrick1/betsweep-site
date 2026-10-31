@@ -81,6 +81,19 @@ a{color:var(--ink)}
 .pp .mates a small{color:var(--mute);margin-left:4px}
 .pp .none{padding:12px 14px;color:var(--mute);font-size:13px;margin:0}
 .pp h2{flex-wrap:wrap}
+.pp details.pg{border-top:1px solid var(--line)} .pp details.pg:first-of-type{border-top:0}
+.pp details.pg>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:11px 14px;background:color-mix(in srgb,var(--chalk) 55%,transparent)}
+.pp details.pg>summary::-webkit-details-marker{display:none}
+.pp details.pg>summary b.gt{font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+.pp details.pg>summary b.gt::before{content:"\25B8";display:inline-block;margin-right:7px;color:var(--red);transition:transform .15s}
+.pp details.pg[open]>summary b.gt::before{transform:rotate(90deg)}
+.pp details.pg>summary .gs{color:var(--mute);font-size:12.5px} .pp details.pg>summary .gs i{font-style:normal;font-weight:700} .pp i.up{color:var(--good)} .pp i.dn{color:var(--bad)}
+.pp details.pg>summary .mup{margin-left:auto}
+.pp details.pg thead th{background:none}
+.pp .rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.pp .rec div{padding:10px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pp .rec small{display:block;color:var(--mute);font-size:11px;letter-spacing:.06em;text-transform:uppercase} .pp .rec b{font-family:var(--display);font-size:24px;margin-right:8px}
+.pp .rec i{font-style:normal;font-weight:700} .pp .rec em{font-style:normal;color:var(--mute);font-size:12px}
 @media (max-width:640px){
  .pp table.props thead{display:none}
  .pp table.props tr:not(.mk){display:grid;grid-template-columns:1fr auto auto;grid-template-areas:"ln e ad" "bk bk bk" "mp bp hr";gap:6px 10px;padding:9px 12px;border-bottom:1px solid var(--line)}
