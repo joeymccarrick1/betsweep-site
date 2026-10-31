@@ -537,7 +537,10 @@ _rec = _simple("BetSweep Receipts", '<h1>Receipts</h1><p>Every week we freeze th
 os.makedirs(os.path.join(SITE, "receipts"), exist_ok=True)
 open(os.path.join(SITE, "receipts", "index.html"), "w").write(wrap(_rec, "BetSweep Receipts", "Every weekly receipt: what the model said before kickoff and what happened.", "/receipts/", "/og.png"))
 open(os.path.join(SITE, "index.html"), "w").write(wrap(landing(weeks), "BetSweep", "NFL projections priced against FanDuel, graded every week. Matchup boards, a parlay builder with FanDuel links, and receipts.", "/", "/og.png"))
-_404 = _simple("Page not found · BetSweep", '<h1>Page not found</h1><p>That page moved or never existed. Try one of these:</p><div class="go"><a href="/">Home</a><a href="/boards/">Matchup boards</a><a href="/build/">Parlay builder</a><a href="/receipts/">Receipts</a></div>')
+_404 = _simple("Page not found · BetSweep", '<h1>Page not found</h1><p>That page moved or never existed. Try one of these:</p><div class="go"><a href="/">Home</a><a href="/boards/">Matchup boards</a><a href="/build/">Parlay builder</a><a href="/receipts/">Receipts</a></div>'
+               # owner 10/31: names on the boards / builder link to /player/<slug>/; a player with no page this week (deep backup) or two players
+               # sharing a name (their pages carry a -team suffix) land here - send them to the Players directory searched for that name
+               '<script>(function(){var m=location.pathname.match(/^\\/player\\/([a-z0-9-]+)\\/?$/);if(m)location.replace("/player/?q="+encodeURIComponent(m[1].replace(/-/g," ")));})();</script>')
 open(os.path.join(SITE, "404.html"), "w").write(wrap(_404, "BetSweep", "Page not found", "/404.html", "/og.png"))
 # ---- owner 10/30: sitemap.xml + robots.txt so search engines find every page (the 375-odd player pages above all). Every index.html
 # this build wrote, except the account page, short-link pages and the 404; receipts the clone already holds are added from in/archive.json weeks.
