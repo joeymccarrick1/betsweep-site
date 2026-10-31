@@ -142,19 +142,25 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav .dd{position:relative;display:flex;align-items:stretch}
 .sitenav .ddb{font:inherit;color:#4a5260;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-3px;padding:14px 10px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .sitenav .ddb i{font-style:normal;font-size:10px;transition:transform .15s}
-.sitenav .dd:hover .ddb,.sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
+.sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
+@media (hover:hover){ .sitenav .dd:hover .ddb{color:#141a24} .sitenav .dd:hover .ddm{display:flex} .sitenav .dd:hover .ddb i{transform:rotate(180deg)} }
+.sitenav .dd:last-child .ddm{left:auto;right:0}
 .sitenav .ddm{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:230px;flex-direction:column;background:#efe9da;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 8px 8px;box-shadow:0 14px 30px rgba(0,0,0,.28);padding:6px 0}
-.sitenav .dd:hover .ddm,.sitenav .dd.open .ddm,.sitenav .dd:focus-within .ddm{display:flex}
-.sitenav .dd:hover .ddb i,.sitenav .dd.open .ddb i{transform:rotate(180deg)}
+.sitenav .dd.open .ddm{display:flex}
+.sitenav .dd.open .ddb i{transform:rotate(180deg)}
 .sitenav .ddm a{display:block;padding:9px 16px !important;border:0 !important;margin:0 !important;text-transform:none !important;letter-spacing:.01em !important;font-size:16px !important;color:#141a24 !important}
 .sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
 .sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
 .sitenav .ddh{display:none}
 @media (max-width:1240px){
-  .sitenav .dd{display:block} .sitenav .ddb{display:none} .sitenav .ddm{display:flex !important;position:static;box-shadow:none;border:0;border-radius:0;padding:0;min-width:0;background:none}
-  .sitenav .ddh{display:block;padding:12px 18px 4px;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#d7332a;border-top:1px solid #d9d1bf}
-  .sitenav .ddm a{padding:10px 18px 10px 26px !important;border-bottom:1px solid #e4ddcb !important;font-size:17px !important}
-  .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto}
+  .sitenav .dd{display:block;border-bottom:1px solid #d9d1bf}
+  .sitenav .ddb{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:13px 18px;font-size:17px;border:0;margin:0;color:#4a5260}
+  .sitenav .dd.on .ddb{color:#141a24;box-shadow:inset 4px 0 0 #d7332a} .sitenav .ddb i{font-size:12px}
+  .sitenav .ddm{display:none;position:static;box-shadow:none;border:0;border-radius:0;padding:0 0 6px;min-width:0;background:#e9e2d0}
+  .sitenav .dd.open .ddm{display:flex}
+  .sitenav .ddm a{padding:10px 18px 10px 30px !important;border-bottom:1px solid #ddd5c2 !important;font-size:16px !important}
+  .sitenav .ddm a:last-child{border-bottom:0 !important}
+  .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 }
 .sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
 @media (max-width:1240px){
@@ -218,7 +224,7 @@ def sitenav(path):
     return (f'<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a>'
             f'<button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById(\'sitenav\');n.classList.toggle(\'open\');this.setAttribute(\'aria-expanded\',n.classList.contains(\'open\'))">Menu <span aria-hidden="true">☰</span></button>'
             f'<div class="acct" id="bsacct"></div><div class="tabs">{tabs}</div></div></nav>\n'
-            '<script>(function(){var n=document.getElementById("sitenav");n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(){n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>\n'
+            '<script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>\n'
             '<script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>\n')
 
 def wrap(body, title, desc, path, og_img):
