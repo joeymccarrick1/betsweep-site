@@ -154,6 +154,19 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .bslip .saved td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top} .bslip .saved td.r,.bslip .saved th.r{text-align:right;white-space:nowrap} .bslip .saved td.nm b{display:block} .bslip .saved td.nm small{color:var(--mute);display:block;line-height:1.35} .bslip .saved tr.cur td{background:color-mix(in srgb,var(--red) 8%,transparent)}
 .bslip .saved .ops{white-space:nowrap} .bslip .saved .ops button,.bslip .saved .ops a{font:inherit;font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:3px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;text-decoration:none;margin-left:3px} .bslip .saved .ops a.fd{background:#1493ff;border-color:#1493ff;color:#fff} .bslip .saved .ops a.fd.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .bslip .saved .ops a.fd.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .bslip .saved .ops button.del{color:var(--mute)}
 .bslip .saved .e.up{color:var(--good)} .bslip .saved .e.dn{color:var(--bad)} .bslip .saved .namebox{display:flex;gap:6px;margin:6px 0} .bslip .saved .namebox input{flex:1;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)} .bslip .saved .namebox button{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:3px;background:none;color:var(--ink);cursor:pointer} .bslip .saved .namebox button.pri{border-color:var(--red)}
+/* owner 10/31: saved slips are one card per slip (name + legs, then FanDuel / Model / Edge / $10 pays, then the buttons) so nothing runs off the side of the betslip */
+.bslip .saved{overflow:hidden} .bslip .saved h3 small{display:block;margin:2px 0 0}
+.bslip .saved table,.bslip .saved tbody{display:block;width:100%} .bslip .saved thead{display:none}
+.bslip .saved tbody tr:not(.lgrow){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:6px;padding:9px 2px 8px;border-bottom:1px solid var(--line)}
+.bslip .saved tbody tr:not(.lgrow) td{border:0 !important;padding:0;min-width:0}
+.bslip .saved tbody td.nm{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-bottom:6px;min-width:0} .bslip .saved tbody td.nm b{display:inline} .bslip .saved tbody td.nm small{flex-basis:100%} .bslip .saved tbody td.nm .lgt{margin-top:0}
+.bslip .saved tbody td.r{text-align:left;font-size:14px;font-weight:600}
+.bslip .saved tbody td.r::before{display:block;font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:1px}
+.bslip .saved tbody td.r:nth-child(2)::before{content:"FanDuel"} .bslip .saved tbody td.r:nth-child(3)::before{content:"Model"} .bslip .saved tbody td.r:nth-child(4)::before{content:"Edge"} .bslip .saved tbody td.r:nth-child(5)::before{content:"$10 pays"}
+.bslip .saved tbody td.ops{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;white-space:normal}
+.bslip .saved tbody .ops button,.bslip .saved tbody .ops a{margin-left:0;padding:6px 12px;font-size:12.5px} .bslip .saved tbody .ops button.del{margin-left:auto}
+.bslip .saved tbody tr.lgrow{display:block} .bslip .saved tbody tr.lgrow td{display:block;padding:0 0 10px}
+.bslip .saved tbody tr.cur{background:color-mix(in srgb,var(--red) 8%,transparent)} .bslip .saved tbody tr.cur td{background:none}
 .bestslip .wf{cursor:pointer} .bestslip .wfnote{flex-basis:100%;font-size:12px;line-height:1.4;color:var(--ink);padding:6px 10px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border-radius:0 4px 4px 0} .bestslip .wfnote b{color:var(--warn)}
 .bslip .price{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12.5px;border-bottom:1px solid var(--line)}
 .bslip .price:empty{display:none}

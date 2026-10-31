@@ -754,6 +754,19 @@ BUILDER_CSS = r"""
 .saved .ops{white-space:nowrap}.saved .ops button,.saved .ops a{font:inherit;font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:3px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;text-decoration:none;margin-left:3px}
 .saved .ops a.fd{background:#1493ff;border-color:#1493ff;color:#fff}.saved .ops button.del{color:var(--mute)}
 .saved .e.up{color:var(--good)}.saved .e.dn{color:var(--bad)}
+/* owner 10/31: saved slips are one card per slip (name + legs, then FanDuel / Model / Edge / $10 pays, then the buttons) so nothing runs off the side of the betslip */
+.saved{overflow:hidden} .saved h3 small{display:block;margin:2px 0 0}
+.saved table,.saved tbody{display:block;width:100%} .saved thead{display:none}
+.saved tbody tr:not(.lgrow){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:6px;padding:9px 2px 8px;border-bottom:1px solid var(--line)}
+.saved tbody tr:not(.lgrow) td{border:0 !important;padding:0;min-width:0}
+.saved tbody td.nm{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-bottom:6px;min-width:0} .saved tbody td.nm b{display:inline} .saved tbody td.nm small{flex-basis:100%} .saved tbody td.nm .lgt{margin-top:0}
+.saved tbody td.r{text-align:left;font-size:14px;font-weight:600}
+.saved tbody td.r::before{display:block;font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:1px}
+.saved tbody td.r:nth-child(2)::before{content:"FanDuel"} .saved tbody td.r:nth-child(3)::before{content:"Model"} .saved tbody td.r:nth-child(4)::before{content:"Edge"} .saved tbody td.r:nth-child(5)::before{content:"$10 pays"}
+.saved tbody td.ops{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;white-space:normal}
+.saved tbody .ops button,.saved tbody .ops a{margin-left:0;padding:6px 12px;font-size:12.5px} .saved tbody .ops button.del{margin-left:auto}
+.saved tbody tr.lgrow{display:block} .saved tbody tr.lgrow td{display:block;padding:0 0 10px}
+.saved tbody tr.cur{background:color-mix(in srgb,var(--red) 8%,transparent)} .saved tbody tr.cur td{background:none}
 .saved .namebox{display:flex;gap:6px;margin:6px 0}.saved .namebox input{flex:1;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}
 .quick{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .quick button{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
