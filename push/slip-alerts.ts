@@ -122,8 +122,19 @@ export function statusOf(st: string): "OUT" | "DOUBTFUL" | null {
   if (x === "doubtful") return "DOUBTFUL";
   return null;
 }
+async function getJson(urls: string[], pick: (j: any) => any = (j) => j): Promise<any> {   // first route that answers JSON wins (ESPN's site.api answers some servers with an HTML block page)
+  for (const u of urls) {
+    try { const r = await fetch(u, { headers: { "Accept": "application/json", "User-Agent": "Mozilla/5.0 (compatible; BetSweep/1.0; +https://betsweep.co)" } });
+      const t = await r.text(); if (!r.ok || t.trimStart().startsWith("<")) { console.warn("route", new URL(u).host, r.status); continue; }
+      const v = pick(JSON.parse(t)); if (v) return v; } catch (e) { console.warn("route", u.slice(0, 60), String(e).slice(0, 80)); }
+  }
+  return null;
+}
 async function espnStatuses(): Promise<Map<string, { st: "OUT" | "DOUBTFUL"; why: string }>> {
-  const j = await (await fetch(ESPN)).json(); const out = new Map();
+  const out = new Map();
+  const j = await getJson([ESPN, "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/injuries", "https://cdn.espn.com/core/nfl/injuries?xhr=1"],
+    (j) => j.injuries ? j : (j.content && j.content.injuries ? { injuries: j.content.injuries } : null));
+  if (!j) { console.warn("no injury feed reachable this run"); return out; }
   for (const t of (j.injuries || [])) for (const x of (t.injuries || [])) {
     const nm = x?.athlete?.displayName; const st = statusOf(x?.status || x?.type?.description);
     if (nm && st) out.set(norm(nm), { st, why: String(x?.details?.type || x?.type?.description || x?.shortComment || "").slice(0, 60) });
@@ -256,7 +267,10 @@ export function parseSummary(js: any, gid: string, B: Box) {
 async function liveBox(games: any[]): Promise<Box> {
   const B: Box = { players: new Map(), first: new Map(), state: new Map() };
   const kos = games.map((g) => g.ko);
-  const sb = await (await fetch(`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${ymd(Math.min(...kos) - 864e5)}-${ymd(Math.max(...kos) + 864e5)}`)).json();
+  const dr = `${ymd(Math.min(...kos) - 864e5)}-${ymd(Math.max(...kos) + 864e5)}`;
+  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&dates=${dr}`],
+    (j) => j.events ? j : (j.content && j.content.sbData && j.content.sbData.events ? j.content.sbData : null));
+  if (!sb) { console.warn("no scoreboard reachable this run"); return B; }
   for (const ev of (sb.events || [])) {
     const c = (ev.competitions || [])[0]; if (!c) continue;
     const abs = (c.competitors || []).map((x: any) => EAB[x?.team?.abbreviation] || x?.team?.abbreviation);
@@ -264,7 +278,9 @@ async function liveBox(games: any[]): Promise<Box> {
       if (!abs.includes(g.a) || !abs.includes(g.b)) continue;
       const st = ((ev.status || c.status || {}).type || {}).state || "pre"; B.state.set(g.gid, st);
       if (st === "pre") continue;
-      try { parseSummary(await (await fetch(`${ESPN_BASE}/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`)).json(), g.gid, B); } catch (e) { console.warn("summary", g.gid, String(e)); }
+      const sm = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://cdn.espn.com/core/nfl/boxscore?xhr=1&gameId=${ev.id}`],
+        (j) => j.boxscore ? j : (j.gamepackageJSON && j.gamepackageJSON.boxscore ? j.gamepackageJSON : null));
+      if (sm) { try { parseSummary(sm, g.gid, B); } catch (e) { console.warn("summary", g.gid, String(e)); } }
     }
   }
   return B;
@@ -290,6 +306,60 @@ function legText(l: any, key: string): string {
   if (/TD$/.test(m)) return `${l.pl} ${m === "Anytime TD" ? "anytime TD" : m}`;
   if (m.startsWith("Under ")) return `${l.pl} under ${l.ln} ${String(l.ms || m.slice(6)).toLowerCase()}`;
   return `${l.pl} ${l.ln}+ ${String(l.ms || m).toLowerCase()}`;
+}
+
+// ---- DraftKings salaries (owner 10/30: "let's do draft kings"): every 3 hours (pg_cron, body {"mode":"dk"}) find the main classic NFL slate in
+// DraftKings' public lobby and store its player list in public.dfs_salaries (site 'dk', this week) as DraftKings' own CSV, which the DFS page
+// loads for everyone. Same rules as the old sheet script DKSalaries.gs (Featured classic slate first, then the most games, then the soonest).
+const DKH = { "Accept": "application/json, text/plain, */*", "Accept-Language": "en-US,en;q=0.9", "Referer": "https://www.draftkings.com/lobby", "Origin": "https://www.draftkings.com",
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36" };
+const DKW = Deno.env.get("DK_WWW") ?? "https://www.draftkings.com", DKA = Deno.env.get("DK_API") ?? "https://api.draftkings.com";
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = []; let row: string[] = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) { const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true; else if (c === ",") { row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cur); rows.push(row); row = []; cur = ""; } else cur += c; }
+  if (cur.length || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+function csvq(c: unknown) { const x = String(c ?? ""); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }
+export async function dkSalaries() {
+  const D = await builderData(); const W = D.week;
+  const lob = await fetch(`${DKW}/lobby/getcontests?sport=NFL`, { headers: DKH });
+  if (!lob.ok) return { error: `DraftKings lobby answered ${lob.status}` };
+  const L = await lob.json();
+  const groups = (L.DraftGroups || L.draftGroups || []).filter((g: any) => ((g.GameTypeId === 1) || (g.GameTypeId == null && g.ContestTypeId === 21)) && !g.ContestStartTimeSuffix && (g.Sport == null || g.Sport === "NFL"));
+  if (!groups.length) return { error: `no classic NFL draft group in the lobby (${(L.DraftGroups || []).length} groups)` };
+  groups.sort((a: any, b: any) => ((b.DraftGroupTag === "Featured" ? 1 : 0) - (a.DraftGroupTag === "Featured" ? 1 : 0)) || ((b.GameCount || 0) - (a.GameCount || 0)) || String(a.StartDateEst || "").localeCompare(String(b.StartDateEst || "")));
+  const g = groups[0], id = g.DraftGroupId;
+  let rows: string[][] = [], how = "csv", why = "";
+  // a) the player-list CSV (DraftKings' own "Export to CSV" file) from www.draftkings.com
+  try {
+    const c = await fetch(`${DKW}/lineup/getavailableplayerscsv?contestTypeId=${g.ContestTypeId || 21}&draftGroupId=${id}`, { headers: { ...DKH, "Accept": "text/csv, */*" } });
+    const t = await c.text();
+    if (c.ok && /Salary/.test(t.slice(0, 600))) {
+      const all = parseCsv(t); const hi = all.findIndex((x) => x.includes("Salary") && x.includes("Position"));
+      if (hi >= 0) { const c0 = all[hi].indexOf("Position"); rows = all.slice(hi).map((x) => x.slice(c0, c0 + 9)).filter((x) => x[0]); }
+    } else why = `csv ${c.status}`;
+  } catch (e) { why = "csv " + String(e).slice(0, 60); }
+  if (rows.length < 21) {
+    how = "draftables"; rows = [["Position", "Name + ID", "Name", "ID", "Roster Position", "Salary", "Game Info", "TeamAbbrev", "AvgPointsPerGame"]];
+    const r = await fetch(`${DKA}/draftgroups/v1/draftgroups/${id}/draftables`, { headers: DKH });
+    if (!r.ok) return { error: `DraftKings player list blocked (${why}; draftables ${r.status}) for draft group ${id}` };
+  const dj = await r.json(); const seen = new Set<number>();
+  for (const p of (dj.draftables || [])) {
+    if (seen.has(p.draftableId)) continue; seen.add(p.draftableId);
+    const comp = p.competition || {}, pos = p.position || "";
+    rows.push([pos, `${p.displayName} (${p.draftableId})`, p.displayName, String(p.draftableId), pos === "QB" ? "QB" : pos === "DST" ? "DST" : `${pos}/FLEX`, String(p.salary),
+      String(comp.name || "").replace(/\s/g, ""), p.teamAbbreviation || "", ""]);
+  }
+  }
+  if (rows.length < 21) return { error: `draftables returned only ${rows.length - 1} players (draft group ${id})` };
+  const csv = rows.map((x) => x.map(csvq).join(",")).join("\n");
+  await rest("dfs_salaries?on_conflict=site,week", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify([{ site: "dk", week: W, slate: `main slate (${g.GameCount || "?"} games)`, csv, players: rows.length - 1, updated_at: new Date().toISOString() }]) });
+  return { week: W, draftGroup: id, games: g.GameCount, players: rows.length - 1, via: how };
 }
 
 // ---- weekly Model's Best note (owner 10/30): one push per user per week, Thursday morning (pg_cron, body {"mode":"weekly"}) ----
@@ -341,7 +411,7 @@ if (import.meta.main) Deno.serve(async (req) => {
       return Response.json(await test(tok), { headers: CORS });
     }
     if (!CRON || req.headers.get("x-cron-secret") !== CRON) return new Response("forbidden", { status: 403, headers: CORS });
-    const r = body && body.mode === "weekly" ? await weekly() : await run(); console.log(JSON.stringify(r));
+    const r = body && body.mode === "weekly" ? await weekly() : body && body.mode === "dk" ? await dkSalaries() : await run(); console.log(JSON.stringify(r));
     return Response.json(r, { headers: CORS });
   } catch (e) {
     console.error(String(e)); return Response.json({ error: String(e) }, { status: 500, headers: CORS });

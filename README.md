@@ -1,1 +1,1 @@
-Generator files for the BetSweep bundle (gen/), owner-requested 10/30 evening: grouped player props, player records, sitemap, live + weekly alerts. Copied into the bundle by the rebuild, not served.
+Generator overrides for the BetSweep rebuild (RUNBOOK Step 1a). Every file here is copied over the bundle copy at the same path before the build runs. Delete this branch once the bundle gen/ files match.
