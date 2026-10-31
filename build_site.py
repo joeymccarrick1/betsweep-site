@@ -120,6 +120,13 @@ open(os.path.join(SITE, "offline.html"), "w").write('<!doctype html><html lang="
 open(os.path.join(SITE, ".nojekyll"), "w").write("")
 
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
+# owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
+NAV_GROUPS = [("/", "Home", None),
+              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
+              (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
+              ("/social/", "Social", None),
+              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge")])]
 NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
@@ -132,10 +139,25 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav .tabs a.on{color:#141a24;border-bottom-color:#d7332a}
 @media (max-width:1180px){ .sitenav .tabs{gap:0} .sitenav .tabs a{font-size:13.5px;padding:14px 7px 11px;letter-spacing:.04em} }
 /* 10/30: Players + Usage made 13 tabs - tighter between 1100 and 1420, the menu button below 1100 */
-@media (max-width:1700px){ .sitenav .tabs{gap:0} .sitenav .tabs a{font-size:13px;padding:14px 5px 11px;letter-spacing:.03em} }
-@media (min-width:1101px){ .sitenav .brand,.sitenav .acct{flex:none} .sitenav .tabs{min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;align-self:stretch} .sitenav .tabs::-webkit-scrollbar{display:none} .sitenav .tabs a{margin-bottom:0;white-space:nowrap;display:flex;align-items:center} }
+.sitenav .dd{position:relative;display:flex;align-items:stretch}
+.sitenav .ddb{font:inherit;color:#4a5260;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-3px;padding:14px 10px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.sitenav .ddb i{font-style:normal;font-size:10px;transition:transform .15s}
+.sitenav .dd:hover .ddb,.sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
+.sitenav .ddm{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:230px;flex-direction:column;background:#efe9da;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 8px 8px;box-shadow:0 14px 30px rgba(0,0,0,.28);padding:6px 0}
+.sitenav .dd:hover .ddm,.sitenav .dd.open .ddm,.sitenav .dd:focus-within .ddm{display:flex}
+.sitenav .dd:hover .ddb i,.sitenav .dd.open .ddb i{transform:rotate(180deg)}
+.sitenav .ddm a{display:block;padding:9px 16px !important;border:0 !important;margin:0 !important;text-transform:none !important;letter-spacing:.01em !important;font-size:16px !important;color:#141a24 !important}
+.sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
+.sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
+.sitenav .ddh{display:none}
+@media (max-width:1240px){
+  .sitenav .dd{display:block} .sitenav .ddb{display:none} .sitenav .ddm{display:flex !important;position:static;box-shadow:none;border:0;border-radius:0;padding:0;min-width:0;background:none}
+  .sitenav .ddh{display:block;padding:12px 18px 4px;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#d7332a;border-top:1px solid #d9d1bf}
+  .sitenav .ddm a{padding:10px 18px 10px 26px !important;border-bottom:1px solid #e4ddcb !important;font-size:17px !important}
+  .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto}
+}
 .sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
-@media (max-width:1100px){
+@media (max-width:1240px){
   .sitenav .menu{display:inline-flex;align-items:center;gap:6px}
   .sitenav .tabs{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;align-items:stretch;gap:0;padding:0;background:#efe9da;border-bottom:3px solid #d7332a;box-shadow:0 12px 30px rgba(0,0,0,.35)}
   .sitenav.open .tabs{display:flex}
@@ -187,10 +209,16 @@ APP_JS = """<script>
 INSTALL_BAR = '<div class="installbar" id="installbar"><b>App</b><span class="msg"></span><button type="button" class="go" hidden>Install</button><button type="button" class="x" aria-label="dismiss">×</button></div>'
 def sitenav(path):
     def on(p): return path == p or (p != "/" and path.startswith(p))
-    tabs = "".join(f'<a href="{p}" class="{"on" if on(p) else ""}">{t}</a>' for p, t in NAV_ITEMS)
+    tabs = ""
+    for p, t, kids in NAV_GROUPS:
+        if not kids: tabs += f'<a href="{p}" class="{"on" if on(p) else ""}">{t}</a>'; continue
+        con = any(on(k[0]) for k in kids)
+        tabs += (f'<div class="dd{" on" if con else ""}"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">{t} <i aria-hidden="true">▾</i></button>'
+                 f'<span class="ddh">{t}</span><div class="ddm">' + "".join(f'<a href="{kp}" class="{"on" if on(kp) else ""}">{kt}<small>{kd}</small></a>' for kp, kt, kd in kids) + '</div></div>')
     return (f'<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a>'
             f'<button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById(\'sitenav\');n.classList.toggle(\'open\');this.setAttribute(\'aria-expanded\',n.classList.contains(\'open\'))">Menu <span aria-hidden="true">☰</span></button>'
             f'<div class="acct" id="bsacct"></div><div class="tabs">{tabs}</div></div></nav>\n'
+            '<script>(function(){var n=document.getElementById("sitenav");n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(){n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>\n'
             '<script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>\n')
 
 def wrap(body, title, desc, path, og_img):
