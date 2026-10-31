@@ -63,6 +63,8 @@ a{color:var(--ink)}
 .soc .bar .seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .soc .empty{padding:26px 16px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:12px}
 .post{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 12px;overflow:hidden}
+/* owner 10/30: tap a post -> its short-link page (/b/?p=<id>): FanDuel / DraftKings / Hard Rock buttons, Save slip, Load into the builder */
+.post .ph .who,.post ul{cursor:pointer} .post:hover{border-color:color-mix(in srgb,var(--red) 55%,var(--line))} .post a.open{font-size:12.5px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap}
 .post[hidden]{display:none}
 .post .ph{display:flex;align-items:center;gap:10px;padding:12px 14px 6px}
 .post .vote{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;min-height:52px;border:1px solid var(--line);border-radius:10px;background:none;color:var(--ink);cursor:pointer;font:inherit;padding:4px}
@@ -221,7 +223,7 @@ a{color:var(--ink)}
         '<div class="pf">' + (url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '') +
         (!started ? '<button type="button" data-load="' + p.id + '">Load into my slip</button>' : '') +
         (p.user_id === me ? '<button type="button" class="mini" data-del="' + p.id + '">Delete</button>' : (me ? '<button type="button" class="mini" data-rep="' + p.id + '">Report</button>' : '')) +
-        '<span class="st" data-st="' + p.id + '">' + (started ? 'Live' : 'Kicks off ' + new Date(p.first_ko).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'})) + '</span></div></article>';
+        '<a class="open" href="/b/?p=' + p.id + '">Open slip →</a><span class="st" data-st="' + p.id + '">' + (started ? 'Live' : 'Kicks off ' + new Date(p.first_ko).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'})) + '</span></div></article>';
     }).join('');
     grade();
     if(location.hash){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
@@ -240,6 +242,7 @@ a{color:var(--ink)}
   }
   function needSignIn(){ var s = document.querySelector('#bsacct button'); if(s) s.click(); }
   list.addEventListener('click', function(e){
+    if(!e.target.closest('button, a, input') && (e.target.closest('.post .who') || e.target.closest('.post ul'))){ var art = e.target.closest('article.post'); if(art){ location.href = '/b/?p=' + art.dataset.id; return; } }
     var v = e.target.closest('[data-v]'), ld = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), rep = e.target.closest('[data-rep]');
     if(v){ if(!A.user){ needSignIn(); return; } var id = +v.dataset.v, p = POSTS.filter(function(x){ return x.id === id; })[0]; if(!p) return; v.disabled = true;
       var q = MYV[id] ? A.client.from('feed_votes').delete().eq('post_id', id).eq('user_id', A.user.id) : A.client.from('feed_votes').insert({post_id: id});
