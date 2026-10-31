@@ -507,6 +507,10 @@ nav.nav a.played{opacity:.5}
 .leagues button{font:inherit;font-size:13px;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer;text-align:left}
 .leagues button.on{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
 .leagues button small{display:block;color:var(--mute);font-size:11px}
+/* owner 10/31: once a league is chosen, only that league shows; "Switch league" opens the rest */
+.leagues.picked button.lgo:not(.on){display:none}
+.leagues button.lgsw{background:none;border-style:dashed;color:var(--mute);align-self:center}
+.leagues:not(.picked) button.lgsw{display:none}
 .scoreline{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mute)} .scoreline b{color:var(--ink)}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line)}
 .tiles > div{background:var(--card);padding:12px 14px}
@@ -860,14 +864,15 @@ nav.nav a.played{opacity:.5}
   $('#go').addEventListener('click', connect); $('#user').addEventListener('keydown', function(e){ if(e.key === 'Enter') connect(); });
   function connect(){
     var u = $('#user').value.trim().replace(/^@/, ''); if(!u) return;
-    $('#go').disabled = true; say('Looking up ' + u + ' on Sleeper…'); out.hidden = true; $('#leagues').innerHTML = '';
+    $('#go').disabled = true; say('Looking up ' + u + ' on Sleeper…'); out.hidden = true; $('#leagues').innerHTML = ''; $('#leagues').classList.remove('picked');
     get('state/nfl').then(function(st){ state.season = String(st.season || new Date().getFullYear()); state.week = st.week || WEEK; return get('user/' + encodeURIComponent(u)); })
     .then(function(user){ if(!user || !user.user_id) throw new Error('no user'); state.user = user; try{ localStorage.setItem('bs_sleeper_user', u); }catch(e){}
       return get('user/' + user.user_id + '/leagues/nfl/' + state.season); })
     .then(function(ls){ ls = (ls || []).filter(function(l){ return l.status !== 'pre_draft'; }); state.leagues = ls;
       if(!ls.length){ say('No ' + state.season + ' NFL leagues on that account.', true); return; }
       say(''); var box = $('#leagues'); var last = ''; try{ last = localStorage.getItem('bs_sleeper_league') || ''; }catch(e){}
-      ls.forEach(function(l){ var b = document.createElement('button'); b.type = 'button'; b.innerHTML = esc(l.name) + '<small>' + l.total_rosters + ' teams · ' + esc(scoringLabel(l.scoring_settings)) + '</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
+      ls.forEach(function(l){ var b = document.createElement('button'); b.type = 'button'; b.className = 'lgo'; b.innerHTML = esc(l.name) + '<small>' + l.total_rosters + ' teams · ' + esc(scoringLabel(l.scoring_settings)) + '</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
+      if(ls.length > 1){ var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'lgsw'; sw.textContent = 'Switch league (' + ls.length + ') ▾'; sw.addEventListener('click', function(){ box.classList.remove('picked'); }); box.appendChild(sw); }
       var auto = ls.filter(function(l){ return l.league_id === last; })[0] || ls[0];
       if(auto) pick(auto, box.children[ls.indexOf(auto)]); })
     .catch(function(e){ say('Could not find that Sleeper username. Check the spelling (it is the username, not the team name).', true); console.error(e); })
@@ -876,6 +881,7 @@ nav.nav a.played{opacity:.5}
   function pick(l, btn){
     state.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){}
     Array.prototype.forEach.call($('#leagues').children, function(b){ b.classList.toggle('on', b === btn); });
+    $('#leagues').classList.add('picked');
     say('Loading ' + l.name + '…'); out.hidden = true;
     var wk = Math.min(Math.max(state.week || WEEK, 1), 18);
     Promise.all([playersMap(), get('league/' + l.league_id + '/rosters'), get('league/' + l.league_id + '/users'), get('league/' + l.league_id + '/matchups/' + wk).catch(function(){ return []; }), get('players/nfl/trending/add?lookback_hours=24&limit=40').catch(function(){ return []; })])
