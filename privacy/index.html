@@ -1101,8 +1101,8 @@ nav.nav a.played{opacity:.5}
     window.BSLive.start(LG, applyLive); }
 })();
 
-// News icon on player rows (owner 10/22; ESPN player news since 10/25): open it in a new tab without toggling the row
-(function(){function go(e){var n=e.target.closest&&e.target.closest('.newsl');if(!n)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();window.open(n.getAttribute('data-href'),'_blank','noopener');}
+// Player icon on player rows (owner 10/31: now his /player/ page, same tab; was ESPN news): follow it without toggling the row
+(function(){function go(e){var n=e.target.closest&&e.target.closest('.newsl');if(!n)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();var h=n.getAttribute('data-href');if(h.charAt(0)==='/'){if(e.metaKey||e.ctrlKey)window.open(h,'_blank');else location.href=h;}else window.open(h,'_blank','noopener');}
 document.addEventListener('click',go,true);document.addEventListener('keydown',go,true);})();
 </script>
 
