@@ -171,6 +171,8 @@ def books_map(builder_data):
     for l in builder_data.get("legs", []):
         k = f'{l.get("pl")}|{l.get("m")}|{int(math.floor(float(l.get("ln") or 1) + 0.5))}'
         e = {}
+        f = l.get("fd") or {}
+        if f.get("m") and f.get("s"): e["fd"] = [f["m"], f["s"]]
         for b in ("dk", "hr"):
             x = (l.get("bks") or {}).get(b); a = (l.get("ba") or {}).get(b)
             if x and x.get("s"): e[b] = [x["s"], x.get("o"), None]
@@ -206,6 +208,8 @@ def promo_page(pr):
 INDEX_JS = r"""<script>(function(){
   var root = document.querySelector('.bl'); if(!root) return;
   var code = (new URLSearchParams(location.search).get('s') || location.hash.replace(/^#/, '') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  var post = (new URLSearchParams(location.search).get('p') || '').replace(/[^0-9]/g, '');   // owner 10/30: a Social post opens here (?p=<post id>)
+  if(post) code = 'p' + post;
   if(!code) return;
   var box = document.getElementById('blDyn'), list = document.getElementById('blStatic'); if(list) list.hidden = true; box.hidden = false;
   box.innerHTML = '<div class="none">Loading the slip…</div>';
@@ -224,7 +228,7 @@ INDEX_JS = r"""<script>(function(){
   }
   var BMAP = null;
   function withMap(r, cb){ var legs = r.legs || [];
-    if(legs.every(function(l){ return l.dk && l.hr; })) return cb(null);
+    if(!post && legs.every(function(l){ return l.dk && l.hr; })) return cb(null);
     fetch('/b/books.json', {cache: 'no-cache'}).then(function(x){ return x.json(); }).then(function(j){ cb(j && String(j.week) === String(r.week) ? j.m : null); }, function(){ cb(null); }); }
   function render(r, map){
     var legs = r.legs || [], W = r.week || '';
@@ -233,16 +237,19 @@ INDEX_JS = r"""<script>(function(){
     var p = legs.every(function(l){ return l.p != null; }) ? legs.reduce(function(a, l){ return a * l.p; }, 1) : null;
     var keys = legs.map(function(l){ return l.k; }).filter(Boolean); var build = keys.length === legs.length ? '/build/?' + keys.map(function(k){ return 'add=' + encodeURIComponent(k); }).join('&') : '/build/';
     var last = Math.max.apply(null, legs.map(function(l){ return +l.ko || 0; }));
-    var url = 'https://betsweep.co/b/?s=' + code;
+    var url = post ? 'https://betsweep.co/b/?p=' + post : 'https://betsweep.co/b/?s=' + code;
+    // FanDuel re-issues prop ids during the week: rebuild the link from this week's ids (books.json) when every leg is there
+    if(map && legs.length && legs.every(function(l){ return l.k && map[l.k] && map[l.k].fd; })) r.link = 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(map[l.k].fd[0]) + '&selectionId[' + i + ']=' + encodeURIComponent(map[l.k].fd[1]); }).join('&');
+    else if(!r.link && legs.length && legs.every(function(l){ return l.fd && l.fd.m && l.fd.s; })) r.link = 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&');
     var share = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent((r.title ? r.title + ' · ' : '') + legs.length + '-leg parlay' + (odds != null ? ' · FanDuel ' + am(odds) : '') + '\n' + url);
     var fd = r.link ? '<a class="fd" href="' + esc(r.link) + '" target="_blank" rel="noopener">Bet it on FanDuel' + (odds != null ? ' · ' + am(odds) : '') + '</a>' : '';
-    box.innerHTML = '<div class="hd"><span class="tag">Betslip</span><span class="wk">Week ' + esc(W) + '</span>' + (last && Date.now() > last ? '<span class="st">Started</span>' : '<span class="st live">Pregame</span>') + '</div>'
+    box.innerHTML = '<div class="hd"><span class="tag">' + (post ? 'Social' : 'Betslip') + '</span><span class="wk">Week ' + esc(W) + '</span>' + (last && Date.now() > last ? '<span class="st">Started</span>' : '<span class="st live">Pregame</span>') + '</div>'
       + '<h1>' + esc(r.title || (legs.length + '-leg parlay')) + '</h1><div class="meta">' + legs.length + ' legs · priced by the BetSweep model · snapshot when the link was made, prices move</div>'
       + '<ul class="legs">' + legs.map(function(l){ var sub = [lnTxt(l), l.opp && !/\//.test(l.tm || '') ? 'vs ' + l.opp : ''].filter(Boolean).join(' · ');
           return '<li><b>' + esc(l.pl) + '</b><span class="o">' + am(l.o) + '</span><small>' + esc(sub) + '</small>' + (l.p != null ? '<span class="mp">model ' + Math.round(l.p * 100) + '%</span>' : '') + '</li>'; }).join('') + '</ul>'
       + '<div class="pf"><div class="big"><small>FanDuel</small>' + (odds != null ? am(odds) : '<span style="font-size:16px;font-weight:600">price on FanDuel</span>') + '</div><div class="md">' + (p == null ? 'Model price not available for every leg' : p < 0.03 ? '<b>Longshot</b> · model ' + (p < 0.01 ? 'under 1' : Math.round(p * 100)) + '% to hit' : '<b>Model ' + (p * 100).toFixed(1) + '%</b> to hit (legs multiplied)') + '</div></div>'
       + '<div class="go">' + fd + (last && Date.now() > last ? '' : bookBtns(legs, map)) + '<div class="row">' + (keys.length === legs.length ? '<button type="button" class="sv" data-slip="' + esc(JSON.stringify({w: +W, n: r.title || (legs.length + '-leg parlay'), k: keys, o: odds, fd: r.link || null})) + '">Save slip</button>' : '') + '<a href="' + esc(build) + '">Load into the builder</a><a href="' + share + '" target="_blank" rel="noopener">Share on X</a></div></div>'
-      + '<p class="svnote" id="svnote" hidden></p><div class="lk">Short link <code>betsweep.co/b/?s=' + esc(code) + '</code><button type="button" data-copy="' + esc(url) + '">Copy</button></div>'
+      + '<p class="svnote" id="svnote" hidden></p><div class="lk">Short link <code>' + esc(url.replace('https://', '')) + '</code><button type="button" data-copy="' + esc(url) + '">Copy</button></div>'
       + '<p class="fn">Made with the <a href="/build/" style="color:var(--ink)">Parlay Builder</a>. 21+ · information, not advice · 1-800-GAMBLER.</p>';
     root.dataset.code = code; root.dataset.lastKo = last || ''; if(window.bsPaintSave) window.bsPaintSave();
     box.querySelectorAll('[data-copy]').forEach(function(b){ b.addEventListener('click', function(){ var t = b.dataset.copy; function done(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1400); }
@@ -252,6 +259,13 @@ INDEX_JS = r"""<script>(function(){
   var tries = 0; (function tick(){ var CFG = window.__BS_ACCOUNT || {};
     if(window.supabase && CFG.url){
       var sb = window.supabase.createClient(CFG.url, CFG.key);
+      if(post){
+        sb.from('feed_posts').select('id,handle,title,week,legs,fd_odds,last_ko').eq('id', +post).maybeSingle().then(function(r){
+          if(r.error || !r.data){ box.innerHTML = '<div class="none">This post is gone - it leaves Social once a leg loses or its games end. <a href="/social/" style="color:var(--ink)">See what is open →</a></div>'; return; }
+          var d = r.data; (d.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; });
+          var row = {week: d.week, title: d.title || ('@' + d.handle + '\'s slip'), legs: d.legs || [], fd_odds: d.fd_odds, link: null};
+          withMap(row, function(m){ render(row, m); });
+        }); return; }
       sb.from('short_links').select('code,week,title,legs,fd_odds,link').eq('code', code).maybeSingle().then(function(r){
         if(r.error){ box.innerHTML = '<div class="none">' + (/relation|does not exist/i.test(r.error.message) ? 'Short links are still being set up - try again soon.' : esc(r.error.message)) + '</div>'; return; }
         if(!r.data){ box.innerHTML = '<div class="none">No slip at this link. <a href="/build/" style="color:var(--ink)">Build one →</a></div>'; return; }
