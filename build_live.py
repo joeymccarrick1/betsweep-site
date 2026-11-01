@@ -44,6 +44,27 @@ slim = [_slim(l) for l in keep]
 keep_ids = {l["i"] for l in keep}
 extra = [_slim(l) for l in D["legs"] if l["i"] not in keep_ids]   # everything else, so a slip leg of any kind can be tracked
 games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort")} for g in D["games"]]
+# owner 11/1: FanDuel stops pricing a leg at kickoff, so a rebuild during the games drops it from the builder data and a saved slip (or a promo)
+# with that leg could no longer be tracked here. Add the latest pre-kickoff frozen copy of every leg this week ('V2 - FanDuel Leg Snapshots',
+# in/legsnaps.json) that the builder no longer carries, so every slip leg keeps its live line, status and model chance.
+try:
+    _have = {(l["pl"], l["m"], round(float(l.get("ln") or 1))) for l in D["legs"]}; _gids = {g["gid"] for g in D["games"]}; _add = 0
+    _v = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "in", "legsnaps.json")))["values"]; _h = {c: i for i, c in enumerate(_v[0])}
+    for _r in _v[1:]:
+        _r = list(_r) + [""] * (len(_v[0]) - len(_r))
+        if str(_r[_h["Latest Snapshot"]]).upper() != "TRUE" or str(_r[_h["Week"]]).split(".")[0] != str(WEEK): continue
+        try: _ln = float(_r[_h["Line (X+)"]]); _o = int(float(str(_r[_h["FanDuel odds"]]).replace("+", ""))); _p = float(_r[_h["Model % (hist-adj)"]])
+        except Exception: continue
+        _pl, _m, _tm, _op = _r[_h["Player"]], _r[_h["Market"]], _r[_h["Team"]], _r[_h["Opp"]]
+        _g = "-".join(sorted([_tm, _op]))
+        if _g not in _gids or (_pl, _m, round(_ln)) in _have: continue
+        _have.add((_pl, _m, round(_ln)))
+        try: _bk = float(_r[_h["Book implied %"]])
+        except Exception: _bk = None
+        extra.append({"pl": _pl, "m": _m, "ln": _ln, "o": _o, "p": _p, "bk": _bk, "tm": _tm, "opp": _op, "g": _g, "snap": 1}); _add += 1
+    print(f"live page: {_add} legs restored from the pre-kickoff snapshots (no longer priced by FanDuel)")
+except Exception as _e:
+    print("note: no leg snapshots for the live page:", _e)
 LD = {"week": WEEK, "games": games, "legs": slim, "extra": extra, "built": D["built"]}
 print(f"live page: {len(slim)} tracked legs across {len(games)} games")
 
@@ -85,6 +106,7 @@ table.lvt .chip.hit{background:var(--good);border-color:var(--good);color:#fff} 
 .lvhelp[open]{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px} .lvhelp p{margin:6px 0;line-height:1.5}
 .fingrp .ghd2.fin{grid-template-columns:1fr;grid-template-areas:"a" "s"} .fingrp .ghd2.fin .t{font-size:18px} .finin .lg2{margin:8px 10px;border-radius:8px}
 .lvt td.who small{white-space:normal}
+.lg2.slipcard{transition:box-shadow .3s;scroll-margin-top:96px} .lg2.slipcard.hl{box-shadow:0 0 0 3px var(--red)}
 table.lvt td.st,table.lvt td.who{display:table-cell;background:none;border-radius:0;gap:0;line-height:1.3;font-size:13px;white-space:normal;flex:none;padding:7px 14px;text-align:left} table.lvt td.st{width:28px;padding-right:0;vertical-align:top;text-align:center;padding-top:6px} .star{margin-top:-1px} .star{font:inherit;font-size:17px;line-height:1;background:none;border:0;color:var(--mute);cursor:pointer;padding:2px 4px} tr.starred .star{color:var(--warn)}
 table.lvt .chip.slip{background:var(--ink);border-color:var(--ink);color:var(--bg)} table.lvt .chip.rz{background:var(--red);border-color:var(--red);color:#fff}
 .pace{display:inline-block;font-size:10.5px;font-weight:600;color:var(--mute);margin-left:6px;vertical-align:1px} .pace.up{color:var(--good)} .pace.dn{color:var(--bad)}
@@ -327,7 +349,12 @@ JS = r"""
     var nLiveOpen = 0; order.forEach(function(gid){ var s = STATE[gid]; if(s && s.st === 'in') nLiveOpen++; }); document.title = (nLiveOpen ? '● ' : '') + 'BetSweep Live';
     var fs = (window.BSLive.status && window.BSLive.status()) || {}; var ft = fs.at ? new Date(fs.at).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', second: '2-digit'}) : '';
     $('#upd').textContent = 'updated ' + new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', second: '2-digit'}) + (fs.ok === true ? ' · scores ' + ft + (fs.src === 'cdn' ? ' (backup feed)' : '') : fs.ok === false ? ' · live scores delayed, retrying' : '');
+    // owner 11/1: a live slip notification opens /live/?slip=<id> - jump to that slip card (its legs already show hit / open / gone) and flash it
+    if(FOCUS && !FOCUSED){ var fe = FOCUS === 'all' ? wrap.querySelector('.slipcard') : [].slice.call(wrap.querySelectorAll('.slipcard')).filter(function(x){ return x.getAttribute('data-sid') === FOCUS; })[0];
+      if(fe){ FOCUSED = true; HLID = fe.getAttribute('data-sid'); HLT = Date.now() + 5000; setTimeout(function(){ fe.scrollIntoView({block: 'start', behavior: 'smooth'}); }, 60); setTimeout(render, 5100); } }
+    [].slice.call(wrap.querySelectorAll('.slipcard')).forEach(function(x){ x.classList.toggle('hl', !!HLID && Date.now() < HLT && x.getAttribute('data-sid') === HLID); });
   }
+  var FOCUS = (function(){ try { return new URLSearchParams(location.search).get('slip'); } catch(e){ return null; } })(), FOCUSED = false, HLID = null, HLT = 0;
   // ---- polling: scoreboard (BSLive) + one summary call per live game every 30 s ----
   var busy = {};
   function pullBox(gid){

@@ -292,34 +292,38 @@ export async function run(now = Date.now()) {
   if (liveSubs.length && recent.length) {
     const BOX = await liveBox(recent);
     for (const uid of [...new Set(liveSubs.map((s) => s.user_id))]) {
-      const events: string[] = [];
+      const events: string[] = []; const evSid: string[] = [];   // owner 11/1: a tap opens that slip on the Live page
       for (const r of states.filter((x) => x.user_id === uid && x.key.startsWith("bs_slips_w"))) {
         let v: any = null; try { v = JSON.parse(r.value?.v ?? "null"); } catch { v = null; }
         for (const sl of (Array.isArray(v) ? v : [])) {
           if (!sl || !Array.isArray(sl.keys) || !sl.keys.length) continue;
           const name = String(sl.name || "Saved slip"), sid = String(sl.id || name);
-          const st = sl.keys.map((k: string) => ({ k, l: LEG.get(k), s: gradeLeg(LEG.get(k), k, BOX) }));
+          // owner 11/1: legs FanDuel stopped pricing at kickoff are gone from the builder data - rebuild them from the key and the box score's game
+          const legOf = (k: string) => { const l = LEG.get(k); if (l) return l; const [pl, m, ln] = String(k).split("|"); const r = BOX.players.get(norm(pl || ""));
+            return r && m ? { pl, m, ln: Number(ln), g: r.g } : undefined; };
+          const st = sl.keys.map((k: string) => { const l = legOf(k); return { k, l, s: gradeLeg(l, k, BOX) }; });
           if (!st.some((x: any) => x.s !== "open" && x.s !== "na")) continue;
           const busted = st.find((x: any) => x.s === "miss"), hits = st.filter((x: any) => x.s === "hit").length;
           const tag = (what: string) => `${sid}|${what}`;
           if (busted) {
-            if (!done.has(`${uid}|${tag("BUST")}|BUST`)) { events.push(`\u2717 "${name}" busted: ${legText(busted.l, busted.k)}`); done.add(`${uid}|${tag("BUST")}|BUST`); await mark(uid, W, tag("BUST"), "BUST"); }
+            if (!done.has(`${uid}|${tag("BUST")}|BUST`)) { events.push(`\u2717 "${name}" busted: ${legText(busted.l, busted.k)}`); evSid.push(sid); done.add(`${uid}|${tag("BUST")}|BUST`); await mark(uid, W, tag("BUST"), "BUST"); }
             continue;
           }
           if (hits === st.length) {
-            if (!done.has(`${uid}|${tag("CASH")}|CASH`)) { events.push(`\u2705 "${name}" cashed - all ${st.length} legs hit`); done.add(`${uid}|${tag("CASH")}|CASH`); await mark(uid, W, tag("CASH"), "CASH"); }
+            if (!done.has(`${uid}|${tag("CASH")}|CASH`)) { events.push(`\u2705 "${name}" cashed - all ${st.length} legs hit`); evSid.push(sid); done.add(`${uid}|${tag("CASH")}|CASH`); await mark(uid, W, tag("CASH"), "CASH"); }
             continue;
           }
           for (const x of st.filter((x: any) => x.s === "hit")) {
             const key = tag(x.k);
             if (done.has(`${uid}|${key}|HIT`)) continue;
-            events.push(`\u2713 ${legText(x.l, x.k)} - "${name}" ${hits}/${st.length}, ${st.length - hits} to go`); done.add(`${uid}|${key}|HIT`); await mark(uid, W, key, "HIT");
+            events.push(`\u2713 ${legText(x.l, x.k)} - "${name}" ${hits}/${st.length}, ${st.length - hits} to go`); evSid.push(sid); done.add(`${uid}|${key}|HIT`); await mark(uid, W, key, "HIT");
           }
         }
       }
       if (!events.length) continue;
-      const msg = events.length === 1 ? { title: events[0].slice(0, 90), body: events[0].length > 90 ? events[0] : "Tap for your slips.", url: "/me/", tag: `bs-live-${W}` }
-        : { title: `${events.length} slip updates`, body: events.join(" \u00b7 ").slice(0, 300), url: "/me/", tag: `bs-live-${W}` };
+      const one = [...new Set(evSid)].length === 1 ? evSid[0] : ""; const lurl = one ? `/live/?slip=${encodeURIComponent(one)}` : "/live/?slip=all";
+      const msg = events.length === 1 ? { title: events[0].slice(0, 90), body: events[0].length > 90 ? events[0] : "Tap to see this slip live.", url: lurl, tag: `bs-live-${W}` }
+        : { title: `${events.length} slip updates`, body: events.join(" \u00b7 ").slice(0, 300), url: lurl, tag: `bs-live-${W}` };
       for (const s of liveSubs.filter((s) => s.user_id === uid)) {
         try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nlive++; } catch (e) { console.warn("push", String(e)); }
       }
