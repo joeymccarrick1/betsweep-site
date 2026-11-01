@@ -147,6 +147,65 @@ function legLabel(l: any): string {
   return l.m === "Anytime TD" ? `${l.pl} anytime TD` : `${l.pl} ${Number.isInteger(l.ln) ? l.ln : l.ln}+ ${String(l.ms || l.m).toLowerCase()}`;
 }
 
+
+// ---- weather turns (owner 11/1: "We should've had the weather update for the Bucs Falcons game ... Push notification for something like that
+// would be helpful"). The boards read the sheet's kickoff forecast at build time; a forecast that turns after the last rebuild never reached
+// anyone. Every 10-minute run now checks the open-air stadiums for games kicking off in the next 6 hours (Open-Meteo, no key) and pushes
+// once per user per game when wind or rain reaches the same bar flags.py uses (wind 15+ mph or gusts 28+, or rain 60%+ with real rainfall),
+// naming the passing / receiving legs on that user's slips.
+const WXAPI = Deno.env.get("OPEN_METEO") ?? "https://api.open-meteo.com/v1/forecast";
+// home team -> [lat, lon, "open" | "roof"]; roofs (domes, retractables, SoFi's canopy) are skipped
+export const STADIUM: Record<string, [number, number, string]> = {
+  ARI: [33.5276, -112.2626, "roof"], ATL: [33.7554, -84.4008, "roof"], BAL: [39.2780, -76.6227, "open"], BUF: [42.7738, -78.7870, "open"],
+  CAR: [35.2258, -80.8528, "open"], CHI: [41.8623, -87.6167, "open"], CIN: [39.0955, -84.5161, "open"], CLE: [41.5061, -81.6995, "open"],
+  DAL: [32.7473, -97.0945, "roof"], DEN: [39.7439, -105.0201, "open"], DET: [42.3400, -83.0456, "roof"], GB: [44.5013, -88.0622, "open"],
+  HOU: [29.6847, -95.4107, "roof"], IND: [39.7601, -86.1639, "roof"], JAX: [30.3239, -81.6373, "open"], KC: [39.0489, -94.4839, "open"],
+  LV: [36.0909, -115.1833, "roof"], LAC: [33.9535, -118.3392, "roof"], LA: [33.9535, -118.3392, "roof"], MIA: [25.9580, -80.2389, "open"],
+  MIN: [44.9738, -93.2577, "roof"], NE: [42.0909, -71.2643, "open"], NO: [29.9511, -90.0812, "roof"], NYG: [40.8135, -74.0745, "open"],
+  NYJ: [40.8135, -74.0745, "open"], PHI: [39.9008, -75.1675, "open"], PIT: [40.4468, -80.0158, "open"], SF: [37.4033, -121.9694, "open"],
+  SEA: [47.5952, -122.3316, "open"], TB: [27.9759, -82.5033, "open"], TEN: [36.1665, -86.7713, "open"], WAS: [38.9078, -76.8645, "open"],
+};
+export type Wx = { wind: number; gust: number; pop: number; rain: number };
+export function wxBad(w: Wx): string[] {   // same bar as flags.py's Wind flag, plus real rain
+  const out: string[] = [];
+  if (w.wind >= 15 || w.gust >= 28) out.push(`wind ${Math.round(w.wind)} mph` + (w.gust >= 20 ? `, gusts ${Math.round(w.gust)}` : ""));
+  if (w.pop >= 60 && w.rain >= 0.04) out.push(`${w.rain >= 0.15 ? "heavy rain" : "rain"} ${Math.round(w.pop)}%`);
+  return out;
+}
+export const WXLEG = (m: string) => /^(Passing Yards|Receiving Yards|Receptions|Longest Reception|Rush \+ Rec Yards)$/.test(m);   // overs that wind / rain hurt
+export function wxWindow(j: any, ko: number): Wx | null {   // kickoff hour through the next 3 hours, worst value of each
+  const h = j?.hourly; if (!h || !Array.isArray(h.time)) return null;
+  const w: Wx = { wind: 0, gust: 0, pop: 0, rain: 0 }; let n = 0;
+  for (let i = 0; i < h.time.length; i++) {
+    const t = Date.parse(h.time[i] + (/Z$|[+-]\d\d:?\d\d$/.test(h.time[i]) ? "" : "Z"));
+    if (t < ko - 3600e3 || t > ko + 3 * 3600e3) continue; n++;
+    w.wind = Math.max(w.wind, +h.wind_speed_10m?.[i] || 0); w.gust = Math.max(w.gust, +h.wind_gusts_10m?.[i] || 0);
+    w.pop = Math.max(w.pop, +h.precipitation_probability?.[i] || 0); w.rain = Math.max(w.rain, +h.precipitation?.[i] || 0);
+  }
+  return n ? w : null;
+}
+async function wxAt(lat: number, lon: number, ko: number): Promise<Wx | null> {
+  try {
+    const r = await fetch(`${WXAPI}?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_gusts_10m,precipitation_probability,precipitation&wind_speed_unit=mph&precipitation_unit=inch&timezone=GMT&forecast_days=3`);
+    if (!r.ok) { console.warn("weather", r.status); return null; }
+    return wxWindow(await r.json(), ko);
+  } catch (e) { console.warn("weather", String(e).slice(0, 80)); return null; }
+}
+async function homesOf(games: any[]): Promise<Map<string, { home: string; away: string; indoor: boolean }>> {   // ESPN scoreboard: who is at home, and the indoor flag
+  const out = new Map(); const kos = games.map((g) => g.ko);
+  const dr = `${ymd(Math.min(...kos) - 864e5)}-${ymd(Math.max(...kos) + 864e5)}`;
+  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&dates=${dr}`],
+    (j) => j.events ? j : (j.content && j.content.sbData && j.content.sbData.events ? j.content.sbData : null));
+  if (!sb) { console.warn("weather: no scoreboard"); return out; }
+  for (const ev of (sb.events || [])) {
+    const c = (ev.competitions || [])[0]; if (!c) continue;
+    const ab = (x: any) => EAB[x?.team?.abbreviation] || x?.team?.abbreviation;
+    const h = (c.competitors || []).find((x: any) => x.homeAway === "home"), a = (c.competitors || []).find((x: any) => x.homeAway === "away"); if (!h || !a) continue;
+    for (const g of games) if ([g.a, g.b].includes(ab(h)) && [g.a, g.b].includes(ab(a))) out.set(g.gid, { home: ab(h), away: ab(a), indoor: !!c.venue?.indoor, neutral: !!c.neutralSite });
+  }
+  return out;
+}
+
 // ---------------- the run ----------------
 export async function run(now = Date.now()) {
   const D = await builderData(); const W = D.week;
@@ -195,13 +254,43 @@ export async function run(now = Date.now()) {
       await rest("push_sent", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates" }, body: JSON.stringify([{ user_id: uid, week: W, player: n, status: h.st }]) });
     }
   }
+  // ---- weather turns (owner 11/1) ----
+  let nwx = 0; const wxGames: string[] = [];
+  const LEG = new Map<string, any>(); for (const l of (D.legs || [])) { const k = `${l.pl}|${l.m}|${Math.floor(Number(l.ln || 1) + 0.5)}`; if (!LEG.has(k)) LEG.set(k, l); }
+  const soon = (D.games || []).filter((g: any) => g.ko && g.ko > now && g.ko - now <= 6 * 3600e3);
+  if (soon.length) {
+    const HOME = await homesOf(soon); const WX = new Map<string, { bad: string[]; title: string }>();
+    for (const g of soon) {
+      const h = HOME.get(g.gid) as any; if (!h || h.indoor || h.neutral) continue;
+      const st = STADIUM[h.home]; if (!st || st[2] !== "open") continue;
+      const w = await wxAt(st[0], st[1], g.ko); if (!w) continue;
+      const bad = wxBad(w); if (bad.length) { WX.set(g.gid, { bad, title: `${h.away} @ ${h.home}` }); wxGames.push(`${h.away}@${h.home}: ${bad.join(", ")}`); }
+    }
+    if (WX.size) for (const uid of users) {
+      const per = new Map<string, Set<string>>();
+      for (const r of states.filter((x) => x.user_id === uid)) {
+        let v: any = null; try { v = JSON.parse(r.value?.v ?? "null"); } catch { v = null; }
+        const keys: string[] = r.key.startsWith("bs_slipk_w") ? (Array.isArray(v) ? v : []) : (Array.isArray(v) ? v.flatMap((s: any) => (s && Array.isArray(s.keys)) ? s.keys : []) : []);
+        for (const k of keys) { const l = LEG.get(k); if (!l || !l.g || !WX.has(l.g) || !WXLEG(String(l.m))) continue;
+          const set = per.get(l.g) || new Set(); set.add(legText(l, k)); per.set(l.g, set); }
+      }
+      for (const [gid, legs] of per) {
+        if (done.has(`${uid}|wx|${gid}|WX`)) continue;
+        const x = WX.get(gid)!; const L = [...legs];
+        const msg = { title: `⛈ Weather turn: ${x.title}`.slice(0, 90),
+          body: `Kickoff forecast now: ${x.bad.join(", ")}. On your slips: ${L.slice(0, 3).join("; ")}${L.length > 3 ? ` +${L.length - 3} more` : ""}. Wind and rain cut passing and deep throws - runs and unders gain. Check the slip before kickoff.`,
+          url: "/me/", tag: `bs-wx-${W}-${gid}` };
+        for (const s of subs.filter((s) => s.user_id === uid)) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nwx++; } catch (e) { console.warn("push", String(e)); } }
+        done.add(`${uid}|wx|${gid}|WX`); await mark(uid, W, `wx|${gid}`, "WX");
+      }
+    }
+  }
   // ---- live slip updates (owner 10/30): during games, a note when a leg on a saved slip hits or busts, and when a slip cashes ----
   let nlive = 0;
   const liveSubs = subs.filter((s) => s.live !== false);
   const recent = (D.games || []).filter((g: any) => g.ko && now >= g.ko && now <= g.ko + 5 * 3600e3);
   if (liveSubs.length && recent.length) {
     const BOX = await liveBox(recent);
-    const LEG = new Map<string, any>(); for (const l of (D.legs || [])) { const k = `${l.pl}|${l.m}|${Math.floor(Number(l.ln || 1) + 0.5)}`; if (!LEG.has(k)) LEG.set(k, l); }
     for (const uid of [...new Set(liveSubs.map((s) => s.user_id))]) {
       const events: string[] = [];
       for (const r of states.filter((x) => x.user_id === uid && x.key.startsWith("bs_slips_w"))) {
@@ -237,7 +326,7 @@ export async function run(now = Date.now()) {
     }
   }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, removed: gone.length, statuses: ST.size };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, weather: wxGames, wxSent: nwx, removed: gone.length, statuses: ST.size };
 }
 
 async function mark(uid: string, W: number, player: string, status: string) {
