@@ -1891,6 +1891,9 @@ window.BSBooks = { attach: function(btn, panel, getText){
     rng.addEventListener('input', function(){ $('#tgtVal').textContent = decToAm(sliderToDec(+rng.value)); clearTimeout(t); t = setTimeout(function(){ retarget(sliderToDec(+rng.value)); }, 120); });
   })();
   $('.slipbar').addEventListener('click', function(){ $('.slipwrap').classList.toggle('open'); });
+  // owner 11/1: a FanDuel slip loaded from My BetSweep lands here (#slip) - open the slip and say which legs could not come along
+  try{ var imn = sessionStorage.getItem('bs_impnote'); if (imn){ sessionStorage.removeItem('bs_impnote'); setTimeout(function(){ var fn = $('#fdnote'); if (fn) fn.textContent = imn; }, 900); } }catch(e){}
+  if (location.hash === '#slip') $('.slipwrap').classList.add('open');
   function toggleHelp(force){ var h = $('#help'); h.hidden = force === true ? false : !h.hidden; if(!h.hidden) h.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
   $('#helpbtn').addEventListener('click', function(){ toggleHelp(); });
   $('#legs').addEventListener('click', function(ev){ if(ev.target.closest('.edgel')) toggleHelp(true); }); $('#games').addEventListener('click', function(ev){ if(ev.target.closest('.edgel')) toggleHelp(true); });
