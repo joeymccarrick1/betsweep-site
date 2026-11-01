@@ -75,6 +75,21 @@ a{color:var(--ink)}
 .me i.g.hit{background:#2b6b3a;color:#fff}.me i.g.miss{background:#b3261e;color:#fff}
 .me .legs em{font-style:normal;color:#9a9388}
 .me a.fdl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#1493ff;color:#fff;padding:3px 9px;border-radius:4px;text-decoration:none}
+
+#import .imp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+#import .imp label.cta{cursor:pointer}
+#impout{margin-top:12px}
+#impout .st{font-size:13px;color:var(--mute)}
+#impout ul{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}
+#impout li{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;line-height:1.35}
+#impout li>span{flex:1;min-width:0;display:block}
+#impout li input{flex:0 0 auto}
+#impout li input{margin-top:3px}
+#impout li small{display:block;color:var(--mute);font-size:12px}
+#impout li.no{opacity:.7;border-style:dashed}
+#impout .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+#impout .row input[type=text]{flex:1;min-width:180px;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+#impout .ok{color:var(--good)} #impout .warn{color:#b7791f}
 </style>
 <style>
 .sitenav .acct{display:flex;align-items:center;gap:6px;margin-left:auto}
@@ -177,6 +192,7 @@ a{color:var(--ink)}
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
  <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
+ <div class="card" id="import"><h2>Import a FanDuel slip</h2><p class="m">Took the bet on FanDuel? Screenshot the betslip (or the bet under My Bets), then choose the picture here or paste it. Your phone reads it - the picture never leaves this device - and the slip is saved with the rest: graded after the games, counted in your exposure, and watched by your slip alerts.</p><div class="imp"><label class="cta">Choose screenshot<input type="file" accept="image/*" hidden></label><span class="m">or paste it here</span></div><div id="impout"></div></div>
  <div class="card"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>
  <div class="card" id="alerts"><h2>Slip alerts</h2><p class="m">Get a notification on this device when a player on one of your saved slips (or your open betslip) is ruled <b>Out</b> or <b>Doubtful</b> before kickoff - with a swap idea from the same game - plus, if you want them, live updates on your saved slips during games and a Thursday note when the Model's Best picks are up. Alerts follow the slips saved to your account, so sign in first.</p><p class="m" id="pushmsg"></p><div class="pushbtns"><button type="button" id="pushon" hidden>Turn on alerts</button><button type="button" id="pushtest" hidden>Send a test alert</button><button type="button" id="pushoff" hidden>Turn off on this device</button></div><div class="pushprefs" id="pushprefs" hidden><label><input type="checkbox" id="pplive" checked> Live updates during games: a leg on a saved slip hits or busts, a slip cashes</label><label><input type="checkbox" id="ppweekly" checked> Thursday note when the week's Model's Best picks are up</label></div></div>
  <div class="card"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
@@ -343,5 +359,6 @@ a{color:var(--ink)}
   bar.querySelector('.x').addEventListener('click', function(){ bar.classList.remove('show'); try { localStorage.setItem('bs_install_dismissed', String(Date.now())); } catch(e){} });
 })();
 </script>
+<script defer src="/import.js"></script>
 </body>
 </html>
