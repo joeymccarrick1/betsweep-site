@@ -198,7 +198,7 @@ POST_JS = r"""<script>(function(){
     $('sdGo').disabled = true; msg('Posting…');
     A.client.from('feed_posts').insert(row).select('id').then(function(r){
       $('sdGo').disabled = false;
-      if(r.error){ msg(/relation|does not exist/i.test(r.error.message) ? 'Social is still being set up - try again soon.' : r.error.message, true); return; }
+      if(r.error){ var em = r.error.message || '', ec = r.error.code || ''; msg((ec === '42P01' || ec === 'PGRST205') ? 'Social is still being set up - try again soon.' : /title_check/.test(em) ? 'That title is too long (60 characters max).' : /legs_check/.test(em) ? 'Social posts take 1 to 15 legs.' : /fd_odds_check/.test(em) ? 'That price looks off - check the odds.' : 'Could not post: ' + em + (ec ? ' (' + ec + ')' : ''), true); try{ console.error('feed post', r.error); }catch(e){} return; }
       msg('Posted! Opening Social…'); setTimeout(function(){ location.href = '/social/#p' + ((r.data && r.data[0] && r.data[0].id) || ''); }, 600);
     });
   });
@@ -286,7 +286,7 @@ PAGE_JS = r"""<script>(function(){
     var since = new Date(Date.now() - 4.5 * 36e5).toISOString();
     A.client.from('feed_posts').select('id,user_id,handle,title,week,legs,fd_odds,first_ko,last_ko,score,created_at').eq('status', 'open').gte('last_ko', since)
       .order('score', {ascending: false}).order('created_at', {ascending: false}).limit(150).then(function(r){
-        if(r.error){ info.textContent = /relation|does not exist/i.test(r.error.message) ? 'Social is being set up - check back soon.' : 'Could not load the feed (' + r.error.message + ').'; list.innerHTML = ''; return; }
+        if(r.error){ info.textContent = (r.error.code === '42P01' || r.error.code === 'PGRST205') ? 'Social is being set up - check back soon.' : 'Could not load the feed (' + r.error.message + (r.error.code ? ', ' + r.error.code : '') + ').'; try{ console.error('feed load', r.error); }catch(e){} list.innerHTML = ''; return; }
         POSTS = (r.data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; });
         info.textContent = POSTS.length + ' open slip' + (POSTS.length === 1 ? '' : 's') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
         var me = A.user ? A.user.id : null;
