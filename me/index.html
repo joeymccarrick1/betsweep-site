@@ -308,6 +308,7 @@ a{color:var(--ink)}
     if (window.BSLoadSlip) window.BSLoadSlip(ks); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks); }, 800); } });
 })();
 </script>
+<script defer src="/import.js"></script>
 <script>
 (function(){
   var VAPID = 'BD3UuhEHyS404Cj8rHy4BOKOpVbRoWsAwL280ALvqmPlhct0Pc42PDiQ9UazK8KHF-sG4IxqEBpBWg3acsYljWk', FN = 'https://fuwiqijgkgbzvnfnsans.supabase.co/functions/v1/slip-alerts';
@@ -380,6 +381,5 @@ a{color:var(--ink)}
   bar.querySelector('.x').addEventListener('click', function(){ bar.classList.remove('show'); try { localStorage.setItem('bs_install_dismissed', String(Date.now())); } catch(e){} });
 })();
 </script>
-<script defer src="/import.js"></script>
 </body>
 </html>
