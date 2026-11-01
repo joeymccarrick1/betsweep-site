@@ -57,7 +57,8 @@ IMPORT_JS = r"""(function(){
     for (var i = 0; i < MK.length; i++) if (MK[i][0].test(line)) return MK[i][1];
     return undefined; }
   function oddsIn(s){ var m = String(s).match(/(?:^|\s)([+\-−~“"]?)(\d{3,6})\s*$/); if (!m) return null; var sign = m[1] === '+' ? 1 : -1; return m[1] === '+' ? +m[2] : -m[2]; }
-  function players(BS){ var P = {}; (BS.legs || []).forEach(function(l){ if (!l.gl && l.pl) P[l.pl] = 1; }); return Object.keys(P).map(function(p){ return {pl: p, n: nrm(p)}; }); }
+  function players(BS){ var P = {}; (BS.legs || []).forEach(function(l){ if (!l.gl && l.pl) P[l.pl] = 1; }); (BS.__names || []).forEach(function(n){ P[n] = 1; });   // __names: the Players directory, so legs FanDuel stopped pricing at kickoff still import
+    return Object.keys(P).map(function(p){ return {pl: p, n: nrm(p)}; }); }
   function matchName(text, P){   // best player whose name is in the text (exact, else within 2 edits per window)
     var t = nrm(text); if (t.length < 4) return null; var best = null, bs = 0, words = t.split(' ');
     P.forEach(function(p){ var s = 0;
@@ -124,14 +125,15 @@ IMPORT_JS = r"""(function(){
     return fetch('/build/', {cache: 'no-cache'}).then(function(r){ return r.text(); }).then(function(h){ var m = h.match(/src="(\/build\/data-[0-9a-f]+\.js)"/); return m ? fetch(m[1]).then(function(r){ return r.text(); }) : h; })
       .then(function(js){ var i = js.indexOf('window.__BS = '); if (i < 0) throw new Error('no board data'); var s = js.indexOf('{', i), dep = 0, q = false, e = false, k;
         for (k = s; k < js.length; k++){ var ch = js[k]; if (q){ if (e) e = false; else if (ch === '\\') e = true; else if (ch === '"') q = false; continue; } if (ch === '"') q = true; else if (ch === '{') dep++; else if (ch === '}'){ dep--; if (!dep) break; } }
-        BSD = JSON.parse(js.slice(s, k + 1)); return BSD; }); }
+        BSD = JSON.parse(js.slice(s, k + 1)); return fetch('/player/').then(function(r){ return r.ok ? r.text() : ''; }).catch(function(){ return ''; })
+          .then(function(h){ var names = [], re = /<span><b>([^<]+)<\/b>/g, m; while ((m = re.exec(h))) names.push(m[1].replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, '&')); BSD.__names = names; return BSD; }); }); }
 
   // owner 11/1: "when I import a slip from Fanduel I can load it to my betslip on betsweep" - the open betslip is bs_slipk_w<W> (the same key the
   // builder, boards and player pages share); legs the builder prices come up in the slip with the model's numbers, the rest stay on the saved slip.
   function loadSlip(BS, keys){
     var W = BS.week, have = {}; (BS.legs || []).forEach(function(l){ have[legKey(l)] = 1; });
     var on = keys.filter(function(k){ return have[k]; }), off = keys.length - on.length;
-    try{ localStorage.setItem('bs_slipk_w' + W, JSON.stringify(on)); if (off) sessionStorage.setItem('bs_impnote', off + ' leg' + (off === 1 ? '' : 's') + ' from your FanDuel slip ' + (off === 1 ? 'is' : 'are') + ' not on the builder board (either-player TDs or lines we do not price) - ' + (off === 1 ? 'it stays' : 'they stay') + ' on the saved slip.'); }catch(e){}
+    try{ localStorage.setItem('bs_slipk_w' + W, JSON.stringify(on)); if (off) sessionStorage.setItem('bs_impnote', off + ' leg' + (off === 1 ? '' : 's') + ' from your FanDuel slip ' + (off === 1 ? 'is' : 'are') + ' not on the builder board (games already under way, either-player TDs or lines we do not price) - ' + (off === 1 ? 'it stays' : 'they stay') + ' on the saved slip.'); }catch(e){}
     location.href = '/build/#slip'; }
   window.BSLoadSlip = function(keys){ return builderData().then(function(BS){ loadSlip(BS, keys); }); };
   // ---- the card on /me/ ----
@@ -167,6 +169,20 @@ IMPORT_JS = r"""(function(){
         document.dispatchEvent(new CustomEvent('bs-account', {detail: {imported: true}})); });
     }
     inp.addEventListener('change', function(){ go(inp.files && inp.files[0]); inp.value = ''; });
+    // owner 11/1 "paste import doesn't look like it works": phones only paste into something editable, so the Paste button reads the clipboard
+    // directly (Safari shows its own Paste bubble), and when the browser will not allow that it opens a box to long-press and paste into
+    var pb = document.getElementById('imppbox'), pbtn = document.getElementById('imppaste');
+    function fromImgEl(){ var im = pb && pb.querySelector('img'); if (!im) return false; var src = im.getAttribute('src') || ''; pb.innerHTML = 'Tap and hold here, then tap Paste.';
+      if (!/^(data:|blob:)/.test(src)) { say('That paste did not include the picture itself - save the screenshot and use Choose screenshot.'); return true; }
+      fetch(src).then(function(r){ return r.blob(); }).then(function(b){ pb.hidden = true; go(b); }).catch(function(){ say('Could not read the pasted picture - use Choose screenshot.'); }); return true; }
+    if (pb){ pb.addEventListener('input', function(){ setTimeout(fromImgEl, 50); }); pb.addEventListener('focus', function(){ if (!pb.querySelector('img')) pb.textContent = ''; }); }
+    if (pbtn) pbtn.addEventListener('click', function(){
+      function box(){ if (!pb) return; pb.hidden = false; pb.textContent = 'Tap and hold here, then tap Paste.'; pb.focus(); }
+      if (!(navigator.clipboard && navigator.clipboard.read)) { box(); return; }
+      navigator.clipboard.read().then(function(items){ for (var i = 0; i < items.length; i++){ var t = (items[i].types || []).filter(function(x){ return /^image\//.test(x); })[0];
+          if (t) return items[i].getType(t).then(function(b){ go(b); }); }
+        say('No picture on the clipboard - copy the screenshot first (open it, tap Share, Copy), then tap Paste screenshot.'); })
+      .catch(function(){ box(); }); });
     document.addEventListener('paste', function(e){ var it = [].slice.call((e.clipboardData || {}).items || []).filter(function(x){ return /^image\//.test(x.type); })[0]; if (it){ e.preventDefault(); go(it.getAsFile()); } });
     if (location.hash === '#import') card.scrollIntoView({block: 'start'});
   }
@@ -178,5 +194,5 @@ IMPORT_JS = r"""(function(){
 CARD_HTML = ('<div class="card" id="import" data-def="open"><h2>Import a FanDuel slip</h2><p class="m">Took the bet on FanDuel? Screenshot the betslip (or the bet under '
              'My Bets), then choose the picture here or paste it. Your phone reads it - the picture never leaves this device - and the slip is saved '
              'with the rest: graded after the games, counted in your exposure, and watched by your slip alerts.</p>'
-             '<div class="imp"><label class="cta">Choose screenshot<input type="file" accept="image/*" hidden></label><span class="m">or paste it here</span></div>'
+             '<div class="imp"><label class="cta">Choose screenshot<input type="file" accept="image/*" hidden></label><button type="button" class="cta" id="imppaste" style="background:none;color:var(--ink);border:1px solid var(--line)">Paste screenshot</button></div><div id="imppbox" contenteditable="true" hidden aria-label="Paste your screenshot here" style="margin-top:10px;min-height:64px;padding:12px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px;line-height:1.4">Tap and hold here, then tap Paste.</div>'
              '<div id="impout"></div></div>')
