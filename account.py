@@ -187,6 +187,7 @@ ME_JS = r"""
           var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
           if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++;
           var bet = (res==='PENDING' && s.fd && !d) ? '<a class="fdl" href="'+esc(s.fd)+'" target="_blank" rel="noopener">Bet on FanDuel</a>' : '';
+          if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'">Load into betslip</button>';   // owner 11/1
           html += '<li><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
         el.innerHTML = html; document.getElementById('record').textContent = (W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : ''); }); }
     // exposure (owner 10/26, after 'I have so much riding on Ken Walker'): the latest week's saved slips + the working builder slip,
@@ -229,6 +230,8 @@ ME_JS = r"""
     document.getElementById('fantasy').innerHTML = mt.join('') || '<li class="none">No saved teams or DFS lineups yet. Build one on the Fantasy or DFS page and tap Save.</li>';
   }
   render(); document.addEventListener('bs-account', render);
+  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.ldb'); if (!b) return; var ks = []; try{ ks = JSON.parse(b.getAttribute('data-keys')) || []; }catch(x){}
+    if (window.BSLoadSlip) window.BSLoadSlip(ks); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks); }, 800); } });
 })();
 """
 
