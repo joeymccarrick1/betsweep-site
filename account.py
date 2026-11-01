@@ -141,6 +141,13 @@ ME_CSS = """
 .me i.g{display:inline-block;width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-style:normal;margin-right:3px;background:#e4ddcc;color:#5d574d}
 .me i.g.hit{background:#2b6b3a;color:#fff}.me i.g.miss{background:#b3261e;color:#fff}
 .me .legs em{font-style:normal;color:#9a9388}
+/* owner 11/1: collapsible cards, week groups and per-slip legs */
+.me .card > h2{cursor:pointer;user-select:none} .me .card > h2::after{content:'▾';font-size:15px;color:var(--mute,#6b655c);margin-left:10px;transition:transform .15s;order:9}
+.me .card.shut > h2{margin-bottom:0} .me .card.shut > h2::after{transform:rotate(-90deg)} .me .card.shut > :not(h2){display:none !important}
+.me li.wkh{padding:10px 0 4px} .me .wkt{font:inherit;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.04em;text-transform:uppercase;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.me .wkt small{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12.5px;text-transform:none;letter-spacing:0;color:var(--mute,#6b655c)} .me .wkt i{font-style:normal;transition:transform .15s} .me li.wkh:not(.on) .wkt i{transform:rotate(-90deg)}
+.me li.sl.wkoff{display:none} .me li.sl .legs{display:none} .me li.sl.lo .legs{display:block}
+.me .lgt{font:inherit;font-size:12px;font-weight:600;color:var(--mute,#6b655c);background:none;border:1px solid var(--line,#d8d1c2);border-radius:12px;padding:1px 9px;cursor:pointer} .me .lgt i{font-style:normal;display:inline-block;transition:transform .15s} .me li.sl.lo .lgt i{transform:rotate(180deg)}
 .me a.fdl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#1493ff;color:#fff;padding:3px 9px;border-radius:4px;text-decoration:none}
 """
 
@@ -181,14 +188,15 @@ ME_JS = r"""
     var el = document.getElementById('slips');
     if (!sl.length){ el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
     else { el.innerHTML = '<li class="none">Grading…</li>';
-      Promise.all(sl.map(function(x){ return getBox(x.w); })).then(function(ds){ var W = 0, L = 0, U = 0, P = 0, html = '';
+      Promise.all(sl.map(function(x){ return getBox(x.w); })).then(function(ds){ var W = 0, L = 0, U = 0, P = 0, html = '', lastW = null, topW = sl.length ? sl[0].w : 0;
         sl.forEach(function(x, i){ var s = x.s, d = ds[i], gs = (s.keys||[]).map(function(k){ return {k:k, g: gradeKey(k, d)}; });
           var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
           var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
           if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++;
           var bet = (res==='PENDING' && s.fd && !d) ? '<a class="fdl" href="'+esc(s.fd)+'" target="_blank" rel="noopener">Bet on FanDuel</a>' : '';
           if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'">Load into betslip</button>';   // owner 11/1
-          html += '<li><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
+          if (x.w !== lastW){ lastW = x.w; var wn = sl.filter(function(y){ return y.w === x.w; }).length; html += '<li class="wkh'+(x.w === topW ? ' on' : '')+'" data-w="'+x.w+'"><button type="button" class="wkt">Week '+x.w+' <small>'+wn+' slip'+(wn===1?'':'s')+'</small><i>▾</i></button></li>'; }
+          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
         el.innerHTML = html; document.getElementById('record').textContent = (W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : ''); }); }
     // exposure (owner 10/26, after 'I have so much riding on Ken Walker'): the latest week's saved slips + the working builder slip,
     // grouped by player (an either-TD leg counts for both names; game lines by their text). Stake and to-win at the slip's own stake/odds.
@@ -230,6 +238,15 @@ ME_JS = r"""
     document.getElementById('fantasy').innerHTML = mt.join('') || '<li class="none">No saved teams or DFS lineups yet. Build one on the Fantasy or DFS page and tap Save.</li>';
   }
   render(); document.addEventListener('bs-account', render);
+  // owner 11/1: "make a bunch of things collapsible" - every card folds on its title (remembered per browser), slips group by week (this week open),
+  // and each slip's legs fold behind a Legs button
+  (function(){ var st = {}; try{ st = JSON.parse(localStorage.getItem('bs_me_fold') || '{}') || {}; }catch(e){}
+    var hashId = (location.hash || '').slice(1);
+    document.querySelectorAll('.me .card[id]').forEach(function(c){ var open = st[c.id] != null ? st[c.id] : c.getAttribute('data-def') !== 'shut'; if (c.id === hashId) open = true; c.classList.toggle('shut', !open); });
+    document.addEventListener('click', function(e){
+      var h = e.target.closest && e.target.closest('.me .card > h2'); if (h && !e.target.closest('a,button')){ var c = h.parentNode; c.classList.toggle('shut'); st[c.id] = !c.classList.contains('shut'); try{ localStorage.setItem('bs_me_fold', JSON.stringify(st)); }catch(x){} return; }
+      var w = e.target.closest && e.target.closest('.wkt'); if (w){ var li = w.parentNode, on = !li.classList.contains('on'); li.classList.toggle('on', on); document.querySelectorAll('.me li.sl.w' + li.dataset.w).forEach(function(x){ x.classList.toggle('wkoff', !on); }); return; }
+      var g = e.target.closest && e.target.closest('.lgt'); if (g){ g.parentNode.classList.toggle('lo'); } }); })();
   document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.ldb'); if (!b) return; var ks = []; try{ ks = JSON.parse(b.getAttribute('data-keys')) || []; }catch(x){}
     if (window.BSLoadSlip) window.BSLoadSlip(ks); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks); }, 800); } });
 })();
@@ -254,13 +271,13 @@ def me_page():
 <div class="me">
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
- <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
+ <div class="card" id="crec" data-def="open"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
  {__import__("slipimport").CARD_HTML}
- <div class="card"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>
- <div class="card" id="alerts"><h2>Slip alerts</h2><p class="m">Get a notification on this device when a player on one of your saved slips (or your open betslip) is ruled <b>Out</b> or <b>Doubtful</b> before kickoff - with a swap idea from the same game - plus, if you want them, live updates on your saved slips during games and a Thursday note when the Model's Best picks are up. Alerts follow the slips saved to your account, so sign in first.</p><p class="m" id="pushmsg"></p><div class="pushbtns"><button type="button" id="pushon" hidden>Turn on alerts</button><button type="button" id="pushtest" hidden>Send a test alert</button><button type="button" id="pushoff" hidden>Turn off on this device</button></div><div class="pushprefs" id="pushprefs" hidden><label><input type="checkbox" id="pplive" checked> Live updates during games: a leg on a saved slip hits or busts, a slip cashes</label><label><input type="checkbox" id="ppweekly" checked> Thursday note when the week's Model's Best picks are up</label></div></div>
- <div class="card"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
- <div class="card"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
- <div class="card"><h2>Fantasy teams &amp; DFS lineups <a href="/team/">Fantasy →</a></h2><ul id="fantasy"></ul></div>
+ <div class="card" id="cexpo" data-def="shut"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>
+ <div class="card" id="alerts" data-def="shut"><h2>Slip alerts</h2><p class="m">Get a notification on this device when a player on one of your saved slips (or your open betslip) is ruled <b>Out</b> or <b>Doubtful</b> before kickoff - with a swap idea from the same game - plus, if you want them, live updates on your saved slips during games and a Thursday note when the Model's Best picks are up. Alerts follow the slips saved to your account, so sign in first.</p><p class="m" id="pushmsg"></p><div class="pushbtns"><button type="button" id="pushon" hidden>Turn on alerts</button><button type="button" id="pushtest" hidden>Send a test alert</button><button type="button" id="pushoff" hidden>Turn off on this device</button></div><div class="pushprefs" id="pushprefs" hidden><label><input type="checkbox" id="pplive" checked> Live updates during games: a leg on a saved slip hits or busts, a slip cashes</label><label><input type="checkbox" id="ppweekly" checked> Thursday note when the week's Model's Best picks are up</label></div></div>
+ <div class="card" id="cbld" data-def="shut"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
+ <div class="card" id="ctrd" data-def="shut"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
+ <div class="card" id="cfan" data-def="shut"><h2>Fantasy teams &amp; DFS lineups <a href="/team/">Fantasy →</a></h2><ul id="fantasy"></ul></div>
  <p class="m">Accounts are optional and free. Sign out from the header at any time; to delete your account and everything saved with it, email support@betsweep.co from the signed-in address.</p>
 </div>
 <script>{ME_JS}</script>
