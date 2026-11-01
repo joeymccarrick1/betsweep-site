@@ -115,6 +115,7 @@ self.addEventListener('notificationclick', function(e){
 '''.replace("__V__", SW_VERSION)
 open(os.path.join(SITE, "sw.js"), "w").write(SW)
 open(os.path.join(SITE, "account.js"), "w").write(ACCT.ACCOUNT_JS)
+open(os.path.join(SITE, "import.js"), "w").write(__import__("slipimport").IMPORT_JS)   # owner 11/1: FanDuel screenshot import on /me/ (slipimport.py)
 open(os.path.join(SITE, "offline.html"), "w").write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BetSweep · offline</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#141a24;color:#f1e8d8;font-family:"IBM Plex Sans",system-ui,sans-serif;text-align:center;padding:24px}img{width:260px;max-width:80vw}p{color:#a9a294;line-height:1.5}a{color:#f1e8d8}</style></head><body><div><img src="/wordmark.png" alt="BetSweep"><p>You are offline and this page was not saved yet.<br>The pages you opened before are still available from the menu.</p><p><a href="/">Try again</a></p></div></body></html>')
 
 open(os.path.join(SITE, ".nojekyll"), "w").write("")

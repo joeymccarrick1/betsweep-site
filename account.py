@@ -247,11 +247,12 @@ def me_page():
     return f"""<title>My BetSweep</title>
 <meta name="description" content="Your saved betslips, built fantasy teams, trade scenarios and Sleeper league - in this browser, or on every device when you sign in.">
 {_link}
-<style>{_base}{ME_CSS}</style>
+<style>{_base}{ME_CSS}{__import__("slipimport").IMPORT_CSS}</style>
 <div class="me">
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
  <div class="card"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
+ {__import__("slipimport").CARD_HTML}
  <div class="card"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>
  <div class="card" id="alerts"><h2>Slip alerts</h2><p class="m">Get a notification on this device when a player on one of your saved slips (or your open betslip) is ruled <b>Out</b> or <b>Doubtful</b> before kickoff - with a swap idea from the same game - plus, if you want them, live updates on your saved slips during games and a Thursday note when the Model's Best picks are up. Alerts follow the slips saved to your account, so sign in first.</p><p class="m" id="pushmsg"></p><div class="pushbtns"><button type="button" id="pushon" hidden>Turn on alerts</button><button type="button" id="pushtest" hidden>Send a test alert</button><button type="button" id="pushoff" hidden>Turn off on this device</button></div><div class="pushprefs" id="pushprefs" hidden><label><input type="checkbox" id="pplive" checked> Live updates during games: a leg on a saved slip hits or busts, a slip cashes</label><label><input type="checkbox" id="ppweekly" checked> Thursday note when the week's Model's Best picks are up</label></div></div>
  <div class="card"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
@@ -260,6 +261,7 @@ def me_page():
  <p class="m">Accounts are optional and free. Sign out from the header at any time; to delete your account and everything saved with it, email support@betsweep.co from the signed-in address.</p>
 </div>
 <script>{ME_JS}</script>
+<script defer src="/import.js"></script>
 <script>{PUSH_JS.replace("__VAPID__", VAPID_PUBLIC).replace("__SB__", SUPABASE_URL)}</script>"""
 
 PUSH_JS = r"""

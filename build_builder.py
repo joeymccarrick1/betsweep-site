@@ -1724,7 +1724,7 @@ body = f'''<div class="bld">
    <p class="note" id="fdnote" style="padding-top:0"></p>
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
-   <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like</small></h3><div id="savedList"></div></div>
+   <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
    <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built {stamp} CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
