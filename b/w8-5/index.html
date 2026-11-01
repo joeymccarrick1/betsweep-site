@@ -241,5 +241,21 @@ a{color:var(--ink)}
   bar.querySelector('.x').addEventListener('click', function(){ bar.classList.remove('show'); try { localStorage.setItem('bs_install_dismissed', String(Date.now())); } catch(e){} });
 })();
 </script>
+<script>(function(){
+  var ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua);
+  var inApp = /Twitter|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly|Snapchat|LinkedInApp|Line\//i.test(ua) || (ios && !/Safari\//.test(ua));
+  if(!inApp) return;
+  var where = /Instagram/i.test(ua) ? 'Instagram' : /FBAN|FBAV|FB_IAB/i.test(ua) ? 'Facebook' : /TikTok|musical_ly/i.test(ua) ? 'TikTok' : 'X';
+  var tip = 'Hard Rock opens from Safari or Chrome, not ' + where + "'s built-in browser: tap \u2022\u2022\u2022 (top right), then Open in " + (ios ? 'Safari' : 'browser') + ', and tap Bet it on Hard Rock again.';
+  function note(a){ var box = a.closest('.bks') || a.parentNode; var n = box.parentNode.querySelector('.hrtip');
+    if(!n){ n = document.createElement('p'); n.className = 'hrtip'; n.style.cssText = 'margin:8px 0 0;padding:9px 11px;border-radius:8px;background:color-mix(in srgb,#5b2d8e 14%,transparent);font-size:13px;line-height:1.4';
+      n.innerHTML = tip.replace(/&/g,'&amp;').replace(/</g,'&lt;') + ' <button type="button" style="font:inherit;font-weight:700;margin-left:4px;padding:3px 9px;border-radius:6px;border:1px solid #5b2d8e;background:none;color:inherit;cursor:pointer">Copy link</button>';
+      n.querySelector('button').addEventListener('click', function(e){ var b = e.target; try{ navigator.clipboard.writeText(location.href).then(function(){ b.textContent = 'Copied'; }); }catch(x){ b.textContent = location.href; } });
+      box.parentNode.insertBefore(n, box.nextSibling); }
+    return n; }
+  document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('a[href^="hardrock://"]'); if(!a) return;
+    var t = setTimeout(function(){ if(!document.hidden) note(a); }, 1200);
+    document.addEventListener('visibilitychange', function(){ if(document.hidden) clearTimeout(t); }, {once: true}); }, true);
+})();</script>
 </body>
 </html>
