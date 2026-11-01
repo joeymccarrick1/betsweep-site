@@ -1153,7 +1153,7 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   $('sdX').addEventListener('click', function(){ dlg.hidden = true; });
   dlg.addEventListener('click', function(e){ if(e.target === dlg) dlg.hidden = true; });
   $('sdGo').addEventListener('click', function(){
-    var A = window.bsAccount, ls = legsNow(); var h = ($('sdH').textContent || '').replace(/^@/, ''), t = $('sdT').value.trim(), o = $('sdO').value.trim().replace(/[^0-9+-]/g, '');
+    var A = window.bsAccount, ls = legsNow(); if(ls.length > 25){ msg('Social posts take up to 25 legs - this slip has ' + ls.length + '.', true); return; } var h = ($('sdH').textContent || '').replace(/^@/, ''), t = $('sdT').value.trim(), o = $('sdO').value.trim().replace(/[^0-9+-]/g, '');
     if(!/^[A-Za-z0-9_.]{2,20}$/.test(h)) h = 'sweeper';   // the server assigns the real one on insert
     if(!clean(t)){ msg('Keep the title clean - that one will not post.', true); return; }
     var odds = o ? parseInt(o, 10) : null; if(o && (isNaN(odds) || Math.abs(odds) < 100)){ msg('Price looks off - use American odds like +650 or -120.', true); return; }
@@ -1167,7 +1167,7 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
     $('sdGo').disabled = true; msg('Posting…');
     A.client.from('feed_posts').insert(row).select('id').then(function(r){
       $('sdGo').disabled = false;
-      if(r.error){ var em = r.error.message || '', ec = r.error.code || ''; msg((ec === '42P01' || ec === 'PGRST205') ? 'Social is still being set up - try again soon.' : /title_check/.test(em) ? 'That title is too long (60 characters max).' : /legs_check/.test(em) ? 'Social posts take 1 to 15 legs.' : /fd_odds_check/.test(em) ? 'That price looks off - check the odds.' : 'Could not post: ' + em + (ec ? ' (' + ec + ')' : ''), true); try{ console.error('feed post', r.error); }catch(e){} return; }
+      if(r.error){ var em = r.error.message || '', ec = r.error.code || ''; msg((ec === '42P01' || ec === 'PGRST205') ? 'Social is still being set up - try again soon.' : /title_check/.test(em) ? 'That title is too long (60 characters max).' : /legs_check/.test(em) ? 'Social posts take 1 to 25 legs.' : /fd_odds_check/.test(em) ? 'That price looks off - check the odds.' : 'Could not post: ' + em + (ec ? ' (' + ec + ')' : ''), true); try{ console.error('feed post', r.error); }catch(e){} return; }
       msg('Posted! Opening Social…'); setTimeout(function(){ location.href = '/social/#p' + ((r.data && r.data[0] && r.data[0].id) || ''); }, 600);
     });
   });
