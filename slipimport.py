@@ -175,7 +175,7 @@ IMPORT_JS = r"""(function(){
 })();
 """
 
-CARD_HTML = ('<div class="card" id="import"><h2>Import a FanDuel slip</h2><p class="m">Took the bet on FanDuel? Screenshot the betslip (or the bet under '
+CARD_HTML = ('<div class="card" id="import" data-def="open"><h2>Import a FanDuel slip</h2><p class="m">Took the bet on FanDuel? Screenshot the betslip (or the bet under '
              'My Bets), then choose the picture here or paste it. Your phone reads it - the picture never leaves this device - and the slip is saved '
              'with the rest: graded after the games, counted in your exposure, and watched by your slip alerts.</p>'
              '<div class="imp"><label class="cta">Choose screenshot<input type="file" accept="image/*" hidden></label><span class="m">or paste it here</span></div>'
