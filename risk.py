@@ -133,10 +133,10 @@ RISK_JS = r"""(function(){
     A.client.rpc('bs_is_admin').then(function(r){ if (!r || r.data !== true) return; var name = ((pp.firstChild && pp.firstChild.nodeType === 3) ? pp.firstChild.nodeValue : pp.textContent).trim();
       var cur = (P[nrm(name)] || []).filter(function(x){ return x.kind === 'note'; })[0] || {};
       var box = document.createElement('div'); box.className = 'bsrnote';
-      box.innerHTML = '<b>BetSweep note</b> <small>only you see this box · shows on every page within minutes · the next rebuild adjusts his numbers</small><div class="row">' +
+      box.innerHTML = '<div class="bsrh"><b>Your BetSweep note</b><span>Only you see this box</span></div><p>Shows on every page within minutes; the next rebuild adjusts his numbers.</p><div class="row">' +
         '<select id="bsrst">' + [['', '- none -'], ['HURT', 'Hurt / playing through it'], ['LIMITED', 'Limited role'], ['OUT', 'Out'], ['STARTING', 'Starting'], ['ROLE_UP', 'Role up']].map(function(o){ return '<option value="' + o[0] + '"' + (cur.status === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
         '<input id="bsrdt" maxlength="200" placeholder="e.g. could barely walk last week" value="' + esc(cur.detail || '') + '"><button type="button" id="bsrsv">Save</button></div><small id="bsrmsg"></small>';
-      pp.parentNode.insertBefore(box, pp.nextSibling);
+      var hd = pp.closest('header') || pp; hd.parentNode.insertBefore(box, hd.nextSibling);   // below the whole name / team header, full width
       document.getElementById('bsrsv').addEventListener('click', function(){ var st = document.getElementById('bsrst').value, dt = document.getElementById('bsrdt').value.trim().slice(0, 200), id = 'note|' + nrm(name), msg = document.getElementById('bsrmsg');
         var W = +((document.querySelector('.pp') || {}).getAttribute ? document.querySelector('.pp').getAttribute('data-week') : 0) || 0;
         var q = !st ? A.client.from('risk_feed').delete().eq('id', id)
@@ -159,8 +159,16 @@ button.bsrblock{opacity:.35;filter:grayscale(1)}
 #bsrpill ul{margin:0 0 10px;padding:0;list-style:none;display:grid;gap:6px} #bsrpill li small{display:block;opacity:.8;font-size:12.5px}
 #bsrpill button{font:inherit;font-weight:700;font-size:13px;padding:7px 12px;border-radius:8px;border:0;background:#b3261e;color:#fff;margin-right:6px;cursor:pointer} #bsrpill button.sec{background:none;border:1px solid currentColor;color:inherit}
 .bsrtoast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bs-tabs, 0px) + 20px);z-index:80;background:#141a24;color:#fff;padding:10px 14px;border-radius:10px;font:600 13.5px 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw}
-.bsrnote{margin:8px 0 14px;padding:10px 12px;border:1px dashed #d7332a;border-radius:10px;font-size:13px} .bsrnote small{color:var(--mute,#6b655c)} .bsrnote .row{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
-.bsrnote select,.bsrnote input{font:inherit;padding:6px 8px;border:1px solid var(--line,#d8d1c2);border-radius:6px;background:var(--card,#fff);color:inherit} .bsrnote input{flex:1;min-width:160px} .bsrnote button{font:inherit;font-weight:700;padding:6px 12px;border-radius:6px;border:0;background:#d7332a;color:#fff;cursor:pointer}
+.bsrnote{margin:12px 0 16px;padding:12px 14px;background:var(--card,#fff);border:1px solid var(--line,#d8d1c2);border-left:4px solid #d7332a;border-radius:10px;font-size:14px;line-height:1.4;font-style:normal;text-align:left}
+.bsrnote .bsrh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bsrnote .bsrh b{font-family:var(--display,inherit);font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:13px}
+.bsrnote .bsrh span{font-size:11.5px;color:var(--mute,#6b655c);border:1px solid var(--line,#d8d1c2);border-radius:99px;padding:1px 8px}
+.bsrnote p{margin:4px 0 10px;color:var(--mute,#6b655c);font-size:12.5px}
+.bsrnote .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:stretch}
+@media (max-width:560px){.bsrnote .row{grid-template-columns:1fr auto}.bsrnote .row select{grid-column:1/-1}}
+.bsrnote select,.bsrnote input{box-sizing:border-box;width:100%;font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line,#d8d1c2);border-radius:8px;background:var(--paper,var(--bg,#fff));color:var(--ink,inherit)}
+.bsrnote button{font:inherit;font-weight:700;font-size:15px;padding:9px 16px;border-radius:8px;border:0;background:#d7332a;color:#fff;cursor:pointer}
+.bsrnote small#bsrmsg{display:block;margin-top:6px;font-size:12.5px;color:var(--mute,#6b655c)}
 @media (min-width:761px){ #bsrpill{left:auto;right:16px;bottom:16px;margin:0} }
 """
 
