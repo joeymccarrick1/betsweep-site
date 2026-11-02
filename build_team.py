@@ -67,14 +67,19 @@ for r in v[1:]:
 
 # availability overrides: NFL.com designations (V1 - Eligible) and the model's weekly availability tab
 ELIG = {}
+_OPPN = {(p["n"], p["p"]): str(p["o"]).replace("LAR", "LA") for p in PLAYERS}
 try:
     for r in vals("eligible.json"):
-        if len(r) >= 6 and r[0] and r[5] and r[5] not in ("ACTIVE", "Eligibility"): ELIG[(r[0], r[2])] = r[5].upper()
+        # owner 11/1: the V1 tab can be weeks stale (Week 8 still carried Week 6 opponents and marked Saquon Barkley / Stefon Diggs OUT) -
+        # a designation only counts when its opponent is this week's opponent
+        if len(r) >= 6 and r[0] and r[5] and r[5] not in ("ACTIVE", "Eligibility") and _OPPN.get((r[0], r[2])) in (None, str(r[3]).replace("LAR", "LA")): ELIG[(r[0], r[2])] = r[5].upper()
 except Exception: pass
 try:
     for r in vals("avail.json")[1:]:
         if len(r) >= 5 and str(r[0]) == str(WEEK) and r[4] == "OUT": ELIG[(r[1], r[3])] = "OUT"
+        elif len(r) >= 5 and str(r[0]) == str(WEEK) and r[4] in ("CLEARED", "ACTIVE", "QUESTIONABLE"): ELIG[(r[1], r[3])] = "QUESTIONABLE" if r[4] == "QUESTIONABLE" else None   # this week's availability tab wins
 except Exception: pass
+ELIG = {k: v for k, v in ELIG.items() if v}
 SNAPS = {}
 try:
     for r in vals("snaps.json")[1:]:
@@ -144,6 +149,7 @@ n_act = sum(1 for p in PLAYERS if p["act"])
 
 TEAM_CSS = r"""
 .tm-wrap{max-width:1360px;margin:0 auto;display:grid;gap:14px}
+.sscta{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--red);border-radius:10px;padding:12px 14px;margin:0 0 12px}.sscta b{font-family:var(--display);font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:17px}.sscta span{color:var(--mute);font-size:13.5px;line-height:1.4;flex:1 1 260px}.sscta i{font-style:normal;font-size:20px;color:var(--red)}
 .tm-wrap .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .tm-wrap h2{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;margin:0;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mute);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .tm-wrap h2 b{color:var(--ink)} .tm-wrap h2 .r{margin-left:auto;font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;font-size:12px}
@@ -546,6 +552,7 @@ TEAM_JS = r"""
 """
 
 body = f'''<div class="tm-wrap">
+ <a class="sscta" href="/team/compare/"><b>Who should I start?</b><span>Stuck on your flex? Compare two or more players - projection, matchup, recent games, risks - and get the model's pick with the reasons.</span><i>→</i></a>
  <section class="panel">
   <div class="mode"><button type="button" class="on" data-m="sleeper">Import from Sleeper</button><button type="button" data-m="manual">No Sleeper? Build it by hand</button></div>
   <div id="sleeperBox">
@@ -616,3 +623,8 @@ page = re.sub(r'<div class="key">.*?</dl>\n</div>\n', '', page, count=1, flags=r
 page = page.replace('<div class="grid">', '<div class="grid" style="display:block">', 1)
 out = os.path.join(OUT, "team.html"); open(out, "w").write(page)
 print(f"wrote {out}: {len(PLAYERS)} players ({n_act} active), week {WEEK}, {len(page)//1024} KB")
+# owner 11/1: /team/compare/ "Who should I start?" (build_startsit.py) - same players and projections as this page
+try:
+    import build_startsit as _BSS
+    _BSS.build(PLAYERS, WEEK, IN, OUT)
+except Exception as _e: print("note: /team/compare/ not built:", _e)
