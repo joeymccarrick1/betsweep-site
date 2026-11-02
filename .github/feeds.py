@@ -28,7 +28,7 @@ if inj:
     json.dump(keep, open("out/injuries.json", "w"))
     print("injuries:", sum(len(t["injuries"]) for t in keep["injuries"]))
 dr = (now - dt.timedelta(days=2)).strftime("%Y%m%d") + "-" + (now + dt.timedelta(days=6)).strftime("%Y%m%d")
-sb = get(f"{S}/scoreboard?dates={dr}")
+sb = get(f"{S}/scoreboard")   # the current NFL week (a dates= range answered 400 from the runner)
 ina = {}
 if sb:
     json.dump({"events": sb.get("events") or [], "mirrored": now.isoformat()}, open("out/scoreboard.json", "w"))
