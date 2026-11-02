@@ -55,10 +55,15 @@ a{color:var(--ink)}
 .ss{max-width:1100px;margin:0 auto;padding:14px 16px 30px}
 .ss h1{font-family:var(--display);font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:clamp(22px,4.5vw,30px);margin:6px 0 2px}
 .ss .sub{color:var(--mute);font-size:14px;line-height:1.5;margin:0 0 12px}
-.ss .ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 12px;font-size:13px;color:var(--mute)}
-.ss .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.ss .seg button{font:inherit;font-size:13px;padding:6px 10px;border:0;background:var(--card);color:var(--ink);cursor:pointer}
-.ss .seg button.on{background:var(--ink);color:var(--paper,#fff)}
+.ss .ctl{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin:0 0 14px}
+@media (max-width:560px){.ss .ctl{grid-template-columns:1fr}}
+.ss .ctl .grp{display:flex;flex-direction:column;gap:5px}
+.ss .ctl .lab{font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:var(--mute)}
+.ss .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;background:var(--chalk,rgba(127,127,127,.12));border:1px solid var(--line);border-radius:10px}
+.ss .seg button{all:unset;box-sizing:border-box;text-align:center;font-family:var(--body);font-weight:600;font-size:14px;line-height:1.2;padding:9px 6px;border-radius:7px;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ss .seg button:hover{background:rgba(127,127,127,.14)}
+.ss .seg button.on{background:#d7332a;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.ss .seg button:focus-visible{outline:2px solid #d7332a;outline-offset:2px}
 .ss .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
 .ss .slot{position:relative}
 .ss .slot input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:11px 36px 11px 12px}
@@ -204,8 +209,8 @@ a{color:var(--ink)}
 <p style="margin:4px 0 0;font-size:13px"><a href="/team/">← Fantasy</a></p>
 <h1>Who should I start?</h1>
 <p class="sub">Search two players for your flex or last starting spot. BetSweep lays out each player's Week 8 projection, matchup, recent games and risks side by side, then makes the call and tells you why. Tap <b>+</b> to compare more.</p>
-<div class="ctl"><span>Scoring</span><span class="seg" id="ssc"><button type="button" data-v="1" class="on">Full PPR</button><button type="button" data-v="0.5">Half</button><button type="button" data-v="0">Standard</button></span>
-<span>I need</span><span class="seg" id="smode"><button type="button" data-v="mid" class="on">Best bet</button><button type="button" data-v="floor">Safe floor</button><button type="button" data-v="ceil">Upside</button></span></div>
+<div class="ctl"><div class="grp"><span class="lab">Your league's scoring</span><span class="seg" id="ssc" role="group" aria-label="Scoring"><button type="button" data-v="1" class="on">Full PPR</button><button type="button" data-v="0.5">Half PPR</button><button type="button" data-v="0">Standard</button></span></div>
+<div class="grp"><span class="lab">What do you need this week?</span><span class="seg" id="smode" role="group" aria-label="What you need"><button type="button" data-v="mid" class="on">Most points</button><button type="button" data-v="floor">Safe floor</button><button type="button" data-v="ceil">Big upside</button></span></div></div>
 <div class="slots" id="slots"></div>
 <div id="out"></div>
 <p class="note">Projections are the BetSweep model's for Week 8 (the same numbers as the Fantasy page). Floor and ceiling come from each player's own game-to-game swings this season around this week's projection. Injury chips update live. Information only - you make the call.</p>
@@ -300,7 +305,7 @@ a{color:var(--ink)}
     var gap = score(top) - score(nxt);
     var h = '<div class="verdict"><h2>Start ' + esc(top.n) + ' <small>' + (gap < 0.75 ? 'coin flip - lean' : gap < 2 ? 'slight edge' : 'clear call') + (ps.length > 2 ? ' · then ' + ranked.slice(1).map(function(p){ return esc(p.n); }).join(', ') : '') + '</small></h2>' +
       '<ul>' + reasons(top, nxt).map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>' +
-      (gap < 0.75 ? '<p class="close">These two are within a point. Tiebreakers: ' + (MODE === 'mid' ? 'switch to <b>Safe floor</b> if you are favored this week, <b>Upside</b> if you are the underdog.' : 'go with the later kickoff so you can pivot if news breaks.') + '</p>' : '') + '</div>';
+      (gap < 0.75 ? '<p class="close">These two are within a point. Tiebreakers: ' + (MODE === 'mid' ? 'switch to <b>Safe floor</b> if you are favored this week, <b>Big upside</b> if you are the underdog.' : 'go with the later kickoff so you can pivot if news breaks.') + '</p>' : '') + '</div>';
     o.innerHTML = h + '<div class="cards">' + ranked.map(function(p, i){ return card(p, i === 0); }).join('') + '</div>';
   }
   function boot(D){ P = D.players || []; P.forEach(function(p){ BY[norm(p.n)] = p; });
