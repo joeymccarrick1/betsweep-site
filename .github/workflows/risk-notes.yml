@@ -1,0 +1,26 @@
+# Owner notes (risk_feed kind=note) copied into the repo so the weekly rebuild can apply them to availability (RUNBOOK Step 2a).
+# The rebuild's sandbox cannot reach Supabase; GitHub can. Anon key only - the table is public-read by design.
+name: risk-notes
+on:
+  schedule: [{cron: "*/30 * * * *"}]
+  workflow_dispatch: {}
+permissions: {contents: write}
+concurrency: {group: risk-notes, cancel-in-progress: false}
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch notes
+        env:
+          SB: https://fuwiqijgkgbzvnfnsans.supabase.co
+          KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU
+        run: |
+          mkdir -p data
+          curl -fsS "$SB/rest/v1/risk_feed?kind=eq.note&select=id,week,player,status,detail,updated_at&order=player" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o /tmp/n.json
+          python3 -c "import json;d=json.load(open('/tmp/n.json'));assert isinstance(d,list);json.dump(d,open('data/risk-notes.json','w'),indent=1)"
+          git config user.name BetSweep; git config user.email support@betsweep.co
+          git add data/risk-notes.json
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          git commit -m "Owner risk notes sync"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0; sleep 5; done; exit 1
