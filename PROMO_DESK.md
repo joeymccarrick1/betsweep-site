@@ -6,7 +6,8 @@ Owner-facing playbook (calendar, rules, templates, video ideas): the Claude Doc 
 (https://claude.ai/artifact/PaUnWPDt2ixt63hGhKANmg).
 
 ## Hard rules
-- Draft only. NEVER write to the Google Sheet (no PROMO rows, no logs), never push to the site repo, never post anywhere.
+- Draft only. NEVER write to the Google Sheet (no PROMO rows, no logs), never push to main or gen-overrides, never post anywhere. The only write
+  allowed is the `promo-drafts` branch (see Weekly flow).
 - Never invent a number. Every probability, price, average or rank comes from the data below; if something is missing, say so.
 - Nobody is watching: no questions; make the call and say what you assumed in one line.
 - The final message is read on a phone: short headed sections, each promo as a copy-ready block.
@@ -51,6 +52,24 @@ A leg is usable only if ALL hold:
 - Name every promo (fun, short, on-theme: holidays, rivalries, the player). Give one line of why per leg with a real number
   (average, hit rate, matchup rank from flags/pf, projection).
 - Profit boost suggestion: name the promo with the highest chance as the one to boost.
+
+## Weekly flow (owner 11/1: "move schedule to start Wednesday night ... get legs and everything Wednesday so I can start making graphics. If
+## Thursday's injuries or anything comes up we can flag it before I post anything")
+- **weekly** (Wednesday night): draft EVERY promo for the coming week in one run - thursday, saturday (Model's Best + SGP of the week),
+  sunday_main, snf, mnf (+500 and Piss Missile Monday) - using the slot recipes below. Leg filter applies, except the "kicks off 30+ minutes after
+  this run" check is simply "not started". If a game's props are not in the data yet, say "props not posted yet" for that slot (the Saturday
+  check fills it). Save the drafts: write `week<W>.md` (the full owner-facing drafts) and `week<W>.json` (per promo: slot, name, legs with
+  pl / m / ln / o / p / fd ids, the FanDuel link, price) to the branch `promo-drafts` of joeymccarrick1/betsweep-site
+  (`git fetch origin promo-drafts || git checkout --orphan promo-drafts`; only those two files; commit "Promo drafts week W"; push that branch only -
+  NEVER main or gen-overrides). This is the ONLY write any promo run may make.
+- **check_<slot>** runs (check_thursday, check_weekend, check_sunday, check_mnf): read `week<W>.json` from the `promo-drafts` branch (newest W), and
+  for every leg of that slot's promos re-run the leg filter against the CURRENT data (injury report, inactives, weather, owner notes, flags,
+  started games) and compare the FanDuel price now vs drafted. Output per promo: OK, or FLAG with the reason and a ready swap (same game, same
+  script, rung rules) and the new link/price. A slot with no draft (props were not posted on Wednesday): draft it now with its recipe and add it to
+  the same files on `promo-drafts`. check_weekend covers saturday + sunday_main + snf + mnf; check_sunday covers sunday_main + snf (inactives);
+  check_mnf covers mnf.
+- If the owner has already posted a promo (it is in `site/b/promos.json` with Status LIVE), check it the same way but never redraft it - the
+  "Promo at risk" push also covers it.
 
 ## Slots
 - **thursday** (TNF): (a) single best bet: the one leg with the highest `e` among legs at -150..+150 with `p >= 0.5`; (b) +500 (target
