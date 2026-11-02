@@ -628,7 +628,7 @@ BUILDER_CSS = r"""
 .glsrc{font-family:var(--body);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-left:6px}
 .lg > button.lockd,.alts .ar button.lockd{border-color:var(--line);color:var(--mute);cursor:not-allowed;background:none}
 .slip li em.stx{font-style:normal;font-weight:700;color:var(--bad)}
-.lg .wf,.slip .wf,.pc .wf{display:inline-block;color:var(--warn);cursor:pointer;font-weight:800;width:18px;height:18px;line-height:16px;text-align:center;border:1.5px solid var(--warn);border-radius:50%;font-size:12px;margin-left:4px;vertical-align:middle}
+.lg .wf,.slip .wf,.pc .wf{display:inline-block;color:var(--warn);cursor:pointer;font-weight:800;width:18px;height:18px;line-height:16px;text-align:center;border:1.5px solid var(--warn);border-radius:50%;font-size:12px;margin-left:4px;vertical-align:middle}.rsk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:1px 6px;border-radius:9px;margin-left:5px;vertical-align:middle;background:#f6e3b8;color:#7a4b00}.rsk.hi{background:#b3261e;color:#fff}
 .why{grid-column:1/-1;margin:0;padding:8px 10px 8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);border-left:3px solid var(--warn);border-radius:0 4px 4px 0;font-size:12.5px;line-height:1.45;color:var(--ink)}
 .why b{display:block;font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px;color:var(--warn);margin-bottom:3px}
 .why b small{font-family:var(--body);font-weight:600;text-transform:none;letter-spacing:0;color:var(--mute);margin-left:6px}
@@ -1259,11 +1259,18 @@ BUILDER_JS = r"""
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') reloadSel(); });
   window.addEventListener('focus', reloadSel);
   document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.changed) reloadSel(); });
+  // owner 11/1: per-leg risk score - model flags (bad 3, watch 1, good -1) plus the live risk list (ruled out 10, injury / weather / note 3).
+  // 0-1 low (no tag), 2-3 medium, 4+ high. Shown on each betslip leg; the slip notes count the high ones.
+  function riskScore(l){ var s = 0; (l.fl || []).forEach(function(f){ s += f[0] === 'bad' ? 3 : f[0] === 'watch' ? 1 : f[0] === 'good' ? -1 : 0; });
+    var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v) s += v.level === 'block' ? 10 : v.level === 'warn' ? 3 : -1; return Math.max(0, s); }
+  function riskTag(l){ if(isGL(l)) return ''; var s = riskScore(l); if(s < 2) return ''; var hi = s >= 4;
+    return ' <span class="rsk' + (hi ? ' hi' : '') + '" title="Risk score ' + s + ': model flags plus live injury / weather / BetSweep notes">' + (hi ? 'High risk' : 'Some risk') + '</span>'; }
+  document.addEventListener('bs-risk', function(){ try{ renderSlip(); }catch(e){} });
   function renderSlip(){
     var ls = slipLegs(); var ul = $('#slipLegs');
     $$('.slipbar .n').forEach(function(n){ n.textContent = ls.length; });
     if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
-    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
+    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
     var bls = bookLegs(ls), implied = ls.length - bls.length;
     var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1), bookP = 1/bookDec;
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls);
@@ -1279,6 +1286,7 @@ BUILDER_JS = r"""
     var flags = [];
     if(sgp.length) flags.push(sgp.length + ' game' + (sgp.length>1?'s':'') + ' with multiple legs (correlation priced in)');
     var pls = {}; ls.forEach(function(l){ pls[l.pl] = (pls[l.pl]||0)+1; }); var dupe = Object.keys(pls).filter(function(p){ return pls[p] > 1; }); if(dupe.length) flags.push('same player twice: ' + dupe.join(', '));
+    var hiR = ls.filter(function(l){ return !isGL(l) && riskScore(l) >= 4; }); if(hiR.length) flags.push(hiR.length + ' high-risk leg' + (hiR.length>1?'s':'') + ' (' + hiR.map(function(l){ return l.pl; }).join(', ') + ')');
     var warned = ls.filter(function(l){ return l.w; }); if(warned.length) flags.push(warned.length + ' leg' + (warned.length>1?'s':'') + ' carr' + (warned.length>1?'y':'ies') + ' a model warning');
     var neg = ls.filter(function(l){ return l.e < 0; }); if(neg.length) flags.push(neg.length + ' leg' + (neg.length>1?'s':'') + ' priced worse than the model');
     var mixG = {}; ls.forEach(function(l){ mixG[l.g] = mixG[l.g] || {gl:0, pr:0}; mixG[l.g][isGL(l) ? 'gl' : 'pr']++; });
@@ -1371,7 +1379,7 @@ BUILDER_JS = r"""
       if(el.classList.contains('glb')){ el.classList.toggle('in', on); return; }
       $$('button', el).forEach(function(b){ if(b.closest('[data-i]') !== el || b.disabled) return; var t = b.textContent.trim(); if(t === '+ Add' || t.indexOf('In slip') === 0){ b.classList.toggle('in', on); b.textContent = lab; } });
     }); }
-  function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; sel[i] = true; } syncSel(i); renderSlip(); }
+  function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; if(window.BSRisk && window.BSRisk.blockAdd(legs[i].pl, legs[i].m)) return; sel[i] = true; } syncSel(i); renderSlip(); }
   // ---- quick builds ----
   function pickLegs(cands, n, opts){
     var used = {}, usedG = {}, out = [];
@@ -1382,7 +1390,7 @@ BUILDER_JS = r"""
     return out;
   }
   function quick(kind){
-    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game); });
+    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });   // owner 11/1: skip live injury / weather / owner-note risks
     var bestOf = {}; pool.forEach(function(l){ var k = l.pl + '|' + l.m; if(!bestOf[k] || l.e > bestOf[k].e) bestOf[k] = l; }); pool = Object.keys(bestOf).map(function(k){ return bestOf[k]; });
     var picks = [];
     if(kind === 'anchor'){ picks = pickLegs(pool.filter(function(l){ return l.o <= -130 && l.e >= -0.005; }).sort(function(a,b){ return b.p - a.p; }), 3, {distinctGames: st.game === 'all'}); }
@@ -1407,7 +1415,7 @@ BUILDER_JS = r"""
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04; });
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04 && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
