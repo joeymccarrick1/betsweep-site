@@ -568,6 +568,14 @@ for _l in LEGS:
             if _bx <= _fd - 0.03: _l.setdefault("fh", []).append(["info", "Better price elsewhere", f"{_nm} has this at {(_l['bks'][_bk]['o']):+.0f} vs FanDuel {float(_l['o']):+.0f} - same leg, {(_fd - _bx)*100:.0f} implied points cheaper."])
             elif all(x >= _fd + 0.03 for _, x in _ot): _l.setdefault("fh", []).append(["info", "Best price: FanDuel", f"FanDuel's {float(_l['o']):+.0f} beats " + ", ".join(f"{ {'dk': 'DraftKings', 'hr': 'Hard Rock'}.get(k, k)} {(_l['bks'][k]['o']):+.0f}" for k, _ in _ot) + " on the same leg."])
     except Exception: pass
+# owner 11/1 ("You have my OK to change whatever ... to get our overall percentage higher"): the leg probability the builder uses (quick builds,
+# parlay prices, edges) is now 50% model + 50% FanDuel's implied % for yardage / reception / longest-catch legs; Anytime TD keeps the model
+# (it beat the book on TDs). Graded Weeks 6-7: log loss 0.6933 -> 0.6720 (wk6) and 0.6700 -> 0.6637 (wk7) vs the model alone, and the 200
+# likeliest legs hit 68% vs 66% (wk6) and 60.5% vs 59.5% (wk7). Edge = blended % - book %, so edges are about half the old size; the order
+# of the edges does not change. l["pm"] keeps the model's own %.
+for _l in LEGS:
+    if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None: continue
+    _l["pm"] = _l["p"]; _l["p"] = round(0.5 * _l["p"] + 0.5 * _l["bk"], 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 BUILDER_CSS = r"""
@@ -1436,7 +1444,7 @@ BUILDER_JS = r"""
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04 && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
