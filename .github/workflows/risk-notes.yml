@@ -17,6 +17,7 @@ jobs:
           KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU
         run: |
           mkdir -p data
+          curl -fsS "$SB/rest/v1/risk_feed?select=kind,player,status,detail,updated_at&order=kind" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" | python3 -c "import json,sys,collections;d=json.load(sys.stdin);print('risk_feed rows by kind:',dict(collections.Counter(r['kind'] for r in d)));[print(' ',r['kind'],r['player'],r['status'],(r['detail'] or '')[:60],r['updated_at'][:16]) for r in d[:40]]"
           curl -fsS "$SB/rest/v1/risk_feed?kind=eq.note&select=id,week,player,status,detail,updated_at&order=player" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o /tmp/n.json
           python3 -c "import json;d=json.load(open('/tmp/n.json'));assert isinstance(d,list);json.dump(d,open('data/risk-notes.json','w'),indent=1)"
           git config user.name BetSweep; git config user.email joeymccarrick@gmail.com
