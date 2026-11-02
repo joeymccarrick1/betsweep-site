@@ -126,7 +126,7 @@ NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay 
 NAV_GROUPS = [("/", "Home", None),
               (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
-              (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
+              (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
               (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge")])]
 NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
@@ -334,6 +334,10 @@ def place_plain(src_html, dest_dir, path):
     m = re.search(r'<meta name="description" content="([^"]*)">\n?', src); d = html.unescape(m.group(1)) if m else "BetSweep"
     if m: src = src.replace(m.group(0), "", 1)
     os.makedirs(dest_dir, exist_ok=True); open(os.path.join(dest_dir, "index.html"), "w").write(wrap(src, t, d, path, "/og.png")); return t
+# owner 11/1: /team/compare/ - "Who should I start?" (build_startsit.py, run by build_team.py)
+if os.path.exists(os.path.join(OUT, "startsit.html")) and os.path.exists(os.path.join(OUT, "startsit.json")):
+    made.append(place_plain(os.path.join(OUT, "startsit.html"), os.path.join(SITE, "team", "compare"), "/team/compare/"))
+    shutil.copy(os.path.join(OUT, "startsit.json"), os.path.join(SITE, "team", "compare", "data.json"))
 _PD = os.path.join(OUT, "players")
 if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
     _np = 0
