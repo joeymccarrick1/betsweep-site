@@ -1143,6 +1143,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var adds = new URLSearchParams(location.search).getAll('add');
     if(adds.length){
       ADDED = {ok: [], late: [], missing: []};
+      if(new URLSearchParams(location.search).get('new')) { Object.keys(sel).forEach(function(k){ delete sel[k]; }); extraKeys.length = 0; }   // owner 11/1: promo-swap links replace the slip
       adds.forEach(function(k){ if(k in KEYIDX){ var i = KEYIDX[k]; if(started(legs[i].g)) ADDED.late.push(legs[i]); else { sel[i] = true; ADDED.ok.push(legs[i]); } } else ADDED.missing.push(k); });
       save(); history.replaceState(null, '', location.pathname + location.hash);
     }
