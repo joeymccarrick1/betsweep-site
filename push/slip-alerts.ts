@@ -22,6 +22,9 @@ const SITE = Deno.env.get("SITE_URL") ?? "https://betsweep.co";
 const ESPN = Deno.env.get("ESPN_INJURIES_URL") ?? "https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries";
 const SUBJECT = "mailto:support@betsweep.co";
 const ESPN_BASE = Deno.env.get("ESPN_BASE") ?? "https://site.api.espn.com";
+// owner 11/1: ESPN answers Supabase's servers with a block page on some runs, which left the risk list empty. A GitHub Action on the site
+// repo mirrors ESPN every ~10 minutes to the `feeds` branch (.github/feeds.py); every ESPN read falls back to that mirror.
+const FEEDS = Deno.env.get("FEEDS_URL") ?? "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 // ---------------- base64url ----------------
@@ -130,10 +133,33 @@ async function getJson(urls: string[], pick: (j: any) => any = (j) => j): Promis
   }
   return null;
 }
+// ---- game-day inactives (owner 11/1): each game's summary lists the inactives as "Out" about 90 minutes before kickoff - hours after the
+// league injury report the morning boards read. Games kicking off within 3 hours (or started in the last 20 minutes) are checked every run;
+// a player listed Out there joins ST as OUT ("Inactive"), so slip pushes, the risk list and the promo watch all pick him up.
+export const INACT = new Set<string>();
+async function gameDayOuts(D: any, now: number, ST: Map<string, any>): Promise<number> {
+  INACT.clear(); let n = 0;
+  const near = (D.games || []).filter((g: any) => g.ko && g.ko - now <= 3 * 3600e3 && now - g.ko <= 20 * 60e3);
+  if (!near.length) return 0;
+  const add = (nm: string, why: string) => { const k = norm(nm); INACT.add(k); if (!ST.has(k) || ST.get(k).st !== "OUT") { ST.set(k, { st: "OUT", why }); n++; } };
+  const mir = await getJson([`${FEEDS}/inactives.json`], (j) => j.games ? j : null);
+  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard`, `${FEEDS}/scoreboard.json`], (j) => j.events ? j : null);
+  for (const g of near) {
+    const ev = (sb?.events || []).find((e: any) => { const abs = ((e.competitions || [])[0]?.competitors || []).map((x: any) => EAB[x?.team?.abbreviation] || x?.team?.abbreviation); return abs.includes(g.a) && abs.includes(g.b); });
+    let outs: any[] | null = null;
+    if (ev) {
+      const sm = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`], (j) => j.injuries ? j : null);
+      if (sm) outs = (sm.injuries || []).flatMap((t: any) => (t.injuries || []).filter((x: any) => /^(out|inactive)$/i.test(String(x?.status || ""))).map((x: any) => ({ name: x?.athlete?.displayName, date: x?.date })));
+      else if (mir?.games?.[ev.id]) outs = mir.games[ev.id].out || [];
+    }
+    for (const o of (outs || [])) if (o.name && (!o.date || Date.parse(o.date) >= g.ko - 12 * 3600e3)) add(o.name, "Inactive");   // game-day designations only
+  }
+  return n;
+}
 export const QST = new Map<string, string>();   // owner 11/1: questionable players too, for the live risk list (not pushed)
 async function espnStatuses(): Promise<Map<string, { st: "OUT" | "DOUBTFUL"; why: string }>> {
   const out = new Map(); QST.clear();
-  const j = await getJson([ESPN, "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/injuries", "https://cdn.espn.com/core/nfl/injuries?xhr=1"],
+  const j = await getJson([ESPN, "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/injuries", "https://cdn.espn.com/core/nfl/injuries?xhr=1", `${FEEDS}/injuries.json`],
     (j) => j.injuries ? j : (j.content && j.content.injuries ? { injuries: j.content.injuries } : null));
   if (!j) { console.warn("no injury feed reachable this run"); return out; }
   for (const t of (j.injuries || [])) for (const x of (t.injuries || [])) {
@@ -196,7 +222,7 @@ async function wxAt(lat: number, lon: number, ko: number): Promise<Wx | null> {
 async function homesOf(games: any[]): Promise<Map<string, { home: string; away: string; indoor: boolean }>> {   // ESPN scoreboard: who is at home, and the indoor flag
   const out = new Map(); const kos = games.map((g) => g.ko);
   const dr = `${ymd(Math.min(...kos) - 864e5)}-${ymd(Math.max(...kos) + 864e5)}`;
-  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&dates=${dr}`],
+  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&dates=${dr}`, `${FEEDS}/scoreboard.json`],
     (j) => j.events ? j : (j.content && j.content.sbData && j.content.sbData.events ? j.content.sbData : null));
   if (!sb) { console.warn("weather: no scoreboard"); return out; }
   for (const ev of (sb.events || [])) {
@@ -220,6 +246,7 @@ export async function run(now = Date.now()) {
   const sent: any[] = await rest(`push_sent?select=user_id,player,status&week=eq.${W}`);
   const done = new Set(sent.map((x) => `${x.user_id}|${x.player}|${x.status}`));
   const ST = await espnStatuses();
+  let ninact = 0; try { ninact = await gameDayOuts(D, now, ST); } catch (e) { console.warn("inactives", String(e)); }
   let nsent = 0, nalerts = 0; const gone: string[] = [];
   for (const uid of users) {
     // slips: name -> keys
@@ -244,7 +271,7 @@ export async function run(now = Date.now()) {
           && (l.m === "Receptions" || l.m === "Anytime TD" || (l.ln || 0) >= 15) && !mine.has(norm(l.pl)) && !ST.get(norm(l.pl)))
         .sort((a: any, b: any) => b.e - a.e)[0];
       const where = h.slips.length === 1 ? (h.slips[0] === "your open betslip" ? "He's on your open betslip." : `He's on "${h.slips[0]}".`) : `He's on ${h.slips.length} of your slips (${h.slips.slice(0, 3).map((x) => x === "your open betslip" ? "open betslip" : `"${x}"`).join(", ")}).`;
-      const msg = { title: `${h.name} is ${h.st === "OUT" ? "OUT" : "DOUBTFUL"}${h.why ? " (" + h.why + ")" : ""}`,
+      const msg = { title: h.why === "Inactive" ? `${h.name} is INACTIVE tonight` : `${h.name} is ${h.st === "OUT" ? "OUT" : "DOUBTFUL"}${h.why ? " (" + h.why + ")" : ""}`,
         body: where + (h.st === "OUT" ? " Check the slip before kickoff." : " Doubtful players rarely play - check the slip before kickoff.") +
           (swap ? ` Swap idea: ${legLabel(swap)} (FD ${am(swap.o)}, model ${Math.round(swap.p * 100)}%).` : ""),
         url: "/me/", tag: `bs-${W}-${n}` };
@@ -311,6 +338,14 @@ export async function run(now = Date.now()) {
     const promos: any[] = await (await fetch(`${SITE}/b/promos.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => []);
     const owner = await rest("rpc/bs_owner_id", { method: "POST", body: "{}" }).catch(() => null);
     const osubs = owner ? subs.filter((s) => s.user_id === owner) : [];
+    const riskOf = (n: string, m: string, gid: string) => ST.has(n) || QST.has(n) || notes.some((x) => norm(x.player) === n && ["OUT", "HURT", "LIMITED"].includes(x.status)) || (WX24.has(gid) && WXLEG(m));
+    const swapFor = (lg: any, pr: any) => {
+      const mk = String(lg.market || String(lg.key || "").split("|")[1] || ""); if (!mk || /either/i.test(mk)) return null;
+      const inPromo = new Set((pr.legs || []).flatMap((x: any) => String(x.who || "").split(/\s+or\s+/i).map(norm)));
+      const orig = (D.legs || []).find((l: any) => `${l.pl}|${l.m}|${Math.round(l.ln || 1)}` === lg.key);
+      const pool = (D.legs || []).filter((l: any) => l.g === lg.gid && l.m === mk && l.pos && !l.w && !inPromo.has(norm(l.pl)) && !riskOf(norm(l.pl), l.m, l.g)
+        && (!orig || (Math.abs(l.ln - orig.ln) <= Math.max(10, orig.ln * 0.35) && l.p >= orig.p - 0.08)));
+      pool.sort((a: any, b: any) => (b.e - a.e) || (b.p - a.p)); return pool[0] || null; };
     if (owner && Array.isArray(promos)) for (const pr of promos) {
       if (String(pr.status || "LIVE").toUpperCase() !== "LIVE" || pr.week !== W) continue; const code = `w${pr.week}-${pr.slot}`;
       for (const lg of (pr.legs || [])) {
@@ -323,7 +358,13 @@ export async function run(now = Date.now()) {
           if (!why && WX24.has(lg.gid) && WXLEG(String(lg.market))) { why = `weather - ${WX24.get(lg.gid)!.join(", ")}`; tag = "WX"; }
           if (!why) continue;
           const key = `promo|${code}|${n}|${tag}`; if (done.has(`${owner}|${key}|PROMO`)) continue;
-          const msg = { title: `⚠ Promo at risk: ${pr.title}`.slice(0, 90), body: `${who}: ${why}. Leg: ${lg.disp || lg.key}. Pull or swap it before kickoff.`.slice(0, 300), url: `/b/${code}/`, tag: `bs-promo-${code}` };
+          // owner 11/1: name the model's best clean replacement from the same game and market, and open the builder with the swapped slip
+          const sw = swapFor(lg, pr); let body = `${who}: ${why}. Leg: ${lg.disp || lg.key}.`, url = `/b/${code}/`;
+          if (sw) { body += ` Swap: ${legLabel(sw)} (${am(sw.o)}, model ${Math.round(sw.p * 100)}%). Tap to load the swapped slip.`;
+            const ks = (pr.legs || []).map((x: any) => x === lg ? `${sw.pl}|${sw.m}|${Math.round(sw.ln || 1)}` : x.key).filter(Boolean);
+            url = `/build/?new=1&${ks.map((k: string) => "add=" + encodeURIComponent(k)).join("&")}#slip`; }
+          else body += " No clean same-game swap on the board - pull it before kickoff.";
+          const msg = { title: `⚠ Promo at risk: ${pr.title}`.slice(0, 90), body: body.slice(0, 300), url, tag: `bs-promo-${code}` };
           for (const s of osubs) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) npromo++; } catch (e) { console.warn("push", String(e)); } }
           done.add(`${owner}|${key}|PROMO`); await mark(String(owner), W, key, "PROMO");
         }
@@ -375,7 +416,7 @@ export async function run(now = Date.now()) {
     }
   }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, weather: wxGames, wxSent: nwx, risk: nrisk, promoAlerts: npromo, removed: gone.length, statuses: ST.size };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, weather: wxGames, wxSent: nwx, risk: nrisk, promoAlerts: npromo, inactives: ninact, removed: gone.length, statuses: ST.size };
 }
 
 async function mark(uid: string, W: number, player: string, status: string) {
@@ -406,7 +447,7 @@ async function liveBox(games: any[]): Promise<Box> {
   const B: Box = { players: new Map(), first: new Map(), state: new Map() };
   const kos = games.map((g) => g.ko);
   const dr = `${ymd(Math.min(...kos) - 864e5)}-${ymd(Math.max(...kos) + 864e5)}`;
-  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&dates=${dr}`],
+  const sb = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dr}`, `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&dates=${dr}`, `${FEEDS}/scoreboard.json`],
     (j) => j.events ? j : (j.content && j.content.sbData && j.content.sbData.events ? j.content.sbData : null));
   if (!sb) { console.warn("no scoreboard reachable this run"); return B; }
   for (const ev of (sb.events || [])) {
@@ -416,7 +457,7 @@ async function liveBox(games: any[]): Promise<Box> {
       if (!abs.includes(g.a) || !abs.includes(g.b)) continue;
       const st = ((ev.status || c.status || {}).type || {}).state || "pre"; B.state.set(g.gid, st);
       if (st === "pre") continue;
-      const sm = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://cdn.espn.com/core/nfl/boxscore?xhr=1&gameId=${ev.id}`],
+      const sm = await getJson([`${ESPN_BASE}/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`, `https://cdn.espn.com/core/nfl/boxscore?xhr=1&gameId=${ev.id}`, `${FEEDS}/box/${ev.id}.json`],
         (j) => j.boxscore ? j : (j.gamepackageJSON && j.gamepackageJSON.boxscore ? j.gamepackageJSON : null));
       if (sm) { try { parseSummary(sm, g.gid, B); } catch (e) { console.warn("summary", g.gid, String(e)); } }
     }
