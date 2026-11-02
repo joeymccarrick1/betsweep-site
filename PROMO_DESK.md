@@ -57,7 +57,7 @@ A leg is usable only if ALL hold:
   projection where one is clearly better on matchup rank, volume trend or flags; write each as "Start A over B: reason", using the logic of
   /team/compare/ (site/team/compare/data.json has projections, last-4 games, flags). Plus a "weekend watch" line: any HIGH weather game and
   notable Questionable players.
-- **saturday** (early Sunday card): "Model's Best" 3 legs from 3 different Sunday games using legs with a `tier`, a themed name.
+- **saturday** (early Sunday card): "Model's Best" 3 legs from 3 different Sunday games using legs with a `tier`, a themed name; plus the SGP of the week (below).
 - **sunday_main** (posted ~10:30 AM after inactives): (1) Favorite TDs: 3-4 Anytime TD legs, different games, `p >= 0.40`, price +200 or
   shorter, highest `p`; (2) Either/Or TDs: 5-6 of the most confident games, for each the two likeliest scorers (FanDuel's "Either TD"
   market is not in the data - list the pairs and say to build it in FanDuel's Either-player market); (3) Sweep: best single leg from the 5
@@ -72,7 +72,15 @@ A leg is usable only if ALL hold:
   shootout script (no unders, no leg that needs a blowout). That slip only cashed because the game went to overtime - so prefer the lower rungs of
   each ladder (rungs 10-25% under projection) and the likeliest TD scorers, and keep the final price nearer +5000 than +10000 when it's close. Still
   apply the leg filter (injuries, weather, flags). Suggest the 50% profit boost on it if one is available. This is a lottery promo: it is exempt from
-  the 3-5 leg rule and counts in the lottery record.
+  the 3-5 leg rule and counts in the lottery record. Script check: `D.games[gid].probs` = model chances of [away by 10+, close & low-scoring,
+  shootout, home by 10+]. Build the both-offenses shootout version when shootout >= 20% or the total `tot` >= 48; otherwise build it around the
+  model's most likely ending (`most`), e.g. "SEA by 10+": the leading team's QB yards + WR1 yards and TD + RB1 rushing yards and TD, plus the
+  trailing QB's rushing - and say which script the slip needs in the post.
+- **SGP of the week** (in the saturday run, owner 11/1): one lottery same-game parlay from the Sunday game with the highest scoring potential -
+  rank Sunday games by shootout chance (`probs[2]`) then total (`tot`); take the top game. 6-8 legs that all need the same script (the shootout, or
+  that game's most likely ending if shootout < 20%), target +3000 to +10000 (FanDuel's SGP price will be lower than the legs multiplied - say so),
+  leg filter applies, rungs 10-25% under projection, likeliest TD scorers. Name it, label LOTTERY, give the script in one line and the model's
+  chance (product of BetSweep % = the independent floor; same-game correlation makes it higher).
 - **tuesday** (receipt): no bets. Read `site/receipts/` (newest week page) and the promo grades it shows, plus `site/b/promos.json`; write
   the receipt post (core record vs lottery record, best hit, toughest miss with its "why it lost" line if the receipt shows one) and a
   60-second video script. If last week is not graded yet, say so and stop.
