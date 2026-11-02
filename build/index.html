@@ -17,7 +17,7 @@
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BetSweep Parlay Builder">
 <meta name="twitter:description" content="Every FanDuel player prop on the Week 8 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Sun "><meta name="twitter:image" content="https://betsweep.co/og.png">
 <script>window.__BS_ACCOUNT={url:"https://fuwiqijgkgbzvnfnsans.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU",google:false};</script>
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
 <meta charset="utf-8">
 <title>BetSweep Parlay Builder</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@1,800&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1627,7 +1627,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
       if(el.classList.contains('glb')){ el.classList.toggle('in', on); return; }
       $$('button', el).forEach(function(b){ if(b.closest('[data-i]') !== el || b.disabled) return; var t = b.textContent.trim(); if(t === '+ Add' || t.indexOf('In slip') === 0){ b.classList.toggle('in', on); b.textContent = lab; } });
     }); }
-  function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; sel[i] = true; } syncSel(i); renderSlip(); }
+  function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; if(window.BSRisk && window.BSRisk.blockAdd(legs[i].pl, legs[i].m)) return; sel[i] = true; } syncSel(i); renderSlip(); }
   // ---- quick builds ----
   function pickLegs(cands, n, opts){
     var used = {}, usedG = {}, out = [];
@@ -1638,7 +1638,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return out;
   }
   function quick(kind){
-    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game); });
+    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });   // owner 11/1: skip live injury / weather / owner-note risks
     var bestOf = {}; pool.forEach(function(l){ var k = l.pl + '|' + l.m; if(!bestOf[k] || l.e > bestOf[k].e) bestOf[k] = l; }); pool = Object.keys(bestOf).map(function(k){ return bestOf[k]; });
     var picks = [];
     if(kind === 'anchor'){ picks = pickLegs(pool.filter(function(l){ return l.o <= -130 && l.e >= -0.005; }).sort(function(a,b){ return b.p - a.p; }), 3, {distinctGames: st.game === 'all'}); }
@@ -1663,7 +1663,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04; });
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.04 && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
