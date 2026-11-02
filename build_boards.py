@@ -731,6 +731,9 @@ def best_parlay(a, b, players, s, wts=None):
         # owner 10/27: best-parlay player legs come from the Model's Best tier only (Weeks 6-7: 65%+ legs at or above the price hit 64.9%;
         # even-money lines the model is 8+ pts above hit 55%) - TDs keep their own rule below
         _rp = l.get("raw_p"); _o = l.get("odds")
+        if l["market"] == "Longest Reception": continue   # owner 11/1: the model's weakest market stays out of listed parlays
+        if l["market"] == "Rushing Yards" and (_rp is None or l["book"] is None or _rp - l["book"] < 0.05): continue   # rushing yards only with a clear cushion
+        if _o is not None and _o <= -250 and not (_rp is not None and _rp >= l["book"] and l["p"] >= l["book"]): continue   # no paying up for -250 and shorter
         if l["market"] != "Anytime TD" and not (_rp is not None and l["book"] is not None and ((l["p"] >= 0.65 and _rp >= l["book"]) or (_o is not None and -135 <= _o <= 115 and _rp - l["book"] >= 0.08))): continue
         if l["market"] == "Anytime TD" and not (_rp is not None and _rp >= l["book"] and _o is not None and _o <= 200): continue
         role = roles.get(l["player"], ""); p = l["p"]; ps = []
