@@ -1,0 +1,18 @@
+# ESPN mirror for the slip-alerts Edge Function (see .github/feeds.py). Force-pushes a single commit to the orphan branch `feeds`.
+name: feeds
+on:
+  schedule: [{cron: "*/10 * * * *"}]
+  workflow_dispatch: {}
+permissions: {contents: write}
+concurrency: {group: feeds, cancel-in-progress: true}
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/feeds.py
+      - run: |
+          cd out
+          git init -q -b feeds && git config user.name BetSweep && git config user.email support@betsweep.co
+          git add -A && git commit -qm "ESPN mirror $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" feeds
