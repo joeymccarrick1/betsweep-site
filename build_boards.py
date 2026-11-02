@@ -276,6 +276,28 @@ for _a, _b, _pl in blocks:
         if f and _p[2] == f["team"]: _p[0] = f["player"]; _p[7] = "FILL-IN STARTER"
 FE.FILLIN = {f["player"]: f["note"] for f in FILLS}
 if FILLS: print("fill-in starters:", ", ".join(f"{f['player']} ({f['team']}, for {f['for']}, on {f['standin']}'s row)" for f in FILLS))
+# owner 11/1 ("How come Charbonnet's not on our matchup boards"): a returning starter with no 2026 game log has no row on the sheet's boards
+# tab (the projection tabs only know players with a log), though the builder prices him (returning.py). Give him a row from the same
+# projection - last year's share x this team's volume, first-game discounts - tagged RETURNING STARTER. Source: this week's availability rows
+# marked CLEARED / ACTIVE / QUESTIONABLE whose reason says "no 2026 game log" (Step 2a writes them that way).
+try:
+    import returning as _RET
+    _PRIOR = _RET.load_prior(HERE); _TVOL = _RET.team_volume(IN, WEEK); _nret = []
+    _onboard = {_RET.normname(_p[0]) for _a, _b, _pl in blocks for _p in _pl}
+    for _r in avail_raw[1:]:
+        if len(_r) < 10 or str(_r[0]) != str(WEEK) or str(_r[4]).strip().upper() not in ("CLEARED", "ACTIVE", "QUESTIONABLE"): continue
+        if "no 2026 game log" not in str(_r[9]).lower() or _RET.normname(_r[1]) in _onboard or str(_r[3]) not in ("RB", "WR", "TE"): continue
+        _blk = next(((_a, _b, _pl) for _a, _b, _pl in blocks if _r[2] in (_a, _b)), None)
+        _pr = _RET.project(_r[1], _r[2], _r[3], _PRIOR, _TVOL) if _blk else None
+        if not _pr: continue
+        _opp = _blk[1] if _blk[0] == _r[2] else _blk[0]
+        _tch = (_pr["tgt"] + _pr["car"]) or 1; _rtd = _pr["lam_td"] * _pr["car"] / _tch; _ctd = _pr["lam_td"] * _pr["tgt"] / _tch
+        _ppr = 0.1 * (_pr["rushy"] + _pr["recy"]) + _pr["rec"] + 6 * _pr["lam_td"]
+        _blk[2].append([_r[1], "", _r[2], _r[3], _opp, f"{_ppr:.2f}", "", "RETURNING STARTER", "", f"{_pr['rushy']:.1f}" if _pr["car"] >= 1 else "",
+                        f"{_pr['recy']:.1f}", f"{_pr['rec']:.1f}", "", f"{_rtd:.2f}" if _pr["car"] >= 1 else "", f"{_ctd:.2f}", "", ""])
+        _nret.append(f"{_r[1]} ({_r[2]} {_r[3]}, {_ppr:.1f} PPR)")
+    if _nret: print("returning starters on the boards:", ", ".join(_nret))
+except Exception as _e: print("note: returning-starter board rows skipped:", _e)
 
 def kick_ms(a, b):
     """Kickoff as epoch ms (nflverse gametime is US Eastern); None when the schedule has no time."""
