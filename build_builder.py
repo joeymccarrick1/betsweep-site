@@ -548,6 +548,26 @@ OSR = {t: {pos: oranks(pos, t, {"QB": "Passing Yards", "RB": "Rushing Yards", "W
 RKTAB = {"cols": list(_ORK.COLS) if _OR else [], "off": _OR["season"] if _OR else {}, "off3": _OR["l3"] if _OR else {},
          "def": {t: RANKS[t] for t in RANKS}, "def3": {t: RANKS3[t] for t in RANKS3}, "dcols": list(DCOL.keys()) if DCOL else []}
 POSR = {o: {pos: dranks(pos, o, {"QB": "Passing Yards", "RB": "Rushing Yards", "WR": "Receiving Yards", "TE": "Receiving Yards"}[pos]) for pos in ("QB", "RB", "WR", "TE")} for o in OPPS}   # card header: "GB vs QB #24"
+# owner 11/1 ("when the model's projections are more likely to be wrong"): Weeks 6-7 graded legs (n=3,298) - where the model sat 10+ pts above
+# FanDuel's implied %, it said ~65% and the legs hit ~50% (n=208, both weeks), and a 50/50 model-book blend beat the model alone out of sample
+# in both weeks. WATCH note for now (does not gate parlays); re-test on Week 8 before it changes edges.
+# Also a price-shop note: FanDuel vs DraftKings / Hard Rock on the same leg (same line), 3+ implied points apart.
+def _imp(o):
+    try: o = float(o)
+    except Exception: return None
+    return 100 / (o + 100) if o > 0 else -o / (-o + 100)
+for _l in LEGS:
+    if _l.get("gl"): continue
+    try:
+        if _l.get("p") is not None and _l.get("bk") is not None and _l["p"] - _l["bk"] >= 0.10:
+            _l.setdefault("fh", []).append(["watch", "Market disagrees", f"The model says {_l['p']*100:.0f}% but FanDuel's price implies {_l['bk']*100:.0f}%. When we disagree with the book by 10+ points the book has usually been closer (Weeks 6-7: model ~65%, hit ~50%) - treat the edge as smaller than it looks."])
+        _fd = _imp(_l.get("o")); _ot = [(k, _imp(v.get("o"))) for k, v in (_l.get("bks") or {}).items() if isinstance(v, dict) and v.get("o") is not None]
+        _ot = [(k, x) for k, x in _ot if x is not None]
+        if _fd is not None and _ot:
+            _bk, _bx = min(_ot, key=lambda t: t[1]); _nm = {"dk": "DraftKings", "hr": "Hard Rock"}.get(_bk, _bk.upper())
+            if _bx <= _fd - 0.03: _l.setdefault("fh", []).append(["info", "Better price elsewhere", f"{_nm} has this at {(_l['bks'][_bk]['o']):+.0f} vs FanDuel {float(_l['o']):+.0f} - same leg, {(_fd - _bx)*100:.0f} implied points cheaper."])
+            elif all(x >= _fd + 0.03 for _, x in _ot): _l.setdefault("fh", []).append(["info", "Best price: FanDuel", f"FanDuel's {float(_l['o']):+.0f} beats " + ", ".join(f"{ {'dk': 'DraftKings', 'hr': 'Hard Rock'}.get(k, k)} {(_l['bks'][k]['o']):+.0f}" for k, _ in _ot) + " on the same leg."])
+    except Exception: pass
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 BUILDER_CSS = r"""

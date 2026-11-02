@@ -141,6 +141,18 @@ class Engine:
                 r = r + [""] * (17 - len(r))
                 self.PROJ[r[0]] = {"team": r[2], "pos": r[3], "opp": r[4], "ppr": _num(r[5]), "role": r[7], "Pass Yds": _num(r[8]), "Rush Yds": _num(r[9]), "Rec Yds": _num(r[10]), "Receptions": _num(r[11])}
         # market totals from the nflverse schedule
+        self.SPREAD = {}   # owner 11/1: team -> points favored this week (closing-ish line from nflverse schedules)
+        # veteran status (blowout rest risk): years in the league / age from the nflverse roster cached in in/
+        self.VET = {}
+        try:
+            import datetime as _d
+            with open(os.path.join(IN, "roster_2026.csv"), newline="") as f:
+                for r in csv.DictReader(f):
+                    yx = _num(r.get("years_exp")); age = None
+                    try: age = (_d.date.today() - _d.date.fromisoformat(r["birth_date"][:10])).days / 365.25
+                    except Exception: pass
+                    if r.get("full_name"): self.VET[_nn(r["full_name"])] = bool((yx is not None and yx >= 8) or (age is not None and age >= 30))
+        except Exception: pass
         self.TOTAL = {}; played = {}   # played[week] = set of teams with a game that week (byes = the teams missing)
         p = os.path.join(IN, "games.csv")
         if os.path.exists(p):
@@ -150,7 +162,18 @@ class Engine:
                     try: wk = int(g["week"])
                     except Exception: continue
                     played.setdefault(wk, set()).update([g["away_team"], g["home_team"]])
-                    if wk == self.WEEK: self.TOTAL[frozenset([g["away_team"], g["home_team"]])] = _num(g["total_line"])
+                    if wk == self.WEEK:
+                        self.TOTAL[frozenset([g["away_team"], g["home_team"]])] = _num(g["total_line"])
+                        sp = _num(g.get("spread_line"))   # nflverse: home spread, positive = home favored
+                        if sp is not None: self.SPREAD[g["home_team"]] = sp; self.SPREAD[g["away_team"]] = -sp
+        # FanDuel's spread wins over the nflverse line when the game-lines pull has it (fresher, and it is the book the site prices against)
+        try:
+            import gamelines as _GLM
+            for r in vals("gamelines.json")[1:]:
+                if len(r) > 5 and r[3] == "Spread" and _num(r[5]) is not None:
+                    ab = _GLM.TEAM_FULL.get(str(r[4]).strip())
+                    if ab: self.SPREAD[ab] = -_num(r[5])   # "-6.5" on a team = favored by 6.5
+        except Exception: pass
         allteams = set().union(*played.values()) if played else set()
         self.BYE = {wk: allteams - ts for wk, ts in played.items() if len(ts) < len(allteams)}   # {week: {teams on bye}}
         ALIAS = {"LAR": "LA", "WSH": "WAS", "JAC": "JAX"}
@@ -512,6 +535,11 @@ class Engine:
                     else: add("good", "Rain = run game", f"{rt}: teams lean on the run in steady rain - carries go up.")
                 elif pt.startswith("rain") or pch >= 50: add("watch", "Rain", f"Rain {'possible' if pt.startswith('rain') else f'{pch:.0f}% chance'} at kickoff ({temp:.0f}°F): wet ball favours the run and short passing; fumbles/drops up.")
                 if temp <= 25: add("watch", "Cold", f"{temp:.0f}°F at kickoff: passing efficiency and kicking drop in deep cold.")
+        # --- blowout rest risk (owner 11/1 after Diggs, SNF Week 8): nflverse 2019-24, veteran WRs (age 30+ or 8+ years) on 7+ point favorites
+        # averaged 13% fewer receiving yards and 15% fewer PPR points than their trailing 4 (n=137); in games actually won by 17+ veterans lost
+        # 10 points of snap share and 16% of targets. Too thin to adjust the projection (2025 check n=24) - a WATCH note only.
+        if team and pos == "WR" and self.VET.get(_nn(name)) and (self.SPREAD.get(team) or 0) >= 7:
+            add("watch", "Blowout rest risk", f"{team} is a {self.SPREAD[team]:g}-point favorite. Since 2019, veteran receivers on 7+ point favorites have averaged about 13% fewer receiving yards than their recent form, and in blowouts they lose snaps to the backups late. Lean unders / lower rungs on his yardage.")
         # --- market total ---
         if team and opp:
             tot = self.TOTAL.get(frozenset([team, opp]))
