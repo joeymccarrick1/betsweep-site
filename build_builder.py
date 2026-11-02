@@ -453,7 +453,8 @@ for l in LEGS:
         if o is not None and -135 <= o <= 115 and bo - (1 - l["raw_p"]) >= 0.08: l["tier"] = "even"
     elif l["m"] == "Anytime TD":
         if l["raw_p"] >= l["bk"] and "/" not in l["pl"] and o is not None and o <= 200: l["tier"] = "td"
-    elif l["m"] in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions", "Longest Reception"):
+    elif l["m"] in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions"):   # owner 11/1: Longest Reception out (the model's weakest market)
+        if l["m"] == "Rushing Yards" and l["raw_p"] - l["bk"] < 0.05: continue   # owner 11/1: rushing yards only with a clear cushion (model overconfident there, Weeks 6-7)
         if o is not None and -135 <= o <= 115 and l["raw_p"] - l["bk"] >= 0.08: l["tier"] = "even"
         elif (l.get("p") or 0) >= 0.65 and l["raw_p"] >= l["bk"] and "Cleared this line in only" not in (l.get("w") or ""):
             k = (l["pl"], l["m"])
@@ -1409,6 +1410,23 @@ BUILDER_JS = r"""
       $$('button', el).forEach(function(b){ if(b.closest('[data-i]') !== el || b.disabled) return; var t = b.textContent.trim(); if(t === '+ Add' || t.indexOf('In slip') === 0){ b.classList.toggle('in', on); b.textContent = lab; } });
     }); }
   function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; if(window.BSRisk && window.BSRisk.blockAdd(legs[i].pl, legs[i].m)) return; sel[i] = true; } syncSel(i); renderSlip(); }
+  // ---- owner 11/1 ("Start with 1-4"): how the quick builds and the parlay generator choose legs. Graded Weeks 6-7 (3,298 legs):
+  //  - heavy favorites (-250 and shorter) are left out unless the model's own % clears the book's by 3+ pts ("price too short" legs lost
+  //    12% per unit; -300..-150 legs hit 61.5% vs 67% implied)
+  //  - on a yardage ladder, the rung the model projects 10-25% over beat the 25-50% rungs (hit 56% vs 53%, units -5% vs -14%): when a
+  //    player has a 10-25% rung, his 25-50% rungs are skipped
+  //  - weakest markets: Longest Reception (-13% per unit) only with a +2 pt edge; Rushing Yards (hit 45% vs 51% model) only with a 10%+ cushion
+  var LADB = {}; legs.forEach(function(l){ if(!isGL(l) && !isTD(l) && !l.u && l.proj && l.ln){ var c = l.proj / l.ln - 1; if(c >= 0.10 && c < 0.25) LADB[l.pl + '|' + l.m] = 1; } });
+  function smartLeg(l){
+    if(isGL(l)) return true;
+    var pm = l.pm != null ? l.pm : l.p;
+    if(l.o <= -250 && !(pm >= l.bk + 0.03)) return false;
+    if(l.m === 'Longest Reception' && !(l.e >= 0.02)) return false;
+    var cu = (!isTD(l) && !l.u && l.proj && l.ln) ? l.proj / l.ln - 1 : null;
+    if(l.m === 'Rushing Yards' && cu != null && cu < 0.10) return false;
+    if(cu != null && cu >= 0.25 && cu < 0.5 && LADB[l.pl + '|' + l.m]) return false;
+    return true;
+  }
   // ---- quick builds ----
   function pickLegs(cands, n, opts){
     var used = {}, usedG = {}, out = [];
@@ -1419,10 +1437,10 @@ BUILDER_JS = r"""
     return out;
   }
   function quick(kind){
-    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });   // owner 11/1: skip live injury / weather / owner-note risks
+    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: skip live injury / weather / owner-note risks; smartLeg = the 11/1 leg rules
     var bestOf = {}; pool.forEach(function(l){ var k = l.pl + '|' + l.m; if(!bestOf[k] || l.e > bestOf[k].e) bestOf[k] = l; }); pool = Object.keys(bestOf).map(function(k){ return bestOf[k]; });
     var picks = [];
-    if(kind === 'anchor'){ picks = pickLegs(pool.filter(function(l){ return l.o <= -130 && l.e >= -0.005; }).sort(function(a,b){ return b.p - a.p; }), 3, {distinctGames: st.game === 'all'}); }
+    if(kind === 'anchor'){ picks = pickLegs(pool.filter(function(l){ return l.o <= -130 && l.e >= -0.005 && (l.o > -250 || l.p >= l.bk); }).sort(function(a,b){ return b.p - a.p; }), 3, {distinctGames: st.game === 'all'}); }
     if(kind === 'value'){ picks = pickLegs(pool.filter(function(l){ return l.o > -250 && l.o < 250 && l.e >= 0.015; }).sort(function(a,b){ return b.e - a.e; }), 4, {distinctGames: st.game === 'all'}); }
     if(kind === 'moon'){ picks = pickLegs(pool.filter(function(l){ return l.o >= 150 && l.e >= 0; }).sort(function(a,b){ return b.e - a.e; }), 5, {distinctGames: st.game === 'all'}); }
     sel = {}; pick = {}; picks.forEach(function(l){ sel[l.i] = true; }); renderList(); renderSlip();
@@ -1444,7 +1462,7 @@ BUILDER_JS = r"""
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)); });
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && (l.o > -250 || l.p >= l.bk) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: no paying up for -250 and shorter unless model + market rate it above the price
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
@@ -1514,6 +1532,11 @@ BUILDER_JS = r"""
   function ladder(pl, m){ return (GROUPS[pl + '|' + m] || []).filter(function(x){ return !x.u; }); }
   function mainIdx(pl, m){ var g = ladder(pl, m); if(!g.length) return 0; var u = UND[pl + '|' + m];
     if(u){ var want = Math.floor(u.ln) + 1; for(var i = 0; i < g.length; i++) if(Math.round(g[i].ln) === want) return i; }
+    // owner 11/1: default to the rung 10-25% under his projection (Weeks 6-7: those lines hit 56%; 25-50% under hit 53% at worse prices),
+    // best edge among them; otherwise the rung priced closest to -110 as before
+    var pj = g[0] && g[0].proj, cand = [];
+    if(pj && !isTD(g[0]) && g[0].m !== 'Longest Reception') g.forEach(function(x, i){ if(x.ln > 0 && x.o != null && x.o >= -400 && pj / x.ln - 1 >= 0.10 && pj / x.ln - 1 <= 0.25) cand.push(i); });
+    if(cand.length){ var bi = cand[0]; cand.forEach(function(i){ if((g[i].e || 0) > (g[bi].e || 0)) bi = i; }); return bi; }
     var best = 0, bd = 1e9; g.forEach(function(x, i){ var d = Math.abs((x.o == null ? 9999 : x.o) + 110); if(d < bd){ bd = d; best = i; } }); return best; }
   function overTxt(l){ return 'Over ' + (Math.round(l.ln) - 0.5); }
   function boxLeg(pl, m){ var s = BOX[pl + '|' + m]; var g = ladder(pl, m); if(!g.length) return null;
@@ -1743,7 +1766,7 @@ body = f'''<div class="bld">
    <div class="quick"><button type="button" data-k="anchor">Anchor 3</button><button type="button" data-k="value">Value 4</button><button type="button" data-k="moon">Moonshot 5</button><span class="note" style="padding:4px 0 0;flex-basis:100%">Quick builds use clean legs (player props and game lines), one per player, one per game when "All games" is selected. Edit freely.</span></div>
    <div class="gen" id="gen">
     <div class="grow"><b>Build me a</b><input id="genT" type="text" inputmode="numeric" value="+500" aria-label="target odds"><span class="presets"><button type="button" data-t="+150">+150</button><button type="button" data-t="+300">+300</button><button type="button" data-t="+500">+500</button><button type="button" data-t="+1000">+1000</button><button type="button" data-t="+5000">+5000</button></span></div>
-    <div class="grow opts"><label><input id="genClean" type="checkbox" checked> clean legs</label><label><input id="genSoft" type="checkbox"> soft matchups</label><label title="Only legs with a green matchup on both sides (offense + defense)"><input id="genGreen" type="checkbox"> green matchups</label><label>legs <select id="genN"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option></select></label><input id="genX" type="text" placeholder="leave out a player (e.g. Walker)" aria-label="leave out players"></div>
+    <div class="grow opts"><label><input id="genClean" type="checkbox" checked> clean legs</label><label><input id="genSoft" type="checkbox"> soft matchups</label><label title="Only legs with a green matchup on both sides (offense + defense)"><input id="genGreen" type="checkbox"> green matchups</label><label>legs <select id="genN"><option>3</option><option selected>4</option><option>5</option><option>6</option><option value="7">7 (long shot)</option><option value="8">8 (long shot)</option></select></label><input id="genX" type="text" placeholder="leave out a player (e.g. Walker)" aria-label="leave out players"></div>
     <div class="grow"><button type="button" class="btn" id="genGo">Find it</button><span class="note" id="genScope"></span></div>
     <div id="genOut"></div>
    </div>
