@@ -116,6 +116,7 @@ self.addEventListener('notificationclick', function(e){
 open(os.path.join(SITE, "sw.js"), "w").write(SW)
 open(os.path.join(SITE, "account.js"), "w").write(ACCT.ACCOUNT_JS)
 open(os.path.join(SITE, "import.js"), "w").write(__import__("slipimport").IMPORT_JS)   # owner 11/1: FanDuel screenshot import on /me/ (slipimport.py)
+open(os.path.join(SITE, "risk.js"), "w").write(__import__("risk").js())   # owner 11/1: live injury / weather / owner-note layer (risk.py)
 open(os.path.join(SITE, "offline.html"), "w").write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BetSweep · offline</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#141a24;color:#f1e8d8;font-family:"IBM Plex Sans",system-ui,sans-serif;text-align:center;padding:24px}img{width:260px;max-width:80vw}p{color:#a9a294;line-height:1.5}a{color:#f1e8d8}</style></head><body><div><img src="/wordmark.png" alt="BetSweep"><p>You are offline and this page was not saved yet.<br>The pages you opened before are still available from the menu.</p><p><a href="/">Try again</a></p></div></body></html>')
 
 open(os.path.join(SITE, ".nojekyll"), "w").write("")
@@ -260,7 +261,7 @@ def wrap(body, title, desc, path, og_img):
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{html.escape(title)}">
 <meta name="twitter:description" content="{html.escape(desc)}"><meta name="twitter:image" content="{BASE}{og_img}">
 <script>window.__BS_ACCOUNT={{url:"{ACCT.SUPABASE_URL}",key:"{ACCT.SUPABASE_ANON}",google:{"true" if ACCT.GOOGLE else "false"}}};</script>
-<script defer src="{ACCT.SUPABASE_JS}"></script><script defer src="/account.js"></script>
+<script defer src="{ACCT.SUPABASE_JS}"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
 '''
     # the built page starts with <title>; everything up to </style>... is head material, the rest is body
     m = re.search(r"</style>\s*", body)
@@ -354,6 +355,14 @@ if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG 
 import shortlinks as SL
 try: _promos = json.load(open(os.path.join(OUT, "promos.json")))
 except Exception: _promos = []
+# owner 11/1: /b/promos.json - this week's promoted bets leg by leg, for the slip-alerts promo watch (pushes the owner when a LIVE promo leg is hit by
+# an injury, a weather turn or an owner note before kickoff)
+try:
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True)
+    json.dump([{"week": _p.get("week"), "slot": _p.get("slot"), "title": _p.get("title"), "status": _p.get("status", "LIVE"),
+                "legs": [{"key": _l.get("key"), "who": _l.get("who"), "market": _l.get("market"), "gid": _l.get("gid"), "ko": _l.get("ko"), "disp": _l.get("disp")} for _l in (_p.get("legs") or [])]}
+               for _p in _promos], open(os.path.join(SITE, "b", "promos.json"), "w"))
+except Exception as _e: print("note: /b/promos.json not written:", _e)
 _bll, _blb = ACCT._base_css()
 def _blpage(inner): return f"<title>BetSweep</title>\n{_bll}\n<style>{_blb}{SL.CSS}</style>\n{inner}"
 os.makedirs(os.path.join(SITE, "b"), exist_ok=True)

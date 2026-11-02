@@ -130,14 +130,16 @@ async function getJson(urls: string[], pick: (j: any) => any = (j) => j): Promis
   }
   return null;
 }
+export const QST = new Map<string, string>();   // owner 11/1: questionable players too, for the live risk list (not pushed)
 async function espnStatuses(): Promise<Map<string, { st: "OUT" | "DOUBTFUL"; why: string }>> {
-  const out = new Map();
+  const out = new Map(); QST.clear();
   const j = await getJson([ESPN, "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/injuries", "https://cdn.espn.com/core/nfl/injuries?xhr=1"],
     (j) => j.injuries ? j : (j.content && j.content.injuries ? { injuries: j.content.injuries } : null));
   if (!j) { console.warn("no injury feed reachable this run"); return out; }
   for (const t of (j.injuries || [])) for (const x of (t.injuries || [])) {
     const nm = x?.athlete?.displayName; const st = statusOf(x?.status || x?.type?.description);
     if (nm && st) out.set(norm(nm), { st, why: String(x?.details?.type || x?.type?.description || x?.shortComment || "").slice(0, 60) });
+    else if (nm && /questionable/i.test(String(x?.status || x?.type?.description || ""))) QST.set(norm(nm), String(x?.details?.type || "").slice(0, 60));
   }
   return out;
 }
@@ -285,6 +287,49 @@ export async function run(now = Date.now()) {
       }
     }
   }
+  // ---- live risk list + promo watch (owner 11/1) ----
+  let nrisk = 0, npromo = 0;
+  try {
+    const nowIso = new Date(now).toISOString(); const rows: any[] = [];
+    const legOfName = new Map<string, any>(); for (const l of (D.legs || [])) if (l.pos && !legOfName.has(norm(l.pl))) legOfName.set(norm(l.pl), l);
+    const injRow = (n: string, st: string, why: string) => { const l = legOfName.get(n); if (!l || (ko.get(l.g) || 0) <= now) return;
+      rows.push({ id: `inj|${n}`, kind: "injury", week: W, player: l.pl, team: l.tm, gid: l.g, status: st, level: st === "OUT" ? "block" : "warn", detail: why || null, by_owner: false, updated_at: nowIso }); };
+    for (const [n, v] of ST) injRow(n, v.st, v.why);
+    for (const [n, why] of QST) if (!ST.has(n)) injRow(n, "QUESTIONABLE", why);
+    const day = (D.games || []).filter((g: any) => g.ko && g.ko > now && g.ko - now <= 24 * 3600e3);
+    const WX24 = new Map<string, string[]>();
+    if (day.length) { const HOME = await homesOf(day);
+      for (const g of day) { const h = HOME.get(g.gid) as any; if (!h || h.indoor || h.neutral) continue; const stad = STADIUM[h.home]; if (!stad || stad[2] !== "open") continue;
+        const w = await wxAt(stad[0], stad[1], g.ko); if (!w) continue; const bad = wxBad(w); if (!bad.length) continue; WX24.set(g.gid, bad);
+        const who = [...new Set((D.legs || []).filter((l: any) => l.g === g.gid && WXLEG(String(l.m)) && ["QB", "WR", "TE"].includes(l.pos)).map((l: any) => l.pl))];
+        rows.push({ id: `wx|${g.gid}`, kind: "weather", week: W, player: null, team: null, gid: g.gid, status: "WEATHER", level: "warn", detail: `${h.away} @ ${h.home} kickoff forecast: ${bad.join(", ")}`, players: who, by_owner: false, updated_at: nowIso }); } }
+    for (let i = 0; i < rows.length; i += 200) await rest("risk_feed?on_conflict=id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify(rows.slice(i, i + 200)) });
+    await rest(`risk_feed?kind=in.(injury,weather)&updated_at=lt.${encodeURIComponent(new Date(now - 25 * 60e3).toISOString())}`, { method: "DELETE" });
+    nrisk = rows.length;
+    // promo watch: any LIVE promo leg not yet kicked off that an injury, a weather turn or an owner note now touches -> one push to the owner
+    const notes: any[] = await rest("risk_feed?kind=eq.note&select=player,status,detail");
+    const promos: any[] = await (await fetch(`${SITE}/b/promos.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => []);
+    const owner = await rest("rpc/bs_owner_id", { method: "POST", body: "{}" }).catch(() => null);
+    const osubs = owner ? subs.filter((s) => s.user_id === owner) : [];
+    if (owner && Array.isArray(promos)) for (const pr of promos) {
+      if (String(pr.status || "LIVE").toUpperCase() !== "LIVE" || pr.week !== W) continue; const code = `w${pr.week}-${pr.slot}`;
+      for (const lg of (pr.legs || [])) {
+        if (!lg.ko || lg.ko <= now) continue;
+        for (const who of String(lg.who || "").split(/\s+or\s+/i)) {
+          const n = norm(who); let why = "", tag = "";
+          const inj = ST.get(n); if (inj) { why = `${inj.st}${inj.why ? " (" + inj.why + ")" : ""} on the injury report`; tag = inj.st; }
+          else if (QST.has(n)) { why = `Questionable${QST.get(n) ? " (" + QST.get(n) + ")" : ""}`; tag = "Q"; }
+          const nt = notes.find((x) => norm(x.player) === n && ["OUT", "HURT", "LIMITED"].includes(x.status)); if (!why && nt) { why = `your note: ${String(nt.status).toLowerCase()}${nt.detail ? " - " + nt.detail : ""}`; tag = "N" + nt.status; }
+          if (!why && WX24.has(lg.gid) && WXLEG(String(lg.market))) { why = `weather - ${WX24.get(lg.gid)!.join(", ")}`; tag = "WX"; }
+          if (!why) continue;
+          const key = `promo|${code}|${n}|${tag}`; if (done.has(`${owner}|${key}|PROMO`)) continue;
+          const msg = { title: `⚠ Promo at risk: ${pr.title}`.slice(0, 90), body: `${who}: ${why}. Leg: ${lg.disp || lg.key}. Pull or swap it before kickoff.`.slice(0, 300), url: `/b/${code}/`, tag: `bs-promo-${code}` };
+          for (const s of osubs) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) npromo++; } catch (e) { console.warn("push", String(e)); } }
+          done.add(`${owner}|${key}|PROMO`); await mark(String(owner), W, key, "PROMO");
+        }
+      }
+    }
+  } catch (e) { console.warn("risk", String(e).slice(0, 200)); }
   // ---- live slip updates (owner 10/30): during games, a note when a leg on a saved slip hits or busts, and when a slip cashes ----
   let nlive = 0;
   const liveSubs = subs.filter((s) => s.live !== false);
@@ -330,7 +375,7 @@ export async function run(now = Date.now()) {
     }
   }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, weather: wxGames, wxSent: nwx, removed: gone.length, statuses: ST.size };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, weather: wxGames, wxSent: nwx, risk: nrisk, promoAlerts: npromo, removed: gone.length, statuses: ST.size };
 }
 
 async function mark(uid: string, W: number, player: string, status: string) {
