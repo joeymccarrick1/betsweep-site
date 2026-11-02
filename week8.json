@@ -1,0 +1,11 @@
+{"week": 8, "drafted": "2026-11-02T14:50Z", "note": "check_mnf run: no week8 draft existed; mnf +500 drafted now. Piss Missile Monday already LIVE in b/promos.json (checked, not redrafted).",
+ "promos": [
+  {"slot": "mnf", "name": "Emerald City Checkdown", "type": "+500", "game": "CHI-SEA",
+   "legs": [
+    {"pl": "D'Andre Swift", "m": "Receiving Yards", "ln": 18, "o": -114, "p": 0.522, "fd": {"m": "42.621389853", "s": "36072091"}},
+    {"pl": "Jaxon Smith-Njigba", "m": "Receptions", "ln": 8, "o": 106, "p": 0.488, "fd": {"m": "42.620207144", "s": "41158865"}},
+    {"pl": "Over 42.5", "m": "Total", "ln": 42.5, "o": -188, "p": 0.619, "fd": {"m": "42.619930129", "s": "12194316"}}],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621389853&selectionId[0]=36072091&marketId[1]=42.620207144&selectionId[1]=41158865&marketId[2]=42.619930129&selectionId[2]=12194316",
+   "price_est": "+404 (same-game estimate 0.85/prod(bk); check FanDuel SGP price)", "chance": 0.158,
+   "backup": {"swap": "Over 42.5 -> Over 44.5 (-138, 55.4%)", "fd": {"m": "42.619930129", "s": "12194312"}, "price_est": "+467", "chance": 0.141}}
+ ]}
