@@ -63,7 +63,16 @@ A leg is usable only if ALL hold:
   market is not in the data - list the pairs and say to build it in FanDuel's Either-player market); (3) Sweep: best single leg from the 5
   games with the most usable legs at `p >= 0.62`; (4) Best legs: 3-4 legs with the highest `p` at -200 or longer. Then mark which one to boost.
 - **sunday_late**: one 3-4 leg parlay from the 3:05 / 3:25 PM games only.
-- **snf** / **mnf**: the night game's +500 (3-4 legs) and +5000 lottery as on Thursday.
+- **snf**: the night game's +500 (3-4 legs) and +5000 lottery as on Thursday.
+- **mnf**: the +500 (3-4 legs) and **PISS MISSILE MONDAY** - always that name, BetSweep's most popular bet. Model it on the one that hit
+  (Bills @ Rams, 10-leg SGP, +6781 base / +10174 with a 50% profit boost: James Cook 60+ rush yds, Davante Adams 50+ rec yds, Josh Allen 200+
+  pass yds, Josh Allen ATD, Kyren Williams ATD, Puka Nacua ATD, Josh Allen 25+ rush yds, Puka Nacua 100+ rec yds, Matthew Stafford 300+ pass yds,
+  James Cook ATD). The story is a shootout where BOTH offenses go off: both QBs' passing yards, a mobile QB's rushing line, each RB1's rushing yards,
+  each WR1's receiving yards, and anytime TDs for the stars. 7-10 legs, target +5000 to +10000 before any boost; every leg must fit the same
+  shootout script (no unders, no leg that needs a blowout). That slip only cashed because the game went to overtime - so prefer the lower rungs of
+  each ladder (rungs 10-25% under projection) and the likeliest TD scorers, and keep the final price nearer +5000 than +10000 when it's close. Still
+  apply the leg filter (injuries, weather, flags). Suggest the 50% profit boost on it if one is available. This is a lottery promo: it is exempt from
+  the 3-5 leg rule and counts in the lottery record.
 - **tuesday** (receipt): no bets. Read `site/receipts/` (newest week page) and the promo grades it shows, plus `site/b/promos.json`; write
   the receipt post (core record vs lottery record, best hit, toughest miss with its "why it lost" line if the receipt shows one) and a
   60-second video script. If last week is not graded yet, say so and stop.
