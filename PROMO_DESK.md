@@ -30,7 +30,10 @@ Owner-facing playbook (calendar, rules, templates, video ideas): the Claude Doc 
 A leg is usable only if ALL hold:
 - its game kicks off at least 30 minutes after this run (`ko`), and the player is not Out / Doubtful / Inactive in injuries.json or
   inactives.json, not OUT / HURT / LIMITED in risk-notes.json, and not marked CONFIRMED OUT in `gd`;
-- no 'bad' flag (`w` empty and no `bad` in `D.pf[pl]`), and no 'Blowout rest risk', 'Market disagrees' or 'Playing through it' tag;
+- no 'bad' flag on THIS leg (`w` empty; `w` already carries the leg's market-specific matchup and hit-rate flags) and no player-level 'bad'
+  flag from `D.pf[pl]` other than matchup ones ('Tough matchup' / 'Matchup' tags describe his headline stat, not every market - a QB's
+  'Tough matchup' on passing does not rule out his rushing line); no 'Blowout rest risk', 'Market disagrees' or 'Playing through it' tag;
+- every SGP should have at least one leg from each team unless no clean leg exists on one side - say so if it doesn't;
 - not Longest Reception; Rushing Yards only when `pm - bk >= 0.05`;
 - odds better than -250, unless `p >= bk` (both model and market rate it above the price);
 - yardage / reception legs: choose the rung where `proj / ln - 1` is between 0.10 and 0.25 (best `e` among them); if none, the rung
