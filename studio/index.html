@@ -41,9 +41,11 @@ button.on{background:var(--red);border-color:var(--red)}
 .go{background:var(--red);border-color:var(--red);font-size:17px}
 .hint{font-size:13px;color:var(--mute);margin:6px 0 0}
 .msg{font-size:14px;color:#f3c56b;min-height:1em}
+body.m-overlay .po{display:none}body.m-poster .ov{display:none}
+canvas{touch-action:none}
 </style>
 </head>
-<body>
+<body class="m-overlay">
 <header><img src="/wordmark.png" alt="BetSweep"><h1>Promo Studio</h1><a href="/">betsweep.co →</a></header>
 <main>
   <div class="stage"><canvas id="cv" width="1080" height="1080"></canvas></div>
@@ -55,6 +57,32 @@ button.on{background:var(--red);border-color:var(--red)}
       <p class="msg" id="msg"></p>
     </fieldset>
     <fieldset>
+      <legend>Mode</legend>
+      <div class="seg" id="mode">
+        <button data-m="overlay" class="on">Slip on my art</button>
+        <button data-m="poster">Full poster</button>
+      </div>
+      <p class="hint" id="modehint">Make the graphic in ChatGPT with a blank panel for the slip, upload it, and the exact slip goes on top.</p>
+    </fieldset>
+    <fieldset class="ov">
+      <legend>Your ChatGPT image</legend>
+      <input type="file" id="art" accept="image/*">
+      <label for="sw">Slip size</label><input type="range" id="sw" min="25" max="75" value="44">
+      <div class="row">
+        <div><label for="sx">Left / right</label><input type="range" id="sx" min="0" max="100" value="94"></div>
+        <div><label for="sy">Up / down</label><input type="range" id="sy" min="0" max="100" value="55"></div>
+      </div>
+      <p class="hint">Or drag the slip on the picture.</p>
+      <label><input type="checkbox" id="ovfoot"> Add the betsweep.co link + 21+ strip at the bottom</label>
+    </fieldset>
+    <fieldset>
+      <legend>ChatGPT prompt</legend>
+      <div class="seg"><button type="button" id="pr-blank">Copy prompt: blank slip panel</button></div>
+      <div class="seg" style="margin-top:6px"><button type="button" id="pr-full">Copy prompt: ChatGPT draws it all</button></div>
+      <textarea id="prompt" readonly style="min-height:150px;margin-top:8px;font-size:14px"></textarea>
+      <p class="hint">Built from the exact legs and odds below. Paste it into ChatGPT. Still send me the finished image to proofread if ChatGPT drew the numbers.</p>
+    </fieldset>
+    <fieldset class="po">
       <legend>Size</legend>
       <div class="seg" id="size">
         <button data-s="square" class="on">Square</button>
@@ -82,7 +110,7 @@ button.on{background:var(--red);border-color:var(--red)}
         <div><label for="stake">Wager $</label><input type="number" id="stake" min="0" value="100"></div>
       </div>
     </fieldset>
-    <fieldset>
+    <fieldset class="po">
       <legend>Look</legend>
       <label for="bg">Background art (make it in ChatGPT with no text on it)</label>
       <input type="file" id="bg" accept="image/*">
@@ -119,7 +147,7 @@ var PLAYS='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.or
 
 var $=function(id){return document.getElementById(id)};
 var cv=$('cv'),ctx=cv.getContext('2d');
-var st={size:'square',promos:[],cur:null,bgImg:null,logo:null,plays:null};
+var st={size:'square',mode:'overlay',promos:[],cur:null,bgImg:null,art:null,logo:null,plays:null,slipBox:null};
 
 function loadImg(src){return new Promise(function(res,rej){var i=new Image();i.onload=function(){res(i)};i.onerror=rej;i.src=src})}
 
@@ -415,7 +443,49 @@ function titleLines(){
   var best=1,bd=1e9;for(var i=1;i<w.length;i++){var a=w.slice(0,i).join(' '),b=w.slice(i).join(' ');var d=Math.abs(a.length-b.length);if(d<bd){bd=d;best=i}}
   return [w.slice(0,best).join(' '),w.slice(best).join(' ')];
 }
+function drawOverlay(){
+  var I=info(),im=st.art,W,H;
+  if(im){var k=Math.min(1,2048/Math.max(im.width,im.height));W=Math.round(im.width*k);H=Math.round(im.height*k)}else{W=1080;H=1080}
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);
+  if(im)ctx.drawImage(im,0,0,W,H);
+  else{drawBg(W,H);ctx.fillStyle='rgba(239,233,218,.85)';ctx.textAlign='center';ctx.font=font('',46,'BSMarker');ctx.fillText('UPLOAD YOUR',W*.27,H*.45);ctx.fillText('CHATGPT IMAGE',W*.27,H*.45+56);ctx.textAlign='left'}
+  var footOn=$('ovfoot').checked,footH=footOn?92*W/1080:0;
+  var base=480,sc=W*(+$('sw').value/100)/base;
+  var lay=slipLayout(9999,64,I),sh=lay.h*sc,swp=base*sc;
+  var x=(W-swp-W*.03)*(+$('sx').value/100)+W*.015,y=(H-footH-sh-H*.03)*(+$('sy').value/100)+H*.015;
+  st.slipBox={x:x,y:y,w:swp,h:sh,W:W,H:H,footH:footH};
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);drawSlip(0,0,base,9999,I,64);ctx.restore();
+  if(footOn){ctx.save();ctx.scale(W/1080,W/1080);drawFooter(1080,H*1080/W,I.link,I.acc);ctx.restore()}
+}
+function buildPrompt(kind){
+  var I=info(),legs=parseLegs(),t=titleLines().join(' '),tag=$('tag').value.split('|').map(function(s){return s.trim()}).filter(Boolean).join(' ');
+  var notes=$('setup').value.split('\n').map(function(s){return s.trim()}).filter(Boolean).slice(0,6);
+  var oddsMain=isNaN(I.odds)?'':fmtAmer(I.boost>0?I.boosted:I.odds);
+  var g=I.games.length===1?(function(x){var p=x.split('-');return teamName(p[0])+' @ '+teamName(p[1])})(I.games[0]):'';
+  var lines=[];
+  lines.push('Make a square 1080x1080 sports-betting promo graphic for my brand BetSweep, in the same style as my past BetSweep posts: dramatic, painted, high-energy sports poster art, dark stadium-night background.');
+  lines.push('Top-left: the BetSweep logo with the tagline "PICKS. DATA. EDGE. SWEEP." (SWEEP in red).');
+  lines.push('Big brush-lettered title: "'+t.toUpperCase()+'"'+(tag?' and a smaller handwritten side tagline: "'+tag.toUpperCase()+'"':'')+'.');
+  if(g)lines.push('Theme: '+g+(I.ko?', '+I.ko:'')+'. Use the two teams\' colors and a scene that fits the title. Do not use official NFL or team logos, and do not draw real players\' faces.');
+  else lines.push('Use a scene that fits the title. Do not use official NFL or team logos, and do not draw real players\' faces.');
+  if(notes.length)lines.push('Bottom-left: a torn notepad page titled "THE SETUP:" with green checkmarks next to these exact lines: '+notes.map(function(n){return '"'+n.toUpperCase()+'"'}).join(', ')+'.');
+  if(oddsMain)lines.push('A big painted odds badge: "'+oddsMain+'"'+(I.boost>0?' with "WITH '+I.boost+'% BOOST (WAS '+fmtAmer(I.odds)+')" under it':'')+'.');
+  lines.push('Bottom strip: "TAIL IT NOW" and "BETSWEEP.CO", plus small text "Model numbers are projections, not guarantees. Prices move. 21+ | 1-800-GAMBLER".');
+  if(kind==='blank'){
+    lines.push('IMPORTANT: on the right side, leave an EMPTY dark rounded rectangle panel about 45% of the image width and 70% of its height, with nothing drawn inside it and no text in it. I will put the betslip there myself.');
+  }else{
+    lines.push('On the right side, a clean white sportsbook-style betslip card with a blue header "'+(I.games.length===1?'Same Game Parlay':legs.length+' Leg Parlay')+'" and "'+(isNaN(I.odds)?'':fmtAmer(I.odds))+'"'+(I.boost>0?' crossed out next to "'+fmtAmer(I.boosted)+'" and a "'+I.boost+'% PROFIT BOOST" tag':'')+(g?', the game line "'+g+'"':'')+', then these legs in this exact order, spelled exactly as written:');
+    legs.forEach(function(L,i){lines.push((i+1)+'. '+L.t+(L.o?' ('+L.o+')':'')+' - '+L.s)});
+    var stake=+$('stake').value||0,pay=payout(I.boost>0?I.boosted:I.odds,stake);
+    if(stake&&pay)lines.push('Footer of the slip: "'+money(stake)+' TOTAL WAGER" and "'+money(pay)+' TOTAL PAYOUT".');
+    lines.push('Double-check every name and number matches the list above exactly.');
+  }
+  return lines.join('\n');
+}
 function draw(){
+  if(st.mode==='overlay'){drawOverlay();updatePrompt();return}
+  updatePrompt();
   var S=SIZES[st.size],W=S[0],H=S[1];
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);
@@ -464,6 +534,20 @@ function blob(){return new Promise(function(r){cv.toBlob(r,'image/png')})}
 $('save').addEventListener('click',function(){blob().then(function(b){var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fileName();document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000)})});
 $('share').addEventListener('click',function(){blob().then(function(b){var f=new File([b],fileName(),{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:$('title').value}).catch(function(){})}else{$('save').click()}})});
 
+var promptKind='blank';
+function updatePrompt(){$('prompt').value=buildPrompt(promptKind)}
+function copyPrompt(kind,btn){promptKind=kind;updatePrompt();var t=$('prompt').value;var old=btn.textContent;function ok(){btn.textContent='Copied';setTimeout(function(){btn.textContent=old},1400)}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,function(){$('prompt').select()});else $('prompt').select()}
+$('pr-blank').addEventListener('click',function(){copyPrompt('blank',this)});
+$('pr-full').addEventListener('click',function(){copyPrompt('full',this)});
+document.querySelectorAll('#mode button').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('#mode button').forEach(function(x){x.classList.toggle('on',x===b)});st.mode=b.dataset.m;document.body.className='m-'+st.mode;$('modehint').textContent=st.mode==='overlay'?'Make the graphic in ChatGPT with a blank panel for the slip, upload it, and the exact slip goes on top.':'A full BetSweep poster drawn from scratch, no ChatGPT needed.';draw()})});
+['sw','sx','sy','ovfoot'].forEach(function(id){$(id).addEventListener('input',draw);$(id).addEventListener('change',draw)});
+$('art').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;loadImg(URL.createObjectURL(f)).then(function(i){st.art=i;draw()})});
+(function(){var drag=null;
+  function pt(e){var r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}}
+  cv.addEventListener('pointerdown',function(e){if(st.mode!=='overlay'||!st.slipBox)return;var p=pt(e),b=st.slipBox;if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){drag={dx:p.x-b.x,dy:p.y-b.y};cv.setPointerCapture(e.pointerId);e.preventDefault()}});
+  cv.addEventListener('pointermove',function(e){if(!drag)return;var p=pt(e),b=st.slipBox;var nx=p.x-drag.dx,ny=p.y-drag.dy;var rx=b.W-b.w-b.W*.03,ry=b.H-b.footH-b.h-b.H*.03;$('sx').value=Math.max(0,Math.min(100,rx>0?(nx-b.W*.015)/rx*100:50));$('sy').value=Math.max(0,Math.min(100,ry>0?(ny-b.H*.015)/ry*100:50));draw()});
+  function end(){drag=null}cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+})();
 /* ---------- wiring ---------- */
 ['title','tag','setup','legs','odds','boost','stake','zoom','dark','px','py','accent'].forEach(function(id){$(id).addEventListener('input',draw);$(id).addEventListener('change',draw)});
 document.querySelectorAll('#size button').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('#size button').forEach(function(x){x.classList.toggle('on',x===b)});st.size=b.dataset.s;draw()})});
