@@ -65,20 +65,44 @@ CT = dt.timezone(dt.timedelta(hours=-6))   # Central (CST from Nov 1); dates onl
 WX_HDR = ["Week", "Game Date", "Matchup Team 1", "Matchup Team 2", "Venue", "Roof Status", "Forecast Source", "Forecast Updated", "Temperature F", "Wind MPH", "Gust MPH",
           "Precipitation Type", "Precipitation Chance %", "Field Condition", "Weather Risk", "Adjustment Status"]
 rows = []
-if sb:
+# 11/3 audit: ESPN's scoreboard stays on the finished week until Tuesday night, so the Tuesday rebuild saw "still on week 8" and fell back to
+# the sheet. The target week and the matchups now come from nflverse games.csv (first 2026 REG week with an unplayed game, played games
+# within it excluded); ESPN's scoreboard is only the fallback when nflverse cannot be fetched.
+def _nflverse_games():
+    import csv, io
+    try:
+        txt = subprocess.check_output(["curl", "-fsSL", "--max-time", "30", "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv"]).decode()
+    except Exception as e:
+        print("nflverse fail", e); return None, []
+    gs = [g for g in csv.DictReader(io.StringIO(txt)) if g.get("season") == "2026" and g.get("game_type") == "REG"]
+    today = now.astimezone(CT).date().isoformat()
+    unplayed = [g for g in gs if g.get("home_score") in ("", None, "NA") and g.get("gameday", "") >= today]
+    if not unplayed: return None, []
+    wk_ = min(int(g["week"]) for g in unplayed)
+    return wk_, [g for g in unplayed if int(g["week"]) == wk_]
+ET = dt.timezone(dt.timedelta(hours=-5))   # Eastern (EST from Nov 1) - nflverse gametime is ET
+wk, games = _nflverse_games()
+evs = []
+if games:
+    for g in games:
+        home, away = EAB.get(g["home_team"], g["home_team"]), EAB.get(g["away_team"], g["away_team"])
+        ko = dt.datetime.fromisoformat(g["gameday"] + "T" + (g.get("gametime") or "13:00")).replace(tzinfo=ET).astimezone(dt.timezone.utc)
+        evs.append((home, away, ko, g.get("stadium") or "", g.get("location") == "Neutral", g.get("roof") or ""))
+elif sb:
     wk = (sb.get("week") or {}).get("number")
     for ev in sb.get("events") or []:
         c = ev["competitions"][0]; teams = {x["homeAway"]: EAB.get(x["team"]["abbreviation"], x["team"]["abbreviation"]) for x in c["competitors"]}
-        home, away = teams.get("home"), teams.get("away"); ko = dt.datetime.fromisoformat(ev["date"].replace("Z", "+00:00"))
-        v = c.get("venue") or {}; vname = v.get("fullName") or ""; neutral = bool(c.get("neutralSite"))
+        v = c.get("venue") or {}
+        evs.append((teams.get("home"), teams.get("away"), dt.datetime.fromisoformat(ev["date"].replace("Z", "+00:00")), v.get("fullName") or "", bool(c.get("neutralSite")), "dome" if v.get("indoor") else ""))
+for home, away, ko, vname, neutral, nroof in evs:
         t1, t2 = sorted([home, away]); upd = now.astimezone(CT).strftime("%Y-%m-%d %H:%M CT")
         base = [str(wk), ko.astimezone(CT).strftime("%Y-%m-%d"), t1, t2, f"{vname} ({home} home)" + (" - neutral site" if neutral else "")]
         st = STADIUM.get(home)
         if neutral or not st:
             rows.append(base + ["", "", upd, "", "", "", "", "", "", "UNKNOWN (neutral site - no forecast)", ""]); continue
-        roof = "dome" if (v.get("indoor") and st[2] == "outdoors") else st[2]
-        if roof == "dome":
-            rows.append(base + ["dome", "Open-Meteo (kickoff hour)", upd, "", "", "", "none (dome)", "", "", "NONE (dome)", ""]); continue
+        roof = "dome" if (nroof in ("dome", "closed") and st[2] == "outdoors") else st[2]
+        if roof == "dome" or nroof == "closed":
+            rows.append(base + ["dome" if roof == "dome" else "retractable (closed)", "Open-Meteo (kickoff hour)", upd, "", "", "", "none (dome)", "", "", "NONE (dome)", ""]); continue
         hr = ko.strftime("%Y-%m-%dT%H:00")
         try:
             w = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20",
@@ -92,6 +116,7 @@ if sb:
                "MODERATE" if ((wind or 0) >= 12 or (pch or 0) >= 40) else "LOW"
         if roof == "retractable": risk += " (roof can close)"
         rows.append(base + [roof, "Open-Meteo (kickoff hour)", upd, f"{tmp:.0f}", f"{wind:.0f}", f"{gust:.0f}", ptype, f"{(pch or 0):.0f}", "", risk, ""])
-    rows.sort(key=lambda r: (r[2], r[3]))
-    json.dump({"header": WX_HDR, "rows": rows, "week": wk, "mirrored": now.isoformat()}, open("out/weather.json", "w"))
-    print("weather rows:", len(rows), [(r[2], r[3], r[5], r[14]) for r in rows])
+rows.sort(key=lambda r: (r[2], r[3]))
+if rows:
+    json.dump({"header": WX_HDR, "rows": rows, "week": wk, "mirrored": now.isoformat(), "source": "nflverse schedule" if games else "ESPN scoreboard"}, open("out/weather.json", "w"))
+print("weather rows:", len(rows), "week", wk, [(r[2], r[3], r[5], r[14]) for r in rows])
