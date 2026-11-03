@@ -1,0 +1,21 @@
+Red-zone anytime-TD model study, 2026-11-03
+Fit: 2025 weeks 4-18 + 2026 weeks 1-5 (n 4,829 player-games), Poisson regression on
+  [1, log rz opportunity share, log goal-line share, log team implied pts, log touches/g + 1, log team rz trips/g]
+coef: [-6.122, 0.143, 0.063, 1.339, 0.634, -0.055]
+  -> once touches per game and implied points are in, red-zone share itself adds little; the TD edge is volume x game environment.
+Test, all player-games wk6-8: n 732, LL 0.4846, Brier 0.1575, base rate 0.231
+
+Graded FanDuel anytime-TD legs wk6-8 (V2 - FanDuel Leg Snapshots, Latest Snapshot TRUE): 344 of 356 matched, hit rate 0.340
+                 LL      Brier    legs edge>=0 (1u)   edge>=5 (1u)
+rz model         0.6057  0.2092    81  +54.2u          30   +7.9u
+raw model        0.6124  0.2110   112  +34.0u          39  +16.0u
+FanDuel          0.6191  0.2145   344   +9.9u           -
+50 rz/50 book    0.6084  0.2101    81  +54.2u          13  +13.0u
+50 raw/50 book   0.6116  0.2111   112  +34.0u          13   -3.8u
+rz+raw avg       0.6057  0.2089    84  +33.9u          23   +7.7u   <- shipped (builder anytime-TD legs)
+rz+raw+book      0.6073  0.2096    84  +33.9u          14   +9.7u
+By week (LL): wk6 n44 rz .6115 raw .6576 book .6843 avg .6308 | wk7 n147 rz .6057 raw .6180 book .6227 avg .6081 | wk8 n153 rz .6040 raw .5940 book .5970 avg .5961
+Bootstrap (2000 resamples): P(avg beats raw) 0.94, mean LL gain 0.0069 (90% CI -0.0003..0.0143); P(rz alone beats raw) 0.77
+Calibration of avg by decile: 0.1: n67 hit .15 pred .17 | 0.2: n123 .27/.25 | 0.3: n78 .44/.35 | 0.4: n44 .45/.44 | 0.5: n25 .72/.55
+rz_check.py (refit through W-1, same legs): wk7 raw .618 rz .6067 avg .6085 FD .6229 | wk8 raw .5778 rz .5899 avg .581 FD .5861
+Revert rule: raw beats the shown average two graded weeks running -> RZ_W = 0 (rztd.py).

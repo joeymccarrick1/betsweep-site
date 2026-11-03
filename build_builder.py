@@ -393,6 +393,21 @@ for l in LEGS:
     if b:
         l["bks"] = {("dk" if bk == "draftkings" else "hr" if bk == "hardrockbet" else bk): {"o": int(v["o"]) if v["o"] is not None else None, "u": v["u"], "s": v["s"]} for bk, v in b.items() if v["o"] is not None}; NBK += 1
 if BOOKODDS: print(f"book odds: {len(BOOKODDS)} rungs in the tab, {NBK} legs priced at DraftKings/Hard Rock")
+# ---- red-zone / opportunity TD model (rztd.py, owner 11/1 study -> 11/3): anytime-TD legs use the average of the projection model's Poisson
+# chance and the red-zone model's (Weeks 6-8 graded legs: log loss 0.6057 vs 0.6124 raw, best Brier; see rztd.py for the revert rule) ----
+try:
+    import rztd as RZ
+    _rz = json.load(open(os.path.join(OUT, "rztd.json")))
+    if int(_rz.get("week", 0)) != WEEK: raise ValueError(f"out/rztd.json is for week {_rz.get('week')}, not {WEEK} - run python3 rztd.py {WEEK}")
+    _nrz = 0
+    for l in LEGS:
+        if l.get("m") != "Anytime TD" or l.get("p") is None or "/" in l["pl"]: continue
+        v = RZ.lookup(_rz["players"], l["pl"], l["tm"])
+        if not v: continue
+        _old = l["p"]; l["p"] = round((1 - RZ.RZ_W) * _old + RZ.RZ_W * v["p"], 4); l["rz"] = v["p"]; _nrz += 1
+        l.setdefault("fh", []).append(["info", "Red-zone model", f"Red-zone model {v['p']*100:.0f}% (red-zone share {v['rz_share']*100:.0f}%, {v['opp_pg']:.0f} touches/g, team implied {v['impl']:.0f} pts) vs the projection model {_old*100:.0f}% - shown number is the average."])
+    print(f"red-zone TD model: {_nrz} anytime-TD legs blended ({len(_rz['players'])} players in out/rztd.json)")
+except Exception as e: print("warn: red-zone TD model not applied:", e)
 # ---- calibration: the shown Model % for every player-prop leg is the raw model blended toward FanDuel's price (calib.py; Weeks 5-6 Brier) ----
 import calib as CALIB
 for l in LEGS:
@@ -584,9 +599,11 @@ for _l in LEGS:
 # (it beat the book on TDs). Graded Weeks 6-7: log loss 0.6933 -> 0.6720 (wk6) and 0.6700 -> 0.6637 (wk7) vs the model alone, and the 200
 # likeliest legs hit 68% vs 66% (wk6) and 60.5% vs 59.5% (wk7). Edge = blended % - book %, so edges are about half the old size; the order
 # of the edges does not change. l["pm"] keeps the model's own %.
+# 11/3 audit: this block used to blend l["p"] AGAIN after calib.shrink had already blended it (W_MODEL 0.5), so yardage / reception legs
+# were shown at 25% model / 75% book while the boards showed 50/50. One blend now: pm = the raw model %, p = calib.shrink(raw, book).
 for _l in LEGS:
-    if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None: continue
-    _l["pm"] = _l["p"]; _l["p"] = round(0.5 * _l["p"] + 0.5 * _l["bk"], 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
+    if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None or _l.get("raw_p") is None: continue
+    _l["pm"] = _l["raw_p"]; _l["p"] = round(CALIB.shrink(_l["raw_p"], _l["bk"]), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 BUILDER_CSS = r"""
