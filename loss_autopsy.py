@@ -74,7 +74,22 @@ def main(W, legs_path=None):
     avail = {}
     for r in vals("avail.json")[1:]:
         if len(r) > 4 and str(r[0]) == str(W) and r[1]: avail[nn(r[1])] = r[4]
-    promo_keys = set()
+    promo_keys = set(); promo_pm = set()
+    # 11/3 audit: out/promos.json is the NEW week's LIVE slips (build_promo runs for week W+1 on Tuesday), so the autopsy matched nothing.
+    # Read the owner's tab (in/promos.json, 'PROMO - Promoted Bets') for week W instead: legs are "who | market N+ | odds".
+    try:
+        pv = vals("promos.json"); PH = {c.strip().split(" (")[0]: i for i, c in enumerate(pv[0])}
+        for r in pv[1:]:
+            if len(r) <= PH["Legs"] or str(r[PH["Week"]]).strip() != str(W): continue
+            for ln_ in str(r[PH["Legs"]]).splitlines():
+                parts = [x.strip() for x in ln_.split("|")]
+                if len(parts) < 2: continue
+                who, mk = parts[0], parts[1]
+                mm = re.match(r"(.*?)\s*(\d+(?:\.\d+)?)\+$", mk); mname, mline = (mm.group(1).strip(), float(mm.group(2))) if mm else (mk, 1.0)
+                if mname == "Either TD": mname = "Anytime TD"   # graded legs carry each player as Anytime TD
+                for w_ in re.split(r"\s+or\s+", who):
+                    promo_pm.add((nn(w_), mname)); promo_keys.add(f"{w_}|{mname}|{int(round(mline))}")
+    except Exception: pass
     try:
         for p in json.load(open(os.path.join(OUT, "promos.json"))):
             if int(p.get("week") or 0) == W:
@@ -108,7 +123,7 @@ def main(W, legs_path=None):
         tag = tag or "VARIANCE"
         seen = (tag == "WEATHER") or (tag == "INJURY" and (avail.get(k) in ("QUESTIONABLE", "OUT") or re.search(r"playing hurt|playing through|betsweep note", warn, re.I)))
         out.append({"player": pl, "market": m, "line": ln, "actual": act, "team": tm, "tag": tag, "why": why, "seen": bool(seen), "key": c(r, "Key"),
-                    "promo": f"{pl}|{m}|{int(round(ln or 1))}" in promo_keys})
+                    "promo": f"{pl}|{m}|{int(round(ln or 1))}" in promo_keys or (k, m) in promo_pm})
     # one row per player + market (alt-line ladders would count the same miss five times): keep the lowest line that missed
     best = {}
     for x in out:
