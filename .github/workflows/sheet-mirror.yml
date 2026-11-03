@@ -1,0 +1,22 @@
+# Sheet mirror for the rebuild (see .github/sheets_pull.py). Pulls the runbook's Step 2 ranges with a service account and force-pushes
+# one commit to the orphan branch `sheet-mirror` (in/*.json + games.csv). Does nothing until the SHEETS_SA_JSON secret exists.
+name: sheet-mirror
+on:
+  schedule: [{cron: "5,35 * * * *"}]
+  workflow_dispatch: {}
+permissions: {contents: write}
+concurrency: {group: sheet-mirror, cancel-in-progress: true}
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q cryptography
+      - run: python3 .github/sheets_pull.py
+        env: {SHEETS_SA_JSON: "${{ secrets.SHEETS_SA_JSON }}"}
+      - run: |
+          test -f out/in/MIRROR.json || { echo "no mirror written (secret missing?)"; exit 0; }
+          cd out
+          git init -q -b sheet-mirror && git config user.name BetSweep && git config user.email support@betsweep.co
+          git add -A && git commit -qm "Sheet mirror $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" sheet-mirror
