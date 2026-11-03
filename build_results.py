@@ -241,7 +241,39 @@ try:
         promo_table = '<table class="sc"><thead><tr><th>Slip</th><th>Legs</th><th>FanDuel</th><th>Result</th><th>Units</th></tr></thead><tbody>' + "".join(
             f'<tr><td>{E(x["title"])}</td><td>{x["n"]}</td><td>{_odds(x["fd"])}</td><td><b>{"HIT" if x["hit"] else "MISS"}</b></td><td class="{"pos" if x["u"] >= 0 else "neg"}">{x["u"]:+.1f}u</td></tr>' for x in PR) + "</tbody></table>"
 except Exception as e: print("warn: promoted bets not graded on the receipt:", e)
-promo_block = f'<h3>What we posted</h3><p class="exp">The slips BetSweep put out on X and Instagram that week, graded at the odds we posted. The leg pool above is everything the model priced; this is what we actually told you to bet.</p><div class="tiles">{promo_tiles}</div>{promo_table}' if promo_tiles else ""
+# ---- the model's own slip vs what we posted (owner 11/3: "would the model's slip have cashed?") ----
+# Model's Best tier frozen before each kickoff ('V2 - Model Best Picks', in/bestpicks.json), graded from the game log at the frozen odds, same
+# week only - the record of the legs the site led with, next to the record of the slips the owner posted.
+best_tiles = ""
+try:
+    bp = vals("bestpicks.json"); gl_ = vals("gamelog.json"); BH = {c: i for i, c in enumerate(bp[0])}; GH_ = {c: i for i, c in enumerate(gl_[0])}
+    act = {}
+    for r in gl_[1:]:
+        r = r + [""] * (len(gl_[0]) - len(r))
+        if num(r[0]) != WEEK: continue
+        g_ = lambda c: num(r[GH_[c]]) if c in GH_ else None
+        act[str(r[GH_["Player"]]).strip().lower()] = {"Passing Yards": g_("Pass Yds"), "Rushing Yards": g_("Rush Yds"), "Receiving Yards": g_("Rec Yds"), "Receptions": g_("Receptions"), "Anytime TD": (g_("Rush TD") or 0) + (g_("Rec TD") or 0)}
+    last = {}
+    for r in bp[1:]:
+        r = r + [""] * (len(bp[0]) - len(r))
+        if num(r[BH["Week"]]) != WEEK: continue
+        if str(r[BH["Kickoff (CT)"]])[:16] and str(r[BH["Frozen at (CT)"]])[:16] >= str(r[BH["Kickoff (CT)"]])[:16]: continue
+        last[(r[BH["Player"]], r[BH["Market"]], str(r[BH["Line"]]))] = r
+    T = {}
+    for (pl, mk, ln), r in last.items():
+        a = act.get(str(pl).strip().lower())
+        if not a: continue
+        under = str(mk).startswith("Under "); base = mk[6:] if under else mk; v = a.get(base); line = num(ln); o = num(r[BH["Odds"]])
+        if v is None or line is None or o is None: continue
+        hit = (v < line) if under else (v >= 1 if base == "Anytime TD" else v >= line)
+        tier = {"even": "Even money", "td": "Touchdowns", "safe": "Safer 65%+"}.get(r[BH["Tier"]], r[BH["Tier"]])
+        for key in (tier, "Model's Best, all"):
+            d = T.setdefault(key, [0, 0, 0.0]); d[0] += 1; d[1] += int(hit); d[2] += ((o / 100) if o > 0 else (100 / -o)) if hit else -1.0
+    if T.get("Model's Best, all"):
+        n_, h_, u_ = T["Model's Best, all"]
+        best_tiles = tile(f"{h_}–{n_-h_}", "the model's own picks (Model's Best tier)", f"{h_/n_*100:.0f}% hit · {u_:+.1f}u at 1u each · " + " · ".join(f"{k} {v[1]}–{v[0]-v[1]}" for k, v in T.items() if k != "Model's Best, all"), "pos" if u_ > 0 else "neg")
+except Exception as e: print("warn: Model's Best week record skipped:", e)
+promo_block = f'<h3>What we posted</h3><p class="exp">The slips BetSweep put out on X and Instagram that week, graded at the odds we posted. The leg pool above is everything the model priced; this is what we actually told you to bet. The last tile is the model\'s own frozen picks for the same week, so you can see whether the slips we built beat what the model would have led with.</p><div class="tiles">{promo_tiles}{best_tiles}</div>{promo_table}' if promo_tiles else ""
 scorecard = f'''<section class="card scorecard expanded" id="scorecard">
  <header class="hd">{PLAYS}<div class="tm a"><b>Week {WEEK}</b><span>how the model did</span></div>
   <div class="score"><span class="pt">{pctf(lp) if L else (f"{mae(pre):.1f}" if pre else "—")}</span><small>{"of the FanDuel legs we froze hit" if L else "fantasy points off per player"}</small>{SWOOSH}</div>

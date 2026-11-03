@@ -42,6 +42,11 @@ A leg is usable only if ALL hold:
 - weather: no passing / receiving legs in a game whose weather.json row is HIGH risk.
 
 ## Building a parlay
+- Market mix (owner 11/3, after the Week 8 receipt: yardage / reception legs lost at -7% ROI and the blend still trailed FanDuel, while
+  Anytime TD was the only market in profit, +6u, 33% hit vs 29% modeled): core promos are TD-led. At least half the legs of every core
+  slip are Anytime TD / Either TD / First TD legs with `p >= bk - 0.02`; yardage / reception legs are allowed only as FLOOR legs the book
+  agrees with (`pm >= bk`, rung 10-25% under projection, -130..-400). Never a core slip built only from yardage ladders. Lottery slips
+  (+2000 and up) keep their recipes but lead with the TD legs too.
 - Core promos: 3-5 legs. Reach a target price by moving ONE leg up a rung (or swapping in a TD) before adding a leg.
 - Parlay chance = product of `p` for legs in different games. Same-game legs are correlated: say "same-game - check FanDuel's
   SGP price" and estimate the price as 0.85 / (product of bk) (FanDuel's ~15% SGP hold) - never present that estimate as FanDuel's quote.
@@ -59,13 +64,24 @@ A leg is usable only if ALL hold:
   sunday_main, snf, mnf (+500 and Piss Missile Monday) - using the slot recipes below. Leg filter applies, except the "kicks off 30+ minutes after
   this run" check is simply "not started". If a game's props are not in the data yet, say "props not posted yet" for that slot (the Saturday
   check fills it). Save the drafts: write `week<W>.md` (the full owner-facing drafts) and `week<W>.json` (per promo: slot, name, legs with
-  pl / m / ln / o / p / fd ids, the FanDuel link, price) to the branch `promo-drafts` of joeymccarrick1/betsweep-site
+  pl / m / ln / o / p / fd ids, the FanDuel link, price, plus `type` ("+500" / "lottery" / ...), `game` ("CHI-SEA" for SGPs), a ready
+  `caption` for the post, and `"post": false`) to the branch `promo-drafts` of joeymccarrick1/betsweep-site
   (`git fetch origin promo-drafts || git checkout --orphan promo-drafts`; only those two files; commit "Promo drafts week W"; push that branch only -
   NEVER main or gen-overrides). This is the ONLY write any promo run may make.
+- **Approving a draft** (owner 11/3): the owner flips a draft's `"post"` to `true` (GitHub edit of week<W>.json, or tells a Claude session
+  "approve week 9 <name>" - that session may set `post`, and `odds` / `link` to the FanDuel SGP price and shareCode link the owner got,
+  on `promo-drafts` only). The next site rebuild runs gen/promo_approve.py, which appends every approved draft not yet on
+  'PROMO - Promoted Bets' as a LIVE row (next free slot, legs in the tab's "who | Market N+ | odds" format, caption, notes), so the home
+  page, /b/w<W>-<slot> short link and posters appear without retyping. check runs: a draft with `post: true` counts as posted - check it,
+  never redraft it. A promo run never sets `post` itself.
 - **check_<slot>** runs (check_thursday, check_weekend, check_sunday, check_mnf): read `week<W>.json` from the `promo-drafts` branch (newest W), and
   for every leg of that slot's promos re-run the leg filter against the CURRENT data (injury report, inactives, weather, owner notes, flags,
-  started games) and compare the FanDuel price now vs drafted. Output per promo: OK, or FLAG with the reason and a ready swap (same game, same
-  script, rung rules) and the new link/price. A slot with no draft (props were not posted on Wednesday): draft it now with its recipe and add it to
+  started games) and compare the FanDuel price now vs drafted. PRICE DRIFT (owner 11/3): for each leg compute implied % now minus implied %
+  when drafted (from `week<W>.json`; `bk` in builder_data.json / `AUTO - Book Odds` is the current FanDuel price). A leg whose price moved
+  AGAINST us by 3+ implied points (the market got longer on our side, e.g. -150 -> -115) is a FLAG even with no injury: the market has
+  moved away from the leg - swap it for the best clean leg in the same game, or if the whole slip's multiplied price rose 15%+ say so and
+  offer the re-priced slip. A leg that moved our way (shorter) is "OK - market came our way" and is a reason to lead the post with it.
+  Output per promo: OK, or FLAG with the reason and a ready swap (same game, same script, rung rules) and the new link/price. A slot with no draft (props were not posted on Wednesday): draft it now with its recipe and add it to
   the same files on `promo-drafts`. check_weekend covers saturday + sunday_main + snf + mnf; check_sunday covers sunday_main + snf (inactives);
   check_mnf covers mnf.
 - If the owner has already posted a promo (it is in `site/b/promos.json` with Status LIVE), check it the same way but never redraft it - the

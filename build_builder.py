@@ -468,10 +468,20 @@ print(f"model's best: {NT['even']} even-odds (overs + unders), {NT['td']} TDs, {
 try:
     _ko = {g["gid"]: g.get("ko") for g in GAMES}; _now = datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000
     _stamp = datetime.datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M")
+    # owner 11/3 (three-book consensus test): DraftKings / Hard Rock implied % on the same leg + line, and the mean of every book that
+    # prices it, frozen beside FanDuel's so build_season can test consensus-vs-FanDuel as the "market" in the blend after 2 graded weeks.
+    def _bimp(o):
+        try: o = float(o)
+        except Exception: return None
+        return round(100 / (o + 100) if o > 0 else -o / (-o + 100), 4)
+    def _books(l):
+        dk = _bimp(((l.get("bks") or {}).get("dk") or {}).get("o")); hr = _bimp(((l.get("bks") or {}).get("hr") or {}).get("o"))
+        xs = [x for x in (l["bk"], dk, hr) if x is not None]
+        return ["" if dk is None else dk, "" if hr is None else hr, round(sum(xs) / len(xs), 4)]
     _rows = [[WEEK, _stamp, l["g"], l["pl"], l["tm"], l["m"], l["ln"], l["o"], round(l["raw_p"], 4), round(l["bk"], 4), l["tier"],
-              datetime.datetime.fromtimestamp(_ko[l["g"]] / 1000, ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M") if _ko.get(l["g"]) else ""]
+              datetime.datetime.fromtimestamp(_ko[l["g"]] / 1000, ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M") if _ko.get(l["g"]) else ""] + _books(l)
              for l in LEGS if l.get("tier") and _ko.get(l["g"]) and _ko[l["g"]] > _now]
-    json.dump({"header": ["Week", "Frozen at (CT)", "Game", "Player", "Team", "Market", "Line", "Odds", "Raw model %", "Book implied %", "Tier", "Kickoff (CT)"], "values": _rows},
+    json.dump({"header": ["Week", "Frozen at (CT)", "Game", "Player", "Team", "Market", "Line", "Odds", "Raw model %", "Book implied %", "Tier", "Kickoff (CT)", "DK implied %", "HR implied %", "Consensus implied %"], "values": _rows},
               open(os.path.join(OUT, "best_rows.json"), "w"))
     print(f"wrote out/best_rows.json: {len(_rows)} Model's Best legs not yet kicked off")
 except Exception as e: print("warn: best_rows skipped:", e)
