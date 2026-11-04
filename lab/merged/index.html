@@ -971,6 +971,12 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .gdpc .mk.more .gdrungs .gdp:nth-child(n+5){display:none} .gdpc .mk .morebtn{font:inherit;font-size:11px;font-weight:700;color:var(--red);background:none;border:0;cursor:pointer;padding:2px 4px} .gdpc .mk:not(.more) .morebtn{display:none}
 .gdctl .sel{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--card);color:var(--ink)} .gdctl .lnk{font:inherit;font-size:12px;font-weight:700;color:var(--red);background:none;border:0;cursor:pointer;padding:0}
 @media (max-width:640px){ .gdpc .row{grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;padding:9px 10px} .gdpc .row .nm b{font-size:16px} }
+
+/* script strip borrowed from the boards (same markup, same classes) */
+.gdstrip{margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)} .gdstrip .scripts{border-top:0} .gdstrip .scripts i{cursor:pointer} .gdstrip .schint,.gdstrip .legend{display:none}
+.gdstrip .splays{display:none} .gdstrip .splays.show{display:flex} .gdstrip .splays .lt{flex-basis:100%;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)} .gdstrip .splays .lt small{font-family:var(--body);text-transform:none;letter-spacing:0}
+.gdstrip .sp{cursor:default} .gdstrip .addmini.in{background:var(--red);color:#fff} .gdstrip .splays button:not(.addmini),.gdstrip .splays > a{display:none} .gdsc div{cursor:pointer} .gdsc div.sel{outline:2px solid var(--red);outline-offset:-2px}
+.gdstrip .loading{padding:8px 14px;font-size:12px;color:var(--mute)}
 </style>
 <div class="gd">
 <div class="gdgames" id="gdgames"></div>
@@ -1005,6 +1011,27 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     $('#gdgames').innerHTML = '<button class="gdg all' + (GAME ? '' : ' on') + '" data-g=""><span><b>All games</b><small>' + gs.length + ' this week</small></span></button>' + gs.map(function(g){ return '<button class="gdg' + (GAME === g.gid ? ' on' : '') + '" data-g="' + g.gid + '">' + badge(g.a, g.ca) + badge(g.b, g.cb) + '<span><b>' + esc(g.a) + ' @ ' + esc(g.b) + '</b><small>' + esc(g.kick) + ' · ' + esc(g.most) + '</small></span></button>'; }).join('');
     render();
   }
+  var STRIPS = null, STRIP_SC = {};
+  function loadStrips(){
+    if(STRIPS) return Promise.resolve(STRIPS);
+    return fetch('/boards/index.html', {cache: 'no-store'}).then(function(r){ return r.text(); }).then(function(t){
+      var doc = new DOMParser().parseFromString(t, 'text/html'); STRIPS = {};
+      doc.querySelectorAll('section.card[id]').forEach(function(c){ var sc = c.querySelector('.scripts'); if(!sc) return; var sp = Array.prototype.slice.call(c.querySelectorAll('.splays[data-sc]')); if(!sp.length) return;
+        STRIPS[c.id] = {bar: sc.outerHTML, plays: sp.map(function(x){ return x.outerHTML; }), on: +(sc.getAttribute('data-on') || 0)}; });
+      return STRIPS; }).catch(function(){ STRIPS = {}; return STRIPS; });
+  }
+  function stripHtml(gid){
+    var st = STRIPS && STRIPS[gid]; if(!STRIPS) return '<div class="loading">Loading the script plays from the boards…</div>';
+    if(!st) return '<div class="loading">No script plays on the boards for this game yet.</div>';
+    var on = STRIP_SC[gid] != null ? STRIP_SC[gid] : st.on;
+    var html = st.bar + st.plays.join('');
+    var box = document.createElement('div'); box.innerHTML = html;
+    box.querySelectorAll('.scripts i[data-sc]').forEach(function(i){ i.classList.toggle('on', +i.dataset.sc === on); });
+    box.querySelectorAll('.splays[data-sc]').forEach(function(d){ d.removeAttribute('hidden'); d.classList.toggle('show', +d.dataset.sc === on); });
+    box.querySelectorAll('.addmini[data-k]').forEach(function(b){ b.classList.toggle('in', !!SEL[b.dataset.k]); b.textContent = SEL[b.dataset.k] ? '✓' : '+'; });
+    return box.innerHTML;
+  }
+  function fillStrips(){ document.querySelectorAll('.gdstrip[data-g]').forEach(function(el){ el.innerHTML = stripHtml(el.dataset.g); }); }
   function rk(n){ if(n == null) return '<span class="rk o">–</span>'; return '<span class="rk' + (n <= 10 ? ' g' : n >= 23 ? ' b' : '') + '">#' + n + '</span>'; }
   function muTable(off, def){
     var o = D.osr[off] || {}, d = D.posr[def] || {};
@@ -1015,7 +1042,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     var lines = D.legs.filter(function(l){ return l.gl && l.g === g.gid && !l.alt; }).sort(function(a, b){ return b.e - a.e; }).slice(0, 8);
     var bestLine = lines[0];
     return '<section class="gdcard" id="g-' + g.gid + '"><div class="hd"><div class="tm">' + badge(g.a, g.ca) + '<span>' + esc(g.a) + '<small>' + esc(g.na) + '</small></span></div><div class="mid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + esc(g.kick) + ' · model total ' + g.tot + '</small></div><div class="tm r"><span>' + esc(g.b) + '<small>' + esc(g.nb) + '</small></span>' + badge(g.b, g.cb) + '</div></div>' +
-      sec('script', 'Game script', 'most likely: <b style="color:var(--ink)">' + esc(labs[top]) + ' ' + Math.round(pr[top]) + '%</b>', '<div class="gdsc">' + pr.map(function(p, i){ return '<div' + (i === top ? ' class="top"' : '') + '><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div>') +
+      sec('script', 'Game script', 'most likely: <b style="color:var(--ink)">' + esc(labs[top]) + ' ' + Math.round(pr[top]) + '%</b>', '<div class="gdsc" data-g="' + g.gid + '">' + pr.map(function(p, i){ return '<div data-sc="' + i + '" class="' + (i === top ? 'top' : '') + ((STRIP_SC[g.gid] != null ? STRIP_SC[g.gid] : top) === i ? ' sel' : '') + '"><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div><div class="gdstrip" data-g="' + g.gid + '">' + stripHtml(g.gid) + '</div>') +
       sec('board', 'Matchup board', '#1 = most produced / allowed', '<div class="gdmu"><div class="gdmug">' + muTable(g.a, g.b) + muTable(g.b, g.a) + '</div></div>') +
       (lines.length ? sec('lines', 'Game lines', bestLine ? 'best edge: ' + esc(bestLine.pl) + ' ' + am(bestLine.o) : '', '<div class="gdlines">' + lines.map(pill).join('') + '</div>') : '') + '</section>';
   }
@@ -1047,6 +1074,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     $('#gdmain').innerHTML = gs.map(board).join('') + ctl + players(GAME);
     document.querySelectorAll('.gdg').forEach(function(b){ b.classList.toggle('on', (b.dataset.g || null) === GAME); });
     slip();
+    if(GAME && !STRIPS) loadStrips().then(fillStrips);
   }
   function slip(){
     var legs = Object.keys(SEL).map(function(k){ return D.legs.filter(function(l){ return key(l) === k; })[0]; }).filter(Boolean);
@@ -1064,6 +1092,8 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     var p = ev.target.closest('.gdp'); if(p){ var k = p.dataset.k; if(SEL[k]) delete SEL[k]; else SEL[k] = true; p.classList.toggle('in', !!SEL[k]); slip(); return; }
     var r = ev.target.closest('[data-rm]'); if(r){ delete SEL[r.dataset.rm]; render(); return; }
     if(ev.target.id === 'gdclear'){ SEL = {}; render(); return; }
+    var si = ev.target.closest('.gdstrip .scripts i[data-sc], .gdsc div[data-sc]'); if(si){ var gid_ = si.closest('[data-g]').dataset.g; STRIP_SC[gid_] = +si.dataset.sc; var wrap = document.querySelector('.gdstrip[data-g="' + gid_ + '"]'); if(wrap) wrap.innerHTML = stripHtml(gid_); document.querySelectorAll('.gdsc[data-g="' + gid_ + '"] div').forEach(function(t){ t.classList.toggle('sel', +t.dataset.sc === STRIP_SC[gid_]); }); return; }
+    var am_ = ev.target.closest('.gdstrip .addmini[data-k]'); if(am_){ var kk = am_.dataset.k; if(!D.legs.some(function(l){ return key(l) === kk; })){ am_.textContent = '?'; am_.title = 'This leg is not in the builder data'; return; } if(SEL[kk]) delete SEL[kk]; else SEL[kk] = true; am_.classList.toggle('in', !!SEL[kk]); am_.textContent = SEL[kk] ? '✓' : '+'; slip(); document.querySelectorAll('.gdp[data-k]').forEach(function(p_){ p_.classList.toggle('in', !!SEL[p_.dataset.k]); }); return; }
     var tg = ev.target.closest('[data-tog]'); if(tg){ var id = tg.dataset.tog; OPEN[id] = OPEN[id] === false; saveOpen(); var box = tg.parentNode; box.classList.toggle('open', OPEN[id] !== false); tg.setAttribute('aria-expanded', OPEN[id] !== false); tg.querySelector('.car').textContent = OPEN[id] !== false ? '▴' : '▾'; return; }
     var pt = ev.target.closest('[data-ptog]'); if(pt){ var pk = pt.dataset.ptog; POPEN[pk] = !POPEN[pk]; var pc_ = pt.parentNode; pc_.classList.toggle('open', POPEN[pk]); pt.setAttribute('aria-expanded', POPEN[pk]); pt.querySelector('.car').textContent = POPEN[pk] ? '▴' : '▾'; return; }
     var mb = ev.target.closest('[data-more]'); if(mb){ MORE[mb.dataset.more] = true; mb.parentNode.parentNode.classList.remove('more'); return; }
