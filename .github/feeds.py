@@ -85,6 +85,23 @@ if sb:
                     "hs": cs.get("home", {}).get("score"), "as": cs.get("away", {}).get("score"), "period": (ev.get("status") or {}).get("period"), "clock": (ev.get("status") or {}).get("displayClock"),
                     "poss": sit.get("possession"), "rz": bool(sit.get("isRedZone")), "dd": sit.get("downDistanceText"), "box": box_of(sm)})
         print("livelog", ev["id"], (ev.get("status") or {}).get("period"), (ev.get("status") or {}).get("displayClock"))
+# pin the live page's tracked legs (pregame chance) the first time a week has a game in progress; never overwritten, so a later rebuild cannot leak
+# in-game information into the pregame numbers live_grade.py replays against
+if any(x["ts"] >= now.isoformat()[:10] for x in LOG[-50:]):
+    try:
+        ll = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/main/b/live-legs.json"]))
+        wk = ll.get("week"); fn = f"out/livelegs_w{wk}.json"
+        try: prev = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", f"https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/livelegs_w{wk}.json"]))
+        except Exception: prev = None
+        json.dump(prev or dict(ll, pinned=now.isoformat()), open(fn, "w")); print("livelegs pinned:", fn, "kept previous" if prev else "new")
+    except Exception as e: print("livelegs: skipped", e)
+# keep every pinned week that is still on the branch (the branch is rebuilt from out/ each run)
+try:
+    for it in json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://api.github.com/repos/joeymccarrick1/betsweep-site/contents?ref=feeds"])):
+        ln = it.get("name", "")
+        if ln.startswith("livelegs_w") and not os.path.exists("out/" + ln):
+            subprocess.run(["curl", "-fsS", "--max-time", "20", "-o", "out/" + ln, f"https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/{ln}"], check=False)
+except Exception as e: print("livelegs carry:", e)
 json.dump({"snaps": LOG, "mirrored": now.isoformat()}, open("out/livelog.json", "w"))
 print("livelog entries:", len(LOG))
 
