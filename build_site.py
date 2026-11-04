@@ -367,6 +367,16 @@ try:
                 "legs": [{"key": _l.get("key"), "who": _l.get("who"), "market": _l.get("market"), "gid": _l.get("gid"), "ko": _l.get("ko"), "disp": _l.get("disp")} for _l in (_p.get("legs") or [])]}
                for _p in _promos], open(os.path.join(SITE, "b", "promos.json"), "w"))
 except Exception as _e: print("note: /b/promos.json not written:", _e)
+# 11/4 (owner: price-move alerts): /b/plus.json - the Model's Best plus-money + TD tier legs with the FanDuel price they were built at, so the
+# price-moves workflow (.github/price_moves.py, every 30 min from the sheet mirror) can push the owner when the market moves toward one
+try:
+    _bd = json.load(open(os.path.join(OUT, "builder_data.json"))); _gko = {g["gid"]: g.get("ko") for g in _bd.get("games", [])}
+    _plus = [{"key": f"{l['pl']}|{l['m']}|{int(round(l.get('ln') or 1))}", "fdkey": f"{str(l['pl']).lower()}|{l['m']}|{int(round(l.get('ln') or 1))}", "pl": l["pl"], "m": l["m"], "ln": l.get("ln"), "o": l.get("o"), "bk": l.get("bk"), "p": l.get("p"), "raw": l.get("raw_p"),
+              "tier": l.get("tier"), "gid": l.get("g"), "ko": _gko.get(l.get("g")), "fd": (l.get("fd") or {}).get("u")}
+             for l in _bd.get("legs", []) if l.get("tier") in ("plus", "td") and not l.get("gl") and not l.get("u")]
+    json.dump({"week": _bd.get("week"), "built": _bd.get("built"), "legs": _plus}, open(os.path.join(SITE, "b", "plus.json"), "w"))
+    print(f"wrote /b/plus.json: {len(_plus)} plus / TD tier legs with their build prices")
+except Exception as _e: print("note: /b/plus.json not written:", _e)
 _bll, _blb = ACCT._base_css()
 def _blpage(inner): return f"<title>BetSweep</title>\n{_bll}\n<style>{_blb}{SL.CSS}</style>\n{inner}"
 os.makedirs(os.path.join(SITE, "b"), exist_ok=True)

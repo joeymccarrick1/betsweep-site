@@ -370,6 +370,18 @@ export async function run(now = Date.now()) {
         }
       }
     }
+    // price moves (owner 11/4): the price-moves workflow writes data/price-moves.json (Model's Best plus / TD legs whose FanDuel price moved 3+
+    // implied points since the build). A move TOWARD the model is the market agreeing and the leg going away - push the owner once per key.
+    try {
+      const pm: any = await (await fetch(`${SITE}/data/price-moves.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
+      if (owner && pm && pm.week === W && Array.isArray(pm.moves)) for (const mv of pm.moves) {
+        if (mv.dir !== "SHORTENED" || !mv.ko || mv.ko <= now || Math.abs(mv.pts || 0) < 3) continue;
+        const key = `price|${mv.key}`; if (done.has(`${owner}|${key}|PRICE`)) continue;
+        const msg = { title: `📈 Market moving our way: ${mv.pl}`.slice(0, 90), body: `${mv.detail}. Still on the board - the price is going.`.slice(0, 300), url: `/build/?new=1&add=${encodeURIComponent(mv.key)}#slip`, tag: `bs-price-${String(mv.key).replace(/[^a-z0-9]/gi, "").slice(0, 40)}` };
+        for (const s of osubs) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) npromo++; } catch (e) { console.warn("push", String(e)); } }
+        done.add(`${owner}|${key}|PRICE`); await mark(String(owner), W, key, "PRICE");
+      }
+    } catch (e) { console.warn("price moves", String(e).slice(0, 200)); }
   } catch (e) { console.warn("risk", String(e).slice(0, 200)); }
   // ---- live slip updates (owner 10/30): during games, a note when a leg on a saved slip hits or busts, and when a slip cashes ----
   let nlive = 0;
