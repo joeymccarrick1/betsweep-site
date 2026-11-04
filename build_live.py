@@ -100,6 +100,21 @@ table.lvt .chip{display:inline-block;font-family:var(--display);font-weight:700;
 table.lvt .chip.hit{background:var(--good);border-color:var(--good);color:#fff} table.lvt .chip.bp{border-color:var(--red);color:var(--red)} table.lvt .chip.warn{border-color:var(--warn);color:var(--warn)}
 .bar{position:relative;height:5px;border-radius:3px;background:var(--line);margin-top:4px;min-width:90px} .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--red)} .bar.ok i{background:var(--good)}
 .lvnote{font-size:12px;color:var(--mute);padding:8px 14px 12px;line-height:1.5}
+/* game drill-down: box score + play by play (11/4) */
+.drillbar{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute)}
+.drill{font:inherit;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);background:transparent;border:1.5px solid var(--red);border-radius:99px;padding:5px 12px;cursor:pointer} .drill:hover{background:var(--red);color:#fff}
+#lvdrill{position:fixed;inset:0;z-index:60;background:rgba(10,16,28,.55);overflow:auto;-webkit-overflow-scrolling:touch;padding:12px} body.drillopen{overflow:hidden}
+#lvdrill .dwrap{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:50vh}
+#lvdrill .dhd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:var(--chalk);border-bottom:1px solid var(--line)} #lvdrill .dt{font-family:var(--display);font-weight:800;font-size:20px;display:flex;align-items:center;gap:6px;flex-wrap:wrap} #lvdrill .dt b{font-size:26px} #lvdrill .dt small{flex-basis:100%;font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute)}
+#lvdrill .dclose{font:inherit;font-size:26px;line-height:1;background:transparent;border:0;color:var(--mute);cursor:pointer;padding:4px 8px}
+#lvdrill .dtabs{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)} #lvdrill .dtab{font:inherit;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--mute);cursor:pointer} #lvdrill .dtab.on{border-color:var(--red);background:var(--red);color:#fff}
+#lvdrill .dbody{padding:10px 14px 18px} #lvdrill h4{font-family:var(--display);font-size:14px;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px;color:var(--mute)}
+.bxw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px} table.bx{width:100%;border-collapse:collapse;font-size:12.5px} table.bx th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line)} table.bx th:first-child{text-align:left} table.bx td{padding:5px 6px;text-align:right;font-variant-numeric:tabular-nums;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)} table.bx td.nm{text-align:left;font-weight:600;white-space:nowrap}
+table.bx tr.mine td{background:color-mix(in srgb,var(--red) 8%,var(--card))} .lms{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px} .lm{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap} .lm.hit{border-color:var(--good);color:var(--good)} .lm.dead{border-color:var(--bad);color:var(--bad);text-decoration:line-through} .lm.open{border-color:var(--red);color:var(--red)}
+table.bx.sc td{text-align:left} table.bx.sc td.q,table.bx.sc td.tm{white-space:nowrap;font-weight:700} table.bx.sc td small{display:block;font-weight:500;color:var(--mute);font-size:11px} table.bx.sc td.scr{text-align:right;font-family:var(--display);font-weight:800;white-space:nowrap}
+.drv{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden} .drv.score{border-color:var(--good)} .drv .dh{padding:7px 10px;background:var(--chalk);font-size:12px;color:var(--mute)} .drv .dh b{color:var(--ink)} .drv .dh i{font-style:normal;font-weight:700;color:var(--red);margin-left:6px}
+.drv .pl{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:8px;padding:6px 10px;font-size:12.5px;border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent)} .drv .pl .dd{color:var(--mute);font-size:11px;white-space:nowrap} .drv .pl .tx{text-align:left} .drv .dh{text-align:left} .drv .pl .ck{color:var(--mute);font-size:11px;white-space:nowrap}
+.drv .pl.td{background:color-mix(in srgb,var(--good) 14%,var(--card))} .drv .pl.td b.sc{color:var(--good);font-family:var(--display);letter-spacing:.06em;text-transform:uppercase;font-size:11px} .drv .pl.mine .tx{font-weight:700} .drv .pl.mine{box-shadow:inset 3px 0 0 var(--red)}
 /* owner 11/1 cleanup: one toolbar, help folded away, finished games grouped, quieter rows */
 .lvtools{gap:6px} .lvtools .upd{flex-basis:100%;font-size:11.5px} .lvtools #lvrefresh{font-size:15px;line-height:1;padding:5px 10px}
 .lvhelp{margin:-4px 0 12px;font-size:12.5px;color:var(--mute)} .lvhelp summary{cursor:pointer;font-weight:600;padding:2px 2px 6px;list-style:none} .lvhelp summary::-webkit-details-marker{display:none} .lvhelp summary::before{content:'ⓘ  '}
@@ -143,7 +158,7 @@ JS = r"""
     if(p<0.02425){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
     if(p>1-0.02425){q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
     q=p-0.5;r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
-  var STATE = {}, BOX = {}, FIRST = {}, lastBox = {}, mode = 'likes', OPEN = {};
+  var STATE = {}, BOX = {}, FIRST = {}, lastBox = {}, mode = 'likes', OPEN = {}, SUMM = {}, DRILL = null;
   var SKEY = 'bs_livestar_w' + D.week, STARS = {}; try { (JSON.parse(localStorage.getItem(SKEY) || '[]')).forEach(function(k){ STARS[k] = true; }); } catch(e){}
   function saveStars(){ try { localStorage.setItem(SKEY, JSON.stringify(Object.keys(STARS))); } catch(e){} }
   function legKey(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
@@ -337,7 +352,8 @@ JS = r"""
         if(hit.length) body += '<h4>Already hit · ' + hit.length + '</h4><table class="lvt">' + hit.map(tr).join('') + '</table>';
         if(dead.length) body += '<h4>Gone · ' + dead.length + '</h4><table class="lvt">' + dead.map(tr).join('') + '</table>';
       }
-      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? sit + body : '') + '</section>';
+      var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
+      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? sit + drill + body : '') + '</section>';
       if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length]); else parts.push([gid, sec]);
     });
     if(FIN.length){   // owner 11/1 cleanup: finished games fold into one group at the bottom
@@ -355,13 +371,60 @@ JS = r"""
     [].slice.call(wrap.querySelectorAll('.slipcard')).forEach(function(x){ x.classList.toggle('hl', !!HLID && Date.now() < HLT && x.getAttribute('data-sid') === HLID); });
   }
   var FOCUS = (function(){ try { return new URLSearchParams(location.search).get('slip'); } catch(e){ return null; } })(), FOCUSED = false, HLID = null, HLT = 0;
+  // ---- game drill-down (owner 11/1 Tuesday list): box score, play-by-play with scoring plays highlighted, your legs marked ----
+  function myLegsFor(gid){ var out = {}; legs.concat(D.extra || []).forEach(function(l){ if(l.g !== gid || l.gl) return; var k = legKey(l); if(INSLIP[k] || STARS[k]) (out[norm(l.pl)] = out[norm(l.pl)] || []).push(l); }); return out; }
+  function legMark(l){ var g = games[l.g], s = STATE[l.g] || {st: 'in'}; var r = live(l, g, s); var cls = r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : 'open'; return '<span class="lm ' + cls + '">' + (r.status === 'hit' ? '✓ ' : r.status === 'dead' ? '✗ ' : '') + esc(legText(l).replace(l.pl, '').trim()) + (r.now ? ' · ' + esc(r.now) : '') + '</span>'; }
+  function drillBox(js, gid){
+    var mine = myLegsFor(gid), html = '';
+    (js.boxscore && js.boxscore.players || []).forEach(function(tm){
+      var ab = tm.team && tm.team.abbreviation || ''; html += '<h4>' + esc(tm.team && tm.team.displayName || ab) + '</h4>';
+      (tm.statistics || []).forEach(function(cat){
+        if(['passing', 'rushing', 'receiving', 'fumbles', 'interceptions', 'kicking', 'kickReturns', 'puntReturns', 'defensive'].indexOf(cat.name) < 0) return;
+        var labs = cat.labels || []; if(!(cat.athletes || []).length) return;
+        html += '<div class="bxw"><table class="bx"><thead><tr><th>' + esc(cat.text || cat.name) + '</th>' + labs.map(function(x){ return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>';
+        (cat.athletes || []).forEach(function(a){ var nm = a.athlete && a.athlete.displayName || ''; var ml = mine[norm(nm)]; html += '<tr' + (ml ? ' class="mine"' : '') + '><td class="nm">' + esc(a.athlete && a.athlete.shortName || nm) + (ml ? '<div class="lms">' + ml.map(legMark).join('') + '</div>' : '') + '</td>' + (a.stats || []).map(function(v){ return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; });
+        html += '</tbody></table></div>';
+      });
+    });
+    return html || '<p class="none">No box score yet.</p>';
+  }
+  function drillScoring(js){
+    var sp = js.scoringPlays || []; if(!sp.length) return '<p class="none">No scoring plays yet.</p>';
+    return '<table class="bx sc"><tbody>' + sp.map(function(p){ return '<tr><td class="q">Q' + (p.period && p.period.number) + '<small>' + esc(p.clock && p.clock.displayValue || '') + '</small></td><td class="tm">' + esc(p.team && p.team.abbreviation || '') + '<small>' + esc(p.type && p.type.text || '') + '</small></td><td class="tx">' + esc(p.text || '') + '</td><td class="scr">' + esc(p.awayScore) + '–' + esc(p.homeScore) + '</td></tr>'; }).join('') + '</tbody></table>';
+  }
+  function drillPlays(js, gid){
+    var dr = (js.drives && js.drives.previous || []).slice(); if(js.drives && js.drives.current && (!dr.length || dr[dr.length-1].id !== js.drives.current.id)) dr.push(js.drives.current);
+    if(!dr.length) return '<p class="none">No plays yet.</p>';
+    var mine = myLegsFor(gid), names = Object.keys(mine).map(function(n){ var p = n.split(' '); return p.length > 1 ? p[p.length - 1] : n; });
+    return dr.slice().reverse().map(function(d){
+      var plays = (d.plays || []).slice().reverse();
+      return '<div class="drv' + (/touchdown|field goal/i.test(d.result || d.displayResult || '') ? ' score' : '') + '"><div class="dh"><b>' + esc(d.team && d.team.abbreviation || '') + '</b> ' + esc(d.description || '') + ' <i>' + esc(d.displayResult || d.result || (d.isScore ? 'Score' : '')) + '</i></div>' +
+        plays.map(function(p){ var t = p.text || ''; var hit = names.length && names.some(function(n){ return n.length > 2 && new RegExp('\\b' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(t); });
+          return '<div class="pl' + (p.scoringPlay ? ' td' : '') + (hit ? ' mine' : '') + '"><span class="dd">' + esc(p.start && p.start.shortDownDistanceText || (p.start && p.start.downDistanceText) || '') + '</span><span class="tx">' + (p.scoringPlay ? '<b class="sc">' + esc(p.type && p.type.text || 'Score') + '</b> ' : '') + esc(t) + '</span><span class="ck">' + esc(p.clock && p.clock.displayValue || '') + (p.period ? ' Q' + p.period.number : '') + '</span></div>'; }).join('') + '</div>';
+    }).join('');
+  }
+  function drawDrill(){
+    if(!DRILL) return; var gid = DRILL.gid, js = SUMM[gid], g = games[gid], s = STATE[gid] || {}; var box = $('#lvdrill');
+    var tabs = ['box', 'plays', 'scoring'].map(function(t){ return '<button type="button" class="dtab' + (DRILL.tab === t ? ' on' : '') + '" data-t="' + t + '">' + ({box: 'Box score', plays: 'Play by play', scoring: 'Scoring'})[t] + '</button>'; }).join('');
+    var body = !js ? '<p class="none">Loading from ESPN…</p>' : DRILL.tab === 'box' ? drillBox(js, gid) : DRILL.tab === 'plays' ? drillPlays(js, gid) : drillScoring(js);
+    box.innerHTML = '<div class="dwrap"><div class="dhd"><div class="dt">' + badge(g.a, g.ca) + ' ' + g.a + ' <b>' + (s.sa != null ? s.sa : '–') + '–' + (s.sb != null ? s.sb : '–') + '</b> ' + g.b + ' ' + badge(g.b, g.cb) + '<small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> ' + esc(s.det || '') : s.st === 'post' ? 'Final' : '') + ' · refreshes every 30 s</small></div><button type="button" class="dclose" aria-label="Close">×</button></div><div class="dtabs">' + tabs + '</div><div class="dbody">' + body + '</div></div>';
+    box.hidden = false; document.body.classList.add('drillopen');
+  }
+  function openDrill(gid, tab){ DRILL = {gid: gid, tab: tab || (DRILL && DRILL.tab) || 'box'}; drawDrill(); if(!SUMM[gid]){ lastBox[gid] = 0; busy[gid] = false; pullBox(gid); } try { history.replaceState(null, '', '#box-' + gid); } catch(e){} }
+  function closeDrill(){ DRILL = null; var box = $('#lvdrill'); box.hidden = true; box.innerHTML = ''; document.body.classList.remove('drillopen'); try { history.replaceState(null, '', location.pathname + location.search); } catch(e){} }
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest('.drill'); if(b){ openDrill(b.dataset.g); return; }
+    if(ev.target.closest('.dclose') || (ev.target.id === 'lvdrill')){ closeDrill(); return; }
+    var t = ev.target.closest('.dtab'); if(t && DRILL){ DRILL.tab = t.dataset.t; drawDrill(); } });
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && DRILL) closeDrill(); });
+  (function(){ var m = (location.hash || '').match(/^#box-([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && games[m[1]]) setTimeout(function(){ openDrill(m[1]); }, 1200); })();
   // ---- polling: scoreboard (BSLive) + one summary call per live game every 30 s ----
   var busy = {};
   function pullBox(gid){
     var s = STATE[gid]; if(!s || !s.eid || busy[gid] || !window.fetch) return; if(lastBox[gid] && Date.now() - lastBox[gid] < 28000) return;
     busy[gid] = true;
     fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + s.eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){
-      busy[gid] = false; lastBox[gid] = Date.now(); if(!js) return; var pb = parseBox(js); Object.keys(pb.box).forEach(function(k){ BOX[k] = pb.box[k]; }); if(pb.first) FIRST[gid] = pb.first; render();
+      busy[gid] = false; lastBox[gid] = Date.now(); if(!js) return; SUMM[gid] = js; if(DRILL && DRILL.gid === gid) drawDrill(); var pb = parseBox(js); Object.keys(pb.box).forEach(function(k){ BOX[k] = pb.box[k]; }); if(pb.first) FIRST[gid] = pb.first; render();
     }).catch(function(){ busy[gid] = false; lastBox[gid] = Date.now(); });
   }
   window.BSLive.start(D.games.map(function(g){ return {gid: g.gid, a: g.a, b: g.b, ko: g.ko, fin: g.fin}; }), function(m){
@@ -475,6 +538,7 @@ body = f'''<div class="lv">
   <div class="row"><input type="text" class="nm" id="impname" placeholder="Slip name (optional)"><input type="text" class="od" id="impodds" inputmode="numeric" placeholder="+593"><input type="text" class="od" id="impstake" inputmode="decimal" placeholder="stake $"><button type="button" class="rfr" id="impmatch">Match</button><button type="button" class="rfr go" id="impgo" disabled>Nothing matched yet</button></div>
   <ul id="implist"></ul></div>
  <div id="lv"></div>
+ <div id="lvdrill" hidden></div>
 
 </div>
 <script>window.__LV = {json.dumps(LD, separators=(",", ":"))};</script>
