@@ -977,6 +977,10 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .gdstrip .splays{display:none} .gdstrip .splays.show{display:flex} .gdstrip .splays .lt{flex-basis:100%;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)} .gdstrip .splays .lt small{font-family:var(--body);text-transform:none;letter-spacing:0}
 .gdstrip .sp{cursor:default} .gdstrip .addmini.in{background:var(--red);color:#fff} .gdstrip .splays button:not(.addmini),.gdstrip .splays > a{display:none} .gdsc div{cursor:pointer} .gdsc div.sel{outline:2px solid var(--red);outline-offset:-2px}
 .gdstrip .loading{padding:8px 14px;font-size:12px;color:var(--mute)}
+
+/* embedded real pages (same origin): the boards card and the builder, trimmed to this game and sized to their content */
+.gdemb{position:relative;min-height:120px} .gdemb iframe{display:block;width:100%;border:0;height:400px;background:transparent} .gdemb .ld{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--mute);pointer-events:none} .gdemb.ready .ld{display:none}
+.gdemb .open{display:block;margin:6px 0 0;font-size:12px;color:var(--mute)} .gdemb .open a{color:var(--red);font-weight:700;text-decoration:none}
 </style>
 <div class="gd">
 <div class="gdgames" id="gdgames"></div>
@@ -1044,7 +1048,9 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     return '<section class="gdcard" id="g-' + g.gid + '"><div class="hd"><div class="tm">' + badge(g.a, g.ca) + '<span>' + esc(g.a) + '<small>' + esc(g.na) + '</small></span></div><div class="mid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + esc(g.kick) + ' · model total ' + g.tot + '</small></div><div class="tm r"><span>' + esc(g.b) + '<small>' + esc(g.nb) + '</small></span>' + badge(g.b, g.cb) + '</div></div>' +
       sec('script', 'Game script', 'most likely: <b style="color:var(--ink)">' + esc(labs[top]) + ' ' + Math.round(pr[top]) + '%</b>', '<div class="gdsc" data-g="' + g.gid + '">' + pr.map(function(p, i){ return '<div data-sc="' + i + '" class="' + (i === top ? 'top' : '') + ((STRIP_SC[g.gid] != null ? STRIP_SC[g.gid] : top) === i ? ' sel' : '') + '"><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div><div class="gdstrip" data-g="' + g.gid + '">' + stripHtml(g.gid) + '</div>') +
       sec('board', 'Matchup board', '#1 = most produced / allowed', '<div class="gdmu"><div class="gdmug">' + muTable(g.a, g.b) + muTable(g.b, g.a) + '</div></div>') +
-      (lines.length ? sec('lines', 'Game lines', bestLine ? 'best edge: ' + esc(bestLine.pl) + ' ' + am(bestLine.o) : '', '<div class="gdlines">' + lines.map(pill).join('') + '</div>') : '') + '</section>';
+      (lines.length ? sec('lines', 'Game lines', bestLine ? 'best edge: ' + esc(bestLine.pl) + ' ' + am(bestLine.o) : '', '<div class="gdlines">' + lines.map(pill).join('') + '</div>') : '') +
+      sec('fullboard', 'Full matchup board', 'the real boards card - game script / projections tabs, weather, confidence flags, both rosters, best parlay, every + button', '<div class="gdemb" data-emb="boards" data-g="' + g.gid + '"><span class="ld">Loading the boards card…</span><span class="open"><a href="/boards/#' + g.gid + '">Open on the boards page →</a></span></div>') +
+      sec('fullbuilder', 'Full parlay builder', 'the real builder, filtered to this game - player cards, stat boxes, book prices, flags, alt lines, "what do the numbers mean"', '<div class="gdemb" data-emb="build" data-g="' + g.gid + '"><span class="ld">Loading the builder…</span><span class="open"><a href="/build/#g-' + g.gid + '">Open in the builder →</a></span></div>') + '</section>';
   }
   function pill(l){ var k = key(l); var e = Math.round(l.e * 100); return '<button class="gdp' + (SEL[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="' + esc(l.w || '') + '">' + esc(l.gl ? l.pl : (l.u ? 'U ' : '') + Math.round(l.ln) + '+') + ' <small>' + am(l.o) + '</small> <span class="e' + (e < 0 ? ' n' : e === 0 ? ' z' : '') + '">' + pc(l.p) + ' · ' + (e > 0 ? '+' : '') + e + '</span></button>'; }
   function playerCard(c){
@@ -1067,13 +1073,38 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     return ['QB', 'RB', 'WR', 'TE', 'K', 'Other'].filter(function(p){ return groups[p]; }).map(function(p){ var o = OPEN[p] === true; var g = groups[p]; var top = g.slice().sort(function(a, b){ return b.best - a.best; })[0];
       return '<div class="gdgrp' + (o ? ' open' : '') + '"><button type="button" class="gdsh" data-tog="' + p + '" aria-expanded="' + o + '"><span class="t">' + esc({QB: 'Quarterbacks', RB: 'Running backs', WR: 'Receivers', TE: 'Tight ends', K: 'Kickers', Other: 'Other'}[p]) + '<small>' + g.length + ' players · ' + g.reduce(function(a, c){ return a + c.nr; }, 0) + ' legs</small></span><span class="sum">' + (top && top.bestLeg ? 'best edge: ' + esc(top.pl) + ' ' + (top.best > 0 ? '+' : '') + Math.round(top.best * 100) : '') + '</span><i class="car">' + (o ? '▴' : '▾') + '</i></button><div class="list">' + g.map(playerCard).join('') + '</div></div>'; }).join('');
   }
+  var EMB = {};
+  function sizeFrame(f){ try { var d = f.contentDocument; if(!d || !d.body) return; var h = Math.max(d.documentElement.scrollHeight, d.body.scrollHeight); if(h > 50 && Math.abs(h - f.clientHeight) > 4) f.style.height = (h + 24) + 'px'; } catch(e){} }
+  function mountEmbed(box){
+    var kind = box.dataset.emb, gid = box.dataset.g, key = kind + '|' + gid; if(box.querySelector('iframe')) return;
+    var f = document.createElement('iframe'); f.setAttribute('title', kind === 'boards' ? 'Matchup board ' + gid : 'Parlay builder ' + gid); f.setAttribute('loading', 'lazy'); f.src = kind === 'boards' ? '/boards/' : '/build/';
+    f.addEventListener('load', function(){
+      try {
+        var d = f.contentDocument, st = d.createElement('style');
+        st.textContent = kind === 'boards'
+          ? 'html,body{overflow:visible!important;background:transparent!important;padding:0!important;margin:0!important;border:0!important} .sitenav,.top,.apptabs,#installbar,.key,.archive,.nav,footer.site,.bstabs,.card:not(#' + gid + '),.lvhelp,h2.wk,footer,.foot,.sitefoot,.legal{display:none!important} .card#' + gid + '{margin:0!important;scroll-margin:0!important}'
+          : 'html,body{overflow:visible!important;background:transparent!important;padding:0!important;margin:0!important;border:0!important} .sitenav,.top,.apptabs,#installbar,footer,.foot,.sitefoot,.legal{display:none!important} .gcard:not(#g-' + gid + '){display:none!important} .bld{grid-template-columns:minmax(0,1fr)!important}';
+        d.head.appendChild(st);
+        if(kind === 'build'){ var sel = d.getElementById('fGame'); if(sel){ sel.value = gid; sel.dispatchEvent(new Event('change', {bubbles: true})); }
+          setTimeout(function(){ var gh = d.querySelector('.ghd[data-g="' + gid + '"]'); if(gh && gh.getAttribute('aria-expanded') !== 'true') gh.click(); sizeFrame(f); }, 400); }
+        else { var c = d.getElementById(gid); if(c && !c.classList.contains('expanded')){ var b = c.querySelector('.tabs button, button.expand, .ghd'); } }
+        box.classList.add('ready'); sizeFrame(f);
+        if(window.ResizeObserver) new ResizeObserver(function(){ sizeFrame(f); }).observe(d.body);
+        setInterval(function(){ sizeFrame(f); }, 1500);
+      } catch(e){ box.classList.add('ready'); f.style.height = '70vh'; }
+    });
+    box.insertBefore(f, box.firstChild); EMB[key] = f;
+  }
+  function mountOpenEmbeds(){ document.querySelectorAll('.gdsec.open .gdemb[data-emb]').forEach(mountEmbed); }
+  // the embedded pages share this week's slip (same origin): pick up what they add or remove
+  window.addEventListener('storage', function(ev){ if(ev.key === 'bs_slipk_w' + (D && D.week)){ SEL = {}; try { (JSON.parse(ev.newValue || '[]')).forEach(function(k){ SEL[k] = true; }); } catch(e){} slip(); document.querySelectorAll('.gdp[data-k]').forEach(function(p_){ p_.classList.toggle('in', !!SEL[p_.dataset.k]); }); } });
   function render(){
     var gs = GAME ? D.games.filter(function(g){ return g.gid === GAME; }) : [];
     var n = D.legs.filter(function(l){ return !l.gl && (!GAME || l.g === GAME); }).length;
     var ctl = '<div class="gdctl"><label><input type="checkbox" id="gdfloors"' + (FLOORS ? ' checked' : '') + '> Floors (−130 to −400)</label><label><input type="checkbox" id="gdliked"' + (ONLYLIKED ? ' checked' : '') + '> Edge +3 up</label><select class="sel" id="gdsort"><option value="usage"' + (SORT === 'usage' ? ' selected' : '') + '>Sort: most priced</option><option value="edge"' + (SORT === 'edge' ? ' selected' : '') + '>Sort: best edge</option><option value="name"' + (SORT === 'name' ? ' selected' : '') + '>Sort: name</option></select><button type="button" class="lnk" id="gdexp">Expand all</button><button type="button" class="lnk" id="gdcol">Collapse all</button><span class="n">' + (GAME ? n + ' legs in this game' : 'Pick a game above for its board · ' + n + ' legs this week') + '</span></div>';
     $('#gdmain').innerHTML = gs.map(board).join('') + ctl + players(GAME);
     document.querySelectorAll('.gdg').forEach(function(b){ b.classList.toggle('on', (b.dataset.g || null) === GAME); });
-    slip();
+    slip(); mountOpenEmbeds();
     if(GAME && !STRIPS) loadStrips().then(fillStrips);
   }
   function slip(){
@@ -1094,7 +1125,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
     if(ev.target.id === 'gdclear'){ SEL = {}; render(); return; }
     var si = ev.target.closest('.gdstrip .scripts i[data-sc], .gdsc div[data-sc]'); if(si){ var gid_ = si.closest('[data-g]').dataset.g; STRIP_SC[gid_] = +si.dataset.sc; var wrap = document.querySelector('.gdstrip[data-g="' + gid_ + '"]'); if(wrap) wrap.innerHTML = stripHtml(gid_); document.querySelectorAll('.gdsc[data-g="' + gid_ + '"] div').forEach(function(t){ t.classList.toggle('sel', +t.dataset.sc === STRIP_SC[gid_]); }); return; }
     var am_ = ev.target.closest('.gdstrip .addmini[data-k]'); if(am_){ var kk = am_.dataset.k; if(!D.legs.some(function(l){ return key(l) === kk; })){ am_.textContent = '?'; am_.title = 'This leg is not in the builder data'; return; } if(SEL[kk]) delete SEL[kk]; else SEL[kk] = true; am_.classList.toggle('in', !!SEL[kk]); am_.textContent = SEL[kk] ? '✓' : '+'; slip(); document.querySelectorAll('.gdp[data-k]').forEach(function(p_){ p_.classList.toggle('in', !!SEL[p_.dataset.k]); }); return; }
-    var tg = ev.target.closest('[data-tog]'); if(tg){ var id = tg.dataset.tog; OPEN[id] = OPEN[id] !== true; saveOpen(); var box = tg.parentNode; box.classList.toggle('open', OPEN[id] === true); tg.setAttribute('aria-expanded', OPEN[id] === true); tg.querySelector('.car').textContent = OPEN[id] === true ? '▴' : '▾'; return; }
+    var tg = ev.target.closest('[data-tog]'); if(tg){ var id = tg.dataset.tog; OPEN[id] = OPEN[id] !== true; saveOpen(); var box = tg.parentNode; box.classList.toggle('open', OPEN[id] === true); tg.setAttribute('aria-expanded', OPEN[id] === true); tg.querySelector('.car').textContent = OPEN[id] === true ? '▴' : '▾'; mountOpenEmbeds(); return; }
     var pt = ev.target.closest('[data-ptog]'); if(pt){ var pk = pt.dataset.ptog; POPEN[pk] = !POPEN[pk]; var pc_ = pt.parentNode; pc_.classList.toggle('open', POPEN[pk]); pt.setAttribute('aria-expanded', POPEN[pk]); pt.querySelector('.car').textContent = POPEN[pk] ? '▴' : '▾'; return; }
     var mb = ev.target.closest('[data-more]'); if(mb){ MORE[mb.dataset.more] = true; mb.parentNode.parentNode.classList.remove('more'); return; }
     if(ev.target.id === 'gdexp' || ev.target.id === 'gdcol'){ var on = ev.target.id === 'gdexp'; document.querySelectorAll('.gdpc').forEach(function(c){ POPEN[c.dataset.pl] = on; }); ['QB', 'RB', 'WR', 'TE', 'K', 'Other', 'script', 'board', 'lines'].forEach(function(p){ OPEN[p] = on; }); saveOpen(); render(); return; }
