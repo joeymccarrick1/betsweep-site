@@ -28,6 +28,21 @@
 .gdnone{color:var(--mute);padding:24px 0;text-align:center}
 .gd .concept{font-size:12px;color:var(--mute);margin:-6px 0 10px}
 @media (max-width:640px){ .gdsc{grid-template-columns:repeat(2,1fr)} .gdmug{grid-template-columns:1fr} .gdcard .hd{grid-template-columns:auto minmax(0,1fr) auto;padding:12px 10px} .gdcard .hd .tm{font-size:18px;gap:6px} .gdcard .hd .tm small{display:none} .gdcard .hd .mid b{font-size:26px} .gdcard .hd .mid small{font-size:10.5px} .gdpl{grid-template-columns:1fr} }
+
+/* collapsible sections + grouped, collapsed player cards (owner 11/4: "make things collapsible and more organized") */
+.gdsec{border-bottom:1px solid var(--line)} .gdsec:last-child{border-bottom:0}
+.gdsh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 14px;background:transparent;border:0;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.gdsh .t{font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);white-space:nowrap} .gdsh .t b{color:var(--ink);margin-left:6px;letter-spacing:.04em} .gdsh .sum{font-size:11.5px;color:var(--mute);margin-left:auto;text-align:right;min-width:0} .gdsh .car{font-style:normal;color:var(--red);font-size:12px;width:16px;text-align:center}
+.gdsec .bd{display:none;padding:0 14px 12px} .gdsec.open .bd{display:block} .gdsec.open .gdsh{border-bottom:1px dashed var(--line)} .gdsec .bd .gdsc,.gdsec .bd .gdmu,.gdsec .bd .gdlines{padding:10px 0 0;border:0}
+.gdgrp{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 10px;overflow:hidden} .gdgrp .gdsh{background:var(--chalk);background-image:var(--plays)} .gdgrp .gdsh .t{color:var(--ink);font-size:14px} .gdgrp .gdsh .t small{font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--mute);text-transform:none;letter-spacing:0;margin-left:6px}
+.gdgrp .list{display:none} .gdgrp.open .list{display:block}
+.gdpc{border:0;border-top:1px solid var(--line);border-radius:0;padding:0;background:transparent} .gdpc .row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:10px;width:100%;padding:9px 12px;background:transparent;border:0;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.gdpc .row .nm{display:block} .gdpc .row .nm b{font-size:17px} .gdpc .row .nm small{font-size:11px} .gdpc .row .best{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} .gdpc .row .best b{display:block;font-family:var(--display);font-weight:700;font-size:16px;color:var(--good)} .gdpc .row .best b.n{color:var(--bad)} .gdpc .row .best small{color:var(--mute);font-size:10.5px;display:block} .gdpc .row .car{color:var(--red);font-size:12px;width:14px;text-align:center}
+.gdpc .mini{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px} .gdpc .mini .gdt{font-size:10px;padding:1px 6px}
+.gdpc .det{display:none;padding:0 12px 12px 12px} .gdpc.open .det{display:block} .gdpc.open{background:color-mix(in srgb,var(--chalk) 55%,var(--card))} .gdpc .det .fl{margin:2px 0 4px}
+.gdpc .mk.more .gdrungs .gdp:nth-child(n+5){display:none} .gdpc .mk .morebtn{font:inherit;font-size:11px;font-weight:700;color:var(--red);background:none;border:0;cursor:pointer;padding:2px 4px} .gdpc .mk:not(.more) .morebtn{display:none}
+.gdctl .sel{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--card);color:var(--ink)} .gdctl .lnk{font:inherit;font-size:12px;font-weight:700;color:var(--red);background:none;border:0;cursor:pointer;padding:0}
+@media (max-width:640px){ .gdpc .row{grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;padding:9px 10px} .gdpc .row .nm b{font-size:16px} }
 </style>
 <div class="gd">
 <div class="gdgames" id="gdgames"></div>
@@ -43,7 +58,11 @@
   function key(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
   function lum(h){ h = h.replace('#', ''); return 0.2126 * parseInt(h.substr(0, 2), 16) / 255 + 0.7152 * parseInt(h.substr(2, 2), 16) / 255 + 0.0722 * parseInt(h.substr(4, 2), 16) / 255; }
   function badge(t, col){ col = col || ['#444', '#999']; return '<span class="badge" style="--p:' + col[0] + ';--s:' + col[1] + ';--ink:' + (lum(col[0]) > 0.45 ? '#101820' : '#ffffff') + '">' + esc(t) + '</span>'; }
-  var D, GAME = null, SEL = {}, FLOORS = false, ONLYLIKED = false, COL = {};
+  var D, GAME = null, SEL = {}, FLOORS = false, ONLYLIKED = false, COL = {}, SORT = 'usage';
+  var OPEN = {script: true, board: true, lines: true, QB: true, RB: true, WR: true, TE: true, K: false}, POPEN = {}, MORE = {};
+  try { var o_ = JSON.parse(localStorage.getItem('bs_desk_open') || 'null'); if(o_) OPEN = o_; } catch(e){}
+  function saveOpen(){ try { localStorage.setItem('bs_desk_open', JSON.stringify(OPEN)); } catch(e){} }
+  function sec(id, title, sum, body){ var o = OPEN[id] !== false; return '<div class="gdsec' + (o ? ' open' : '') + '" data-sec="' + id + '"><button type="button" class="gdsh" data-tog="' + id + '" aria-expanded="' + o + '"><span class="t">' + title + '</span><span class="sum">' + sum + '</span><i class="car">' + (o ? '▴' : '▾') + '</i></button><div class="bd">' + body + '</div></div>'; }
   function load(){
     var q = new URLSearchParams(location.search).get('data');
     var go = function(src){ var s = document.createElement('script'); s.src = src; s.onload = function(){ D = window.__BS; init(); }; s.onerror = function(){ $('#gdmain').innerHTML = '<p class="gdnone">Could not load the builder data (' + esc(src) + ').</p>'; }; document.head.appendChild(s); };
@@ -66,27 +85,37 @@
   function board(g){
     var pr = g.probs || [0, 0, 0, 0], labs = [g.a + ' by 10+', 'Close, low', 'Shootout', g.b + ' by 10+'], top = pr.indexOf(Math.max.apply(null, pr));
     var lines = D.legs.filter(function(l){ return l.gl && l.g === g.gid && !l.alt; }).sort(function(a, b){ return b.e - a.e; }).slice(0, 8);
-    return '<section class="gdcard" id="g-' + g.gid + '"><div class="hd"><div class="tm">' + badge(g.a, g.ca) + '<span>' + esc(g.a) + '<small>' + esc(g.na) + '</small></span></div><div class="mid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + esc(g.kick) + ' · model total ' + g.tot + ' · most likely: ' + esc(g.most) + '</small></div><div class="tm r"><span>' + esc(g.b) + '<small>' + esc(g.nb) + '</small></span>' + badge(g.b, g.cb) + '</div></div>' +
-      '<div class="gdsc">' + pr.map(function(p, i){ return '<div' + (i === top ? ' class="top"' : '') + '><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div>' +
-      '<div class="gdmu"><h3>Matchup board · rank 1 = produces / allows the most</h3><div class="gdmug">' + muTable(g.a, g.b) + muTable(g.b, g.a) + '</div></div>' +
-      (lines.length ? '<div class="gdlines">' + lines.map(pill).join('') + '</div>' : '') + '</section>';
+    var bestLine = lines[0];
+    return '<section class="gdcard" id="g-' + g.gid + '"><div class="hd"><div class="tm">' + badge(g.a, g.ca) + '<span>' + esc(g.a) + '<small>' + esc(g.na) + '</small></span></div><div class="mid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + esc(g.kick) + ' · model total ' + g.tot + '</small></div><div class="tm r"><span>' + esc(g.b) + '<small>' + esc(g.nb) + '</small></span>' + badge(g.b, g.cb) + '</div></div>' +
+      sec('script', 'Game script', 'most likely: <b style="color:var(--ink)">' + esc(labs[top]) + ' ' + Math.round(pr[top]) + '%</b>', '<div class="gdsc">' + pr.map(function(p, i){ return '<div' + (i === top ? ' class="top"' : '') + '><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div>') +
+      sec('board', 'Matchup board', '#1 = most produced / allowed', '<div class="gdmu"><div class="gdmug">' + muTable(g.a, g.b) + muTable(g.b, g.a) + '</div></div>') +
+      (lines.length ? sec('lines', 'Game lines', bestLine ? 'best edge: ' + esc(bestLine.pl) + ' ' + am(bestLine.o) : '', '<div class="gdlines">' + lines.map(pill).join('') + '</div>') : '') + '</section>';
   }
   function pill(l){ var k = key(l); var e = Math.round(l.e * 100); return '<button class="gdp' + (SEL[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="' + esc(l.w || '') + '">' + esc(l.gl ? l.pl : (l.u ? 'U ' : '') + Math.round(l.ln) + '+') + ' <small>' + am(l.o) + '</small> <span class="e' + (e < 0 ? ' n' : e === 0 ? ' z' : '') + '">' + pc(l.p) + ' · ' + (e > 0 ? '+' : '') + e + '</span></button>'; }
+  function playerCard(c){
+    var l0 = c.l0, fl = (D.pf[c.pl] || []), k = c.pl, open = !!POPEN[k], best = c.bestLeg;
+    var mu = '<span class="gdt mu">' + esc(l0.pos) + ' vs ' + esc(l0.opp) + ' D' + (l0.dr ? ' #' + l0.dr[0] + ' · L3 #' + l0.dr[1] : '') + '</span>';
+    var mini = mu + fl.filter(function(f){ return f[0] === 'bad' || f[0] === 'watch'; }).slice(0, 2).map(function(f){ return '<span class="gdt ' + f[0] + '" title="' + esc(f[2]) + '">' + esc(f[1]) + '</span>'; }).join('');
+    var tags = (l0.or ? '<span class="gdt">' + esc(l0.tm) + ' O #' + l0.or[0] + '</span>' : '') + fl.map(function(f){ return '<span class="gdt ' + f[0] + '" title="' + esc(f[2]) + '">' + esc(f[1]) + '</span>'; }).join('');
+    var e = best ? Math.round(best.e * 100) : null;
+    var mks = Object.keys(c.x.mk).map(function(m){ var ls = c.x.mk[m].sort(function(a, b){ return (a.u ? 1 : 0) - (b.u ? 1 : 0) || a.ln - b.ln; }); var p0 = ls[0]; var mk = k + '|' + m; var more = ls.length > 4 && !MORE[mk];
+      return '<div class="mk' + (more ? ' more' : '') + '"><div class="lab"><span>' + esc(m) + '</span><i>' + (p0.proj != null ? 'proj ' + p0.proj + (p0.avg != null ? ' · avg ' + p0.avg : '') + (p0.n ? ' · ' + p0.n + ' gms' : '') : '') + '</i></div><div class="gdrungs">' + ls.map(pill).join('') + (more ? '<button type="button" class="morebtn" data-more="' + esc(mk) + '">+' + (ls.length - 4) + ' more</button>' : '') + '</div></div>'; }).join('');
+    return '<div class="gdpc' + (open ? ' open' : '') + '" data-pl="' + esc(k) + '"><button type="button" class="row" data-ptog="' + esc(k) + '" aria-expanded="' + open + '">' + badge(l0.tm, COL[l0.tm]) + '<span class="nm"><b>' + esc(c.pl) + '</b><small>' + esc(l0.pos) + ' · ' + esc(l0.tm) + ' vs ' + esc(l0.opp) + ' · ' + c.nr + ' legs</small><span class="mini">' + mini + '</span></span><span class="best">' + (best ? '<b class="' + (e < 0 ? 'n' : '') + '">' + (e > 0 ? '+' : '') + e + '</b><small>' + esc((best.u ? 'U ' : '') + Math.round(best.ln) + '+ ' + best.ms.toLowerCase()) + ' ' + am(best.o) + '</small>' : '') + '</span><i class="car">' + (open ? '▴' : '▾') + '</i></button><div class="det"><div class="fl">' + tags + '</div>' + mks + '</div></div>';
+  }
   function players(gid){
     var by = {};
     D.legs.forEach(function(l){ if(l.gl || (gid && l.g !== gid)) return; if(FLOORS && !(l.o <= -130 && l.o >= -400)) return; if(ONLYLIKED && l.e < 0.03) return; (by[l.pl] = by[l.pl] || {l: l, mk: {}}).mk[l.m] = (by[l.pl].mk[l.m] || []).concat([l]); });
-    var cards = Object.keys(by).map(function(pl){ var x = by[pl], best = -1, nr = 0; Object.keys(x.mk).forEach(function(m){ x.mk[m].forEach(function(l){ nr++; if(l.e > best) best = l.e; }); }); return {pl: pl, x: x, l0: x.l, best: best, nr: nr}; })
-      .sort(function(a, b){ return (b.nr - a.nr) || (b.best - a.best); });
+    var cards = Object.keys(by).map(function(pl){ var x = by[pl], best = null, nr = 0; Object.keys(x.mk).forEach(function(m){ x.mk[m].forEach(function(l){ nr++; if(!best || l.e > best.e) best = l; }); }); return {pl: pl, x: x, l0: x.l, best: best ? best.e : -1, bestLeg: best, nr: nr}; });
     if(!cards.length) return '<p class="gdnone">' + (gid && !FLOORS && !ONLYLIKED ? 'FanDuel has not posted player props for this game yet - the game lines above are live.' : 'No legs match these filters.') + '</p>';
-    return '<div class="gdpl">' + cards.map(function(c){ var l0 = c.l0, fl = (D.pf[c.pl] || []).slice(0, 4);
-      var tags = '<span class="gdt mu">' + esc(l0.pos) + ' vs ' + esc(l0.opp) + ' D' + (l0.dr ? ' #' + l0.dr[0] + ' · L3 #' + l0.dr[1] : '') + '</span>' + (l0.or ? '<span class="gdt">' + esc(l0.tm) + ' O #' + l0.or[0] + '</span>' : '') + fl.map(function(f){ return '<span class="gdt ' + f[0] + '" title="' + esc(f[2]) + '">' + esc(f[1]) + '</span>'; }).join('');
-      var mks = Object.keys(c.x.mk).map(function(m){ var ls = c.x.mk[m].sort(function(a, b){ return (a.u ? 1 : 0) - (b.u ? 1 : 0) || a.ln - b.ln; }); var p0 = ls[0]; return '<div class="mk"><div class="lab"><span>' + esc(m) + '</span><i>' + (p0.proj != null ? 'proj ' + p0.proj + (p0.avg != null ? ' · avg ' + p0.avg : '') + (p0.n ? ' · ' + p0.n + ' gms' : '') : '') + '</i></div><div class="gdrungs">' + ls.map(pill).join('') + '</div></div>'; }).join('');
-      return '<div class="gdpc"><div class="nm">' + badge(l0.tm, COL[l0.tm]) + '<span><b>' + esc(c.pl) + '</b><small>' + esc(l0.pos) + ' · ' + esc(l0.tm) + ' vs ' + esc(l0.opp) + '</small></span></div><div class="fl">' + tags + '</div>' + mks + '</div>'; }).join('') + '</div>';
+    cards.sort(function(a, b){ return SORT === 'edge' ? (b.best - a.best) : SORT === 'name' ? (a.pl < b.pl ? -1 : 1) : ((b.nr - a.nr) || (b.best - a.best)); });
+    var groups = {}; cards.forEach(function(c){ var p = c.l0.pos || 'Other'; (groups[p] = groups[p] || []).push(c); });
+    return ['QB', 'RB', 'WR', 'TE', 'K', 'Other'].filter(function(p){ return groups[p]; }).map(function(p){ var o = OPEN[p] !== false; var g = groups[p]; var top = g.slice().sort(function(a, b){ return b.best - a.best; })[0];
+      return '<div class="gdgrp' + (o ? ' open' : '') + '"><button type="button" class="gdsh" data-tog="' + p + '" aria-expanded="' + o + '"><span class="t">' + esc({QB: 'Quarterbacks', RB: 'Running backs', WR: 'Receivers', TE: 'Tight ends', K: 'Kickers', Other: 'Other'}[p]) + '<small>' + g.length + ' players · ' + g.reduce(function(a, c){ return a + c.nr; }, 0) + ' legs</small></span><span class="sum">' + (top && top.bestLeg ? 'best edge: ' + esc(top.pl) + ' ' + (top.best > 0 ? '+' : '') + Math.round(top.best * 100) : '') + '</span><i class="car">' + (o ? '▴' : '▾') + '</i></button><div class="list">' + g.map(playerCard).join('') + '</div></div>'; }).join('');
   }
   function render(){
     var gs = GAME ? D.games.filter(function(g){ return g.gid === GAME; }) : [];
     var n = D.legs.filter(function(l){ return !l.gl && (!GAME || l.g === GAME); }).length;
-    var ctl = '<div class="gdctl"><label><input type="checkbox" id="gdfloors"' + (FLOORS ? ' checked' : '') + '> Floor prices only (−130 to −400)</label><label><input type="checkbox" id="gdliked"' + (ONLYLIKED ? ' checked' : '') + '> Model edge +3 or better</label><span class="n">' + (GAME ? n + ' legs in this game' : 'Pick a game above for its board · ' + n + ' legs this week') + '</span></div>';
+    var ctl = '<div class="gdctl"><label><input type="checkbox" id="gdfloors"' + (FLOORS ? ' checked' : '') + '> Floors (−130 to −400)</label><label><input type="checkbox" id="gdliked"' + (ONLYLIKED ? ' checked' : '') + '> Edge +3 up</label><select class="sel" id="gdsort"><option value="usage"' + (SORT === 'usage' ? ' selected' : '') + '>Sort: most priced</option><option value="edge"' + (SORT === 'edge' ? ' selected' : '') + '>Sort: best edge</option><option value="name"' + (SORT === 'name' ? ' selected' : '') + '>Sort: name</option></select><button type="button" class="lnk" id="gdexp">Expand all</button><button type="button" class="lnk" id="gdcol">Collapse all</button><span class="n">' + (GAME ? n + ' legs in this game' : 'Pick a game above for its board · ' + n + ' legs this week') + '</span></div>';
     $('#gdmain').innerHTML = gs.map(board).join('') + ctl + players(GAME);
     document.querySelectorAll('.gdg').forEach(function(b){ b.classList.toggle('on', (b.dataset.g || null) === GAME); });
     slip();
@@ -107,9 +136,13 @@
     var p = ev.target.closest('.gdp'); if(p){ var k = p.dataset.k; if(SEL[k]) delete SEL[k]; else SEL[k] = true; p.classList.toggle('in', !!SEL[k]); slip(); return; }
     var r = ev.target.closest('[data-rm]'); if(r){ delete SEL[r.dataset.rm]; render(); return; }
     if(ev.target.id === 'gdclear'){ SEL = {}; render(); return; }
+    var tg = ev.target.closest('[data-tog]'); if(tg){ var id = tg.dataset.tog; OPEN[id] = OPEN[id] === false; saveOpen(); var box = tg.parentNode; box.classList.toggle('open', OPEN[id] !== false); tg.setAttribute('aria-expanded', OPEN[id] !== false); tg.querySelector('.car').textContent = OPEN[id] !== false ? '▴' : '▾'; return; }
+    var pt = ev.target.closest('[data-ptog]'); if(pt){ var pk = pt.dataset.ptog; POPEN[pk] = !POPEN[pk]; var pc_ = pt.parentNode; pc_.classList.toggle('open', POPEN[pk]); pt.setAttribute('aria-expanded', POPEN[pk]); pt.querySelector('.car').textContent = POPEN[pk] ? '▴' : '▾'; return; }
+    var mb = ev.target.closest('[data-more]'); if(mb){ MORE[mb.dataset.more] = true; mb.parentNode.parentNode.classList.remove('more'); return; }
+    if(ev.target.id === 'gdexp' || ev.target.id === 'gdcol'){ var on = ev.target.id === 'gdexp'; document.querySelectorAll('.gdpc').forEach(function(c){ POPEN[c.dataset.pl] = on; }); ['QB', 'RB', 'WR', 'TE', 'K', 'Other'].forEach(function(p){ OPEN[p] = on || OPEN[p] !== false; }); if(on) ['script', 'board', 'lines'].forEach(function(x){ OPEN[x] = true; }); saveOpen(); render(); return; }
     if(ev.target.closest('#gdsbar')){ $('#gdslip').classList.toggle('closed'); return; }
   });
-  document.addEventListener('change', function(ev){ if(ev.target.id === 'gdfloors'){ FLOORS = ev.target.checked; render(); } if(ev.target.id === 'gdliked'){ ONLYLIKED = ev.target.checked; render(); } });
+  document.addEventListener('change', function(ev){ if(ev.target.id === 'gdfloors'){ FLOORS = ev.target.checked; render(); } if(ev.target.id === 'gdliked'){ ONLYLIKED = ev.target.checked; render(); } if(ev.target.id === 'gdsort'){ SORT = ev.target.value; render(); } });
   load();
 })();
 </script>
