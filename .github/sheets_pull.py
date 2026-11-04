@@ -49,7 +49,13 @@ def main():
         chunk = RANGES[i:i + 8]
         q = "&".join("ranges=" + urllib.parse.quote(f"'{t}'!{r}", safe="") for t, r in chunk) + "&valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS"
         req = urllib.request.Request(f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET}/values:batchGet?{q}", headers={"Authorization": f"Bearer {tok}"})
-        res = json.load(urllib.request.urlopen(req, timeout=120))
+        try: res = json.load(urllib.request.urlopen(req, timeout=120))
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", "replace")[:600]
+            print(f"Sheets API HTTP {e.code} on ranges {[t for t, _ in chunk]}: {body}")
+            if e.code == 403 and "SERVICE_DISABLED" in body or "has not been used in project" in body: print("FIX: enable the Google Sheets API for the service account's project (console.cloud.google.com -> APIs & Services -> Enable APIs -> Google Sheets API).")
+            elif e.code == 403: print(f"FIX: share the sheet with the service account email ({sa.get('client_email')}) as Viewer.")
+            return 1
         for (t, r), vr in zip(chunk, res.get("valueRanges", [])):
             name = BY_TITLE[t]
             if t == "V2 - Boards Results Feed" and r.startswith("AJ"): name = "results_legs.json"
