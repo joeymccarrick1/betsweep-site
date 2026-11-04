@@ -553,6 +553,28 @@ nav.nav a.played{opacity:.5}
 <script>window.__BSL = /*SLIPDATA*/null; window.__BSW = '{{WEEK}}';</script>
 <script>/*LIVEJS*/</script>
 <script>/*BOOKSJS*/</script>
+<script>
+/* 11/4 affiliate hook (owner: FanDuel affiliate links). Reads /b/aff.json {"fd": "<template or query>"} built from the sheet's 'AUTO - Settings' row
+   "FanDuel affiliate". Empty = no-op. At click time every link to sportsbook.fanduel.com is rewritten: a template containing {url} wraps the deep
+   link (tracking redirect), anything else is appended as query parameters. Links in the page markup never change, so copying a link still
+   gives the plain FanDuel URL and the sheet's link formats are untouched. */
+(function(){
+  var cfg = null; try{ cfg = JSON.parse(localStorage.getItem('bs_aff') || 'null'); }catch(e){}
+  try{ fetch('/b/aff.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ if(j){ cfg = j; try{ localStorage.setItem('bs_aff', JSON.stringify(j)); }catch(e){} } }).catch(function(){}); }catch(e){}
+  function wrap(u){
+    var t = cfg && cfg.fd; if(!t || typeof u !== 'string' || u.indexOf('https://sportsbook.fanduel.com/') !== 0) return u;
+    if(t.indexOf('{url}') >= 0) return t.replace('{url}', encodeURIComponent(u));
+    return u + (u.indexOf('?') >= 0 ? '&' : '?') + t.replace(/^[?&]/, '');
+  }
+  window.bsAff = wrap;
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href^="https://sportsbook.fanduel.com/"]') : null;
+    if(!a || !(cfg && cfg.fd)) return;
+    var w = wrap(a.getAttribute('href')); if(w === a.getAttribute('href')) return;
+    e.preventDefault(); window.open(w, a.target || '_blank', 'noopener');
+  }, true);
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 (function(){

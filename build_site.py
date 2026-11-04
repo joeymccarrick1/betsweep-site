@@ -377,6 +377,17 @@ try:
     json.dump({"week": _bd.get("week"), "built": _bd.get("built"), "legs": _plus}, open(os.path.join(SITE, "b", "plus.json"), "w"))
     print(f"wrote /b/plus.json: {len(_plus)} plus / TD tier legs with their build prices")
 except Exception as _e: print("note: /b/plus.json not written:", _e)
+# 11/4 (owner: FanDuel affiliate links): /b/aff.json from the sheet's 'AUTO - Settings' row "FanDuel affiliate" (template with {url}, or query params).
+# Empty row = {} = the template's click hook does nothing. The deep links themselves are never changed (see template.html).
+try:
+    _st = json.load(open(os.path.join(IN, "settings.json"))); _st = _st.get("values", _st) if isinstance(_st, dict) else _st
+    _aff = next((str(r[1]).strip() for r in _st if len(r) > 1 and str(r[0]).strip().lower() == "fanduel affiliate"), "")
+    json.dump({"fd": _aff} if _aff else {}, open(os.path.join(SITE, "b", "aff.json"), "w")); print("wrote /b/aff.json:", "set" if _aff else "empty (no affiliate tag yet)")
+except Exception as _e: print("note: /b/aff.json not written:", _e)
+# 11/4: /b/live-legs.json - the live page's tracked legs with their pregame chance (build_live.py); pinned per week by the feeds workflow for live_grade.py
+try:
+    shutil.copy(os.path.join(OUT, "live_legs.json"), os.path.join(SITE, "b", "live-legs.json")); print("wrote /b/live-legs.json (live page tracked legs + pregame chance)")
+except Exception as _e: print("live-legs.json skipped:", _e)
 _bll, _blb = ACCT._base_css()
 def _blpage(inner): return f"<title>BetSweep</title>\n{_bll}\n<style>{_blb}{SL.CSS}</style>\n{inner}"
 os.makedirs(os.path.join(SITE, "b"), exist_ok=True)
