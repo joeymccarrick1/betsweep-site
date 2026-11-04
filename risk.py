@@ -92,13 +92,20 @@ RISK_JS = r"""(function(){
     var h = document.querySelector('.pp h1'); if (h){ var t2 = (h.firstChild && h.firstChild.nodeType === 3) ? h.firstChild.nodeValue : h.textContent; out.push([h, t2.trim(), null]); }
     return out; }
   function mkt(t){ t = String(t).toLowerCase(); return /passing/.test(t) ? 'Passing Yards' : /receiving|reception|rec /.test(t) ? 'Receiving Yards' : /rushing/.test(t) ? 'Rushing Yards' : null; }
+  var MOVES = {};
+  function loadMoves(){ try { fetch('/data/price-moves.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ MOVES = {}; if (j && Array.isArray(j.moves)) j.moves.forEach(function(m){ if (m.key) MOVES[m.key] = m; }); decorate(); }).catch(function(){}); } catch(e){} }
+  loadMoves(); setInterval(loadMoves, 10 * 60e3);
   var busy = false;
   function decorate(){ if (!loaded || busy) return; busy = true;
     try {
       hosts().forEach(function(h){ var el = h[0], v = verdict(h[1], h[2]); var cur = el.querySelector(':scope > .bsrc');
         var html = v ? chip(v) : ''; if (cur && cur.outerHTML === html) return; if (cur) cur.remove(); if (v) el.insertAdjacentHTML('beforeend', ' ' + html); });
       document.querySelectorAll('[data-k]').forEach(function(b){ if (b.tagName !== 'BUTTON') return; var q = b.getAttribute('data-k').split('|'), v = verdict(q[0], q[1]);
-        b.classList.toggle('bsrblock', !!(v && v.level === 'block')); if (v && v.level === 'block') b.title = q[0] + ': ' + v.why; });
+        b.classList.toggle('bsrblock', !!(v && v.level === 'block')); if (v && v.level === 'block') b.title = q[0] + ': ' + v.why;
+        // price moves (11/4): a chip on any leg button whose FanDuel price moved 3+ implied points since the build (data/price-moves.json)
+        var mv = MOVES[b.getAttribute('data-k')]; var host = b.closest('tr, .pb, .lg, .gdp, .sp, li') || b.parentNode; if (!host) return; var cur = host.querySelector(':scope .bsrmv');
+        var html = mv ? '<span class="bsrmv ' + (mv.dir === 'SHORTENED' ? 'up' : 'dn') + '" title="' + esc(mv.detail) + '">' + (mv.dir === 'SHORTENED' ? '📈 market moving our way ' : '📉 market drifted ') + (mv.pts > 0 ? '+' : '') + mv.pts + '</span>' : '';
+        if (cur && cur.outerHTML === html) return; if (cur) cur.remove(); if (mv) { var anchor = host.querySelector('.who b, .pbn, b') || b; anchor.insertAdjacentHTML('afterend', ' ' + html); } });
       pill();
     } catch(e){} busy = false; }
   // ---- the open betslip ----
@@ -150,6 +157,7 @@ RISK_JS = r"""(function(){
 """
 
 RISK_CSS = r"""
+.bsrmv{display:inline-flex;align-items:center;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;border:1px solid #2a8a4a;color:#2a8a4a;white-space:nowrap} .bsrmv.dn{border-color:#b7791f;color:#b7791f}
 .bsrc{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:0;text-transform:none;vertical-align:middle;white-space:nowrap;cursor:help}
 .bsr-block{background:#b3261e;color:#fff} .bsr-warn{background:#f6e3b4;color:#6b4a00} .bsr-good{background:#dcefdc;color:#1f5d2b}
 button.bsrblock{opacity:.35;filter:grayscale(1)}
