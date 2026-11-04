@@ -1,0 +1,115 @@
+<style>
+/* Game Desk (concept) - built on the site's own variables: --bg --card --chalk --ink --mute --line --red --good --bad --display --body */
+.gd{max-width:1360px;margin:0 auto}
+.gdgames{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none} .gdgames::-webkit-scrollbar{display:none}
+.gdg{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit;color:var(--ink);cursor:pointer;text-align:left;min-width:150px;transition:border-color .15s,background .15s}
+.gdg .badge{width:26px;height:26px;font-size:10px;border-radius:5px;box-shadow:inset 0 -3px 0 var(--s)} .gdg b{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.04em;display:block;line-height:1.1} .gdg small{display:block;color:var(--mute);font-size:11px;white-space:nowrap}
+.gdg.on{border-color:var(--red);background:var(--chalk);box-shadow:inset 0 0 0 1px var(--red)} .gdg.all{min-width:0} .gdg.all b{color:var(--red)}
+.gdcard{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:0 0 12px;position:relative}
+.gdcard .hd{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px 12px;padding:14px;background:var(--chalk);background-image:var(--plays);border-bottom:1px solid var(--line)}
+.gdcard .hd .tm{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em} .gdcard .hd .tm.r{justify-content:flex-end;text-align:right} .gdcard .hd .tm small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute);letter-spacing:0}
+.gdcard .hd .mid{text-align:center;font-family:var(--display)} .gdcard .hd .mid b{display:block;font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums} .gdcard .hd .mid b i{font-style:normal;color:var(--red);margin:0 6px} .gdcard .hd .mid small{display:block;margin-top:4px;font-family:var(--body);font-size:11.5px;color:var(--mute)}
+.gdsc{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)} .gdsc div{background:var(--chalk);border-radius:8px;padding:8px;text-align:center;border:1px solid transparent} .gdsc b{display:block;font-family:var(--display);font-size:22px;font-weight:700;line-height:1} .gdsc small{display:block;margin-top:3px;font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em} .gdsc div.top{border-color:var(--red)} .gdsc div.top b{color:var(--red)}
+.gdmu{padding:10px 14px;border-bottom:1px solid var(--line)} .gdmu h3,.gdsec h3{margin:0 0 8px;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.gdmug{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px} .gdmt{width:100%;border-collapse:collapse;font-size:12.5px} .gdmt th{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:left;padding:3px 0;border-bottom:1px solid var(--line)} .gdmt th.c{text-align:center} .gdmt td{padding:4px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent);white-space:nowrap} .gdmt td.p{font-family:var(--display);font-weight:700;letter-spacing:.06em;font-size:13px} .gdmt td.c{text-align:center}
+.rk{display:inline-block;min-width:36px;text-align:center;border-radius:5px;padding:2px 6px;font-weight:700;font-size:11.5px;font-variant-numeric:tabular-nums;background:var(--chalk);color:var(--ink)} .rk.g{background:color-mix(in srgb,var(--good) 28%,var(--card));color:var(--good)} .rk.b{background:color-mix(in srgb,var(--bad) 28%,var(--card));color:var(--bad)} .rk.o{opacity:.6}
+.gdlines{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
+.gdp{font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);border:1.5px solid var(--line);background:var(--chalk);border-radius:6px;padding:5px 9px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums;transition:border-color .12s,background .12s} .gdp small{font-weight:600;color:var(--mute)} .gdp .e{font-weight:700;color:var(--good)} .gdp .e.n{color:var(--bad)} .gdp .e.z{color:var(--mute)}
+.gdp.in{background:var(--red);border-color:var(--red);color:#fff} .gdp.in small,.gdp.in .e{color:#fff} .gdp:hover{border-color:var(--red)}
+.gdctl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0 10px;font-size:12.5px;color:var(--mute)} .gdctl label{display:inline-flex;gap:5px;align-items:center;cursor:pointer;color:var(--ink)} .gdctl input{accent-color:var(--red)} .gdctl .n{margin-left:auto}
+.gdpl{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;padding-bottom:12px}
+.gdpc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px} .gdpc .nm{display:flex;align-items:center;gap:9px} .gdpc .nm .badge{width:30px;height:30px;font-size:11px;border-radius:6px;box-shadow:inset 0 -3px 0 var(--s)} .gdpc .nm b{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.03em;line-height:1.1} .gdpc .nm small{display:block;color:var(--mute);font-size:11.5px;font-family:var(--body)}
+.gdpc .fl{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 2px} .gdt{font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:2px 7px;background:var(--chalk);color:var(--ink);border:1px solid var(--line)} .gdt.good{border-color:var(--good);color:var(--good)} .gdt.bad{border-color:var(--bad);color:var(--bad)} .gdt.watch{border-color:var(--warn);color:var(--warn)} .gdt.mu{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.gdpc .mk{margin-top:8px} .gdpc .mk .lab{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)} .gdpc .mk .lab i{font-style:normal;font-family:var(--body);font-weight:500;text-transform:none;letter-spacing:0;font-size:11.5px} .gdrungs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.gdslip{position:fixed;left:0;right:0;bottom:var(--bs-tabs,0px);z-index:40;background:var(--card);color:var(--ink);border-top:2px solid var(--red);box-shadow:0 -8px 28px rgba(0,0,0,.35);transition:transform .2s} .gdslip.closed{transform:translateY(calc(100% - 56px))}
+.gdslip .sbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;cursor:pointer;max-width:1360px;margin:0 auto} .gdslip .sbar b{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.06em;text-transform:uppercase} .gdslip .sbar .px{font-family:var(--display);font-size:24px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums} .gdslip .sbar small{color:var(--mute);display:block;font-size:12px}
+.gdslip .sbody{max-height:46vh;overflow:auto;padding:0 16px 14px;max-width:1360px;margin:0 auto} .gdslip .leg{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px} .gdslip .leg small{display:block;color:var(--mute);font-size:11.5px} .gdslip .leg button{background:transparent;border:0;color:var(--bad);font-size:20px;cursor:pointer;line-height:1}
+.gdslip .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px} .gdslip .acts a,.gdslip .acts button{font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:9px 14px;text-decoration:none;cursor:pointer;border:1.5px solid var(--red);color:var(--red);background:transparent} .gdslip .acts a.fd{background:var(--red);color:#fff}
+.gdnone{color:var(--mute);padding:24px 0;text-align:center}
+.gd .concept{font-size:12px;color:var(--mute);margin:-6px 0 10px}
+@media (max-width:640px){ .gdsc{grid-template-columns:repeat(2,1fr)} .gdmug{grid-template-columns:1fr} .gdcard .hd{grid-template-columns:auto minmax(0,1fr) auto;padding:12px 10px} .gdcard .hd .tm{font-size:18px;gap:6px} .gdcard .hd .tm small{display:none} .gdcard .hd .mid b{font-size:26px} .gdcard .hd .mid small{font-size:10.5px} .gdpl{grid-template-columns:1fr} }
+</style>
+<div class="gd">
+<div class="gdgames" id="gdgames"></div>
+<div id="gdmain"><p class="gdnone">Loading this week's data…</p></div>
+</div>
+<div class="gdslip closed" id="gdslip"><div class="sbar" id="gdsbar"><span><b id="gdsn">Slip · 0 legs</b><small id="gdsp">tap legs to build a parlay</small></span><span class="px" id="gdsx">—</span></div><div class="sbody" id="gdsbody"></div></div>
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function am(o){ return o > 0 ? '+' + o : '' + o; } function pc(p){ return Math.round(p * 100) + '%'; }
+  function dec(o){ return o > 0 ? 1 + o / 100 : 1 + 100 / (-o); } function amer(d){ return d >= 2 ? '+' + Math.round((d - 1) * 100) : '' + (-Math.round(100 / (d - 1))); }
+  function key(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
+  function lum(h){ h = h.replace('#', ''); return 0.2126 * parseInt(h.substr(0, 2), 16) / 255 + 0.7152 * parseInt(h.substr(2, 2), 16) / 255 + 0.0722 * parseInt(h.substr(4, 2), 16) / 255; }
+  function badge(t, col){ col = col || ['#444', '#999']; return '<span class="badge" style="--p:' + col[0] + ';--s:' + col[1] + ';--ink:' + (lum(col[0]) > 0.45 ? '#101820' : '#ffffff') + '">' + esc(t) + '</span>'; }
+  var D, GAME = null, SEL = {}, FLOORS = false, ONLYLIKED = false, COL = {};
+  function load(){
+    var q = new URLSearchParams(location.search).get('data');
+    var go = function(src){ var s = document.createElement('script'); s.src = src; s.onload = function(){ D = window.__BS; init(); }; s.onerror = function(){ $('#gdmain').innerHTML = '<p class="gdnone">Could not load the builder data (' + esc(src) + ').</p>'; }; document.head.appendChild(s); };
+    if(q) return go(q);
+    fetch('/build/index.html', {cache: 'no-store'}).then(function(r){ return r.text(); }).then(function(t){ var m = t.match(/src="(\/build\/data-[a-f0-9]+\.js)"/); if(!m) throw 0; go(m[1]); }).catch(function(){ $('#gdmain').innerHTML = '<p class="gdnone">Could not find this week\'s builder data.</p>'; });
+  }
+  function init(){
+    try { (JSON.parse(localStorage.getItem('bs_slipk_w' + D.week) || '[]')).forEach(function(k){ SEL[k] = true; }); } catch(e){}
+    D.games.forEach(function(g){ COL[g.a] = g.ca; COL[g.b] = g.cb; });
+    var h = (location.hash || '').replace('#', ''); if(D.games.some(function(g){ return g.gid === h; })) GAME = h;
+    var gs = D.games.slice().sort(function(a, b){ return a.sort < b.sort ? -1 : 1; });
+    $('#gdgames').innerHTML = '<button class="gdg all' + (GAME ? '' : ' on') + '" data-g=""><span><b>All games</b><small>' + gs.length + ' this week</small></span></button>' + gs.map(function(g){ return '<button class="gdg' + (GAME === g.gid ? ' on' : '') + '" data-g="' + g.gid + '">' + badge(g.a, g.ca) + badge(g.b, g.cb) + '<span><b>' + esc(g.a) + ' @ ' + esc(g.b) + '</b><small>' + esc(g.kick) + ' · ' + esc(g.most) + '</small></span></button>'; }).join('');
+    render();
+  }
+  function rk(n){ if(n == null) return '<span class="rk o">–</span>'; return '<span class="rk' + (n <= 10 ? ' g' : n >= 23 ? ' b' : '') + '">#' + n + '</span>'; }
+  function muTable(off, def){
+    var o = D.osr[off] || {}, d = D.posr[def] || {};
+    return '<table class="gdmt"><thead><tr><th>' + esc(off) + ' offense</th><th class="c">season</th><th class="c">last 3</th><th class="c">vs ' + esc(def) + ' D</th><th class="c">last 3</th></tr></thead><tbody>' + ['QB', 'RB', 'WR', 'TE'].map(function(p){ var a = o[p] || [], b = d[p] || []; return '<tr><td class="p">' + p + '</td><td class="c">' + rk(a[0]) + '</td><td class="c">' + rk(a[1]) + '</td><td class="c">' + rk(b[0]) + '</td><td class="c">' + rk(b[1]) + '</td></tr>'; }).join('') + '</tbody></table>';
+  }
+  function board(g){
+    var pr = g.probs || [0, 0, 0, 0], labs = [g.a + ' by 10+', 'Close, low', 'Shootout', g.b + ' by 10+'], top = pr.indexOf(Math.max.apply(null, pr));
+    var lines = D.legs.filter(function(l){ return l.gl && l.g === g.gid && !l.alt; }).sort(function(a, b){ return b.e - a.e; }).slice(0, 8);
+    return '<section class="gdcard" id="g-' + g.gid + '"><div class="hd"><div class="tm">' + badge(g.a, g.ca) + '<span>' + esc(g.a) + '<small>' + esc(g.na) + '</small></span></div><div class="mid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + esc(g.kick) + ' · model total ' + g.tot + ' · most likely: ' + esc(g.most) + '</small></div><div class="tm r"><span>' + esc(g.b) + '<small>' + esc(g.nb) + '</small></span>' + badge(g.b, g.cb) + '</div></div>' +
+      '<div class="gdsc">' + pr.map(function(p, i){ return '<div' + (i === top ? ' class="top"' : '') + '><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div>' +
+      '<div class="gdmu"><h3>Matchup board · rank 1 = produces / allows the most</h3><div class="gdmug">' + muTable(g.a, g.b) + muTable(g.b, g.a) + '</div></div>' +
+      (lines.length ? '<div class="gdlines">' + lines.map(pill).join('') + '</div>' : '') + '</section>';
+  }
+  function pill(l){ var k = key(l); var e = Math.round(l.e * 100); return '<button class="gdp' + (SEL[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="' + esc(l.w || '') + '">' + esc(l.gl ? l.pl : (l.u ? 'U ' : '') + Math.round(l.ln) + '+') + ' <small>' + am(l.o) + '</small> <span class="e' + (e < 0 ? ' n' : e === 0 ? ' z' : '') + '">' + pc(l.p) + ' · ' + (e > 0 ? '+' : '') + e + '</span></button>'; }
+  function players(gid){
+    var by = {};
+    D.legs.forEach(function(l){ if(l.gl || (gid && l.g !== gid)) return; if(FLOORS && !(l.o <= -130 && l.o >= -400)) return; if(ONLYLIKED && l.e < 0.03) return; (by[l.pl] = by[l.pl] || {l: l, mk: {}}).mk[l.m] = (by[l.pl].mk[l.m] || []).concat([l]); });
+    var cards = Object.keys(by).map(function(pl){ var x = by[pl], best = -1, nr = 0; Object.keys(x.mk).forEach(function(m){ x.mk[m].forEach(function(l){ nr++; if(l.e > best) best = l.e; }); }); return {pl: pl, x: x, l0: x.l, best: best, nr: nr}; })
+      .sort(function(a, b){ return (b.nr - a.nr) || (b.best - a.best); });
+    if(!cards.length) return '<p class="gdnone">' + (gid && !FLOORS && !ONLYLIKED ? 'FanDuel has not posted player props for this game yet - the game lines above are live.' : 'No legs match these filters.') + '</p>';
+    return '<div class="gdpl">' + cards.map(function(c){ var l0 = c.l0, fl = (D.pf[c.pl] || []).slice(0, 4);
+      var tags = '<span class="gdt mu">' + esc(l0.pos) + ' vs ' + esc(l0.opp) + ' D' + (l0.dr ? ' #' + l0.dr[0] + ' · L3 #' + l0.dr[1] : '') + '</span>' + (l0.or ? '<span class="gdt">' + esc(l0.tm) + ' O #' + l0.or[0] + '</span>' : '') + fl.map(function(f){ return '<span class="gdt ' + f[0] + '" title="' + esc(f[2]) + '">' + esc(f[1]) + '</span>'; }).join('');
+      var mks = Object.keys(c.x.mk).map(function(m){ var ls = c.x.mk[m].sort(function(a, b){ return (a.u ? 1 : 0) - (b.u ? 1 : 0) || a.ln - b.ln; }); var p0 = ls[0]; return '<div class="mk"><div class="lab"><span>' + esc(m) + '</span><i>' + (p0.proj != null ? 'proj ' + p0.proj + (p0.avg != null ? ' · avg ' + p0.avg : '') + (p0.n ? ' · ' + p0.n + ' gms' : '') : '') + '</i></div><div class="gdrungs">' + ls.map(pill).join('') + '</div></div>'; }).join('');
+      return '<div class="gdpc"><div class="nm">' + badge(l0.tm, COL[l0.tm]) + '<span><b>' + esc(c.pl) + '</b><small>' + esc(l0.pos) + ' · ' + esc(l0.tm) + ' vs ' + esc(l0.opp) + '</small></span></div><div class="fl">' + tags + '</div>' + mks + '</div>'; }).join('') + '</div>';
+  }
+  function render(){
+    var gs = GAME ? D.games.filter(function(g){ return g.gid === GAME; }) : [];
+    var n = D.legs.filter(function(l){ return !l.gl && (!GAME || l.g === GAME); }).length;
+    var ctl = '<div class="gdctl"><label><input type="checkbox" id="gdfloors"' + (FLOORS ? ' checked' : '') + '> Floor prices only (−130 to −400)</label><label><input type="checkbox" id="gdliked"' + (ONLYLIKED ? ' checked' : '') + '> Model edge +3 or better</label><span class="n">' + (GAME ? n + ' legs in this game' : 'Pick a game above for its board · ' + n + ' legs this week') + '</span></div>';
+    $('#gdmain').innerHTML = gs.map(board).join('') + ctl + players(GAME);
+    document.querySelectorAll('.gdg').forEach(function(b){ b.classList.toggle('on', (b.dataset.g || null) === GAME); });
+    slip();
+  }
+  function slip(){
+    var legs = Object.keys(SEL).map(function(k){ return D.legs.filter(function(l){ return key(l) === k; })[0]; }).filter(Boolean);
+    var p = legs.reduce(function(a, l){ return a * l.p; }, 1), d = legs.reduce(function(a, l){ return a * dec(l.o); }, 1), games = {}; legs.forEach(function(l){ games[l.g] = 1; });
+    $('#gdsn').textContent = 'Slip · ' + legs.length + ' leg' + (legs.length === 1 ? '' : 's'); $('#gdsx').textContent = legs.length ? amer(d) : '—';
+    $('#gdsp').textContent = legs.length ? 'model ' + pc(p) + ' · fair ' + amer(1 / Math.max(p, 0.0001)) + (Object.keys(games).length < legs.length ? ' · same-game legs: check FanDuel\'s SGP price' : '') : 'tap legs to build a parlay';
+    var ok = legs.filter(function(l){ return l.fd && l.fd.m; });
+    var fd = ok.length ? 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&') : '';
+    $('#gdsbody').innerHTML = legs.map(function(l){ return '<div class="leg"><span>' + esc(l.pl) + (l.gl ? '' : ' ' + (l.u ? 'under ' : '') + Math.round(l.ln) + '+ ' + esc(l.ms.toLowerCase())) + '<small>' + esc(l.g) + ' · FD ' + am(l.o) + ' · model ' + pc(l.p) + '</small></span><button data-rm="' + esc(key(l)) + '" aria-label="Remove">×</button></div>'; }).join('') +
+      (legs.length ? '<div class="acts">' + (fd ? '<a class="fd" href="' + fd + '" target="_blank" rel="noopener">Bet it on FanDuel</a>' : '') + '<a href="/build/?new=1&add=' + encodeURIComponent(Object.keys(SEL).join(',')) + '#slip">Open in the builder</a><button id="gdclear">Clear</button></div>' : '');
+    try { localStorage.setItem('bs_slipk_w' + D.week, JSON.stringify(Object.keys(SEL))); } catch(e){}
+  }
+  document.addEventListener('click', function(ev){
+    var g = ev.target.closest('.gdg'); if(g){ GAME = g.dataset.g || null; try { history.replaceState(null, '', GAME ? '#' + GAME : location.pathname); } catch(e){} render(); if(GAME){ var el = $('#gdgames'); if(el) window.scrollTo({top: el.getBoundingClientRect().top + window.pageYOffset - 70, behavior: 'smooth'}); } return; }
+    var p = ev.target.closest('.gdp'); if(p){ var k = p.dataset.k; if(SEL[k]) delete SEL[k]; else SEL[k] = true; p.classList.toggle('in', !!SEL[k]); slip(); return; }
+    var r = ev.target.closest('[data-rm]'); if(r){ delete SEL[r.dataset.rm]; render(); return; }
+    if(ev.target.id === 'gdclear'){ SEL = {}; render(); return; }
+    if(ev.target.closest('#gdsbar')){ $('#gdslip').classList.toggle('closed'); return; }
+  });
+  document.addEventListener('change', function(ev){ if(ev.target.id === 'gdfloors'){ FLOORS = ev.target.checked; render(); } if(ev.target.id === 'gdliked'){ ONLYLIKED = ev.target.checked; render(); } });
+  load();
+})();
+</script>
