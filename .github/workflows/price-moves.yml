@@ -1,0 +1,20 @@
+# Price moves on the Model's Best plus-money / TD legs (see .github/price_moves.py). Runs after each sheet mirror; commits data/price-moves.json.
+name: price-moves
+on:
+  schedule: [{cron: "12,42 * * * *"}]
+  workflow_dispatch: {}
+permissions: {contents: write}
+concurrency: {group: price-moves, cancel-in-progress: false}
+jobs:
+  moves:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/price_moves.py || { echo "price moves skipped (plus.json or mirror missing)"; exit 0; }
+      - run: |
+          test -f data/price-moves.json || exit 0
+          git config user.name BetSweep; git config user.email support@betsweep.co
+          git add data/price-moves.json
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          git commit -qm "Price moves $(date -u +%FT%TZ)"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0; sleep 5; done; exit 1
