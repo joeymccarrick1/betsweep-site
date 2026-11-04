@@ -66,6 +66,12 @@ try:
 except Exception as _e:
     print("note: no leg snapshots for the live page:", _e)
 LD = {"week": WEEK, "games": games, "legs": slim, "extra": extra, "built": D["built"]}
+# 11/4 (owner: grade the live page's "from here" numbers): the tracked legs with their pregame chance go to out/live_legs.json; build_site publishes it
+# as /b/live-legs.json and the feeds workflow pins the first in-game copy of each week on the `feeds` branch, so live_grade.py can replay every
+# snapshot against the pregame numbers the page actually showed.
+json.dump({"week": WEEK, "built": D["built"], "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko")} for g in games],
+           "legs": [{k: l[k] for k in ("pl", "tm", "opp", "g", "m", "ln", "o", "p", "bk", "e", "proj") if k in l} for l in slim if not l.get("gl") and not l.get("alt")]},
+          open(os.path.join(OUT, "live_legs.json"), "w"), separators=(",", ":"))
 print(f"live page: {len(slim)} tracked legs across {len(games)} games")
 
 CSS = r"""
