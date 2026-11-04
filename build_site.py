@@ -128,7 +128,7 @@ NAV_GROUPS = [("/", "Home", None),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
-              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge")])]
+              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record")])]
 NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
@@ -576,8 +576,9 @@ for _d, _, _fs in os.walk(SITE):
     _urls.append(_path)
 for _w in weeks:
     if f"/receipts/week{_w}/" not in _urls: _urls.append(f"/receipts/week{_w}/")
+if "/how/" not in _urls: _urls.append("/how/")   # 11/4: static page in the repo (how/index.html), not built here
 _pri = lambda u: "1.0" if u == "/" else ("0.9" if u in ("/boards/", "/build/", "/player/") else ("0.6" if u.startswith("/player/") else "0.7"))
-_freq = lambda u: "monthly" if u.startswith(("/receipts/week", "/terms/", "/privacy/", "/responsible-gambling/", "/guide/")) else "daily"
+_freq = lambda u: "monthly" if u.startswith(("/receipts/week", "/terms/", "/privacy/", "/responsible-gambling/", "/guide/", "/how/")) else "daily"
 open(os.path.join(SITE, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"<url><loc>{BASE}{html.escape(u)}</loc><lastmod>{_today}</lastmod><changefreq>{_freq(u)}</changefreq><priority>{_pri(u)}</priority></url>\n" for u in sorted(set(_urls)))
     + "</urlset>\n")
