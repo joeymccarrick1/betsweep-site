@@ -1,6 +1,6 @@
 <style>
 /* Game Desk (concept) - built on the site's own variables: --bg --card --chalk --ink --mute --line --red --good --bad --display --body */
-.gd{max-width:1360px;margin:0 auto}
+.gd{max-width:1360px;margin:0 auto;padding-bottom:72px}
 .gdgames{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none} .gdgames::-webkit-scrollbar{display:none}
 .gdg{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit;color:var(--ink);cursor:pointer;text-align:left;min-width:150px;transition:border-color .15s,background .15s}
 .gdg .badge{width:26px;height:26px;font-size:10px;border-radius:5px;box-shadow:inset 0 -3px 0 var(--s)} .gdg b{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.04em;display:block;line-height:1.1} .gdg small{display:block;color:var(--mute);font-size:11px;white-space:nowrap}
@@ -23,7 +23,7 @@
 .gdpc .mk{margin-top:8px} .gdpc .mk .lab{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)} .gdpc .mk .lab i{font-style:normal;font-family:var(--body);font-weight:500;text-transform:none;letter-spacing:0;font-size:11.5px} .gdrungs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .gdslip{position:fixed;left:0;right:0;bottom:var(--bs-tabs,0px);z-index:40;background:var(--card);color:var(--ink);border-top:2px solid var(--red);box-shadow:0 -8px 28px rgba(0,0,0,.35);transition:transform .2s} .gdslip.closed{transform:translateY(calc(100% - 56px))}
 .gdslip .sbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;cursor:pointer;max-width:1360px;margin:0 auto} .gdslip .sbar b{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.06em;text-transform:uppercase} .gdslip .sbar .px{font-family:var(--display);font-size:24px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums} .gdslip .sbar small{color:var(--mute);display:block;font-size:12px}
-.gdslip .sbody{max-height:46vh;overflow:auto;padding:0 16px 14px;max-width:1360px;margin:0 auto} .gdslip .leg{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px} .gdslip .leg small{display:block;color:var(--mute);font-size:11.5px} .gdslip .leg button{background:transparent;border:0;color:var(--bad);font-size:20px;cursor:pointer;line-height:1}
+.gdslip .sbody{max-height:46vh;overflow:auto;overscroll-behavior:contain;padding:0 16px 14px;max-width:1360px;margin:0 auto} .gdslip .leg{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px} .gdslip .leg small{display:block;color:var(--mute);font-size:11.5px} .gdslip .leg button{background:transparent;border:0;color:var(--bad);font-size:20px;cursor:pointer;line-height:1}
 .gdslip .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px} .gdslip .acts a,.gdslip .acts button{font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:9px 14px;text-decoration:none;cursor:pointer;border:1.5px solid var(--red);color:var(--red);background:transparent} .gdslip .acts a.fd{background:var(--red);color:#fff}
 .gdnone{color:var(--mute);padding:24px 0;text-align:center}
 .gd .concept{font-size:12px;color:var(--mute);margin:-6px 0 10px}
@@ -65,10 +65,10 @@
   function lum(h){ h = h.replace('#', ''); return 0.2126 * parseInt(h.substr(0, 2), 16) / 255 + 0.7152 * parseInt(h.substr(2, 2), 16) / 255 + 0.0722 * parseInt(h.substr(4, 2), 16) / 255; }
   function badge(t, col){ col = col || ['#444', '#999']; return '<span class="badge" style="--p:' + col[0] + ';--s:' + col[1] + ';--ink:' + (lum(col[0]) > 0.45 ? '#101820' : '#ffffff') + '">' + esc(t) + '</span>'; }
   var D, GAME = null, SEL = {}, FLOORS = false, ONLYLIKED = false, COL = {}, SORT = 'usage';
-  var OPEN = {script: true, board: true, lines: true, QB: true, RB: true, WR: true, TE: true, K: false}, POPEN = {}, MORE = {};
-  try { var o_ = JSON.parse(localStorage.getItem('bs_desk_open') || 'null'); if(o_) OPEN = o_; } catch(e){}
-  function saveOpen(){ try { localStorage.setItem('bs_desk_open', JSON.stringify(OPEN)); } catch(e){} }
-  function sec(id, title, sum, body){ var o = OPEN[id] !== false; return '<div class="gdsec' + (o ? ' open' : '') + '" data-sec="' + id + '"><button type="button" class="gdsh" data-tog="' + id + '" aria-expanded="' + o + '"><span class="t">' + title + '</span><span class="sum">' + sum + '</span><i class="car">' + (o ? '▴' : '▾') + '</i></button><div class="bd">' + body + '</div></div>'; }
+  var OPEN = {script: false, board: false, lines: false, QB: false, RB: false, WR: false, TE: false, K: false, Other: false}, POPEN = {}, MORE = {};   // owner 11/4: everything collapsed by default
+  try { var o_ = JSON.parse(localStorage.getItem('bs_desk_open2') || 'null'); if(o_) OPEN = o_; } catch(e){}
+  function saveOpen(){ try { localStorage.setItem('bs_desk_open2', JSON.stringify(OPEN)); } catch(e){} }
+  function sec(id, title, sum, body){ var o = OPEN[id] === true; return '<div class="gdsec' + (o ? ' open' : '') + '" data-sec="' + id + '"><button type="button" class="gdsh" data-tog="' + id + '" aria-expanded="' + o + '"><span class="t">' + title + '</span><span class="sum">' + sum + '</span><i class="car">' + (o ? '▴' : '▾') + '</i></button><div class="bd">' + body + '</div></div>'; }
   function load(){
     var q = new URLSearchParams(location.search).get('data');
     var go = function(src){ var s = document.createElement('script'); s.src = src; s.onload = function(){ D = window.__BS; init(); }; s.onerror = function(){ $('#gdmain').innerHTML = '<p class="gdnone">Could not load the builder data (' + esc(src) + ').</p>'; }; document.head.appendChild(s); };
@@ -136,7 +136,7 @@
     if(!cards.length) return '<p class="gdnone">' + (gid && !FLOORS && !ONLYLIKED ? 'FanDuel has not posted player props for this game yet - the game lines above are live.' : 'No legs match these filters.') + '</p>';
     cards.sort(function(a, b){ return SORT === 'edge' ? (b.best - a.best) : SORT === 'name' ? (a.pl < b.pl ? -1 : 1) : ((b.nr - a.nr) || (b.best - a.best)); });
     var groups = {}; cards.forEach(function(c){ var p = c.l0.pos || 'Other'; (groups[p] = groups[p] || []).push(c); });
-    return ['QB', 'RB', 'WR', 'TE', 'K', 'Other'].filter(function(p){ return groups[p]; }).map(function(p){ var o = OPEN[p] !== false; var g = groups[p]; var top = g.slice().sort(function(a, b){ return b.best - a.best; })[0];
+    return ['QB', 'RB', 'WR', 'TE', 'K', 'Other'].filter(function(p){ return groups[p]; }).map(function(p){ var o = OPEN[p] === true; var g = groups[p]; var top = g.slice().sort(function(a, b){ return b.best - a.best; })[0];
       return '<div class="gdgrp' + (o ? ' open' : '') + '"><button type="button" class="gdsh" data-tog="' + p + '" aria-expanded="' + o + '"><span class="t">' + esc({QB: 'Quarterbacks', RB: 'Running backs', WR: 'Receivers', TE: 'Tight ends', K: 'Kickers', Other: 'Other'}[p]) + '<small>' + g.length + ' players · ' + g.reduce(function(a, c){ return a + c.nr; }, 0) + ' legs</small></span><span class="sum">' + (top && top.bestLeg ? 'best edge: ' + esc(top.pl) + ' ' + (top.best > 0 ? '+' : '') + Math.round(top.best * 100) : '') + '</span><i class="car">' + (o ? '▴' : '▾') + '</i></button><div class="list">' + g.map(playerCard).join('') + '</div></div>'; }).join('');
   }
   function render(){
@@ -160,16 +160,16 @@
     try { localStorage.setItem('bs_slipk_w' + D.week, JSON.stringify(Object.keys(SEL))); } catch(e){}
   }
   document.addEventListener('click', function(ev){
-    var g = ev.target.closest('.gdg'); if(g){ GAME = g.dataset.g || null; try { history.replaceState(null, '', GAME ? '#' + GAME : location.pathname); } catch(e){} render(); if(GAME){ var el = $('#gdgames'); if(el) window.scrollTo({top: el.getBoundingClientRect().top + window.pageYOffset - 70, behavior: 'smooth'}); } return; }
+    var g = ev.target.closest('.gdg'); if(g){ GAME = g.dataset.g || null; try { history.replaceState(null, '', GAME ? '#' + GAME : location.pathname); } catch(e){} render(); if(GAME){ var el = $('#gdgames'); if(el) window.scrollTo(0, el.getBoundingClientRect().top + window.pageYOffset - 70); } return; }
     var p = ev.target.closest('.gdp'); if(p){ var k = p.dataset.k; if(SEL[k]) delete SEL[k]; else SEL[k] = true; p.classList.toggle('in', !!SEL[k]); slip(); return; }
     var r = ev.target.closest('[data-rm]'); if(r){ delete SEL[r.dataset.rm]; render(); return; }
     if(ev.target.id === 'gdclear'){ SEL = {}; render(); return; }
     var si = ev.target.closest('.gdstrip .scripts i[data-sc], .gdsc div[data-sc]'); if(si){ var gid_ = si.closest('[data-g]').dataset.g; STRIP_SC[gid_] = +si.dataset.sc; var wrap = document.querySelector('.gdstrip[data-g="' + gid_ + '"]'); if(wrap) wrap.innerHTML = stripHtml(gid_); document.querySelectorAll('.gdsc[data-g="' + gid_ + '"] div').forEach(function(t){ t.classList.toggle('sel', +t.dataset.sc === STRIP_SC[gid_]); }); return; }
     var am_ = ev.target.closest('.gdstrip .addmini[data-k]'); if(am_){ var kk = am_.dataset.k; if(!D.legs.some(function(l){ return key(l) === kk; })){ am_.textContent = '?'; am_.title = 'This leg is not in the builder data'; return; } if(SEL[kk]) delete SEL[kk]; else SEL[kk] = true; am_.classList.toggle('in', !!SEL[kk]); am_.textContent = SEL[kk] ? '✓' : '+'; slip(); document.querySelectorAll('.gdp[data-k]').forEach(function(p_){ p_.classList.toggle('in', !!SEL[p_.dataset.k]); }); return; }
-    var tg = ev.target.closest('[data-tog]'); if(tg){ var id = tg.dataset.tog; OPEN[id] = OPEN[id] === false; saveOpen(); var box = tg.parentNode; box.classList.toggle('open', OPEN[id] !== false); tg.setAttribute('aria-expanded', OPEN[id] !== false); tg.querySelector('.car').textContent = OPEN[id] !== false ? '▴' : '▾'; return; }
+    var tg = ev.target.closest('[data-tog]'); if(tg){ var id = tg.dataset.tog; OPEN[id] = OPEN[id] !== true; saveOpen(); var box = tg.parentNode; box.classList.toggle('open', OPEN[id] === true); tg.setAttribute('aria-expanded', OPEN[id] === true); tg.querySelector('.car').textContent = OPEN[id] === true ? '▴' : '▾'; return; }
     var pt = ev.target.closest('[data-ptog]'); if(pt){ var pk = pt.dataset.ptog; POPEN[pk] = !POPEN[pk]; var pc_ = pt.parentNode; pc_.classList.toggle('open', POPEN[pk]); pt.setAttribute('aria-expanded', POPEN[pk]); pt.querySelector('.car').textContent = POPEN[pk] ? '▴' : '▾'; return; }
     var mb = ev.target.closest('[data-more]'); if(mb){ MORE[mb.dataset.more] = true; mb.parentNode.parentNode.classList.remove('more'); return; }
-    if(ev.target.id === 'gdexp' || ev.target.id === 'gdcol'){ var on = ev.target.id === 'gdexp'; document.querySelectorAll('.gdpc').forEach(function(c){ POPEN[c.dataset.pl] = on; }); ['QB', 'RB', 'WR', 'TE', 'K', 'Other'].forEach(function(p){ OPEN[p] = on || OPEN[p] !== false; }); if(on) ['script', 'board', 'lines'].forEach(function(x){ OPEN[x] = true; }); saveOpen(); render(); return; }
+    if(ev.target.id === 'gdexp' || ev.target.id === 'gdcol'){ var on = ev.target.id === 'gdexp'; document.querySelectorAll('.gdpc').forEach(function(c){ POPEN[c.dataset.pl] = on; }); ['QB', 'RB', 'WR', 'TE', 'K', 'Other', 'script', 'board', 'lines'].forEach(function(p){ OPEN[p] = on; }); saveOpen(); render(); return; }
     if(ev.target.closest('#gdsbar')){ $('#gdslip').classList.toggle('closed'); return; }
   });
   document.addEventListener('change', function(ev){ if(ev.target.id === 'gdfloors'){ FLOORS = ev.target.checked; render(); } if(ev.target.id === 'gdliked'){ ONLYLIKED = ev.target.checked; render(); } if(ev.target.id === 'gdsort'){ SORT = ev.target.value; render(); } });
