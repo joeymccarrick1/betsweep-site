@@ -486,6 +486,8 @@ body.compact .card:not(.expanded) > .vbtns{display:flex;padding:10px 12px}
 nav.nav a.played{opacity:.5}
 /*LIVECSS*/
 /*BOOKSCSS*/
+/* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
+.card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
 </style>
 
 <div class="banner"><img src="data:image/jpeg;base64,{{BANNER}}" alt="BetSweep — Picks. Data. Edge. Sweep."></div>
