@@ -49,6 +49,45 @@ if sb:
         print("inactives", teams, len(outs))
 json.dump({"games": ina, "mirrored": now.isoformat()}, open("out/inactives.json", "w"))
 
+# ---- livelog.json (owner 11/4: "grade the live page's from-here numbers"): every run during a game, the box score of every player in it with
+# the clock and score, so the live model's in-game calls can be studied against what happened next. Rolling 10 days; one entry per game per run.
+LOG = []
+try: LOG = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/livelog.json"])).get("snaps", [])
+except Exception as e: print("livelog: no previous log", e)
+cut = (now - dt.timedelta(days=10)).isoformat()
+LOG = [x for x in LOG if x.get("ts", "") >= cut]
+def box_of(sm):
+    out = {}
+    for tm in sm.get("boxscore", {}).get("players", []) or []:
+        ab = (tm.get("team") or {}).get("abbreviation")
+        for cat in tm.get("statistics", []) or []:
+            keys = cat.get("keys") or []; nm = cat.get("name")
+            for a in cat.get("athletes", []) or []:
+                n = (a.get("athlete") or {}).get("displayName");
+                if not n: continue
+                S = dict(zip(keys, a.get("stats", []))); row = out.setdefault(n, {"tm": ab, "pass": 0, "rush": 0, "rec": 0, "recy": 0, "td": 0})
+                def num(v):
+                    try: return float(str(v).split("/")[0])
+                    except Exception: return 0.0
+                if nm == "passing": row["pass"] = num(S.get("passingYards", 0))
+                if nm == "rushing": row["rush"] = num(S.get("rushingYards", 0)); row["td"] += num(S.get("rushingTouchdowns", 0))
+                if nm == "receiving": row["rec"] = num(S.get("receptions", 0)); row["recy"] = num(S.get("receivingYards", 0)); row["td"] += num(S.get("receivingTouchdowns", 0))
+    return out
+if sb:
+    for ev in sb.get("events") or []:
+        st = ((ev.get("status") or {}).get("type") or {})
+        if st.get("state") != "in": continue
+        sm = get(f"{S}/summary?event={ev['id']}")
+        if not sm: continue
+        comp = (ev.get("competitions") or [{}])[0]; cs = {c["homeAway"]: c for c in comp.get("competitors", [])}
+        sit = comp.get("situation") or {}
+        LOG.append({"ts": now.isoformat(), "eid": ev["id"], "home": cs.get("home", {}).get("team", {}).get("abbreviation"), "away": cs.get("away", {}).get("team", {}).get("abbreviation"),
+                    "hs": cs.get("home", {}).get("score"), "as": cs.get("away", {}).get("score"), "period": (ev.get("status") or {}).get("period"), "clock": (ev.get("status") or {}).get("displayClock"),
+                    "poss": sit.get("possession"), "rz": bool(sit.get("isRedZone")), "dd": sit.get("downDistanceText"), "box": box_of(sm)})
+        print("livelog", ev["id"], (ev.get("status") or {}).get("period"), (ev.get("status") or {}).get("displayClock"))
+json.dump({"snaps": LOG, "mirrored": now.isoformat()}, open("out/livelog.json", "w"))
+print("livelog entries:", len(LOG))
+
 # ---- weather.json (owner 11/1): the sheet's 'AUTO - Game Weather' rows had last week's venues against this week's matchups (ATL-TB was read
 # as a roofed game in Atlanta), so the boards had no usable forecast. This builds the same 16 columns from ESPN's home team / venue and
 # Open-Meteo's kickoff hour; the rebuild prefers it (RUNBOOK Step 2) and the Edge Function keeps doing its own live check.
