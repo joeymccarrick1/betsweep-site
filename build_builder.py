@@ -473,6 +473,21 @@ try:
                      "fd": _ufd(r), "dr": base.get("dr"), "sk": base.get("sk", "")})
         NUND += 1
     print(f"unders: {NUND} FanDuel main-line unders priced from the model ladder")
+    # 11/4 (owner: "test the unders properly"): freeze EVERY main-line under + over price with the model's under chance, so Tuesday can grade
+    # both sides of the main line at real prices (appended to 'V2 - Unders Snapshots' by the runbook; graded by unders_check.py)
+    try:
+        _ko2 = {g["gid"]: g.get("ko") for g in GAMES}; _now2 = datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000
+        _st2 = datetime.datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M"); _urows = []
+        for r in vals("unders.json")[1:]:
+            if len(r) < 8: continue
+            mk, pt, uo, ov = r[2], num(r[3]), num(r[4]), num(r[5])
+            if mk not in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions") or pt is None or uo is None: continue
+            base = _rung.get((normname(r[1]), mk, int(_mth.floor(pt)) + 1)); gid = base["g"] if base else None
+            if not gid or not _ko2.get(gid) or _ko2[gid] <= _now2: continue
+            _urows.append([WEEK, _st2, base["pl"], mk, pt, int(uo), int(ov) if ov is not None else "", gid, datetime.datetime.fromtimestamp(_ko2[gid] / 1000, ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M"), round(1 - base["raw_p"], 4), r[0], r[11] if len(r) > 11 else ""])
+        json.dump({"header": ["Week", "Frozen at (CT)", "Player", "Market", "Line", "Under odds", "Over odds", "Game", "Kickoff (CT)", "Raw model under %", "Key", "Pulled (CT)"], "values": _urows}, open(os.path.join(OUT, "unders_rows.json"), "w"))
+        print(f"wrote out/unders_rows.json: {len(_urows)} main-line unders not yet kicked off")
+    except Exception as e: print("warn: unders_rows skipped:", e)
 except FileNotFoundError: print("unders: no in/unders.json (FanDuelOdds.gs v2026-10-27 not installed yet)")
 except Exception as e: print("warn: unders skipped:", e)
 # ---- Model's Best tier (owner 10/27: "primarily FanDuel lines around -110"; tested on Weeks 6-7 graded legs, scratchpad tier/) ----
