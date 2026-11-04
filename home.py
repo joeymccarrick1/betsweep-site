@@ -89,6 +89,8 @@ def top_plays(D, n=8):
             if mk == "Rushing Yards" and l.get("proj") and ln_f > 0.75 * float(l["proj"]): continue   # rushing projections ran hot in week 6 even at floor rungs
             if mk == "Rush + Rec Yards" and l.get("proj") and ln_f > 0.8 * float(l["proj"]): continue
         if mk == "Longest Reception": continue   # no edge in this market yet (week 6: 0-for-6 at edge >= +10, fades hit 47%)
+        if mk == "Rushing Yards": continue   # 11/4 audit: -19% at every depth, both sides, Weeks 6-8
+        if bp_f is not None and bp_f >= 0.667: continue   # 11/4 audit: -200 and shorter hit 5-9 pts under the price (-9% to -12%) - no top play pays that vig
         sp_f = CALIB.shrink(mp_f, bp_f)   # the number the whole site shows (calib.py): raw model blended toward the price
         if bp_f is not None and sp_f < 0.55: continue   # the leg must still be likely when the price gets its vote
         gid = l["g"] if l else None
@@ -654,7 +656,7 @@ def sections(IN, OUT, latest_week=None):
                + (f'<div class="plays">{plays_html}</div><p class="none allstarted" hidden>Every top play has kicked off. The <a href="/live/" style="color:var(--ink)">Live page</a> tracks what is still open; the next slate\'s plays land after the next rebuild.</p>'
                   if tp else '<p class="none">No clean plays on the sheet right now - the next rebuild refreshes this.</p>')
                + '<p class="none" style="margin-top:10px;font-size:12.5px">From the sheet\'s Best Legs: strong-value lines with no warnings, best line per player, floor lines only (no above-projection rungs, no cold streaks, no longest-reception legs), and the leg must stay likely when FanDuel\'s price gets an equal vote. Model % is the projected hit rate; "price needs" is what FanDuel\'s odds imply; edge is the gap in points.</p></section>')
-    if fl:
+    if fl and False:   # 11/4 audit: floor legs (-130..-400) lost 9-12% in every market across Weeks 6-8 - the section and its ready slip are off the home page
         out.append('<section class="sec" id="floor"><h2 class="t">Floor legs <small class="tsub">parlay anchors</small></h2>'
                    + f'<div class="plays">{"".join(play_card(x, "floor") for x in fl)}</div><p class="none allstarted" hidden>All kicked off.</p>'
                    + (f'<div class="ptwo" style="margin-top:12px"><div>{floor_slip_block(fs)}</div></div>' if fs else "")
