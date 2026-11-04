@@ -266,7 +266,7 @@ try:
         under = str(mk).startswith("Under "); base = mk[6:] if under else mk; v = a.get(base); line = num(ln); o = num(r[BH["Odds"]])
         if v is None or line is None or o is None: continue
         hit = (v < line) if under else (v >= 1 if base == "Anytime TD" else v >= line)
-        tier = {"even": "Even money", "td": "Touchdowns", "safe": "Safer 65%+"}.get(r[BH["Tier"]], r[BH["Tier"]])
+        tier = {"plus": "Plus-money edge", "even": "Even money", "td": "Touchdowns", "safe": "Safer 65%+"}.get(r[BH["Tier"]], r[BH["Tier"]])
         for key in (tier, "Model's Best, all"):
             d = T.setdefault(key, [0, 0, 0.0]); d[0] += 1; d[1] += int(hit); d[2] += ((o / 100) if o > 0 else (100 / -o)) if hit else -1.0
     if T.get("Model's Best, all"):

@@ -393,6 +393,30 @@ for l in LEGS:
     if b:
         l["bks"] = {("dk" if bk == "draftkings" else "hr" if bk == "hardrockbet" else bk): {"o": int(v["o"]) if v["o"] is not None else None, "u": v["u"], "s": v["s"]} for bk, v in b.items() if v["o"] is not None}; NBK += 1
 if BOOKODDS: print(f"book odds: {len(BOOKODDS)} rungs in the tab, {NBK} legs priced at DraftKings/Hard Rock")
+# ---- per-market recalibration from the graded legs (11/4 audit): the model's rushing-yard hit chances assume a symmetric miss around the
+# projection, but actual / projection has a median of 0.75-0.81 with a long right tail, and passing yards run 6-7% above projection. For those
+# two markets the chance to clear a line is now read off the empirical actual/projection ratio distribution of the graded Weeks (in/legsnaps.json,
+# one ratio per player-market-week). 3-fold test (train two weeks, test the third), log loss blended 50/50 with the book:
+#   rushing  raw/book .7213 .6831 .6820  ->  emp/book .7083 .6779 .6654 (better in all three);  passing better in two of three.
+# Receiving yards / receptions got WORSE with it, so they keep the model's own number. Revert if raw beats emp two graded weeks running.
+try:
+    import bisect as _bis
+    _lf = vals("legsnaps.json"); _LH = {c: i for i, c in enumerate(_lf[0])}; _RAT = {"Rushing Yards": {}, "Passing Yards": {}}
+    for _r in _lf[1:]:
+        _r = _r + [""] * (len(_lf[0]) - len(_r))
+        if str(_r[_LH["Latest Snapshot"]]).upper() != "TRUE" or _r[_LH["Result"]].upper() not in ("HIT", "MISS") or _r[_LH["Market"]] not in _RAT: continue
+        _pj, _ac = num(_r[_LH["Projection"]]), num(_r[_LH["Actual"]])
+        if not _pj or _pj <= 0 or _ac is None: continue
+        _RAT[_r[_LH["Market"]]].setdefault((_r[_LH["Week"]], _r[_LH["Player"]]), _ac / _pj)
+    _RAT = {m: sorted(d.values()) for m, d in _RAT.items()}
+    _nre = 0
+    for l in LEGS:
+        _rat = _RAT.get(l.get("m")); 
+        if not _rat or len(_rat) < 150 or l.get("gl") or l.get("p") is None or not l.get("proj") or l["proj"] <= 0 or not l.get("ln"): continue
+        _x = l["ln"] / l["proj"]; _pe = 1 - _bis.bisect_left(_rat, _x) / len(_rat); _pe = min(max(_pe, 0.02), 0.98)
+        l["p_model"] = l["p"]; l["p"] = round(_pe, 4); _nre += 1
+    print(f"recalibrated from graded ratios: {_nre} rushing / passing legs ({', '.join(f'{m} n={len(v)} median {v[len(v)//2]:.2f}' for m, v in _RAT.items() if v)})")
+except Exception as e: print("warn: ratio recalibration skipped:", e)
 # ---- red-zone / opportunity TD model (rztd.py, owner 11/1 study -> 11/3): anytime-TD legs use the average of the projection model's Poisson
 # chance and the red-zone model's (Weeks 6-8 graded legs: log loss 0.6057 vs 0.6124 raw, best Brier; see rztd.py for the revert rule) ----
 try:
@@ -458,18 +482,23 @@ except Exception as e: print("warn: unders skipped:", e)
 #        Longer prices were dropped 10/27: the full Week 6 pool at any price went 9-79, and bigger model-vs-book gaps did worse.
 #  safe: calibrated (shown) model % >= 65% - "top-end pulled down": raw 80%+ only hit 59%, the calibrated 65%+ hit 64-68% -,
 #        raw >= price, no "Cleared this line in only" warning, best-edge rung per player+market: 64.9% hit, +3.3% (n=154)
-NT = {"even": 0, "td": 0, "safe": 0}
+NT = {"plus": 0, "even": 0, "td": 0, "safe": 0}
 _safe_best = {}
+# 11/4 audit of 4,929 graded legs (Weeks 6-8): Rushing Yards lost at every depth, both sides (-19% overs; Model's Best Week 8 rushing overs
+# 24% hit, unders 31%) - out of every tier. The one cut that paid in all three weeks: plus-money legs (+150 or longer) where the raw model is
+# 5+ points over FanDuel's implied %, in receptions / receiving yards / anytime TD / passing yards: 150 legs, 41% hit vs 32% implied, +31% at 1u.
+_PLUS_MK = ("Receiving Yards", "Receptions", "Passing Yards", "Anytime TD", "Longest Reception")
 for l in LEGS:
     if l.get("gl") or l.get("raw_p") is None or l.get("bk") is None or l.get("status") in ("OUT", "BYE"): continue
     o = l.get("o")
+    if l["m"] == "Rushing Yards" or l.get("ms") == "Rush yds": continue
+    if not l.get("u") and l["m"] in _PLUS_MK and o is not None and o >= 150 and l["raw_p"] - l["bk"] >= 0.05 and "/" not in l["pl"]: l["tier"] = "plus"; continue
     if l.get("u"):
         bo = l.get("bko") if l.get("bko") is not None else 1 - l["bk"]
         if o is not None and -135 <= o <= 115 and bo - (1 - l["raw_p"]) >= 0.08: l["tier"] = "even"
     elif l["m"] == "Anytime TD":
         if l["raw_p"] >= l["bk"] and "/" not in l["pl"] and o is not None and o <= 200: l["tier"] = "td"
-    elif l["m"] in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions"):   # owner 11/1: Longest Reception out (the model's weakest market)
-        if l["m"] == "Rushing Yards" and l["raw_p"] - l["bk"] < 0.05: continue   # owner 11/1: rushing yards only with a clear cushion (model overconfident there, Weeks 6-7)
+    elif l["m"] in ("Passing Yards", "Receiving Yards", "Receptions"):   # owner 11/1: Longest Reception out (the model's weakest market); 11/4: Rushing Yards out
         if o is not None and -135 <= o <= 115 and l["raw_p"] - l["bk"] >= 0.08: l["tier"] = "even"
         elif (l.get("p") or 0) >= 0.65 and l["raw_p"] >= l["bk"] and "Cleared this line in only" not in (l.get("w") or ""):
             k = (l["pl"], l["m"])
@@ -478,7 +507,7 @@ for l in _safe_best.values():
     if not l.get("tier"): l["tier"] = "safe"
 for l in LEGS:
     if l.get("tier"): NT[l["tier"]] += 1
-print(f"model's best: {NT['even']} even-odds (overs + unders), {NT['td']} TDs, {NT['safe']} safer legs")
+print(f"model's best: {NT['plus']} plus-money edges, {NT['even']} even-odds (overs + unders), {NT['td']} TDs, {NT['safe']} safer legs")
 # frozen copy of the tier for its own scorecard (appended to 'V2 - Model Best Picks' by the runbook, graded by build_season.py)
 try:
     _ko = {g["gid"]: g.get("ko") for g in GAMES}; _now = datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000
@@ -920,8 +949,8 @@ BUILDER_JS = r"""
   var BN = {dk: 'DraftKings', hr: 'Hard Rock'};
   function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.ba && l.ba[b]) return {s: l.ba[b].s, o: l.ba[b].o, ln: l.ba[b].ln, sub: true}; return null; }
   function subName(l, x){ if(l.gl){ var sd = l.gl.side; return l.m === 'Total' ? (sd === 'OVER' ? 'Over ' : 'Under ') + x.ln : sd + ' ' + (x.ln > 0 ? '+' : '') + x.ln; } return l.pl + ' ' + x.ln + '+'; }
-  var TIERL = {even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · safer"};
-  var TIERT = {even: 'Priced near even money and the model is 8+ pts off FanDuel - in Weeks 6-7 these unders won 59%, overs 55%', td: 'Anytime TD the model rates at or above FanDuel\'s price - 34% hit at ~+270 in Weeks 6-7 (small sample)', safe: 'Model 65%+ and at or above the price - 65% hit at about -195 in Weeks 6-7'};
+  var TIERL = {plus: "Model's Best · plus-money edge", even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · safer"};
+  var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - Weeks 6-8: 41% hit at about +200, +31% at 1u on 150 legs', even: 'Priced near even money and the model is 8+ pts off FanDuel - in Weeks 6-7 these unders won 59%, overs 55%', td: 'Anytime TD the model rates at or above FanDuel\'s price - 34% hit at ~+270 in Weeks 6-7 (small sample)', safe: 'Model 65%+ and at or above the price - 65% hit at about -195 in Weeks 6-7'};
   function tierChip(l){ return l.tier ? '<span class="tierb t-' + l.tier + '" title="' + esc(TIERT[l.tier]) + '">' + TIERL[l.tier] + '</span>' : ''; }
   function lnTxt(l){ return l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'; }   // unders show FanDuel's main line ('under 74.5')
   function legName(l){ return l.pl + (isGL(l) || isTD(l) || l.m === 'First TD' ? '' : ' ' + lnTxt(l)); }
@@ -1772,7 +1801,7 @@ body = f'''<div class="bld">
    <span class="seg" id="fOdds"><button type="button" class="on" data-v="all">Any odds</button><button type="button" data-v="anchor">Anchors ≤ −200</button><button type="button" data-v="mid">−200 to +200</button><button type="button" data-v="long">+200 and up</button></span>
    <select id="fSort" aria-label="sort"><option value="edge">Sort: edge</option><option value="model">Sort: model %</option><option value="odds">Sort: odds</option><option value="kick">Sort: kickoff</option></select>
    <label><input id="fClean" type="checkbox"> clean legs only (hide flagged)</label>
-   <label title="Only the Model's Best tier: lines near even money where the model is 8+ pts off FanDuel (mostly unders), TDs the model likes, and 65%+ legs at a fair price"><input id="fTier" type="checkbox"> <b>Model's Best</b> only</label>
+   <label title="Only the Model's Best tier: plus-money legs where the model is 5+ pts over the price, lines near even money where it is 8+ pts off FanDuel, TDs the model likes, and 65%+ legs at a fair price"><input id="fTier" type="checkbox"> <b>Model's Best</b> only</label>
    <label title="Opponent ranks top 12 in allowing this stat to this position, both this season and over the last 3 weeks (#1 allows the most). Game lines have no matchup rank and drop out."><input id="fSoft" type="checkbox"> soft matchups only</label>
    <label title="His offense AND the opposing defense both green for this stat (both top 10), or offense middling (11-21) with the defense top 5. #1 = produces / allows the most. Unders flip it."><input id="fGreen" type="checkbox"> green matchups (off + def)</label>
    <label title="Primary roles only, line at 30–60% of the projection, −130 to −400, model not fading it, no role risk, no cold streak. Ranked by probability - the parlay-anchor strategy, not an edge hunt."><input id="fFloor" type="checkbox"> floor legs (anchors)</label>
