@@ -52,7 +52,10 @@ A leg is usable only if ALL hold:
   SGP; no floor legs, no rushing yards, no -200-or-shorter anything. A 2-leg slip of two +200 edges prices near +800 and hits ~17% - say
   so; that is the honest "+500" product. Lottery slips (+2000 and up) keep their recipes, built from the same leg pool.
 - Singles (new, every slate): the day's 3-5 best `tier: "plus"` legs posted as single plays with the model % and FanDuel's implied %, one
-  line of why each. Singles are the product with the record worth posting ("4 of 10 cashed at +190 average"); parlays of 50-60% legs
+  line of why each. Write them as `singles-<thu|sun|snf|mnf>.json` ([{pl, m, ln, o, p, bk, why}]) on `promo-drafts`, then render the post:
+  `python3 desk/singles_poster.py singles-thu.json singles-thu --title "Thursday singles" --week <W> --record "<W-L · units>"` (the record
+  comes from the season page's Model's Best "Plus-money edge" row; "new this week" until it has one) and commit the -square.png, -story.png
+  and .txt caption next to the JSON. The owner lays his art over the square; the caption is ready to paste. Singles are the product with the record worth posting ("4 of 10 cashed at +190 average"); parlays of 50-60% legs
   cannot build one (the promos went 0-28 in Weeks 6-8).
 - Core promos: 3-5 legs. Reach a target price by moving ONE leg up a rung (or swapping in a TD) before adding a leg.
 - Parlay chance = product of `p` for legs in different games. Same-game legs are correlated: say "same-game - check FanDuel's
