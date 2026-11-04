@@ -87,7 +87,7 @@ open(os.path.join(SITE, "manifest.webmanifest"), "w").write(json.dumps(MANIFEST,
 SW_VERSION = _dt.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%Y%m%d%H%M") if "_dt" in globals() else __import__("datetime").datetime.now().strftime("%Y%m%d%H%M")
 SW = r'''// BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
 // with the last good copy served when the connection drops (stadium wifi). Version: __V__
-var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/app/icon-192.png'];
+var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -566,6 +566,23 @@ _404 = _simple("Page not found · BetSweep", '<h1>Page not found</h1><p>That pag
                # sharing a name (their pages carry a -team suffix) land here - send them to the Players directory searched for that name
                '<script>(function(){var m=location.pathname.match(/^\\/player\\/([a-z0-9-]+)\\/?$/);if(m)location.replace("/player/?q="+encodeURIComponent(m[1].replace(/-/g," ")));})();</script>')
 open(os.path.join(SITE, "404.html"), "w").write(wrap(_404, "BetSweep", "Page not found", "/404.html", "/og.png"))
+# ---- 11/4 (owner: page weight): the masthead logo (128 KB) and banner (231 KB) were inlined as base64 into every page, 385 pages a build -
+# 360 KB per page view that no cache could share. They are now files (/logo.png, /banner.jpg, cached once by the browser and the service
+# worker) and every written page points at them. The data: URLs are replaced by exact string match, so nothing else in a page changes.
+try:
+    _bimg = base64.b64decode(BANNER); _bext = "jpg" if _bimg[:3] == b"\xff\xd8\xff" else "png"
+    open(os.path.join(SITE, f"banner.{_bext}"), "wb").write(_bimg); open(os.path.join(SITE, "logo.png"), "wb").write(base64.b64decode(LOGO))
+    if _bext != "jpg": open(os.path.join(SITE, "banner.jpg"), "wb").write(_bimg)   # the service-worker shell lists /banner.jpg; a 404 there would break the install
+    _reps = [(f"data:image/jpeg;base64,{BANNER}", f"/banner.{_bext}"), (f"data:image/png;base64,{BANNER}", f"/banner.{_bext}"), (f"data:image/png;base64,{LOGO}", "/logo.png")]
+    _np = _saved = 0
+    for _d, _, _fs in os.walk(SITE):
+        for _f in _fs:
+            if not _f.endswith(".html"): continue
+            _fp = os.path.join(_d, _f); _h = open(_fp, encoding="utf-8").read(); _h2 = _h
+            for _a, _b in _reps: _h2 = _h2.replace(_a, _b)
+            if _h2 != _h: open(_fp, "w", encoding="utf-8").write(_h2); _np += 1; _saved += len(_h) - len(_h2)
+    print(f"inline images -> files: {_np} pages rewritten, {_saved/1e6:.1f} MB of base64 removed (/logo.png, /banner.{_bext})")
+except Exception as _e: print("note: inline image pass skipped:", _e)
 # ---- owner 10/30: sitemap.xml + robots.txt so search engines find every page (the 375-odd player pages above all). Every index.html
 # this build wrote, except the account page, short-link pages and the 404; receipts the clone already holds are added from in/archive.json weeks.
 _today = _dt.date.today().isoformat(); _urls = []
