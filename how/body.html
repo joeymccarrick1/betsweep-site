@@ -1,0 +1,43 @@
+<style>
+.how{max-width:860px;margin:0 auto;padding-bottom:40px;font-size:15.5px;line-height:1.55}
+.how h2{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:26px 0 8px}
+.how p{margin:0 0 12px} .how .lead{font-size:18px;line-height:1.5}
+.how .num{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0 16px} .how .num div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .how .num b{display:block;font-family:var(--display);font-size:26px;font-weight:700;line-height:1.1} .how .num b.g{color:var(--good)} .how .num b.b{color:var(--bad)} .how .num small{display:block;color:var(--mute);font-size:11.5px;margin-top:3px}
+.how ul{margin:0 0 12px 18px;padding:0} .how li{margin:4px 0}
+.how .box{background:var(--chalk);border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:10px 14px;margin:10px 0 14px}
+.how a{color:var(--red);font-weight:700;text-decoration:none}
+.how .fine{font-size:12.5px;color:var(--mute)}
+</style>
+<div class="how">
+<p class="lead">BetSweep is a projection model that prices every FanDuel prop, then shows you only the handful of legs where the model has actually beaten the price. Everything on the site is graded every Tuesday against the box scores, in public, at the odds we showed. This page is what the grades say and how the picks follow from them.</p>
+
+<h2>Where the numbers come from</h2>
+<p>Every player gets a projection for the week: yards, catches, touchdowns, fantasy points. It starts from his own season and recent games, then adjusts for the literal matchup — how his offense ranks in that stat against how the opponent's defense ranks at allowing it — the game's expected script (FanDuel's spread and total, which beat our own formula at predicting endings), injuries and who fills in, weather at kickoff, and red-zone and snap usage. The model's chance for a line (say, 60+ receiving yards) is then blended half-and-half with what FanDuel's price implies, because on three weeks of graded legs the raw model ran overconfident when it disagreed with the market.</p>
+
+<h2>What three graded weeks taught us</h2>
+<div class="num">
+<div><b class="b">−8%</b><small>return on every priced leg at FanDuel's price (4,929 legs, Weeks 6–8)</small></div>
+<div><b class="b">−9 to −12%</b><small>"floor" legs priced −130 to −400 — they hit 5–9 points under their price</small></div>
+<div><b class="b">−19%</b><small>rushing-yard overs, at every line, both sides</small></div>
+<div><b class="g">+31%</b><small>plus-money legs (+150 or longer) where the model is 5+ points over the price: 41% hit vs 32% implied</small></div>
+</div>
+<p>The whole board loses because FanDuel shades its favorites: the short-priced "safe" legs people stack into parlays are the most expensive ones on the menu. The model's edge shows up at plus money — receptions, receiving yards, passing yards and touchdowns where the book's number is lower than the model's. Longer-priced touchdown scorers paid; touchdown favorites did not. Passing-yard lines <em>above</em> the projection hit 63%; passing floors lost.</p>
+
+<h2>So this is how we pick</h2>
+<ul>
+<li><b>Model's Best leads with plus-money edges.</b> +150 or longer, model 5+ points over the price, in the markets that have paid. Touchdowns the model likes come next. Even-money lines are shown but tracked, not pushed.</li>
+<li><b>No rushing-yard legs</b> in anything we post or list until the model's rushing number earns its way back (it is being recalibrated on the graded data now).</li>
+<li><b>Short slips.</b> Two or three legs, each one a plus-money edge or a touchdown at +120 or longer. A two-leg slip of +200 edges prices near +800 and hits about one time in six — we say so. The Monday lottery slip is the lottery slip.</li>
+<li><b>Singles every day.</b> The three to five best plus-money legs on the slate, posted as single plays with the model's number next to FanDuel's. That is the record we keep.</li>
+<li><b>Every pick is frozen before kickoff and graded Tuesday</b> at the price we showed. The <a href="/receipts/">receipts</a> and the <a href="/season/">season page</a> are the whole record — the misses too.</li>
+</ul>
+<div class="box">If someone asks "where do the numbers come from?": our own projection model, checked against FanDuel's prices, graded every week in public. We only post the legs where the model has beaten the market before.</div>
+
+<h2>What we don't do</h2>
+<ul>
+<li>We don't post heavy favorites as "locks". They are where the book makes its money.</li>
+<li>We don't move the model's numbers after a bad week to fit the result. Changes are tested on past weeks first and logged.</li>
+<li>We don't hide a losing week. The receipt goes up either way.</li>
+</ul>
+<p class="fine">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER.</p>
+</div>
