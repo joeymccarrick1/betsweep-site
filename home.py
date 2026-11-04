@@ -633,7 +633,7 @@ def model_best(D):
             seen.add(l["pl"]); out.append(_mb(D, l, games))
             if len(out) >= n: break
         return out
-    return pick("even", lambda l: -gap(l), 8), pick("td", lambda l: -gap(l), 4), pick("safe", lambda l: -l["p"], 6)
+    return pick("plus", lambda l: -gap(l), 8), pick("td", lambda l: -gap(l), 4), pick("even", lambda l: -gap(l), 6)   # 11/4: plus-money edge tier leads; even-odds demoted; safer tier off the home page (break-even at best)
 
 def sections(IN, OUT, latest_week=None):
     D = load(IN, OUT)
@@ -644,11 +644,11 @@ def sections(IN, OUT, latest_week=None):
     if pb: out.append(pb)
     mbe, mbt, mbs = model_best(D)
     if mbe or mbt or mbs:
-        out.append('<section class="sec" id="best"><h2 class="t">Model\'s Best <small class="tsub">near even money</small></h2>'
-                   + (f'<div class="subt">Lines priced near −110 where the model is 8+ points off FanDuel · in Weeks 6–7 unders like these won 59% (393 legs), overs 55%</div><div class="plays">{"".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))}</div>' if mbe else "")
-                   + (f'<div class="subt">Touchdowns the model likes at +200 or shorter · 10–8 in Weeks 6–7 (small sample — tracked on the season page)</div><div class="plays">{"".join(play_card(x) for x in mbt)}</div>' if mbt else "")
-                   + (f'<div class="subt">Safer picks · model 65%+ and at or above the price · 65% hit at about −195 in Weeks 6–7, roughly break-even</div><div class="plays">{"".join(play_card(x, "floor") for x in mbs)}</div>' if mbs else "")
-                   + '<p class="none allstarted" hidden>All kicked off.</p><p class="none" style="margin-top:10px;font-size:12.5px">Graded every week on the season page. At −110 a pick has to win 52.4% to break even, so 59% is a strong number; nothing here is a lock. <a href="/build/?best=1" style="color:var(--ink)">All Model\'s Best legs in the builder →</a></p></section>')
+        out.append('<section class="sec" id="best"><h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>'
+                   + (f'<div class="subt">Plus-money edges · +150 or longer where the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) · Weeks 6–8: 41% hit at about +200, +31% at a unit each (150 legs)</div><div class="plays">{"".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))}</div>' if mbe else "")
+                   + (f'<div class="subt">Touchdowns the model likes at +200 or shorter · longer-priced scorers have paid (+8% at +151 and up, 246 legs); favorites have not</div><div class="plays">{"".join(play_card(x) for x in mbt)}</div>' if mbt else "")
+                   + (f'<div class="subt">Near even money, model 8+ points off FanDuel · 59% in Weeks 6–7, 45% in Week 8 — tracked, not a lead; rushing yards removed</div><div class="plays">{"".join(play_card(x, "floor") for x in mbs)}</div>' if mbs else "")
+                   + '<p class="none allstarted" hidden>All kicked off.</p><p class="none" style="margin-top:10px;font-size:12.5px">Graded every week on the season page. The whole priced pool loses about 8% at FanDuel\'s prices — the edge lives in the few hundred plus-money legs a week the model sees differently, not in heavy favorites. <a href="/build/?best=1" style="color:var(--ink)">All Model\'s Best legs in the builder →</a></p></section>')
     plays_html = "".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(tp))
     out.append('<section class="sec" id="plays"><h2 class="t">The model\'s top plays this week</h2>'
                + (f'<div class="plays">{plays_html}</div><p class="none allstarted" hidden>Every top play has kicked off. The <a href="/live/" style="color:var(--ink)">Live page</a> tracks what is still open; the next slate\'s plays land after the next rebuild.</p>'

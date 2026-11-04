@@ -35,18 +35,25 @@ A leg is usable only if ALL hold:
   flag from `D.pf[pl]` other than matchup ones ('Tough matchup' / 'Matchup' tags describe his headline stat, not every market - a QB's
   'Tough matchup' on passing does not rule out his rushing line); no 'Blowout rest risk', 'Market disagrees' or 'Playing through it' tag;
 - every SGP should have at least one leg from each team unless no clean leg exists on one side - say so if it doesn't;
-- not Longest Reception; Rushing Yards only when `pm - bk >= 0.05`;
-- odds better than -250, unless `p >= bk` (both model and market rate it above the price);
+- not Longest Reception; never Rushing Yards (11/4: -19% at every depth, both sides);
+- odds +120 or longer for core legs (floors lose: see Market mix); a -130..-200 leg only inside an SGP where the script needs it, never more than one;
 - yardage / reception legs: choose the rung where `proj / ln - 1` is between 0.10 and 0.25 (best `e` among them); if none, the rung
   closest to -150;
 - weather: no passing / receiving legs in a game whose weather.json row is HIGH risk.
 
 ## Building a parlay
-- Market mix (owner 11/3, after the Week 8 receipt: yardage / reception legs lost at -7% ROI and the blend still trailed FanDuel, while
-  Anytime TD was the only market in profit, +6u, 33% hit vs 29% modeled): core promos are TD-led. At least half the legs of every core
-  slip are Anytime TD / Either TD / First TD legs with `p >= bk - 0.02`; yardage / reception legs are allowed only as FLOOR legs the book
-  agrees with (`pm >= bk`, rung 10-25% under projection, -130..-400). Never a core slip built only from yardage ladders. Lottery slips
-  (+2000 and up) keep their recipes but lead with the TD legs too.
+- Market mix (owner 11/3 + the 11/4 audit of 4,929 graded legs, Weeks 6-8): FanDuel's heavy favorites are the vig-heaviest legs on the board -
+  "floor" legs at -130..-400 hit 5-9 points UNDER their implied chance and lost 9-12% at a unit each, in every market; rushing-yard overs
+  lost 19% at every depth and are OFF every promo. The only cut that paid all three weeks: plus-money legs (+150 or longer) where the raw
+  model (`pm`) is 5+ points over FanDuel's implied % (`bk`) in receptions, receiving yards, anytime TD or passing yards - 41% hit vs 32%
+  implied, +31% at 1u on 150 legs (the builder tags them Model's Best · plus-money edge, `tier: "plus"`). Longer-priced TD scorers paid
+  (+8% at +151 and up), TD favorites did not. Passing-yard lines ABOVE the projection hit 63% (+19%); passing floors lost.
+  So: core slips are 2-3 legs, built from `tier: "plus"` legs and TD legs at +120 or longer, each leg from a different game unless it is an
+  SGP; no floor legs, no rushing yards, no -200-or-shorter anything. A 2-leg slip of two +200 edges prices near +800 and hits ~17% - say
+  so; that is the honest "+500" product. Lottery slips (+2000 and up) keep their recipes, built from the same leg pool.
+- Singles (new, every slate): the day's 3-5 best `tier: "plus"` legs posted as single plays with the model % and FanDuel's implied %, one
+  line of why each. Singles are the product with the record worth posting ("4 of 10 cashed at +190 average"); parlays of 50-60% legs
+  cannot build one (the promos went 0-28 in Weeks 6-8).
 - Core promos: 3-5 legs. Reach a target price by moving ONE leg up a rung (or swapping in a TD) before adding a leg.
 - Parlay chance = product of `p` for legs in different games. Same-game legs are correlated: say "same-game - check FanDuel's
   SGP price" and estimate the price as 0.85 / (product of bk) (FanDuel's ~15% SGP hold) - never present that estimate as FanDuel's quote.
@@ -88,6 +95,7 @@ A leg is usable only if ALL hold:
   "Promo at risk" push also covers it.
 
 ## Slots
+Every recipe below is subject to the Market mix rule above (11/4): where a recipe says floor legs, rungs 10-25% under projection, or -250-or-better prices, use `tier: "plus"` legs and +120-or-longer TD legs instead, and keep core slips to 2-3 legs. The recipes still decide WHICH games and WHAT kind of slip.
 - **thursday** (TNF): (a) single best bet: the one leg with the highest `e` among legs at -150..+150 with `p >= 0.5`; (b) +500 (target
   +400..+650, 3-4 legs, highest chance); (c) +5000 lottery (+3500..+7000, a story-driven same-game build - TDs + overs that need the same
   game script; 4-6 legs, label LOTTERY).
