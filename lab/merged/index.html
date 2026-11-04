@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>BetSweep · Game Desk (concept)</title>
+<style>
+:root{--navy:#0f1b2d;--ink:#141a22;--cream:#f4efe4;--card:#fffdf8;--line:#dcd5c6;--mute:#6b7280;--red:#d7332a;--good:#2a8a4a;--bad:#b3261e;--warn:#b7791f;--chalk:#ece6d8}
+*{box-sizing:border-box} html,body{margin:0;background:var(--cream);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.top{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.top b{font-weight:900;letter-spacing:.06em;text-transform:uppercase;font-size:13px} .top b i{font-style:normal;color:var(--red)} .top small{color:#c9c2b2;font-size:11px}
+.concept{background:#fff3cd;color:#6b4f00;font-size:12px;padding:6px 14px;border-bottom:1px solid #e9d78a}
+.games{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none} .games::-webkit-scrollbar{display:none}
+.gch{flex:0 0 auto;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer;text-align:left;min-width:124px}
+.gch b{display:block;font-weight:900;font-size:15px;letter-spacing:.02em} .gch small{display:block;color:var(--mute);font-size:11px} .gch.on{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)} .gch.all{min-width:70px}
+main{max-width:980px;margin:0 auto;padding:0 14px 150px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:4px 0 12px}
+.gcard .hd{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:14px;background:var(--chalk)} .gcard .hd .t{font-weight:900;font-size:22px} .gcard .hd .t.r{text-align:right} .gcard .hd .t small{display:block;font-weight:500;font-size:11px;color:var(--mute)}
+.gcard .hd .mid{text-align:center} .gcard .hd .mid b{display:block;font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums} .gcard .hd .mid b i{font-style:normal;color:var(--red);margin:0 6px} .gcard .hd .mid small{color:var(--mute);font-size:11px}
+.scripts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)} .scripts div{background:var(--cream);border-radius:9px;padding:7px 8px;text-align:center} .scripts b{display:block;font-size:17px;font-weight:900} .scripts small{font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em} .scripts div.top{background:var(--navy);color:#fff;position:static} .scripts div.top small{color:#c9c2b2}
+.mu{padding:10px 14px;border-bottom:1px solid var(--line)} .mu h3{margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.mugrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px} .mut{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;font-size:12px} .mut .lab{font-weight:800} .mut .row{display:flex;gap:6px;align-items:center}
+.rk{display:inline-block;min-width:34px;text-align:center;border-radius:6px;padding:2px 5px;font-weight:800;font-size:11.5px;font-variant-numeric:tabular-nums;background:#e5e1d6;color:#333} .rk.g{background:#d9efe0;color:#1f6b3a} .rk.b{background:#f6d9d6;color:#8f1d16} .rk.o{opacity:.75}
+.lines{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.pill{font:inherit;font-size:12px;font-weight:700;border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:5px 10px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px} .pill small{font-weight:600;color:var(--mute)} .pill.in{background:var(--navy);color:#fff;border-color:var(--navy)} .pill.in small{color:#c9c2b2} .pill .e{color:var(--good)} .pill .e.n{color:var(--bad)}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:12px 14px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px} .pc .nm{display:flex;align-items:baseline;justify-content:space-between;gap:8px} .pc .nm b{font-size:16px;font-weight:900} .pc .nm small{color:var(--mute);font-size:11px;white-space:nowrap}
+.pc .mline{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0} .tag{font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;background:#e5e1d6;color:#444} .tag.good{background:#d9efe0;color:#1f6b3a} .tag.bad{background:#f6d9d6;color:#8f1d16} .tag.watch{background:#fbe9c6;color:#7a5200} .tag.mu{background:var(--navy);color:#fff}
+.pc .mk{margin-top:6px} .pc .mk .lab{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between} .pc .mk .lab i{font-style:normal;font-weight:700;color:var(--ink);text-transform:none;letter-spacing:0} .rungs{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.ctl{display:flex;gap:8px;align-items:center;padding:8px 14px;font-size:12px;color:var(--mute);flex-wrap:wrap} .ctl label{display:inline-flex;gap:4px;align-items:center;cursor:pointer} .ctl select{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--card)}
+.slip{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--navy);color:#fff;box-shadow:0 -6px 24px rgba(0,0,0,.25);transition:transform .2s} .slip.closed{transform:translateY(calc(100% - 54px))}
+.slip .sbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;cursor:pointer} .slip .sbar b{font-weight:900} .slip .sbar .px{font-size:20px;font-weight:900;color:#ffd166} .slip .sbar small{color:#c9c2b2}
+.slip .sbody{max-height:46vh;overflow:auto;padding:0 14px 14px} .slip .leg{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.12);font-size:13px} .slip .leg small{display:block;color:#c9c2b2;font-size:11px} .slip .leg button{background:transparent;border:0;color:#ff8a80;font-size:18px;cursor:pointer}
+.slip .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px} .slip .acts a,.slip .acts button{font:inherit;font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:9px 14px;text-decoration:none;cursor:pointer;border:1.5px solid #fff;color:#fff;background:transparent} .slip .acts a.fd{background:var(--red);border-color:var(--red)}
+.none{color:var(--mute);padding:20px 14px;text-align:center}
+@media (max-width:600px){ .scripts{grid-template-columns:repeat(2,1fr)} .mugrid{grid-template-columns:1fr} .gcard .hd .t{font-size:18px} }
+</style></head><body>
+<div class="top"><b>Bet<i>Sweep</i> · Game Desk</b><small id="wk">loading…</small></div>
+<div class="concept">Concept preview (not linked from the menu): the Matchup Boards and the Parlay Builder on one page. Pick a game, read its board, tap legs, your slip rides at the bottom. Nothing here changes the live pages.</div>
+<div class="games" id="games"></div>
+<main id="main"><p class="none">Loading this week's data…</p></main>
+<div class="slip closed" id="slip"><div class="sbar" id="sbar"><span><b id="sn">Slip · 0 legs</b><br><small id="sp">tap legs to build a parlay</small></span><span class="px" id="sx">—</span></div><div class="sbody" id="sbody"></div></div>
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function am(o){ return o > 0 ? '+' + o : '' + o; } function pc(p){ return Math.round(p * 100) + '%'; }
+  function dec(o){ return o > 0 ? 1 + o / 100 : 1 + 100 / (-o); } function amer(d){ return d >= 2 ? '+' + Math.round((d - 1) * 100) : '' + (-Math.round(100 / (d - 1))); }
+  function key(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
+  var D, GAME = null, SEL = {}, FLOORS = false, ONLYLIKED = false;
+  function load(){
+    // the builder's data file is hashed per build: find it in /build/index.html (fallback ?data=)
+    var q = new URLSearchParams(location.search).get('data');
+    var go = function(src){ var s = document.createElement('script'); s.src = src; s.onload = function(){ D = window.__BS; init(); }; s.onerror = function(){ $('#main').innerHTML = '<p class="none">Could not load the builder data (' + esc(src) + ').</p>'; }; document.head.appendChild(s); };
+    if(q) return go(q);
+    fetch('/build/index.html', {cache: 'no-store'}).then(function(r){ return r.text(); }).then(function(t){ var m = t.match(/src="(\/build\/data-[a-f0-9]+\.js)"/); if(!m) throw 0; go(m[1]); }).catch(function(){ $('#main').innerHTML = '<p class="none">Could not find this week\'s builder data.</p>'; });
+  }
+  function init(){
+    $('#wk').textContent = 'Week ' + D.week + ' · built ' + D.built;
+    try { (JSON.parse(localStorage.getItem('bs_slipk_w' + D.week) || '[]')).forEach(function(k){ SEL[k] = true; }); } catch(e){}
+    var gs = D.games.slice().sort(function(a, b){ return a.sort < b.sort ? -1 : 1; });
+    $('#games').innerHTML = '<button class="gch all' + (GAME ? '' : ' on') + '" data-g=""><b>All</b><small>' + gs.length + ' games</small></button>' + gs.map(function(g){ return '<button class="gch' + (GAME === g.gid ? ' on' : '') + '" data-g="' + g.gid + '"><b>' + esc(g.a) + ' @ ' + esc(g.b) + '</b><small>' + esc(g.kick) + ' · ' + esc(g.most) + '</small></button>'; }).join('');
+    render();
+  }
+  function rk(n, inv){ if(n == null) return '<span class="rk o">–</span>'; var good = inv ? n >= 23 : n <= 10, bad = inv ? n <= 10 : n >= 23; return '<span class="rk' + (good ? ' g' : bad ? ' b' : '') + '">#' + n + '</span>'; }
+  function board(g){
+    var pr = g.probs || [0, 0, 0, 0], labs = [g.a + ' by 10+', 'close, low', 'shootout', g.b + ' by 10+'], top = pr.indexOf(Math.max.apply(null, pr));
+    var scripts = '<div class="scripts">' + pr.map(function(p, i){ return '<div' + (i === top ? ' class="top"' : '') + '><b>' + Math.round(p) + '%</b><small>' + esc(labs[i]) + '</small></div>'; }).join('') + '</div>';
+    // matchup board: each side's offense rank at the position vs the other side's defense rank (season, last 3); rank 1 = produces / allows the most
+    var mu = function(off, def){ var o = D.osr[off] || {}, d = D.posr[def] || {}; return '<div class="mut"><span class="lab">' + esc(off) + ' O vs ' + esc(def) + ' D</span><span></span>' + ['QB', 'RB', 'WR', 'TE'].map(function(p){ var a = o[p] || [], b = d[p] || []; return '<span>' + p + '</span><span class="row">off ' + rk(a[0]) + ' <small>L3</small> ' + rk(a[1]) + ' &nbsp;vs def ' + rk(b[0]) + ' <small>L3</small> ' + rk(b[1]) + '</span>'; }).join('') + '</div>'; };
+    var lines = D.legs.filter(function(l){ return l.gl && l.g === g.gid && !l.alt; }).sort(function(a, b){ return b.e - a.e; }).slice(0, 8);
+    return '<section class="gcard" id="g-' + g.gid + '"><div class="hd"><div class="t">' + esc(g.a) + '<small>' + esc(g.na) + '</small></div><div class="mid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + esc(g.kick) + ' · model total ' + g.tot + '</small></div><div class="t r">' + esc(g.b) + '<small>' + esc(g.nb) + '</small></div></div>' + scripts +
+      '<div class="mu"><h3>Matchup board · rank 1 = most produced / most allowed</h3><div class="mugrid">' + mu(g.a, g.b) + mu(g.b, g.a) + '</div></div>' +
+      (lines.length ? '<div class="lines">' + lines.map(pill).join('') + '</div>' : '') + '</section>';
+  }
+  function pill(l){ var k = key(l); return '<button class="pill' + (SEL[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="' + esc(l.w || '') + '">' + esc(l.gl ? l.pl : (l.u ? 'U ' : '') + Math.round(l.ln) + '+') + ' <small>' + am(l.o) + '</small> <span class="e' + (l.e < 0 ? ' n' : '') + '">' + pc(l.p) + '</span></button>'; }
+  function players(gid){
+    var by = {};
+    D.legs.forEach(function(l){ if(l.gl || (gid && l.g !== gid)) return; if(FLOORS && !(l.o <= -130 && l.o >= -400)) return; if(ONLYLIKED && l.e < 0.03) return; (by[l.pl] = by[l.pl] || {l: l, mk: {}}).mk[l.m] = (by[l.pl].mk[l.m] || []).concat([l]); });
+    var cards = Object.keys(by).map(function(pl){ var x = by[pl], l0 = x.l, best = Math.max.apply(null, Object.keys(x.mk).map(function(m){ return Math.max.apply(null, x.mk[m].map(function(l){ return l.e; })); })); var nr = Object.keys(x.mk).reduce(function(a, m){ return a + x.mk[m].length; }, 0); return {pl: pl, x: x, l0: l0, best: best, nr: nr}; })
+      .sort(function(a, b){ return (b.nr - a.nr) || (b.best - a.best); });   // the players FanDuel prices most are the ones people bet; edge breaks ties
+    if(!cards.length) return '<p class="none">No legs match these filters.</p>';
+    return '<div class="players">' + cards.map(function(c){ var l0 = c.l0, fl = (D.pf[c.pl] || []).slice(0, 4);
+      var mline = '<span class="tag mu">' + esc(l0.pos) + ' vs ' + esc(l0.opp) + ' D ' + (l0.dr ? '#' + l0.dr[0] + ' · L3 #' + l0.dr[1] : '') + '</span>' + (l0.or ? '<span class="tag">' + esc(l0.tm) + ' O #' + l0.or[0] + '</span>' : '') + fl.map(function(f){ return '<span class="tag ' + f[0] + '" title="' + esc(f[2]) + '">' + esc(f[1]) + '</span>'; }).join('');
+      var mks = Object.keys(c.x.mk).map(function(m){ var ls = c.x.mk[m].sort(function(a, b){ return (a.u ? 1 : 0) - (b.u ? 1 : 0) || a.ln - b.ln; }); var p0 = ls[0]; return '<div class="mk"><div class="lab"><span>' + esc(m) + '</span><i>' + (p0.proj != null ? 'proj ' + p0.proj + (p0.avg != null ? ' · avg ' + p0.avg : '') : '') + '</i></div><div class="rungs">' + ls.map(pill).join('') + '</div></div>'; }).join('');
+      return '<div class="pc"><div class="nm"><b>' + esc(c.pl) + '</b><small>' + esc(l0.tm) + ' · ' + esc(l0.g) + '</small></div><div class="mline">' + mline + '</div>' + mks + '</div>'; }).join('') + '</div>';
+  }
+  function render(){
+    var gs = GAME ? D.games.filter(function(g){ return g.gid === GAME; }) : [];
+    var ctl = '<div class="ctl"><label><input type="checkbox" id="floors"' + (FLOORS ? ' checked' : '') + '> floor prices only (-130 to -400)</label><label><input type="checkbox" id="liked"' + (ONLYLIKED ? ' checked' : '') + '> model edge +3 or better</label><span>' + (GAME ? 'one game' : 'every game: pick a game above to see its board') + '</span></div>';
+    $('#main').innerHTML = gs.map(board).join('') + ctl + players(GAME);
+    document.querySelectorAll('.gch').forEach(function(b){ b.classList.toggle('on', (b.dataset.g || null) === GAME); });
+    slip();
+  }
+  function slip(){
+    var legs = Object.keys(SEL).map(function(k){ return D.legs.filter(function(l){ return key(l) === k; })[0]; }).filter(Boolean);
+    var p = legs.reduce(function(a, l){ return a * l.p; }, 1), d = legs.reduce(function(a, l){ return a * dec(l.o); }, 1), games = {}; legs.forEach(function(l){ games[l.g] = 1; });
+    $('#sn').textContent = 'Slip · ' + legs.length + ' leg' + (legs.length === 1 ? '' : 's'); $('#sx').textContent = legs.length ? amer(d) : '—';
+    $('#sp').textContent = legs.length ? 'model ' + pc(p) + ' · fair ' + amer(1 / Math.max(p, 0.0001)) + (Object.keys(games).length < legs.length ? ' · same-game legs: check FanDuel\'s SGP price' : '') : 'tap legs to build a parlay';
+    var ok = legs.filter(function(l){ return l.fd && l.fd.m; });
+    var fd = ok.length ? 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&') : '';
+    $('#sbody').innerHTML = legs.map(function(l){ return '<div class="leg"><span>' + esc(l.pl) + (l.gl ? '' : ' ' + (l.u ? 'under ' : '') + Math.round(l.ln) + '+ ' + esc(l.ms.toLowerCase())) + '<small>' + esc(l.g) + ' · FD ' + am(l.o) + ' · model ' + pc(l.p) + '</small></span><button data-rm="' + esc(key(l)) + '" aria-label="Remove">×</button></div>'; }).join('') +
+      (legs.length ? '<div class="acts">' + (fd ? '<a class="fd" href="' + fd + '" target="_blank" rel="noopener">Bet it on FanDuel</a>' : '') + '<a href="/build/?new=1&add=' + encodeURIComponent(Object.keys(SEL).join(',')) + '#slip">Open in the builder</a><button id="clear">Clear</button></div>' : '');
+    try { localStorage.setItem('bs_slipk_w' + D.week, JSON.stringify(Object.keys(SEL))); } catch(e){}
+  }
+  document.addEventListener('click', function(ev){
+    var g = ev.target.closest('.gch'); if(g){ GAME = g.dataset.g || null; render(); if(GAME) window.scrollTo({top: 0}); return; }
+    var p = ev.target.closest('.pill'); if(p){ var k = p.dataset.k; if(SEL[k]) delete SEL[k]; else SEL[k] = true; p.classList.toggle('in', !!SEL[k]); slip(); return; }
+    var r = ev.target.closest('[data-rm]'); if(r){ delete SEL[r.dataset.rm]; render(); return; }
+    if(ev.target.id === 'clear'){ SEL = {}; render(); return; }
+    if(ev.target.closest('#sbar')){ $('#slip').classList.toggle('closed'); return; }
+  });
+  document.addEventListener('change', function(ev){ if(ev.target.id === 'floors'){ FLOORS = ev.target.checked; render(); } if(ev.target.id === 'liked'){ ONLYLIKED = ev.target.checked; render(); } });
+  load();
+})();
+</script></body></html>
