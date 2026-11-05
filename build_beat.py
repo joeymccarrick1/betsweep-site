@@ -25,10 +25,13 @@ for l in D["legs"]:
     pool.append([skey(l["pl"], l["m"], l.get("ln", 1)), l["pl"], l.get("tm", ""), l.get("opp", ""), l.get("g", ""), l["m"], l.get("ln", 1), o, round(l["p"], 3), KO.get(l.get("g", "")), round(l.get("e", 0), 3)])
 pool.sort(key=lambda x: (x[9] or 0, x[1], x[5]))
 # the model's five: best edge, chance >= 50%, one per player, one per game
-model, seen_p, seen_g = [], set(), set()
+# owner 11/5: at most two unders in the model's five - unders are where the biggest -150..+150 edges often sit, but five unders reads like a fade list, not a picks slate
+MAX_UNDERS = 2
+model, seen_p, seen_g, n_under = [], set(), set(), 0
 for x in sorted(pool, key=lambda x: -x[10]):
-    if x[8] < 0.5 or x[1] in seen_p or x[4] in seen_g: continue
-    model.append(x[0]); seen_p.add(x[1]); seen_g.add(x[4])
+    under = x[5].startswith("Under ")
+    if x[8] < 0.5 or x[1] in seen_p or x[4] in seen_g or (under and n_under >= MAX_UNDERS): continue
+    model.append(x[0]); seen_p.add(x[1]); seen_g.add(x[4]); n_under += under
     if len(model) == 5: break
 built = dt.datetime.now(dt.timezone.utc)
 json.dump({"week": W, "built": built.isoformat(), "model": model, "pool": [x[:10] for x in pool]}, open(os.path.join(OUT, "beat.json"), "w"), separators=(",", ":"))
