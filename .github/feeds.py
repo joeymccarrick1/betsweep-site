@@ -169,6 +169,20 @@ try:
         NEWS.append({"src": "rotowire", "ts": it.findtext("pubDate") or now.isoformat(), "title": (it.findtext("title") or "").strip(), "text": re.sub(r"<[^>]+>", "", it.findtext("description") or "")[:900], "link": ln, "players": [], "teams": []}); seen.add(ln)
     print("news rotowire ok")
 except Exception as e: print("news rotowire failed", e)
+# more wires (owner 11/4: "local news, beat reporters"): national NFL RSS feeds that carry beat-sourced practice / role notes. Each is best-effort;
+# a feed that fails or changes shape is skipped. Items are tagged by source and parsed by gen news_desk.py like the RotoWire ones.
+for _src, _url in (("cbs", "https://www.cbssports.com/rss/headlines/nfl/"), ("yahoo", "https://sports.yahoo.com/nfl/rss.xml"), ("espn-rss", "https://www.espn.com/espn/rss/nfl/news"),
+                   ("pft", "https://www.nbcsports.com/nfl/profootballtalk/rss"), ("nfl", "https://www.nfl.com/rss/rsslanding?searchString=home")):
+    try:
+        import xml.etree.ElementTree as ET
+        rss = subprocess.check_output(["curl", "-fsSL", "--max-time", "20", "-A", "Mozilla/5.0", _url], stderr=subprocess.DEVNULL)
+        n = 0
+        for it in ET.fromstring(rss).iter("item"):
+            ln = (it.findtext("link") or "").strip()
+            if not ln or ln in seen: continue
+            NEWS.append({"src": _src, "ts": it.findtext("pubDate") or now.isoformat(), "title": (it.findtext("title") or "").strip(), "text": re.sub(r"<[^>]+>", "", it.findtext("description") or "")[:900], "link": ln, "players": [], "teams": []}); seen.add(ln); n += 1
+        print("news", _src, "ok", n)
+    except Exception as e: print("news", _src, "failed", str(e)[:80])
 def _ts(x):
     try: return dt.datetime.fromisoformat(str(x.get("ts")).replace("Z", "+00:00"))
     except Exception:
