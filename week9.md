@@ -15,15 +15,16 @@ Link: https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectio
 Both legs need the same thing (Fagnano throwing from behind into the softest WR coverage on the board), so they win and lose together - FanDuel's SGP price will sit under the multiplied number.
 Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266
 
-### LOTTERY: Run It, Chase It - +4100 multiplied, ~+3500 est as a FanDuel SGP (2.9% floor) - place it AFTER the 5:45 PM inactives
-- Zay Flowers 60+ rec yds, +148, 44%
-- Rashod Bateman 20+ rec yds, +148, 44%
-- Ja'Kobi Lane 3+ receptions, +250, 32% - Model's Best plus-money edge (34% vs 29%); snaps 47% -> 67% the last two weeks
-- Bhayshul Tuten anytime TD, -105, 47% - 2 TDs in each of his last two; JAX leads by 10+ in half the endings = clock-killing carries. QUESTIONABLE (ankle/foot, DNP Mon/Tue, game-time decision)
-  If Tuten is inactive: Chris Rodriguez Jr. anytime TD at the same -105 (the fill-in lead back, Role Up; model 41% with Tuten active, higher without him) - 2.5% floor.
-One script, two sides: Jacksonville's lead back punches it in, Baltimore throws 35+ times to catch up.
-Link (Tuten): https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266&marketId[2]=42.621869069&selectionId[2]=102523776&marketId[3]=42.621857664&selectionId[3]=60238401
-Link (Rodriguez): https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266&marketId[2]=42.621869069&selectionId[2]=102523776&marketId[3]=42.621857664&selectionId[3]=60221458
+### LOTTERY: Run It, Chase It - +5512 multiplied, ~+4674 est as a FanDuel SGP (2.0% floor) - rebalanced 11:03 AM, 3 Jaguars + 2 Ravens - place AFTER the 5:45 PM inactives
+- Bhayshul Tuten anytime TD, -105, 47% - 2 TDs in each of his last two; JAX leads by 10+ in half the endings. QUESTIONABLE: if inactive, Chris Rodriguez Jr. ATD at the same -105 (1.7%)
+- Nate Boerkircher 10+ rec yds, -102, 50% - Jags' TE2, 10+ in 4 of 6; Strange's snaps are shrinking (52% last game)
+- Josh Cameron 15+ rec yds, +136, 44% - 28 yds/g over the last 3; BAL allows the 5th-most WR yards and is missing S Hawkins (watch: Meyers back)
+- Zay Flowers 60+ rec yds, +148, 44% - 60+ in 5 of 7
+- Rashod Bateman 20+ rec yds, +148, 44% - 20+ in 6 of 8
+One script, both sides: Jacksonville pulls away on the ground and spreads it around; Baltimore throws 35+ times to catch up.
+Link (Tuten): https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621968304&selectionId[1]=103841755&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266
+Link (Rodriguez): https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60221458&marketId[1]=42.621968304&selectionId[1]=103841755&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266
+Owner's-call version: Brian Thomas Jr. 20+ (+154) in place of Boerkircher - bigger edge but flagged (2.3 targets/g lately): 1.8%, ~+6019 SGP est. Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621970815&selectionId[1]=73617857&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266
 
 ### Fill-ins and limitations (the reasons behind the picks - not bets)
 - BAL QB Joe Fagnano: undrafted rookie, first NFL start, after 21 relief attempts last week (91 yds, 0 TD, 1 INT); CBS had him battling an ankle Tuesday; Brissett is not available until Week 10. Model: 132 pass yds, but the trail script puts the volume on Flowers / Bateman / Lane.
