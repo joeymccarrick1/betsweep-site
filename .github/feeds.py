@@ -103,6 +103,26 @@ try:
             subprocess.run(["curl", "-fsS", "--max-time", "20", "-o", "out/" + ln, f"https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/{ln}"], check=False)
 except Exception as e: print("livelegs carry:", e)
 json.dump({"snaps": LOG, "mirrored": now.isoformat()}, open("out/livelog.json", "w"))
+
+# ---- depthcharts.json (owner 11/4: "I wish you'd take news into account" - Emanuel Wilson lost his job when Charbonnet and Price came back and
+# the model still had him RB1). ESPN's team depth charts, once an hour, raw per team, so the rebuild can compare ESPN's RB/WR/TE order with the
+# model's auto depth role and force roles / flag legs (gen depth_check.py). Only at :0x past the hour to keep the run light.
+if now.minute < 10:
+    DC = {"mirrored": now.isoformat(), "teams": {}}
+    try:
+        tl = get(f"{S}/teams?limit=40") or {}
+        for t in (tl.get("sports", [{}])[0].get("leagues", [{}])[0].get("teams", []) or []):
+            tm = t.get("team") or {}; ab = tm.get("abbreviation"); tid = tm.get("id")
+            if not ab or not tid: continue
+            dc = get(f"https://site.web.api.espn.com/apis/v2/sports/football/nfl/teams/{tid}/depthcharts")
+            if dc: DC["teams"][ab] = dc
+        print("depthcharts:", len(DC["teams"]), "teams")
+    except Exception as e: print("depthcharts: failed", e)
+    if DC["teams"]: json.dump(DC, open("out/depthcharts.json", "w"))
+# carry the last depth chart forward on the other runs (the branch is rebuilt from out/ each time)
+if not os.path.exists("out/depthcharts.json"):
+    subprocess.run(["curl", "-fsS", "--max-time", "30", "-o", "out/depthcharts.json", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/depthcharts.json"], check=False)
+    if os.path.exists("out/depthcharts.json") and os.path.getsize("out/depthcharts.json") < 100: os.remove("out/depthcharts.json")
 print("livelog entries:", len(LOG))
 
 # ---- weather.json (owner 11/1): the sheet's 'AUTO - Game Weather' rows had last week's venues against this week's matchups (ATL-TB was read
