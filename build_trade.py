@@ -94,13 +94,14 @@ try:
         if len(r) > SH["Signal"]: SN[r[0].strip()] = {"snap": num(r[SH["Season snap %"]]), "l2": num(r[SH["Last-2 snap %"]]), "sig": r[SH["Signal"]]}
 except Exception: pass
 # ---- ages and draft capital (nflverse roster; downloaded once per container) ----
+# 11/5: _norm lives at module level - it used to be defined inside this try, so one failed roster download (a GitHub 504) took the whole trade page down
+def _norm(x): return re.sub(r"\s+", " ", re.sub(r"\.", "", str(x))).strip().lower().replace(" jr", "").replace(" sr", "").replace(" iii", "").replace(" ii", "")
 AGE = {}
 try:
     rp = os.path.join(IN, "roster_2026.csv")
     if not os.path.exists(rp):
         import urllib.request
         urllib.request.urlretrieve("https://github.com/nflverse/nflverse-data/releases/download/rosters/roster_2026.csv", rp)
-    def _norm(x): return re.sub(r"\s+", " ", re.sub(r"\.", "", str(x))).strip().lower().replace(" jr", "").replace(" sr", "").replace(" iii", "").replace(" ii", "")
     with open(rp, newline="") as f:
         for r in csv.DictReader(f):
             if r.get("position") not in ("QB", "RB", "WR", "TE") or not r.get("birth_date"): continue

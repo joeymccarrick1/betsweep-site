@@ -1,6 +1,13 @@
 # BetSweep changelog (moved out of RUNBOOK.md on 11/5 to keep the rebuild's reading short)
 Dated notes on features shipped and bugs fixed. Nothing here is a step; the RUNBOOK keeps the procedure and the mechanisms it depends on.
 
+## Out-of-the-box batch (11/5 morning, owner: "do all of your out of the box things")
+- Weather pushes unconditional + Discord; morning briefs lead with weather. Line-move pushes on saved legs (price_moves.py rewritten to cover every tracked leg, keyed by slip key).
+- CLV + one-leg-away on /me/ (slips store px; data/close-w<W>.json; recap push mode). Supabase modes: recap, inactives, startsit, email, ask, grade (gen/push/slip-alerts.ts, gen/push/betsweep-11-5.sql).
+- New pages: /teasers/ (build_teasers.py: 6/6.5/7-point teasers priced by the game-line model, classic 3-and-7 pairs, editable prices), /beat/ (build_beat.py: five picks vs the model's five, leaderboard), /api/ (every public JSON). Today: Trade desk (build_targets.py buy-low / sell-high from snaps, role notes, schedule left and FantasyCalc gaps), Ask the model, Listen.
+- build_trade.py: _norm hoisted to module level - a failed nflverse roster download (GitHub 504) used to crash the whole trade page.
+- build_mydata.py also writes data/graded-w<W>.json (hit/miss per slip key) for Beat the model grading.
+
 ## Game lines vanished from AUTO - Book Odds between game-line runs (fixed in FanDuelOdds.gs v2026-10-22)
 - writeBookOddsTab_ (every odds refresh) cleared the whole tab, gl| rows included, so after the 06:55 refresh on 10/22 no spread / total /
   ML leg had a DraftKings or Hard Rock link (the TNF SGP's NE +3.5 had no DK link). v2026-10-22 keeps the gl| rows and writes them first.
