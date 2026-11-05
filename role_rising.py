@@ -6,9 +6,14 @@ A receiver or back whose offensive snap share is rising while his targets / carr
 reachable from the sandbox: nflverse snap_counts_2026.csv (offense_pct per game) and in/gamelog.json (targets, carries per game).
 
 Rules (RB / WR / TE with 4+ games, excluding games the injury layer marks as limited):
-  last-2 snap share vs the 4 games before: +15 pts or more and last-2 >= 60%  -> "Role rising" (good) ... if the target/carry share also rose
-                                                                                  >= 4 pts it is "Role up" (good, stronger)
-  -18 pts or more (healthy, not a fill-in fading - those have their own flag) -> "Snaps falling" (watch)
+  last-2 snap share vs the 4 games before: +15 pts or more and last-2 >= 60%  -> "Role rising" (WATCH, not good - see below) ... if the
+                                                                                  target/carry share also rose >= 4 pts it is "Role up" (info)
+  -18 pts or more (healthy, not a fill-in fading - those have their own flag) -> "Snaps falling" (info)
+BACKTEST (dig2/tprr_study.py, 11/4): on nflverse 2025 a snap-trend multiplier (k=0.6) cut the targets MAE 2.05 -> 2.02 and TPRR x routes
+2.05 -> 1.99, but on 2026 and on THIS MODEL's frozen Week 6-8 projections it made things worse (rec yds MAE 22.2 -> 22.6, receptions 1.63 -> 1.66):
+players whose snap share rose 15+ pts delivered 9% UNDER the model's projection (n=60, actual/proj 0.908) and those whose share fell 15+ beat it
+by 11% (n=29). The model's recent-game weighting + Snap Trends factor already price the role change, if anything too far. So: no multiplier,
+and the flags say that - a rising role is a reason NOT to pay extra for the name, a falling one is not a fade.
 Writes in/ctx_role.json players notes. Usage: python3 role_rising.py <WEEK>
 """
 import csv, io, json, os, re, subprocess, sys, datetime as dt, statistics
@@ -67,11 +72,11 @@ def main(week):
         wk = f"Weeks {last2[0]}-{last2[-1]} vs {prior[0]}-{prior[-1]}"
         if s_last - s_prior >= 0.15 and s_last >= 0.60:
             if d_sh is not None and d_sh >= 0.04:
-                notes.append({"player": name, "team": team, "pos": pos, "k": "good", "tag": "Role up", "txt": f"Snap share {s_prior*100:.0f}% -> {s_last*100:.0f}% and {unit} share {statistics.mean(sh_prior)*100:.0f}% -> {statistics.mean(sh_last)*100:.0f}% ({wk}). The role has grown and the box score agrees; season averages under-rate him."})
+                notes.append({"player": name, "team": team, "pos": pos, "k": "info", "tag": "Role up", "txt": f"Snap share {s_prior*100:.0f}% -> {s_last*100:.0f}% and {unit} share {statistics.mean(sh_prior)*100:.0f}% -> {statistics.mean(sh_last)*100:.0f}% ({wk}). The role has grown and the box score agrees; the projection's recent-game weighting already carries it."})
             else:
-                notes.append({"player": name, "team": team, "pos": pos, "k": "good", "tag": "Role rising", "txt": f"Snap share {s_prior*100:.0f}% -> {s_last*100:.0f}% ({wk})" + (f" while his {unit} share only moved {statistics.mean(sh_prior)*100:.0f}% -> {statistics.mean(sh_last)*100:.0f}%" if d_sh is not None else "") + (". Snaps lead targets - the pre-breakout profile; the projection (season averages) has not caught up." if d_sh is not None else ". A bigger role than his season averages show.")})
+                notes.append({"player": name, "team": team, "pos": pos, "k": "watch", "tag": "Role rising", "txt": f"Snap share {s_prior*100:.0f}% -> {s_last*100:.0f}% ({wk})" + (f" while his {unit} share only moved {statistics.mean(sh_prior)*100:.0f}% -> {statistics.mean(sh_last)*100:.0f}%" if d_sh is not None else "") + ". More snaps, not yet more volume. Our Week 6-8 check: players with a 15+ pt snap rise produced about 9% UNDER the model's projection (n=60) - the projection already leans into the new role, so do not pay extra for the name."})
         elif s_prior - s_last >= 0.18 and s_prior >= 0.50 and (not IW or IW.healthy_now(name)):
-            notes.append({"player": name, "team": team, "pos": pos, "k": "watch", "tag": "Snaps falling", "txt": f"Snap share {s_prior*100:.0f}% -> {s_last*100:.0f}% ({wk}) with no injury on the report - a role change the season averages do not show yet." + (f" {unit.title()} share {statistics.mean(sh_prior)*100:.0f}% -> {statistics.mean(sh_last)*100:.0f}%." if d_sh is not None else "")})
+            notes.append({"player": name, "team": team, "pos": pos, "k": "info", "tag": "Snaps falling", "txt": f"Snap share {s_prior*100:.0f}% -> {s_last*100:.0f}% ({wk}) with no injury on the report." + (f" {unit.title()} share {statistics.mean(sh_prior)*100:.0f}% -> {statistics.mean(sh_last)*100:.0f}%." if d_sh is not None else "") + " The model's snap-decline factor already cuts his projection; in Weeks 6-8 such players beat the cut number by about 11% (n=29), so this is not a fade on its own."})
     json.dump({"week": week, "built": now.isoformat(), "players": notes, "games": {}}, open(os.path.join(IN, "ctx_role.json"), "w"), indent=1)
     from collections import Counter
     print(f"role_rising week {week}: {len(notes)} notes", dict(Counter(n["tag"] for n in notes)))

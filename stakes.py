@@ -10,7 +10,9 @@ context for the card and a flag where the literature supports one; nothing chang
   - division game, primetime, international, dome/outdoors .... info
   - standings: record, division place, games back; "eliminated" / "clinched" only when the arithmetic says so; from Week 16 a team that has
     clinched its seed gets a WATCH (starters may rest) and a team eliminated gets an info line (young players get snaps)
-  - referee crew: this crew's average total points and overtime rate in games it worked (2023-26, n shown) vs the league - info only
+  - referee crew: this crew's average total points and overtime rate in games it worked (2023-26, n shown) vs the league - info only;
+    dig2/ref_study.py (11/4): crew traits do not persist year to year (penalties r=0.21, DPI r=0.14; 2023-24 crew rankings did not predict
+    2025 overs - the hot crews reverted), so the crew is never an input
 Writes in/ctx_stakes.json: {"week", "games": {"A-B": [{k, tag, txt}]}, "players": [], "standings": {team: {...}}}
 Usage: python3 stakes.py <WEEK>
 """
@@ -91,7 +93,7 @@ def main(week):
         ref = (g.get("referee") or "").strip(); rr = refs.get(ref)
         if ref and rr and len(rr["tot"]) >= 12:
             m = statistics.mean(rr["tot"]); d = m - lg
-            note(gid, "info", "Referee", f"{ref}'s crew: games average {m:.1f} points ({d:+.1f} vs the league's {lg:.1f}, n={len(rr['tot'])} since 2023), {rr['ot']} went to overtime." + (" A high-scoring crew tends to call more defensive penalties - a nudge for the over, not a reason." if d >= 2.5 else " A low-scoring crew." if d <= -2.5 else ""))
+            note(gid, "info", "Referee", f"{ref}'s crew: games average {m:.1f} points ({d:+.1f} vs the league's {lg:.1f}, n={len(rr['tot'])} since 2023), {rr['ot']} went to overtime. For the record only: our 2023-25 check found a crew's penalty, DPI and scoring rates do not carry from one season to the next (r = 0.1-0.2), so this is not a reason to move a total.")
     out = {"week": week, "built": now.isoformat(), "games": games, "players": [], "standings": stand}
     json.dump(out, open(os.path.join(IN, "ctx_stakes.json"), "w"), indent=1)
     print(f"stakes week {week}: {len(games)} games, {sum(len(v) for v in games.values())} notes; league avg total {lg:.1f}")
