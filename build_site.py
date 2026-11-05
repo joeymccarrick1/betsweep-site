@@ -187,7 +187,7 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
   .sitenav .dd.open .ddm{display:flex}
   .sitenav .ddm a{padding:10px 18px 10px 30px !important;border-bottom:1px solid #ddd5c2 !important;font-size:16px !important}
   .sitenav .ddm a:last-child{border-bottom:0 !important}
-  .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  /* no overflow-x:clip on .sitenav: iOS Safari clipped the dropdown to the header box (owner 11/5, blank menu) */ .sitenav.open .tabs{z-index:75} .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 }
 .sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
 @media (max-width:1240px){
@@ -222,9 +222,8 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
   .sitenav .acct{flex:none;gap:4px;margin-right:0} .sitenav .acct a.me{font-size:11.5px;padding:4px 9px 4px 4px;white-space:nowrap} .sitenav .acct a.me i{width:20px;height:20px;line-height:20px;margin-right:5px}
   .sitenav .acct button.out{display:none} }
 /* the open menu scrolls inside the screen (it used to run under the bottom tabs with no way to reach the last items) */
-@media (max-width:1240px){ .sitenav .tabs{max-height:calc(100vh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media (max-width:1240px){ .sitenav .tabs{max-height:calc(100vh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));overflow-y:auto;overscroll-behavior:contain}
   .sitenav .tabs .mout{color:#b8261d} }
-.sitenav{overflow-x:clip}
 </style>
 """
 
