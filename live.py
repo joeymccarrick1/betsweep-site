@@ -18,6 +18,8 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .tick .tbox{margin-left:8px;font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);text-decoration:none;white-space:nowrap;border:1.5px solid var(--red);border-radius:99px;padding:2px 8px} .tick .tbox:hover{background:var(--red);color:#fff}
 @media (max-width:560px){ .tick{grid-template-columns:1fr} .tick .tsc{grid-row:auto;font-size:18px} }
 .tick.final{background:var(--card)} .tick.final .tsc i{color:var(--mute)}
+/* 11/5: a finished game already shows its score in the header pill (.gstat); the strip keeps only the status + Box & plays */
+.card.done .tick.final{display:flex;flex-wrap:wrap;gap:4px 10px;padding:7px 14px} .card.done .tick.final .tsc{display:none} .card.done .tick.final .tlp:empty{display:none}
 """
 
 LIVE_JS = r"""

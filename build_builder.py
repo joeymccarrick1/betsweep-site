@@ -666,6 +666,8 @@ BUILDER_CSS = r"""
 .legs{list-style:none;margin:0;padding:0;max-height:calc(100vh - 230px);overflow:auto}
 .bld [hidden]{display:none!important}
 .tabs{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.helpbtn.qb{display:inline-flex;align-items:center;gap:8px;white-space:nowrap} .helpbtn.qb b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;font-size:13px;line-height:1} .helpbtn.qb[aria-expanded="true"]{color:var(--red)}
+@media (max-width:560px){ .helpbtn.qb{padding:0;width:36px;min-height:36px;justify-content:center;border-radius:50%} .helpbtn.qb span{display:none} }
 .tab{font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .tab.on{background:var(--red);border-color:var(--red);color:#fff} .tab .car{font-style:normal;font-size:11px;opacity:.8} .tab[aria-expanded="true"] .car{display:inline-block;transform:rotate(180deg)}
 .tabs #count{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
@@ -1800,7 +1802,7 @@ BUILDER_JS = r"""
 
 body = f'''<div class="bld">
  <section class="panel">
-  <div class="tabs"><button type="button" id="tabGames" class="tab on">Games</button><button type="button" id="tabSearch" class="tab" aria-expanded="false" aria-controls="filters"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Search &amp; filter<i class="car">▾</i></button><b id="count" hidden></b><button type="button" id="helpbtn" class="helpbtn" style="margin-left:auto">What do the numbers mean?</button></div>
+  <div class="tabs"><button type="button" id="tabGames" class="tab on">Games</button><button type="button" id="tabSearch" class="tab" aria-expanded="false" aria-controls="filters"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Search<i class="car">▾</i></button><b id="count" hidden></b><button type="button" id="helpbtn" class="helpbtn qb" style="margin-left:auto" aria-label="What do the numbers mean?" title="What do the numbers mean?"><b>?</b><span>What the numbers mean</span></button></div>
   <div class="help" id="help" hidden>
    <dl>
     <div><dt>Model %</dt><dd>How often BetSweep expects this leg to hit: the model's history-adjusted hit rate for that line, blended half-and-half with what FanDuel's price implies. The blend is there because on the graded pre-kickoff legs the raw model ran overconfident where it disagreed with the price; the half-way number has scored better two weeks running.</dd></div>

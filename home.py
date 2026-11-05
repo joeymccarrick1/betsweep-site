@@ -555,6 +555,7 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .play .foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto}
 .play .hist{font-size:11.5px;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:2px 8px} .play .hist.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))} .play .hist.bad{color:#e07070}
 .play .more,.pfoot .more{color:var(--mute);text-decoration:none;font-size:12.5px;font-weight:600} .play .more:hover,.pfoot .more:hover{color:var(--ink)}
+.play .more.slipt,.pfoot .more.slipt{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink);font-weight:700} .play .more.slipt:hover,.pfoot .more.slipt:hover{border-color:var(--red)}
 .fdb{margin-left:auto;text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:#0b0f15;background:#1493ff;border-radius:6px;padding:6px 10px}
 .fdb:hover{filter:brightness(1.08)}
 .foot .bks,.pfoot .bks{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;margin-left:auto} .bks .fdb{margin-left:0} .bks .dkb,.bks .hrb{margin-left:0}
@@ -566,7 +567,7 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .play.nm{border-color:color-mix(in srgb,#1493ff 45%,var(--line))} .play.nm .why{margin:0;color:var(--mute);font-size:12.5px;line-height:1.45}
 .parlay.fslip::after{background:var(--good)} .parlay.fslip small{color:var(--good)} .fslip .pfoot{align-items:center} .fslip .pfoot .fdb{margin-left:0}
 .play .what .proj{color:var(--mute);font-weight:500;font-size:12px;margin-left:6px;margin-right:auto}
-.sec h2 .tsub{font-family:var(--body);font-weight:500;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-left:10px}
+.sec h2 .tsub{font-family:var(--body);font-weight:500;font-size:13.5px;letter-spacing:0;text-transform:none;color:var(--mute);margin-left:0}
 .subt{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:12px;color:var(--mute);margin:18px 0 8px}
 .none{color:var(--mute);font-size:14px;margin:0}
 .ptwo{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px} @media (max-width:760px){.ptwo{grid-template-columns:1fr}}
@@ -691,7 +692,7 @@ HOME_SLIP_JS = r"""<script>(function(){
   function put(a){ try { localStorage.setItem(KEY, JSON.stringify(a)); } catch(e){} }
   function keysOf(a){ try { return new URL(a.getAttribute('href'), location.origin).searchParams.getAll('add'); } catch(e){ return []; } }
   var links = [].slice.call(document.querySelectorAll('a.more[href^="/build/?add="]'));
-  links.forEach(function(a){ if(!a.dataset.lab) a.dataset.lab = a.textContent; });
+  links.forEach(function(a){ if(!a.dataset.lab) a.dataset.lab = a.textContent; a.classList.add('slipt'); });
   function paint(){ var s = get(), m = {}; s.forEach(function(k){ m[k] = 1; });
     links.forEach(function(a){ var ks = keysOf(a), all = ks.length && ks.every(function(k){ return m[k]; });
       a.classList.toggle('inslip', !!all); a.textContent = all ? (ks.length > 1 ? '\u2713 All in slip' : '\u2713 In slip') : (ks.length > 1 ? '+ Add all to slip' : '+ Slip');
