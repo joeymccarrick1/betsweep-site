@@ -1,36 +1,7 @@
 {
  "week": 9,
- "built": "Wed 11/4 6:40 PM",
- "checked": "2026-11-05T13:52:42Z",
- "legs_checked": 48,
- "moves": [
-  {
-   "key": "Javonte Williams|Longest Reception|10",
-   "pl": "Javonte Williams",
-   "m": "Longest Reception",
-   "ln": 10.0,
-   "gid": "DAL-IND",
-   "ko": 1794160800000,
-   "built": 200,
-   "now": 160.0,
-   "pts": 5.1,
-   "dir": "SHORTENED",
-   "pulled": "2026-11-05 6:09",
-   "detail": "Javonte Williams long rec 10+: FanDuel +200 at build -> +160 now (+5.1 implied pts toward the model)"
-  },
-  {
-   "key": "Reggie Virgil|Anytime TD|1",
-   "pl": "Reggie Virgil",
-   "m": "Anytime TD",
-   "ln": 1,
-   "gid": "ARI-SEA",
-   "ko": 1794173100000,
-   "built": 1100,
-   "now": 750.0,
-   "pts": 3.4,
-   "dir": "SHORTENED",
-   "pulled": "2026-11-05 6:09",
-   "detail": "Reggie Virgil anytime TD: FanDuel +1100 at build -> +750 now (+3.4 implied pts toward the model)"
-  }
- ]
+ "built": "Thu 11/5 8:06 AM",
+ "checked": "2026-11-05T15:00:28Z",
+ "legs_checked": 1416,
+ "moves": []
 }
