@@ -1,0 +1,45 @@
+{
+ "built": "2026-11-05",
+ "seasons": "2006-2025",
+ "spots": [
+  {
+   "tier": "lean",
+   "key": "bounce_after_blowout_loss",
+   "label": "Team coming off a 21+ point loss",
+   "side": "with",
+   "n": 873,
+   "cover": 0.5338,
+   "first_half": 0.5323,
+   "second_half": 0.5355,
+   "recent": 0.5374,
+   "p": 0.0458
+  },
+  {
+   "tier": "lean",
+   "key": "lookahead_fav",
+   "label": "Favorite of 3+ whose next game is a division game",
+   "side": "fade",
+   "n": 1397,
+   "cover": 0.4681,
+   "first_half": 0.4653,
+   "second_half": 0.471,
+   "recent": 0.4747,
+   "p": 0.0173
+  }
+ ],
+ "tested": [
+  "big_fav_vs_worse",
+  "bad_dog_vs_good",
+  "letdown_after_blowout",
+  "bounce_after_blowout_loss",
+  "thursday_road",
+  "div_dog",
+  "div_dog_7",
+  "rest_edge",
+  "lookahead_fav",
+  "revenge",
+  "home_dog",
+  "road_fav_2nd_road",
+  "double_digit_fav"
+ ]
+}

@@ -87,7 +87,7 @@ open(os.path.join(SITE, "manifest.webmanifest"), "w").write(json.dumps(MANIFEST,
 SW_VERSION = _dt.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%Y%m%d%H%M") if "_dt" in globals() else __import__("datetime").datetime.now().strftime("%Y%m%d%H%M")
 SW = r'''// BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
 // with the last good copy served when the connection drops (stadium wifi). Version: __V__
-var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
+var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dossier/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -126,7 +126,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
 NAV_GROUPS = [("/", "Home", None),
-              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game dossiers", "The read before the bet"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
@@ -526,6 +526,15 @@ if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
     if os.path.exists(os.path.join(_PD, "index.json")):
         os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(_PD, "index.json"), os.path.join(SITE, "b", "players.json"))
     print(f"player pages: {_np}")
+# owner 11/5: /dossier/ + /dossier/<gid>/ (build_dossier.py) - the Game Dossier: similar-defense splits, leaks by role, script, weather, injuries, news, tested spots
+_DD = os.path.join(OUT, "dossier")
+if os.path.isdir(_DD) and os.path.exists(os.path.join(_DD, "index.html")):
+    shutil.rmtree(os.path.join(SITE, "dossier"), ignore_errors=True)
+    for _f in sorted(os.listdir(_DD)):
+        if _f.endswith(".html") and _f != "index.html": place_plain(os.path.join(_DD, _f), os.path.join(SITE, "dossier", _f[:-5]), f"/dossier/{_f[:-5]}/")
+    made.append(place_plain(os.path.join(_DD, "index.html"), os.path.join(SITE, "dossier"), "/dossier/"))
+    if os.path.exists(os.path.join(OUT, "dossier.json")):
+        os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "dossier.json"), os.path.join(SITE, "b", "dossier.json"))
 # owner 11/5: /teams/ + /teams/<abbr>/ (build_teams.py) - team stats, results, ATS / over-under and every game's box score; styled by /player/player.css
 _TD = os.path.join(OUT, "teams")
 if os.path.isdir(_TD) and os.path.exists(os.path.join(_TD, "index.html")):
@@ -824,6 +833,7 @@ _API = [
     ("/b/today.json", "The morning briefs per game day: {week, briefs:{YYYY-MM-DD:{title, body, url, games}}, days}. Weather risks lead the body.", "every rebuild"),
     ("/b/teasers.json", "The teaser finder: every spread and total teased 6, 6.5 and 7 points with the model's chance before and after the move, which cross 3 and 7, and the best pairs.", "every rebuild"),
     ("/b/beat.json", "Beat the model: the week's pool (every player prop priced -150 to +150, as [key, player, team, opp, game, market, line, odds, model chance, kickoff]) and the model's five keys.", "every rebuild"),
+    ("/b/dossier.json", "Game dossiers: per game, the model script, weather / injury / news flags, situational spots (tested on 2006-2025), each offense's results against the most similar defenses and each defense's leaks by role.", "every rebuild"),
     ("/b/startsit.json", "Who-should-I-start inputs: {week, players:[{n, t, p, o, fp, av}]} - name, team, position, opponent, projected fantasy points, availability.", "every rebuild"),
     ("/b/books.json", "DraftKings / Hard Rock selection ids for the week's legs, keyed like the slip keys, for deep links.", "every rebuild"),
     ("/b/promos.json", "The promo desk's posted slips with their short links and grades.", "every rebuild"),

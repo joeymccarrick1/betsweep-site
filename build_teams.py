@@ -298,7 +298,7 @@ for t in TEAMS:
     if g:
         opp = g["b"] if g["a"] == t else g["a"]; home = g["b"] == t; tp = g["pb"] if home else g["pa"]; op = g["pa"] if home else g["pb"]
         sub += f'<span>Week {W}: {"vs" if home else "@"} {tlink(opp)} · {E(g.get("kick") or "")}</span>' + (f'<span>model {tp:.0f}-{op:.0f}</span>' if isinstance(tp, (int, float)) and isinstance(op, (int, float)) else "")
-    acts = (f'<a class="pri" href="/boards/#{E(g["gid"])}">Matchup board</a><a href="/build/?g={E(g["gid"])}">Parlay Builder</a>' if g else "") + '<a href="/teams/">All teams</a><a href="/player/">Players</a>'
+    acts = (f'<a class="pri" href="/boards/#{E(g["gid"])}">Matchup board</a>' + (f'<a href="/dossier/{E(g["gid"])}/">Game dossier</a>' if os.path.exists(os.path.join(OUT, "dossier", g["gid"] + ".html")) else "") + f'<a href="/build/?g={E(g["gid"])}">Parlay Builder</a>' if g else "") + '<a href="/teams/">All teams</a><a href="/player/">Players</a>'
     desc = f'{full(t)} 2026: {s["w"]}-{s["l"]} record, points and yards per game with league ranks, against-the-spread and over/under record, and the box score of every game this season.'
     body = (head(f'{full(t)} stats, results & box scores · BetSweep', desc) +
             f'<div class="pp tpage" data-team="{t}"><p class="crumb"><a href="/teams/">Teams</a> › {E(DIV.get(t, ""))} › {E(full(t))}</p>'
