@@ -5,52 +5,38 @@
  "promos": [
   {
    "slot": "thursday",
-   "name": "Backup Plan",
+   "name": "Zay Gets Fed",
    "type": "single",
    "legs": [
     {
-     "pl": "Joe Fagnano",
-     "m": "Under Passing Yards",
-     "ln": 160.5,
-     "o": -114,
-     "p": 0.594,
-     "bk": 0.533,
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 50,
+     "o": -104,
+     "p": 0.553,
+     "bk": 0.51,
      "game": "BAL-JAX",
      "fd": {
-      "m": "42.621857693",
-      "s": "104573398"
+      "m": "42.621869046",
+      "s": "49181556"
      },
-     "why": "91 pass yds in his Week 8 start; model 66% vs FanDuel 53%"
+     "why": "JAX allows the most WR rec yds; BAL trails in 50% of endings so the volume comes; 0 yds with Fagnano in W8, 87/g before"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.621857693&selectionId=104573398",
-   "price": "-114",
-   "chance": 0.594,
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectionId=49181556",
+   "price": "-104",
+   "chance": 0.553,
    "boost": true,
-   "note": "Redrafted Thu 11/5 after the owner's read: Fagnano starts (Huntley and Lamar out for the season, Brissett not ready), Flowers had 0 catches with him in Week 8, and the owner expects JAX by 10+. Stale 'Low market total (39.5)' flag ignored (total is 40.5); every other filter applied.",
-   "caption": "Backup Plan -114\nJoe Fagnano UNDER 160.5 pass yds\nWhy: 91 yards in his first start, and the model has him under this number 66% of the time vs FanDuel's 53%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "note": "Redrafted Thu 11/5 (3rd pass). Owner: Fagnano starts and must throw to compete; JAX #5 vs QB pass yds (season) but #19 last 3 weeks and #1-most WR rec yds allowed. Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection, but his player card projects 162 (trail script) on a 1-game sample - coin flip, no edge. Stale 39.5-total flag ignored (now 40.5); every other filter applied.",
+   "caption": "Zay Gets Fed -104\nZay Flowers 50+ rec yds\nWhy: the Jags give up the most WR yards in the NFL, and a Ravens team playing from behind has to throw - model 60% vs FanDuel 51%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
    "post": false
   },
   {
    "slot": "thursday",
    "name": "Duval Blowout",
-   "type": "+500 (2-leg same-game; prices near +270 - the honest number)",
+   "type": "+500 slot (2-leg same-game; prices near +290 - the honest number)",
    "game": "BAL-JAX",
    "legs": [
-    {
-     "pl": "Joe Fagnano",
-     "m": "Under Passing Yards",
-     "ln": 160.5,
-     "o": -114,
-     "p": 0.594,
-     "bk": 0.533,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621857693",
-      "s": "104573398"
-     },
-     "why": "91 pass yds in his Week 8 start; model 66% vs FanDuel 53%"
-    },
     {
      "pl": "JAX -9.5",
      "m": "Spread",
@@ -64,13 +50,27 @@
       "s": "50207"
      },
      "why": "JAX by 10+ is the model's likeliest ending (50%); 42-7 last week"
+    },
+    {
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 60,
+     "o": 152,
+     "p": 0.443,
+     "bk": 0.397,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869046",
+      "s": "49181554"
+     },
+     "why": "60+ in 5 of 7; JAX allows the most WR rec yds; trail script"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857693&selectionId[0]=104573398&marketId[1]=42.619967582&selectionId[1]=50207",
-   "price": "+193 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
-   "chance": 0.297,
-   "note": "Redrafted Thu 11/5 after the owner's read: Fagnano starts (Huntley and Lamar out for the season, Brissett not ready), Flowers had 0 catches with him in Week 8, and the owner expects JAX by 10+. Stale 'Low market total (39.5)' flag ignored (total is 40.5); every other filter applied. Only 2 clean legs fit the script at a usable price; a third would be a floor.",
-   "caption": "Duval Blowout ~+193\nJaguars -9.5\nJoe Fagnano UNDER 160.5 pass yds\nWhy: Ravens are down to their third QB - JAX by 10+ is the model's most likely ending at 50%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.619967582&selectionId[0]=50207&marketId[1]=42.621869046&selectionId[1]=49181554",
+   "price": "+293 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
+   "chance": 0.222,
+   "note": "Redrafted Thu 11/5 (3rd pass). Owner: Fagnano starts and must throw to compete; JAX #5 vs QB pass yds (season) but #19 last 3 weeks and #1-most WR rec yds allowed. Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection, but his player card projects 162 (trail script) on a 1-game sample - coin flip, no edge. Stale 39.5-total flag ignored (now 40.5); every other filter applied. Legs are correlated the right way: a JAX blowout forces BAL to throw.",
+   "caption": "Duval Blowout ~+293\nJaguars -9.5\nZay Flowers 60+ rec yds\nWhy: Jags pull away, Ravens' third QB chases through Zay - JAX by 10+ is the model's most likely ending at 50%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
    "post": false
   },
   {
@@ -80,20 +80,6 @@
    "game": "BAL-JAX",
    "legs": [
     {
-     "pl": "Joe Fagnano",
-     "m": "Under Passing Yards",
-     "ln": 160.5,
-     "o": -114,
-     "p": 0.594,
-     "bk": 0.533,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621857693",
-      "s": "104573398"
-     },
-     "why": "91 pass yds in his Week 8 start; model 66% vs FanDuel 53%"
-    },
-    {
      "pl": "JAX -9.5",
      "m": "Spread",
      "ln": -9.5,
@@ -106,6 +92,20 @@
       "s": "50207"
      },
      "why": "JAX by 10+ is the model's likeliest ending (50%); 42-7 last week"
+    },
+    {
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 50,
+     "o": -104,
+     "p": 0.553,
+     "bk": 0.51,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869046",
+      "s": "49181556"
+     },
+     "why": "JAX allows the most WR rec yds; BAL trails in 50% of endings so the volume comes; 0 yds with Fagnano in W8, 87/g before"
     },
     {
      "pl": "Chris Rodriguez Jr.",
@@ -150,38 +150,19 @@
      "why": "28 yds/g over the last 3; BAL allows the #5-most WR yds"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857693&selectionId[0]=104573398&marketId[1]=42.619967582&selectionId[1]=50207&marketId[2]=42.621857664&selectionId[2]=60221458&marketId[3]=42.621968304&selectionId[3]=103841750&marketId[4]=42.621970817&selectionId[4]=103430219",
-   "price": "+4735 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
-   "chance": 0.016,
-   "note": "Redrafted Thu 11/5 after the owner's read: Fagnano starts (Huntley and Lamar out for the season, Brissett not ready), Flowers had 0 catches with him in Week 8, and the owner expects JAX by 10+. Stale 'Low market total (39.5)' flag ignored (total is 40.5); every other filter applied. Rodriguez TD is below FanDuel's implied (41% vs 51%) - in for the script, not value.",
-   "caption": "LOTTERY: Third-String Thursday ~+4735\nJaguars -9.5\nJoe Fagnano UNDER 160.5 pass yds\nChris Rodriguez Jr. anytime TD\nNate Boerkircher 15+ rec yds\nJosh Cameron 20+ rec yds\nWhy: one script - Jags run away with it, Ravens' third QB can't keep up\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.619967582&selectionId[0]=50207&marketId[1]=42.621869046&selectionId[1]=49181556&marketId[2]=42.621857664&selectionId[2]=60221458&marketId[3]=42.621968304&selectionId[3]=103841750&marketId[4]=42.621970817&selectionId[4]=103430219",
+   "price": "+4953 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
+   "chance": 0.015,
+   "note": "Redrafted Thu 11/5 (3rd pass). Owner: Fagnano starts and must throw to compete; JAX #5 vs QB pass yds (season) but #19 last 3 weeks and #1-most WR rec yds allowed. Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection, but his player card projects 162 (trail script) on a 1-game sample - coin flip, no edge. Stale 39.5-total flag ignored (now 40.5); every other filter applied. Rodriguez TD is below FanDuel's implied (41% vs 51%) - in for the script, not value.",
+   "caption": "LOTTERY: Third-String Thursday ~+4953\nJaguars -9.5\nZay Flowers 50+ rec yds\nChris Rodriguez Jr. anytime TD\nNate Boerkircher 15+ rec yds\nJosh Cameron 20+ rec yds\nWhy: one script - Jags run away with it, Ravens throw to Zay trying to catch up\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
    "post": false
   },
   {
    "slot": "thursday",
-   "name": "Zay with a backup (optional)",
-   "type": "single",
-   "legs": [
-    {
-     "pl": "Zay Flowers",
-     "m": "Receiving Yards",
-     "ln": 50,
-     "o": -104,
-     "p": 0.553,
-     "bk": 0.51,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621869046",
-      "s": "49181556"
-     },
-     "why": "Backup-QB rung: 0 yds with Fagnano in Week 8, 87/g before; over FD's main line (48) in 4 of 5"
-    }
-   ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectionId=49181556",
-   "price": "-104",
-   "chance": 0.553,
-   "note": "Owner likes Zay; cut from 60+ to 50+ because Fagnano is throwing. Floor-priced, so not a core promo - post only if you want a Zay play.",
-   "caption": "Zay Flowers 50+ rec yds -104\nWhy: 87 yds/g before the QB change; this is the rung that survives a backup QB\n21+ | gamble responsibly",
+   "name": "Fagnano UNDER 160.5 - passed",
+   "type": "note",
+   "legs": [],
+   "note": "Dropped: projection conflict (134 on the leg vs 162 on his card, trail script, 1-game sample). Coin flip.",
    "post": false
   },
   {
