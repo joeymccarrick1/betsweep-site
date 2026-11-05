@@ -7,7 +7,7 @@ scoreboard. GitHub's runners can reach ESPN, so every ~10 minutes this writes, t
   inactives.json  game-day outs from each game's summary for games kicking off within 3 hours (or started in the last 20 min):
                   {"<event id>": {"ko": ISO, "teams": [..], "out": [{"name", "team", "status", "date"}]}} - the inactive list posts ~90 min before kickoff
 """
-import json, os, subprocess, datetime as dt
+import json, os, re, subprocess, datetime as dt
 
 S = "https://site.api.espn.com/apis/site/v2/sports/football/nfl"
 def get(u):
@@ -119,6 +119,39 @@ if now.minute < 10:
         print("depthcharts:", len(DC["teams"]), "teams")
     except Exception as e: print("depthcharts: failed", e)
     if DC["teams"]: json.dump(DC, open("out/depthcharts.json", "w"))
+# ---- news.json (owner 11/4: "check news and use player news, team news in our projections"): player-news items from ESPN's NFL news API and
+# RotoWire's public NFL RSS, every run, rolling 7 days, de-duplicated by link. The rebuild's news desk (gen news_desk.py) reads it; nothing here judges.
+NEWS = []
+try: NEWS = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/news.json"])).get("items", [])
+except Exception: pass
+seen = {x.get("link") for x in NEWS}
+try:
+    nj = get(f"{S}/news?limit=100") or {}
+    for a in nj.get("articles", []) or []:
+        ln = (a.get("links") or {}).get("web", {}).get("href") or a.get("id")
+        if not ln or ln in seen: continue
+        ath = [c.get("description") for c in (a.get("categories") or []) if c.get("type") == "athlete" and c.get("description")]
+        tms = [c.get("description") for c in (a.get("categories") or []) if c.get("type") == "team" and c.get("description")]
+        NEWS.append({"src": "espn", "ts": a.get("published") or now.isoformat(), "title": a.get("headline"), "text": (a.get("description") or "")[:600], "link": ln, "players": ath, "teams": tms}); seen.add(ln)
+    print("news espn ok")
+except Exception as e: print("news espn failed", e)
+try:
+    import xml.etree.ElementTree as ET
+    rss = subprocess.check_output(["curl", "-fsSL", "--max-time", "20", "-A", "Mozilla/5.0", "https://www.rotowire.com/rss/news.php?sport=NFL"])
+    for it in ET.fromstring(rss).iter("item"):
+        ln = (it.findtext("link") or "").strip()
+        if not ln or ln in seen: continue
+        NEWS.append({"src": "rotowire", "ts": it.findtext("pubDate") or now.isoformat(), "title": (it.findtext("title") or "").strip(), "text": re.sub(r"<[^>]+>", "", it.findtext("description") or "")[:900], "link": ln, "players": [], "teams": []}); seen.add(ln)
+    print("news rotowire ok")
+except Exception as e: print("news rotowire failed", e)
+def _ts(x):
+    try: return dt.datetime.fromisoformat(str(x.get("ts")).replace("Z", "+00:00"))
+    except Exception:
+        try: return dt.datetime.strptime(str(x.get("ts"))[:25].strip(), "%a, %d %b %Y %H:%M:%S").replace(tzinfo=dt.timezone.utc)
+        except Exception: return now
+NEWS = [x for x in NEWS if (now - _ts(x)).days < 7]
+json.dump({"items": NEWS, "mirrored": now.isoformat()}, open("out/news.json", "w")); print("news items:", len(NEWS))
+
 # carry the last depth chart forward on the other runs (the branch is rebuilt from out/ each time)
 if not os.path.exists("out/depthcharts.json"):
     subprocess.run(["curl", "-fsS", "--max-time", "30", "-o", "out/depthcharts.json", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/depthcharts.json"], check=False)
