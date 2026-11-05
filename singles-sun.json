@@ -1,0 +1,38 @@
+[
+ {
+  "pl": "Jahmyr Gibbs",
+  "m": "Receptions",
+  "ln": 5,
+  "o": 158,
+  "p": 0.443,
+  "bk": 0.388,
+  "why": "5+ catches in 5 of 7 games; proj 4.8, avg 4.9; total 50.5"
+ },
+ {
+  "pl": "Brock Purdy",
+  "m": "Passing Yards",
+  "ln": 275,
+  "o": 168,
+  "p": 0.4295,
+  "bk": 0.373,
+  "why": "Proj 265; 275+ in 3 of 7; 189+ every game; total 52.5"
+ },
+ {
+  "pl": "Caleb Douglas",
+  "m": "Receiving Yards",
+  "ln": 60,
+  "o": 220,
+  "p": 0.3795,
+  "bk": 0.313,
+  "why": "Proj 62 vs avg 56.5; over FD's main line (40) in 3 of 4"
+ },
+ {
+  "pl": "Jared Goff",
+  "m": "Passing Yards",
+  "ln": 300,
+  "o": 205,
+  "p": 0.367,
+  "bk": 0.328,
+  "why": "Avg 281; 300+ in 3 of 7; FD main line cleared 5 of 7"
+ }
+]

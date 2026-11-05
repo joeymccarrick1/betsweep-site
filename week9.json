@@ -1,0 +1,168 @@
+{
+ "week": 9,
+ "drafted": "2026-11-05T02:30Z",
+ "note": "Weekly (Wednesday-night) run. Strict leg filter left 6 of 15 games with no clean props.",
+ "promos": [
+  {
+   "slot": "saturday",
+   "name": "Fall Back Double",
+   "type": "core",
+   "game": "DET-MIA + LV-SF",
+   "legs": [
+    {
+     "pl": "Caleb Douglas",
+     "m": "Receiving Yards",
+     "ln": 60,
+     "o": 220,
+     "p": 0.3795,
+     "bk": 0.313,
+     "game": "DET-MIA",
+     "fd": {
+      "m": "42.622480665",
+      "s": "59995027"
+     },
+     "why": "Proj 61.8 vs avg 56.5; over FD's main line (40) in 3 of 4; total 50.5"
+    },
+    {
+     "pl": "Brock Purdy",
+     "m": "Passing Yards",
+     "ln": 275,
+     "o": 168,
+     "p": 0.4295,
+     "bk": 0.373,
+     "game": "LV-SF",
+     "fd": {
+      "m": "42.622430826",
+      "s": "50945626"
+     },
+     "why": "Proj 264.8; 275+ in 3 of 7; 189+ every game; total 52.5"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622480665&selectionId[0]=59995027&marketId[1]=42.622430826&selectionId[1]=50945626",
+   "price": "+758",
+   "chance": 0.163,
+   "boost": true,
+   "caption": "Fall Back Double +758\nCaleb Douglas 60+ rec yds (+220)\nBrock Purdy 275+ pass yds (+168)\nWhy: two plus-money edges in the two highest totals on the slate (50.5, 52.5) - BetSweep 38% / 43% vs FanDuel 31% / 37%\nTail it: betsweep.co/b/w9-saturday\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
+   "slot": "sunday_main",
+   "name": "Plus-Money Paydirt",
+   "type": "core (TDs)",
+   "game": "LV-SF + GB-NE + DET-MIA",
+   "legs": [
+    {
+     "pl": "Brock Bowers",
+     "m": "Anytime TD",
+     "ln": 1,
+     "o": 120,
+     "p": 0.3966,
+     "bk": 0.455,
+     "game": "LV-SF",
+     "fd": {
+      "m": "42.622419464",
+      "s": "42200636"
+     },
+     "why": "TD in 4 of 6; LV TEs #3 in rec TDs; coverage edge vs Upton Stout"
+    },
+    {
+     "pl": "Matthew Golden",
+     "m": "Anytime TD",
+     "ln": 1,
+     "o": 160,
+     "p": 0.3688,
+     "bk": 0.385,
+     "game": "GB-NE",
+     "fd": {
+      "m": "42.622011761",
+      "s": "48301335"
+     },
+     "why": "TD in 4 of 8; Role Up; coverage edge vs Christian Gonzalez"
+    },
+    {
+     "pl": "Jameson Williams",
+     "m": "Anytime TD",
+     "ln": 1,
+     "o": 155,
+     "p": 0.3492,
+     "bk": 0.392,
+     "game": "DET-MIA",
+     "fd": {
+      "m": "42.622477088",
+      "s": "36914887"
+     },
+     "why": "TD in 3 of 7; DET WRs #2 in rec TDs; team implied 28.75"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622419464&selectionId[0]=42200636&marketId[1]=42.622011761&selectionId[1]=48301335&marketId[2]=42.622477088&selectionId[2]=36914887",
+   "price": "+1359",
+   "chance": 0.051,
+   "note": "Recipe wants p>=0.40 at +200 or shorter; under the 11/4 rule (+120 or longer) no clean TD leg reaches 40% - these are the three likeliest clean scorers at +120..+200.",
+   "caption": "Plus-Money Paydirt +1359\nBrock Bowers anytime TD (+120)\nMatthew Golden anytime TD (+160)\nJameson Williams anytime TD (+155)\nWhy: three plus-money scorers in three games - 4/6, 4/8 and 3/7 TD games this season\nTail it: betsweep.co/b/w9-sunday_main\n21+ | gamble responsibly",
+   "post": false
+  }
+ ],
+ "either_or": {
+  "slot": "sunday_main",
+  "name": "Either/Or TDs",
+  "note": "Build in FanDuel's Either-player market; only 4 games had two clean scorers",
+  "pairs": [
+   {
+    "game": "DET-MIA",
+    "pair": [
+     "Jahmyr Gibbs 74% (-425)",
+     "Ollie Gordon II 47% (+105)"
+    ]
+   },
+   {
+    "game": "LV-SF",
+    "pair": [
+     "Christian McCaffrey 70% (-310, Questionable)",
+     "George Kittle 46% (-115)"
+    ]
+   },
+   {
+    "game": "LA-WAS",
+    "pair": [
+     "Kyren Williams 57% (-160)",
+     "Stefon Diggs 30% (+210)"
+    ]
+   },
+   {
+    "game": "CAR-DEN",
+    "pair": [
+     "Chuba Hubbard 50% (-115)",
+     "Jonah Coleman 48% (+105)"
+    ]
+   }
+  ]
+ },
+ "singles": {
+  "slot": "sunday",
+  "file": "singles-sun.json"
+ },
+ "pending": [
+  {
+   "slot": "thursday",
+   "status": "not drafted - no clean BAL-JAX leg (every prop carries the low-total 39.5 flag or another bad flag); check_thursday redrafts"
+  },
+  {
+   "slot": "saturday",
+   "name": "SGP of the week",
+   "status": "props not posted yet - top game ATL-CIN (shootout 28%, total 52.5) has no props; Saturday check fills it"
+  },
+  {
+   "slot": "sunday_main",
+   "name": "Sweep / Best legs",
+   "status": "Sweep dropped: every clean leg at p>=0.62 is a floor (-136 or shorter), banned by the 11/4 market mix. Best legs = Sunday singles card."
+  },
+  {
+   "slot": "snf",
+   "status": "not drafted - CHI-TB: no clean TB leg; clean CHI legs are all -104 or shorter (no +120 core legs, no clean TDs); check_weekend redrafts"
+  },
+  {
+   "slot": "mnf",
+   "status": "not drafted - BUF-MIN: no clean MIN leg; clean BUF legs only Cook ATD -120, Allen ATD -125, Cook/Allen 2+ TD, Shakir rec. +500 and Piss Missile Monday (needs 7-10 legs, script BUF by 10+: shootout 19%, total 46.5) can't be built clean; check_mnf redrafts"
+  }
+ ]
+}
