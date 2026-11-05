@@ -2,7 +2,7 @@
  "name": "BetSweep",
  "short_name": "BetSweep",
  "description": "NFL projections priced against FanDuel: matchup boards, parlay builder, live tracker, receipts.",
- "start_url": "/?source=app",
+ "start_url": "/today/?source=app",
  "scope": "/",
  "display": "standalone",
  "orientation": "portrait",
@@ -35,14 +35,18 @@
  ],
  "shortcuts": [
   {
-   "name": "Live",
-   "url": "/live/",
+   "name": "Today",
+   "url": "/today/",
    "icons": [
     {
      "src": "/app/icon-192.png",
      "sizes": "192x192"
     }
    ]
+  },
+  {
+   "name": "Live",
+   "url": "/live/"
   },
   {
    "name": "Parlay Builder",
