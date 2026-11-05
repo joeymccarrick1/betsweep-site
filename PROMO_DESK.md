@@ -27,6 +27,13 @@ Owner-facing playbook (calendar, rules, templates, video ideas): the Claude Doc 
 4. Already-posted promos this week: `site/b/promos.json` (don't repeat the same legs in a new promo the same day).
 5. The site is the source of truth; the Sheets connector is not needed.
 
+## Game dossier first (owner 11/5: "how does this team play against similar defenses ... key matchups, injuries on both sides, game script, weather, who's heating up or in the news")
+Before drafting any slot, read the game's dossier: `https://betsweep.co/b/dossier.json` (or the clone's out/dossier.json after Step 3), games[<gid>]. For every leg you keep, the draft's "why" must agree with it or say why not:
+- similar: how this offense did against its 3 nearest past opponents by defense profile (points, pass, rush vs its season average); prefer players who produced in those games.
+- leak: what this defense allows to each role (WR1 / WR2 / TE1 / RB1 / QB1) against those players' own averages; a leg on a role this defense shuts down (vs_own <= 0.9) needs a stated reason.
+- flags: weather, defensive injuries, news on both sides. spots: only "lean" spots are tested edges (2006-2025, both decades); "no edge" spots are folklore - never sell a promo on one.
+In the owner-facing notes, add one line per game: "Dossier: <the one fact that drove the pick>".
+
 ## Leg filter (every promo)
 A leg is usable only if ALL hold:
 - its game kicks off at least 30 minutes after this run (`ko`), and the player is not Out / Doubtful / Inactive in injuries.json or

@@ -1,0 +1,33 @@
+Situational spots vs the closing spread, NFL regular season 2006-2025 (nflverse games.csv), pushes dropped
+break-even at -110 = 52.4%. SURVIVES = n>=150, beats 52.4% overall and in both halves (2006-15, 2016-25), p<0.05 overall
+
+spot                             n  cover%   06-15   16-25   21-25       p  verdict
+big_fav_vs_worse              1210   48.8%   49.3%   48.4%   47.4%   0.421  no edge
+    Favorite of 7+ against a team with a worse record ("playing down")
+bad_dog_vs_good                519   51.1%   51.6%   50.6%   48.9%   0.629  no edge
+    Bad team (win% <= .35) as an underdog to a good team (>= .65), week 5+
+letdown_after_blowout          590   47.5%   47.2%   47.8%   44.6%   0.217  no edge
+    Favorite coming off a 21+ point win
+bounce_after_blowout_loss      873   53.4%   53.2%   53.5%   53.7%   0.046  SURVIVES (with)
+    Team coming off a 21+ point loss
+thursday_road                  280   48.6%   50.4%   47.3%   48.4%   0.633  no edge
+    Road team on Thursday (short week), week 2+
+div_dog                       1901   52.3%   52.4%   52.2%   54.1%   0.046  no edge
+    Underdog in a division game
+div_dog_7                      618   50.6%   52.1%   49.2%   50.3%   0.748  no edge
+    Underdog of 7+ in a division game
+rest_edge                     1069   51.4%   51.3%   51.4%   52.5%   0.375  no edge
+    Team with 3+ more days of rest (off a bye, Thursday-to-Sunday-week)
+lookahead_fav                 1397   46.8%   46.5%   47.1%   47.5%   0.017  SURVIVES (fade)
+    Favorite of 3+ whose next game is a division game
+revenge                        933   52.0%   53.0%   51.0%   50.6%   0.226  no edge
+    Team that lost the first meeting this season (division rematch)
+home_dog                      1877   50.0%   49.8%   50.2%   50.4%   0.982  no edge
+    Home underdog
+road_fav_2nd_road              542   51.7%   55.3%   48.6%   49.1%   0.439  no edge
+    Road favorite playing a second straight road game
+double_digit_fav               672   47.6%   45.6%   49.8%   52.4%   0.217  no edge
+    Favorite of 10+
+
+Multiple testing: 13 spots were tested, so a p-value has to be under 0.0038 (Bonferroni) to count as strong evidence.
+Survivors above that line are tagged 'lean' in situational_spots.json: shown in the dossier as a lean, never used in a projection.
