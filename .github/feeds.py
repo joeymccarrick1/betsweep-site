@@ -120,8 +120,27 @@ if _dc_age > 50:
         for t in (tl.get("sports", [{}])[0].get("leagues", [{}])[0].get("teams", []) or []):
             tm = t.get("team") or {}; ab = tm.get("abbreviation"); tid = tm.get("id")
             if not ab or not tid: continue
-            dc = get(f"https://site.web.api.espn.com/apis/v2/sports/football/nfl/teams/{tid}/depthcharts")
-            if dc: DC["teams"][ab] = dc
+            # ESPN core API: depth chart slots hold athlete $ref links; the team roster (one call) resolves ids to names + positions
+            dc = get(f"https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/{now.year}/teams/{tid}/depthcharts")
+            ro = get(f"{S}/teams/{tid}/roster")
+            if not dc: continue
+            names = {}
+            for grp in (ro or {}).get("athletes", []) or []:
+                for a in grp.get("items", []) or []:
+                    names[str(a.get("id"))] = {"name": a.get("displayName") or a.get("fullName"), "pos": ((a.get("position") or {}).get("abbreviation") or ""), "inj": [(i.get("status") or "") for i in (a.get("injuries") or [])]}
+            chart = {}
+            for item in dc.get("items", []) or []:
+                for pkey, pv in (item.get("positions") or {}).items():
+                    pab = ((pv.get("position") or {}).get("abbreviation") or pkey).upper()
+                    grp = "WR" if "WR" in pab else "RB" if pab in ("RB", "HB") else "QB" if pab == "QB" else "TE" if pab == "TE" else "FB" if pab == "FB" else None
+                    if not grp: continue
+                    for a in pv.get("athletes", []) or []:
+                        ref = ((a.get("athlete") or {}).get("$ref") or ""); aid = re.search(r"/athletes/(\d+)", ref)
+                        if not aid: continue
+                        info = names.get(aid.group(1), {"name": None, "pos": "", "inj": []})
+                        chart.setdefault(grp, []).append({"rank": a.get("rank") or a.get("slot") or 99, "slot": pab, "id": aid.group(1), "name": info["name"], "pos": info["pos"], "inj": info["inj"]})
+            for g in chart: chart[g].sort(key=lambda x: (x["rank"], x["slot"]))
+            DC["teams"][ab] = {"id": tid, "chart": chart, "roster_n": len(names)}
         print("depthcharts:", len(DC["teams"]), "teams")
     except Exception as e: print("depthcharts: failed", e)
     if DC["teams"]: json.dump(DC, open("out/depthcharts.json", "w"))
