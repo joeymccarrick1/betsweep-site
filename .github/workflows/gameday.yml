@@ -1,0 +1,21 @@
+# Game-day inactives -> the model sheet without a Claude session (see .github/gameday.py). Joins the feeds branch's official ESPN
+# inactive lists with the sheet mirror and writes 'AUTO - Weekly Availability' + 'AUTO - Game Day Status'. Needs the service account
+# shared as EDITOR; until then it prints the fix and exits 0. Sundays 10:08 AM - 7:38 PM CT every half hour, plus 6:08/6:38 PM CT
+# Thursday and Monday nights (UTC below; November = CST, so CT + 6).
+name: gameday
+on:
+  schedule:
+    - {cron: "8,38 13-23 * * 0"}
+    - {cron: "8,38 0,1 * * 1"}
+    - {cron: "8,38 0 * * 2,5"}
+  workflow_dispatch: {}
+permissions: {contents: read}
+concurrency: {group: gameday, cancel-in-progress: true}
+jobs:
+  gameday:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q cryptography
+      - run: python3 .github/gameday.py
+        env: {SHEETS_SA_JSON: "${{ secrets.SHEETS_SA_JSON }}"}
