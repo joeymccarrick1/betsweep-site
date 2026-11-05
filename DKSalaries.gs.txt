@@ -1,0 +1,115 @@
+/**
+ * DKSalaries.gs  v2026-10-27  - BetSweep
+ * Pulls DraftKings' NFL main-slate (classic) player list - the same CSV the "Export to CSV" button gives - into the tab
+ * 'AUTO - DK Salaries' so the site's DFS page has DraftKings salaries without anyone importing a file.
+ *
+ * Layout written: A1:I = DraftKings' CSV (Position, Name + ID, Name, ID, Roster Position, Salary, Game Info, TeamAbbrev, AvgPointsPerGame)
+ *                 K1:L4 = Updated | Draft group | Slate | Start   (read by gen/build_dfs.py)
+ *
+ * Setup (once): paste this file as a NEW script file in the sheet's Apps Script project (Extensions > Apps Script > + > Script,
+ * name it DKSalaries), save, pick installDKSalaries in the function menu and Run (approve the permission prompt).
+ * That pulls the list now and adds a trigger that refreshes it every 3 hours. refreshDKSalaries can be run by hand any time.
+ * It defines no onOpen, so it does not clash with FanDuelOdds.gs.
+ */
+var DK_TAB = 'AUTO - DK Salaries';
+
+function installDKSalaries() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'refreshDKSalaries') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('refreshDKSalaries').timeBased().everyHours(3).create();
+  var msg = refreshDKSalaries();
+  Logger.log('Trigger installed (every 3 hours). ' + msg);
+}
+
+function refreshDKSalaries() {
+  // v2026-10-27: DraftKings returned 403 to the old script-style User-Agent from Google's servers - send a browser's headers instead
+  var hdrs = { 'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'en-US,en;q=0.9',
+               'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+               'Referer': 'https://www.draftkings.com/lobby', 'Origin': 'https://www.draftkings.com' };
+  // Backup when the lobby is blocked: type this week's main-slate draft group ID into 'AUTO - DK Salaries'!L8 (label K8 'Draft group override').
+  // It is the number after draftGroupId= in DraftKings' "Export to CSV" link (or in the URL of a lineup page for that slate).
+  var ovSh = SpreadsheetApp.getActive().getSheetByName(DK_TAB), ov = ovSh ? String(ovSh.getRange('L8').getValue() || '').replace(/\D/g, '') : '';
+  // 1. find the main classic NFL slate in the public lobby
+  var lob = ov ? null : UrlFetchApp.fetch('https://www.draftkings.com/lobby/getcontests?sport=NFL', { muteHttpExceptions: true, headers: hdrs });
+  if (ov) return dkFetchGroup_({DraftGroupId: +ov, ContestTypeId: 21, GameCount: null, StartDateEst: ''}, hdrs, 'override');
+  if (lob.getResponseCode() !== 200) return dkFail_('lobby HTTP ' + lob.getResponseCode() + ' - DraftKings blocked the request; type the draft group ID into L8 (see the note in K8:L9)');
+  var L = JSON.parse(lob.getContentText());
+  var groups = (L.DraftGroups || L.draftGroups || []).filter(function (g) {
+    var classic = (g.GameTypeId === 1) || (g.GameTypeId == null && g.ContestTypeId === 21);
+    return classic && !g.ContestStartTimeSuffix && (g.Sport == null || g.Sport === 'NFL');
+  });
+  if (!groups.length) return dkFail_('no classic NFL draft group in the lobby (' + (L.DraftGroups || []).length + ' groups seen)');
+  groups.sort(function (a, b) {
+    var fa = a.DraftGroupTag === 'Featured' ? 1 : 0, fb = b.DraftGroupTag === 'Featured' ? 1 : 0;
+    if (fa !== fb) return fb - fa;                                   // the Featured (main) slate first
+    if ((b.GameCount || 0) !== (a.GameCount || 0)) return (b.GameCount || 0) - (a.GameCount || 0);   // then the biggest
+    return String(a.StartDateEst || '').localeCompare(String(b.StartDateEst || ''));                   // then the soonest
+  });
+  return dkFetchGroup_(groups[0], hdrs, 'lobby');
+}
+
+function dkFetchGroup_(g, hdrs, src) {
+  var id = g.DraftGroupId, ctype = g.ContestTypeId || 21;
+
+  // 2. the player-list CSV (same file as the Export to CSV button); fall back to the public draftables API
+  var rows = null, how = 'csv';
+  var r = UrlFetchApp.fetch('https://www.draftkings.com/lineup/getavailableplayerscsv?contestTypeId=' + ctype + '&draftGroupId=' + id,
+                            { muteHttpExceptions: true, headers: hdrs });
+  if (r.getResponseCode() === 200 && /Salary/.test(r.getContentText().slice(0, 400))) {
+    rows = Utilities.parseCsv(r.getContentText());
+    var hi = rows.findIndex(function (x) { return x.indexOf('Salary') >= 0 && x.indexOf('Position') >= 0; });
+    rows = hi >= 0 ? rows.slice(hi) : null;
+    if (rows) {                                            // DK sometimes puts instructions to the left of the list - keep only its 9 columns
+      var c0 = rows[0].indexOf('Position');
+      rows = rows.map(function (x) { return x.slice(c0, c0 + 9); }).filter(function (x) { return x[0]; });
+    }
+  }
+  if (!rows || rows.length < 20) {
+    how = 'draftables';
+    var d = UrlFetchApp.fetch('https://api.draftkings.com/draftgroups/v1/draftgroups/' + id + '/draftables', { muteHttpExceptions: true, headers: hdrs });
+    if (d.getResponseCode() !== 200) return dkFail_('player list HTTP ' + r.getResponseCode() + ' and draftables HTTP ' + d.getResponseCode());
+    var D = JSON.parse(d.getContentText()), seen = {};
+    rows = [['Position', 'Name + ID', 'Name', 'ID', 'Roster Position', 'Salary', 'Game Info', 'TeamAbbrev', 'AvgPointsPerGame']];
+    (D.draftables || []).forEach(function (p) {
+      if (seen[p.draftableId]) return; seen[p.draftableId] = 1;
+      var comp = p.competition || {};
+      var gi = (comp.name || '').replace(/\s/g, '') + (comp.startTime ? ' ' + Utilities.formatDate(new Date(comp.startTime), 'America/New_York', 'MM/dd/yyyy hh:mma') + ' ET' : '');
+      var pos = p.position || '';
+      var rp = pos === 'QB' ? 'QB' : pos === 'DST' ? 'DST' : pos + '/FLEX';
+      rows.push([pos, p.displayName + ' (' + p.draftableId + ')', p.displayName, String(p.draftableId), rp, String(p.salary), gi, p.teamAbbreviation || '', '']);
+    });
+    if (rows.length < 20) return dkFail_('draftables returned only ' + (rows.length - 1) + ' players');
+  }
+
+  // 3. write the tab
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(DK_TAB) || ss.insertSheet(DK_TAB);
+  var keepOv = sh.getRange('L8').getValue();
+  sh.clearContents();
+  var need = rows.length + 5;
+  if (sh.getMaxRows() < need) sh.insertRowsAfter(sh.getMaxRows(), need - sh.getMaxRows());
+  if (sh.getMaxColumns() < 12) sh.insertColumnsAfter(sh.getMaxColumns(), 12 - sh.getMaxColumns());
+  sh.getRange(1, 1, rows.length, 9).setNumberFormat('@').setValues(rows);
+  var now = Utilities.formatDate(new Date(), 'America/Chicago', 'yyyy-MM-dd HH:mm') + ' CT';
+  sh.getRange(1, 11, 4, 2).setNumberFormat('@').setValues([
+    ['Updated', now],
+    ['Draft group', String(id)],
+    ['Slate', 'main slate (' + (g.GameCount || '?') + ' games)'],
+    ['Start', String(g.StartDateEst || '').slice(0, 16)]
+  ]);
+  sh.getRange(8, 11, 2, 2).setValues([['Draft group override', keepOv], ['How', 'Leave L8 blank normally. If refresh says the lobby was blocked, paste the number after draftGroupId= from DraftKings\' Export to CSV link here, then run refreshDKSalaries. Clear it next week.']]);
+  var msg = 'DK salaries (' + src + '): ' + (rows.length - 1) + ' players, draft group ' + id + ', ' + (g.GameCount || '?') + ' games, via ' + how + ', ' + now;
+  Logger.log(msg);
+  return msg;
+}
+
+function dkFail_(why) {
+  // leave the last good list in place; note the failure next to it
+  var sh = SpreadsheetApp.getActive().getSheetByName(DK_TAB);
+  var ss = SpreadsheetApp.getActive(); if (!sh) sh = ss.insertSheet(DK_TAB);
+  if (sh.getMaxColumns() < 12) sh.insertColumnsAfter(sh.getMaxColumns(), 12 - sh.getMaxColumns());
+  sh.getRange(6, 11, 1, 2).setValues([['Last error', Utilities.formatDate(new Date(), 'America/Chicago', 'yyyy-MM-dd HH:mm') + ' CT - ' + why]]);
+  if (!sh.getRange('K8').getValue()) sh.getRange(8, 11, 2, 1).setValues([['Draft group override'], ['How: paste the number after draftGroupId= from DraftKings\' Export to CSV link into L8, then run refreshDKSalaries']]);
+  Logger.log('DK salaries NOT refreshed: ' + why);
+  return 'FAILED: ' + why;
+}

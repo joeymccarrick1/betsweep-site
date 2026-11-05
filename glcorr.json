@@ -1,0 +1,122 @@
+{
+ "source": "nflverse stats_player_week 2023-2025 REG + schedules; Spearman -> Gaussian rho = 2 sin(pi/6 * rs); margin = player's own team margin; roles: QB 10+ att, RB 5+ touches/targets, WR/TE 3+ targets",
+ "rho": {
+  "QB_PASS": {
+   "n": 1701,
+   "margin": 0.253,
+   "total": 0.398
+  },
+  "QB_RUSH": {
+   "n": 1701,
+   "margin": 0.017,
+   "total": 0.023
+  },
+  "QB_TD": {
+   "n": 1701,
+   "margin": 0.121,
+   "total": 0.158
+  },
+  "RB_REC": {
+   "n": 2931,
+   "margin": -0.138,
+   "total": 0.01
+  },
+  "RB_RECYDS": {
+   "n": 2931,
+   "margin": -0.051,
+   "total": 0.054
+  },
+  "RB_RUSH": {
+   "n": 2931,
+   "margin": 0.217,
+   "total": 0.053
+  },
+  "RB_TD": {
+   "n": 2931,
+   "margin": 0.257,
+   "total": 0.223
+  },
+  "TE_REC": {
+   "n": 1720,
+   "margin": -0.032,
+   "total": 0.09
+  },
+  "TE_RECYDS": {
+   "n": 1720,
+   "margin": 0.059,
+   "total": 0.151
+  },
+  "TE_RUSH": {
+   "n": 1720,
+   "margin": 0.028,
+   "total": -0.008
+  },
+  "TE_TD": {
+   "n": 1720,
+   "margin": 0.143,
+   "total": 0.205
+  },
+  "WR_REC": {
+   "n": 4346,
+   "margin": 0.091,
+   "total": 0.123
+  },
+  "WR_RECYDS": {
+   "n": 4346,
+   "margin": 0.14,
+   "total": 0.163
+  },
+  "WR_RUSH": {
+   "n": 4346,
+   "margin": 0.042,
+   "total": 0.044
+  },
+  "WR_TD": {
+   "n": 4346,
+   "margin": 0.183,
+   "total": 0.223
+  },
+  "RB_LONG": {
+   "n": 2931,
+   "margin": -0.051,
+   "total": 0.054,
+   "note": "longest reception: uses receiving-yards correlation"
+  },
+  "WR_LONG": {
+   "n": 4346,
+   "margin": 0.14,
+   "total": 0.163,
+   "note": "longest reception: uses receiving-yards correlation"
+  },
+  "TE_LONG": {
+   "n": 1720,
+   "margin": 0.059,
+   "total": 0.151,
+   "note": "longest reception: uses receiving-yards correlation"
+  },
+  "QB_FTD": {
+   "n": 1701,
+   "margin": 0.121,
+   "total": 0.158,
+   "note": "first TD: uses anytime-TD correlation"
+  },
+  "RB_FTD": {
+   "n": 2931,
+   "margin": 0.257,
+   "total": 0.223,
+   "note": "first TD: uses anytime-TD correlation"
+  },
+  "WR_FTD": {
+   "n": 4346,
+   "margin": 0.183,
+   "total": 0.223,
+   "note": "first TD: uses anytime-TD correlation"
+  },
+  "TE_FTD": {
+   "n": 1720,
+   "margin": 0.143,
+   "total": 0.205,
+   "note": "first TD: uses anytime-TD correlation"
+  }
+ }
+}

@@ -1,0 +1,66 @@
+{
+ "version": "runlean_v1",
+ "fit": "train 2019-2023 REG, nflverse player_stats aggregated to team-game; test 2024-2026",
+ "inputs": "this season's player game log (prior weeks only) + game spread/total; no pbp features",
+ "league_constants": {
+  "rr": 0.43842786625686875,
+  "ypc": 4.342892750421322,
+  "pass_yds_pg": 244.01213040181955,
+  "rb_car_pg": 21.667551175132676
+ },
+ "shrinkage_k": {
+  "rr": 300,
+  "rb_car": 8,
+  "ypc": 150,
+  "pya": 3
+ },
+ "feature_definitions": {
+  "base_rr": "(team sum Rush Att over prior games this season + 300*0.4384) / (team sum (Rush Att + Pass Att) over prior games + 300); Rush Att and Pass Att summed over all the team's player rows",
+  "base_rb_car": "(team sum Rush Att of Pos=RB rows over prior games + 8*21.6676) / (prior games played + 8)",
+  "own_ypc": "(team sum Rush Yds prior games + 150*4.3429) / (team sum Rush Att prior games + 150)",
+  "opp_ypc_allowed": "(sum Rush Yds by all teams vs this opponent in opponent's prior games + 150*4.3429) / (their Rush Att + 150)",
+  "opp_pass_yds_allowed_pg": "(sum Pass Yds by teams vs this opponent in opponent's prior games + 3*244.01) / (opponent prior games + 3)",
+  "imp_margin": "team implied margin = -(team's FanDuel spread); e.g. team -4.5 -> +4.5",
+  "total_line": "FanDuel game total"
+ },
+ "rush_rate_model": {
+  "intercept": -0.0024638265023630423,
+  "base_rr": 0.6832414913656669,
+  "imp_margin": 0.0007651173596881292,
+  "total_line": -0.0037861462503201073,
+  "own_ypc": 0.03954793767973049,
+  "opp_ypc_allowed": 0.04223032254689415,
+  "opp_pass_yds_allowed_pg": -0.0001574199368406888
+ },
+ "rb_carries_model": {
+  "intercept": -1.9424462543399308,
+  "base_rb_car": 0.8497532965077015,
+  "base_rr": -11.163092225673708,
+  "imp_margin": 0.10731010241436789,
+  "total_line": -0.17785438422384584,
+  "own_ypc": 1.4628766085821918,
+  "opp_ypc_allowed": 2.655244345209564,
+  "opp_pass_yds_allowed_pg": 0.0015905158184317905
+ },
+ "team_norm": {
+  "formula": "norm = a + b*base_rr",
+  "a": 0.0375950227763191,
+  "b": 0.9193515794914007
+ },
+ "notes": [
+  "Rush Att in history = nflverse player_stats carries (includes QB scrambles and kneels); Pass Att = attempts (excludes sacks); Pass Yds = gross passing yards. Production game log should match these conventions.",
+  "Week 1 (no prior games): every season-to-date feature equals its league constant.",
+  "Opponent features use the opponent's own prior games this season (what offenses gained against them).",
+  "Lines in the fit are nflverse closing spread_line/total_line, used as a stand-in for FanDuel.",
+  "Rush-rate target is the player-row rate sum(Rush Att)/(sum(Rush Att)+sum(Pass Att)) for the game."
+ ],
+ "lean": {
+  "formula": "lean = rush_rate_model prediction - norm",
+  "flag_threshold": 0.02,
+  "train_quantiles": {
+   "p80": 0.018690969442925386,
+   "p90": 0.028569951633788004,
+   "p95": 0.036015279620356826
+  }
+ }
+}

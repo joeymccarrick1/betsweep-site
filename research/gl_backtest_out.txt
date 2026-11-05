@@ -1,0 +1,42 @@
+=== 1. market-as-prior + adjustments, walk-forward (train = earlier seasons) ===
+ test    n | Brier mkt Brier adj |  LL mkt  LL adj | fav SU% | strongest adjustments (logit units per unit of feature)
+ 2022  269 |    0.2108    0.2129 |  0.6085  0.6114 |   65.4% | road_fav +0.61, dome -0.40, qb_change_h -0.39, big_fav +0.39
+ 2023  272 |    0.2187    0.2328 |  0.6273  0.6606 |   67.6% | road_fav +0.53, form_su_a -0.50, form_su_h +0.43, big_fav +0.37
+ 2024  272 |    0.2002    0.2039 |  0.5875  0.5938 |   71.7% | qb_change_a +0.27, big_fav +0.26, dome -0.26, form_su_a -0.25
+ 2025  271 |    0.2121    0.2137 |  0.6094  0.6137 |   65.3% | form_su_h +0.41, qb_change_a +0.40, form_su_a -0.24, early -0.19
+ 2026   92 |    0.2334    0.2296 |  0.6614  0.6519 |   62.0% | form_su_h +0.43, qb_change_a +0.35, form_su_a -0.35, big_fav +0.16
+market coefficient on its own logit (1.00 = take the price as is): 2022: 1.04, 2023: 1.07, 2024: 1.04, 2025: 1.11, 2026: 1.08
+
+=== 2. how often the favourite lost, flag on vs off (all seasons with lines) ===
+baseline upset rate 33.5% over 1702 games; market-implied upset rate 33.8%
+flag                                n on upset% on upset% off  exp% on   (exp = what the moneyline implied for those games)
+QB change, favourite                 105     38.1%      33.2%    36.1%
+QB change, underdog                  253     26.9%      34.7%    30.3%
+Division game                        601     34.9%      32.8%    33.1%
+Road favourite                       680     33.5%      33.6%    35.5%
+Favourite on short week              113     34.5%      33.5%    33.0%
+Underdog on short week               110     34.5%      33.5%    32.9%
+Favourite rest edge >= 3 days        210     31.4%      33.8%    32.6%
+Underdog rest edge >= 3 days         146     34.9%      33.4%    34.0%
+Prime time                           345     34.8%      33.2%    34.1%
+Dome                                 546     32.1%      34.3%    34.8%
+Favourite 0-3 SU last 3 (cold)       156     34.6%      33.4%    37.5%
+Underdog 3-0 SU last 3 (hot)         176     39.8%      32.8%    38.3%
+Favourite -7 or more                 487     20.1%      38.9%    20.9%
+Weeks 1-3                            334     37.1%      32.7%    35.6%
+
+=== 3. post-mortem 2026 week 6 ===
+SEA 14 @ DEN 17  fav SEA (58%, spread -2.5 home)  UPSET  QBs Drew Lock / Bo Nix  rest +0  form SU 0.33/0.67  flags: Road favourite, Favourite on short week, Underdog on short week, Prime time
+HOU 34 @ JAX 31  fav JAX (56%, spread +2.5 home)  UPSET  QBs C.J. Stroud / Trevor Lawrence  rest +0  form SU 0.33/1.00  flags: Division game
+CHI 31 @ ATL 23  fav CHI (52%, spread -1.5 home)  held  QBs Caleb Williams / Michael Penix Jr.  rest +0  form SU 0.67/0.67  flags: QB change, favourite, Road favourite, Dome
+BAL 10 @ CLE 13  fav BAL (60%, spread -3.0 home)  UPSET  QBs Tyler Huntley / Deshaun Watson  rest +0  form SU 1.00/0.67  flags: Division game, Road favourite
+TEN 26 @ IND 20  fav IND (72%, spread +6.5 home)  UPSET  QBs Cam Ward / Daniel Jones  rest +0  form SU 0.00/0.67  flags: Division game
+NYJ 19 @ NE 26  fav NE (74%, spread +7.5 home)  held  QBs Geno Smith / Drake Maye  rest +0  form SU 0.33/0.67  flags: Division game, Favourite -7 or more
+NO 34 @ NYG 27  fav NYG (50%, spread -1.5 home)  UPSET  QBs Tyler Shough / Jameis Winston  rest +0  form SU 0.00/0.67  flags: -
+CAR 25 @ PHI 14  fav CAR (59%, spread -3.0 home)  held  QBs Bryce Young / Tanner McKee  rest -7  form SU 0.67/0.00  flags: QB change, underdog, Road favourite, Favourite rest edge >= 3 days
+PIT 26 @ TB 19  fav PIT (56%, spread -2.5 home)  held  QBs Aaron Rodgers / Jalon Daniels  rest +3  form SU 0.67/0.33  flags: Road favourite, Underdog rest edge >= 3 days
+ARI 18 @ LA 16  fav LA (84%, spread +12.5 home)  UPSET  QBs Jacoby Brissett / Matthew Stafford  rest -1  form SU 0.00/0.33  flags: Division game, Dome, Favourite -7 or more
+LAC 6 @ KC 22  fav KC (79%, spread +7.5 home)  held  QBs Justin Herbert / Patrick Mahomes  rest +7  form SU 0.00/1.00  flags: Division game, Favourite rest edge >= 3 days, Favourite -7 or more
+BUF 33 @ LV 30  fav BUF (68%, spread -5.5 home)  held  QBs Josh Allen / Kirk Cousins  rest +1  form SU 0.67/0.33  flags: Road favourite, Dome
+DAL 13 @ GB 23  fav DAL (51%, spread -1.5 home)  UPSET  QBs Dak Prescott / Jordan Love  rest -3  form SU 0.33/0.67  flags: Road favourite, Favourite rest edge >= 3 days, Prime time
+WAS 17 @ SF 23  fav SF (77%, spread +7.5 home)  held  QBs Jayden Daniels / Brock Purdy  rest +0  form SU 0.33/1.00  flags: Prime time, Favourite -7 or more

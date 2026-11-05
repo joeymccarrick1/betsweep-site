@@ -1,0 +1,64 @@
+/**
+ * ClosingLines.gs  v2026-10-27  - BetSweep
+ * Keeps FanDuel's last price before kickoff for every prop line, so the season page can show closing line value (CLV):
+ * did FanDuel's price move toward the side the model liked between our freeze and kickoff? (Win/loss on a week of legs is noisy;
+ * CLV shows real edge within a few weeks.)
+ *
+ * Every 30 minutes it reads 'AUTO - FanDuel Odds' (rewritten by FanDuelOdds.gs on each refresh) and, for every row whose game
+ * kicks off within the next 3 hours, writes that row's price into 'V2 - Closing Lines' - one row per week + line, overwritten by each
+ * newer pre-kickoff pull, so the row left at kickoff is the closing price. It never touches any other tab.
+ *
+ * Layout written: A Week | B Key (name|market|X+, lowercase name, same as the odds tab) | C Player | D Market | E Line (X+) |
+ *                 F Close odds | G Close implied | H Pulled at (CT) | I Kickoff (CT) | J Captured (CT)
+ *
+ * Setup (once): Extensions > Apps Script > + > Script, name it ClosingLines, paste this file, save, choose installClosingLines in
+ * the function menu and Run (approve the prompt). It defines no onOpen, so it does not clash with the other scripts.
+ */
+var CL_TAB = 'V2 - Closing Lines', CL_ODDS = 'AUTO - FanDuel Odds', CL_HDR = ['Week', 'Key', 'Player', 'Market', 'Line (X+)', 'Close odds', 'Close implied', 'Pulled at (CT)', 'Kickoff (CT)', 'Captured (CT)'];
+
+function installClosingLines() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'captureClosingLines') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('captureClosingLines').timeBased().everyMinutes(30).create();
+  Logger.log('Trigger installed (every 30 minutes). ' + captureClosingLines());
+}
+
+function clImplied_(o) { o = Number(o); if (!o) return ''; return o > 0 ? 100 / (o + 100) : -o / (-o + 100); }
+function clKick_(txt, now) {
+  // 'Thu 10/29 19:15' (Central) -> Date; the year is this year, or next year when that date is > 200 days in the past
+  var m = String(txt || '').match(/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/); if (!m) return null;
+  var y = now.getFullYear();
+  var s = Utilities.formatString('%d-%02d-%02dT%02d:%s:00', y, +m[1], +m[2], +m[3], m[4]);
+  var d = new Date(Utilities.parseDate(s, 'America/Chicago', "yyyy-MM-dd'T'HH:mm:ss").getTime());
+  if (now - d > 200 * 864e5) d = new Date(Utilities.parseDate(s.replace(String(y), String(y + 1)), 'America/Chicago', "yyyy-MM-dd'T'HH:mm:ss").getTime());
+  return d;
+}
+
+function captureClosingLines() {
+  var ss = SpreadsheetApp.getActive(), now = new Date();
+  var src = ss.getSheetByName(CL_ODDS); if (!src) return 'no odds tab';
+  var week = ss.getSheetByName('AUTO - Settings').getRange('B2').getValue();
+  var rows = src.getRange(2, 1, Math.max(1, src.getLastRow() - 1), 9).getValues();   // A key .. I pulled at
+  var want = [];
+  rows.forEach(function (r) {
+    if (!r[0] || r[4] === '' || r[4] === null) return;
+    var ko = clKick_(r[6], now); if (!ko) return;
+    var mins = (ko - now) / 6e4; if (mins < 0 || mins > 180) return;   // only games kicking off in the next 3 hours
+    var pulled = r[8] instanceof Date ? Utilities.formatDate(r[8], 'America/Chicago', 'yyyy-MM-dd HH:mm') : String(r[8]);
+    want.push([week, String(r[0]).toLowerCase(), r[1], r[2], r[3], r[4], clImplied_(r[4]), pulled, r[6], Utilities.formatDate(now, 'America/Chicago', 'yyyy-MM-dd HH:mm')]);
+  });
+  if (!want.length) return 'nothing kicking off in the next 3 hours';
+  var sh = ss.getSheetByName(CL_TAB) || ss.insertSheet(CL_TAB);
+  if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, CL_HDR.length).setValues([CL_HDR]);
+  var last = sh.getLastRow(), data = last > 1 ? sh.getRange(2, 1, last - 1, CL_HDR.length).getValues() : [], idx = {};
+  data.forEach(function (r, i) { idx[r[0] + '|' + r[1]] = i; });
+  var fresh = 0, upd = 0;
+  want.forEach(function (w) {   // one write at the end: update rows in memory, append new ones
+    var k = w[0] + '|' + w[1];
+    if (k in idx) { data[idx[k]] = w; upd++; } else { idx[k] = data.length; data.push(w); fresh++; }
+  });
+  var need = data.length + 6;
+  if (sh.getMaxRows() < need) sh.insertRowsAfter(sh.getMaxRows(), need - sh.getMaxRows());
+  sh.getRange(2, 1, data.length, CL_HDR.length).setValues(data);
+  var msg = 'closing lines: ' + fresh + ' new, ' + upd + ' updated (week ' + week + ')';
+  Logger.log(msg); return msg;
+}
