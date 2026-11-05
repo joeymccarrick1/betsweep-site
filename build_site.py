@@ -94,6 +94,8 @@ self.addEventListener('fetch', function(e){
   var req = e.request; if(req.method !== 'GET') return;
   var url = new URL(req.url);
   if(url.origin !== location.origin) return;   // ESPN, fonts, FanDuel links: straight to the network
+  if(url.pathname.indexOf('/data/') === 0 || req.cache === 'no-store' || req.cache === 'reload'){   // 11/5: hourly files (risk notes, price moves) must not be pinned for a whole build
+    e.respondWith(fetch(req).then(function(r){ var copy = r.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); return r; }).catch(function(){ return caches.match(req); })); return; }
   if(req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')){
     e.respondWith(fetch(req).then(function(r){ var copy = r.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); return r; })
       .catch(function(){ return caches.match(req).then(function(r){ return r || caches.match('/offline.html'); }); }));
@@ -240,6 +242,41 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 </style>
 """
 
+# ---- 11/5 efficiency pass: one copy of the shared CSS / JS per build instead of 27 KB inlined on every page (and 65 KB of
+# template CSS on every template page); self-hosted fonts (no Google Fonts round trip, no third-party request); html2canvas
+# self-hosted and loaded on first use instead of 195 KB on every page load. Files land in /s/ with a content hash in the name,
+# so the service worker's cache can never serve a stale one. assets/ ships with the generators (gen-overrides).
+import hashlib as _hl
+_ASSETS = os.path.join(HERE, "assets")
+_LATIN = "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+_FONTS = [("Barlow", "italic", 800, "barlow-latin-800-italic.woff2"), ("Barlow Condensed", "normal", 500, "barlow-condensed-latin-500-normal.woff2"),
+          ("Barlow Condensed", "normal", 600, "barlow-condensed-latin-600-normal.woff2"), ("Barlow Condensed", "normal", 700, "barlow-condensed-latin-700-normal.woff2"),
+          ("IBM Plex Sans", "normal", 400, "ibm-plex-sans-latin-400-normal.woff2"), ("IBM Plex Sans", "normal", 500, "ibm-plex-sans-latin-500-normal.woff2"),
+          ("IBM Plex Sans", "normal", 600, "ibm-plex-sans-latin-600-normal.woff2")]
+FONT_CSS = "".join(f"@font-face{{font-family:'{fam}';font-style:{sty};font-weight:{w};font-display:swap;src:url(/s/fonts/{f}) format('woff2');unicode-range:{_LATIN}}}\n" for fam, sty, w, f in _FONTS) if os.path.isdir(os.path.join(_ASSETS, "fonts")) else ""
+def _inner(block, tag):
+    i = block.index("<" + tag + ">") + len(tag) + 2; j = block.rindex("</" + tag + ">"); return block[i:j]
+def _h(txt): return _hl.md5(txt.encode("utf-8") if isinstance(txt, str) else txt).hexdigest()[:10]
+_TPL_CSS = ""
+try:
+    _t = open(os.path.join(HERE, "template.html"), encoding="utf-8").read(); _TPL_CSS = _t[_t.index("<style>") + 7: _t.index("</style>")]
+    if "/*LIVECSS*/" in _TPL_CSS: _TPL_CSS = _TPL_CSS[:_TPL_CSS.index("/*LIVECSS*/")]   # build_boards fills the placeholders after this point; the prefix is identical on every template page
+except Exception: _TPL_CSS = ""
+SHARED = {}   # name -> (served path, content)
+def _write_shared():
+    os.makedirs(os.path.join(SITE, "s", "fonts"), exist_ok=True)
+    for fam, sty, w, f in _FONTS:
+        src = os.path.join(_ASSETS, "fonts", f)
+        if os.path.exists(src): shutil.copy(src, os.path.join(SITE, "s", "fonts", f))
+    h2c = os.path.join(_ASSETS, "html2canvas.min.js")
+    if os.path.exists(h2c): shutil.copy(h2c, os.path.join(SITE, "s", "html2canvas.min.js"))
+    site_css = FONT_CSS + _inner(NAV_CSS, "style") + "\n" + _inner(BRAND_CSS, "style")
+    app_js = _inner(APP_JS, "script")
+    for name, txt, ext in (("site", site_css, "css"), ("app", app_js, "js")) + ((("tpl", _TPL_CSS, "css"),) if _TPL_CSS else ()):
+        fn = f"{name}-{_h(txt)}.{ext}"; open(os.path.join(SITE, "s", fn), "w", encoding="utf-8").write(txt); SHARED[name] = "/s/" + fn
+    return SHARED
+_H2C_STUB = ('<script>window.html2canvas=window.html2canvas||function(el,o){return (window.__bsh2c||(window.__bsh2c=new Promise(function(res,rej){var s=document.createElement("script");'
+             's.src="/s/html2canvas.min.js";s.onload=function(){res(window.html2canvas)};s.onerror=rej;document.head.appendChild(s)}))).then(function(h){return h(el,o)})};</script>')
 APP_TABS = [("/today/", "Today", '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg>'),
             ("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
             ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
@@ -377,7 +414,17 @@ def wrap(body, title, desc, path, og_img):
     m = re.search(r"</style>\s*", body)
     headpart, rest = body[:m.end()], body[m.end():]
     foot = '' if path == "/" else '<p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p>'
-    return head + headpart + NAV_CSS + BRAND_CSS + "</head>\n<body>\n" + sitenav(path) + (INSTALL_BAR if path == "/" else "") + rest + foot + apptabs(path) + APP_JS + "\n</body>\n</html>\n"
+    if not SHARED: _write_shared()
+    headpart = re.sub(r'\s*<link rel="stylesheet" href="https://fonts\.googleapis\.com[^>]*>', "", headpart)   # fonts are self-hosted (site.css @font-face)
+    headpart = re.sub(r'\s*<link rel="preconnect" href="https://fonts\.[^>]*>', "", headpart)
+    if _TPL_CSS and _TPL_CSS in headpart and "tpl" in SHARED:
+        headpart = headpart.replace(_TPL_CSS, "", 1); headpart = headpart.replace("<style>", f'<link rel="stylesheet" href="{SHARED["tpl"]}">\n<style>', 1)
+    rest = rest.replace('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>', _H2C_STUB)
+    pre = ('<link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>'
+           '<link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>') if FONT_CSS else ""
+    shared_css = f'<link rel="stylesheet" href="{SHARED["site"]}">' if "site" in SHARED else NAV_CSS + BRAND_CSS
+    shared_js = f'<script src="{SHARED["app"]}" defer></script>' if "app" in SHARED else APP_JS
+    return head + pre + headpart + shared_css + "</head>\n<body>\n" + sitenav(path) + (INSTALL_BAR if path == "/" else "") + rest + foot + apptabs(path) + (_H2C_STUB if ("html2canvas" in rest and _H2C_STUB not in rest) else "") + shared_js + "\n</body>\n</html>\n"
 
 def title_desc(src):
     t = re.search(r"<title>(.*?)</title>", src).group(1)
@@ -536,7 +583,7 @@ for f in sorted(glob.glob(os.path.join(OUT, "results-week*.html"))):
 # receipts index lists every week in the archive tab too (older receipts already live in the deployed repo)
 try:
     for r in json.load(open(os.path.join(IN, "archive.json")))["values"][1:]:
-        if len(r) >= 3 and str(r[0]).strip() and "claude.ai/artifact/" in str(r[2]): weeks.append(int(float(r[0])))
+        if len(r) >= 3 and str(r[0]).strip() and ("claude.ai/artifact/" in str(r[2]) or "/receipts/week" in str(r[2])): weeks.append(int(float(r[0])))   # 11/5: rows may point at the site itself
 except Exception: pass
 weeks = sorted(set(weeks))
 
