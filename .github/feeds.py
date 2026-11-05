@@ -158,6 +158,30 @@ def _ts(x):
 NEWS = [x for x in NEWS if (now - _ts(x)).days < 7]
 json.dump({"items": NEWS, "mirrored": now.isoformat()}, open("out/news.json", "w")); print("news items:", len(NEWS))
 
+# ---- projections.json (owner 11/4: "when could the numbers be wrong" - consensus disagreement detector): Sleeper's public weekly projections and
+# ESPN's fantasy projections for the current week, raw, refreshed when older than 50 minutes. gen consensus.py compares them with the model.
+_pj_age = 1e9
+try:
+    _pp = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/projections.json"]))
+    _pj_age = (now - dt.datetime.fromisoformat(_pp["mirrored"])).total_seconds() / 60
+except Exception: pass
+if _pj_age > 50:
+    PJ = {"mirrored": now.isoformat(), "week": None, "sleeper": None, "espn": None}
+    try:
+        wk = ((sb or {}).get("week") or {}).get("number")
+        PJ["week"] = wk
+        if wk:
+            PJ["sleeper"] = get(f"https://api.sleeper.app/projections/nfl/2026/{wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&order_by=pts_ppr")
+            print("projections sleeper:", len(PJ["sleeper"] or []))
+            flt = json.dumps({"players": {"limit": 600, "sortPercOwned": {"sortPriority": 1, "sortAsc": False}, "filterSlotIds": {"value": [0, 2, 4, 6, 23]}}})
+            espn = subprocess.check_output(["curl", "-fsS", "--max-time", "40", "-H", f"X-Fantasy-Filter: {flt}", "-H", "Accept: application/json",
+                                            f"https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?scoringPeriodId={wk}&view=kona_player_info"])
+            PJ["espn"] = json.loads(espn).get("players"); print("projections espn:", len(PJ["espn"] or []))
+    except Exception as e: print("projections: failed", e)
+    if PJ["sleeper"] or PJ["espn"]: json.dump(PJ, open("out/projections.json", "w"))
+if not os.path.exists("out/projections.json"):
+    subprocess.run(["curl", "-fsS", "--max-time", "30", "-o", "out/projections.json", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/projections.json"], check=False)
+    if os.path.exists("out/projections.json") and os.path.getsize("out/projections.json") < 100: os.remove("out/projections.json")
 # carry the last depth chart forward on the other runs (the branch is rebuilt from out/ each time)
 if not os.path.exists("out/depthcharts.json"):
     subprocess.run(["curl", "-fsS", "--max-time", "30", "-o", "out/depthcharts.json", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/depthcharts.json"], check=False)
