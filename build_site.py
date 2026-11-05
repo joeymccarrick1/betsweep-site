@@ -135,6 +135,26 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:7px 0}
 .sitenav .brand img{height:32px;width:auto;display:block}
 .sitenav .brand img.cream{display:none}
+.sitenav .srch{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1.5px solid #141a24;border-radius:8px;background:none;color:#141a24;cursor:pointer;flex:none} .sitenav .srch:hover{background:#141a24;color:#efe9da} .sitenav .srch + .menu{margin-left:8px}
+.bssrch{position:fixed;inset:0;z-index:200;background:rgba(15,20,28,.72);display:none;align-items:flex-start;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px 10px} .bssrch.open{display:flex}
+.bssrch .box{width:100%;max-width:560px;background:#efe9da;color:#141a24;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.45);overflow:hidden;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.bssrch .row{display:flex;align-items:center;gap:8px;padding:10px 10px 8px;border-bottom:1px solid #d9d2c0} .bssrch input{flex:1;font:inherit;font-size:17px;padding:10px 12px;border:1.5px solid #141a24;border-radius:8px;background:#fff;color:#141a24;min-width:0} .bssrch input:focus{outline:none;border-color:#d7332a;box-shadow:0 0 0 3px rgba(215,51,42,.22)} .bssrch .x{font:inherit;font-size:20px;background:none;border:0;color:#5b6473;padding:6px 10px;cursor:pointer}
+.bssrch ul{list-style:none;margin:0;padding:4px 0;max-height:min(60vh,520px);overflow:auto} .bssrch li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:0}
+.bssrch li a.pl{display:block;padding:10px 14px;text-decoration:none;color:#141a24;font-weight:600;font-size:15px;line-height:1.2} .bssrch li a.pl small{display:block;color:#5b6473;font-weight:500;font-size:12px;margin-top:2px}
+.bssrch li .go{display:flex;gap:6px;padding-right:10px} .bssrch li .go a{text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid #c9c1ad;border-radius:6px;padding:6px 8px;color:#141a24;white-space:nowrap}
+.bssrch li.on a.pl,.bssrch li a.pl:hover{background:#e6dfcc} .bssrch .hint{padding:8px 14px 12px;color:#5b6473;font-size:12.5px}
+@media (max-width:760px){
+  .top .mast{padding-block:6px 2px;gap:8px} .top .mast img{display:none} .top .mast h1{font-size:14px;letter-spacing:.1em} .top .mast p{display:none} .top .nav{padding-block:0 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch} .top .nav::-webkit-scrollbar{display:none}
+  .top .nav a{white-space:nowrap;flex:none}
+  body.bs-scrolled .top .mast{display:none} body.bs-scrolled .top{margin-bottom:10px}
+}
+@media (min-width:761px){
+  /* desktop: the sticky page header is up to 197px tall (logo, title, paragraph, slate chips); scrolling down keeps title + chips only */
+  body.bs-scrolled .top .mast p,body.bs-scrolled .top .mast img{display:none} body.bs-scrolled .top .mast{padding-block:6px 0} body.bs-scrolled .top .mast h1{font-size:18px}
+}
+/* deep links (#g-X / #lv-X / #box-X / a boards card) land below the sticky chrome instead of under it */
+.gcard,.lg2,.tdgame,[id^="box-"],.player .sec,.pcard{scroll-margin-top:140px}
+@media (min-width:761px){ .gcard,.lg2,.tdgame,[id^="box-"]{scroll-margin-top:230px} }
 .sitenav .tabs{display:flex;gap:4px;margin-left:auto;align-items:center;padding:0;border:0;background:none}
 .sitenav .tabs a{color:#4a5260;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;padding:14px 10px 11px;border-bottom:3px solid transparent;margin-bottom:-3px}
 .sitenav .tabs a:hover{color:#141a24}
@@ -154,6 +174,9 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
 .sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
 .sitenav .ddh{display:none}
+.sitenav .thm{display:flex;align-items:center;gap:6px;padding:8px 10px;border-left:1px solid #d9d1bf;margin-left:6px} .sitenav .thm span{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4a5260;margin-right:2px}
+.sitenav .thm button{font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:#4a5260;background:none;border:1.5px solid #d9d1bf;border-radius:999px;padding:4px 10px;cursor:pointer;min-height:30px} .sitenav .thm button.on{color:#efe9da;background:#141a24;border-color:#141a24}
+@media (max-width:1240px){ .sitenav .thm{border-left:0;margin:0;padding:12px 18px;border-bottom:1px solid #d9d1bf} .sitenav .thm span{font-size:14px;margin-right:auto} .sitenav .thm button{min-height:36px;padding:6px 14px;font-size:14px} }
 @media (max-width:1240px){
   .sitenav .dd{display:block;border-bottom:1px solid #d9d1bf}
   .sitenav .ddb{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:13px 18px;font-size:17px;border:0;margin:0;color:#4a5260}
@@ -173,6 +196,9 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
   .sitenav .tabs a.on{border-left:4px solid #d7332a;border-bottom-color:#d9d1bf}
   .top{top:calc(50px + env(safe-area-inset-top,0px))}
 }
+/* 11/4: phones zoom page content 1.1x (BIGGER_CSS), so a 50px sticky offset lands at 55px and a 2px strip of page showed between the
+   site nav (53px) and the page header; the offset is set in pre-zoom units */
+@media (max-width:760px){ .top{top:calc((53px + env(safe-area-inset-top,0px)) / 1.1)} }
 @media (display-mode: standalone){ .sitenav .in{min-height:54px} }
 /* app tab bar: the installed app and phones get bottom tabs like a native app; the top menu stays for everything else */
 .apptabs{display:none;position:fixed;left:0;right:0;bottom:0;z-index:70;background:#141a24;border-top:1px solid #2a3240;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.35)}
@@ -195,8 +221,44 @@ def apptabs(path):
     # five bottom tabs; Fantasy lights up for every page in the Fantasy group
     def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/team/" and path.startswith(("/trade/", "/dfs/")))
     return '<nav class="apptabs" aria-label="app tabs">' + "".join(f'<a href="{p}" class="{"on" if on(p) else ""}">{svg}<span>{t}</span></a>' for p, t, svg in APP_TABS) + '</nav>\n'
-APP_JS = """<script>
+APP_JS = r"""<script>
 (function(){
+  // ---- 11/4 UX audit: three site-wide behaviours ----
+  // 1. game deep links: the home page and Today link to /boards/#g-BAL-JAX, the boards card is id="BAL-JAX", the builder's is "g-BAL-JAX" and
+  //    the Live page's is "lv-BAL-JAX" - land on the game whichever form the link used
+  function landOnHash(){ var h = (location.hash || '').slice(1); if(!h) return; var el = document.getElementById(h);
+    if(!el){ var m = h.match(/^(?:g-|lv-|box-|td-)?([A-Z]{2,3}-[A-Z]{2,3})$/); if(!m) return;
+      el = ['g-' + m[1], 'lv-' + m[1], 'td-' + m[1], m[1]].map(function(id){ return document.getElementById(id); }).filter(Boolean)[0]; if(!el) return; }
+    if(el.classList.contains('gcard') || el.classList.contains('lg2') || el.classList.contains('tdgame')) el.classList.add('open');
+    if(el.classList.contains('card')) el.classList.add('expanded');   // boards card (template.html folds .card:not(.expanded) on phones)
+    var det = el.querySelector('details'); if(det && el.tagName !== 'DETAILS') det.open = true;
+    setTimeout(function(){
+      // land just below the sticky chrome as it will look once scrolled (the header compacts on scroll), whatever the page's own margins
+      document.body.classList.add('bs-scrolled');
+      var nav = document.querySelector('.sitenav'), top = document.querySelector('.top');
+      var chrome = (nav ? nav.getBoundingClientRect().height : 0) + (top && getComputedStyle(top).position === 'sticky' ? top.getBoundingClientRect().height : 0) + 8;
+      var y = el.getBoundingClientRect().top + (window.scrollY || 0) - chrome; window.scrollTo(0, Math.max(0, y)); lastY = y; }, 60); }
+  window.addEventListener('load', landOnHash); window.addEventListener('hashchange', landOnHash);
+  // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
+  var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
+  // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
+  var sb = document.getElementById('bssrchbtn');
+  if(sb){ var IDX = null, box = null, list = null, inp = null, sel = 0;
+    function build(){ box = document.createElement('div'); box.className = 'bssrch'; box.innerHTML = '<div class="box"><div class="row"><input type="search" placeholder="Player, team or position" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find a player"><button type="button" class="x" aria-label="Close">×</button></div><ul></ul><div class="hint">Tap a name for his page. Builder opens his legs in the Parlay Builder; Board opens his game. Type a team code (BUF) or a position (TE).</div></div>'; document.body.appendChild(box); inp = box.querySelector('input'); list = box.querySelector('ul');
+      box.addEventListener('click', function(e){ if(e.target === box || e.target.classList.contains('x')) close(); }); inp.addEventListener('input', function(){ sel = 0; render(); });
+      inp.addEventListener('keydown', function(e){ var items = list.querySelectorAll('li'); if(e.key === 'ArrowDown'){ sel = Math.min(sel + 1, items.length - 1); paint(); e.preventDefault(); } else if(e.key === 'ArrowUp'){ sel = Math.max(sel - 1, 0); paint(); e.preventDefault(); } else if(e.key === 'Enter'){ var a = items[sel] && items[sel].querySelector('a.pl'); if(a) location.href = a.getAttribute('href'); } else if(e.key === 'Escape') close(); }); }
+    function paint(){ list.querySelectorAll('li').forEach(function(li, i){ li.classList.toggle('on', i === sel); }); }
+    function norm(s){ return String(s || '').toLowerCase().replace(/[.'\u2019]/g, ''); }
+    function render(){ var q = norm(inp.value).trim(); if(!IDX){ list.innerHTML = '<li><a class="pl">Loading players…</a></li>'; return; }
+      var terms = q.split(/\s+/).filter(Boolean); var hits = !terms.length ? [] : IDX.filter(function(p){ var hay = norm(p.n) + ' ' + norm(p.t) + ' ' + norm(p.p) + ' ' + norm(p.o); return terms.every(function(t){ return hay.indexOf(t) >= 0; }); });
+      hits.sort(function(a, b){ var an = norm(a.n).indexOf(terms[0]) === 0 ? 0 : 1, bn = norm(b.n).indexOf(terms[0]) === 0 ? 0 : 1; return an - bn || (b.l - a.l) || a.n.localeCompare(b.n); });
+      list.innerHTML = hits.slice(0, 12).map(function(p){ var gid = p.t && p.o ? [p.t, p.o].sort().join('-') : ''; return '<li><a class="pl" href="/player/' + p.s + '/">' + esc(p.n) + '<small>' + esc(p.p) + ' · ' + esc(p.t) + (p.o ? ' ' + (p.o === 'BYE' ? '· bye' : 'vs ' + esc(p.o)) : '') + (p.l ? ' · props this week' : '') + '</small></a><span class="go">' + (p.l ? '<a href="/build/?p=' + encodeURIComponent(p.n) + '">Builder</a>' : '') + (gid && p.o !== 'BYE' ? '<a href="/boards/#' + gid + '">Board</a>' : '') + '</span></li>'; }).join('') || (terms.length ? '<li><a class="pl">No player, team or position matches "' + esc(inp.value) + '"</a></li>' : ''); paint(); }
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function open(){ if(!box) build(); box.classList.add('open'); inp.value = ''; list.innerHTML = ''; setTimeout(function(){ inp.focus(); }, 30);
+      if(!IDX){ fetch('/b/players.json', {cache: 'force-cache'}).then(function(r){ return r.ok ? r.json() : []; }).then(function(j){ IDX = Array.isArray(j) ? j : []; render(); }).catch(function(){ IDX = []; render(); }); } }
+    function close(){ if(box) box.classList.remove('open'); }
+    sb.addEventListener('click', open);
+    document.addEventListener('keydown', function(e){ if((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')){ e.preventDefault(); open(); } }); }
   // full-bleed header: inner pages pad/margin the body, so measure the nav's inset and pull it back to the viewport edge
   function bleed(){ var n = document.getElementById('sitenav'); if(!n) return; var d = document.documentElement.style; d.setProperty('--bs-inset', '0px'); var l = Math.round(n.getBoundingClientRect().left); if(l > 0) d.setProperty('--bs-inset', l + 'px'); }
   window.addEventListener('resize', bleed); window.addEventListener('orientationchange', bleed);
@@ -213,6 +275,21 @@ APP_JS = """<script>
   bar.querySelector('.go').addEventListener('click', function(){ if(deferred){ deferred.prompt(); deferred = null; } bar.classList.remove('show'); });
   bar.querySelector('.x').addEventListener('click', function(){ bar.classList.remove('show'); try { localStorage.setItem('bs_install_dismissed', String(Date.now())); } catch(e){} });
 })();
+(function(){
+  // 11/4 UX audit: Theme switch (Auto / Dark / Light). Auto follows the phone; the choice is kept in localStorage and applied before
+  // paint by the one-line script in <head>. Home stays dark (hero landing); every app page honours data-theme.
+  var g = document.querySelector('.sitenav .thm'); if(!g) return;
+  function cur(){ try { var t = localStorage.getItem('bs_theme'); return (t === 'dark' || t === 'light') ? t : 'auto'; } catch(e){ return 'auto'; } }
+  function paint(){ var c = cur(); g.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-thm') === c); b.setAttribute('aria-pressed', b.getAttribute('data-thm') === c ? 'true' : 'false'); }); }
+  g.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-thm]'); if(!b) return;
+    var t = b.getAttribute('data-thm');
+    try { if(t === 'auto') localStorage.removeItem('bs_theme'); else localStorage.setItem('bs_theme', t); } catch(err){}
+    if(t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    paint();
+  });
+  paint();
+})();
 </script>"""
 INSTALL_BAR = '<div class="installbar" id="installbar"><b>App</b><span class="msg"></span><button type="button" class="go" hidden>Install</button><button type="button" class="x" aria-label="dismiss">×</button></div>'
 def sitenav(path):
@@ -224,8 +301,9 @@ def sitenav(path):
         tabs += (f'<div class="dd{" on" if con else ""}"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">{t} <i aria-hidden="true">▾</i></button>'
                  f'<span class="ddh">{t}</span><div class="ddm">' + "".join(f'<a href="{kp}" class="{"on" if on(kp) else ""}">{kt}<small>{kd}</small></a>' for kp, kt, kd in kids) + '</div></div>')
     return (f'<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a>'
+            f'<button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>'
             f'<button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById(\'sitenav\');n.classList.toggle(\'open\');this.setAttribute(\'aria-expanded\',n.classList.contains(\'open\'))">Menu <span aria-hidden="true">☰</span></button>'
-            f'<div class="acct" id="bsacct"></div><div class="tabs">{tabs}</div></div></nav>\n'
+            f'<div class="acct" id="bsacct"></div><div class="tabs">{tabs}<div class="thm" role="group" aria-label="Theme"><span>Theme</span><button type="button" data-thm="auto">Auto</button><button type="button" data-thm="dark">Dark</button><button type="button" data-thm="light">Light</button></div></div></div></nav>\n'
             '<script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>\n'
             '<script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>\n')
 
@@ -252,6 +330,7 @@ def wrap(body, title, desc, path, og_img):
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#d7332a">
+<script>try{{var _t=localStorage.getItem("bs_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t)}}catch(e){{}}</script>
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BetSweep">
 <link rel="canonical" href="{BASE}{path}">
@@ -346,6 +425,9 @@ if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
         _slug = _f[:-5]; place_plain(os.path.join(_PD, _f), os.path.join(SITE, "player", _slug), f"/player/{_slug}/"); _np += 1
     made.append(place_plain(os.path.join(_PD, "index.html"), os.path.join(SITE, "player"), "/player/"))
     for _f in ("player.css", "player.js"): shutil.copy(os.path.join(_PD, _f), os.path.join(SITE, "player", _f))
+    # 11/4 UX audit: the site-wide player search (APP_JS) reads /b/players.json = build_players.py's out/players/index.json
+    if os.path.exists(os.path.join(_PD, "index.json")):
+        os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(_PD, "index.json"), os.path.join(SITE, "b", "players.json"))
     print(f"player pages: {_np}")
 for _src, _dir in (("usage.html", "usage"), ("benefits.html", "benefits"), ("guide.html", "guide")):
     if os.path.exists(os.path.join(OUT, _src)): made.append(place_plain(os.path.join(OUT, _src), os.path.join(SITE, _dir), f"/{_dir}/"))

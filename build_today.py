@@ -121,14 +121,14 @@ def sections(IN_, OUT_):
             price = bp.get("price") or bp.get("odds") or ""
             bp_html = ('<div class="tdbp"><small>Best parlay for this game</small><ul>' + "".join(f'<li><b>{E(str(x[0]))}</b> <span>{E(HOME.leg_line(x[1], x[2]))}</span><em>{E(odds(x[3]))}</em></li>' for x in bp["legs"][:4]) + '</ul>'
                        + (f'<a class="more" href="/boards/#g-{E(g["gid"])}">Full card →</a>') + '</div>')
-        cards.append(f'''<article class="tdgame" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-date="{E(ct_date(g.get("ko")) or "")}" data-fin="{E(g.get("fin", ""))}">
+        cards.append(f'''<article class="tdgame" id="td-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-date="{E(ct_date(g.get("ko")) or "")}" data-fin="{E(g.get("fin", ""))}">
  <header><div class="tdm"><span class="tm">{E(away)}</span><span class="at">@</span><span class="tm">{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="gl"></span></div></header>
  <p class="tdl">{market_line(g)}{" · " if market_line(g) else ""}{script_line(g)}</p>
  {f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>' if say else ""}
  {f'<div class="tdchips">{chip_html}</div>' if chip_html else ""}
  {f'<ul class="tdnews">{news_html}</ul>' if news_html else ""}
  {f'<button type="button" class="tdtog" aria-expanded="false">Looks &amp; parlay <i>▾</i></button><div class="tdmore"><div class="plays tdplays">{legs_html}</div>{bp_html}</div>' if (legs_html or bp_html) else ""}
- <div class="tdlinks"><a href="/boards/#g-{E(g["gid"])}">Matchup card</a><a href="/build/#g-{E(g["gid"])}">Builder</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#g-{E(g["gid"])}">Live</a></div>
+ <div class="tdlinks"><a href="/boards/#g-{E(g["gid"])}">Matchup card</a><a href="/build/#g-{E(g["gid"])}">Builder</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#lv-{E(g["gid"])}">Live</a></div>
 </article>''')
     # ---- news that moved the model (whole week, newest first) -------------------------------------------------------------------------
     sev = {"bad": 0, "watch": 1, "good": 2, "info": 3}
@@ -190,6 +190,12 @@ def sections(IN_, OUT_):
     return body
 
 TODAY_CSS = r"""
+/* UX audit 11/4: /today/ follows the same theme rule as the boards, builder, live and player pages (dark-first, cream when the phone
+   prefers light or the menu's Theme switch says Light). Values mirror template.html; --bad is new here (home.py hard-codes #e07070). */
+:root{--bad:#ef8a7e;--warn:#f2b35a;color-scheme:dark}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){--bg:#efe9da;--card:#f7f3e8;--chalk:#e4ddcb;--ink:#141a24;--mute:#5d6676;--line:#d3cbb8;--good:#1f7a4d;--bad:#b3372b;--warn:#a86400;color-scheme:light} }
+:root[data-theme="light"]{--bg:#efe9da;--card:#f7f3e8;--chalk:#e4ddcb;--ink:#141a24;--mute:#5d6676;--line:#d3cbb8;--good:#1f7a4d;--bad:#b3372b;--warn:#a86400;color-scheme:light}
+.play .nums .edge.neg,.play .hist.bad,.promo .ph .st.loss{color:var(--bad)}
 .tdhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;max-width:1360px;margin:14px auto 0;padding:0 16px}
 .tdh1 h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1} .tdsub{display:block;margin-top:4px;color:var(--mute);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
 .tdact{display:flex;gap:8px;align-items:center} .tdshare,.tdlive{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none} .tdlive{background:var(--red);border-color:var(--red);color:#fff}

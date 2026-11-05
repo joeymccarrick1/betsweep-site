@@ -441,6 +441,10 @@ for k, p in pages.items():
 open(os.path.join(OUT, "players", "player.css"), "w").write(__import__("account")._base_css()[1] + PCSS)   # site tokens + light/dark, once for every page
 open(os.path.join(OUT, "players", "player.js"), "w").write(PJS)
 json.dump(slugs, open(os.path.join(OUT, "players", "slugs.json"), "w"))
+# 11/4 UX: the site-wide player search (build_site APP_JS) reads /b/players.json - name, slug, team, position, this week's opponent
+def _opp(p):
+    g = S.game_of(p["team"]); return ((g["b"] if g["a"] == p["team"] else g["a"]) if g else "")
+json.dump([{"n": p["name"], "s": p["slug"], "t": p.get("team", ""), "p": p.get("pos", ""), "o": _opp(p), "l": 1 if p.get("legs") else 0} for k, p in pages.items()], open(os.path.join(OUT, "players", "index.json"), "w"), separators=(",", ":"))
 
 # directory
 def dir_item(k, p):

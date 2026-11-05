@@ -131,13 +131,14 @@ def play_card(x, cls=""):
     hist_html = f'<span class="hist {hist[0]}">{E(hist[1])}</span>' if hist else ""
     sub = " · ".join(s for s in [E(x.get("pos", "")), (E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else E(x.get("gid", "").replace("-", " @ ")), E(x.get("kick", ""))] if s)
     bb = BL.best(x); btn = (f'<a class="fdb{" best" if bb == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True)
+    if btn: btn = f'<span class="bks">{btn}</span>'   # 11/4 UX: the book buttons wrap as one group (FD · DK · HR), not one per line
     more = f'<a class="more" href="{E(build_href(x.get("gid"), [(x["pl"], x["m"], x["ln"])]))}" title="Open the parlay builder with this leg in your slip">+ Builder</a>' 
     e = x.get("e"); ecls = "pos" if (e or 0) > 0 else "neg"
     proj_html = f'<small class="proj">proj {float(x["proj"]):g}</small>' if x.get("proj") and cls == "floor" else ""
     return (f'<article class="play {cls}" data-gid="{E(x.get("gid",""))}" data-ko="{x.get("ko") or ""}">'
             f'<div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div>'
             f'<div class="what">{E(leg_line(x["m"], x["ln"]))}{proj_html}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
-            f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span><i>Price needs</i>{(x["bk"] or 0)*100:.0f}%</span><span class="edge {ecls}"><i>Edge</i>{(e or 0)*100:+.0f}</span></div>'
+            f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{(x["bk"] or 0)*100:.0f}%</span><span class="edge {ecls}"><i>Edge</i>{(e or 0)*100:+.0f}</span></div>'
             f'<div class="foot">{hist_html}{more}{btn}</div></article>')
 
 # ---------- anytime TD plays and game lines from the builder legs ----------
@@ -249,8 +250,9 @@ def nextman_block(xs):
         sub = " · ".join(s for s in [E(x["pos"]), f'{E(x["tm"])} vs {E(x["opp"])}', E(x.get("kick", ""))] if s)
         if x["leg"]:
             l = x["leg"]; what = f'{E(leg_line(l["m"], l["ln"]))} <span class="odds">{E(odds_str(l["o"]))}</span>'
-            nums = f'<div class="nums"><span><i>Model</i>{l["p"]*100:.0f}%</span><span><i>Price needs</i>{(l["bk"] or 0)*100:.0f}%</span><span><i>Room math</i>{E(_room_pct(x["txt"]))}</span></div>'
+            nums = f'<div class="nums"><span><i>Model</i>{l["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{(l["bk"] or 0)*100:.0f}%</span><span><i>Room math</i>{E(_room_pct(x["txt"]))}</span></div>'
             bb = BL.best(l); btn = (f'<a class="fdb{" best" if bb == "fd" and (l.get("bks") or {}) else ""}" href="{E(l["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if l.get("fd") else "") + BL.buttons([l], price=True)
+            if btn: btn = f'<span class="bks">{btn}</span>'
         else:
             what = 'No FanDuel line in the pull yet <span class="odds">check the app</span>'; nums = f'<div class="nums"><span><i>Room math</i>{E(_room_pct(x["txt"]))}</span></div>'; btn = ""
         cards.append(f'<article class="play nm" data-gid="{E(x["gid"])}" data-ko="{x.get("ko") or ""}"><div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div>'
@@ -285,8 +287,8 @@ def gl_card(x):
     return (f'<article class="play gl" data-gid="{E(x["gid"])}" data-ko="{x.get("ko") or ""}">'
             f'<div class="who"><b>{E(x["pl"])}</b><small>{E(x["gid"].replace("-", " @ "))} · {E(x.get("kick",""))}</small></div>'
             f'<div class="what">{E(x.get("disp") or x["m"])}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
-            f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span><i>Price needs</i>{x["bk"]*100:.0f}%</span><span class="edge {"pos" if e>0 else "neg"}"><i>Edge</i>{e*100:+.0f}</span></div>'
-            f'<div class="foot"><a class="more" href="/boards/#g-{E(x["gid"])}">Board →</a>' + (f'<a class="fdb{" best" if BL.best(x) == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True) + '</div></article>')
+            f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{x["bk"]*100:.0f}%</span><span class="edge {"pos" if e>0 else "neg"}"><i>Edge</i>{e*100:+.0f}</span></div>'
+            f'<div class="foot"><a class="more" href="/boards/#g-{E(x["gid"])}">Board →</a><span class="bks">' + (f'<a class="fdb{" best" if BL.best(x) == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True) + '</span></div></article>')
 
 # ---------- best same-game parlay ----------
 def parlays(D):
@@ -555,6 +557,7 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .play .more,.pfoot .more{color:var(--mute);text-decoration:none;font-size:12.5px;font-weight:600} .play .more:hover,.pfoot .more:hover{color:var(--ink)}
 .fdb{margin-left:auto;text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:#0b0f15;background:#1493ff;border-radius:6px;padding:6px 10px}
 .fdb:hover{filter:brightness(1.08)}
+.foot .bks,.pfoot .bks{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;margin-left:auto} .bks .fdb{margin-left:0} .bks .dkb,.bks .hrb{margin-left:0}
 .dkb,.hrb{text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:6px 9px;margin-left:6px} .fdb.best,.dkb.best,.hrb.best{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--good);position:relative} .fdb.best::after,.dkb.best::after,.hrb.best::after{content:"best";position:absolute;top:-9px;right:-6px;font-size:9px;letter-spacing:.08em;padding:1px 5px;border-radius:99px;background:var(--good);color:#0b1a07} .dkb{background:#53d337;color:#0b1a07} .hrb{background:#5b2d8e;color:#fff} .dkb:hover,.hrb:hover{filter:brightness(1.08)} .fslip .pfoot .dkb,.parlay .pfoot .dkb{margin-left:0}
 @media (max-width:560px){.promo .pa a.fd,.promo .pa a.dk,.promo .pa a.hr{flex:1 1 100%;text-align:center;white-space:nowrap}}
 .promo .pa a.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .promo .pa a.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .promo .bknote{font-size:11.5px;color:var(--mute);margin:4px 16px 0;line-height:1.4}
