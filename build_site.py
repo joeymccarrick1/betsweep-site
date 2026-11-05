@@ -78,16 +78,16 @@ def make_icons():
     ap = Image.new("RGBA", (180, 180), "#141a24"); lg3 = logo.resize((148, 148), Image.LANCZOS); ap.alpha_composite(lg3, (16, 16)); ap.convert("RGB").save(os.path.join(SITE, "apple-touch-icon.png"))
 make_icons()
 MANIFEST = {"name": "BetSweep", "short_name": "BetSweep", "description": "NFL projections priced against FanDuel: matchup boards, parlay builder, live tracker, receipts.",
-            "start_url": "/today/?source=app", "scope": "/", "display": "standalone", "orientation": "portrait", "background_color": "#141a24", "theme_color": "#d7332a", "lang": "en-US",
+            "start_url": "/?source=app", "scope": "/", "display": "standalone", "orientation": "portrait", "background_color": "#141a24", "theme_color": "#d7332a", "lang": "en-US",
             "icons": [{"src": "/app/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/app/icon-512.png", "sizes": "512x512", "type": "image/png"},
                       {"src": "/app/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"}, {"src": "/app/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}],
-            "shortcuts": [{"name": "Today", "url": "/today/", "icons": [{"src": "/app/icon-192.png", "sizes": "192x192"}]}, {"name": "Live", "url": "/live/"}, {"name": "Parlay Builder", "url": "/build/"}, {"name": "Matchup Boards", "url": "/boards/"}],
+            "shortcuts": [{"name": "Today", "url": "/", "icons": [{"src": "/app/icon-192.png", "sizes": "192x192"}]}, {"name": "Live", "url": "/live/"}, {"name": "Parlay Builder", "url": "/build/"}, {"name": "Matchup Boards", "url": "/boards/"}],
             "categories": ["sports"]}
 open(os.path.join(SITE, "manifest.webmanifest"), "w").write(json.dumps(MANIFEST, indent=1))
 SW_VERSION = _dt.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%Y%m%d%H%M") if "_dt" in globals() else __import__("datetime").datetime.now().strftime("%Y%m%d%H%M")
 SW = r'''// BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
 // with the last good copy served when the connection drops (stadium wifi). Version: __V__
-var V = 'bs-__V__', SHELL = ['/', '/today/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
+var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -125,7 +125,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
-NAV_GROUPS = [("/", "Home", None), ("/today/", "Today", None),
+NAV_GROUPS = [("/", "Home", None),
               (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
@@ -285,7 +285,8 @@ def _write_shared():
     return SHARED
 _H2C_STUB = ('<script>window.html2canvas=window.html2canvas||function(el,o){return (window.__bsh2c||(window.__bsh2c=new Promise(function(res,rej){var s=document.createElement("script");'
              's.src="/s/html2canvas.min.js";s.onload=function(){res(window.html2canvas)};s.onerror=rej;document.head.appendChild(s)}))).then(function(h){return h(el,o)})};</script>')
-APP_TABS = [("/today/", "Today", '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg>'),
+# owner 11/5: "merge Today and the Home Screen together. Lose the today button and give back the social button" - Today's content is the home page now (the logo goes home)
+APP_TABS = [("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>'),
             ("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
             ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
             ("/team/", "Fantasy", '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'),
@@ -699,7 +700,6 @@ def landing(weeks):
     latest = max(weeks) if weeks else None
     GAL = posts_gallery()
     tiles = [
-        ("/today/", "Today", "Open this first", "What kicks off today, the model's plus-money looks for those games, the news that moved the numbers, your slips and your Sleeper team - one scroll, every game day.", None),
         ("/boards/", "Matchup Boards", f"Week {week}", "One board per game: projected score, game-script odds, weather, every skill player's projected stats colored by the matchup, the best FanDuel leg for each, and a model-priced same-game slip.", "/boards/img/summary.png"),
         ("/build/", "Parlay Builder", (f"{nlegs:,} legs priced" if nlegs else "Live"), "Every FanDuel player prop on the slate against the model. Filter, fade lines up or down, drag to a target price, see each player's last five games and what the defense allows, then send the slip straight to FanDuel.", ("/build/img/preview.png" if os.path.exists(os.path.join(OUT, "img-build", "preview.png")) else None)),
         ("/live/", "Live", "Game day", "During the games: every leg the model liked that has not happened yet, against the live box score, with the model's chance from here. Built for live betting.", None),
@@ -722,6 +722,8 @@ def landing(weeks):
     legs_stat = f'<span><b>{nlegs:,}</b> FanDuel legs priced</span>' if nlegs else ''
     import home as HOME, live as LIVE
     home_html, home_js = HOME.sections(IN, OUT, latest)
+    global LANDING_HOME_PARTS
+    LANDING_HOME_PARTS = {"home_html": home_html, "home_js": home_js, "tiles": tile_html, "gal": GAL}
     return ('<title>BetSweep</title>\n'
             '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@1,800&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">\n'
             '<style>' + LANDING_CSS + HOME.HOME_CSS + LIVE.LIVE_CSS + f'.hero{{--banner:url("data:image/png;base64,{BANNER}")}}' + '</style>\n'
@@ -800,7 +802,18 @@ if os.path.exists(os.path.join(OUT, "today.html")):
     _tb = open(os.path.join(OUT, "today.html")).read()
     _tb = _tb.replace("<style>", '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@1,800&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">\n<style>' + LANDING_CSS + _HOME.HOME_CSS + _LIVE.LIVE_CSS, 1)   # the Today page reuses the landing/home CSS (sections, play cards) and the live score chips
     open(os.path.join(OUT, "today_wrapped.html"), "w").write(_tb)
-    made.append(place_plain(os.path.join(OUT, "today_wrapped.html"), os.path.join(SITE, "today"), "/today/"))
+    # owner 11/5: Today and Home are one page. "/" = Today's day view + the home page's week sections (promos, Model's Best, top plays, next man up,
+    # floor legs, best parlay, slate) + the tiles / how-it-works; /today/ redirects to "/" so old links, the installed app and shared links still land.
+    try:
+        import landing_merge as _LM
+        open(os.path.join(SITE, "index.html"), "w").write(wrap(_LM.merge(_tb, LANDING_HOME_PARTS), "BetSweep", "NFL projections priced against FanDuel, graded every week: today's games, the model's plays, promos, news and your slips in one scroll.", "/", "/og.png"))
+        os.makedirs(os.path.join(SITE, "today"), exist_ok=True)
+        open(os.path.join(SITE, "today", "index.html"), "w").write('<!doctype html><html><head><meta charset="utf-8"><title>BetSweep</title><link rel="canonical" href="/"><meta http-equiv="refresh" content="0;url=/">'
+            '<script>location.replace("/" + location.search + location.hash)</script></head><body><a href="/">BetSweep</a></body></html>')
+        print("home: Today merged into / (/today/ redirects)")
+    except Exception as _e:
+        print("WARN home merge failed, Today stays at /today/:", _e)
+        made.append(place_plain(os.path.join(OUT, "today_wrapped.html"), os.path.join(SITE, "today"), "/today/"))
     try: shutil.copy(os.path.join(OUT, "today.json"), os.path.join(SITE, "b", "today.json")); print("wrote /b/today.json (morning briefs per game day)")
     except Exception as _e: print("note: /b/today.json not written:", _e)
 # ---- 11/5 (out-of-the-box batch): /api/ - a plain page listing every public JSON the site serves, so anyone can build on the numbers ----

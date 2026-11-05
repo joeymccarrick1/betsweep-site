@@ -229,7 +229,8 @@ TODAY_CSS = r"""
 .play .nums .edge.neg,.play .hist.bad,.promo .ph .st.loss{color:var(--bad)}
 .tdhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;max-width:1360px;margin:14px auto 0;padding:0 16px}
 .tdh1 h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1} .tdsub{display:block;margin-top:6px;color:var(--mute);font-family:var(--body);font-weight:500;font-size:14px;letter-spacing:0;text-transform:none;line-height:1.4;max-width:34ch}
-.tdact{display:flex;gap:8px;align-items:center} .tdshare,.tdlive{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none} .tdlive{background:var(--red);border-color:var(--red);color:#fff}
+.tdact{display:flex;gap:8px;align-items:center}
+@media (max-width:560px){ .tdhead{flex-direction:column;align-items:stretch} .tdact{flex-wrap:wrap} } .tdshare,.tdlive{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none} .tdlive{background:var(--red);border-color:var(--red);color:#fff}
 .tdday .tdgames{display:grid;gap:12px}
 .tdgame{display:none;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px} .tdgame.show{display:flex} .tdgame.post{opacity:.72}
 .tdgame header{display:flex;align-items:center;justify-content:space-between;gap:10px} .tdm{display:flex;align-items:baseline;gap:8px;font-family:var(--brand);font-style:italic;font-weight:800;font-size:30px;letter-spacing:-.01em;line-height:1} .tdm .at{font-size:16px;color:var(--mute);font-weight:600}
