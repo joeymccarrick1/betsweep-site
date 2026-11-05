@@ -397,11 +397,11 @@ def log_block(p):
     qb = p["pos"] == "QB"
     if qb:
         hdr = "<th>Wk</th><th>Opp</th><th>Snap</th><th>Att</th><th>Pass yds</th><th>Pass TD</th><th>INT</th><th>Car</th><th>Rush yds</th><th>Rush TD</th><th>PPR</th>"
-        def row(g): return (f'<td>{g["w"]}</td><td>{E(g["opp"])}</td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["att"]:.0f}</td><td>{g["pass"]:.0f}</td><td>{g["ptd"]:.0f}</td><td>{g["int"]:.0f}</td>'
+        def row(g): return (f'<td>{g["w"]}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["att"]:.0f}</td><td>{g["pass"]:.0f}</td><td>{g["ptd"]:.0f}</td><td>{g["int"]:.0f}</td>'
                             f'<td>{g["car"]:.0f}</td><td>{g["rush"]:.0f}</td><td>{g["td"]:.0f}</td><td>{g["ppr"]:.1f}</td>')
     else:
         hdr = "<th>Wk</th><th>Opp</th><th>Snap</th><th>Tgt</th><th>Rec</th><th>Rec yds</th><th>Car</th><th>Rush yds</th><th>TD</th><th>Tgt share</th><th>PPR</th>"
-        def row(g): return (f'<td>{g["w"]}</td><td>{E(g["opp"])}</td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["tgt"]:.0f}</td><td>{g["rec"]:.0f}</td><td>{g["recy"]:.0f}</td>'
+        def row(g): return (f'<td>{g["w"]}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["tgt"]:.0f}</td><td>{g["rec"]:.0f}</td><td>{g["recy"]:.0f}</td>'
                             f'<td>{g["car"]:.0f}</td><td>{g["rush"]:.0f}</td><td>{g["td"]:.0f}</td><td>{100 * g["ts"]:.0f}%</td><td>{g["ppr"]:.1f}</td>')
     body = "".join(f"<tr>{row(g)}</tr>" for g in reversed(gs))
     return f'<section><h2>Game log <small>2026 regular season, newest first</small></h2><div class="tw"><table><thead><tr>{hdr}</tr></thead><tbody>{body}</tbody></table></div></section>'
@@ -420,15 +420,15 @@ def page(k, p):
     opp = (g["b"] if g["a"] == p["team"] else g["a"]) if g else None
     home = g and g.get("b") == p["team"]
     tp = (g["pb"] if home else g["pa"]) if g else None
-    sub = f'<b>{p["pos"]}</b><span>{E(p["team"])}</span>'
-    if g: sub += f'<span>{"vs" if home else "@"} {E(opp)}</span><span>{kick_text(g)}</span>' + (f'<span>team total {tp:.1f} (model)</span>' if isinstance(tp, (int, float)) else "")
+    sub = f'<b>{p["pos"]}</b><span><a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a></span>'
+    if g: sub += f'<span>{"vs" if home else "@"} <a href="/teams/{opp.lower()}/">{E(opp)}</a></span><span>{kick_text(g)}</span>' + (f'<span>team total {tp:.1f} (model)</span>' if isinstance(tp, (int, float)) else "")
     nu, nsrc = news_url(p["name"])
     top = sorted([l for l in p["legs"] if l["m"] in MORDER and l.get("e") is not None], key=lambda l: -l["e"])[:1]
     desc = f'{p["name"]} ({p["pos"]}, {p["team"]}) Week {W}' + (f' vs {opp}' if opp else "") + ': props with FanDuel, DraftKings and Hard Rock prices, the BetSweep model\'s chance and edge, hit rates, matchup ranks, snap share and game log.'
     acts = (f'<a class="pri" href="/build/?p={E(p["name"])}">Parlay Builder</a>' if p["legs"] else "") + (f'<a href="/boards/#{E(g["gid"])}">Matchup board</a>' if g else "") + f'<a href="{E(nu)}" target="_blank" rel="noopener" title="News ({nsrc})">News</a>'
     body = (head(f'{p["name"]} props, stats & matchup · Week {W} · BetSweep', desc) +
-            f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › {E(p["team"])} › {E(p["name"])}</p>'
-            f'<header><span class="tb" style="--p:{c1};--s:{c2}">{E(p["team"])}</span><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
+            f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › <a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a> › {E(p["name"])}</p>'
+            f'<header><a class="tb" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
             + props_block(p) + record_block(p) + flags_block(p) + usage_block(k, p) + log_block(p) + mates_block(k, p) + jsonld(p, opp) +
             '</div><div class="ppbar" id="ppbar"><b></b><a href="/build/">Open betslip</a></div><script src="/player/player.js" defer></script>')
     return body, desc
