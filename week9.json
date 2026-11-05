@@ -96,18 +96,18 @@
      "why": "2 TDs in each of his last two; JAX leads by 10+ in half the endings. QUESTIONABLE - only if active"
     },
     {
-     "pl": "Nate Boerkircher",
-     "m": "Receiving Yards",
-     "ln": 10,
-     "o": -102,
-     "p": 0.497,
-     "bk": 0.505,
+     "pl": "Brian Thomas Jr.",
+     "m": "Receptions",
+     "ln": 2,
+     "o": 144,
+     "p": 0.454,
+     "bk": 0.41,
      "game": "BAL-JAX",
      "fd": {
-      "m": "42.621968304",
-      "s": "103841755"
+      "m": "42.621970818",
+      "s": "42267563"
      },
-     "why": "Jags' TE2 - 10+ in 4 of 6; Strange's snaps are shrinking (52% last game) and the targets move to him"
+     "why": "2+ catches in 5 of 7; 1.8 projected; BAL allows the 5th-most WR yards and S Hawkins is out (owner's pick 11/5)"
     },
     {
      "pl": "Josh Cameron",
@@ -152,10 +152,10 @@
      "why": "20+ in 6 of 8; 39 yds/g over the last 3"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621968304&selectionId[1]=103841755&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266",
-   "price": "+5512 multiplied; ~+4674 est as a FanDuel SGP - check FanDuel's price",
-   "price_est": "+4674 (est FanDuel SGP; multiplied +5512)",
-   "chance": 0.02,
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621970818&selectionId[1]=42267563&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266",
+   "price": "+6810 multiplied; ~+5780 est as a FanDuel SGP - check FanDuel's price",
+   "price_est": "+5780 (est FanDuel SGP; multiplied +6810)",
+   "chance": 0.018,
    "alt_rb": {
     "leg": {
      "pl": "Chris Rodriguez Jr.",
@@ -171,16 +171,12 @@
      },
      "why": "the fill-in lead back at the same price if Tuten sits"
     },
-    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60221458&marketId[1]=42.621968304&selectionId[1]=103841755&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266",
-    "chance": 0.017,
+    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60221458&marketId[1]=42.621970818&selectionId[1]=42267563&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266",
+    "chance": 0.016,
     "when": "Tuten inactive (inactives post ~5:45 PM CT)"
    },
-   "alt_btj": {
-    "note": "Owner's-call version: Brian Thomas Jr. 20+ (+154, 45% vs 39%) in place of Boerkircher - bigger edge, but flagged (2.3 targets/g last 3, 20+ in 2 of 7): 1.8%, multiplied +7098, SGP est +6019",
-    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621970815&selectionId[1]=73617857&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266"
-   },
-   "note": "LOTTERY, rebalanced 11/5 11:03 AM (owner: 'a better mix'): 3 Jaguars + 2 Ravens, one script - Jacksonville pulls away (Tuten scores, Lawrence spreads it to Boerkircher and Cameron against a secondary missing Hawkins) while Baltimore chases through Flowers and Bateman. Lane 3+ dropped for the mix. RB leg is a game-time call: Tuten if active, Rodriguez if not. Place after the 5:45 PM inactives.",
-   "caption": "LOTTERY: Run It, Chase It ~+4700\nBhayshul Tuten anytime TD (Rodriguez if Tuten sits)\nNate Boerkircher 10+ rec yds\nJosh Cameron 15+ rec yds\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nWhy: one script, both sides - Jags pull away on the ground and spread it around, Ravens throw 35+ times to catch up. Wait for the inactives, then fire\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "note": "LOTTERY, rebalanced 11/5 11:03 AM (owner: 'a better mix'): 3 Jaguars + 2 Ravens, one script - Jacksonville pulls away (Tuten scores, Lawrence finds Brian Thomas Jr. (2+ catches, owner's pick) and Cameron against a secondary missing Hawkins) while Baltimore chases through Flowers and Bateman. Lane 3+ dropped for the mix. RB leg is a game-time call: Tuten if active, Rodriguez if not. Place after the 5:45 PM inactives.",
+   "caption": "LOTTERY: Run It, Chase It ~+5800\nBhayshul Tuten anytime TD (Rodriguez if Tuten sits)\nBrian Thomas Jr. 2+ catches\nJosh Cameron 15+ rec yds\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nWhy: one script, both sides - Jags pull away on the ground and spread it around, Ravens throw 35+ times to catch up. Wait for the inactives, then fire\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
    "post": false
   },
   {
