@@ -27,7 +27,8 @@
   // ---- UI ----
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   var slot = document.getElementById('bsacct'); if(!slot) return;
-  function paint(){ if (user){ var e = user.email||'', ini = (e[0]||'?').toUpperCase(); slot.innerHTML = '<a class="me" href="/me/" title="'+esc(e)+'"><i>'+esc(ini)+'</i>My BetSweep</a><button type="button" class="out" title="Sign out">Out</button>'; slot.querySelector('.out').addEventListener('click', function(){ sb.auth.signOut().then(function(){ location.reload(); }); }); }
+  function paint(){ if (user){ var e = user.email||'', ini = (e[0]||'?').toUpperCase(); slot.innerHTML = '<a class="me" href="/me/" title="'+esc(e)+'"><i>'+esc(ini)+'</i>My BetSweep</a><button type="button" class="out" title="Sign out">Out</button>'; slot.querySelector('.out').addEventListener('click', function(){ sb.auth.signOut().then(function(){ location.reload(); }); });
+      var tabs = document.querySelector('.sitenav .tabs'); if (tabs && !tabs.querySelector('.mout')){ var mo = document.createElement('a'); mo.href = '#'; mo.className = 'mout'; mo.textContent = 'Sign out'; mo.addEventListener('click', function(e){ e.preventDefault(); sb.auth.signOut().then(function(){ location.reload(); }); }); tabs.appendChild(mo); } }
     else { slot.innerHTML = '<button type="button" class="in">Sign in</button>'; slot.querySelector('.in').addEventListener('click', openDlg); } }
   var dlg = null;
   function openDlg(){ if(!dlg){ dlg = document.createElement('div'); dlg.className = 'bsdlg'; dlg.innerHTML = '<div class="box" role="dialog" aria-label="Sign in"><button class="x" type="button" aria-label="close">×</button><h2>Sign in to BetSweep</h2><p>Optional. Signed in, your saved betslips, built fantasy teams, trade scenarios and Sleeper league follow you to any device. Nothing here requires it.</p>'
