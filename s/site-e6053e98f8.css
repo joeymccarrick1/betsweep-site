@@ -125,10 +125,15 @@
 /* 11/5 (owner: "header you can't see log out and zooms are weird"): signed in, the header row (wordmark + search + Menu + My BetSweep + Out) was 478px of
    non-shrinking content on a 390px phone, so iOS laid the page out at 478px and zoomed out - every page looked small and Out was off-screen.
    The row may never exceed the viewport: the wordmark shrinks, the account button is the avatar alone, nothing wraps or overflows. */
-@media (max-width:560px){ .sitenav .in{flex-wrap:nowrap;min-width:0;gap:8px;padding:0 10px} .sitenav .brand{min-width:0;flex:0 1 auto} .sitenav .brand img{height:28px;max-width:100%;object-fit:contain}
-  .sitenav .srch{width:36px;height:36px;flex:none} .sitenav .menu{flex:none;padding:0 10px}
-  .sitenav .acct{flex:none;gap:4px;margin-right:0} .sitenav .acct a.me{padding:4px;width:32px;height:32px;justify-content:center} .sitenav .acct a.me i{margin:0;width:22px;height:22px;line-height:22px;font-size:12px} .sitenav .acct a.me{font-size:0}
-  .sitenav .acct button.out{padding:5px 7px;font-size:11px} }
+/* 11/5 evening (owner: "I liked it better when it said My BetSweep in the header"): the pill keeps its words; to fit 390px the Menu button is the
+   icon alone and Out moves into the menu panel (account.py adds "Sign out" there). */
+@media (max-width:560px){ .sitenav .in{flex-wrap:nowrap;min-width:0;gap:8px;padding:0 10px} .sitenav .brand{min-width:0;flex:0 1 auto} .sitenav .brand img{height:26px;max-width:100%;object-fit:contain}
+  .sitenav .srch{width:36px;height:36px;flex:none} .sitenav .menu{flex:none;width:40px;height:36px;padding:0;justify-content:center;font-size:0;gap:0} .sitenav .menu svg,.sitenav .menu i,.sitenav .menu span{font-size:18px}
+  .sitenav .acct{flex:none;gap:4px;margin-right:0} .sitenav .acct a.me{font-size:11.5px;padding:4px 9px 4px 4px;white-space:nowrap} .sitenav .acct a.me i{width:20px;height:20px;line-height:20px;margin-right:5px}
+  .sitenav .acct button.out{display:none} }
+/* the open menu scrolls inside the screen (it used to run under the bottom tabs with no way to reach the last items) */
+@media (max-width:1240px){ .sitenav .tabs{max-height:calc(100vh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .sitenav .tabs .mout{color:#b8261d} }
 .sitenav{overflow-x:clip}
 
 
