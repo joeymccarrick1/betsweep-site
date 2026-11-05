@@ -9,11 +9,10 @@ Where the value is: the Jaguars' side is priced to the model (JAX -9.5 50% vs 55
 49+ in 6 of 7 games; projection 65 vs the 50 line; JAX #1 in WR yards allowed. The limitation to know: Flowers went 0 for 5 targets in the half Fagnano played last week - the bet is that a full week of first-team reps and 35+ throws from behind beats one half of relief duty.
 Link: https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectionId=49181556
 
-### +500: Catch-Up Mode - +515 multiplied, ~+423 est as a FanDuel SGP (19.5% floor), same-game: check FanDuel's price
-- Zay Flowers 60+ rec yds, +148, 44% - 60+ in 5 of 7
-- Rashod Bateman 20+ rec yds, +148, 44% - 20+ in 6 of 8; 39 yds/g over the last 3; back to a full snap share
-Both legs need the same thing (Fagnano throwing from behind into the softest WR coverage on the board), so they win and lose together - FanDuel's SGP price will sit under the multiplied number.
-Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266
+### +500: Crossfire - +505 multiplied, ~+414 est as a FanDuel SGP (20% floor) - one leg from each side (owner 11:06 AM; replaces Catch-Up Mode)
+- Brian Thomas Jr. 2+ receptions, +144, 45% - 2+ in 5 of 7; BAL allows the 5th-most WR yards, S Hawkins out
+- Zay Flowers 60+ rec yds, +148, 44% - 60+ in 5 of 7; JAX allows the most WR yards in the NFL
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621970818&selectionId[0]=42267563&marketId[1]=42.621869046&selectionId[1]=49181554
 
 ### LOTTERY: Run It, Chase It - +6810 multiplied, ~+5780 est as a FanDuel SGP (1.8% floor) - rebalanced 11:05 AM, 3 Jaguars + 2 Ravens - place AFTER the 5:45 PM inactives
 - Bhayshul Tuten anytime TD, -105, 47% - 2 TDs in each of his last two; JAX leads by 10+ in half the endings. QUESTIONABLE: if inactive, Chris Rodriguez Jr. ATD at the same -105 (1.7%)

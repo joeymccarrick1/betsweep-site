@@ -34,10 +34,24 @@
   },
   {
    "slot": "thursday",
-   "name": "Catch-Up Mode",
-   "type": "+500 (2-leg same-game)",
+   "name": "Crossfire",
+   "type": "+500 (2-leg same-game, one from each side)",
    "game": "BAL-JAX",
    "legs": [
+    {
+     "pl": "Brian Thomas Jr.",
+     "m": "Receptions",
+     "ln": 2,
+     "o": 144,
+     "p": 0.454,
+     "bk": 0.41,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621970818",
+      "s": "42267563"
+     },
+     "why": "2+ catches in 5 of 7; BAL allows the 5th-most WR yards and S Hawkins is out"
+    },
     {
      "pl": "Zay Flowers",
      "m": "Receiving Yards",
@@ -50,30 +64,16 @@
       "m": "42.621869046",
       "s": "49181554"
      },
-     "why": "60+ in 5 of 7 games; proj 65 vs the 60 rung; the softest WR matchup on the board and a trail script"
-    },
-    {
-     "pl": "Rashod Bateman",
-     "m": "Receiving Yards",
-     "ln": 20,
-     "o": 148,
-     "p": 0.442,
-     "bk": 0.403,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621869047",
-      "s": "73458266"
-     },
-     "why": "20+ in 6 of 8; 39 yds/g over the last 3 (+33% vs season); healthy again (78% snaps normal); same JAX pass defense"
+     "why": "60+ in 5 of 7; JAX allows the most WR yards in the NFL; BAL chases in half the endings"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266",
-   "price": "+515 multiplied; ~+423 est as a FanDuel SGP (0.85/prod(bk)) - check FanDuel's price",
-   "chance": 0.195,
-   "note": "Both Ravens starting WRs over their rung: 60+ (5 of 7) and 20+ (6 of 8). Same script (Fagnano throws from behind), so they win and lose together; FanDuel's SGP price will be under the multiplied +515. Model floor 19.5%; correlation makes it higher.",
-   "caption": "Catch-Up Mode ~+450\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nWhy: Jags by 10+ in half the model's endings means 35+ Fagnano throws into the NFL's softest WR coverage - Zay 60+ in 5 of 7, Bateman 20+ in 6 of 8\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
-   "post": false,
-   "price_est": "+423 (est FanDuel SGP; multiplied +515)"
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621970818&selectionId[0]=42267563&marketId[1]=42.621869046&selectionId[1]=49181554",
+   "price": "+505 multiplied; ~+414 est as a FanDuel SGP - check FanDuel's price",
+   "price_est": "+414 (est FanDuel SGP; multiplied +505)",
+   "chance": 0.201,
+   "note": "Owner 11/5 11:06 AM: the +500 with a leg from each side. Replaces Catch-Up Mode (both Ravens). Same floor (20%) as Catch-Up Mode with the mix the owner wants; the legs are less correlated than two Ravens, so FanDuel's SGP discount should be smaller.",
+   "caption": "Crossfire ~+450\nBrian Thomas Jr. 2+ catches\nZay Flowers 60+ rec yds\nWhy: the Ravens' WR1 against the defense that allows the most receiver yards in the league, and the Jags' WR1 against a secondary missing its safety - one from each side, 20% to cash\nTail it: betsweep.co/b/w9-2\n21+ | gamble responsibly",
+   "post": false
   },
   {
    "slot": "thursday",
@@ -176,8 +176,8 @@
     "when": "Tuten inactive (inactives post ~5:45 PM CT)"
    },
    "note": "LOTTERY, rebalanced 11/5 11:03 AM (owner: 'a better mix'): 3 Jaguars + 2 Ravens, one script - Jacksonville pulls away (Tuten scores, Lawrence finds Brian Thomas Jr. (2+ catches, owner's pick) and Cameron against a secondary missing Hawkins) while Baltimore chases through Flowers and Bateman. Lane 3+ dropped for the mix. RB leg is a game-time call: Tuten if active, Rodriguez if not. Place after the 5:45 PM inactives.",
-   "caption": "LOTTERY: Run It, Chase It ~+5800\nBhayshul Tuten anytime TD (Rodriguez if Tuten sits)\nBrian Thomas Jr. 2+ catches\nJosh Cameron 15+ rec yds\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nWhy: one script, both sides - Jags pull away on the ground and spread it around, Ravens throw 35+ times to catch up. Wait for the inactives, then fire\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
-   "post": false
+   "caption": "LOTTERY: Run It, Chase It ~+5800\nBhayshul Tuten anytime TD (Rodriguez if Tuten sits)\nBrian Thomas Jr. 2+ catches\nJosh Cameron 15+ rec yds\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nWhy: one script, both sides - Jags pull away on the ground and spread it around, Ravens throw 35+ times to catch up. Wait for the inactives, then fire\nTail it: betsweep.co/b/w9-3\n21+ | gamble responsibly",
+   "post": true
   },
   {
    "slot": "thursday",
