@@ -195,6 +195,12 @@ TEAM_CSS = r"""
 .roster .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .roster .who span{color:var(--mute);font-size:11.5px}
 .roster .pts{text-align:right;font-variant-numeric:tabular-nums} .roster .pts b{display:block;font-family:var(--display);font-size:16px} .roster .pts small{color:var(--mute);font-size:11px}
 .roster li.st{background:color-mix(in srgb,var(--good) 8%,transparent)}
+.panel h2 .share{margin-left:auto;font:inherit;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--red);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
+.prwrap{padding:12px 14px} .prcard{--pi:#efe9da;--pm:#9aa3b2;--pl:#2b3442;background:#0f141c;color:var(--pi);border:1px solid var(--pl);border-radius:14px;padding:14px 14px 10px;max-width:560px}
+.prtop{display:flex;align-items:center;gap:10px;margin-bottom:8px} .prtop img{width:34px;height:34px;border-radius:8px} .prtop b{display:block;color:var(--pi);font-family:var(--brand);font-style:italic;font-weight:800;font-size:22px;letter-spacing:-.01em;line-height:1} .prtop small{display:block;color:var(--pm);font-size:12px;margin-top:2px}
+.pr{list-style:none;margin:0;padding:0;counter-reset:pr} .pr li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--pl);font-size:14px;color:var(--pi)} .pr li::before{counter-increment:pr;content:counter(pr);font-family:var(--display);font-weight:800;font-size:16px;color:var(--pm)} .pr li b{color:var(--pi);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .pr li small{color:var(--pm);font-size:11.5px;margin-left:6px} .pr li em{font-style:normal;font-family:var(--display);font-weight:800;font-size:17px;font-variant-numeric:tabular-nums;color:var(--pi)} .pr li.me{background:rgba(215,51,42,.18);margin:0 -6px;padding-left:6px;padding-right:6px;border-radius:6px} .pr li.me::before{color:#d7332a}
+.mups{margin-top:10px;border-top:2px solid var(--pl);padding-top:8px;display:grid;gap:4px} .mup2{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto minmax(0,1fr);gap:6px;align-items:center;font-size:13px;color:var(--pi)} .mup2 .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .mup2 .nm.r{text-align:right} .mup2 b{font-family:var(--display);font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--pi)} .mup2 b.fav{color:#5fcf93} .mup2 i{font-style:normal;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;color:#d7332a;text-transform:uppercase;white-space:nowrap} .mup2.mhd{color:var(--pm);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--display);font-weight:700} .mup2.mhd i{color:var(--pm)}
+.prfoot{margin-top:10px;color:var(--pm);font-size:11px;letter-spacing:.02em}
 .waiv{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .waiv > div{background:var(--card);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .waiv h3{margin:0;padding:8px 14px;font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:12px;color:var(--red);border-bottom:1px solid var(--line)}
@@ -460,6 +466,32 @@ TEAM_JS = r"""
     $('#waiv').innerHTML = wh || '<div><p class="note">No free agents clear the model this week.</p></div>';
     $('#waivH').innerHTML = manual ? '<b>Players to target</b> <span class="r">best players not on your roster, by the model · the ones your league mates have not grabbed are your waiver claims</span>' : '<b>Waiver wire</b> <span class="r">best free agents in this league by the model · trending = most-added on Sleeper today</span>';
     $('#waivNote').textContent = manual ? '"Over your X" compares the player to the weakest player the model would start at that spot this week. Check your league\'s free-agent list to see which of these are actually available.' : '"Over your X" compares the free agent to the weakest player the model would start at that spot this week. A one-week number is not a season-long ranking; treat the big gaps as the ones worth a claim.';
+    // owner 11/4 ("the few apps on the phone"): the whole league by the model - power rankings + every matchup with a win chance, shareable
+    try {
+      var sdAll = Math.sqrt(Math.max(nStart, 1)) * 5.2;
+      var teams = rosters.map(function(r){ var ro = (r.players || []).map(entry); var pl = ro.filter(function(e){ return e.flag !== 'out' && e.flag !== 'bye'; }).map(function(e){ return {id: e.id, pos: e.pos, pts: e.pts, e: e}; });
+        var b = optimal(slots, pl); var tot = 0; Object.keys(b).forEach(function(i){ tot += b[i].pts; });
+        var top = null; Object.keys(b).forEach(function(i){ if(!top || b[i].pts > top.pts) top = b[i]; });
+        var curT = 0; (r.starters || []).forEach(function(id){ if(id && id !== '0'){ var e = ro.filter(function(x){ return x.id === id; })[0]; if(e) curT += e.pts; }});
+        var rec = (r.settings && r.settings.wins != null) ? (r.settings.wins + '-' + (r.settings.losses || 0) + ((r.settings.ties) ? '-' + r.settings.ties : '')) : '';
+        return {r: r, name: uname[r.owner_id] || ('Team ' + r.roster_id), tot: tot, cur: curT, top: top ? top.e.name : '', rec: rec, me: r.roster_id === mine.roster_id}; });
+      teams.sort(function(a, b){ return b.tot - a.tot; });
+      if(teams.length >= 3 && !manual){
+        $('#prTitle').textContent = l.name; $('#prSub').textContent = 'Power rankings by the BetSweep model · Week ' + wk + ' · ' + scoringLabel(s);
+        $('#pr').innerHTML = teams.map(function(t, i){ return '<li class="' + (t.me ? 'me' : '') + '"><b>' + esc(t.name) + (t.rec ? '<small>' + esc(t.rec) + '</small>' : '') + (t.top ? '<small>' + esc(t.top) + '</small>' : '') + '</b><em>' + f1(t.tot) + '</em></li>'; }).join('');
+        var byRid = {}; teams.forEach(function(t){ byRid[t.r.roster_id] = t; });
+        var pairs = {}; (matchups || []).forEach(function(m){ if(m.matchup_id == null) return; (pairs[m.matchup_id] = pairs[m.matchup_id] || []).push(m); });
+        var mh = ''; Object.keys(pairs).forEach(function(k){ var pr = pairs[k]; if(pr.length !== 2) return; var A = byRid[pr[0].roster_id], B = byRid[pr[1].roster_id]; if(!A || !B) return;
+          var w = normalCdf((A.tot - B.tot) / (sdAll * Math.SQRT2)); var af = w >= 0.5;
+          mh += '<div class="mup2"><span class="nm">' + esc(A.name) + '</span><b class="' + (af ? 'fav' : '') + '">' + f1(A.tot) + '</b><i>' + (af ? '◀ ' + pct(w) : pct(1 - w) + ' ▶') + '</i><b class="' + (af ? '' : 'fav') + '">' + f1(B.tot) + '</b><span class="nm r">' + esc(B.name) + '</span></div>'; });
+        $('#mups').innerHTML = mh ? '<div class="mup2 mhd"><span class="nm">This week</span><b></b><i>win chance</i><b></b><span class="nm r">model pts</span></div>' + mh : '';
+        $('#leaguePanel').hidden = false;
+        var sh = $('#prShare'); if(sh && !sh.dataset.wired){ sh.dataset.wired = '1'; sh.addEventListener('click', function(){ var el = $('#prcard'); if(!window.html2canvas){ if(navigator.share) navigator.share({title: l.name + ' by the model', url: location.href}); return; } sh.disabled = true;
+          html2canvas(el, {backgroundColor: '#0f141c', scale: 2, useCORS: true, logging: false}).then(function(c){ return new Promise(function(res){ c.toBlob(res, 'image/png'); }); }).then(function(blob){ var f = new File([blob], 'league-by-the-model.png', {type: 'image/png'});
+            if(navigator.canShare && navigator.canShare({files: [f]})) return navigator.share({files: [f], title: l.name + ' by the model', text: 'Power rankings by the BetSweep model - betsweep.co/team/'});
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'league-by-the-model.png'; a.click(); }).catch(function(e){ console.warn(e); }).then(function(){ sh.disabled = false; }); }); }
+      } else { $('#leaguePanel').hidden = true; }
+    } catch(e){ console.warn('league block', e); }
     $('#leagueH').innerHTML = '<b>' + esc(l.name) + '</b> <span class="r">' + esc(scoringLabel(s)) + ' · Week ' + wk + (wk !== WEEK ? ' (model is on Week ' + WEEK + ')' : '') + (manual ? ' · built by hand' : '') + '</span>';
     out.hidden = false; out.scrollIntoView({block: 'start', behavior: 'smooth'});
   }
@@ -601,6 +633,18 @@ body = f'''<div class="tm-wrap">
   <section class="panel" style="margin-bottom:14px">
    <h2><b>Your roster</b> <span class="r">highlighted = model starter</span></h2>
    <ul class="roster" id="roster"></ul>
+  </section>
+  <section class="panel" style="margin-bottom:14px" id="leaguePanel" hidden>
+   <h2 id="prH"><b>The league, by the model</b> <span class="r">every roster's best lineup under this league's scoring · this week's matchups with a win chance</span><button type="button" class="share" id="prShare" title="Share this as an image to the league chat">Share to the chat</button></h2>
+   <div class="prwrap" id="prwrap">
+    <div class="prcard" id="prcard">
+     <div class="prtop"><img src="/favicon.png" alt=""><div><b id="prTitle"></b><small id="prSub"></small></div></div>
+     <ol class="pr" id="pr"></ol>
+     <div class="mups" id="mups"></div>
+     <div class="prfoot">betsweep.co/team/ · model projections, not Sleeper's · start/sit, waivers and trades graded the same way</div>
+    </div>
+   </div>
+   <p class="note">Power rankings = each team's best possible lineup this week by the model (bye and out players score 0). Win chance assumes about 5 points of noise per starter. Drop the image in the league chat and let them argue.</p>
   </section>
   <section class="panel">
    <h2 id="waivH"><b>Waiver wire</b></h2>
