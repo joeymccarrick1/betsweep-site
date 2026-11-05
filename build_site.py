@@ -87,7 +87,7 @@ open(os.path.join(SITE, "manifest.webmanifest"), "w").write(json.dumps(MANIFEST,
 SW_VERSION = _dt.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%Y%m%d%H%M") if "_dt" in globals() else __import__("datetime").datetime.now().strftime("%Y%m%d%H%M")
 SW = r'''// BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
 // with the last good copy served when the connection drops (stadium wifi). Version: __V__
-var V = 'bs-__V__', SHELL = ['/', '/today/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
+var V = 'bs-__V__', SHELL = ['/', '/today/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -127,7 +127,7 @@ NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay 
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
 NAV_GROUPS = [("/", "Home", None), ("/today/", "Today", None),
               (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
-              (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
+              (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
               (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record"), ("/api/", "API", "Every JSON the site serves")])]
@@ -525,6 +525,18 @@ if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
     if os.path.exists(os.path.join(_PD, "index.json")):
         os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(_PD, "index.json"), os.path.join(SITE, "b", "players.json"))
     print(f"player pages: {_np}")
+# owner 11/5: /teams/ + /teams/<abbr>/ (build_teams.py) - team stats, results, ATS / over-under and every game's box score; styled by /player/player.css
+_TD = os.path.join(OUT, "teams")
+if os.path.isdir(_TD) and os.path.exists(os.path.join(_TD, "index.html")):
+    _nt = 0
+    for _f in sorted(os.listdir(_TD)):
+        if not _f.endswith(".html") or _f == "index.html": continue
+        _ab = _f[:-5]; place_plain(os.path.join(_TD, _f), os.path.join(SITE, "teams", _ab), f"/teams/{_ab}/"); _nt += 1
+    made.append(place_plain(os.path.join(_TD, "index.html"), os.path.join(SITE, "teams"), "/teams/"))
+    shutil.copy(os.path.join(_TD, "teams.js"), os.path.join(SITE, "teams", "teams.js"))
+    if os.path.isdir(os.path.join(_TD, "box")):
+        shutil.rmtree(os.path.join(SITE, "teams", "box"), ignore_errors=True); shutil.copytree(os.path.join(_TD, "box"), os.path.join(SITE, "teams", "box"))
+    print(f"team pages: {_nt}")
 for _src, _dir in (("usage.html", "usage"), ("benefits.html", "benefits"), ("guide.html", "guide")):
     if os.path.exists(os.path.join(OUT, _src)): made.append(place_plain(os.path.join(OUT, _src), os.path.join(SITE, _dir), f"/{_dir}/"))
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
