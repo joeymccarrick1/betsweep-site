@@ -283,6 +283,29 @@ export async function run(now = Date.now()) {
       await rest("push_sent", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates" }, body: JSON.stringify([{ user_id: uid, week: W, player: n, status: h.st }]) });
     }
   }
+  // ---- kickoff reminders (owner 11/4, "the app on the phone during football season"): 20-40 minutes before a game, one push per user per
+  // game naming how many of their slip legs are in it; the run is every 10 minutes so the window catches each kickoff once (push_sent __ko__<gid>).
+  let nko = 0;
+  try {
+    const LEGG = new Map<string, string>(); for (const l of (D.legs || [])) { LEGG.set(`${l.pl}|${l.m}|${Math.floor(Number(l.ln || 1) + 0.5)}`, l.g); if (!l.gl) LEGG.set(`${l.pl}|${l.m}|${l.ln}`, l.g); }
+    const soonKo = (D.games || []).filter((g: any) => g.ko && g.ko - now > 20 * 60e3 && g.ko - now <= 40 * 60e3);
+    if (soonKo.length) for (const uid of users) {
+      const keys: string[] = [];
+      for (const r of states.filter((x) => x.user_id === uid)) { let v: any = null; try { v = JSON.parse(r.value?.v ?? "null"); } catch { v = null; }
+        if (r.key.startsWith("bs_slips_w") && Array.isArray(v)) for (const sl of v) if (sl && Array.isArray(sl.keys)) keys.push(...sl.keys.map(String));
+        if (r.key.startsWith("bs_slipk_w") && Array.isArray(v)) keys.push(...v.map(String)); }
+      if (!keys.length) continue;
+      const us = subs.filter((s) => s.user_id === uid && s.live !== false);
+      for (const g of soonKo) {
+        const key = `__ko__${g.gid}`; if (done.has(`${uid}|${key}|SENT`)) continue;
+        const n = new Set(keys.filter((k) => (LEGG.get(k) || gameOf.get(norm(k.split("|")[0]))) === g.gid)).size; if (!n) continue;
+        const mins = Math.round((g.ko - now) / 60e3);
+        const msg = { title: `${g.a} @ ${g.b} kicks off in ${mins} min`, body: `${n} of your legs ${n === 1 ? "is" : "are"} in this one. Live page tracks them against the box score with the model's chance from here.`, url: `/live/#g-${g.gid}`, tag: `bs-ko-${g.gid}` };
+        for (const s of us) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nko++; } catch (e) { console.warn("push", String(e)); } }
+        await mark(uid, W, key, "SENT"); done.add(`${uid}|${key}|SENT`);
+      }
+    }
+  } catch (e) { console.warn("kickoff reminders", String(e).slice(0, 200)); }
   // ---- weather turns (owner 11/1) ----
   let nwx = 0; const wxGames: string[] = [];
   const LEG = new Map<string, any>(); for (const l of (D.legs || [])) { const k = `${l.pl}|${l.m}|${Math.floor(Number(l.ln || 1) + 0.5)}`; if (!LEG.has(k)) LEG.set(k, l); }
@@ -428,7 +451,7 @@ export async function run(now = Date.now()) {
     }
   }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, live: nlive, weather: wxGames, wxSent: nwx, risk: nrisk, promoAlerts: npromo, inactives: ninact, removed: gone.length, statuses: ST.size };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, risk: nrisk, promoAlerts: npromo, inactives: ninact, removed: gone.length, statuses: ST.size };
 }
 
 async function mark(uid: string, W: number, player: string, status: string) {
@@ -575,6 +598,30 @@ export async function weekly(now = Date.now()) {
   return { week: W, best: best.length, sent: n };
 }
 
+// owner 11/4 ("one of the few apps on the phone during football season"): the morning brief. pg_cron calls {"mode":"brief"} every day at
+// 9:05 am Central; build_today.py leaves /b/today.json with a ready title/body per GAME DAY (Central date). No game today -> nothing is sent.
+// One push per subscriber per game day (push_sent player = __brief__<date>); honours the same "weekly" preference as the Thursday push.
+export async function brief(now = Date.now()) {
+  const tj: any = await (await fetch(`${SITE}/b/today.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
+  if (!tj || !tj.briefs) return { sent: 0, reason: "no today.json" };
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(now));
+  const o: Record<string, string> = {}; for (const x of p) o[x.type] = x.value; const date = `${o.year}-${o.month}-${o.day}`;
+  const b = tj.briefs[date]; if (!b) return { sent: 0, date, reason: "no games today" };
+  const W = tj.week; const key = `__brief__${date}`;
+  const subs: Sub[] = (await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly")).filter((s: Sub) => s.weekly !== false);
+  const sent: any[] = await rest(`push_sent?select=user_id&week=eq.${W}&player=eq.${key}`);
+  const done = new Set(sent.map((x) => x.user_id));
+  const msg = { title: `☀️ ${b.title}`.slice(0, 90), body: String(b.body || "").slice(0, 300), url: b.url || "/today/", tag: `bs-brief-${date}` };
+  let n = 0; const gone: string[] = [];
+  for (const uid of [...new Set(subs.map((s) => s.user_id))]) {
+    if (done.has(uid)) continue;
+    for (const s of subs.filter((s) => s.user_id === uid)) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) n++; } catch (e) { console.warn("push", String(e)); } }
+    await mark(uid, W, key, "SENT");
+  }
+  for (const ep of gone) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
+  return { week: W, date, sent: n, title: msg.title };
+}
+
 async function test(token: string) {
   if (!VPUB || !VPRIV) return { error: "Alert keys are missing on the server (VAPID_PUBLIC / VAPID_PRIVATE secrets)." };
   const u = await fetch(`${SB}/auth/v1/user`, { headers: { apikey: SRK, Authorization: `Bearer ${token}` } });
@@ -602,7 +649,7 @@ if (import.meta.main) Deno.serve(async (req) => {
       return Response.json(await test(tok), { headers: CORS });
     }
     if (!CRON || req.headers.get("x-cron-secret") !== CRON) return new Response("forbidden", { status: 403, headers: CORS });
-    const r = body && body.mode === "weekly" ? await weekly() : body && body.mode === "dk" ? await dkSalaries() : await run(); console.log(JSON.stringify(r));
+    const r = body && body.mode === "weekly" ? await weekly() : body && body.mode === "brief" ? await brief() : body && body.mode === "dk" ? await dkSalaries() : await run(); console.log(JSON.stringify(r));
     return Response.json(r, { headers: CORS });
   } catch (e) {
     console.error(String(e)); return Response.json({ error: String(e) }, { status: 500, headers: CORS });
