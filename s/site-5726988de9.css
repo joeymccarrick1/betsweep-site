@@ -1,0 +1,157 @@
+@font-face{font-family:'Barlow';font-style:italic;font-weight:800;font-display:swap;src:url(/s/fonts/barlow-latin-800-italic.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:500;font-display:swap;src:url(/s/fonts/barlow-condensed-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:600;font-display:swap;src:url(/s/fonts/barlow-condensed-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:700;font-display:swap;src:url(/s/fonts/barlow-condensed-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/s/fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:500;font-display:swap;src:url(/s/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/s/fonts/ibm-plex-sans-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+.sitenav .acct{display:flex;align-items:center;gap:6px;margin-left:auto}
+.sitenav .acct+.tabs{margin-left:0}
+.sitenav .acct button,.sitenav .acct a.me{font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:6px 11px;border-radius:999px;border:1.5px solid #d7332a;background:none;color:#d7332a;cursor:pointer;text-decoration:none;white-space:nowrap}
+.sitenav .acct a.me{background:#d7332a;color:#fff}
+.sitenav .acct a.me i{display:inline-block;width:18px;height:18px;border-radius:50%;background:#fff;color:#d7332a;font-style:normal;font-size:11px;line-height:18px;text-align:center;margin-right:5px}
+.sitenav .acct button.out{border-color:#9a9388;color:#6b655c;padding:6px 8px}
+@media(max-width:760px){.sitenav .acct{margin-left:auto;margin-right:6px}.sitenav .acct button,.sitenav .acct a.me{font-size:12px;padding:5px 9px}}
+.bsdlg{position:fixed;inset:0;z-index:100;background:rgba(10,12,16,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.bsdlg[hidden]{display:none}
+.bsdlg .box{background:#f4efe3;color:#1b1a17;border-radius:16px;max-width:420px;width:100%;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:'IBM Plex Sans',system-ui,sans-serif}
+.bsdlg h2{margin:0 0 4px;font-family:'Barlow Condensed',sans-serif;font-size:24px;letter-spacing:.02em}
+.bsdlg p{margin:0 0 12px;font-size:13.5px;color:#5d574d;line-height:1.5}
+.bsdlg input[type=email]{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #cfc7b6;border-radius:10px;background:#fff;color:#1b1a17}
+.bsdlg label.chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:10px 0;color:#3b372f;line-height:1.4}
+.bsdlg .go{width:100%;font:inherit;font-size:15px;font-weight:700;padding:11px;border:0;border-radius:10px;background:#d7332a;color:#fff;cursor:pointer;margin-top:4px}
+.bsdlg .go[disabled]{opacity:.6}
+.bsdlg .g{width:100%;font:inherit;font-size:14px;font-weight:600;padding:10px;border:1px solid #cfc7b6;border-radius:10px;background:#fff;color:#1b1a17;cursor:pointer;margin-top:8px}
+.bsdlg .msg{font-size:13px;margin-top:10px;color:#2b6b3a;min-height:1.2em}.bsdlg .msg.err{color:#b3261e}
+.bsdlg .x{float:right;background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:#6b655c;margin:-6px -6px 0 0}
+.bsdlg small.lg{display:block;margin-top:10px;font-size:11.5px;color:#7a7368;line-height:1.4}
+
+/* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
+@media (max-width:760px){
+ body{margin:0 !important;padding-left:5px !important;padding-right:5px !important}
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.1}
+}
+/* owner 10/23 (betslip "stuck" mid-screen with the tab bar): iOS Safari zooms the page in when a form field under 16px gets focus (the
+   builder search box, the filter dropdowns, the slip-name box were 13px) and stays zoomed, so the fixed tab bar and slip sit mid-screen.
+   16px fields on touch screens stop the zoom. */
+@media (pointer:coarse){ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important} }
+@media (min-width:761px){
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.06}
+}
+@media (max-width:760px){.hero{min-height:0 !important;aspect-ratio:1600/640 !important;background-size:100% auto !important;background-position:center 50% !important}}
+
+
+.sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
+.sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
+.sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:7px 0}
+.sitenav .brand img{height:32px;width:auto;display:block}
+.sitenav .brand img.cream{display:none}
+.sitenav .srch{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1.5px solid #141a24;border-radius:8px;background:none;color:#141a24;cursor:pointer;flex:none} .sitenav .srch:hover{background:#141a24;color:#efe9da} .sitenav .srch + .menu{margin-left:8px}
+.bssrch{position:fixed;inset:0;z-index:200;background:rgba(15,20,28,.72);display:none;align-items:flex-start;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px 10px} .bssrch.open{display:flex}
+.bssrch .box{width:100%;max-width:560px;background:#efe9da;color:#141a24;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.45);overflow:hidden;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.bssrch .row{display:flex;align-items:center;gap:8px;padding:10px 10px 8px;border-bottom:1px solid #d9d2c0} .bssrch input{flex:1;font:inherit;font-size:17px;padding:10px 12px;border:1.5px solid #141a24;border-radius:8px;background:#fff;color:#141a24;min-width:0} .bssrch input:focus{outline:none;border-color:#d7332a;box-shadow:0 0 0 3px rgba(215,51,42,.22)} .bssrch .x{font:inherit;font-size:20px;background:none;border:0;color:#5b6473;padding:6px 10px;cursor:pointer}
+.bssrch ul{list-style:none;margin:0;padding:4px 0;max-height:min(60vh,520px);overflow:auto} .bssrch li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:0}
+.bssrch li a.pl{display:block;padding:10px 14px;text-decoration:none;color:#141a24;font-weight:600;font-size:15px;line-height:1.2} .bssrch li a.pl small{display:block;color:#5b6473;font-weight:500;font-size:12px;margin-top:2px}
+.bssrch li .go{display:flex;gap:6px;padding-right:10px} .bssrch li .go a{text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid #c9c1ad;border-radius:6px;padding:6px 8px;color:#141a24;white-space:nowrap}
+.bssrch li.on a.pl,.bssrch li a.pl:hover{background:#e6dfcc} .bssrch .hint{padding:8px 14px 12px;color:#5b6473;font-size:12.5px}
+@media (max-width:760px){
+  .top .mast{padding-block:8px 4px;gap:8px} .top .mast img{display:none} .top .mast h1{font-size:22px;gap:2px} .top .mast h1 small{font-size:10.5px;letter-spacing:.14em} .top .mast p{display:none} .top .nav{padding-block:0 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch} .top .nav::-webkit-scrollbar{display:none}
+  .top .nav a{white-space:nowrap;flex:none}
+  body.bs-scrolled .top .mast{display:none} body.bs-scrolled .top{margin-bottom:10px}
+}
+@media (min-width:761px){
+  /* desktop: the sticky page header is up to 197px tall (logo, title, paragraph, slate chips); scrolling down keeps title + chips only */
+  body.bs-scrolled .top .mast p,body.bs-scrolled .top .mast img{display:none} body.bs-scrolled .top .mast{padding-block:6px 0} body.bs-scrolled .top .mast h1{font-size:22px} body.bs-scrolled .top .mast h1 small{display:none}
+}
+/* deep links (#g-X / #lv-X / #box-X / a boards card) land below the sticky chrome instead of under it */
+.gcard,.lg2,.tdgame,[id^="box-"],.player .sec,.pcard{scroll-margin-top:140px}
+@media (min-width:761px){ .gcard,.lg2,.tdgame,[id^="box-"]{scroll-margin-top:230px} }
+.sitenav .tabs{display:flex;gap:4px;margin-left:auto;align-items:center;padding:0;border:0;background:none}
+.sitenav .tabs a{color:#4a5260;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;padding:14px 10px 11px;border-bottom:3px solid transparent;margin-bottom:-3px}
+.sitenav .tabs a:hover{color:#141a24}
+.sitenav .tabs a.on{color:#141a24;border-bottom-color:#d7332a}
+@media (max-width:1180px){ .sitenav .tabs{gap:0} .sitenav .tabs a{font-size:13.5px;padding:14px 7px 11px;letter-spacing:.04em} }
+/* 10/30: Players + Usage made 13 tabs - tighter between 1100 and 1420, the menu button below 1100 */
+.sitenav .dd{position:relative;display:flex;align-items:stretch}
+.sitenav .ddb{font:inherit;color:#4a5260;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-3px;padding:14px 10px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.sitenav .ddb i{font-style:normal;font-size:10px;transition:transform .15s}
+.sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
+@media (hover:hover){ .sitenav .dd:hover .ddb{color:#141a24} .sitenav .dd:hover .ddm{display:flex} .sitenav .dd:hover .ddb i{transform:rotate(180deg)} }
+.sitenav .dd:last-child .ddm{left:auto;right:0}
+.sitenav .ddm{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:230px;flex-direction:column;background:#efe9da;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 8px 8px;box-shadow:0 14px 30px rgba(0,0,0,.28);padding:6px 0}
+.sitenav .dd.open .ddm{display:flex}
+.sitenav .dd.open .ddb i{transform:rotate(180deg)}
+.sitenav .ddm a{display:block;padding:9px 16px !important;border:0 !important;margin:0 !important;text-transform:none !important;letter-spacing:.01em !important;font-size:16px !important;color:#141a24 !important}
+.sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
+.sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
+.sitenav .ddh{display:none}
+.sitenav .thm{display:flex;align-items:center;gap:6px;padding:8px 10px;border-left:1px solid #d9d1bf;margin-left:6px} .sitenav .thm span{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4a5260;margin-right:2px}
+.sitenav .thm button{font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:#4a5260;background:none;border:1.5px solid #d9d1bf;border-radius:999px;padding:4px 10px;cursor:pointer;min-height:30px} .sitenav .thm button.on{color:#efe9da;background:#141a24;border-color:#141a24}
+@media (max-width:1240px){ .sitenav .thm{border-left:0;margin:0;padding:12px 18px;border-bottom:1px solid #d9d1bf} .sitenav .thm span{font-size:14px;margin-right:auto} .sitenav .thm button{min-height:36px;padding:6px 14px;font-size:14px} }
+@media (max-width:1240px){
+  .sitenav .dd{display:block;border-bottom:1px solid #d9d1bf}
+  .sitenav .ddb{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:13px 18px;font-size:17px;border:0;margin:0;color:#4a5260}
+  .sitenav .dd.on .ddb{color:#141a24;box-shadow:inset 4px 0 0 #d7332a} .sitenav .ddb i{font-size:12px}
+  .sitenav .ddm{display:none;position:static;box-shadow:none;border:0;border-radius:0;padding:0 0 6px;min-width:0;background:#e9e2d0}
+  .sitenav .dd.open .ddm{display:flex}
+  .sitenav .ddm a{padding:10px 18px 10px 30px !important;border-bottom:1px solid #ddd5c2 !important;font-size:16px !important}
+  .sitenav .ddm a:last-child{border-bottom:0 !important}
+  .sitenav .tabs{max-height:calc(100vh - 70px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+}
+.sitenav .menu{display:none;margin-left:auto;font:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#141a24;background:none;border:1.5px solid #141a24;border-radius:4px;padding:6px 10px;cursor:pointer}
+@media (max-width:1240px){
+  .sitenav .menu{display:inline-flex;align-items:center;gap:6px}
+  .sitenav .tabs{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;align-items:stretch;gap:0;padding:0;background:#efe9da;border-bottom:3px solid #d7332a;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+  .sitenav.open .tabs{display:flex}
+  .sitenav .tabs a{display:block;text-align:left;padding:13px 18px;border-bottom:1px solid #d9d1bf;font-size:17px;margin-bottom:0}
+  .sitenav .tabs a.on{border-left:4px solid #d7332a;border-bottom-color:#d9d1bf}
+  .top{top:calc(50px + env(safe-area-inset-top,0px))}
+}
+/* 11/4: phones zoom page content 1.1x (BIGGER_CSS), so a 50px sticky offset lands at 55px and a 2px strip of page showed between the
+   site nav (53px) and the page header; the offset is set in pre-zoom units */
+@media (max-width:760px){ .top{top:calc((53px + env(safe-area-inset-top,0px)) / 1.1)} }
+@media (display-mode: standalone){ .sitenav .in{min-height:54px} }
+/* app tab bar: the installed app and phones get bottom tabs like a native app; the top menu stays for everything else */
+.apptabs{display:none;position:fixed;left:0;right:0;bottom:0;z-index:70;background:#141a24;border-top:1px solid #2a3240;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.35)}
+.apptabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#a9a294;text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
+.apptabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.apptabs a.on{color:#fff} .apptabs a.on svg{stroke:#d7332a}
+@media (max-width:760px){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
+@media (display-mode: standalone){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} .sitenav .menu{display:inline-flex} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
+.installbar{display:none;align-items:center;gap:10px;max-width:1360px;margin:10px auto 0;padding:10px 14px;background:#141a24;color:#f1e8d8;border-radius:8px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px}
+.installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
+/* 11/5 (owner: "header you can't see log out and zooms are weird"): signed in, the header row (wordmark + search + Menu + My BetSweep + Out) was 478px of
+   non-shrinking content on a 390px phone, so iOS laid the page out at 478px and zoomed out - every page looked small and Out was off-screen.
+   The row may never exceed the viewport: the wordmark shrinks, the account button is the avatar alone, nothing wraps or overflows. */
+@media (max-width:560px){ .sitenav .in{flex-wrap:nowrap;min-width:0;gap:8px;padding:0 10px} .sitenav .brand{min-width:0;flex:0 1 auto} .sitenav .brand img{height:28px;max-width:100%;object-fit:contain}
+  .sitenav .srch{width:36px;height:36px;flex:none} .sitenav .menu{flex:none;padding:0 10px}
+  .sitenav .acct{flex:none;gap:4px;margin-right:0} .sitenav .acct a.me{padding:4px;width:32px;height:32px;justify-content:center} .sitenav .acct a.me i{margin:0;width:22px;height:22px;line-height:22px;font-size:12px} .sitenav .acct a.me{font-size:0}
+  .sitenav .acct button.out{padding:5px 7px;font-size:11px} }
+.sitenav{overflow-x:clip}
+
+
+/* ===== BetSweep brand layer (11/5) - one control system and one heading system for every page; loads after the page's own CSS ===== */
+:root{--brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 8'%3E%3Cpath d='M1.5 5.2C10 2.6 18 2.2 27 3.4c7 1 14 2.6 21 1.6 4-.6 7-1.9 10-2.9' fill='none' stroke='%23d7332a' stroke-width='3.4' stroke-linecap='round'/%3E%3Cpath d='M3 6.4c9-1.3 17-2 26-1 7 .8 13 2 19 1.1' fill='none' stroke='%23d7332a' stroke-width='1.5' stroke-linecap='round' opacity='.8'/%3E%3C/svg%3E");--ctl:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif}
+/* the brushed red stroke under a section title (the board's "PICKS. DATA." dash) */
+.brush{position:relative;padding-bottom:12px} .brush::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* segmented controls: builder view tabs, live Picks / Every leg, players position filter, usage/benefits chips */
+.tabs .tab,.seg button,.pos button,.usg .tabs button,.bnf .tabs button{font:inherit;font-family:var(--ctl);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;line-height:1}
+body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs button.on,body .bnf .tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg{display:inline-flex;gap:6px;background:none;border:0;padding:0}
+/* primary action = red; secondary = outline; both in the control face */
+.dfs .btn:not(.sec),.tc .lg .go,.tdlive,a.pri.solid,.bsbtn{font:inherit;font-family:var(--ctl);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:8px;border:1.5px solid var(--red);background:var(--red);color:#fff;cursor:pointer;text-decoration:none}
+.dfs .btn.sec,.rfr,.tdshare,.altbtn,.bsbtn.sec{font:inherit;font-family:var(--ctl);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
+.rfr:hover,.tdshare:hover,.altbtn:hover,.dfs .btn.sec:hover{border-color:var(--red)}
+/* inputs */
+.lvbar input,.pd input,.tc input[type=text],.slform input,.bslip .namebox input{font:inherit;font-size:16px;min-height:42px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.lvbar input:focus,.pd input:focus,.tc input[type=text]:focus,.slform input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+/* status pills stay pills; everything else squares off at 8px */
+.tdlinks a,.fdgo,.bslip .acts button,.bslip .acts a,.acts button,.acts a.fd,.lg a.fd{border-radius:8px}
+/* page titles and section titles on the pages that carry their own CSS (usage, who-benefits, social, how-to guide, receipts) */
+.uw h1,.soc h1,.sp h1,.gd h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;letter-spacing:-.01em;line-height:1}
+.uw h2,.gd h2{letter-spacing:.01em;text-transform:none;font-size:19px} .gd h2{font-size:22px;margin:0 0 10px;padding-bottom:12px;position:relative} .gd h2::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* focus is visible everywhere, in the brand red */
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
