@@ -1,0 +1,39 @@
+  sn["k"] = sn.player.map(nn); s["k"] = s.player_display_name.map(nn)
+  d["routes"] = d.offense_snaps * d.dbrate
+  d["year"] = year
+  sn["k"] = sn.player.map(nn); s["k"] = s.player_display_name.map(nn)
+  d["routes"] = d.offense_snaps * d.dbrate
+  d["year"] = year
+rows: 2025 2351, 2026 718
+  2025 targets MAE with snap-trend k=0.0: 2.053
+  2025 targets MAE with snap-trend k=0.1: 2.045
+  2025 targets MAE with snap-trend k=0.2: 2.037
+  2025 targets MAE with snap-trend k=0.3: 2.031
+  2025 targets MAE with snap-trend k=0.4: 2.027
+  2025 targets MAE with snap-trend k=0.5: 2.024
+  2025 targets MAE with snap-trend k=0.6: 2.024
+  2025 targets MAE with snap-trend k=0.8: 2.029
+  2025 targets MAE with snap-trend k=1.0: 2.040
+best k on 2025: 0.6
+T1 2025: targets MAE  season-avg 2.053 | x snap-trend(k=0.6) 2.024 | TPRR x routes 1.991 | TPRR(70/30 l2) x routes 1.995
+     snaps up 15+     n=  380  actual/avg targets 1.128  rec yds 1.118   MAE avg 1.961 -> adj 1.999
+     snaps down 15+   n=  373  actual/avg targets 0.826  rec yds 0.857   MAE avg 1.946 -> adj 1.748
+     flat             n= 1598  actual/avg targets 0.964  rec yds 0.972   MAE avg 2.101 -> adj 2.095
+T1 2026: targets MAE  season-avg 2.146 | x snap-trend(k=0.6) 2.178 | TPRR x routes 2.173 | TPRR(70/30 l2) x routes 2.176
+     snaps up 15+     n=  104  actual/avg targets 1.033  rec yds 0.961   MAE avg 1.915 -> adj 2.052
+     snaps down 15+   n=   46  actual/avg targets 1.001  rec yds 1.021   MAE avg 1.825 -> adj 1.909
+     flat             n=  568  actual/avg targets 0.995  rec yds 0.996   MAE avg 2.214 -> adj 2.223
+
+T2: the model's frozen Week 6-8 projections x snap-trend factor (k fitted on 2025)
+  Receiving Yards: n=396  MAE model 22.224 -> adjusted 22.622  (bias model -1.122, adjusted -0.373)
+     week 6: n=135  21.097 -> 21.700
+     week 7: n=128  22.869 -> 22.800
+     week 8: n=133  22.747 -> 23.387
+     snaps up 15+   n=  60 actual/proj 0.908  MAE 18.882 -> 20.673
+     snaps down 15+ n=  29 actual/proj 1.111  MAE 21.002 -> 21.627
+  Receptions: n=395  MAE model 1.632 -> adjusted 1.660  (bias model +0.089, adjusted +0.150)
+     week 6: n=134  1.747 -> 1.810
+     week 7: n=128  1.513 -> 1.498
+     week 8: n=133  1.631 -> 1.666
+     snaps up 15+   n=  60 actual/proj 0.923  MAE 1.317 -> 1.459
+     snaps down 15+ n=  29 actual/proj 1.047  MAE 1.522 -> 1.569
