@@ -35,7 +35,7 @@
   {
    "slot": "thursday",
    "name": "Crossfire",
-   "type": "+500 (2-leg same-game, one from each side)",
+   "type": "+500 (3-leg same-game)",
    "game": "BAL-JAX",
    "legs": [
     {
@@ -65,14 +65,28 @@
       "s": "49181554"
      },
      "why": "60+ in 5 of 7; JAX allows the most WR yards in the NFL; BAL chases in half the endings"
+    },
+    {
+     "pl": "Rashod Bateman",
+     "m": "Receiving Yards",
+     "ln": 10,
+     "o": -172,
+     "p": 0.656,
+     "bk": 0.632,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869047",
+      "s": "73458260"
+     },
+     "why": "10+ in 6 of 8; the only short-priced leg in the game with an edge (66% vs 63%); same Ravens-chase script as Zay"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621970818&selectionId[0]=42267563&marketId[1]=42.621869046&selectionId[1]=49181554",
-   "price": "+505 multiplied; ~+414 est as a FanDuel SGP - check FanDuel's price",
-   "price_est": "+414 (est FanDuel SGP; multiplied +505)",
-   "chance": 0.201,
-   "note": "Owner 11/5 11:06 AM: the +500 with a leg from each side. Replaces Catch-Up Mode (both Ravens). Same floor (20%) as Catch-Up Mode with the mix the owner wants; the legs are less correlated than two Ravens, so FanDuel's SGP discount should be smaller.",
-   "caption": "Crossfire ~+450\nBrian Thomas Jr. 2+ catches\nZay Flowers 60+ rec yds\nWhy: the Ravens' WR1 against the defense that allows the most receiver yards in the league, and the Jags' WR1 against a secondary missing its safety - one from each side, 20% to cash\nTail it: betsweep.co/b/w9-2\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621970818&selectionId[0]=42267563&marketId[1]=42.621869046&selectionId[1]=49181554&marketId[2]=42.621869047&selectionId[2]=73458260",
+   "price": "+856 multiplied; ~+690 est as a FanDuel SGP - owner to confirm FanDuel's price",
+   "price_est": "+690 (est FanDuel SGP; multiplied +856)",
+   "chance": 0.132,
+   "note": "Owner 11/5 11:06 AM: the +500 with a leg from each side. Replaces Catch-Up Mode (both Ravens). Same floor (20%) as Catch-Up Mode with the mix the owner wants; the legs are less correlated than two Ravens, so FanDuel's SGP discount should be smaller. 11:12 AM: FanDuel priced the 2-leg version at +402; owner added a third leg - Bateman 10+ (-172) - instead of moving Thomas to 20+ yds.",
+   "caption": "Crossfire ~+690\nBrian Thomas Jr. 2+ catches\nZay Flowers 60+ rec yds\nRashod Bateman 10+ rec yds\nWhy: the Ravens' receivers against the defense that allows the most WR yards in the league, the Jags' WR1 against a secondary missing its safety - both sides of the ball, one game\nTail it: betsweep.co/b/w9-2\n21+ | gamble responsibly",
    "post": true
   },
   {
