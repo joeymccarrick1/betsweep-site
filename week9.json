@@ -82,6 +82,48 @@
    "game": "BAL-JAX",
    "legs": [
     {
+     "pl": "Bhayshul Tuten",
+     "m": "Anytime TD",
+     "ln": 1,
+     "o": -105,
+     "p": 0.47,
+     "bk": 0.512,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621857664",
+      "s": "60238401"
+     },
+     "why": "2 TDs in each of his last two; JAX leads by 10+ in half the endings. QUESTIONABLE - only if active"
+    },
+    {
+     "pl": "Nate Boerkircher",
+     "m": "Receiving Yards",
+     "ln": 10,
+     "o": -102,
+     "p": 0.497,
+     "bk": 0.505,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621968304",
+      "s": "103841755"
+     },
+     "why": "Jags' TE2 - 10+ in 4 of 6; Strange's snaps are shrinking (52% last game) and the targets move to him"
+    },
+    {
+     "pl": "Josh Cameron",
+     "m": "Receiving Yards",
+     "ln": 15,
+     "o": 136,
+     "p": 0.435,
+     "bk": 0.424,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621970817",
+      "s": "103430249"
+     },
+     "why": "28 yds/g over the last 3 (+45%); BAL allows the 5th-most WR yards and is missing S Hawkins. Watch: Meyers back"
+    },
+    {
      "pl": "Zay Flowers",
      "m": "Receiving Yards",
      "ln": 60,
@@ -93,7 +135,7 @@
       "m": "42.621869046",
       "s": "49181554"
      },
-     "why": "60+ in 5 of 7 games; proj 65 vs the 60 rung; the softest WR matchup on the board and a trail script"
+     "why": "60+ in 5 of 7; the Ravens chase into the NFL's softest WR coverage"
     },
     {
      "pl": "Rashod Bateman",
@@ -107,40 +149,13 @@
       "m": "42.621869047",
       "s": "73458266"
      },
-     "why": "20+ in 6 of 8; 39 yds/g over the last 3 (+33% vs season); healthy again (78% snaps normal); same JAX pass defense"
-    },
-    {
-     "pl": "Ja'Kobi Lane",
-     "m": "Receptions",
-     "ln": 3,
-     "o": 250,
-     "p": 0.315,
-     "bk": 0.286,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621869069",
-      "s": "102523776"
-     },
-     "why": "Model's Best plus-money edge (34% vs 29% implied); snaps 47% -> 67% the last two weeks; the WR3 in a 50% trail script"
-    },
-    {
-     "pl": "Bhayshul Tuten",
-     "m": "Anytime TD",
-     "ln": 1,
-     "o": -105,
-     "p": 0.47,
-     "bk": 0.512,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621857664",
-      "s": "60238401"
-     },
-     "why": "2 TDs in each of the last two games (104 rush yds last week); JAX leads by 10+ in 50% of endings = clock-killing carries. QUESTIONABLE (ankle/foot, DNP Mon/Tue) - only if active"
+     "why": "20+ in 6 of 8; 39 yds/g over the last 3"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266&marketId[2]=42.621869069&selectionId[2]=102523776&marketId[3]=42.621857664&selectionId[3]=60238401",
-   "price": "+4100 multiplied; ~+3500 est as a FanDuel SGP - check FanDuel's price",
-   "chance": 0.029,
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621968304&selectionId[1]=103841755&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266",
+   "price": "+5512 multiplied; ~+4674 est as a FanDuel SGP - check FanDuel's price",
+   "price_est": "+4674 (est FanDuel SGP; multiplied +5512)",
+   "chance": 0.02,
    "alt_rb": {
     "leg": {
      "pl": "Chris Rodriguez Jr.",
@@ -154,16 +169,19 @@
       "m": "42.621857664",
       "s": "60221458"
      },
-     "why": "The fill-in lead back if Tuten sits (Role Up); same -105 price. The model's 41% is with Tuten active - it rises if Tuten is out"
+     "why": "the fill-in lead back at the same price if Tuten sits"
     },
-    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=73458266&marketId[2]=42.621869069&selectionId[2]=102523776&marketId[3]=42.621857664&selectionId[3]=60221458",
-    "chance": 0.025,
+    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60221458&marketId[1]=42.621968304&selectionId[1]=103841755&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266",
+    "chance": 0.017,
     "when": "Tuten inactive (inactives post ~5:45 PM CT)"
    },
-   "note": "LOTTERY. Two scripts in one slip: Jacksonville's lead back punches it in while the Ravens chase through the air (Zay 60+, Bateman 20+, Lane 3 catches). The RB leg is a game-time call: Tuten if active (2 TDs in each of his last two), Chris Rodriguez Jr. at the same -105 if Tuten is inactive. Place it after the 5:45 PM inactives. The one -105 leg is the script anchor (rule: at most one -130..-200-or-shorter leg inside an SGP).",
-   "caption": "LOTTERY: Run It, Chase It ~+3500\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nJa'Kobi Lane 3+ catches\nBhayshul Tuten anytime TD (Rodriguez if Tuten sits)\nWhy: one script - Jags pull away on the ground, Ravens throw it 35+ times to catch up. Wait for the inactives, then fire\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
-   "post": false,
-   "price_est": "+3500 (est FanDuel SGP; multiplied +4100)"
+   "alt_btj": {
+    "note": "Owner's-call version: Brian Thomas Jr. 20+ (+154, 45% vs 39%) in place of Boerkircher - bigger edge, but flagged (2.3 targets/g last 3, 20+ in 2 of 7): 1.8%, multiplied +7098, SGP est +6019",
+    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621857664&selectionId[0]=60238401&marketId[1]=42.621970815&selectionId[1]=73617857&marketId[2]=42.621970817&selectionId[2]=103430249&marketId[3]=42.621869046&selectionId[3]=49181554&marketId[4]=42.621869047&selectionId[4]=73458266"
+   },
+   "note": "LOTTERY, rebalanced 11/5 11:03 AM (owner: 'a better mix'): 3 Jaguars + 2 Ravens, one script - Jacksonville pulls away (Tuten scores, Lawrence spreads it to Boerkircher and Cameron against a secondary missing Hawkins) while Baltimore chases through Flowers and Bateman. Lane 3+ dropped for the mix. RB leg is a game-time call: Tuten if active, Rodriguez if not. Place after the 5:45 PM inactives.",
+   "caption": "LOTTERY: Run It, Chase It ~+4700\nBhayshul Tuten anytime TD (Rodriguez if Tuten sits)\nNate Boerkircher 10+ rec yds\nJosh Cameron 15+ rec yds\nZay Flowers 60+ rec yds\nRashod Bateman 20+ rec yds\nWhy: one script, both sides - Jags pull away on the ground and spread it around, Ravens throw 35+ times to catch up. Wait for the inactives, then fire\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "post": false
   },
   {
    "slot": "thursday",
