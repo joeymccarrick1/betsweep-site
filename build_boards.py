@@ -114,6 +114,16 @@ def cov_strip(a, b):
     ta, tb = team(a), team(b)
     if not (ta or tb): return ""
     return (f'<div class="splays cov"><span class="lt">Coverage <small>Clay WR-CB · ▲ softer corner · ▼ tougher</small></span>{ta}{tb}</div>')
+def ctx_strip(a, b):
+    """Context desk (11/4): game-level notes from stakes.py (standings, short week, primetime, referee), def_inj.py (defensive report) and any
+    other ctx_*.json 'games' entries - one collapsible line per card; watch notes are shown open."""
+    ns = getattr(FE, "CTX_G", {}).get(frozenset([a, b]), [])
+    if not ns: return ""
+    order = {"bad": 0, "watch": 1, "good": 2, "info": 3}
+    ns = sorted(ns, key=lambda n: order.get(n.get("k"), 9))
+    items = "".join(f'<li class="cx-{E(n.get("k", "info"))}"><b>{E(n.get("tag", ""))}</b> {E(n.get("txt", ""))}</li>' for n in ns)
+    head = " · ".join(E(n["tag"]) for n in ns[:4]) + (" · …" if len(ns) > 4 else "")
+    return f'<details class="splays ctx"{" open" if any(n.get("k") in ("bad", "watch") for n in ns) else ""}><summary><span class="lt">Context <small>{head}</small></span></summary><ul class="cxl">{items}</ul></details>'
 PROBIT = {r[0]: r[3:11] for r in json.load(open(os.path.join(HERE, "probit.json")))}
 import calib as CALIB
 exec(open(os.path.join(HERE, "brand.py")).read())   # NAMES, TEAMCOL, badge(), PLAYS, SWOOSH, LOGO, LOGO_S, BANNER
@@ -1003,6 +1013,7 @@ for a, b, pl_all in blocks:
  {sc_blocks}
  {ftd_strip(a, b)}
  {cov_strip(a, b)}
+ {ctx_strip(a, b)}
  {faceoff_block(a, b)}
  {mbs_block(a, b)}
  <div class="cols"><ul class="col">{team_col(pl, a, maxppr)}</ul><ul class="col">{team_col(pl, b, maxppr)}</ul></div>

@@ -98,6 +98,21 @@ class Engine:
             for r in (json.load(open(os.path.join(IN, "risk_notes.json"))) or []):
                 if r.get("player") and r.get("status") and int(r.get("week") or self.WEEK) == self.WEEK: self.NOTES[_nn(r["player"])] = r
         except Exception: pass
+        # context desk (11/4, owner: "take news into account"): every in/ctx_*.json is {"week", "players": [{player, team, pos, k, tag, txt, ...}],
+        # "games": {"A-B": [{k, tag, txt}]}} written by news_desk.py, depth_check.py, def_inj.py, stakes.py, role_rising.py, consensus.py, refs.py.
+        # Player notes become flags in player(); game notes go on the game cards (build_boards ctx_strip). Files for another week are ignored.
+        self.CTX, self.CTX_G, self.CTX_CB = {}, {}, {}
+        import glob as _glob
+        for _f in sorted(_glob.glob(os.path.join(IN, "ctx_*.json"))):
+            try:
+                _d = json.load(open(_f))
+                if int(_d.get("week") or self.WEEK) != self.WEEK: continue
+                for _n in _d.get("players") or []:
+                    if _n.get("player") and _n.get("txt"): self.CTX.setdefault(_nn(_n["player"]), []).append(dict(_n, src_file=os.path.basename(_f)))
+                for _g, _ns in (_d.get("games") or {}).items():
+                    self.CTX_G.setdefault(frozenset(_g.split("-")), []).extend(_ns)
+                for _cb, _st in (_d.get("cbs") or {}).items(): self.CTX_CB[_nn(_cb)] = _st   # def_inj.py: corner -> {"status", "why", "team"}
+            except Exception as _e: print("ctx skipped", _f, _e)
         # availability
         self.OUT, self.QUEST, self.OUT_BY_TEAM = {}, {}, {}
         for r in vals("avail.json")[1:]:
@@ -275,6 +290,9 @@ class Engine:
             elif _nt["status"] == "LIMITED": add("bad", "Limited role (BetSweep)", f"BetSweep note: expect a limited role{_d}.")
             elif _nt["status"] == "STARTING": add("good", "Starting (BetSweep)", f"BetSweep note: confirmed starter{_d}.")
             elif _nt["status"] == "ROLE_UP": add("good", "Role up (BetSweep)", f"BetSweep note: bigger role this week{_d}.")
+        # context desk notes (news, depth chart, role rising, consensus, trending) - one flag each, in the order the files were read
+        for _c in self.CTX.get(_nn(name), []):
+            if _c.get("k") in ("good", "bad", "watch", "info"): add(_c["k"], _c.get("tag") or "Context", _c["txt"])
         _ms = (self.SNAPS.get(name) or {}).get("season")
         if fill_recent and (_ms is None or _ms < 0.60):   # rotational players only: a starter's share does not "go back" when a backup returns
             who = sorted({t for t, _ in fill_recent.values()})
@@ -618,7 +636,12 @@ class Engine:
                 tr = c["cb_tr"] * 100 if c["cb_tr"] <= 1 else c["cb_tr"]; parts.append(f"that corner allows {tr:.0f}% targets per route and {c['cb_fr']:.2f} fantasy points per route in coverage")
             if dtr is not None and dfr is not None: parts.append(f"Clay's matchup read vs his season rates: targets {dtr*100:+.0f}%, points per route {dfr:+.2f}")
             txt = "; ".join(parts) + "."
-            if dtr is not None and dfr is not None and dtr >= 0.08 and dfr >= 0.15: fl.append({"k": "good", "tag": "Coverage edge", "txt": txt})
+            _cbst = self.CTX_CB.get(_nn(c["cb"]))
+            if _cbst and _cbst.get("status") in ("Out", "Doubtful", "IR"):
+                fl.append({"k": "good", "tag": "Corner out", "txt": f"{c['cb']} is {_cbst['status']} this week ({_cbst.get('why') or 'injury'}), so Clay's read below assumed a corner who will not play; expect the backup / a softer look. " + txt})
+            elif _cbst and _cbst.get("status") == "Questionable":
+                fl.append({"k": "watch", "tag": "Corner questionable", "txt": f"{c['cb']} is Questionable ({_cbst.get('why') or 'injury'}); if he sits, the coverage read below changes. " + txt})
+            elif dtr is not None and dfr is not None and dtr >= 0.08 and dfr >= 0.15: fl.append({"k": "good", "tag": "Coverage edge", "txt": txt})
             elif dtr is not None and dfr is not None and dtr <= -0.08 and dfr <= -0.15: fl.append({"k": "watch", "tag": "Tough coverage", "txt": txt})
             elif c.get("flag") == "DIFFICULT": fl.append({"k": "watch", "tag": "Coverage", "txt": txt + " Defense ranks tough for his alignment."})
             else: fl.append({"k": "info", "tag": "Coverage", "txt": txt})

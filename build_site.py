@@ -384,6 +384,13 @@ try:
     _aff = next((str(r[1]).strip() for r in _st if len(r) > 1 and str(r[0]).strip().lower() == "fanduel affiliate"), "")
     json.dump({"fd": _aff} if _aff else {}, open(os.path.join(SITE, "b", "aff.json"), "w")); print("wrote /b/aff.json:", "set" if _aff else "empty (no affiliate tag yet)")
 except Exception as _e: print("note: /b/aff.json not written:", _e)
+# 11/4 context desk: keep this week's trending list and consensus table on the site (data/) so the Tuesday grades (trending_grade.py,
+# consensus_grade.py) can read what the model and the market said before the games, from git history if need be.
+try:
+    os.makedirs(os.path.join(SITE, "data"), exist_ok=True)
+    for _fn in glob.glob(os.path.join(OUT, "trending_w*.json")) + glob.glob(os.path.join(OUT, "consensus_w*.json")):
+        shutil.copy(_fn, os.path.join(SITE, "data", os.path.basename(_fn).replace("_", "-"))); print("kept", os.path.basename(_fn), "in data/")
+except Exception as _e: print("note: context tables not kept:", _e)
 # 11/4: /b/live-legs.json - the live page's tracked legs with their pregame chance (build_live.py); pinned per week by the feeds workflow for live_grade.py
 try:
     shutil.copy(os.path.join(OUT, "live_legs.json"), os.path.join(SITE, "b", "live-legs.json")); print("wrote /b/live-legs.json (live page tracked legs + pregame chance)")
