@@ -1782,7 +1782,12 @@ BUILDER_JS = r"""
     try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
     setView('list'); renderSlip();
     var tgt = $('#filters'); if(tgt) setTimeout(function(){ tgt.scrollIntoView({block:'start'}); }, 50);
-  } else { setView('games'); renderSlip(); }
+  } else {
+    // 11/4 UX: /build/#g-BAL-JAX (Today, the boards' game chips, the player search) opens that game's card
+    var gh = (location.hash || '').match(/^#g-([A-Z]{2,3}-[A-Z]{2,3})$/); if(gh && games[gh[1]]) openG[gh[1]] = true;
+    setView('games'); renderSlip();
+    if(gh && games[gh[1]]) setTimeout(function(){ var el = $('#g-' + gh[1]); if(el) el.scrollIntoView({block: 'start'}); }, 80);
+  }
   if(ADDED){
     var msg = ADDED.ok.length ? 'Added to your slip: ' + ADDED.ok.map(function(l){ return l.pl + ' ' + (l.m === 'Anytime TD' ? 'anytime TD' : l.m === 'First TD' ? 'first TD' : l.ms.toLowerCase() + ' ' + lnTxt(l)); }).join(', ') : '';
     if(ADDED.late.length) msg += (msg ? ' · ' : '') + 'Already kicked off, not added: ' + ADDED.late.map(function(l){ return l.pl; }).join(', ');
@@ -1874,7 +1879,7 @@ page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>Parlay Builder</b></h1>")
         .replace("</style>", BUILDER_CSS + LIVE.LIVE_CSS + BOOKS.BOOKS_CSS + "\n</style>", 1)
         .replace("{{DESC}}", f"Every FanDuel player prop on the Week {WEEK} slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built {stamp} CT.")
-        .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv">← This week\'s boards</a>').replace("{{CARDS}}", body)
+        .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv" class="tool">Matchup Boards →</a> ' + " ".join(f'<a href="#g-{g["gid"]}">{g["a"]}·{g["b"]}</a>' for g in sorted(GAMES, key=lambda g: g.get("ko") or 0))).replace("{{CARDS}}", body)
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ""))
 page = re.sub(r'<div class="key">.*?</div>\n', '', page, count=1, flags=re.S)
 page = page.replace('<div class="grid">', '<div class="grid" style="display:block">', 1)
