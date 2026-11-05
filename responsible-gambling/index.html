@@ -8,6 +8,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#d7332a">
+<script>try{var _t=localStorage.getItem("bs_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BetSweep">
 <link rel="canonical" href="https://betsweep.co/responsible-gambling/">
@@ -25,9 +26,9 @@
 /* Layout: BetSweep chalkboard. Dark navy ground with chalk play-diagram texture, cream type, one red swoosh per card.
    One board per game, two team columns, score + script odds + weather strip up top. Dark-first; cream "paper" variant for light. */
 :root{
-  --bg:#0f141c; --card:#161d28; --chalk:#1d2633; --ink:#efe9da; --mute:#9aa3b2; --line:#2b3442;
-  --red:#d7332a; --red-ink:#ffffff; --cream:#efe9da;
-  --bar:#efe9da; --barbg:#2a3341;
+  --bg:#0e1820; --card:#152230; --chalk:#1c2b3a; --ink:#efe9da; --mute:#97a5b3; --line:#2a3b4b;
+  --red:#d7332a; --redtxt:#f0594e; --red-ink:#ffffff; --cream:#efe9da;
+  --bar:#efe9da; --barbg:#253646;
   --good:#5fcf93; --bad:#ef8a7e; --warn:#f2b35a;
   --s1:#efe9da; --s2:#6f7a8c; --s3:#d7332a; --s4:#8a3a44;
   --s1-ink:#0f141c; --s2-ink:#ffffff; --s3-ink:#ffffff; --s4-ink:#ffffff;
@@ -39,12 +40,12 @@
 }
 @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
   --bg:#efe9da; --card:#f7f3e8; --chalk:#e4ddcb; --ink:#141a24; --mute:#5d6676; --line:#d3cbb8;
-  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2;
+  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2; --redtxt:#b8261d;
   --good:#1f7a4d; --bad:#b3372b; --warn:#a86400;
   --s1:#141a24; --s2:#7a8699; --s3:#d7332a; --s4:#6b2d3f; --s1-ink:#efe9da; --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%2820%2C26%2C36%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E"); color-scheme:light }}
 :root[data-theme="light"]{
   --bg:#efe9da; --card:#f7f3e8; --chalk:#e4ddcb; --ink:#141a24; --mute:#5d6676; --line:#d3cbb8;
-  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2;
+  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2; --redtxt:#b8261d;
   --good:#1f7a4d; --bad:#b3372b; --warn:#a86400;
   --s1:#141a24; --s2:#7a8699; --s3:#d7332a; --s4:#6b2d3f; --s1-ink:#efe9da; --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%2820%2C26%2C36%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E"); color-scheme:light }
 *{box-sizing:border-box}
@@ -60,12 +61,14 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .wm{display:inline-flex;flex-direction:column;line-height:1}
 .wm .word{font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;color:var(--ink);position:relative;padding-right:22px}
 .wm svg{display:block;width:100%;height:14px;margin-top:-2px;overflow:visible}
-.mast h1{font-family:var(--display);font-weight:600;font-size:24px;letter-spacing:.08em;text-transform:uppercase;margin:0;color:var(--mute);text-wrap:balance}
-.mast h1 b{color:var(--ink);font-weight:700}
-.mast p{margin:0;color:var(--mute);font-size:12px;flex-basis:100%}
+.mast h1{display:flex;flex-direction:column;gap:3px;margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;line-height:1;letter-spacing:-.01em;text-transform:none;color:var(--ink);text-wrap:balance}
+.mast h1 small{font-family:var(--display);font-style:normal;font-weight:700;font-size:12px;line-height:1;letter-spacing:.16em;text-transform:uppercase;color:var(--redtxt,var(--red))}
+.mast h1 b{font-weight:800;color:var(--ink)}
+.mast p{margin:0;color:var(--mute);font-size:13px;line-height:1.45;flex-basis:100%;max-width:78ch}
 .nav{display:flex;flex-wrap:wrap;gap:6px;max-width:1360px;margin:0 auto;padding-block:0 12px}
-.nav a{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.04em;color:var(--ink);text-decoration:none;background:var(--chalk);padding:3px 9px;border-radius:3px;border:1px solid transparent}
+.nav a{display:inline-flex;align-items:center;min-height:36px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;background:var(--chalk);padding:0 12px;border-radius:8px;border:1.5px solid transparent}
 .nav a.tool{background:var(--red);color:#fff;border-color:var(--red)}
+.nav a.played{color:var(--mute);background:transparent;border-color:var(--line)}
 .nav a:hover,.nav a:focus-visible{border-color:var(--red);outline:none}
 
 .archive{display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:1360px;margin:0 auto;padding:0 0 10px;font-size:12px;color:var(--mute)}
@@ -103,9 +106,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .rec{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.04em;color:var(--ink)} .faint{opacity:.7}
 .key{max-width:1360px;margin:0 auto 18px;color:var(--mute);font-size:12.5px}
 .key b{color:var(--ink);font-weight:600}
-.helpbtn{font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:3px;padding:4px 10px;cursor:pointer}
+.helpbtn{font-family:var(--body);font-size:13px;font-weight:600;color:var(--mute);background:none;border:1.5px solid var(--line);border-radius:8px;padding:7px 12px;min-height:34px;cursor:pointer}
 .helpbtn:hover,.helpbtn[aria-expanded="true"]{border-color:var(--red)}
-.keylist{margin:10px 0 0;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:8px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 12px;color:var(--ink);line-height:1.45}
+.keylist{margin:10px 0 0;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 12px;color:var(--ink);line-height:1.45}
 .keylist dt{font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11.5px;color:var(--red);padding-top:2px}
 .keylist dd{margin:0}
 .keylist[hidden]{display:none}
@@ -116,7 +119,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 
 /* ---- boards ---- */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,640px),1fr));gap:22px;max-width:1360px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;scroll-margin-top:150px;position:relative}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;scroll-margin-top:150px;position:relative}
 
 /* player flag strip: every flag, good and bad, tap to expand */
 .pl .flags{grid-area:flags;margin:2px 0 0;min-width:0}
@@ -139,23 +142,24 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 .storyframe .pl .flags .more{display:none} .storyframe .pl .flags ul{display:none}
 
 /* Add-to-betslip buttons and the page betslip (same pricing as the parlay builder) */
-.addmini{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:5px;border-radius:3px;border:1px solid var(--red);background:none;color:var(--ink);font-weight:700;font-size:13px;line-height:1;cursor:pointer;vertical-align:middle;padding:0;font-family:inherit}
-@media (pointer:coarse){.addmini{position:relative;width:22px;height:22px}.addmini::after{content:"";position:absolute;inset:-6px}}
+.addmini{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:5px;border-radius:5px;border:1.5px solid var(--red);background:none;color:var(--ink);font-weight:700;font-size:16px;line-height:1;cursor:pointer;vertical-align:middle;padding:0;font-family:inherit;position:relative} .addmini::after{content:"";position:absolute;inset:-6px} .addmini:active{background:var(--red);color:#fff}
+.pl .prow .car{padding:8px 10px;margin:-8px -6px -8px 0}
+@media (pointer:coarse){.addmini{position:relative;width:28px;height:28px}.addmini::after{content:"";position:absolute;inset:-7px}}
 .addmini:hover{background:color-mix(in srgb,var(--red) 10%,transparent)} .addmini.in{background:var(--red);border-color:var(--red);color:#fff}
-.bslip{position:fixed;right:16px;bottom:var(--bs-tabs,0px);z-index:60;width:380px;max-width:calc(100vw - 32px);max-height:75vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-bottom:0;border-top:2px solid var(--red);border-radius:10px 10px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);transform:translateY(calc(100% - 52px));transition:transform .2s;font-size:13px;color:var(--ink)}
+.bslip{position:fixed;right:16px;bottom:var(--bs-tabs,0px);z-index:60;width:380px;max-width:calc(100vw - 32px);max-height:75vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-bottom:0;border-top:2px solid var(--red);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);transform:translateY(calc(100% - 52px));transition:transform .2s;font-size:13px;color:var(--ink)}
 .bslip.open{transform:none}
 .bslip[hidden]{display:none}
 .bslip .slipbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px;height:52px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line)}
 .bslip .slipbar b{font-family:var(--display);font-size:16px;font-weight:700} .bslip .slipbar .n{background:var(--red);color:#fff;border-radius:99px;padding:1px 8px;font-weight:700;font-size:12px}
 .bslip .slipbar.pulse{animation:bspulse .6s ease-out} @keyframes bspulse{0%{box-shadow:inset 0 0 0 2px #1493ff}100%{box-shadow:none}}
-.bslip h2{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;margin:0;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mute);display:flex;align-items:center;gap:10px}
+.bslip h2{font-family:var(--display);font-weight:700;letter-spacing:.01em;text-transform:none;font-size:18px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink);display:flex;align-items:center;gap:10px}
 .bslip h2 .n{margin-left:auto;background:var(--red);color:#fff;border-radius:99px;padding:1px 8px;font-size:12px}
 .bslip ul{list-style:none;margin:0;padding:0}
 .bslip li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}
 .bslip li b{display:block;font-weight:600} .bslip li span{color:var(--mute);font-size:11.5px}
 .bslip li .e{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px} .bslip li .hrs{grid-column:1/-1;font-size:12px;color:var(--mute);padding:4px 8px;border-left:3px solid #c9a227;background:rgba(201,162,39,.08)} .bslip li .hrs.on{border-left-color:#1a1a1a} .bslip li .hrs b{display:inline;font-weight:700;color:var(--ink)} .bslip li .hrs button{font:inherit;font-size:11.5px;font-weight:700;margin-left:6px;padding:3px 8px;border:1px solid #c9a227;border-radius:3px;background:#1a1a1a;color:#e8c55a;cursor:pointer} .bslip li small.swl{font-weight:700;color:#8a6d12;margin-left:4px;font-size:11px} .bslip li .hrs.dk{border-left-color:#53d337;background:rgba(83,211,55,.10)} .bslip li .hrs.dk button{background:#53d337;border-color:#53d337;color:#0b1a07} .bslip li .hrs.hr{border-left-color:#5b2d8e;background:rgba(91,45,142,.08)} .bslip li .hrs.hr button{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .bslip li small.swl.dk{color:#2f8f1c} .bslip li small.swl.hr{color:#5b2d8e} .bslip .up{color:var(--good)} .bslip .dn{color:var(--bad)}
 .bslip li .x{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;padding:0 4px}
-.bslip li.empty{display:block;padding:18px 14px;color:var(--mute);font-size:13px}
+.bslip li.empty{display:block;padding:18px 14px;color:var(--mute);font-size:13.5px;line-height:1.5} .bslip li.empty b{display:inline;font-weight:700;color:var(--ink)}
 .bslip li .wf{display:inline-block;color:var(--warn);cursor:pointer;font-weight:800;width:18px;height:18px;line-height:16px;text-align:center;border:1.5px solid var(--warn);border-radius:50%;font-size:12px;margin-left:4px;vertical-align:middle} .bslip li .wf.ok{color:var(--good);border-color:var(--good)} .bslip li .wf.nt{color:var(--mute);border-color:var(--mute);font-style:italic;font-family:Georgia,serif}
 .bslip .why{grid-column:1/-1;margin:4px 0 0;padding:8px 10px 8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);border-left:3px solid var(--warn);border-radius:0 4px 4px 0;font-size:12.5px;line-height:1.45;color:var(--ink)} .bslip .why[hidden]{display:none}
 .bslip .why > b{display:block;font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px;color:var(--warn);margin-bottom:3px} .bslip .why > b small{font-family:var(--body);font-weight:600;text-transform:none;letter-spacing:0;color:var(--mute);margin-left:6px}
@@ -258,7 +262,7 @@ body.compact .storyframe .card > *{display:revert}
 .conf li,.conf p,.conf .mread,.conf .mread .lt,.conf .mnote{font-size:12px;max-height:999999px}
 .conf summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:8px 14px;cursor:pointer;list-style:none}
 .conf summary::-webkit-details-marker{display:none}
-.conf .cg{font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;color:#fff;background:var(--good)}
+.conf .cg{font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;color:#fff;background:var(--good)}
 .conf.c-medium .cg{background:var(--warn)} .conf.c-low .cg{background:var(--red)}
 .conf.c-high .cg,.conf.c-medium .cg{color:#0f141c}
 @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .conf.c-high .cg,:root:not([data-theme="dark"]) .conf.c-medium .cg{color:#fff} }
@@ -289,8 +293,8 @@ body.compact .card:not(.expanded) > .conf .cl{display:none}
 .ginfo .wx.r-high svg{color:var(--red)} .ginfo .wx.r-med svg{color:var(--warn)}
 .ginfo .mkt{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums} .ginfo .mkt.differ{color:var(--warn)}
 .vbtns{display:flex;gap:8px;padding:10px 14px;background:color-mix(in srgb,var(--ink) 7%,var(--card));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.vbtn{flex:1;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-.vbtn:hover{border-color:var(--red)} .card[data-view="script"] .vbtn[data-view="script"],.card[data-view="proj"] .vbtn[data-view="proj"]{background:var(--red);border-color:var(--red);color:#fff}
+.vbtn{flex:1;min-height:38px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.vbtn:hover{border-color:var(--red)} .card[data-view="script"] .vbtn[data-view="script"],.card[data-view="proj"] .vbtn[data-view="proj"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .card.expanded[data-view="script"] .cols,.card.expanded[data-view="script"] .ft{display:none}
 .card.expanded[data-view="proj"] .scripts,.card.expanded[data-view="proj"] .schint,.card.expanded[data-view="proj"] .legend,.card.expanded[data-view="proj"] .splays,.card.expanded[data-view="proj"] .slip,.card.expanded[data-view="proj"] .bestslip{display:none}
 body.compact .card:not(.expanded) > .ginfo{display:flex;padding:7px 12px;border-top:0}
@@ -334,13 +338,14 @@ body.compact .card:not(.expanded) > .vbtns{display:flex;padding:10px 12px}
 .faceoff thead th{font-weight:700;font-size:10px;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;text-overflow:clip;padding-left:1px;padding-right:1px} .faceoff thead th.lg{font-size:8.5px} .faceoff thead th small{display:block;color:var(--mute);font-weight:500;font-size:10px} .faceoff thead th.fot{text-align:left;font-family:var(--display);letter-spacing:.1em;color:var(--mute);width:66px}
 .faceoff tbody th{text-align:left;font-weight:600;font-size:11px;color:var(--mute);cursor:help;width:66px} .faceoff td small{display:block;color:var(--mute);font-size:10px} .faceoff td small.est{font-style:italic}
 .faceoff td.bst{font-weight:800;color:var(--good)} .faceoff .fonote{margin:0 0 10px;color:var(--mute);font-size:11px;line-height:1.4}
-.newsl{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin:0 0 0 3px;border-radius:4px;color:var(--mute);cursor:pointer;vertical-align:middle} .newsl:hover,.newsl:focus-visible{color:var(--ink);background:var(--chalk);outline:none} .storyframe .newsl,body.render .newsl{display:none}
-.splays.cov{border-left:4px solid #5b2d8e} .splays.cov .covt{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px} .splays.cov .covt em{font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--mute);margin-right:2px} .splays.cov .sp b{min-width:0} .splays.cov .sp.cov-up{border-color:var(--good)} .splays.cov .sp.cov-up b{color:var(--good)} .splays.cov .sp.cov-dn{border-color:var(--bad)} .splays.cov .sp.cov-dn b{color:var(--bad)} .splays.cov .sp.cov-n b{color:var(--mute)}
+.newsl{display:inline-flex;align-items:center;justify-content:center;width:28px;height:26px;margin:0 0 0 4px;border-radius:5px;color:var(--mute);cursor:pointer;vertical-align:middle;position:relative;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);background:color-mix(in srgb,var(--chalk) 55%,transparent)} .newsl::after{content:"";position:absolute;inset:-7px} .newsl svg{width:15px;height:15px} .newsl:hover,.newsl:focus-visible{color:var(--red);border-color:var(--red)} .newsl:active{background:var(--red);color:#fff} .storyframe .newsl,body.render .newsl{display:none}
+.sweepsays{margin:8px 0 0;position:relative;background:var(--chalk);border-radius:10px;padding:10px 12px 10px 16px;font-size:15px;line-height:1.4;font-weight:500;color:var(--ink)} .sweepsays i{display:block;font-style:normal;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--redtxt,var(--red));margin-bottom:3px} .sweepsays::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--red)} .splays.ctx{border-left:4px solid #8a6d1f;padding:6px 10px} .splays.ctx summary{cursor:pointer;list-style:none;display:flex;align-items:center} .splays.ctx summary::-webkit-details-marker{display:none} .splays.ctx summary .lt small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--mute)} .splays.ctx .cxl{margin:6px 0 0;padding:0 0 0 14px;font-size:12.5px;line-height:1.45;color:var(--ink)} .splays.ctx .cxl li{margin:3px 0} .splays.ctx .cxl li b{font-family:var(--display);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:4px} .splays.ctx .cx-watch b{color:#b7791f} .splays.ctx .cx-bad b{color:var(--bad)} .splays.ctx .cx-good b{color:var(--good)} .splays.ctx .cx-info b{color:var(--mute)} .splays.cov{border-left:4px solid #5b2d8e} .splays.cov .covt{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px} .splays.cov .covt em{font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--mute);margin-right:2px} .splays.cov .sp b{min-width:0} .splays.cov .sp.cov-up{border-color:var(--good)} .splays.cov .sp.cov-up b{color:var(--good)} .splays.cov .sp.cov-dn{border-color:var(--bad)} .splays.cov .sp.cov-dn b{color:var(--bad)} .splays.cov .sp.cov-n b{color:var(--mute)}
 .splays.ftd{border-left:4px solid var(--ink)} .splays.ftd .ftdmore{margin-left:auto;font-size:11px;font-weight:600;color:var(--red);text-decoration:none;white-space:nowrap} body.render .splays.ftd .ftdmore{display:none}
-.fdgo{display:inline-flex;align-items:baseline;gap:5px;margin-left:auto;padding:4px 9px;border-radius:3px;background:none;color:var(--ink);border:1px solid var(--red);font:inherit;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;text-decoration:none;white-space:nowrap;cursor:pointer}
+.fdgo{display:inline-flex;align-items:baseline;gap:5px;margin-left:auto;padding:6px 11px;border-radius:8px;min-height:30px;background:none;color:var(--ink);border:1.5px solid var(--red);font:inherit;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;text-decoration:none;white-space:nowrap;cursor:pointer}
 .fdgo small{font:inherit;font-size:11px;font-weight:500;color:var(--mute)}
 .fdgo:hover{background:color-mix(in srgb,var(--red) 10%,transparent)}
 .fdgo.in{background:var(--red);color:#fff} .fdgo.in small{color:rgba(255,255,255,.85)}
+.fdgo:disabled,.fdgo[disabled]{border-color:var(--line);color:var(--mute);cursor:default;background:none}   /* kicked off: a quiet note, not a red call to action */
 .storyframe .fdgo,.storyframe .schint,body.render .fdgo,body.render .schint{display:none}
 .legend{margin:0;padding:7px 14px;border-bottom:1px solid var(--line);font-size:11.5px;color:var(--mute);display:flex;flex-wrap:wrap;gap:3px 14px;font-variant-numeric:tabular-nums}
 .legend b{color:var(--ink);font-weight:600;flex-basis:100%}
@@ -351,6 +356,9 @@ body.compact .card:not(.expanded) > .vbtns{display:flex;padding:10px 12px}
 
 /* summary card */
 .summary .tm b{font-size:34px}
+body.compact .card.summary .hd{grid-template-columns:1fr auto;grid-template-areas:"a s";row-gap:0;padding:12px 14px 14px}
+body.compact .card.summary .tm.b{display:none} body.compact .card.summary .tm b{font-size:30px} body.compact .card.summary .score .pt{font-size:30px}
+body.compact .card.summary .score .swoosh{height:12px;margin-top:0}
 .calib{margin-top:16px;padding:14px 16px 12px}.calib h2{margin:0 0 4px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.06em;text-transform:uppercase}.calib h2 small{display:block;font-family:var(--body);font-weight:400;font-size:11px;letter-spacing:0;text-transform:none;color:var(--mute)}.calib p{color:var(--mute);font-size:13px;line-height:1.45;margin:4px 0 10px}.calgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:4px 22px}.calgrid h3{margin:0 0 4px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase}.calib .fn{margin:10px 0 0}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:0;border-top:1px solid var(--line)}
 .sumgrid>div{padding:10px 14px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
@@ -487,7 +495,7 @@ body.compact .card:not(.expanded) > .vbtns{display:flex;padding:10px 12px}
   .hd{grid-template-columns:1fr 1fr;grid-template-areas:"a b" "s s";row-gap:6px}
   .cols{grid-template-columns:1fr} .col+.col{border-left:0;border-top:2px solid var(--line)}
   .scripts em{display:none}
-  .mast{gap:10px;padding-block:8px 4px} .mast p{display:none} .mast img{width:30px;height:30px} .mast h1{font-size:16px;letter-spacing:.06em}
+  .mast{gap:10px;padding-block:8px 4px} .mast p{display:none} .mast img{width:30px;height:30px} .mast h1{font-size:22px}
   .nav{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-block:0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,#000 92%,transparent)}
   .nav::-webkit-scrollbar{display:none}
   .nav a{font-size:14px;padding:5px 10px;flex:none}
@@ -550,6 +558,26 @@ nav.nav a.played{opacity:.5}
 .sitenav .brand{display:inline-flex;align-items:center;text-decoration:none;padding:7px 0}
 .sitenav .brand img{height:32px;width:auto;display:block}
 .sitenav .brand img.cream{display:none}
+.sitenav .srch{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1.5px solid #141a24;border-radius:8px;background:none;color:#141a24;cursor:pointer;flex:none} .sitenav .srch:hover{background:#141a24;color:#efe9da} .sitenav .srch + .menu{margin-left:8px}
+.bssrch{position:fixed;inset:0;z-index:200;background:rgba(15,20,28,.72);display:none;align-items:flex-start;justify-content:center;padding:max(10px,env(safe-area-inset-top)) 10px 10px} .bssrch.open{display:flex}
+.bssrch .box{width:100%;max-width:560px;background:#efe9da;color:#141a24;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.45);overflow:hidden;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.bssrch .row{display:flex;align-items:center;gap:8px;padding:10px 10px 8px;border-bottom:1px solid #d9d2c0} .bssrch input{flex:1;font:inherit;font-size:17px;padding:10px 12px;border:1.5px solid #141a24;border-radius:8px;background:#fff;color:#141a24;min-width:0} .bssrch input:focus{outline:none;border-color:#d7332a;box-shadow:0 0 0 3px rgba(215,51,42,.22)} .bssrch .x{font:inherit;font-size:20px;background:none;border:0;color:#5b6473;padding:6px 10px;cursor:pointer}
+.bssrch ul{list-style:none;margin:0;padding:4px 0;max-height:min(60vh,520px);overflow:auto} .bssrch li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:0}
+.bssrch li a.pl{display:block;padding:10px 14px;text-decoration:none;color:#141a24;font-weight:600;font-size:15px;line-height:1.2} .bssrch li a.pl small{display:block;color:#5b6473;font-weight:500;font-size:12px;margin-top:2px}
+.bssrch li .go{display:flex;gap:6px;padding-right:10px} .bssrch li .go a{text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid #c9c1ad;border-radius:6px;padding:6px 8px;color:#141a24;white-space:nowrap}
+.bssrch li.on a.pl,.bssrch li a.pl:hover{background:#e6dfcc} .bssrch .hint{padding:8px 14px 12px;color:#5b6473;font-size:12.5px}
+@media (max-width:760px){
+  .top .mast{padding-block:8px 4px;gap:8px} .top .mast img{display:none} .top .mast h1{font-size:22px;gap:2px} .top .mast h1 small{font-size:10.5px;letter-spacing:.14em} .top .mast p{display:none} .top .nav{padding-block:0 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch} .top .nav::-webkit-scrollbar{display:none}
+  .top .nav a{white-space:nowrap;flex:none}
+  body.bs-scrolled .top .mast{display:none} body.bs-scrolled .top{margin-bottom:10px}
+}
+@media (min-width:761px){
+  /* desktop: the sticky page header is up to 197px tall (logo, title, paragraph, slate chips); scrolling down keeps title + chips only */
+  body.bs-scrolled .top .mast p,body.bs-scrolled .top .mast img{display:none} body.bs-scrolled .top .mast{padding-block:6px 0} body.bs-scrolled .top .mast h1{font-size:22px} body.bs-scrolled .top .mast h1 small{display:none}
+}
+/* deep links (#g-X / #lv-X / #box-X / a boards card) land below the sticky chrome instead of under it */
+.gcard,.lg2,.tdgame,[id^="box-"],.player .sec,.pcard{scroll-margin-top:140px}
+@media (min-width:761px){ .gcard,.lg2,.tdgame,[id^="box-"]{scroll-margin-top:230px} }
 .sitenav .tabs{display:flex;gap:4px;margin-left:auto;align-items:center;padding:0;border:0;background:none}
 .sitenav .tabs a{color:#4a5260;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;padding:14px 10px 11px;border-bottom:3px solid transparent;margin-bottom:-3px}
 .sitenav .tabs a:hover{color:#141a24}
@@ -569,6 +597,9 @@ nav.nav a.played{opacity:.5}
 .sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
 .sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
 .sitenav .ddh{display:none}
+.sitenav .thm{display:flex;align-items:center;gap:6px;padding:8px 10px;border-left:1px solid #d9d1bf;margin-left:6px} .sitenav .thm span{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4a5260;margin-right:2px}
+.sitenav .thm button{font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:#4a5260;background:none;border:1.5px solid #d9d1bf;border-radius:999px;padding:4px 10px;cursor:pointer;min-height:30px} .sitenav .thm button.on{color:#efe9da;background:#141a24;border-color:#141a24}
+@media (max-width:1240px){ .sitenav .thm{border-left:0;margin:0;padding:12px 18px;border-bottom:1px solid #d9d1bf} .sitenav .thm span{font-size:14px;margin-right:auto} .sitenav .thm button{min-height:36px;padding:6px 14px;font-size:14px} }
 @media (max-width:1240px){
   .sitenav .dd{display:block;border-bottom:1px solid #d9d1bf}
   .sitenav .ddb{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:13px 18px;font-size:17px;border:0;margin:0;color:#4a5260}
@@ -588,6 +619,9 @@ nav.nav a.played{opacity:.5}
   .sitenav .tabs a.on{border-left:4px solid #d7332a;border-bottom-color:#d9d1bf}
   .top{top:calc(50px + env(safe-area-inset-top,0px))}
 }
+/* 11/4: phones zoom page content 1.1x (BIGGER_CSS), so a 50px sticky offset lands at 55px and a 2px strip of page showed between the
+   site nav (53px) and the page header; the offset is set in pre-zoom units */
+@media (max-width:760px){ .top{top:calc((53px + env(safe-area-inset-top,0px)) / 1.1)} }
 @media (display-mode: standalone){ .sitenav .in{min-height:54px} }
 /* app tab bar: the installed app and phones get bottom tabs like a native app; the top menu stays for everything else */
 .apptabs{display:none;position:fixed;left:0;right:0;bottom:0;z-index:70;background:#141a24;border-top:1px solid #2a3240;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.35)}
@@ -600,9 +634,34 @@ nav.nav a.played{opacity:.5}
 .installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
 .installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
 </style>
+<style>
+/* ===== BetSweep brand layer (11/5) - one control system and one heading system for every page; loads after the page's own CSS ===== */
+:root{--brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 8'%3E%3Cpath d='M1.5 5.2C10 2.6 18 2.2 27 3.4c7 1 14 2.6 21 1.6 4-.6 7-1.9 10-2.9' fill='none' stroke='%23d7332a' stroke-width='3.4' stroke-linecap='round'/%3E%3Cpath d='M3 6.4c9-1.3 17-2 26-1 7 .8 13 2 19 1.1' fill='none' stroke='%23d7332a' stroke-width='1.5' stroke-linecap='round' opacity='.8'/%3E%3C/svg%3E");--ctl:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif}
+/* the brushed red stroke under a section title (the board's "PICKS. DATA." dash) */
+.brush{position:relative;padding-bottom:12px} .brush::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* segmented controls: builder view tabs, live Picks / Every leg, players position filter, usage/benefits chips */
+.tabs .tab,.seg button,.pos button,.usg .tabs button,.bnf .tabs button{font:inherit;font-family:var(--ctl);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;line-height:1}
+body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs button.on,body .bnf .tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg{display:inline-flex;gap:6px;background:none;border:0;padding:0}
+/* primary action = red; secondary = outline; both in the control face */
+.dfs .btn:not(.sec),.tc .lg .go,.tdlive,a.pri.solid,.bsbtn{font:inherit;font-family:var(--ctl);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:8px;border:1.5px solid var(--red);background:var(--red);color:#fff;cursor:pointer;text-decoration:none}
+.dfs .btn.sec,.rfr,.tdshare,.altbtn,.bsbtn.sec{font:inherit;font-family:var(--ctl);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
+.rfr:hover,.tdshare:hover,.altbtn:hover,.dfs .btn.sec:hover{border-color:var(--red)}
+/* inputs */
+.lvbar input,.pd input,.tc input[type=text],.slform input,.bslip .namebox input{font:inherit;font-size:16px;min-height:42px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.lvbar input:focus,.pd input:focus,.tc input[type=text]:focus,.slform input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+/* status pills stay pills; everything else squares off at 8px */
+.tdlinks a,.fdgo,.bslip .acts button,.bslip .acts a,.acts button,.acts a.fd,.lg a.fd{border-radius:8px}
+/* page titles and section titles on the pages that carry their own CSS (usage, who-benefits, social, how-to guide, receipts) */
+.uw h1,.soc h1,.sp h1,.gd h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;letter-spacing:-.01em;line-height:1}
+.uw h2,.gd h2{letter-spacing:.01em;text-transform:none;font-size:19px} .gd h2{font-size:22px;margin:0 0 10px;padding-bottom:12px;position:relative} .gd h2::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* focus is visible everywhere, in the brand red */
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
 </head>
 <body>
-<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><a href="/" class="">Home</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><a href="/social/" class="">Social</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a></div></div></div></div></nav>
+<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><a href="/" class="">Home</a><a href="/today/" class="">Today</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><a href="/social/" class="">Social</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a></div></div><div class="thm" role="group" aria-label="Theme"><span>Theme</span><button type="button" data-thm="auto">Auto</button><button type="button" data-thm="dark">Dark</button><button type="button" data-thm="light">Light</button></div></div></div></nav>
 <script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
 <script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>
 <div class="top">
@@ -1218,9 +1277,45 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function(){ show(true); }, function(){ show(false); }); else show(false);
     });
   });
-})();</script><p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Builder</span></a><a href="/team/" class=""><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Fantasy</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a></nav>
+})();</script><p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/today/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg><span>Today</span></a><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Builder</span></a><a href="/team/" class=""><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Fantasy</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a></nav>
 <script>
 (function(){
+  // ---- 11/4 UX audit: three site-wide behaviours ----
+  // 1. game deep links: the home page and Today link to /boards/#g-BAL-JAX, the boards card is id="BAL-JAX", the builder's is "g-BAL-JAX" and
+  //    the Live page's is "lv-BAL-JAX" - land on the game whichever form the link used
+  function landOnHash(){ var h = (location.hash || '').slice(1); if(!h) return; var el = document.getElementById(h);
+    if(!el){ var m = h.match(/^(?:g-|lv-|box-|td-)?([A-Z]{2,3}-[A-Z]{2,3})$/); if(!m) return;
+      el = ['g-' + m[1], 'lv-' + m[1], 'td-' + m[1], m[1]].map(function(id){ return document.getElementById(id); }).filter(Boolean)[0]; if(!el) return; }
+    if(el.classList.contains('gcard') || el.classList.contains('lg2') || el.classList.contains('tdgame')) el.classList.add('open');
+    if(el.classList.contains('card')) el.classList.add('expanded');   // boards card (template.html folds .card:not(.expanded) on phones)
+    var det = el.querySelector('details'); if(det && el.tagName !== 'DETAILS') det.open = true;
+    setTimeout(function(){
+      // land just below the sticky chrome as it will look once scrolled (the header compacts on scroll), whatever the page's own margins
+      document.body.classList.add('bs-scrolled');
+      var nav = document.querySelector('.sitenav'), top = document.querySelector('.top');
+      var chrome = (nav ? nav.getBoundingClientRect().height : 0) + (top && getComputedStyle(top).position === 'sticky' ? top.getBoundingClientRect().height : 0) + 8;
+      var y = el.getBoundingClientRect().top + (window.scrollY || 0) - chrome; window.scrollTo(0, Math.max(0, y)); lastY = y; }, 60); }
+  window.addEventListener('load', landOnHash); window.addEventListener('hashchange', landOnHash);
+  // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
+  var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
+  // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
+  var sb = document.getElementById('bssrchbtn');
+  if(sb){ var IDX = null, box = null, list = null, inp = null, sel = 0;
+    function build(){ box = document.createElement('div'); box.className = 'bssrch'; box.innerHTML = '<div class="box"><div class="row"><input type="search" placeholder="Player, team or position" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find a player"><button type="button" class="x" aria-label="Close">×</button></div><ul></ul><div class="hint">Tap a name for his page. Builder opens his legs in the Parlay Builder; Board opens his game. Type a team code (BUF) or a position (TE).</div></div>'; document.body.appendChild(box); inp = box.querySelector('input'); list = box.querySelector('ul');
+      box.addEventListener('click', function(e){ if(e.target === box || e.target.classList.contains('x')) close(); }); inp.addEventListener('input', function(){ sel = 0; render(); });
+      inp.addEventListener('keydown', function(e){ var items = list.querySelectorAll('li'); if(e.key === 'ArrowDown'){ sel = Math.min(sel + 1, items.length - 1); paint(); e.preventDefault(); } else if(e.key === 'ArrowUp'){ sel = Math.max(sel - 1, 0); paint(); e.preventDefault(); } else if(e.key === 'Enter'){ var a = items[sel] && items[sel].querySelector('a.pl'); if(a) location.href = a.getAttribute('href'); } else if(e.key === 'Escape') close(); }); }
+    function paint(){ list.querySelectorAll('li').forEach(function(li, i){ li.classList.toggle('on', i === sel); }); }
+    function norm(s){ return String(s || '').toLowerCase().replace(/[.'\u2019]/g, ''); }
+    function render(){ var q = norm(inp.value).trim(); if(!IDX){ list.innerHTML = '<li><a class="pl">Loading players…</a></li>'; return; }
+      var terms = q.split(/\s+/).filter(Boolean); var hits = !terms.length ? [] : IDX.filter(function(p){ var hay = norm(p.n) + ' ' + norm(p.t) + ' ' + norm(p.p) + ' ' + norm(p.o); return terms.every(function(t){ return hay.indexOf(t) >= 0; }); });
+      hits.sort(function(a, b){ var an = norm(a.n).indexOf(terms[0]) === 0 ? 0 : 1, bn = norm(b.n).indexOf(terms[0]) === 0 ? 0 : 1; return an - bn || (b.l - a.l) || a.n.localeCompare(b.n); });
+      list.innerHTML = hits.slice(0, 12).map(function(p){ var gid = p.t && p.o ? [p.t, p.o].sort().join('-') : ''; return '<li><a class="pl" href="/player/' + p.s + '/">' + esc(p.n) + '<small>' + esc(p.p) + ' · ' + esc(p.t) + (p.o ? ' ' + (p.o === 'BYE' ? '· bye' : 'vs ' + esc(p.o)) : '') + (p.l ? ' · props this week' : '') + '</small></a><span class="go">' + (p.l ? '<a href="/build/?p=' + encodeURIComponent(p.n) + '">Builder</a>' : '') + (gid && p.o !== 'BYE' ? '<a href="/boards/#' + gid + '">Board</a>' : '') + '</span></li>'; }).join('') || (terms.length ? '<li><a class="pl">No player, team or position matches "' + esc(inp.value) + '"</a></li>' : ''); paint(); }
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function open(){ if(!box) build(); box.classList.add('open'); inp.value = ''; list.innerHTML = ''; setTimeout(function(){ inp.focus(); }, 30);
+      if(!IDX){ fetch('/b/players.json', {cache: 'force-cache'}).then(function(r){ return r.ok ? r.json() : []; }).then(function(j){ IDX = Array.isArray(j) ? j : []; render(); }).catch(function(){ IDX = []; render(); }); } }
+    function close(){ if(box) box.classList.remove('open'); }
+    sb.addEventListener('click', open);
+    document.addEventListener('keydown', function(e){ if((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')){ e.preventDefault(); open(); } }); }
   // full-bleed header: inner pages pad/margin the body, so measure the nav's inset and pull it back to the viewport edge
   function bleed(){ var n = document.getElementById('sitenav'); if(!n) return; var d = document.documentElement.style; d.setProperty('--bs-inset', '0px'); var l = Math.round(n.getBoundingClientRect().left); if(l > 0) d.setProperty('--bs-inset', l + 'px'); }
   window.addEventListener('resize', bleed); window.addEventListener('orientationchange', bleed);
@@ -1236,6 +1331,21 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   if(ios){ bar.querySelector('.msg').innerHTML = 'Install BetSweep: tap <b>Share</b> then <b>Add to Home Screen</b>.'; bar.classList.add('show'); }
   bar.querySelector('.go').addEventListener('click', function(){ if(deferred){ deferred.prompt(); deferred = null; } bar.classList.remove('show'); });
   bar.querySelector('.x').addEventListener('click', function(){ bar.classList.remove('show'); try { localStorage.setItem('bs_install_dismissed', String(Date.now())); } catch(e){} });
+})();
+(function(){
+  // 11/4 UX audit: Theme switch (Auto / Dark / Light). Auto follows the phone; the choice is kept in localStorage and applied before
+  // paint by the one-line script in <head>. Home stays dark (hero landing); every app page honours data-theme.
+  var g = document.querySelector('.sitenav .thm'); if(!g) return;
+  function cur(){ try { var t = localStorage.getItem('bs_theme'); return (t === 'dark' || t === 'light') ? t : 'auto'; } catch(e){ return 'auto'; } }
+  function paint(){ var c = cur(); g.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-thm') === c); b.setAttribute('aria-pressed', b.getAttribute('data-thm') === c ? 'true' : 'false'); }); }
+  g.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-thm]'); if(!b) return;
+    var t = b.getAttribute('data-thm');
+    try { if(t === 'auto') localStorage.removeItem('bs_theme'); else localStorage.setItem('bs_theme', t); } catch(err){}
+    if(t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    paint();
+  });
+  paint();
 })();
 </script>
 </body>
