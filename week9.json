@@ -4,6 +4,146 @@
  "note": "Weekly (Wednesday-night) run. Strict leg filter left 6 of 15 games with no clean props.",
  "promos": [
   {
+   "slot": "thursday",
+   "name": "Zay Day",
+   "type": "single",
+   "legs": [
+    {
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 60,
+     "o": 152,
+     "p": 0.443,
+     "bk": 0.397,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869046",
+      "s": "49181554"
+     },
+     "why": "60+ in 5 of 7; JAX allows the most WR rec yds; BAL trails by 10+ in 50% of endings"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectionId=49181554",
+   "price": "+152",
+   "chance": 0.443,
+   "boost": true,
+   "note": "Owner asked for TNF bets anyway (Thu 11/5). Only override: the game-wide 'Low market total (39.5)' flag, which is stale (total is now 40.5). Every other filter was applied. BAL starts Joe Fagnano at QB (Huntley out, Brissett not available until Week 10).",
+   "caption": "Zay Day +152\nZay Flowers 60+ rec yds\nWhy: JAX gives up the most WR yards in the league and the model has BAL chasing in half its endings - 44% vs FanDuel's 40%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
+   "slot": "thursday",
+   "name": "Charm City Chase",
+   "type": "+500",
+   "game": "BAL-JAX",
+   "legs": [
+    {
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 60,
+     "o": 152,
+     "p": 0.443,
+     "bk": 0.397,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869046",
+      "s": "49181554"
+     },
+     "why": "60+ in 5 of 7; JAX allows the most WR rec yds; BAL trails by 10+ in 50% of endings"
+    },
+    {
+     "pl": "Rashod Bateman",
+     "m": "Receiving Yards",
+     "ln": 25,
+     "o": 194,
+     "p": 0.3715,
+     "bk": 0.34,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869047",
+      "s": "41435578"
+     },
+     "why": "25+ in 5 of 8; 39 yds/g over the last 3"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181554&marketId[1]=42.621869047&selectionId[1]=41435578",
+   "price": "+530 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
+   "chance": 0.165,
+   "note": "Owner asked for TNF bets anyway (Thu 11/5). Only override: the game-wide 'Low market total (39.5)' flag, which is stale (total is now 40.5). Every other filter was applied. BAL starts Joe Fagnano at QB (Huntley out, Brissett not available until Week 10). No JAX leg: none at +120 or longer with a model edge.",
+   "caption": "Charm City Chase ~+530\nZay Flowers 60+ rec yds\nRashod Bateman 25+ rec yds\nWhy: Jags lead, Ravens throw - JAX allows the most WR yards in the NFL\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
+   "slot": "thursday",
+   "name": "Duval Comeback Special",
+   "type": "lottery",
+   "game": "BAL-JAX",
+   "legs": [
+    {
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 70,
+     "o": 225,
+     "p": 0.3515,
+     "bk": 0.308,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869046",
+      "s": "49181558"
+     },
+     "why": "70+ in 4 of 7; avg 86.9"
+    },
+    {
+     "pl": "Rashod Bateman",
+     "m": "Receiving Yards",
+     "ln": 25,
+     "o": 194,
+     "p": 0.3715,
+     "bk": 0.34,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869047",
+      "s": "41435578"
+     },
+     "why": "25+ in 5 of 8; 39 yds/g over the last 3"
+    },
+    {
+     "pl": "Chris Rodriguez Jr.",
+     "m": "Anytime TD",
+     "ln": 1,
+     "o": -105,
+     "p": 0.412,
+     "bk": 0.512,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621857664",
+      "s": "60221458"
+     },
+     "why": "JAX implied 25 pts; Tuten (ankle/foot) questionable"
+    },
+    {
+     "pl": "Nate Boerkircher",
+     "m": "Receiving Yards",
+     "ln": 15,
+     "o": 182,
+     "p": 0.3685,
+     "bk": 0.355,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621968304",
+      "s": "103841750"
+     },
+     "why": "15+ in 3 of 6; over FD's main line (8) in 5 of 6"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181558&marketId[1]=42.621869047&selectionId[1]=41435578&marketId[2]=42.621857664&selectionId[2]=60221458&marketId[3]=42.621968304&selectionId[3]=103841750",
+   "price": "+4370 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
+   "chance": 0.0198,
+   "note": "Owner asked for TNF bets anyway (Thu 11/5). Only override: the game-wide 'Low market total (39.5)' flag, which is stale (total is now 40.5). Every other filter was applied. BAL starts Joe Fagnano at QB (Huntley out, Brissett not available until Week 10).",
+   "caption": "LOTTERY: Duval Comeback Special ~+4370\nZay Flowers 70+ rec yds\nRashod Bateman 25+ rec yds\nChris Rodriguez Jr. anytime TD\nNate Boerkircher 15+ rec yds\nWhy: JAX scores early, BAL airs it out chasing - JAX by 10+ is the model's likeliest ending (50%)\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
    "slot": "saturday",
    "name": "Fall Back Double",
    "type": "core",
@@ -142,10 +282,6 @@
   "file": "singles-sun.json"
  },
  "pending": [
-  {
-   "slot": "thursday",
-   "status": "not drafted - no clean BAL-JAX leg (every prop carries the low-total 39.5 flag or another bad flag); check_thursday redrafts"
-  },
   {
    "slot": "saturday",
    "name": "SGP of the week",
