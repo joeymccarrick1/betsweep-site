@@ -107,7 +107,13 @@ json.dump({"snaps": LOG, "mirrored": now.isoformat()}, open("out/livelog.json", 
 # ---- depthcharts.json (owner 11/4: "I wish you'd take news into account" - Emanuel Wilson lost his job when Charbonnet and Price came back and
 # the model still had him RB1). ESPN's team depth charts, once an hour, raw per team, so the rebuild can compare ESPN's RB/WR/TE order with the
 # model's auto depth role and force roles / flag legs (gen depth_check.py). Only at :0x past the hour to keep the run light.
-if now.minute < 10:
+# GitHub's cron is throttled (runs land at odd minutes), so gate on age, not on the clock: refresh when the last mirror is older than 50 minutes
+_dc_age = 1e9
+try:
+    _prev = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/depthcharts.json"]))
+    _dc_age = (now - dt.datetime.fromisoformat(_prev["mirrored"])).total_seconds() / 60
+except Exception: pass
+if _dc_age > 50:
     DC = {"mirrored": now.isoformat(), "teams": {}}
     try:
         tl = get(f"{S}/teams?limit=40") or {}
