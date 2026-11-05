@@ -113,20 +113,21 @@ for k, p in pages.items(): by_team.setdefault(p["team"], []).append(k)
 PCSS = r"""
 .pp{max-width:1100px;margin:16px auto 40px}
 .pp a{color:var(--ink)}
-.pp .crumb{font-size:12px;color:var(--mute);margin:0 0 10px}.pp .crumb a{color:var(--mute)}
-.pp header{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;background:var(--chalk) var(--plays) center/360px 130px repeat;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.pp .crumb{font-size:13.5px;color:var(--mute);margin:0 0 10px;line-height:28px}.pp .crumb a{color:var(--mute);padding:4px 0}
+.pp header{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;background:var(--chalk) var(--plays) center/360px 130px repeat;border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin-bottom:14px}
 .pp .tb{grid-row:1/3;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:10px;background:var(--p,#333);box-shadow:inset 0 -6px 0 var(--s,#000);color:#fff;font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.04em}
 .pp h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1;letter-spacing:-.01em}
-.pp .sub{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;color:var(--mute);font-size:13px}
+.pp .sub{display:flex;flex-wrap:wrap;gap:4px 0;align-items:center;color:var(--mute);font-size:13.5px} .pp .sub>*:not(:last-child)::after{content:"·";margin:0 8px;color:var(--mute)} .pp .sub .st{margin-left:0} .pp .sub .st::after{content:none}
 .pp .sub b{color:var(--ink);font-weight:600}
 .pp .st{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:3px;color:#fff;background:var(--warn)}
 .pp .st.out{background:var(--red)} .pp .st.dbt{background:#b3372b} .pp .st.q{background:var(--warn);color:#0f141c}
 .pp .acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.pp .acts a{font-size:12.5px;font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px}
+.pp .acts a{display:inline-flex;align-items:center;min-height:36px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;border:1.5px solid var(--line);background:transparent;border-radius:8px;padding:0 12px;white-space:nowrap}
+.pp .acts a.pri{background:var(--red);border-color:var(--red);color:#fff}
 .pp .acts a:hover{border-color:var(--red)}
-.pp section{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:0 0 14px;overflow:hidden}
-.pp h2{margin:0;padding:10px 14px;border-bottom:1px solid var(--line);font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:14px;display:flex;gap:10px;align-items:baseline}
-.pp h2 small{font-family:var(--body);font-weight:400;letter-spacing:0;text-transform:none;color:var(--mute);font-size:12px}
+.pp section{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 14px;overflow:hidden}
+.pp h2{margin:0;padding:12px 14px;border-bottom:1px solid var(--line);font-family:var(--display);font-weight:700;letter-spacing:.01em;text-transform:none;font-size:18px;display:flex;gap:10px;align-items:baseline}
+.pp h2 small{font-family:var(--body);font-weight:400;letter-spacing:0;text-transform:none;color:var(--mute);font-size:12.5px}
 .pp .tw{overflow-x:auto}
 .pp table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
 .pp th,.pp td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
@@ -136,9 +137,9 @@ PCSS = r"""
 .pp tr.mk td .mup{margin-left:8px;vertical-align:1px}
 .pp .e.up{color:var(--good);font-weight:700} .pp .e.dn{color:var(--bad)}
 .pp .hr{color:var(--mute)} .pp .hr b{color:var(--ink)}
-.pp .bk a{display:inline-block;font-size:11.5px;font-weight:700;text-decoration:none;padding:3px 8px;border-radius:4px;margin-left:4px;color:#fff;background:#1493ff}
+.pp .bk a{display:inline-block;font-size:12px;font-weight:700;text-decoration:none;padding:4px 9px;border-radius:6px;margin-left:4px;color:#fff;background:#1493ff}
 .pp .bk a.dkb{background:#53d337;color:#0b1a07} .pp .bk a.hrb{background:#5b2d8e} .pp .bk a.best{outline:2px solid var(--good);outline-offset:1px}
-.pp .add{font:inherit;font-size:14px;font-weight:700;width:26px;height:26px;border-radius:5px;border:1px solid var(--red);background:none;color:var(--ink);cursor:pointer;line-height:1}
+.pp .add{font:inherit;font-size:16px;font-weight:700;width:28px;height:28px;border-radius:8px;border:1.5px solid var(--red);background:none;color:var(--ink);cursor:pointer;line-height:1;position:relative} .pp .add::after{content:"";position:absolute;inset:-7px} .pp .add:active{background:var(--red);color:#fff}
 .pp .add.in{background:var(--red);color:#fff} .pp .add:disabled{opacity:.35;cursor:not-allowed}
 .pp .mup{display:inline-flex;align-items:center;gap:3px;font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:0;text-transform:none}
 .pp .mup i{font-style:normal;color:#fff;padding:1px 6px;border-radius:3px} .pp .mup i.nr{background:var(--line);color:var(--ink)} .pp .mup b{color:var(--mute);font-weight:600}
@@ -191,13 +192,14 @@ PCSS = r"""
 .ppbar.on{display:flex} .ppbar a{background:var(--red);color:#fff;text-decoration:none;border-radius:999px;padding:6px 12px;font-weight:700}
 /* directory */
 .pd{max-width:1100px;margin:16px auto 40px}
-.pd h1{font-family:var(--display);font-size:30px;margin:0 0 4px} .pd p.m{color:var(--mute);margin:0 0 12px;line-height:1.5}
+.pd h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;letter-spacing:-.01em;line-height:1;margin:0 0 6px} .pd p.m{color:var(--mute);margin:0 0 12px;line-height:1.5;max-width:70ch}
 .pd .ctl{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
-.pd input{flex:1 1 220px;font:inherit;font-size:15px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-.pd .pos button{font:inherit;font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-.pd .pos button.on{background:var(--red);border-color:var(--red);color:#fff}
+.pd input{flex:1 1 220px;font:inherit;font-size:16px;min-height:42px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.pd .pos{display:flex;gap:6px;flex-wrap:wrap}
+.pd .pos button{font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;min-height:42px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.pd .pos button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .pd ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
-.pd li a{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.pd li a{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .pd li a:hover{border-color:var(--red)}
 .pd li .tb{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:7px;background:var(--p,#333);box-shadow:inset 0 -4px 0 var(--s,#000);color:#fff;font-family:var(--display);font-weight:700;font-size:13px}
 .pd li b{display:block;font-weight:600} .pd li small{color:var(--mute);font-size:12px}
@@ -418,12 +420,12 @@ def page(k, p):
     opp = (g["b"] if g["a"] == p["team"] else g["a"]) if g else None
     home = g and g.get("b") == p["team"]
     tp = (g["pb"] if home else g["pa"]) if g else None
-    sub = f'<b>{p["pos"]}</b> · {E(p["team"])}'
-    if g: sub += f' · {"vs" if home else "@"} {E(opp)} · {kick_text(g)}' + (f' · team total {tp:.1f} (model)' if isinstance(tp, (int, float)) else "")
+    sub = f'<b>{p["pos"]}</b><span>{E(p["team"])}</span>'
+    if g: sub += f'<span>{"vs" if home else "@"} {E(opp)}</span><span>{kick_text(g)}</span>' + (f'<span>team total {tp:.1f} (model)</span>' if isinstance(tp, (int, float)) else "")
     nu, nsrc = news_url(p["name"])
     top = sorted([l for l in p["legs"] if l["m"] in MORDER and l.get("e") is not None], key=lambda l: -l["e"])[:1]
     desc = f'{p["name"]} ({p["pos"]}, {p["team"]}) Week {W}' + (f' vs {opp}' if opp else "") + ': props with FanDuel, DraftKings and Hard Rock prices, the BetSweep model\'s chance and edge, hit rates, matchup ranks, snap share and game log.'
-    acts = (f'<a href="/build/?p={E(p["name"])}">Open in Parlay Builder</a>' if p["legs"] else "") + f'<a href="{E(nu)}" target="_blank" rel="noopener">News ({nsrc})</a>' + (f'<a href="/boards/#{E(g["gid"])}">Matchup board</a>' if g else "") + '<a href="/benefits/">Who benefits</a><a href="/player/">All players</a>'
+    acts = (f'<a class="pri" href="/build/?p={E(p["name"])}">Parlay Builder</a>' if p["legs"] else "") + (f'<a href="/boards/#{E(g["gid"])}">Matchup board</a>' if g else "") + f'<a href="{E(nu)}" target="_blank" rel="noopener" title="News ({nsrc})">News</a>'
     body = (head(f'{p["name"]} props, stats & matchup · Week {W} · BetSweep', desc) +
             f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › {E(p["team"])} › {E(p["name"])}</p>'
             f'<header><span class="tb" style="--p:{c1};--s:{c2}">{E(p["team"])}</span><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'

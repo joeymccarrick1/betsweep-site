@@ -149,16 +149,16 @@ n_act = sum(1 for p in PLAYERS if p["act"])
 
 TEAM_CSS = r"""
 .tm-wrap{max-width:1360px;margin:0 auto;display:grid;gap:14px}
-.sscta{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--red);border-radius:10px;padding:12px 14px;margin:0 0 12px}.sscta b{font-family:var(--display);font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:17px}.sscta span{color:var(--mute);font-size:13.5px;line-height:1.4;flex:1 1 260px}.sscta i{font-style:normal;font-size:20px;color:var(--red)}
-.tm-wrap .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.tm-wrap h2{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;margin:0;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mute);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sscta{display:flex;align-items:center;gap:4px 14px;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 20px;margin:0 0 12px;position:relative}.sscta::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 2px 2px 0;background:var(--red)}.sscta b{font-family:var(--brand);font-style:italic;font-weight:800;font-size:22px;letter-spacing:-.01em;flex-basis:100%}.sscta span{color:var(--mute);font-size:14px;line-height:1.45;flex:1 1 260px}.sscta i{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--red);white-space:nowrap}
+.tm-wrap .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.tm-wrap h2{font-family:var(--display);font-weight:700;letter-spacing:.01em;text-transform:none;font-size:18px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .tm-wrap h2 b{color:var(--ink)} .tm-wrap h2 .r{margin-left:auto;font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;font-size:12px}
 .connect{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px}
-.connect label{font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:var(--mute)}
-.connect input{font:inherit;font-size:16px;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-width:220px;flex:1 1 220px}
-.connect button{font:inherit;font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:14px;color:var(--red-ink);background:var(--red);border:0;border-radius:6px;padding:10px 18px;cursor:pointer}
+.connect label{font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--mute);flex-basis:100%}
+.connect input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;min-width:220px;min-height:44px;flex:1 1 220px} .connect input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+.connect button{font:inherit;font-family:var(--display);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:14px;color:var(--red-ink);background:var(--red);border:0;border-radius:8px;padding:0 18px;min-height:44px;cursor:pointer}
 .connect button:disabled{opacity:.6;cursor:wait}
-.connect .how{flex-basis:100%;margin:0;color:var(--mute);font-size:12.5px;line-height:1.5}
+.connect .how{flex-basis:100%;margin:0;color:var(--mute);font-size:13px;line-height:1.5;max-width:70ch}
 .msg{padding:10px 14px;font-size:13px;color:var(--ink);border-top:1px solid var(--line)} .msg.err{color:var(--bad)} .msg[hidden]{display:none}
 .leagues{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
 .leagues button{font:inherit;font-size:13px;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer;text-align:left}
@@ -253,7 +253,7 @@ TEAM_CSS = r"""
 .chips button{font:inherit;background:none;border:0;color:var(--mute);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px}
 .chips button.star{color:var(--warn);font-size:17px} .chips li.st button.star{color:var(--good)}
 .chips button.rm:hover{color:var(--bad)}
-@media (max-width:760px){ .mstep{grid-template-columns:1fr} .mstep .hint,.mstep .chips{grid-column:1} .mode button{font-size:12px;padding:11px 6px} }
+@media (max-width:760px){ .mstep{grid-template-columns:1fr} .mstep .hint,.mstep .chips{grid-column:1} .mode button{font-size:13px;padding:12px 8px;letter-spacing:.06em} }
 #out[hidden]{display:none} #out{scroll-margin-top:175px}
 @media (max-width:760px){ .roster{columns:1} .tiles b{font-size:24px} }
 """
@@ -584,14 +584,14 @@ TEAM_JS = r"""
 """
 
 body = f'''<div class="tm-wrap">
- <a class="sscta" href="/team/compare/"><b>Who should I start?</b><span>Stuck on your flex? Compare two or more players - projection, matchup, recent games, risks - and get the model's pick with the reasons.</span><i>→</i></a>
+ <a class="sscta" href="/team/compare/"><b>Who should I start?</b><span>Stuck on your flex? Compare two or more players - projection, matchup, recent games, risks - and get the model's pick with the reasons.</span><i>Open</i></a>
  <section class="panel">
-  <div class="mode"><button type="button" class="on" data-m="sleeper">Import from Sleeper</button><button type="button" data-m="manual">No Sleeper? Build it by hand</button></div>
+  <div class="mode"><button type="button" class="on" data-m="sleeper">From Sleeper</button><button type="button" data-m="manual">Build it by hand</button></div>
   <div id="sleeperBox">
   <h2><b>Connect your Sleeper</b> <span class="r">read-only · no password · nothing leaves your browser except the Sleeper lookups</span></h2>
   <div class="connect">
    <label for="user">Sleeper username</label>
-   <input id="user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="your Sleeper username (not the team name)">
+   <input id="user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your Sleeper username">
    <button type="button" id="go">Grade my team</button>
    <p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p>
   </div>

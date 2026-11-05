@@ -144,13 +144,13 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .bssrch li .go{display:flex;gap:6px;padding-right:10px} .bssrch li .go a{text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid #c9c1ad;border-radius:6px;padding:6px 8px;color:#141a24;white-space:nowrap}
 .bssrch li.on a.pl,.bssrch li a.pl:hover{background:#e6dfcc} .bssrch .hint{padding:8px 14px 12px;color:#5b6473;font-size:12.5px}
 @media (max-width:760px){
-  .top .mast{padding-block:6px 2px;gap:8px} .top .mast img{display:none} .top .mast h1{font-size:14px;letter-spacing:.1em} .top .mast p{display:none} .top .nav{padding-block:0 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch} .top .nav::-webkit-scrollbar{display:none}
+  .top .mast{padding-block:8px 4px;gap:8px} .top .mast img{display:none} .top .mast h1{font-size:22px;gap:2px} .top .mast h1 small{font-size:10.5px;letter-spacing:.14em} .top .mast p{display:none} .top .nav{padding-block:0 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch} .top .nav::-webkit-scrollbar{display:none}
   .top .nav a{white-space:nowrap;flex:none}
   body.bs-scrolled .top .mast{display:none} body.bs-scrolled .top{margin-bottom:10px}
 }
 @media (min-width:761px){
   /* desktop: the sticky page header is up to 197px tall (logo, title, paragraph, slate chips); scrolling down keeps title + chips only */
-  body.bs-scrolled .top .mast p,body.bs-scrolled .top .mast img{display:none} body.bs-scrolled .top .mast{padding-block:6px 0} body.bs-scrolled .top .mast h1{font-size:18px}
+  body.bs-scrolled .top .mast p,body.bs-scrolled .top .mast img{display:none} body.bs-scrolled .top .mast{padding-block:6px 0} body.bs-scrolled .top .mast h1{font-size:22px} body.bs-scrolled .top .mast h1 small{display:none}
 }
 /* deep links (#g-X / #lv-X / #box-X / a boards card) land below the sticky chrome instead of under it */
 .gcard,.lg2,.tdgame,[id^="box-"],.player .sec,.pcard{scroll-margin-top:140px}
@@ -212,6 +212,34 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
 </style>
 """
+
+BRAND_CSS = """<style>
+/* ===== BetSweep brand layer (11/5) - one control system and one heading system for every page; loads after the page's own CSS ===== */
+:root{--brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 8'%3E%3Cpath d='M1.5 5.2C10 2.6 18 2.2 27 3.4c7 1 14 2.6 21 1.6 4-.6 7-1.9 10-2.9' fill='none' stroke='%23d7332a' stroke-width='3.4' stroke-linecap='round'/%3E%3Cpath d='M3 6.4c9-1.3 17-2 26-1 7 .8 13 2 19 1.1' fill='none' stroke='%23d7332a' stroke-width='1.5' stroke-linecap='round' opacity='.8'/%3E%3C/svg%3E");--ctl:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif}
+/* the brushed red stroke under a section title (the board's "PICKS. DATA." dash) */
+.brush{position:relative;padding-bottom:12px} .brush::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* segmented controls: builder view tabs, live Picks / Every leg, players position filter, usage/benefits chips */
+.tabs .tab,.seg button,.pos button,.usg .tabs button,.bnf .tabs button{font:inherit;font-family:var(--ctl);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;line-height:1}
+body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs button.on,body .bnf .tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg{display:inline-flex;gap:6px;background:none;border:0;padding:0}
+/* primary action = red; secondary = outline; both in the control face */
+.dfs .btn:not(.sec),.tc .lg .go,.tdlive,a.pri.solid,.bsbtn{font:inherit;font-family:var(--ctl);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:8px;border:1.5px solid var(--red);background:var(--red);color:#fff;cursor:pointer;text-decoration:none}
+.dfs .btn.sec,.rfr,.tdshare,.altbtn,.bsbtn.sec{font:inherit;font-family:var(--ctl);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
+.rfr:hover,.tdshare:hover,.altbtn:hover,.dfs .btn.sec:hover{border-color:var(--red)}
+/* inputs */
+.lvbar input,.pd input,.tc input[type=text],.slform input,.bslip .namebox input{font:inherit;font-size:16px;min-height:42px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.lvbar input:focus,.pd input:focus,.tc input[type=text]:focus,.slform input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+/* status pills stay pills; everything else squares off at 8px */
+.tdlinks a,.fdgo,.bslip .acts button,.bslip .acts a,.acts button,.acts a.fd,.lg a.fd{border-radius:8px}
+/* page titles and section titles on the pages that carry their own CSS (usage, who-benefits, social, how-to guide, receipts) */
+.uw h1,.soc h1,.sp h1,.gd h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;letter-spacing:-.01em;line-height:1}
+.uw h2,.gd h2{letter-spacing:.01em;text-transform:none;font-size:19px} .gd h2{font-size:22px;margin:0 0 10px;padding-bottom:12px;position:relative} .gd h2::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* focus is visible everywhere, in the brand red */
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+"""
+
 APP_TABS = [("/today/", "Today", '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg>'),
             ("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
             ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
@@ -317,6 +345,9 @@ def wrap(body, title, desc, path, og_img):
     body = body.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
     body = body.replace('<meta name="viewport" content="width=device-width, initial-scale=1">\n', "")   # template.html carries one for raw/artifact views; the site head has its own
     body = re.sub(r'\s*<nav class="archive"[^>]*>.*?</nav>', "", body, count=1, flags=re.S)
+    # 11/5 brand pass: "Week 9 · Matchup Boards" -> a small red WEEK 9 over the title in the brand italic (CSS: .mast h1 small / b)
+    body = re.sub(r"<h1>Week (\d+) · <b>(.*?)</b></h1>", r"<h1><small>Week \1</small><b>\2</b></h1>", body, count=1)
+    body = re.sub(r'(<a href="[^"]*" class="tool">)(.*?) →(</a>)', r"\1\2\3", body)   # arrows out of button text (the swoosh is the arrow)
     # audit 10/26: the 215px banner opened every inner page (first phone screen mostly banner) and cost ~300KB per page; the site header
     # already carries the brand, so the banner stays only in the claude.ai artifact copies
     body = re.sub(r'<div class="banner"><img src="data:image/[a-z]+;base64,[^"]*"[^>]*></div>\s*', "", body, count=1)   # site has the header tabs; the artifact keeps its own links
@@ -346,7 +377,7 @@ def wrap(body, title, desc, path, og_img):
     m = re.search(r"</style>\s*", body)
     headpart, rest = body[:m.end()], body[m.end():]
     foot = '' if path == "/" else '<p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p>'
-    return head + headpart + NAV_CSS + "</head>\n<body>\n" + sitenav(path) + (INSTALL_BAR if path == "/" else "") + rest + foot + apptabs(path) + APP_JS + "\n</body>\n</html>\n"
+    return head + headpart + NAV_CSS + BRAND_CSS + "</head>\n<body>\n" + sitenav(path) + (INSTALL_BAR if path == "/" else "") + rest + foot + apptabs(path) + APP_JS + "\n</body>\n</html>\n"
 
 def title_desc(src):
     t = re.search(r"<title>(.*?)</title>", src).group(1)
@@ -512,26 +543,26 @@ weeks = sorted(set(weeks))
 # ---- landing page ----
 LANDING_CSS = """
 
-:root{--bg:#0f141c;--card:#161d28;--chalk:#1d2633;--ink:#efe9da;--mute:#9aa3b2;--line:#2b3442;--red:#d7332a;--good:#5fcf93;--brand:'Barlow','Barlow Condensed',sans-serif;--display:'Barlow Condensed','IBM Plex Sans',sans-serif;--body:'IBM Plex Sans',system-ui,sans-serif;--plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%28239%2C233%2C218%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E");color-scheme:dark}
+:root{--bg:#0e1820;--card:#152230;--chalk:#1c2b3a;--ink:#efe9da;--mute:#97a5b3;--line:#2a3b4b;--red:#d7332a;--redtxt:#f0594e;--good:#5fcf93;--brand:'Barlow','Barlow Condensed',sans-serif;--display:'Barlow Condensed','IBM Plex Sans',sans-serif;--body:'IBM Plex Sans',system-ui,sans-serif;--plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%28239%2C233%2C218%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E");color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg) var(--plays) center/360px 130px repeat;color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
 .hero{position:relative;width:100%;aspect-ratio:1600/595;min-height:300px;background:#0b0f15 var(--banner) center/cover no-repeat;border-bottom:1px solid var(--line)}
 .hero::after{content:"";position:absolute;inset:auto 0 0 0;height:38%;background:linear-gradient(180deg,transparent,var(--bg))}
 .pitch{position:relative;max-width:1360px;margin:-40px auto 0;padding:0 16px}
-.pitch .card{position:relative;overflow:hidden;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:12px;padding:26px 24px 22px;backdrop-filter:blur(6px)}
+.pitch .card{position:relative;overflow:hidden;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:14px;padding:26px 24px 22px;backdrop-filter:blur(6px)}
 .pitch .card .mark{position:absolute;top:18px;right:20px;width:84px;height:84px;border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,.45);transform:rotate(-8deg)}
 .pitch h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:clamp(28px,4.6vw,44px);letter-spacing:-.02em;margin:0 0 8px;line-height:1.12;max-width:900px;padding-right:100px}
 .pitch h1 span{text-decoration:underline;text-decoration-color:var(--red);text-decoration-thickness:3px;text-underline-offset:5px}
 .pitch p.lede{font-size:clamp(15px,1.8vw,17px);line-height:1.55;color:var(--mute);max-width:760px;margin:0 0 14px}
-.stats{display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:12.5px;color:var(--mute);margin:0 0 6px}
-.stats b{color:var(--ink);font-size:16px;margin-right:4px}
+.stats{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;font-size:13.5px;color:var(--mute);margin:0 0 8px}
+.stats b{font-family:var(--display);font-weight:700;color:var(--ink);font-size:18px;margin-right:4px;font-variant-numeric:tabular-nums}
 .social{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
-.social a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:7px 14px;background:var(--chalk)}
+.social a{display:inline-flex;align-items:center;gap:6px;min-height:36px;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:8px;padding:0 12px}
 .social a:hover{border-color:var(--red)}
 .social a small{font-family:var(--body);font-weight:500;text-transform:none;letter-spacing:0;color:var(--mute)}
 .sec{max-width:1360px;margin:30px auto 0;padding:0 16px}
-.sec h2.t{font-family:var(--display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--mute);margin:0 0 12px;display:flex;align-items:center;gap:12px}
-.sec h2.t::after{content:"";flex:1;height:2px;background:linear-gradient(90deg,var(--red),transparent)}
+.sec h2.t{font-family:var(--display);font-weight:700;letter-spacing:.01em;text-transform:none;font-size:22px;line-height:1.1;color:var(--ink);margin:0 0 14px;padding-bottom:12px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px}
+.sec h2.t::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
 .tile{position:relative;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;text-decoration:none;color:var(--ink);transition:transform .15s,border-color .15s}
 .tile:hover{transform:translateY(-2px);border-color:var(--red)}
@@ -618,7 +649,7 @@ def landing(weeks):
             '<section class="hero" role="img" aria-label="BetSweep - Picks. Data. Edge. Sweep."></section>\n'
             '<section class="pitch"><div class="card"><img class="mark" src="/favicon.png" alt="">\n'
             ' <h1>The model\'s picks, <span>graded against the sportsbooks</span> every week.</h1>\n'
-            ' <p class="lede">BetSweep projects every NFL skill player, prices every FanDuel prop against those projections, and shows you the receipts afterward. Boards land Thursday morning, refresh through Sunday\'s inactives, and get graded Tuesday.</p>\n'
+            ' <p class="lede">Every NFL skill player projected, every FanDuel prop priced against it, and the receipts shown afterward. Boards land Thursday morning, refresh through Sunday\'s inactives and get graded Tuesday.</p>\n'
             f' <div class="stats"><span><b>Week {week}</b> on the board</span><span><b>{ngames}</b> games</span>{legs_stat}<span>updated {html.escape(stamp)} CT</span></div>\n'
             ' <div class="social"><a href="https://x.com/bet_sweep" target="_blank" rel="noopener">X <small>@bet_sweep</small></a><a href="https://www.instagram.com/bet_sweep" target="_blank" rel="noopener">Instagram <small>@bet_sweep</small></a></div>\n'
             '</div></section>\n'
@@ -642,11 +673,11 @@ def landing(weeks):
 def _simple(title, inner):
     _link, _base = ACCT._base_css()
     return (f"<title>{html.escape(title)}</title>\n{_link}\n<style>{_base}"
-            ".sp{max-width:760px;margin:22px auto 30px}.sp h1{font-family:var(--display);font-size:30px;margin:0 0 6px;letter-spacing:.02em}"
+            ".sp{max-width:760px;margin:22px auto 30px}.sp h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;line-height:1;margin:0 0 8px;letter-spacing:-.01em}"
             ".sp p{color:var(--mute);line-height:1.5;margin:4px 0 14px}.sp .wk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0 18px}"
-            ".sp .wk a{display:block;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--card);text-decoration:none;color:var(--ink)}"
-            ".sp .wk a b{display:block;font-family:var(--display);font-size:22px}.sp .wk a small{color:var(--mute)}"
-            ".sp .go{display:flex;flex-wrap:wrap;gap:10px}.sp .go a{padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}"
+            ".sp .wk a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);text-decoration:none;color:var(--ink)}.sp .wk a:hover{border-color:var(--red)}"
+            ".sp .wk a b{display:block;font-family:var(--brand);font-style:italic;font-weight:800;font-size:24px;line-height:1;margin-bottom:6px}.sp .wk a small{color:var(--mute);font-size:13px}"
+            ".sp .go{display:flex;flex-wrap:wrap;gap:8px}.sp .go a{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);color:var(--ink);text-decoration:none;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase}.sp .go a:hover{border-color:var(--red)}"
             f"</style>\n<div class=\"sp\">{inner}</div>")
 _prw = {}
 try:
@@ -656,9 +687,9 @@ try:
         if _res not in ("hit", "cashed", "missed", "miss", "lost"): continue
         _w = int(float(_r[_ph["Week"]])); _d = _prw.setdefault(_w, [0, 0]); _d[0 if _res in ("hit", "cashed") else 1] += 1
 except Exception: pass
-_cards = "".join(f'<a href="/receipts/week{w}/"><b>Week {w}</b><small>{"promoted bets " + str(_prw[w][0]) + "–" + str(_prw[w][1]) if w in _prw else "every leg graded"}</small></a>' for w in sorted(weeks, reverse=True)) or "<p>No receipts yet.</p>"
+_cards = "".join(f'<a href="/receipts/week{w}/"><b>Week {w}</b><small>{"posted slips " + str(_prw[w][0]) + "–" + str(_prw[w][1]) if w in _prw else "every leg graded"}</small></a>' for w in sorted(weeks, reverse=True)) or "<p>No receipts yet.</p>"
 _rec = _simple("BetSweep Receipts", '<h1>Receipts</h1><p>Every week we freeze the model\'s legs and game calls before kickoff, then grade them against the box scores - hits and misses. Pick a week, or see the whole season.</p>'
-               f'<div class="wk">{_cards}</div><div class="go"><a href="/season/">Season to date →</a><a href="/boards/">This week\'s boards →</a></div>')
+               f'<div class="wk">{_cards}</div><div class="go"><a href="/season/">Season to date</a><a href="/boards/">This week\'s boards</a></div>')
 os.makedirs(os.path.join(SITE, "receipts"), exist_ok=True)
 open(os.path.join(SITE, "receipts", "index.html"), "w").write(wrap(_rec, "BetSweep Receipts", "Every weekly receipt: what the model said before kickoff and what happened.", "/receipts/", "/og.png"))
 open(os.path.join(SITE, "index.html"), "w").write(wrap(landing(weeks), "BetSweep", "NFL projections priced against FanDuel, graded every week. Matchup boards, a parlay builder with FanDuel links, and receipts.", "/", "/og.png"))
