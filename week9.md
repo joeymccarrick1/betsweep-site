@@ -3,29 +3,29 @@
 Data: builder week 9 (main @ 2026-11-05 01:49 UTC), ESPN injuries/inactives/weather mirror (01:34 UTC), owner risk notes (empty), b/promos.json (empty).
 Strict leg filter: 303 of 3,536 legs usable. BAL-JAX, ARI-SEA and NYG-PHI are fully flagged (low total 39.5); ATL-CIN, CLE-NO and KC-NYJ have no props posted.
 
-## Thursday (BAL @ JAX) - redrafted Thu 11/5 (3rd pass): Jags by 10+, Ravens forced to throw
-Owner's read: Fagnano starts and has to throw to compete. Data: JAX #5 vs QB pass yds for the season but #19 over the last 3 weeks, and #1-most WR rec yds allowed; Fagnano's card carries a Trail-script flag (BAL trails by 10+ in 50% of endings). Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection but his card projects 162 on a 1-game sample - coin flip. Stale 39.5-total flag ignored (now 40.5); every other filter applied.
+## Thursday (BAL @ JAX) - final (4th pass, Thu 11/5): built from a full combo search
+Owner's read: Fagnano starts and must throw; Jags by 10+. Search of every clean leg and combination: the Ravens' pass-catchers are the best-value legs in the game; JAX -9.5 (50% vs 54.5% implied) and Rodriguez TD (41% vs 51%) were negative-edge story legs and are out; Cuevas out (Hibner back, 'Fill-in fading' flag, JAX #32 vs TEs). Stale 39.5-total flag ignored (now 40.5); every other filter applied.
 
 ### Single: Zay Gets Fed - Zay Flowers 50+ rec yds, -104 (55%; model 60% vs FanDuel 51%)  [BOOST THIS ONE]
 JAX allows the most WR rec yds in the NFL; the volume comes when BAL trails. Risk: 0 yds with Fagnano in Week 8 (87/g before).
 Link: https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectionId=49181556
 
-### +500 slot: Duval Blowout - est +293 (22% independent floor), same-game: check FanDuel's SGP price
-- Jaguars -9.5, -120, 50% - JAX by 10+ is the model's likeliest ending; 42-7 last week
-- Zay Flowers 60+ rec yds, +152, 44% - 60+ in 5 of 7; correlated the right way (a blowout forces BAL to throw)
-Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.619967582&selectionId[0]=50207&marketId[1]=42.621869046&selectionId[1]=49181554
-Honest number: prices near +290, not +500.
-
-### LOTTERY: Third-String Thursday - est +4953 (1.5% independent floor), same-game: check FanDuel's SGP price
-- Jaguars -9.5, -120, 50%
+### +500 slot: Charm City Chase - est +390 (20% independent floor), same-game: check FanDuel's SGP price
 - Zay Flowers 50+ rec yds, -104, 55%
-- Chris Rodriguez Jr. anytime TD, -105, 41% (below FanDuel's 51% - in for the script; Tuten questionable)
-- Nate Boerkircher 15+ rec yds, +182, 37% - over FD's main line (8) in 5 of 6
-- Josh Cameron 20+ rec yds, +200, 35% - 28 yds/g over the last 3
-Script: Jags run away with it, Ravens throw to Zay trying to catch up. Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.619967582&selectionId[0]=50207&marketId[1]=42.621869046&selectionId[1]=49181556&marketId[2]=42.621857664&selectionId[2]=60221458&marketId[3]=42.621968304&selectionId[3]=103841750&marketId[4]=42.621970817&selectionId[4]=103430219
+- Rashod Bateman 25+ rec yds, +194, 37% - 25+ in 5 of 8; 39 yds/g over the last 3; coverage edge vs Montaric Brown
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181556&marketId[1]=42.621869047&selectionId[1]=41435578
+Highest-chance 2-leg combo in the +400 band. Both legs need Fagnano to throw: they win and lose together.
 
-### Passed: Fagnano UNDER 160.5
-Projection conflict (134 on the leg vs 162 on his card), 1-game sample, trail script. No edge either way.
+### LOTTERY: Third-String Thursday - est +3541 (3.0% independent floor), same-game: check FanDuel's SGP price
+- Zay Flowers 70+ rec yds, +225, 35% - 70+ in 4 of 7
+- Rashod Bateman 20+ rec yds, +134, 45%
+- Nate Boerkircher 8+ rec yds, -114, 54% - over this line in 5 of 6 (the one floor leg)
+- Josh Cameron 20+ rec yds, +200, 35% - 28 yds/g over the last 3; watch: Meyers back at practice
+Script: Jags pull away, both teams' pass-catchers eat. Double the chance of the spread-and-TD version (1.5%) at a similar price.
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181558&marketId[1]=42.621869047&selectionId[1]=73458266&marketId[2]=42.621968303&selectionId[2]=103841717&marketId[3]=42.621970817&selectionId[3]=103430219
+Alt if Cameron's role shrinks: Lane 3+ rec (+235) | Boerkircher 15+ (+182) | Bateman 20+ (+134) | Zay 50+ (-104) - est +3577, 3.0%.
+
+### Passed: Fagnano UNDER 160.5 (projection conflict 134 vs 162, 1-game sample) · JAX -9.5 (no edge) · Rodriguez ATD (41% vs 51%) · Cuevas 2+ rec (Hibner back)
 
 ## Saturday - Model's Best: Fall Back Double - +758 (16.3%)  [BOOST THIS ONE]
 - Caleb Douglas (MIA) 60+ rec yds, +220, BetSweep 38% (model 45% vs FanDuel 31%). Proj 61.8 vs avg 56.5; over FD's main line (40) in 3 of 4; total 50.5.

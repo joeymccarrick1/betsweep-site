@@ -20,79 +20,23 @@
       "m": "42.621869046",
       "s": "49181556"
      },
-     "why": "JAX allows the most WR rec yds; BAL trails in 50% of endings so the volume comes; 0 yds with Fagnano in W8, 87/g before"
+     "why": "JAX allows the most WR rec yds; BAL trails in 50% of endings; 0 yds with Fagnano in W8, 87/g before"
     }
    ],
    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.621869046&selectionId=49181556",
    "price": "-104",
    "chance": 0.553,
    "boost": true,
-   "note": "Redrafted Thu 11/5 (3rd pass). Owner: Fagnano starts and must throw to compete; JAX #5 vs QB pass yds (season) but #19 last 3 weeks and #1-most WR rec yds allowed. Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection, but his player card projects 162 (trail script) on a 1-game sample - coin flip, no edge. Stale 39.5-total flag ignored (now 40.5); every other filter applied.",
+   "note": "Redrafted Thu 11/5 (4th pass) after a full combo search: JAX -9.5 (50% vs 54.5% implied) and Rodriguez TD (41% vs 51%) dropped as negative-edge story legs; Cuevas dropped (Hibner back - 'Fill-in fading' flag, JAX #32 vs TEs). Stale 39.5-total flag ignored (now 40.5); every other filter applied.",
    "caption": "Zay Gets Fed -104\nZay Flowers 50+ rec yds\nWhy: the Jags give up the most WR yards in the NFL, and a Ravens team playing from behind has to throw - model 60% vs FanDuel 51%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
    "post": false
   },
   {
    "slot": "thursday",
-   "name": "Duval Blowout",
-   "type": "+500 slot (2-leg same-game; prices near +290 - the honest number)",
+   "name": "Charm City Chase",
+   "type": "+500 slot (2-leg same-game; prices near +390)",
    "game": "BAL-JAX",
    "legs": [
-    {
-     "pl": "JAX -9.5",
-     "m": "Spread",
-     "ln": -9.5,
-     "o": -120,
-     "p": 0.5,
-     "bk": 0.545,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.619967582",
-      "s": "50207"
-     },
-     "why": "JAX by 10+ is the model's likeliest ending (50%); 42-7 last week"
-    },
-    {
-     "pl": "Zay Flowers",
-     "m": "Receiving Yards",
-     "ln": 60,
-     "o": 152,
-     "p": 0.443,
-     "bk": 0.397,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.621869046",
-      "s": "49181554"
-     },
-     "why": "60+ in 5 of 7; JAX allows the most WR rec yds; trail script"
-    }
-   ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.619967582&selectionId[0]=50207&marketId[1]=42.621869046&selectionId[1]=49181554",
-   "price": "+293 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
-   "chance": 0.222,
-   "note": "Redrafted Thu 11/5 (3rd pass). Owner: Fagnano starts and must throw to compete; JAX #5 vs QB pass yds (season) but #19 last 3 weeks and #1-most WR rec yds allowed. Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection, but his player card projects 162 (trail script) on a 1-game sample - coin flip, no edge. Stale 39.5-total flag ignored (now 40.5); every other filter applied. Legs are correlated the right way: a JAX blowout forces BAL to throw.",
-   "caption": "Duval Blowout ~+293\nJaguars -9.5\nZay Flowers 60+ rec yds\nWhy: Jags pull away, Ravens' third QB chases through Zay - JAX by 10+ is the model's most likely ending at 50%\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
-   "post": false
-  },
-  {
-   "slot": "thursday",
-   "name": "Third-String Thursday",
-   "type": "lottery",
-   "game": "BAL-JAX",
-   "legs": [
-    {
-     "pl": "JAX -9.5",
-     "m": "Spread",
-     "ln": -9.5,
-     "o": -120,
-     "p": 0.5,
-     "bk": 0.545,
-     "game": "BAL-JAX",
-     "fd": {
-      "m": "42.619967582",
-      "s": "50207"
-     },
-     "why": "JAX by 10+ is the model's likeliest ending (50%); 42-7 last week"
-    },
     {
      "pl": "Zay Flowers",
      "m": "Receiving Yards",
@@ -105,35 +49,77 @@
       "m": "42.621869046",
       "s": "49181556"
      },
-     "why": "JAX allows the most WR rec yds; BAL trails in 50% of endings so the volume comes; 0 yds with Fagnano in W8, 87/g before"
+     "why": "JAX allows the most WR rec yds; BAL trails in 50% of endings; 0 yds with Fagnano in W8, 87/g before"
     },
     {
-     "pl": "Chris Rodriguez Jr.",
-     "m": "Anytime TD",
-     "ln": 1,
-     "o": -105,
-     "p": 0.412,
-     "bk": 0.512,
+     "pl": "Rashod Bateman",
+     "m": "Receiving Yards",
+     "ln": 25,
+     "o": 194,
+     "p": 0.3715,
+     "bk": 0.34,
      "game": "BAL-JAX",
      "fd": {
-      "m": "42.621857664",
-      "s": "60221458"
+      "m": "42.621869047",
+      "s": "41435578"
      },
-     "why": "JAX implied 25 pts; Tuten (ankle/foot) questionable"
+     "why": "25+ in 5 of 8; 39 yds/g over the last 3; coverage edge vs Montaric Brown"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181556&marketId[1]=42.621869047&selectionId[1]=41435578",
+   "price": "+390 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
+   "chance": 0.205,
+   "note": "Redrafted Thu 11/5 (4th pass) after a full combo search: JAX -9.5 (50% vs 54.5% implied) and Rodriguez TD (41% vs 51%) dropped as negative-edge story legs; Cuevas dropped (Hibner back - 'Fill-in fading' flag, JAX #32 vs TEs). Stale 39.5-total flag ignored (now 40.5); every other filter applied. Highest-chance 2-leg combo in the +400 band. Both legs need Fagnano to throw - they win and lose together.",
+   "caption": "Charm City Chase ~+390\nZay Flowers 50+ rec yds\nRashod Bateman 25+ rec yds\nWhy: Jags lead, Ravens throw - Jacksonville allows the most WR yards in the NFL\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
+   "slot": "thursday",
+   "name": "Third-String Thursday",
+   "type": "lottery",
+   "game": "BAL-JAX",
+   "legs": [
+    {
+     "pl": "Zay Flowers",
+     "m": "Receiving Yards",
+     "ln": 70,
+     "o": 225,
+     "p": 0.3515,
+     "bk": 0.308,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869046",
+      "s": "49181558"
+     },
+     "why": "70+ in 4 of 7; JAX allows the most WR rec yds; trail script"
+    },
+    {
+     "pl": "Rashod Bateman",
+     "m": "Receiving Yards",
+     "ln": 20,
+     "o": 134,
+     "p": 0.454,
+     "bk": 0.427,
+     "game": "BAL-JAX",
+     "fd": {
+      "m": "42.621869047",
+      "s": "73458266"
+     },
+     "why": "39 yds/g over the last 3; coverage edge vs Montaric Brown"
     },
     {
      "pl": "Nate Boerkircher",
      "m": "Receiving Yards",
-     "ln": 15,
-     "o": 182,
-     "p": 0.3685,
-     "bk": 0.355,
+     "ln": 8,
+     "o": -114,
+     "p": 0.542,
+     "bk": 0.533,
      "game": "BAL-JAX",
      "fd": {
-      "m": "42.621968304",
-      "s": "103841750"
+      "m": "42.621968303",
+      "s": "103841717"
      },
-     "why": "Over FD's main line (8) in 5 of 6; 31-yd TD last week"
+     "why": "Over this line (FD's main) in 5 of 6; the one floor leg"
     },
     {
      "pl": "Josh Cameron",
@@ -147,22 +133,22 @@
       "m": "42.621970817",
       "s": "103430219"
      },
-     "why": "28 yds/g over the last 3; BAL allows the #5-most WR yds"
+     "why": "28 yds/g over the last 3; BAL allows the #5-most WR yds; watch: Meyers back to full practice"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.619967582&selectionId[0]=50207&marketId[1]=42.621869046&selectionId[1]=49181556&marketId[2]=42.621857664&selectionId[2]=60221458&marketId[3]=42.621968304&selectionId[3]=103841750&marketId[4]=42.621970817&selectionId[4]=103430219",
-   "price": "+4953 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
-   "chance": 0.015,
-   "note": "Redrafted Thu 11/5 (3rd pass). Owner: Fagnano starts and must throw to compete; JAX #5 vs QB pass yds (season) but #19 last 3 weeks and #1-most WR rec yds allowed. Fagnano UNDER 160.5 dropped: its 66% used a 134-yd projection, but his player card projects 162 (trail script) on a 1-game sample - coin flip, no edge. Stale 39.5-total flag ignored (now 40.5); every other filter applied. Rodriguez TD is below FanDuel's implied (41% vs 51%) - in for the script, not value.",
-   "caption": "LOTTERY: Third-String Thursday ~+4953\nJaguars -9.5\nZay Flowers 50+ rec yds\nChris Rodriguez Jr. anytime TD\nNate Boerkircher 15+ rec yds\nJosh Cameron 20+ rec yds\nWhy: one script - Jags run away with it, Ravens throw to Zay trying to catch up\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.621869046&selectionId[0]=49181558&marketId[1]=42.621869047&selectionId[1]=73458266&marketId[2]=42.621968303&selectionId[2]=103841717&marketId[3]=42.621970817&selectionId[3]=103430219",
+   "price": "+3541 est (same-game 0.85/prod(bk); check FanDuel's SGP price)",
+   "chance": 0.03,
+   "note": "Redrafted Thu 11/5 (4th pass) after a full combo search: JAX -9.5 (50% vs 54.5% implied) and Rodriguez TD (41% vs 51%) dropped as negative-edge story legs; Cuevas dropped (Hibner back - 'Fill-in fading' flag, JAX #32 vs TEs). Stale 39.5-total flag ignored (now 40.5); every other filter applied. Highest-chance 4-leg combo in the +3500..+7000 band with one leg per player.",
+   "caption": "LOTTERY: Third-String Thursday ~+3541\nZay Flowers 70+ rec yds\nRashod Bateman 20+ rec yds\nNate Boerkircher 8+ rec yds\nJosh Cameron 20+ rec yds\nWhy: Jags pull away and both teams' pass-catchers eat - the Ravens chasing through the air, the Jags' young receivers feasting on a defense that allows the 5th-most WR yards\nTail it: betsweep.co/b/w9-thursday\n21+ | gamble responsibly",
    "post": false
   },
   {
    "slot": "thursday",
-   "name": "Fagnano UNDER 160.5 - passed",
+   "name": "Passed legs",
    "type": "note",
    "legs": [],
-   "note": "Dropped: projection conflict (134 on the leg vs 162 on his card, trail script, 1-game sample). Coin flip.",
+   "note": "Fagnano UNDER 160.5 (projection conflict 134 vs 162, 1-game sample); JAX -9.5 (no edge, 50% vs 54.5%); Rodriguez ATD (41% vs 51%); Cuevas 2+ rec (Hibner back). Alt lottery if Cameron's role shrinks with Meyers healthy: Lane 3+ rec (+235) | Boerkircher 15+ (+182) | Bateman 20+ (+134) | Zay 50+ (-104), est +3577, 3.0%.",
    "post": false
   },
   {
