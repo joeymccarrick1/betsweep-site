@@ -450,6 +450,13 @@ TEAM_JS = r"""
     $('#lineup').innerHTML = li;
     $('#lineupH').innerHTML = '<b>Lineup check</b> ' + (noCur ? '<span class="r">the model\'s lineup for this roster</span>' : changes ? '<span class="r" style="color:var(--good)">' + changes + ' change' + (changes > 1 ? 's' : '') + ' · +' + f1(gain) + ' pts</span>' : '<span class="r">your starters match the model</span>');
 
+    // owner 11/5: a signed-in user's roster follows the account (fantasy_rosters) so the alert function can push official inactives on
+    // Sunday ("X is inactive - best bench play Y") and the Saturday-night lineup check. Starters = Sleeper's current lineup; bench = the rest.
+    try { var acct = window.bsAccount, curSet = {}; curStarters.forEach(function(id){ curSet[id] = 1; });
+      if (acct && acct.user && acct.client) { var row = { user_id: acct.user.id, league_id: String(l.league_id || l.id || ''), league: l.name || '', sleeper: state.user.display_name || state.user.username || '',
+          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }),
+          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }), updated_at: new Date().toISOString() };
+        if (row.league_id) acct.client.from('fantasy_rosters').upsert(row, {onConflict: 'user_id,league_id'}).then(function(r){ if (r.error && !/relation|does not exist/i.test(r.error.message)) console.warn('roster sync', r.error.message); }); } } catch(e){}
     // full roster
     roster.sort(function(a, b){ return b.pts - a.pts || a.name.localeCompare(b.name); });
     $('#roster').innerHTML = roster.map(function(e){ return '<li class="' + (startSet[e.id] ? 'st' : '') + '"><span class="pz">' + esc(e.pos) + '</span><span class="who"><b>' + esc(e.name) + tagFor(e) + '</b><span>' + (e.mp ? esc(e.mp.t) + (e.mp.o ? ' vs ' + esc(e.mp.o) : '') + (e.mp.role && e.mp.role !== e.pos ? ' · ' + esc(e.mp.role) : '') : 'not in the model this week') + '</span></span><span class="pts"><b>' + f1(e.pts) + '</b><small>' + (startSet[e.id] ? 'start' : 'bench') + '</small></span></li>'; }).join('');

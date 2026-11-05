@@ -162,21 +162,52 @@ def sections(IN_, OUT_):
         label = dt.datetime.strptime(d, "%Y-%m-%d").strftime("%A")
         title = f"{label}: {len(gs)} game{'s' if len(gs) != 1 else ''} · {', '.join((GL.get(g['gid']) or {}).get('away', g['a']) + '@' + (GL.get(g['gid']) or {}).get('home', g['b']) for g in gs[:3])}{'…' if len(gs) > 3 else ''}"
         body = []
+        # owner 11/5 ("always push weather updates"): the brief names every game with a kickoff-hour weather risk first
+        wxl = []
+        for g in gs:
+            wx = (FE.WX.get(frozenset([g["a"], g["b"]])) if FE else None) or {}
+            if wx.get("risk") in ("HIGH", "MODERATE"):
+                bits = [x for x in [f"wind {wx['wind']:.0f}" if wx.get("wind") else "", (wx.get("ptype") or "").replace("none", "") if (wx.get("pch") or 0) >= 40 else ""] if x]
+                wxl.append(f"{g['a']}-{g['b']} {wx['risk'].lower()}" + (f" ({', '.join(bits)})" if bits else ""))
+        if wxl: body.append("Weather: " + "; ".join(wxl[:3]))
         if hot: body.append("; ".join(f"{n['player']} {tag_short(n).lower()}" for n in hot))
         if looks: body.append("Looks: " + " · ".join(f"{l['pl']} {HOME.leg_line(l['m'], l['ln'])} ({odds(l['o'])}, {l['p']*100:.0f}%)" for l in looks))
         briefs[d] = {"title": title[:90], "body": ("; ".join(body) or "Today's games, looks and news in one place.")[:300], "url": "/today/?source=push", "games": [g["gid"] for g in gs]}
     today_json = {"week": W, "built": built.isoformat(), "briefs": briefs, "days": {d: [g["gid"] for g in gs] for d, gs in days.items()}}
     json.dump(today_json, open(os.path.join(OUT_, "today.json"), "w"))
+    # ---- Trade desk (build_targets.py -> out/targets.json; 11/5): buy-low / sell-high, strongest on Tuesday when the week is in the books ----
+    tgt_html = ""
+    try:
+        TG = json.load(open(os.path.join(OUT_, "targets.json")))
+        from plydata import slugify as slug
+        def tg_card(r, kind):
+            sn = f"{r['snap']*100:.0f}% snaps" if r.get("snap") else ""
+            rk = f"{E(r['pos'])}{r['mrank']}" + (f" <small>(market {E(r['pos'])}{r['krank']})</small>" if r.get("krank") else "")
+            return (f'<li class="tg {kind}"><div class="tgh"><a href="/player/{slug(r["n"])}/"><b>{E(r["n"])}</b></a> <span class="tgm">{E(r["pos"])} · {E(r["tm"])}</span><span class="tgr">{rk}</span></div>'
+                    f'<div class="tgn"><span><b>{r["S"]}</b> season</span><span><b>{r["l3"]}</b> last 3</span>{("<span>" + sn + "</span>") if sn else ""}</div><p>{E(r["why"])}</p></li>')
+        if TG.get("buy") or TG.get("sell"):
+            tgt_html = (f'<section class="sec" id="tdtrade"><h2 class="t">Trade desk <small class="tsub">buy low, sell high · snaps and schedule, not the box score</small></h2>'
+                        f'<div class="tgcols"><div><h3 class="tgt buy">Buy low</h3><ul class="tgl">{"".join(tg_card(r, "buy") for r in TG["buy"][:6])}</ul></div>'
+                        f'<div><h3 class="tgt sell">Sell high</h3><ul class="tgl">{"".join(tg_card(r, "sell") for r in TG["sell"][:6])}</ul></div></div>'
+                        f'<p class="none" style="margin-top:8px;font-size:12.5px">Values for the whole offer: <a href="/trade/" style="color:var(--ink)">Trade calculator</a>. Market ranks come from FantasyCalc when the sheet has them.</p></section>')
+    except FileNotFoundError: pass
+    except Exception as _e: print("note: trade desk skipped:", _e)
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     body = f'''<title>Today · BetSweep</title>
 <meta name="description" content="Today on BetSweep: what kicks off, the model's plus-money looks for today's games, the news that moved the numbers, your slips and your Sleeper team.">
 <style>{TODAY_CSS}</style>
-<section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><button type="button" class="tdshare" id="tdshare" title="Share today's card as an image">Share</button><a class="tdlive" href="/live/">Live</a></div></section>
+<section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><button type="button" class="tdlisten" id="tdlisten" hidden title="Read today's brief aloud">▶ Listen</button><button type="button" class="tdshare" id="tdshare" title="Share today's card as an image">Share</button><a class="tdlive" href="/live/">Live</a></div></section>
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p></section>
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>
+<section class="sec" id="tdask"><h2 class="t">Ask the model <small class="tsub">the week's numbers, in a sentence or two</small></h2>
+ <form class="askbox" id="askform"><input type="text" id="askq" maxlength="400" placeholder="Charbonnet 60+ rush yds tonight?" autocomplete="off"><button type="submit" class="bsbtn" id="askgo">Ask</button></form>
+ <p class="asknote" id="asknote">Signed-in users get 20 questions a day. Answers quote the model's chance, the FanDuel price and the flags - nothing it does not have.</p>
+ <div class="askans" id="askans" hidden></div>
+</section>
 <section class="sec" id="tdnewsS"><h2 class="t">News that moved the model <small class="tsub">as of {E(stamp)} CT</small></h2>{("<ul class='tdnewsl' id='tdnewsl'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}<p class="none" style="margin-top:8px;font-size:12.5px">From the news desk: ESPN, RotoWire, CBS, Yahoo and the team injury pages, read at every rebuild. Red = out, amber = limited or a role change, green = back or a bigger role. Live injury chips on names update every 10 minutes everywhere on the site.</p></section>
+{tgt_html}
 <section class="sec" id="tdweek"><h2 class="t">The rest of the week</h2><div class="tdweek" id="tdweeklist"></div></section>
 <section class="sec" id="record"><h2 class="t">Track record</h2>{rec_html}<p class="none" style="margin-top:8px;font-size:12.5px"><a href="/how/" style="color:var(--ink)">How BetSweep picks</a> · <a href="/season/" style="color:var(--ink)">every week graded</a></p></section>
 <div class="hsbar" id="hsbar" data-week="{E(str(W))}"><b></b><a href="/build/">Open betslip</a></div>
@@ -212,13 +243,44 @@ TODAY_CSS = r"""
 .tdtog{display:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;min-height:38px;padding:8px 12px;cursor:pointer;text-align:left} .tdtog i{font-style:normal;float:right} .tdgame.compact .tdtog{display:block} .tdgame.compact .tdmore{display:none} .tdgame.compact.open .tdmore{display:block} .tdgame.compact.open .tdtog i{transform:rotate(180deg);display:inline-block} .tdmore{display:flex;flex-direction:column;gap:10px}
 .tdlinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px} .tdlinks a{text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:6px;padding:5px 10px} .tdlinks a:hover{border-color:var(--red)}
 .tdyou{display:grid;gap:8px} .tdyou .yrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px} .tdyou .yrow b{font-family:var(--display);font-weight:700;font-size:16px} .tdyou .yrow small{color:var(--mute);display:block;font-size:12.5px} .tdyou .yk{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);min-width:54px} .tdyou .yrow a{text-decoration:none;color:var(--ink);font-weight:600;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:5px 9px;white-space:nowrap} .tdyou .yrow.bad .yk{color:var(--bad)} .tdyou .yrow.good .yk{color:var(--good)} .tdyou .yrow.watch .yk{color:#b7791f}
+.tgcols{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))} .tgt{margin:0 0 8px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase} .tgt.buy{color:var(--good)} .tgt.sell{color:var(--redtxt,var(--red))}
+.tgl{list-style:none;margin:0;padding:0;display:grid;gap:8px} .tg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;border-left-width:4px} .tg.buy{border-left-color:var(--good)} .tg.sell{border-left-color:var(--red)}
+.tgh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap} .tgh a{color:var(--ink);text-decoration:none} .tgh a:hover{text-decoration:underline} .tgm{color:var(--mute);font-size:12.5px} .tgr{margin-left:auto;font-family:var(--display);font-weight:700;font-size:13px} .tgr small{font-weight:500;color:var(--mute)}
+.tgn{display:flex;gap:14px;margin:6px 0 4px;font-size:12.5px;color:var(--mute)} .tgn b{color:var(--ink);font-family:var(--display);font-size:15px;font-weight:700;margin-right:3px} .tg p{margin:0;font-size:13.5px;line-height:1.45}
 .tdnewsl{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))} .tdnewsl li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .tdnewsl li .nt{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-top:3px;min-width:52px} .tdnewsl li.bad .nt{color:var(--bad)} .tdnewsl li.watch .nt{color:#b7791f} .tdnewsl li.good .nt{color:var(--good)} .tdnewsl li b{font-family:var(--display);font-weight:700;font-size:16px} .tdnewsl li b small{color:var(--mute);font-size:12px;font-weight:600;margin-left:4px} .tdnewsl li p{margin:2px 0 0;color:var(--mute);font-size:13px;line-height:1.45} .tdnewsl li.mine{border-color:var(--red)}
 .tdweek{display:grid;gap:8px} .tdwd{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .tdwd b{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)} .tdwd .g{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13.5px} .tdwd .g a{text-decoration:none;color:var(--ink);font-weight:600} .tdwd .g a small{color:var(--mute);font-weight:500;margin-left:4px} .tdwd .g a.post{opacity:.6}
 .tdempty{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;font-size:15px;line-height:1.5} .tdempty b{font-family:var(--display);font-size:22px;display:block;margin-bottom:4px}
+.askbox{display:flex;gap:8px} .askbox input{flex:1;min-width:0;font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)} .askbox input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+.asknote{margin:6px 0 0;color:var(--mute);font-size:13px} .askans{margin-top:10px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.5;white-space:pre-wrap}
+/* owner 11/5: Listen - the brief read aloud by the phone's own voice */
+.tdlisten{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer} .tdlisten.on{border-color:var(--red);color:var(--red)}
 @media (max-width:560px){.tdm{font-size:26px} .tdh1 h1{font-size:34px}}
 """
 
 TODAY_JS = r"""<script>
+(function(){ // Ask the model (owner 11/5): POST {mode:'ask', q} to the alert function with the user's session token
+  var f = document.getElementById('askform'), q = document.getElementById('askq'), go = document.getElementById('askgo'), out = document.getElementById('askans'), note = document.getElementById('asknote'); if (!f) return;
+  var CFG = window.__BS_ACCOUNT || {}; var FN = (CFG.url || '') + '/functions/v1/slip-alerts';
+  f.addEventListener('submit', function(e){ e.preventDefault(); var text = (q.value || '').trim(); if (text.length < 3) return;
+    var acct = window.bsAccount; if (!acct || !acct.user || !acct.client){ note.textContent = 'Sign in (menu, top right) to ask - it is free, 20 a day.'; var s = document.querySelector('#bsacct .in'); if (s) s.focus(); return; }
+    go.disabled = true; out.hidden = false; out.textContent = 'Thinking…';
+    acct.client.auth.getSession().then(function(r){ var tok = r.data && r.data.session && r.data.session.access_token;
+      return fetch(FN, {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'apikey': CFG.key || ''}, body: JSON.stringify({mode: 'ask', q: text})}); })
+    .then(function(r){ return r.json(); }).then(function(j){ out.textContent = j && j.a ? j.a : (j && j.error) || 'No answer came back.'; if (j && typeof j.left === 'number') note.textContent = j.left + ' questions left today.'; })
+    .catch(function(){ out.textContent = 'Could not reach the model desk.'; }).then(function(){ go.disabled = false; }); });
+})();
+(function(){ // Listen (owner 11/5): the day's brief through speechSynthesis - no server, works in the car
+  var b = document.getElementById('tdlisten'); if (!b || !('speechSynthesis' in window)) return;
+  function text(){ var parts = []; var h = document.getElementById('tdtitle'); if (h) parts.push(h.textContent.trim() + '.');
+    document.querySelectorAll('.tdgame.show').forEach(function(g){ var m = g.querySelector('.tdm'); var say = g.querySelector('.sweepsays'); var l = g.querySelector('.tdl');
+      if (m) parts.push(m.textContent.replace(/\s+/g, ' ').replace('@', ' at ') + '.'); if (l) parts.push(l.textContent.replace(/\s+/g, ' ') + '.'); if (say) parts.push(say.textContent.replace(/^Sweep says/i, 'Sweep says:').replace(/\s+/g, ' ') + '.'); });
+    var looks = document.querySelectorAll('#tdlooksgrid .play'); if (looks.length){ parts.push("Today's looks."); looks.forEach(function(p, i){ if (i > 3) return; var who = p.querySelector('.who b'), what = p.querySelector('.what'); if (who && what) parts.push(who.textContent + ', ' + what.textContent.replace(/\s+/g, ' ') + '.'); }); }
+    return parts.join(' '); }
+  b.hidden = false; var on = false;
+  b.addEventListener('click', function(){ if (on){ speechSynthesis.cancel(); on = false; b.classList.remove('on'); b.textContent = '▶ Listen'; return; }
+    var u = new SpeechSynthesisUtterance(text()); u.rate = 1.02; u.onend = function(){ on = false; b.classList.remove('on'); b.textContent = '▶ Listen'; };
+    speechSynthesis.cancel(); speechSynthesis.speak(u); on = true; b.classList.add('on'); b.textContent = '■ Stop'; });
+})();
 (function(){
   var T = window.__TD || {games: [], keys: {}, news: []}; var TZ = 'America/Chicago';
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }

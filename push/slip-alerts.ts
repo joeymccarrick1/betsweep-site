@@ -25,6 +25,15 @@ const ESPN_BASE = Deno.env.get("ESPN_BASE") ?? "https://site.api.espn.com";
 // owner 11/1: ESPN answers Supabase's servers with a block page on some runs, which left the risk list empty. A GitHub Action on the site
 // repo mirrors ESPN every ~10 minutes to the `feeds` branch (.github/feeds.py); every ESPN read falls back to that mirror.
 const FEEDS = Deno.env.get("FEEDS_URL") ?? "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds";
+const DISCORD = Deno.env.get("DISCORD_WEBHOOK") ?? "";   // owner 11/5: optional - a channel webhook URL; the brief, weather turns, kickoff reminders and promo alerts post there too
+export async function discord(title: string, body: string, url = ""): Promise<boolean> {
+  if (!DISCORD) return false;
+  try {
+    const r = await fetch(DISCORD, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "BetSweep", embeds: [{ title: title.slice(0, 250), description: body.slice(0, 1900), url: url ? (url.startsWith("http") ? url : SITE + url) : undefined, color: 0xd7332a }] }) });
+    return r.ok;
+  } catch (e) { console.warn("discord", String(e).slice(0, 80)); return false; }
+}
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 // ---------------- base64url ----------------
@@ -235,12 +244,26 @@ async function homesOf(games: any[]): Promise<Map<string, { home: string; away: 
 }
 
 // ---------------- the run ----------------
+// 11/5 Beat the model: the model's five for the week are frozen the first time the hourly run sees a week without a beat_model row -
+// the Thursday-morning build's picks are the model's picks for the week, however the lines and the build move afterwards.
+async function freezeBeat(W: number) {
+  try {
+    const have: any[] = await rest(`beat_model?select=week&week=eq.${W}`);
+    if (have.length) return false;
+    const b = await (await fetch(`${SITE}/b/beat.json`, { headers: { "cache-control": "no-cache" } })).json();
+    if (!b || b.week !== W || !Array.isArray(b.model) || b.model.length !== 5) return false;
+    await rest("beat_model", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates" }, body: JSON.stringify({ week: W, keys: b.model }) });
+    return true;
+  } catch (e) { console.log("freezeBeat skipped:", String(e).slice(0, 120)); return false; }
+}
+
 export async function run(now = Date.now()) {
   const D = await builderData(); const W = D.week;
+  const frozeBeat = await freezeBeat(W);
   const ko = new Map<string, number>(); for (const g of (D.games || [])) ko.set(g.gid, g.ko || 0);
   const gameOf = new Map<string, string>(); for (const l of (D.legs || [])) if (l.pos && !gameOf.has(norm(l.pl))) gameOf.set(norm(l.pl), l.g);
   const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly");
-  if (!subs.length) return { week: W, subs: 0, sent: 0 };
+  if (!subs.length) return { week: W, subs: 0, sent: 0, frozeBeat };
   const users = [...new Set(subs.map((s) => s.user_id))];
   const states: any[] = await rest(`user_state?select=user_id,key,value&key=in.(bs_slips_w${W},bs_slipk_w${W})&user_id=in.(${users.join(",")})`);
   const sent: any[] = await rest(`push_sent?select=user_id,player,status&week=eq.${W}`);
@@ -300,6 +323,7 @@ export async function run(now = Date.now()) {
         const key = `__ko__${g.gid}`; if (done.has(`${uid}|${key}|SENT`)) continue;
         const n = new Set(keys.filter((k) => (LEGG.get(k) || gameOf.get(norm(k.split("|")[0]))) === g.gid)).size; if (!n) continue;
         const mins = Math.round((g.ko - now) / 60e3);
+        if (DISCORD && !(await keysDone(`dc|ko|${W}|${g.gid}`)).size) { if (await discord(`${g.a} @ ${g.b} kicks off in ${mins} min`, `Live page tracks every leg against the box score with the model's chance from here.`, `/live/#lv-${g.gid}`)) await markKey(`dc|ko|${W}|${g.gid}`); }
         const msg = { title: `${g.a} @ ${g.b} kicks off in ${mins} min`, body: `${n} of your legs ${n === 1 ? "is" : "are"} in this one. Live page tracks them against the box score with the model's chance from here.`, url: `/live/#g-${g.gid}`, tag: `bs-ko-${g.gid}` };
         for (const s of us) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nko++; } catch (e) { console.warn("push", String(e)); } }
         await mark(uid, W, key, "SENT"); done.add(`${uid}|${key}|SENT`);
@@ -318,6 +342,10 @@ export async function run(now = Date.now()) {
       const w = await wxAt(st[0], st[1], g.ko); if (!w) continue;
       const bad = wxBad(w); if (bad.length) { WX.set(g.gid, { bad, title: `${h.away} @ ${h.home}` }); wxGames.push(`${h.away}@${h.home}: ${bad.join(", ")}`); }
     }
+    // owner 11/5 ("always push weather updates"): every subscriber hears about every bad-weather kickoff once, legs or no legs; the legs
+    // on their slips are named when there are any. Discord gets one message per game.
+    if (WX.size && DISCORD) { const dc = await keysDone(`dc|wx|${W}|`);
+      for (const [gid, x] of WX) { if (dc.has(`dc|wx|${W}|${gid}`)) continue; if (await discord(`Weather: ${x.title}`, `Kickoff forecast: ${x.bad.join(", ")}. Wind and rain cut passing and deep throws - runs and unders gain.`, `/boards/#${gid}`)) await markKey(`dc|wx|${W}|${gid}`); } }
     if (WX.size) for (const uid of users) {
       const per = new Map<string, Set<string>>();
       for (const r of states.filter((x) => x.user_id === uid)) {
@@ -326,17 +354,45 @@ export async function run(now = Date.now()) {
         for (const k of keys) { const l = LEG.get(k); if (!l || !l.g || !WX.has(l.g) || !WXLEG(String(l.m))) continue;
           const set = per.get(l.g) || new Set(); set.add(legText(l, k)); per.set(l.g, set); }
       }
-      for (const [gid, legs] of per) {
+      for (const [gid, x] of WX) {
         if (done.has(`${uid}|wx|${gid}|WX`)) continue;
-        const x = WX.get(gid)!; const L = [...legs];
-        const msg = { title: `⛈ Weather turn: ${x.title}`.slice(0, 90),
-          body: `Kickoff forecast now: ${x.bad.join(", ")}. On your slips: ${L.slice(0, 3).join("; ")}${L.length > 3 ? ` +${L.length - 3} more` : ""}. Wind and rain cut passing and deep throws - runs and unders gain. Check the slip before kickoff.`,
-          url: "/me/", tag: `bs-wx-${W}-${gid}` };
+        const L = [...(per.get(gid) || [])];
+        const mine = L.length ? ` On your slips: ${L.slice(0, 3).join("; ")}${L.length > 3 ? ` +${L.length - 3} more` : ""}.` : " Nothing of yours is in it.";
+        const msg = { title: `⛈ Weather: ${x.title}`.slice(0, 90),
+          body: `Kickoff forecast: ${x.bad.join(", ")}.${mine} Wind and rain cut passing and deep throws - runs and unders gain.`,
+          url: L.length ? "/me/" : `/boards/#${gid}`, tag: `bs-wx-${W}-${gid}` };
         for (const s of subs.filter((s) => s.user_id === uid)) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nwx++; } catch (e) { console.warn("push", String(e)); } }
         done.add(`${uid}|wx|${gid}|WX`); await mark(uid, W, `wx|${gid}`, "WX");
       }
     }
   }
+  // ---- line moves on YOUR legs (owner 11/5): data/price-moves.json (hourly, every board leg) x each subscriber's slip keys ----
+  // one push per leg per direction (push_sent __mv__<key>|<dir>), 3+ implied points (about 10 cents) or more, game not yet kicked off.
+  let nmv = 0;
+  try {
+    const pmj: any = await (await fetch(`${SITE}/data/price-moves.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
+    const MV = new Map<string, any>(); for (const m of (pmj?.moves || [])) if (m && m.key && Math.abs(+m.pts || 0) >= 3 && (!m.ko || m.ko > now)) MV.set(String(m.key), m);
+    const imp = (o: number) => o > 0 ? 100 / (o + 100) : -o / (-o + 100);
+    if (MV.size) for (const uid of users) {
+      const keys = new Set<string>();
+      for (const r of states.filter((x) => x.user_id === uid)) { let v: any = null; try { v = JSON.parse(r.value?.v ?? "null"); } catch { v = null; }
+        if (r.key.startsWith("bs_slips_w") && Array.isArray(v)) for (const sl of v) if (sl && Array.isArray(sl.keys)) for (const k of sl.keys) keys.add(String(k));
+        if (r.key.startsWith("bs_slipk_w") && Array.isArray(v)) for (const k of v) keys.add(String(k)); }
+      if (!keys.size) continue;
+      const us = subs.filter((s) => s.user_id === uid && s.live !== false); if (!us.length) continue;
+      for (const k of keys) {
+        const m = MV.get(k); if (!m) continue;
+        const mk = `__mv__${k}|${m.dir}`.slice(0, 300); if (done.has(`${uid}|${mk}|SENT`)) continue;
+        const l = LEG.get(k); const edge = l && typeof l.p === "number" ? Math.round((l.p - imp(+m.now)) * 100) : null;
+        const up = m.dir === "SHORTENED";
+        const msg = { title: `${up ? "📈" : "📉"} ${m.pl}: ${am(+m.built)} → ${am(+m.now)}`.slice(0, 90),
+          body: `${String(m.detail || "").replace(/^[^:]*: /, "")}${edge === null ? "" : up ? (edge > 0 ? ` Still +${edge} edge at the new price.` : ` The edge is gone at the new price (${edge}).`) : ` Model edge at the new price: ${edge > 0 ? "+" : ""}${edge}.`}`.slice(0, 300),
+          url: "/me/", tag: `bs-mv-${W}-${k}`.slice(0, 60) };
+        for (const s of us) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nmv++; } catch (e) { console.warn("push", String(e)); } }
+        await mark(uid, W, mk, "SENT"); done.add(`${uid}|${mk}|SENT`);
+      }
+    }
+  } catch (e) { console.warn("line moves", String(e).slice(0, 200)); }
   // ---- live risk list + promo watch (owner 11/1) ----
   let nrisk = 0, npromo = 0;
   try {
@@ -451,9 +507,16 @@ export async function run(now = Date.now()) {
     }
   }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, risk: nrisk, promoAlerts: npromo, inactives: ninact, removed: gone.length, statuses: ST.size };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, moves: nmv, risk: nrisk, promoAlerts: npromo, inactives: ninact, removed: gone.length, statuses: ST.size, frozeBeat };
 }
 
+// owner 11/5: marks that are not per user (Discord posts, model-wide sends) live in bs_marks (key text primary key; owner/betsweep-11-5.sql)
+export async function keysDone(prefix: string): Promise<Set<string>> {
+  try { const rows: any[] = await rest(`bs_marks?select=key&key=like.${encodeURIComponent(prefix + "%")}`); return new Set(rows.map((r) => r.key)); } catch { return new Set(); }
+}
+export async function markKey(key: string) {
+  try { await rest("bs_marks", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates" }, body: JSON.stringify([{ key: key.slice(0, 300) }]) }); } catch (e) { console.warn("markKey", String(e).slice(0, 80)); }
+}
 async function mark(uid: string, W: number, player: string, status: string) {
   await rest("push_sent", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates" }, body: JSON.stringify([{ user_id: uid, week: W, player: player.slice(0, 300), status }]) });
 }
@@ -612,6 +675,7 @@ export async function brief(now = Date.now()) {
   const sent: any[] = await rest(`push_sent?select=user_id&week=eq.${W}&player=eq.${key}`);
   const done = new Set(sent.map((x) => x.user_id));
   const msg = { title: `☀️ ${b.title}`.slice(0, 90), body: String(b.body || "").slice(0, 300), url: b.url || "/today/", tag: `bs-brief-${date}` };
+  if (DISCORD && !(await keysDone(`dc|brief|${date}`)).size) { if (await discord(b.title, String(b.body || ""), b.url || "/today/")) await markKey(`dc|brief|${date}`); }
   let n = 0; const gone: string[] = [];
   for (const uid of [...new Set(subs.map((s) => s.user_id))]) {
     if (done.has(uid)) continue;
@@ -620,6 +684,180 @@ export async function brief(now = Date.now()) {
   }
   for (const ep of gone) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
   return { week: W, date, sent: n, title: msg.title };
+}
+
+
+// =====================================================================================================================================
+// 11/5 modes (owner: "do all of your out of the box things"). Each one is independent and does nothing without its data or secret.
+// =====================================================================================================================================
+const RESEND = Deno.env.get("RESEND_API_KEY") ?? "", EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "BetSweep <brief@betsweep.co>";
+const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") ?? "", ASK_MODEL = Deno.env.get("ASK_MODEL") ?? "claude-haiku-5-5";
+function slipKeysOf(states: any[], uid: string): string[] {
+  const keys: string[] = [];
+  for (const r of states.filter((x) => x.user_id === uid)) { let v: any = null; try { v = JSON.parse(r.value?.v ?? "null"); } catch { v = null; }
+    if (r.key.startsWith("bs_slips_w") && Array.isArray(v)) for (const sl of v) if (sl && Array.isArray(sl.keys)) keys.push(...sl.keys.map(String));
+    if (r.key.startsWith("bs_slipk_w") && Array.isArray(v)) keys.push(...v.map(String)); }
+  return keys;
+}
+async function pushAll(subs: Sub[], msg: Record<string, unknown>, gone: string[]): Promise<number> {
+  let n = 0; for (const s of subs) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) n++; } catch (e) { console.warn("push", String(e)); } } return n;
+}
+async function dropGone(gone: string[]) { for (const ep of gone) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" }); }
+const CT_DATE = (t: number) => { const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(t)); const o: Record<string, string> = {}; for (const x of p) o[x.type] = x.value; return `${o.year}-${o.month}-${o.day}`; };
+
+// ---- "Your Sunday" recap (11:35 PM CT on game nights): saved slips graded against the box score, the one leg away, your CLV ----
+export async function recap(now = Date.now()) {
+  const D = await builderData(); const W = D.week; const date = CT_DATE(now);
+  const todays = (D.games || []).filter((g: any) => g.ko && CT_DATE(g.ko) === date);
+  if (!todays.length) return { week: W, date, sent: 0, reason: "no games today" };
+  const subs: Sub[] = (await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly")).filter((s: Sub) => s.weekly !== false);
+  if (!subs.length) return { week: W, sent: 0 };
+  const users = [...new Set(subs.map((s) => s.user_id))];
+  const states: any[] = await rest(`user_state?select=user_id,key,value&key=eq.bs_slips_w${W}&user_id=in.(${users.join(",")})`);
+  const sent: any[] = await rest(`push_sent?select=user_id&week=eq.${W}&player=eq.__recap__${date}`); const done = new Set(sent.map((x) => x.user_id));
+  const B = await liveBox(D.games || []); const todaySet = new Set(todays.map((g: any) => g.gid));
+  const LEG = new Map<string, any>(); for (const l of (D.legs || [])) { const k = `${l.pl}|${l.m}|${Math.floor(Number(l.ln || 1) + 0.5)}`; if (!LEG.has(k)) LEG.set(k, l); }
+  let close: any = null; try { close = await (await fetch(`${SITE}/data/close-w${W}.json`, { headers: { "cache-control": "no-cache" } })).json(); } catch { close = null; }
+  const imp = (o: number) => o > 0 ? 100 / (o + 100) : -o / (-o + 100);
+  let n = 0; const gone: string[] = [];
+  for (const uid of users) {
+    if (done.has(uid)) continue;
+    const row = states.find((x) => x.user_id === uid); let slips: any[] = []; try { slips = JSON.parse(row?.value?.v ?? "[]"); } catch { slips = []; }
+    slips = (Array.isArray(slips) ? slips : []).filter((sl: any) => sl && Array.isArray(sl.keys) && sl.keys.some((k: string) => { const l = LEG.get(String(k)); return l && todaySet.has(l.g); }));
+    if (!slips.length) continue;
+    let cashed = 0, missed = 0, open = 0, beat = 0, clvN = 0, clvSum = 0; let oneAway = "";
+    for (const sl of slips) {
+      const res = sl.keys.map((k: string) => { const l = LEG.get(String(k)); return l ? gradeLeg(l, String(k), B) : "na"; });
+      const misses = res.filter((r: string) => r === "miss").length, opens = res.filter((r: string) => r === "open").length;
+      if (misses) { missed++; if (misses === 1 && !oneAway) { const i = res.indexOf("miss"); const l = LEG.get(String(sl.keys[i])); if (l) { const r = B.players.get(norm(l.pl)); const base = String(l.m).replace(/^Under /, "");
+          const v = r ? (/TD$/.test(l.m) ? r.td : base === "Passing Yards" ? r.pass : base === "Rushing Yards" ? r.rush : base === "Receiving Yards" ? r.recy : base === "Receptions" ? r.rec : base === "Longest Reception" ? r.long : null) : null;
+          oneAway = `${sl.name || "a slip"} was one leg away: ${l.pl} ${legLabel(l).replace(l.pl + " ", "")}${v != null ? ` (had ${v})` : ""}`; } } }
+      else if (opens) open++; else if (res.every((r: string) => r === "hit" || r === "na")) cashed++;
+      for (const k of sl.keys) { const mine = sl.px && sl.px[k] && sl.px[k].o != null ? +sl.px[k].o : (close?.build?.[k]?.o ?? null); const cl = close?.close?.[k]?.o ?? null;
+        if (mine == null || cl == null) continue; const pts = (imp(+cl) - imp(+mine)) * 100; clvN++; clvSum += pts; if (pts > 0) beat++; }
+    }
+    const parts = [`${slips.length} slip${slips.length === 1 ? "" : "s"} today: ${cashed} cashed, ${missed} missed${open ? `, ${open} still open` : ""}.`];
+    if (oneAway) parts.push(oneAway + ".");
+    if (clvN) parts.push(`You beat the closing line on ${beat} of ${clvN} legs (${clvSum / clvN >= 0 ? "+" : ""}${(clvSum / clvN).toFixed(1)} pts avg).`);
+    const msg = { title: cashed ? `🧾 Your ${new Date(now).toLocaleDateString("en-US", { weekday: "long", timeZone: "America/Chicago" })}: ${cashed} cashed` : `🧾 Your ${new Date(now).toLocaleDateString("en-US", { weekday: "long", timeZone: "America/Chicago" })}, graded`,
+      body: parts.join(" ").slice(0, 300), url: "/me/", tag: `bs-recap-${date}` };
+    n += await pushAll(subs.filter((s) => s.user_id === uid), msg, gone); await mark(uid, W, `__recap__${date}`, "SENT");
+  }
+  await dropGone(gone); return { week: W, date, sent: n };
+}
+
+// the Who-should-I-start data (build_startsit.py -> /team/compare/data.json): {week, players: [{n, t, p, o, fp, av, ...}]}
+async function projections(): Promise<{ P: Map<string, any>; W: number }> {
+  let proj: any = null; try { proj = await (await fetch(`${SITE}/team/compare/data.json`, { headers: { "cache-control": "no-cache" } })).json(); } catch { proj = null; }
+  const P = new Map<string, any>(); for (const p of (proj?.players || [])) if (p && p.n) P.set(norm(p.n), { name: p.n, pos: p.p, team: p.t, opp: p.o, fp: p.fp, out: p.av === "OUT" });
+  return { P, W: +(proj?.week || 0) };
+}
+// ---- Sleeper roster inactives (Sunday 11:35 AM / 2:35 / 6:35 PM CT, TNF / MNF 5:35 PM): the official ESPN inactive list from the feeds
+// branch x the rosters the Fantasy page saved (fantasy_rosters). "X is out - the model's best bench play is Y" from /b/startsit.json.
+export async function inactives(now = Date.now()) {
+  const ina: any = await (await fetch(`${FEEDS}/inactives.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
+  const outs: { name: string; team: string }[] = []; for (const g of Object.values((ina?.games || {}) as Record<string, any>)) for (const o of (g.out || [])) if (o?.name) outs.push({ name: String(o.name), team: String(o.team || "") });
+  if (!outs.length) return { sent: 0, reason: "no inactives in the window" };
+  const OUT = new Map(outs.map((o) => [norm(o.name), o]));
+  const rosters: any[] = await rest("fantasy_rosters?select=user_id,league_id,league,starters,bench");
+  if (!rosters.length) return { sent: 0, outs: outs.length, reason: "no saved rosters" };
+  const { P, W } = await projections(); const date = CT_DATE(now);
+  const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly");
+  const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.INACTIVE`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
+  let n = 0; const gone: string[] = [];
+  for (const r of rosters) {
+    const us = subs.filter((s) => s.user_id === r.user_id); if (!us.length) continue;
+    for (const st of (r.starters || [])) {
+      const o = OUT.get(norm(st.name)); if (!o) continue; const key = `__ina__${r.league_id}|${norm(st.name)}`.slice(0, 300); if (done.has(`${r.user_id}|${key}`)) continue;
+      const pos = String(st.pos || ""); const bench = (r.bench || []).filter((b: any) => b && b.pos === pos && !OUT.has(norm(b.name))).map((b: any) => ({ b, pr: P.get(norm(b.name)) })).filter((x: any) => x.pr && x.pr.fp != null).sort((a: any, b: any) => b.pr.fp - a.pr.fp)[0];
+      const msg = { title: `${st.name} is INACTIVE${r.league ? ` (${r.league})` : ""}`.slice(0, 90),
+        body: bench ? `Official inactives. Your best bench ${pos} by the model: ${bench.b.name} (${(+bench.pr.fp).toFixed(1)} pts${bench.pr.opp ? ` vs ${bench.pr.opp}` : ""}). Swap before kickoff.` : `Official inactives. No ${pos} on your bench with a projection - check the waiver wire.`,
+        url: "/team/", tag: `bs-ina-${norm(st.name)}` };
+      n += await pushAll(us, msg, gone); await mark(r.user_id, W, key, "INACTIVE"); done.add(`${r.user_id}|${key}`);
+    }
+  }
+  await dropGone(gone); return { week: W, date, outs: outs.length, rosters: rosters.length, sent: n };
+}
+
+// ---- Saturday-night start/sit (7:05 PM CT): the model's lineup calls for each saved roster, one push per league ----
+export async function startsit(now = Date.now()) {
+  const { P, W } = await projections(); if (!P.size) return { sent: 0, reason: "no projections (team/compare/data.json)" };
+  const rosters: any[] = await rest("fantasy_rosters?select=user_id,league_id,league,starters,bench");
+  const subs: Sub[] = (await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly")).filter((s: Sub) => s.weekly !== false);
+  const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.STARTSIT`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
+  let n = 0; const gone: string[] = [];
+  for (const r of rosters) {
+    const us = subs.filter((s) => s.user_id === r.user_id); if (!us.length) continue; const key = `__ss__${r.league_id}`.slice(0, 300); if (done.has(`${r.user_id}|${key}`)) continue;
+    const calls: string[] = [];
+    for (const st of (r.starters || [])) { const sp = P.get(norm(st.name)); if (!sp || sp.fp == null || sp.out) { if (sp?.out) calls.push(`${st.name} is out`); continue; }
+      const better = (r.bench || []).filter((b: any) => b && b.pos === st.pos).map((b: any) => P.get(norm(b.name))).filter((bp: any) => bp && bp.fp != null && !bp.out && bp.fp - sp.fp >= 2).sort((a: any, b: any) => b.fp - a.fp)[0];
+      if (better) calls.push(`${better.name} over ${st.name} (+${(better.fp - sp.fp).toFixed(1)})`); }
+    if (!calls.length) continue;
+    const msg = { title: `Lineup check${r.league ? `: ${r.league}` : ""}`.slice(0, 90), body: `The model would start ${calls.slice(0, 3).join("; ")}${calls.length > 3 ? ` +${calls.length - 3} more` : ""}. Full lineup and the reasons on the Fantasy page.`.slice(0, 300), url: "/team/", tag: `bs-ss-${W}` };
+    n += await pushAll(us, msg, gone); await mark(r.user_id, W, key, "STARTSIT");
+  }
+  await dropGone(gone); return { week: W, rosters: rosters.length, sent: n };
+}
+
+// ---- email digest (Thu + Sun 9:20 AM CT) through Resend: the morning brief, or on Thursdays the week's top looks ----
+export async function email(now = Date.now()) {
+  if (!RESEND) return { sent: 0, reason: "RESEND_API_KEY not set" };
+  const prefs: any[] = await rest("email_prefs?select=user_id,email&digest=eq.true"); if (!prefs.length) return { sent: 0, reason: "no subscribers" };
+  const tj: any = await (await fetch(`${SITE}/b/today.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
+  const date = CT_DATE(now); const W = tj?.week || 0; const b = tj?.briefs?.[date];
+  let plus: any = null; try { plus = await (await fetch(`${SITE}/b/plus.json`)).json(); } catch { plus = null; }
+  const looks = (plus?.legs || []).filter((l: any) => !l.ko || l.ko > now).sort((a: any, b: any) => (b.p - b.bk) - (a.p - a.bk)).slice(0, 5);
+  const subject = b ? b.title : `Week ${W}: this week's looks`;
+  const lines = [b ? b.body : `The boards are up for Week ${W}.`, "", ...looks.map((l: any) => `• ${l.pl} ${l.m === "Anytime TD" ? "anytime TD" : `${Math.round(l.ln)}+ ${String(l.m).toLowerCase()}`} (FD ${am(l.o)}, model ${Math.round(l.p * 100)}%)`),
+    "", `Today: ${SITE}/today/`, `Boards: ${SITE}/boards/`, "", "Information and analysis only, not betting advice. 21+. 1-800-GAMBLER.", `Stop these emails: ${SITE}/me/`];
+  const mk = `email|${date}|`; const dc = await keysDone(mk); let n = 0;
+  for (const p of prefs) {
+    if (dc.has(mk + p.user_id)) continue;
+    const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: EMAIL_FROM, to: [p.email], subject: `BetSweep · ${subject}`.slice(0, 120), text: lines.join("\n") }) });
+    if (r.ok) { n++; await markKey(mk + p.user_id); } else console.warn("resend", r.status, (await r.text()).slice(0, 120));
+  }
+  return { week: W, date, sent: n, of: prefs.length };
+}
+
+// ---- Ask the model (signed-in users, 20 questions a day): the week's numbers as context, a short answer, nothing invented ----
+export async function ask(token: string, q: string) {
+  if (!ANTHROPIC) return { error: "Ask is not switched on yet." };
+  const u = await fetch(`${SB}/auth/v1/user`, { headers: { apikey: SRK, Authorization: `Bearer ${token}` } }); if (!u.ok) return { error: "Sign in to ask the model." };
+  const user = await u.json(); q = String(q || "").trim().slice(0, 400); if (q.length < 3) return { error: "Ask a question." };
+  const today: any[] = await rest(`ask_log?select=id&user_id=eq.${user.id}&asked_at=gte.${encodeURIComponent(new Date(Date.now() - 864e5).toISOString())}`);
+  if (today.length >= 20) return { error: "That's 20 questions today - back tomorrow." };
+  const D = await builderData(); const W = D.week; const now = Date.now();
+  const who = q.toLowerCase(); const legs = (D.legs || []).filter((l: any) => l.pl && who.includes(String(l.pl).toLowerCase().split(" ").pop() || "~~"));
+  const named = [...new Set(legs.map((l: any) => l.pl))].slice(0, 4);
+  let news: any = null; try { news = await (await fetch(`${SITE}/b/today.json`)).json(); } catch { news = null; }
+  const ctx: string[] = [`Week ${W}. Today ${CT_DATE(now)} CT. BetSweep's model prices every FanDuel prop; "model" = our chance, "book" = the price's implied chance, edge = model minus book in points.`];
+  for (const n of named) { const ls = (D.legs || []).filter((l: any) => l.pl === n && !l.gl).slice(0, 14);
+    ctx.push(`${n} (${ls[0]?.pos || ""} ${ls[0]?.tm || ""} vs ${ls[0]?.opp || ""}, game ${ls[0]?.g || ""}): ` + ls.map((l: any) => `${l.m} ${l.ln}: FD ${am(l.o)}, model ${Math.round(l.p * 100)}%, book ${Math.round(l.bk * 100)}%${l.w ? `; flags: ${String(l.w).slice(0, 160)}` : ""}`).join(" | ")); }
+  if (!named.length) { const top = (D.legs || []).filter((l: any) => !l.gl && l.e > 0.04).sort((a: any, b: any) => b.e - a.e).slice(0, 12);
+    ctx.push("Top edges this week: " + top.map((l: any) => `${l.pl} ${l.m} ${l.ln} (FD ${am(l.o)}, model ${Math.round(l.p * 100)}%)`).join("; ")); }
+  const sys = "You are BetSweep's model desk. Answer in 2-4 plain sentences from the context only; cite the model %, the FanDuel price and any flag; if the context has nothing on the player or game, say so and suggest where on the site to look (boards, builder, player page). Never invent numbers, never guarantee outcomes, keep the tone of a sharp friend. End with 'Not betting advice.' only when you recommend a side.";
+  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: ASK_MODEL, max_tokens: 350, system: sys, messages: [{ role: "user", content: `Context:\n${ctx.join("\n")}\n\nQuestion: ${q}` }] }) });
+  if (!r.ok) { console.warn("anthropic", r.status, (await r.text()).slice(0, 200)); return { error: "The model desk is busy - try again in a minute." }; }
+  const j = await r.json(); const a = (j.content || []).map((c: any) => c.text || "").join("").trim();
+  await rest("ask_log", { method: "POST", body: JSON.stringify([{ user_id: user.id, q, a: a.slice(0, 2000), tokens: (j.usage?.input_tokens || 0) + (j.usage?.output_tokens || 0) }]) });
+  return { a, left: 19 - today.length };
+}
+
+// ---- Beat the model: Tuesday grading (4:40 PM CT, after the receipt) from the site's graded legs; the model's five are frozen on Thursday by the first "beat" page load of the week (beat_model row) ----
+export async function grade(now = Date.now()) {
+  const D = await builderData(); const W = D.week - 1; if (W < 1) return { graded: 0 };
+  let gj: any = null; try { gj = await (await fetch(`${SITE}/data/graded-w${W}.json`, { headers: { "cache-control": "no-cache" } })).json(); } catch { gj = null; }
+  if (!gj || !gj.legs) return { week: W, graded: 0, reason: "no graded-w.json yet" };
+  const G = new Map<string, string>(Object.entries(gj.legs as Record<string, string>));
+  const picks: any[] = await rest(`beat_picks?select=user_id,keys&week=eq.${W}&graded_at=is.null`);
+  let n = 0;
+  for (const p of picks) { const hits = (p.keys || []).filter((k: string) => G.get(String(k)) === "hit").length;
+    await rest(`beat_picks?user_id=eq.${p.user_id}&week=eq.${W}`, { method: "PATCH", body: JSON.stringify({ hits, graded_at: new Date(now).toISOString() }) }); n++; }
+  const m: any[] = await rest(`beat_model?select=keys,hits&week=eq.${W}`);
+  if (m.length && m[0].hits == null) { const hits = (m[0].keys || []).filter((k: string) => G.get(String(k)) === "hit").length; await rest(`beat_model?week=eq.${W}`, { method: "PATCH", body: JSON.stringify({ hits }) }); }
+  return { week: W, graded: n };
 }
 
 async function test(token: string) {
@@ -648,8 +886,14 @@ if (import.meta.main) Deno.serve(async (req) => {
       const tok = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
       return Response.json(await test(tok), { headers: CORS });
     }
+    if (body && body.mode === "ask") {   // signed-in users: the Authorization header is their session token
+      const tok = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+      return Response.json(await ask(tok, body.q), { headers: CORS });
+    }
     if (!CRON || req.headers.get("x-cron-secret") !== CRON) return new Response("forbidden", { status: 403, headers: CORS });
-    const r = body && body.mode === "weekly" ? await weekly() : body && body.mode === "brief" ? await brief() : body && body.mode === "dk" ? await dkSalaries() : await run(); console.log(JSON.stringify(r));
+    const mode = body && body.mode;
+    const r = mode === "weekly" ? await weekly() : mode === "brief" ? await brief() : mode === "dk" ? await dkSalaries() : mode === "recap" ? await recap() : mode === "inactives" ? await inactives()
+      : mode === "startsit" ? await startsit() : mode === "email" ? await email() : mode === "grade" ? await grade() : await run(); console.log(JSON.stringify(r));
     return Response.json(r, { headers: CORS });
   } catch (e) {
     console.error(String(e)); return Response.json({ error: String(e) }, { status: 500, headers: CORS });

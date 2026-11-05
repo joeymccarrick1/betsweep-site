@@ -147,6 +147,7 @@ ME_CSS = """
 .me li.wkh{padding:10px 0 4px} .me .wkt{font:inherit;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.04em;text-transform:uppercase;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;display:flex;gap:8px;align-items:baseline}
 .me .wkt small{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12.5px;text-transform:none;letter-spacing:0;color:var(--mute,#6b655c)} .me .wkt i{font-style:normal;transition:transform .15s} .me li.wkh:not(.on) .wkt i{transform:rotate(-90deg)}
 .me li.sl.wkoff{display:none} .me li.sl .legs{display:none} .me li.sl.lo .legs{display:block}
+.me li.sl small.clv,.me li.sl small.away{display:block;margin-top:3px;font-size:12.5px;color:var(--mute)} .me li.sl small.away b{color:var(--ink)} .me li.sl .legs em.cl{font-style:normal;font-size:11.5px;color:var(--mute);margin-left:4px} .me li.sl .legs em.cl.up{color:var(--good)} .me li.sl .legs em.cl.dn{color:var(--bad)}
 .me .lgt{font:inherit;font-size:12px;font-weight:600;color:var(--mute,#6b655c);background:none;border:1px solid var(--line,#d8d1c2);border-radius:12px;padding:1px 9px;cursor:pointer} .me .lgt i{font-style:normal;display:inline-block;transition:transform .15s} .me li.sl.lo .lgt i{transform:rotate(180deg)}
 .me a.fdl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#1493ff;color:#fff;padding:3px 9px;border-radius:4px;text-decoration:none}
 """
@@ -160,6 +161,12 @@ ME_JS = r"""
   var NICK = {"Cardinals":"ARI","Falcons":"ATL","Ravens":"BAL","Bills":"BUF","Panthers":"CAR","Bears":"CHI","Bengals":"CIN","Browns":"CLE","Cowboys":"DAL","Broncos":"DEN","Lions":"DET","Packers":"GB","Texans":"HOU","Colts":"IND","Jaguars":"JAX","Chiefs":"KC","Raiders":"LV","Chargers":"LAC","Rams":"LA","Dolphins":"MIA","Vikings":"MIN","Patriots":"NE","Saints":"NO","Giants":"NYG","Jets":"NYJ","Eagles":"PHI","Steelers":"PIT","49ers":"SF","Seahawks":"SEA","Buccaneers":"TB","Titans":"TEN","Commanders":"WAS"};
   var BOX = {};   // week -> {box, games} once fetched
   function getBox(w){ if (BOX[w] !== undefined) return Promise.resolve(BOX[w]); return fetch('/data/box-w'+w+'.json').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }).then(function(d){ BOX[w] = d; return d; }); }
+  // owner 11/5 ("your CLV"): closing FanDuel prices per leg key (data/close-w<W>.json from build_mydata.py) + the build prices as the fallback for slips saved before prices were stored
+  var CLOSE = {};
+  function getClose(w){ if (CLOSE[w] !== undefined) return Promise.resolve(CLOSE[w]); return fetch('/data/close-w'+w+'.json').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }).then(function(d){ CLOSE[w] = d; return d; }); }
+  function imp(o){ o = +o; if (!o) return null; return o > 0 ? 100/(o+100) : -o/(-o+100); }
+  function clvOf(s, k, c){ var mine = (s.px && s.px[k] && s.px[k].o != null) ? +s.px[k].o : (c && c.build && c.build[k] ? +c.build[k].o : null); var cl = c && c.close && c.close[k] ? +c.close[k].o : null;
+    if (mine == null || cl == null) return null; return {mine: mine, close: cl, pts: Math.round((imp(cl) - imp(mine)) * 1000) / 10}; }
   // grade one slip key against the week's box scores: returns {r: 'HIT'|'MISS'|'PUSH'|'?', a: actual text}
   function gradeKey(k, d){ if (!d) return {r: '?', a: 'not final'}; var p = String(k).split('|'); if (p.length < 3) return {r: '?', a: ''};
     var who = p[0], m = p[1], ln = parseFloat(p[2]); var S = {"Passing Yards":0, "Passing TDs":1, "Rushing Yards":3, "Receptions":5, "Receiving Yards":6, "Longest Reception":8};
@@ -174,8 +181,8 @@ ME_JS = r"""
     if (/^Under /.test(m)){ var mu = S[m.slice(6)]; if (mu == null) return {r:'?', a:''}; var vu = b[mu]; return {r: vu < ln - 0.5 ? 'HIT' : 'MISS', a: String(vu)}; }   // FanDuel main-line unders (key line = rounded X.5)
     if (m === 'Anytime TD'){ var td = b[4]+b[7]; return {r: td>=1?'HIT':'MISS', a: td+' TD'}; }
     if (m === '2+ TD' || m === '3+ TD'){ var td2 = b[4]+b[7], need2 = m === '2+ TD' ? 2 : 3; return {r: td2>=need2?'HIT':'MISS', a: td2+' TD'}; }
-    if (m === 'Rush + Rec Yards'){ var y = b[3]+b[6]; return {r: y>=ln?'HIT':'MISS', a: y+' yds'}; }
-    if (S[m] != null){ var v2 = b[S[m]]; return {r: v2>=ln?'HIT':'MISS', a: String(v2)}; }
+    if (m === 'Rush + Rec Yards'){ var y = b[3]+b[6]; return {r: y>=ln?'HIT':'MISS', a: y+' yds', v: y, need: ln}; }
+    if (S[m] != null){ var v2 = b[S[m]]; return {r: v2>=ln?'HIT':'MISS', a: String(v2), v: v2, need: ln}; }
     return {r:'?', a:''}; }
   function dec(o){ o = +o; if (!o) return null; return o > 0 ? o/100 + 1 : 100/(-o) + 1; }
   function render(){
@@ -188,16 +195,23 @@ ME_JS = r"""
     var el = document.getElementById('slips');
     if (!sl.length){ el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
     else { el.innerHTML = '<li class="none">Grading…</li>';
-      Promise.all(sl.map(function(x){ return getBox(x.w); })).then(function(ds){ var W = 0, L = 0, U = 0, P = 0, html = '', lastW = null, topW = sl.length ? sl[0].w : 0;
-        sl.forEach(function(x, i){ var s = x.s, d = ds[i], gs = (s.keys||[]).map(function(k){ return {k:k, g: gradeKey(k, d)}; });
+      Promise.all(sl.map(function(x){ return getBox(x.w); }).concat(sl.map(function(x){ return getClose(x.w); }))).then(function(all){ var ds = all.slice(0, sl.length), cs = all.slice(sl.length); var W = 0, L = 0, U = 0, P = 0, html = '', lastW = null, topW = sl.length ? sl[0].w : 0, CB = 0, CN = 0, CP = 0;
+        sl.forEach(function(x, i){ var s = x.s, d = ds[i], c = cs[i], gs = (s.keys||[]).map(function(k){ return {k:k, g: gradeKey(k, d), clv: clvOf(s, k, c)}; });
+          var withClv = gs.filter(function(g){ return g.clv; }), beat = withClv.filter(function(g){ return g.clv.pts > 0; }).length, avg = withClv.length ? withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0) / withClv.length : null;
+          CB += beat; CN += withClv.length; CP += withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0);
           var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
           var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
           if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++;
+          var misses = gs.filter(function(g){ return g.g.r === 'MISS'; }), oneAway = (res === 'MISS' && misses.length === 1) ? misses[0] : null;
+          var extra = '';
+          if (withClv.length) extra += '<small class="clv">Closing line: beat it on ' + beat + ' of ' + withClv.length + ' leg' + (withClv.length===1?'':'s') + (avg != null ? ' (' + (avg>=0?'+':'') + avg.toFixed(1) + ' pts avg)' : '') + '</small>';
+          if (oneAway){ var q0 = String(oneAway.k).split('|'), gg = oneAway.g, short = (gg.v != null && gg.need != null) ? (Math.round((gg.need - gg.v) * 10) / 10) + ' short (' + gg.v + ' vs ' + gg.need + '+)' : (gg.a || 'missed');
+            extra += '<small class="away">One leg away: <b>' + esc(q0[0]) + ' ' + esc(q0[1].toLowerCase()) + '</b> ' + esc(short) + '</small>'; }
           var bet = (res==='PENDING' && s.fd && !d) ? '<a class="fdl" href="'+esc(s.fd)+'" target="_blank" rel="noopener">Bet on FanDuel</a>' : '';
           if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'">Load into betslip</button>';   // owner 11/1
           if (x.w !== lastW){ lastW = x.w; var wn = sl.filter(function(y){ return y.w === x.w; }).length; html += '<li class="wkh'+(x.w === topW ? ' on' : '')+'" data-w="'+x.w+'"><button type="button" class="wkt">Week '+x.w+' <small>'+wn+' slip'+(wn===1?'':'s')+'</small><i>▾</i></button></li>'; }
-          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small><button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : ''); }).join(' &nbsp; ')+'</span></li>'; });
-        el.innerHTML = html; document.getElementById('record').textContent = (W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : ''); }); }
+          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small>'+extra+'<button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : '')+cv; }).join(' &nbsp; ')+'</span></li>'; });
+        el.innerHTML = html; document.getElementById('record').textContent = ((W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : '')) + (CN ? ' · beat the close on '+CB+' of '+CN+' legs ('+(CP/CN>=0?'+':'')+(CP/CN).toFixed(1)+' pts avg)' : ''); }); }
     // exposure (owner 10/26, after 'I have so much riding on Ken Walker'): the latest week's saved slips + the working builder slip,
     // grouped by player (an either-TD leg counts for both names; game lines by their text). Stake and to-win at the slip's own stake/odds.
     (function(){ var ex = document.getElementById('expo'); if (!ex) return;
@@ -275,6 +289,7 @@ def me_page():
  {__import__("slipimport").CARD_HTML}
  <div class="card" id="cexpo" data-def="shut"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>
  <div class="card" id="alerts" data-def="shut"><h2>Slip alerts</h2><p class="m">Get a notification on this device when a player on one of your saved slips (or your open betslip) is ruled <b>Out</b> or <b>Doubtful</b> before kickoff - with a swap idea from the same game - plus, if you want them, live updates on your saved slips during games and a Thursday note when the Model's Best picks are up. Alerts follow the slips saved to your account, so sign in first.</p><p class="m" id="pushmsg"></p><div class="pushbtns"><button type="button" id="pushon" hidden>Turn on alerts</button><button type="button" id="pushtest" hidden>Send a test alert</button><button type="button" id="pushoff" hidden>Turn off on this device</button></div><div class="pushprefs" id="pushprefs" hidden><label><input type="checkbox" id="pplive" checked> Live updates during games: a leg on a saved slip hits or busts, a slip cashes</label><label><input type="checkbox" id="ppweekly" checked> Thursday note when the week's Model's Best picks are up</label></div></div>
+ <div class="card" id="cmail" data-def="shut"><h2>Email digest</h2><p class="m">The morning brief by email on game days (Thursday and Sunday, 9:20 AM CT): the weather watch, the news that moved the model and the top looks. Same text as the push, for people who never allow notifications.</p><p class="m" id="mailmsg"></p><div class="pushbtns"><label id="maillab" hidden><input type="checkbox" id="mailon"> Email me the brief at <b id="mailaddr"></b></label></div></div>
  <div class="card" id="cbld" data-def="shut"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
  <div class="card" id="ctrd" data-def="shut"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
  <div class="card" id="cfan" data-def="shut"><h2>Fantasy teams &amp; DFS lineups <a href="/team/">Fantasy →</a></h2><ul id="fantasy"></ul></div>
@@ -321,6 +336,14 @@ PUSH_JS = r"""
     .catch(function(e){ var t = String(e && (e.message || e)); say(/push_subs|relation|does not exist/i.test(t) ? 'Alerts are not switched on on our side yet - try again soon.' : t, 'err'); })
     .then(function(){ on.disabled = false; });
   });
+  // owner 11/5: email digest opt-in (email_prefs: the signed-in user's own address; the function sends through Resend)
+  (function(){ var lab = document.getElementById('maillab'), cb = document.getElementById('mailon'), msg = document.getElementById('mailmsg'); if (!lab || !cb) return;
+    function paintMail(){ var u = user(); if (!u || !u.email){ lab.hidden = true; msg.textContent = 'Sign in to get the brief by email.'; return; }
+      lab.hidden = false; document.getElementById('mailaddr').textContent = u.email; msg.textContent = '';
+      client().from('email_prefs').select('digest').eq('user_id', u.id).maybeSingle().then(function(r){ cb.checked = !!(r.data && r.data.digest); }).catch(function(){}); }
+    cb.addEventListener('change', function(){ var u = user(); if (!u) return; cb.disabled = true;
+      client().from('email_prefs').upsert({user_id: u.id, email: u.email, digest: cb.checked, updated_at: new Date().toISOString()}, {onConflict: 'user_id'}).then(function(r){ msg.textContent = r.error ? 'Could not save that: ' + r.error.message : (cb.checked ? 'On - the next game-day brief lands in your inbox.' : 'Off.'); }).catch(function(){ msg.textContent = 'Could not save that.'; }).then(function(){ cb.disabled = false; }); });
+    document.addEventListener('bs-account', paintMail); paintMail(); })();
   test.addEventListener('click', function(){
     test.disabled = true; say('Sending…');
     client().auth.getSession().then(function(r){ var tok = r.data && r.data.session && r.data.session.access_token;

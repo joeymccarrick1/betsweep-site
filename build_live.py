@@ -185,7 +185,8 @@ JS = r"""
     if(id === 'builder'){ if(SLIP[k]) delete SLIP[k]; else SLIP[k] = true; saveBuilderSlip(); }
     else { var s = slipById(id); if(!s) return; var i = s.keys.indexOf(k); if(i >= 0) s.keys.splice(i, 1); else s.keys.push(k); saveSlips(); }
     loadSlips(); render(); }
-  function newSlip(name, keys, odds, stake){ var s = {id: 's' + Date.now().toString(36), name: name || ('Slip ' + (SLIPS.length + 1)), keys: keys || [], odds: odds || null, stake: stake || null, made: Date.now()}; SLIPS.push(s); saveSlips(); loadSlips(); return s; }
+  function newSlip(name, keys, odds, stake){ var px = {}; (keys || []).forEach(function(k){ var l = LEGIDX[k]; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });
+    var s = {id: 's' + Date.now().toString(36), name: name || ('Slip ' + (SLIPS.length + 1)), keys: keys || [], odds: odds || null, stake: stake || null, px: px, made: Date.now()}; SLIPS.push(s); saveSlips(); loadSlips(); return s; }
   function dec(o){ return o > 0 ? 1 + o/100 : 1 + 100/(-o); } function amer(d){ return d >= 2 ? Math.round((d - 1)*100) : -Math.round(100/(d - 1)); }
   function parseOdds(v){ var m = String(v == null ? '' : v).trim().match(/^([+-])?\s*(\d{3,5})$/); return m ? (m[1] === '-' ? -1 : 1) * (+m[2]) : null; }
   function slipLegs(sl){ return sl.keys.map(function(k){ return LEGIDX[k]; }).filter(Boolean); }

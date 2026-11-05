@@ -87,7 +87,7 @@ open(os.path.join(SITE, "manifest.webmanifest"), "w").write(json.dumps(MANIFEST,
 SW_VERSION = _dt.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%Y%m%d%H%M") if "_dt" in globals() else __import__("datetime").datetime.now().strftime("%Y%m%d%H%M")
 SW = r'''// BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
 // with the last good copy served when the connection drops (stadium wifi). Version: __V__
-var V = 'bs-__V__', SHELL = ['/', '/today/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
+var V = 'bs-__V__', SHELL = ['/', '/today/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -126,11 +126,11 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
 NAV_GROUPS = [("/", "Home", None), ("/today/", "Today", None),
-              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
-              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record")])]
+              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record"), ("/api/", "API", "Every JSON the site serves")])]
 NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
@@ -491,10 +491,20 @@ def place_plain(src_html, dest_dir, path):
     m = re.search(r'<meta name="description" content="([^"]*)">\n?', src); d = html.unescape(m.group(1)) if m else "BetSweep"
     if m: src = src.replace(m.group(0), "", 1)
     os.makedirs(dest_dir, exist_ok=True); open(os.path.join(dest_dir, "index.html"), "w").write(wrap(src, t, d, path, "/og.png")); return t
+# 11/5 (out-of-the-box batch): /teasers/ - the teaser finder (build_teasers.py); /b/teasers.json for the app and the API page
+if os.path.exists(os.path.join(OUT, "teasers.html")):
+    made.append(place_plain(os.path.join(OUT, "teasers.html"), os.path.join(SITE, "teasers"), "/teasers/"))
+    try: os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "teasers.json"), os.path.join(SITE, "b", "teasers.json"))
+    except Exception as _e: print("note: /b/teasers.json not written:", _e)
+# 11/5: /beat/ - Beat the model (build_beat.py); /b/beat.json = the pool and the model's five (frozen into Supabase beat_model by the hourly Edge Function run)
+if os.path.exists(os.path.join(OUT, "beat.html")) and os.path.exists(os.path.join(OUT, "beat.json")):
+    made.append(place_plain(os.path.join(OUT, "beat.html"), os.path.join(SITE, "beat"), "/beat/"))
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "beat.json"), os.path.join(SITE, "b", "beat.json"))
 # owner 11/1: /team/compare/ - "Who should I start?" (build_startsit.py, run by build_team.py)
 if os.path.exists(os.path.join(OUT, "startsit.html")) and os.path.exists(os.path.join(OUT, "startsit.json")):
     made.append(place_plain(os.path.join(OUT, "startsit.html"), os.path.join(SITE, "team", "compare"), "/team/compare/"))
     shutil.copy(os.path.join(OUT, "startsit.json"), os.path.join(SITE, "team", "compare", "data.json"))
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "startsit.json"), os.path.join(SITE, "b", "startsit.json"))
 _PD = os.path.join(OUT, "players")
 if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
     _np = 0
@@ -679,6 +689,8 @@ def landing(weeks):
         ("/benefits/", "Who Benefits", "Injuries this week", "When a starter is ruled out: where his snaps, targets and carries went in the games he already missed, with each teammate's best-priced leg - books are often slow on the backup.", None),
         ("/usage/", "Usage Trends", "Rising and falling roles", "Whose snaps, targets and carries are growing or shrinking over the last three games, with the injury context that explains a fill-in bump or a dip from playing hurt.", None),
         ("/firsttd/", "First TD", f"{nftd} players" if nftd else f"Week {week}", "Who scores first in every game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price with the edge.", None),
+        ("/teasers/", "Teaser Finder", "6, 6.5 and 7 points", "Every spread and total teased 6, 6.5 and 7 points, scored by the model: which teased legs clear your book's two-leg price, and the classic pairs that cross both 3 and 7.", None),
+        ("/beat/", "Beat the Model", "Your five vs its five", "Pick five FanDuel player props for the week and go head to head with the model's five. Hits count, not odds; Tuesday grades everyone and the leaderboard keeps the season score.", None),
         ("/receipts/", "Receipts", (f"Week {latest} graded" if latest else "Coming Tuesday"), "What we said before kickoff and what happened. Every projection frozen before the games, graded after, biggest beats and busts included. Nothing is edited after the fact.", (f"/receipts/week{latest}/img/summary.png" if latest else None)),
         ("/season/", "Season to date", "Running record", "Projection error by position week by week and the FanDuel leg record, all from pre-kickoff snapshots.", "/season/img/summary.png"),
         ("/guide/", "How to read BetSweep", "New here? Start here", "What every color, rank, percentage and chip on the site means: matchups, model % vs book %, edge, confidence grades, flags and the betslip.", None),
@@ -771,6 +783,46 @@ if os.path.exists(os.path.join(OUT, "today.html")):
     made.append(place_plain(os.path.join(OUT, "today_wrapped.html"), os.path.join(SITE, "today"), "/today/"))
     try: shutil.copy(os.path.join(OUT, "today.json"), os.path.join(SITE, "b", "today.json")); print("wrote /b/today.json (morning briefs per game day)")
     except Exception as _e: print("note: /b/today.json not written:", _e)
+# ---- 11/5 (out-of-the-box batch): /api/ - a plain page listing every public JSON the site serves, so anyone can build on the numbers ----
+_API = [
+    ("/b/plus.json", "This week's plus-money and touchdown-tier legs with the price at build time: {week, built, legs:[{pl, m, ln, o, p, tier, ...}]}.", "every rebuild"),
+    ("/b/live-legs.json", "Every leg the live page tracks (the model's picks plus saved slips' legs) with the pregame chance; the live page re-prices them from the box score.", "every rebuild"),
+    ("/b/players.json", "Player index for search: name, slug (the /player/<slug>/ page), team, position, opponent, whether he has props this week.", "every rebuild"),
+    ("/b/today.json", "The morning briefs per game day: {week, briefs:{YYYY-MM-DD:{title, body, url, games}}, days}. Weather risks lead the body.", "every rebuild"),
+    ("/b/teasers.json", "The teaser finder: every spread and total teased 6, 6.5 and 7 points with the model's chance before and after the move, which cross 3 and 7, and the best pairs.", "every rebuild"),
+    ("/b/beat.json", "Beat the model: the week's pool (every player prop priced -150 to +150, as [key, player, team, opp, game, market, line, odds, model chance, kickoff]) and the model's five keys.", "every rebuild"),
+    ("/b/startsit.json", "Who-should-I-start inputs: {week, players:[{n, t, p, o, fp, av}]} - name, team, position, opponent, projected fantasy points, availability.", "every rebuild"),
+    ("/b/books.json", "DraftKings / Hard Rock selection ids for the week's legs, keyed like the slip keys, for deep links.", "every rebuild"),
+    ("/b/promos.json", "The promo desk's posted slips with their short links and grades.", "every rebuild"),
+    ("/data/price-moves.json", "FanDuel price moves of 3+ points since the build on every tracked leg: {built, moves:[{key, pl, m, ln, from, to, pts, dir, tier, detail}]}.", "every 30 min (GitHub Action)"),
+    ("/data/risk-notes.json", "Risk flags per player (questionable tags, weather, role changes) refreshed between builds.", "every 30 min (GitHub Action)"),
+    ("/data/box-w<W>.json", "The graded box score per week: every tracked leg's final stat and hit / miss.", "Tuesday"),
+    ("/data/close-w<W>.json", "Closing lines per slip key with the build price: {week, close:{key:{o, imp, at}}, build:{key:{o, p}}} - the CLV numbers on /me/.", "Tuesday"),
+    ("/data/graded-w<W>.json", "Hit / miss per slip key for the week, the input to Beat the model grading.", "Tuesday"),
+    ("/data/weeks.json", "Which weeks have box scores and receipts.", "Tuesday"),
+    ("/team/compare/data.json", "The same projections the start/sit page uses (alias of /b/startsit.json).", "every rebuild"),
+]
+_feeds = [("injuries.json", "Official injury report rows (nflverse), refreshed every 10 minutes on the feeds branch."), ("inactives.json", "Game-day inactives as they post."), ("scoreboard.json", "Live scores and clock per game."),
+          ("weather.json", "Kickoff-hour forecast per game: wind, precipitation chance and type, temperature, risk."), ("depthcharts.json", "ESPN depth charts per team."), ("news.json", "The news desk's tagged items."), ("projections.json", "The sheet's current projections snapshot.")]
+_rows = "".join(f'<tr><td><code>{html.escape(p)}</code></td><td>{html.escape(d)}</td><td class="r">{html.escape(f)}</td></tr>' for p, d, f in _API)
+_frows = "".join(f'<tr><td><code>https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/{html.escape(n)}</code></td><td>{html.escape(d)}</td><td class="r">every 10 min</td></tr>' for n, d in _feeds)
+_api_body = f'''<title>API · BetSweep</title>
+<meta name="description" content="Every public JSON BetSweep serves: this week's priced legs, live legs, price moves, closing lines, box scores, teasers and the live feeds - free to read, no key.">
+<style>.api{{max-width:1100px;margin:16px auto 40px;padding:0 16px}} .api h1{{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;margin:0 0 8px}} .api p{{color:var(--mute);line-height:1.5;max-width:76ch}} .api table{{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0 22px}} .api th,.api td{{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}} .api th.r,.api td.r{{text-align:right;white-space:nowrap;color:var(--mute)}} .api thead th{{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}} .api code{{font-size:12.5px;background:var(--chalk);padding:2px 6px;border-radius:6px;word-break:break-all}} .api h2{{font-family:var(--display);font-weight:700;font-size:20px;margin:18px 0 4px}}</style>
+<main class="api">
+<h1>API</h1>
+<p>Everything on this site is built from JSON the site also serves. Read it from anything - a spreadsheet, a bot, your own page. No key, no sign-up; same-origin and cross-origin GETs both work. Numbers are the model's, prices are FanDuel's at build time unless the file says otherwise. Please cache for a few minutes and credit betsweep.co. Not betting advice.</p>
+<h2>Site JSON</h2>
+<table><thead><tr><th>URL</th><th>What it holds</th><th class="r">Refreshed</th></tr></thead><tbody>{_rows}</tbody></table>
+<h2>Live feeds</h2>
+<p>The feeds live on the <code>feeds</code> branch of the public repo and refresh every ten minutes during the season.</p>
+<table><thead><tr><th>URL</th><th>What it holds</th><th class="r">Refreshed</th></tr></thead><tbody>{_frows}</tbody></table>
+<h2>Keys</h2>
+<p>A slip key is <code>Player|Market|Line</code> with the line rounded to an integer the way JavaScript's <code>Math.round</code> does it (<code>Josh Allen|Passing Yds|250</code>); the same key appears in price moves, closing lines, box scores and saved slips, so the files join on it.</p>
+<p>Ideas, bugs, something you built: <a href="/social/" style="color:var(--ink)">post it on Social</a>.</p>
+</main>
+'''
+os.makedirs(os.path.join(SITE, "api"), exist_ok=True); open(os.path.join(SITE, "api", "index.html"), "w").write(wrap(_api_body, "API · BetSweep", "Every public JSON BetSweep serves, free to read.", "/api/", "/og.png")); print("wrote /api/")
 # ---- owner 10/30: sitemap.xml + robots.txt so search engines find every page (the 375-odd player pages above all). Every index.html
 # this build wrote, except the account page, short-link pages and the 404; receipts the clone already holds are added from in/archive.json weeks.
 _today = _dt.date.today().isoformat(); _urls = []
