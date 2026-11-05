@@ -212,6 +212,14 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .installbar{display:none;align-items:center;gap:10px;max-width:1360px;margin:10px auto 0;padding:10px 14px;background:#141a24;color:#f1e8d8;border-radius:8px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px}
 .installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
 .installbar button{margin-left:auto;font:inherit;font-weight:700;color:#141a24;background:#f1e8d8;border:0;border-radius:4px;padding:6px 12px;cursor:pointer} .installbar .x{margin-left:0;background:none;color:#a9a294;font-size:18px;padding:0 6px}
+/* 11/5 (owner: "header you can't see log out and zooms are weird"): signed in, the header row (wordmark + search + Menu + My BetSweep + Out) was 478px of
+   non-shrinking content on a 390px phone, so iOS laid the page out at 478px and zoomed out - every page looked small and Out was off-screen.
+   The row may never exceed the viewport: the wordmark shrinks, the account button is the avatar alone, nothing wraps or overflows. */
+@media (max-width:560px){ .sitenav .in{flex-wrap:nowrap;min-width:0;gap:8px;padding:0 10px} .sitenav .brand{min-width:0;flex:0 1 auto} .sitenav .brand img{height:28px;max-width:100%;object-fit:contain}
+  .sitenav .srch{width:36px;height:36px;flex:none} .sitenav .menu{flex:none;padding:0 10px}
+  .sitenav .acct{flex:none;gap:4px;margin-right:0} .sitenav .acct a.me{padding:4px;width:32px;height:32px;justify-content:center} .sitenav .acct a.me i{margin:0;width:22px;height:22px;line-height:22px;font-size:12px} .sitenav .acct a.me{font-size:0}
+  .sitenav .acct button.out{padding:5px 7px;font-size:11px} }
+.sitenav{overflow-x:clip}
 </style>
 """
 
