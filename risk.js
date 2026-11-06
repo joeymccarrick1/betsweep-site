@@ -83,7 +83,7 @@
   window.addEventListener('storage', function(e){ if (/^bs_slipk_w/.test(e.key || '')) pill(); });
   // ---- the owner's note panel on player pages ----
   var ownerChecked = false;
-  function owner(){ var pp = document.querySelector('.pp h1'); if (!pp || ownerChecked) return; var A = window.bsAccount; if (!A || !A.client || !A.user) return; ownerChecked = true;
+  function owner(){ return; var pp = document.querySelector('.pp h1'); if (!pp || ownerChecked) return; var A = window.bsAccount; if (!A || !A.client || !A.user) return; ownerChecked = true;
     A.client.rpc('bs_is_admin').then(function(r){ if (!r || r.data !== true) return; var name = ((pp.firstChild && pp.firstChild.nodeType === 3) ? pp.firstChild.nodeValue : pp.textContent).trim();
       var cur = (P[nrm(name)] || []).filter(function(x){ return x.kind === 'note'; })[0] || {};
       var box = document.createElement('div'); box.className = 'bsrnote';
