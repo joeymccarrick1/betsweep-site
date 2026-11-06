@@ -742,7 +742,7 @@ window.BSLive = (function(){
     if(i.rest && i.rest[0] != null) d.push(['Rest', esc(home + ' ' + i.rest[0] + ' days · ' + away + ' ' + i.rest[1] + ' days')]);
     if(i.coach && i.coach[0]) d.push(['Coaches', esc(home + ' ' + i.coach[0] + ' · ' + away + ' ' + i.coach[1])]);
     if(i.div) d.push(['Division', 'Divisional game']);
-    (g.sp || []).forEach(function(t){ d.push(['Tested spot', esc(t) + ' (2006-25, small edge)']); });
+    (g.sp || []).forEach(function(t){ d.push(['Tested spot', esc(t) + ' - small edge']); });
     if(i.ref) d.push(['Referee', esc(i.ref)]);
     if(w && w.upd && wxText(w) && !/Indoors|No forecast/.test(wxText(w))) d.push(['Forecast', 'kickoff hour, updated ' + esc(String(w.upd).replace(/^\d{4}-\d\d-\d\d /, ''))]);
     return '<div class="gdet">' + d.map(function(x){ return '<span><b>' + x[0] + '</b>' + x[1] + '</span>'; }).join('') + '</div>'; }
