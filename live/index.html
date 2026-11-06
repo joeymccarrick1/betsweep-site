@@ -131,6 +131,19 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .gc-tick{display:flex;gap:8px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none} .gc-tick::-webkit-scrollbar{display:none}
 .gc-tick span{flex:none;max-width:250px;font-size:11.5px;line-height:1.35;color:var(--mute);background:var(--chalk);border-radius:8px;padding:6px 8px;white-space:normal}
 .gc-tick span.td{color:#fff;background:var(--good)} .gc-tick span.to{color:#fff;background:var(--bad)}
+.sc2 .sch{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 14px 10px}
+.sc2 .sliptog{position:static;width:34px;height:34px}
+.sc2 .scn{min-width:0} .sc2 .scn input{font:inherit;font-family:var(--display);font-weight:800;font-size:20px;line-height:1.1;border:0;border-bottom:1px dashed transparent;background:none;color:var(--ink);width:100%;padding:0}
+.sc2 .scn input:focus{outline:none;border-bottom-color:var(--line)} .sc2 .scn small{display:block;color:var(--mute);font-size:12px;margin-top:3px}
+.sc2 .scp{text-align:right} .sc2 .scp b{display:block;font-family:var(--display);font-weight:800;font-size:30px;line-height:1} .sc2 .scp small{display:block;color:var(--mute);font-size:11px;margin-top:2px;white-space:nowrap}
+.sc2 .scp.cashed b{color:var(--good)} .sc2 .scp.dead b{color:var(--bad);font-size:22px}
+.sc2 .scm{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line)} .sc2 .scm span{flex:1;padding:8px 14px;border-right:1px solid var(--line);min-width:0} .sc2 .scm span:last-child{border-right:0}
+.sc2 .scm small{display:block;color:var(--mute);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--display);font-weight:700} .sc2 .scm b{font-family:var(--display);font-weight:800;font-size:17px}
+.sc2.folded .scm{border-bottom:0}
+@media (max-width:620px){ .lvt tr.hit{background:color-mix(in srgb,var(--good) 10%,transparent)} .lvt tr.hit td, .lvt tr.dead td{background:none !important}
+  .sc2 .slipbar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center} .sc2 .slipbar .fd{grid-column:1/-1;text-align:center}
+  .sc2 .slipbar label{display:flex;align-items:center;gap:6px;min-width:0} .sc2 .slipbar label input{width:100%;min-width:0} }
+/* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
 
@@ -291,11 +304,25 @@ window.BSLive = (function(){
     var rows = sr.map(function(x){ var l = x.l, r = x.r, st = x.s; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st"><button type="button" class="rm" data-sid="' + esc(sl.id) + '" data-k="' + esc(legKey(l)) + '" title="Remove from this slip">×</button></td><td class="who"><b>' + esc(legText(l)) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'dead' ? '<span class="chip">Dead</span>' : '') + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + ' · FD ' + am(l.o) + ' · ' + (st.st === 'in' ? esc(st.det || 'live') : st.st === 'post' ? 'final' : esc(games[l.g].kick)) + '</small></td><td class="now"><b>' + esc(r.now || '') + '</b></td><td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + pc(r.p) + '</b><small>' + (st.st === 'pre' ? 'pregame' : 'from here') + '</small></td></tr>'; }).join('');
     if(missing) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + missing + ' leg' + (missing > 1 ? 's' : '') + ' from an older board are not on this week\'s page and cannot be tracked.</small></td></tr>';
     if(!ls.length && !missing) rows = '<tr><td class="who" colspan="4"><small>Empty - tap + on any leg below to add it here.</small></td></tr>';
-    return '<section class="lg2 slipcard open" data-sid="' + esc(sl.id) + '"><div class="ghd2 static"><span class="t"><input type="text" class="slipname" data-sid="' + esc(sl.id) + '" value="' + esc(sl.name) + '" aria-label="Slip name"><small>' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + (sl.builder ? ' · shared with the boards / builder' : '') + '</small></span><span class="mid"><b>' + done + '</b><small>' + sub + '</small></span><span class="t r"><small>' + (price ? (sl.odds ? 'ticket ' : 'legs imply ') + am(price) : '') + (toWin != null ? '<br>$' + (+sl.stake).toFixed(2) + ' → wins $' + toWin.toFixed(2) : '') + (no && pj > 0 && pj < 1 ? '<br>fair from here ' + am(amer(1/pj)) : '') + '</small></span></div>' +
-      '<table class="lvt">' + rows + '</table>' +
-      '<div class="slipbar">' + (fdUrl ? '<a class="rfr fd" href="' + fdUrl + '" target="_blank" rel="noopener">Open in FanDuel' + (fdOk.length < ls.length ? ' (' + fdOk.length + '/' + ls.length + ')' : '') + '</a>' : '') +
+    var so = !(('slip|' + sl.id) in OPEN) || OPEN['slip|' + sl.id];   // owner 11/5: "Can every betslip collapse?" - open until you fold it, remembered per slip
+    // owner 11/5: "I don't like how this looks. I like what it says though" - one clean header: name + chance on top, the facts as a strip below
+    var stCls = nd ? 'dead' : (no === 0 && nh ? 'cashed' : '');
+    var facts = [nh + ' hit', (nd ? nd + ' dead' : no + ' open')];
+    if(!nd && !(no === 0 && nh) && ls.length) facts.push('pregame ' + pc(pre));
+    var money = [];
+    if(price) money.push('<span><small>' + (sl.odds ? 'Ticket' : 'Legs imply') + '</small><b>' + am(price) + '</b></span>');
+    if(no && pj > 0 && pj < 1) money.push('<span><small>Fair from here</small><b>' + am(amer(1/pj)) + '</b></span>');
+    if(toWin != null) money.push('<span><small>$' + (+sl.stake).toFixed(2) + ' wins</small><b>$' + toWin.toFixed(2) + '</b></span>');
+    return '<section class="lg2 slipcard sc2' + (so ? ' open' : ' folded') + '" data-sid="' + esc(sl.id) + '"><div class="sch">' +
+      '<button type="button" class="sliptog" data-sid="' + esc(sl.id) + '" aria-expanded="' + so + '" aria-label="' + (so ? 'Collapse' : 'Expand') + ' slip">' + (so ? '▴' : '▾') + '</button>' +
+      '<div class="scn"><input type="text" class="slipname" data-sid="' + esc(sl.id) + '" value="' + esc(sl.name) + '" aria-label="Slip name"><small>' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + ' · ' + facts.join(' · ') + (sl.builder ? ' · shared with the builder' : '') + '</small></div>' +
+      '<div class="scp ' + stCls + '"><b>' + done + '</b><small>' + (stCls ? '' : 'to cash from here') + '</small></div></div>' +
+      (money.length ? '<div class="scm">' + money.join('') + '</div>' : '') +
+      (so ? '<table class="lvt">' + rows + '</table>' : '') +
+      '<div class="slipbar"' + (so ? '' : ' hidden') + '>' + (fdUrl ? '<a class="rfr fd" href="' + fdUrl + '" target="_blank" rel="noopener">Open in FanDuel' + (fdOk.length < ls.length ? ' (' + fdOk.length + '/' + ls.length + ')' : '') + '</a>' : '') +
       '<label>ticket <input type="text" inputmode="numeric" class="slipodds" data-sid="' + esc(sl.id) + '" placeholder="+593" value="' + (sl.odds ? am(sl.odds) : '') + '"></label><label>stake $<input type="text" inputmode="decimal" class="slipstake" data-sid="' + esc(sl.id) + '" placeholder="10" value="' + (sl.stake || '') + '"></label>' +
       '<button type="button" class="rfr slipdel" data-sid="' + esc(sl.id) + '">' + (sl.builder ? 'Clear' : 'Delete') + '</button></div></section>'; }
+  try { (JSON.parse(localStorage.getItem('bs_live_fold') || '[]') || []).forEach(function(k){ OPEN[k] = false; }); } catch(e){}
   var PREV = {}, FLASH = {};   // status per leg from the last render, to flash what just changed   // OPEN[gid] = true/false once the user has toggled; otherwise live games open, others closed
   // ---- ESPN game summary -> per-player box + first TD scorer ----
   function parseBox(js){
@@ -578,6 +605,7 @@ window.BSLive = (function(){
     var rm = ev.target.closest('.rm'); if(rm){ toggleIn(rm.dataset.sid, rm.dataset.k); return; }
     var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; saveBuilderSlip(); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
+    var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_fold', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === false; }))); } catch(e){} render(); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
     var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log === false; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
