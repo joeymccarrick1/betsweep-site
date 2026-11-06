@@ -136,7 +136,8 @@ RISK_JS = r"""(function(){
   window.addEventListener('storage', function(e){ if (/^bs_slipk_w/.test(e.key || '')) pill(); });
   // ---- the owner's note panel on player pages ----
   var ownerChecked = false;
-  function owner(){ var pp = document.querySelector('.pp h1'); if (!pp || ownerChecked) return; var A = window.bsAccount; if (!A || !A.client || !A.user) return; ownerChecked = true;
+  // owner 11/5: "I don't think we need the Your BetSweep note section" - the panel is off; owner notes still come from the sheet (RUNBOOK Step 2a)
+  function owner(){ return; var pp = document.querySelector('.pp h1'); if (!pp || ownerChecked) return; var A = window.bsAccount; if (!A || !A.client || !A.user) return; ownerChecked = true;
     A.client.rpc('bs_is_admin').then(function(r){ if (!r || r.data !== true) return; var name = ((pp.firstChild && pp.firstChild.nodeType === 3) ? pp.firstChild.nodeValue : pp.textContent).trim();
       var cur = (P[nrm(name)] || []).filter(function(x){ return x.kind === 'note'; })[0] || {};
       var box = document.createElement('div'); box.className = 'bsrnote';
