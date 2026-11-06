@@ -521,7 +521,11 @@ JS = r"""
         (OPEN.__log === true ? '<div class="logbar"><button type="button" class="rfr" id="logshare">Share my week</button><button type="button" class="rfr" id="logcopy">Copy as text</button><button type="button" class="rfr" id="logcsv">Download CSV</button><span>Pin a leg (☆) or add it to your slip and it shows up here; results fill in as the games end.</span></div>' + lrows : '') + '</section>']);
       // owner 11/5 "a season ledger": keep this week's settled legs (synced to the account like slips) so My season can total every week
       try { var lw = mr.filter(function(x){ return x.r.status === 'hit' || x.r.status === 'dead'; }).map(function(x){ return [x.l.pl, x.l.m, x.l.ln, x.l.o, x.r.status === 'hit' ? 1 : 0]; });
-        var lk = 'bs_log_w' + D.week, prevLog = localStorage.getItem(lk), nl = JSON.stringify(lw); if(lw.length && prevLog !== nl) localStorage.setItem(lk, nl); } catch(e){}
+        var lk = 'bs_log_w' + D.week, prevLog = localStorage.getItem(lk), nl = JSON.stringify(lw); if(lw.length && prevLog !== nl) localStorage.setItem(lk, nl);
+        // owner 11/6 "your own closing-line value": every tracked leg's price at tracking time, compared with FanDuel's last pre-kickoff price
+        var ck = 'bs_clv_w' + D.week, cv = {}; try { cv = JSON.parse(localStorage.getItem(ck) || '{}') || {}; } catch(e){ cv = {}; }
+        var chg = false; mr.forEach(function(x){ var l = x.l; if(l.gl || /^Under /.test(l.m) || l.o == null) return; var k = (l.pl + '|' + l.m + '|' + (Math.round(l.ln || 1) === +l.ln ? Math.round(l.ln || 1) : l.ln)).toLowerCase(); if(!(k in cv)){ cv[k] = +l.o; chg = true; } });
+        if(chg) localStorage.setItem(ck, JSON.stringify(cv)); } catch(e){}
       window.__BSLOGT = mr.map(function(x){ return legText(x.l); });
       window.__BSLOG = mr.map(function(x){ var l = x.l, r = x.r; return [D.week, l.g, l.pl, l.m, l.ln, l.o, Math.round(l.p * 1000) / 10, r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : 'OPEN', r.now || '', (INSLIP[legKey(l)] || []).map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join('; ')]; });
     }
@@ -537,8 +541,9 @@ JS = r"""
         var row = function(lab, a){ return '<tr><td class="lb"><b>' + esc(lab) + '</b></td><td>' + a.w + '–' + (a.n - a.w) + '</td><td>' + Math.round(a.w / a.n * 100) + '%</td><td class="' + (a.u >= 0 ? 'up' : 'dn') + '"><b>' + (a.u >= 0 ? '+' : '') + a.u.toFixed(2) + 'u</b></td><td>' + (a.roi >= 0 ? '+' : '') + Math.round(a.roi * 100) + '%</td></tr>'; };
         var tbl = function(title, obj, order_){ var ks = order_ || Object.keys(obj).sort(function(a, b){ return obj[b].length - obj[a].length; }); return '<h4 class="sh">' + title + '</h4><table class="ssn"><tr class="hd"><td></td><td>W–L</td><td>Hit</td><td>Units</td><td>ROI</td></tr>' + ks.filter(function(k){ return obj[k]; }).map(function(k){ return row(k, agg(obj[k])); }).join('') + '</table>'; };
         var so = OPEN.__season === true;
+        var clvTxt = ''; try { var cl = clvSummary(); if(cl && cl.n) clvTxt = '<div class="logbar"><span><b>Closing-line value:</b> ' + cl.beat + ' of ' + cl.n + ' legs you tracked got a better price than FanDuel\'s last pre-kickoff price (avg ' + (cl.avg >= 0 ? '+' : '') + cl.avg.toFixed(1) + ' implied pts). Beating the close more often than not is the clearest sign of real edge.</span></div>'; } catch(e){}
         parts.push(['season', '<section class="lg2 logcard seasoncard' + (so ? ' open' : '') + '"><button type="button" class="ghd2" data-g="__season" aria-expanded="' + so + '"><span class="t">My season<small>' + Object.keys(wks).length + ' week' + (Object.keys(wks).length === 1 ? '' : 's') + ' · ' + tot.n + ' settled legs</small></span><span class="mid"><b>' + tot.w + '–' + (tot.n - tot.w) + '</b><small>' + (tot.u >= 0 ? '+' : '') + tot.u.toFixed(2) + 'u · ROI ' + (tot.roi >= 0 ? '+' : '') + Math.round(tot.roi * 100) + '%</small></span><span class="tog"><i class="car">' + (so ? '▴' : '▾') + '</i></span></button>' +
-          (so ? '<div class="logbar"><span>Every leg you pinned or slipped, once it settled, at 1 unit each at the price when it was tracked. Saved per week and synced to your account when signed in.</span></div>' +
+          (so ? clvTxt + '<div class="logbar"><span>Every leg you pinned or slipped, once it settled, at 1 unit each at the price when it was tracked. Saved per week and synced to your account when signed in.</span></div>' +
             tbl('By week', (function(){ var o = {}; Object.keys(wks).sort(function(a, b){ return b - a; }).forEach(function(k){ o['Week ' + k] = wks[k]; }); return o; })(), Object.keys(wks).sort(function(a, b){ return b - a; }).map(function(k){ return 'Week ' + k; })) +
             tbl('By market', mks) + tbl('By price', bands, ['-200 or shorter', '-199 to -111', '-110 to +110', '+111 to +250', '+251 and longer']) : '') + '</section>']);
       }
@@ -718,6 +723,14 @@ JS = r"""
     } catch(e){}
   }
   setTimeout(pullChanges, 1200); setInterval(pullChanges, 3e5);
+  var CLOSE = {}, CLOSE_TRY = {};
+  function impO(o){ o = +o; return o > 0 ? 100 / (o + 100) : -o / (-o + 100); }
+  function clvSummary(){ var n = 0, beat = 0, sum = 0;
+    for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i), m = /^bs_clv_w(\d+)$/.exec(k || ''); if(!m) continue; var w = m[1];
+      if(!(w in CLOSE)){ if(!CLOSE_TRY[w]){ CLOSE_TRY[w] = 1; fetch('/data/closing-w' + w + '.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then((function(ww){ return function(j){ CLOSE[ww] = (j && j.rows) || {}; render(); }; })(w)).catch(function(){}); } continue; }
+      var cv = {}; try { cv = JSON.parse(localStorage.getItem(k) || '{}') || {}; } catch(e){}
+      Object.keys(cv).forEach(function(key){ var c = CLOSE[w][key]; if(!c || c.o == null) return; var d = (impO(c.o) - impO(cv[key])) * 100; n++; sum += d; if(d > 0.01) beat++; }); }
+    return {n: n, beat: beat, avg: n ? sum / n : 0}; }
   var WXL = {}, WXURL = 'https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/weather.json';
   function matchup(gid){ var g = games[gid]; return g ? g.b + ' @ ' + g.a : String(gid).replace('-', ' @ '); }   // a = home after the 11/5 flip
   function pairK(a, b){ return [a, b].sort().join('|'); }
