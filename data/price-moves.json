@@ -1,8 +1,8 @@
 {
  "week": 9,
  "built": "Thu 11/5 5:31 PM",
- "checked": "2026-11-06T06:00:33Z",
- "legs_checked": 1192,
+ "checked": "2026-11-06T07:18:45Z",
+ "legs_checked": 944,
  "moves": [
   {
    "key": "Omarion Hampton|Rushing Yards|30",
@@ -14,9 +14,11 @@
    "built": -106,
    "now": -192.0,
    "pts": 14.3,
+   "p": 0.552,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Omarion Hampton rush yds 30+: FanDuel -106 at build -> -192 now (+14.3 implied pts toward the model)"
   },
   {
@@ -29,9 +31,11 @@
    "built": 124,
    "now": 230.0,
    "pts": -14.3,
+   "p": 0.4073,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Kimani Vidal rush yds 30+: FanDuel +124 at build -> +230 now (-14.3 implied pts against us)"
   },
   {
@@ -44,9 +48,11 @@
    "built": 130,
    "now": 240.0,
    "pts": -14.1,
+   "p": 0.391,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Braelon Allen anytime TD: FanDuel +130 at build -> +240 now (-14.1 implied pts against us)"
   },
   {
@@ -59,9 +65,11 @@
    "built": 480,
    "now": 2700.0,
    "pts": -13.7,
+   "p": 0.1613,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Isaiah Davis anytime TD: FanDuel +480 at build -> +2700 now (-13.7 implied pts against us)"
   },
   {
@@ -72,12 +80,14 @@
    "gid": "CLE-NO",
    "ko": 1794160800000,
    "built": 1400,
-   "now": 450.0,
-   "pts": 11.5,
+   "now": 440.0,
+   "pts": 11.9,
+   "p": 0.0606,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "Blake Whiteheart anytime TD: FanDuel +1400 at build -> +450 now (+11.5 implied pts toward the model)"
+   "pulled": "2026-11-06 0:11",
+   "detail": "Blake Whiteheart anytime TD: FanDuel +1400 at build -> +440 now (+11.9 implied pts toward the model)"
   },
   {
    "key": "Breece Hall|Anytime TD|1",
@@ -89,9 +99,11 @@
    "built": 130,
    "now": 190.0,
    "pts": -9.0,
+   "p": 0.4132,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Breece Hall anytime TD: FanDuel +130 at build -> +190 now (-9.0 implied pts against us)"
   },
   {
@@ -104,9 +116,11 @@
    "built": 140,
    "now": -102.0,
    "pts": 8.8,
+   "p": 0.324,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Justin Jefferson rec yds 80+: FanDuel +140 at build -> -102 now (+8.8 implied pts toward the model)"
   },
   {
@@ -119,9 +133,11 @@
    "built": -138,
    "now": -198.0,
    "pts": 8.5,
+   "p": 0.5273,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Joe Burrow rush yds 5+: FanDuel -138 at build -> -198 now (+8.5 implied pts toward the model)"
   },
   {
@@ -134,9 +150,11 @@
    "built": 158,
    "now": 225.0,
    "pts": -8.0,
+   "p": 0.3395,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "James Cook rec yds 20+: FanDuel +158 at build -> +225 now (-8.0 implied pts against us)"
   },
   {
@@ -149,9 +167,11 @@
    "built": 158,
    "now": 220.0,
    "pts": -7.5,
+   "p": 0.406,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Drew Sample rec 2+: FanDuel +158 at build -> +220 now (-7.5 implied pts against us)"
   },
   {
@@ -164,9 +184,11 @@
    "built": 100,
    "now": 135.0,
    "pts": -7.4,
+   "p": 0.546,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Troy Franklin long rec 10+: FanDuel +100 at build -> +135 now (-7.4 implied pts against us)"
   },
   {
@@ -179,25 +201,12 @@
    "built": 220,
    "now": 162.0,
    "pts": 6.9,
+   "p": 0.221,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Justin Jefferson rec 8+: FanDuel +220 at build -> +162 now (+6.9 implied pts toward the model)"
-  },
-  {
-   "key": "James Cook|Longest Reception|15",
-   "pl": "James Cook",
-   "m": "Longest Reception",
-   "ln": 15.0,
-   "gid": "BUF-MIN",
-   "ko": 1794273300000,
-   "built": 240,
-   "now": 340.0,
-   "pts": -6.7,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "James Cook long rec 15+: FanDuel +240 at build -> +340 now (-6.7 implied pts against us)"
   },
   {
    "key": "John Bates|Anytime TD|1",
@@ -209,9 +218,11 @@
    "built": 1800,
    "now": 750.0,
    "pts": 6.5,
+   "p": 0.0634,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "John Bates anytime TD: FanDuel +1800 at build -> +750 now (+6.5 implied pts toward the model)"
   },
   {
@@ -224,10 +235,29 @@
    "built": -230,
    "now": -174.0,
    "pts": -6.2,
+   "p": 0.6642,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Bo Nix rush yds 10+: FanDuel -230 at build -> -174 now (-6.2 implied pts against us)"
+  },
+  {
+   "key": "James Cook|Longest Reception|15",
+   "pl": "James Cook",
+   "m": "Longest Reception",
+   "ln": 15.0,
+   "gid": "BUF-MIN",
+   "ko": 1794273300000,
+   "built": 240,
+   "now": 330.0,
+   "pts": -6.2,
+   "p": 0.221,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-06 0:11",
+   "detail": "James Cook long rec 15+: FanDuel +240 at build -> +330 now (-6.2 implied pts against us)"
   },
   {
    "key": "Jadarian Price|Under Receptions|2",
@@ -239,6 +269,8 @@
    "built": -130,
    "now": -102.0,
    "pts": -6.0,
+   "p": 0.5961,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -254,9 +286,11 @@
    "built": 140,
    "now": 110.0,
    "pts": 6.0,
+   "p": 0.408,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Courtland Sutton long rec 20+: FanDuel +140 at build -> +110 now (+6.0 implied pts toward the model)"
   },
   {
@@ -269,6 +303,8 @@
    "built": -130,
    "now": -166.0,
    "pts": 5.9,
+   "p": 0.5706,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -284,9 +320,11 @@
    "built": 115,
    "now": -110.0,
    "pts": 5.9,
+   "p": 0.4304,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Cam Skattebo anytime TD: FanDuel +115 at build -> -110 now (+5.9 implied pts toward the model)"
   },
   {
@@ -299,9 +337,11 @@
    "built": 122,
    "now": -104.0,
    "pts": 5.9,
+   "p": 0.3965,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jaylen Waddle rec yds 50+: FanDuel +122 at build -> -104 now (+5.9 implied pts toward the model)"
   },
   {
@@ -314,9 +354,11 @@
    "built": 210,
    "now": 280.0,
    "pts": -5.9,
+   "p": 0.2661,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Adonai Mitchell anytime TD: FanDuel +210 at build -> +280 now (-5.9 implied pts against us)"
   },
   {
@@ -329,9 +371,11 @@
    "built": 115,
    "now": -110.0,
    "pts": 5.9,
+   "p": 0.3405,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Devin Singletary anytime TD: FanDuel +115 at build -> -110 now (+5.9 implied pts toward the model)"
   },
   {
@@ -344,9 +388,11 @@
    "built": 800,
    "now": 490.0,
    "pts": 5.8,
+   "p": 0.094,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Joe Milton anytime TD: FanDuel +800 at build -> +490 now (+5.8 implied pts toward the model)"
   },
   {
@@ -359,9 +405,11 @@
    "built": 205,
    "now": 270.0,
    "pts": -5.8,
+   "p": 0.295,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Tre Tucker rec 5+: FanDuel +205 at build -> +270 now (-5.8 implied pts against us)"
   },
   {
@@ -374,9 +422,11 @@
    "built": -115,
    "now": -145.0,
    "pts": 5.7,
+   "p": 0.5485,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Noah Gray long rec 10+: FanDuel -115 at build -> -145 now (+5.7 implied pts toward the model)"
   },
   {
@@ -389,9 +439,11 @@
    "built": 182,
    "now": 235.0,
    "pts": -5.6,
+   "p": 0.3615,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Zach Charbonnet rec yds 15+: FanDuel +182 at build -> +235 now (-5.6 implied pts against us)"
   },
   {
@@ -404,9 +456,11 @@
    "built": -166,
    "now": -132.0,
    "pts": -5.5,
+   "p": 0.6149,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Bryce Young rush yds 5+: FanDuel -166 at build -> -132 now (-5.5 implied pts against us)"
   },
   {
@@ -419,6 +473,8 @@
    "built": -104,
    "now": -130.0,
    "pts": 5.5,
+   "p": 0.4819,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -434,9 +490,11 @@
    "built": 380,
    "now": 550.0,
    "pts": -5.4,
+   "p": 0.1713,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Kenyon Sadiq anytime TD: FanDuel +380 at build -> +550 now (-5.4 implied pts against us)"
   },
   {
@@ -449,9 +507,11 @@
    "built": 105,
    "now": 130.0,
    "pts": -5.3,
+   "p": 0.4625,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Ryan Flournoy long rec 20+: FanDuel +105 at build -> +130 now (-5.3 implied pts against us)"
   },
   {
@@ -464,6 +524,8 @@
    "built": 108,
    "now": -114.0,
    "pts": 5.2,
+   "p": 0.4914,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -479,6 +541,8 @@
    "built": -125,
    "now": -102.0,
    "pts": -5.1,
+   "p": 0.5913,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -494,6 +558,8 @@
    "built": -106,
    "now": -130.0,
    "pts": 5.1,
+   "p": 0.5083,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -509,9 +575,11 @@
    "built": 118,
    "now": -104.0,
    "pts": 5.1,
+   "p": 0.522,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Noah Gray rec yds 15+: FanDuel +118 at build -> -104 now (+5.1 implied pts toward the model)"
   },
   {
@@ -524,9 +592,11 @@
    "built": 198,
    "now": 250.0,
    "pts": -5.0,
+   "p": 0.311,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Zach Charbonnet rec 3+: FanDuel +198 at build -> +250 now (-5.0 implied pts against us)"
   },
   {
@@ -539,40 +609,12 @@
    "built": 220,
    "now": 280.0,
    "pts": -4.9,
+   "p": 0.363,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "plus",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Troy Franklin long rec 15+: FanDuel +220 at build -> +280 now (-4.9 implied pts against us)"
-  },
-  {
-   "key": "Braelon Allen|2+ TD|1",
-   "pl": "Braelon Allen",
-   "m": "2+ TD",
-   "ln": 1,
-   "gid": "KC-NYJ",
-   "ko": 1794160800000,
-   "built": 950,
-   "now": 2000.0,
-   "pts": -4.8,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "Braelon Allen 2+ TD: FanDuel +950 at build -> +2000 now (-4.8 implied pts against us)"
-  },
-  {
-   "key": "KC Concepcion|Receptions|7",
-   "pl": "KC Concepcion",
-   "m": "Receptions",
-   "ln": 7.0,
-   "gid": "CLE-NO",
-   "ko": 1794160800000,
-   "built": 350,
-   "now": 270.0,
-   "pts": 4.8,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "KC Concepcion rec 7+: FanDuel +350 at build -> +270 now (+4.8 implied pts toward the model)"
   },
   {
    "key": "Drew Sample|Receiving Yards|10",
@@ -584,9 +626,11 @@
    "built": 178,
    "now": 220.0,
    "pts": -4.7,
+   "p": 0.403,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "plus",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Drew Sample rec yds 10+: FanDuel +178 at build -> +220 now (-4.7 implied pts against us)"
   },
   {
@@ -599,9 +643,11 @@
    "built": 142,
    "now": 118.0,
    "pts": 4.5,
+   "p": 0.4555,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jahmyr Gibbs rec 5+: FanDuel +142 at build -> +118 now (+4.5 implied pts toward the model)"
   },
   {
@@ -614,9 +660,11 @@
    "built": 128,
    "now": 154.0,
    "pts": -4.5,
+   "p": 0.3765,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Bryce Young pass yds 250+: FanDuel +128 at build -> +154 now (-4.5 implied pts against us)"
   },
   {
@@ -629,9 +677,11 @@
    "built": 280,
    "now": 225.0,
    "pts": 4.5,
+   "p": 0.2185,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jadarian Price rec 3+: FanDuel +280 at build -> +225 now (+4.5 implied pts toward the model)"
   },
   {
@@ -644,6 +694,8 @@
    "built": -158,
    "now": -132.0,
    "pts": -4.3,
+   "p": 0.6487,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -659,40 +711,12 @@
    "built": -106,
    "now": 112.0,
    "pts": -4.3,
+   "p": 0.5453,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
    "detail": "Ja'Marr Chase under rec 6.5: FanDuel -106 at build -> +112 now (-4.3 implied pts against us)"
-  },
-  {
-   "key": "Cam Skattebo|2+ TD|1",
-   "pl": "Cam Skattebo",
-   "m": "2+ TD",
-   "ln": 1,
-   "gid": "NYG-PHI",
-   "ko": 1794160800000,
-   "built": 800,
-   "now": 550.0,
-   "pts": 4.3,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "Cam Skattebo 2+ TD: FanDuel +800 at build -> +550 now (+4.3 implied pts toward the model)"
-  },
-  {
-   "key": "Devin Singletary|2+ TD|1",
-   "pl": "Devin Singletary",
-   "m": "2+ TD",
-   "ln": 1,
-   "gid": "NYG-PHI",
-   "ko": 1794160800000,
-   "built": 800,
-   "now": 550.0,
-   "pts": 4.3,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "Devin Singletary 2+ TD: FanDuel +800 at build -> +550 now (+4.3 implied pts toward the model)"
   },
   {
    "key": "Troy Franklin|Anytime TD|1",
@@ -704,9 +728,11 @@
    "built": 500,
    "now": 700.0,
    "pts": -4.2,
+   "p": 0.1648,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Troy Franklin anytime TD: FanDuel +500 at build -> +700 now (-4.2 implied pts against us)"
   },
   {
@@ -719,9 +745,11 @@
    "built": 320,
    "now": 410.0,
    "pts": -4.2,
+   "p": 0.1545,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "James Cook rec 4+: FanDuel +320 at build -> +410 now (-4.2 implied pts against us)"
   },
   {
@@ -734,9 +762,11 @@
    "built": -125,
    "now": -148.0,
    "pts": 4.1,
+   "p": 0.49,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Ja'Marr Chase rec 7+: FanDuel -125 at build -> -148 now (+4.1 implied pts toward the model)"
   },
   {
@@ -749,9 +779,11 @@
    "built": 110,
    "now": 130.0,
    "pts": -4.1,
+   "p": 0.441,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Xavier Worthy long rec 20+: FanDuel +110 at build -> +130 now (-4.1 implied pts against us)"
   },
   {
@@ -764,9 +796,11 @@
    "built": 120,
    "now": 102.0,
    "pts": 4.1,
+   "p": 0.4185,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "KC Concepcion rec yds 50+: FanDuel +120 at build -> +102 now (+4.1 implied pts toward the model)"
   },
   {
@@ -779,6 +813,8 @@
    "built": 114,
    "now": 134.0,
    "pts": -4.0,
+   "p": 0.4272,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -794,9 +830,11 @@
    "built": 290,
    "now": 360.0,
    "pts": -3.9,
+   "p": 0.2039,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jordan Watkins anytime TD: FanDuel +290 at build -> +360 now (-3.9 implied pts against us)"
   },
   {
@@ -809,9 +847,11 @@
    "built": 265,
    "now": 220.0,
    "pts": 3.9,
+   "p": 0.309,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jahmyr Gibbs rec 6+: FanDuel +265 at build -> +220 now (+3.9 implied pts toward the model)"
   },
   {
@@ -824,9 +864,11 @@
    "built": 320,
    "now": 400.0,
    "pts": -3.8,
+   "p": 0.287,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "plus",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Drew Sample rec yds 15+: FanDuel +320 at build -> +400 now (-3.8 implied pts against us)"
   },
   {
@@ -839,9 +881,11 @@
    "built": 900,
    "now": 1500.0,
    "pts": -3.8,
+   "p": 0.0917,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Braelon Allen first TD: FanDuel +900 at build -> +1500 now (-3.8 implied pts against us)"
   },
   {
@@ -854,6 +898,8 @@
    "built": 116,
    "now": 100.0,
    "pts": 3.7,
+   "p": 0.4825,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -869,6 +915,8 @@
    "built": -180,
    "now": -154.0,
    "pts": -3.7,
+   "p": 0.6495,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -884,6 +932,8 @@
    "built": 100,
    "now": 116.0,
    "pts": -3.7,
+   "p": 0.468,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -899,9 +949,11 @@
    "built": 230,
    "now": 194.0,
    "pts": 3.7,
+   "p": 0.2475,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jaylen Waddle rec 6+: FanDuel +230 at build -> +194 now (+3.7 implied pts toward the model)"
   },
   {
@@ -914,9 +966,11 @@
    "built": -104,
    "now": -120.0,
    "pts": 3.6,
+   "p": 0.4615,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Joe Burrow pass yds 275+: FanDuel -104 at build -> -120 now (+3.6 implied pts toward the model)"
   },
   {
@@ -929,9 +983,11 @@
    "built": 175,
    "now": 150.0,
    "pts": 3.6,
+   "p": 0.3045,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Justin Jefferson long rec 30+: FanDuel +175 at build -> +150 now (+3.6 implied pts toward the model)"
   },
   {
@@ -944,6 +1000,8 @@
    "built": -136,
    "now": -118.0,
    "pts": -3.5,
+   "p": 0.6017,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -959,6 +1017,8 @@
    "built": -162,
    "now": -140.0,
    "pts": -3.5,
+   "p": 0.5601,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -974,9 +1034,11 @@
    "built": 122,
    "now": 106.0,
    "pts": 3.5,
+   "p": 0.4745,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Stefon Diggs rec 5+: FanDuel +122 at build -> +106 now (+3.5 implied pts toward the model)"
   },
   {
@@ -989,9 +1051,11 @@
    "built": 140,
    "now": 162.0,
    "pts": -3.5,
+   "p": 0.4355,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Kenny Gainwell rec yds 15+: FanDuel +140 at build -> +162 now (-3.5 implied pts against us)"
   },
   {
@@ -1004,9 +1068,11 @@
    "built": 220,
    "now": 188.0,
    "pts": 3.5,
+   "p": 0.2785,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Chig Okonkwo rec 5+: FanDuel +220 at build -> +188 now (+3.5 implied pts toward the model)"
   },
   {
@@ -1019,9 +1085,11 @@
    "built": 154,
    "now": 178.0,
    "pts": -3.4,
+   "p": 0.361,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Tetairoa McMillan rec yds 80+: FanDuel +154 at build -> +178 now (-3.4 implied pts against us)"
   },
   {
@@ -1034,9 +1102,11 @@
    "built": -154,
    "now": -178.0,
    "pts": 3.4,
+   "p": 0.5361,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Emmett Johnson rush yds 10+: FanDuel -154 at build -> -178 now (+3.4 implied pts toward the model)"
   },
   {
@@ -1049,9 +1119,11 @@
    "built": 320,
    "now": 390.0,
    "pts": -3.4,
+   "p": 0.262,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Josh Jacobs rec 6+: FanDuel +320 at build -> +390 now (-3.4 implied pts against us)"
   },
   {
@@ -1064,9 +1136,11 @@
    "built": 126,
    "now": 110.0,
    "pts": 3.4,
+   "p": 0.438,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Courtland Sutton rec yds 40+: FanDuel +126 at build -> +110 now (+3.4 implied pts toward the model)"
   },
   {
@@ -1079,9 +1153,11 @@
    "built": 162,
    "now": 188.0,
    "pts": -3.4,
+   "p": 0.3525,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Ryan Flournoy rec yds 50+: FanDuel +162 at build -> +188 now (-3.4 implied pts against us)"
   },
   {
@@ -1094,9 +1170,11 @@
    "built": 110,
    "now": 126.0,
    "pts": -3.4,
+   "p": 0.4355,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Xavier Worthy rec yds 40+: FanDuel +110 at build -> +126 now (-3.4 implied pts against us)"
   },
   {
@@ -1109,9 +1187,11 @@
    "built": 178,
    "now": 154.0,
    "pts": 3.4,
+   "p": 0.293,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jadarian Price rec yds 15+: FanDuel +178 at build -> +154 now (+3.4 implied pts toward the model)"
   },
   {
@@ -1124,6 +1204,8 @@
    "built": 112,
    "now": -102.0,
    "pts": 3.3,
+   "p": 0.4234,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
@@ -1139,9 +1221,11 @@
    "built": 142,
    "now": 124.0,
    "pts": 3.3,
+   "p": 0.3595,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Ladd McConkey rec yds 60+: FanDuel +142 at build -> +124 now (+3.3 implied pts toward the model)"
   },
   {
@@ -1154,9 +1238,11 @@
    "built": -165,
    "now": -190.0,
    "pts": 3.3,
+   "p": 0.5375,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Ladd McConkey long rec 20+: FanDuel -165 at build -> -190 now (+3.3 implied pts toward the model)"
   },
   {
@@ -1169,25 +1255,12 @@
    "built": 230,
    "now": 270.0,
    "pts": -3.3,
+   "p": 0.3113,
+   "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Samaje Perine anytime TD: FanDuel +230 at build -> +270 now (-3.3 implied pts against us)"
-  },
-  {
-   "key": "Breece Hall|2+ TD|1",
-   "pl": "Breece Hall",
-   "m": "2+ TD",
-   "ln": 1,
-   "gid": "KC-NYJ",
-   "ko": 1794160800000,
-   "built": 950,
-   "now": 1500.0,
-   "pts": -3.3,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-05 18:09",
-   "detail": "Breece Hall 2+ TD: FanDuel +950 at build -> +1500 now (-3.3 implied pts against us)"
   },
   {
    "key": "Jonathan Taylor|Anytime TD|1",
@@ -1199,9 +1272,11 @@
    "built": -155,
    "now": -135.0,
    "pts": -3.3,
+   "p": 0.5659,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jonathan Taylor anytime TD: FanDuel -155 at build -> -135 now (-3.3 implied pts against us)"
   },
   {
@@ -1214,9 +1289,11 @@
    "built": 102,
    "now": 116.0,
    "pts": -3.2,
+   "p": 0.4595,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Tetairoa McMillan rec 6+: FanDuel +102 at build -> +116 now (-3.2 implied pts against us)"
   },
   {
@@ -1229,9 +1306,11 @@
    "built": 270,
    "now": 320.0,
    "pts": -3.2,
+   "p": 0.266,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Malik Nabers rec 8+: FanDuel +270 at build -> +320 now (-3.2 implied pts against us)"
   },
   {
@@ -1244,9 +1323,11 @@
    "built": 174,
    "now": 200.0,
    "pts": -3.2,
+   "p": 0.3505,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Tre Tucker rec yds 60+: FanDuel +174 at build -> +200 now (-3.2 implied pts against us)"
   },
   {
@@ -1259,9 +1340,11 @@
    "built": 110,
    "now": 125.0,
    "pts": -3.2,
+   "p": 0.4,
+   "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Tucker Kraft long rec 20+: FanDuel +110 at build -> +125 now (-3.2 implied pts against us)"
   },
   {
@@ -1274,10 +1357,29 @@
    "built": 134,
    "now": 118.0,
    "pts": 3.1,
+   "p": 0.4169,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "James Cook rush yds 90+: FanDuel +134 at build -> +118 now (+3.1 implied pts toward the model)"
+  },
+  {
+   "key": "Jerry Jeudy|Anytime TD|1",
+   "pl": "Jerry Jeudy",
+   "m": "Anytime TD",
+   "ln": 1,
+   "gid": "CLE-NO",
+   "ko": 1794160800000,
+   "built": 550,
+   "now": 440.0,
+   "pts": 3.1,
+   "p": 0.1554,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-06 0:11",
+   "detail": "Jerry Jeudy anytime TD: FanDuel +550 at build -> +440 now (+3.1 implied pts toward the model)"
   },
   {
    "key": "Jaylen Waddle|Longest Reception|30",
@@ -1289,9 +1391,11 @@
    "built": 330,
    "now": 280.0,
    "pts": 3.1,
+   "p": 0.2115,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Jaylen Waddle long rec 30+: FanDuel +330 at build -> +280 now (+3.1 implied pts toward the model)"
   },
   {
@@ -1304,10 +1408,29 @@
    "built": -136,
    "now": -154.0,
    "pts": 3.0,
+   "p": 0.5761,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-05 18:09",
    "detail": "Tetairoa McMillan under rec 5.5: FanDuel -136 at build -> -154 now (+3.0 implied pts toward the model)"
+  },
+  {
+   "key": "Nico Collins|Receiving Yards|80",
+   "pl": "Nico Collins",
+   "m": "Receiving Yards",
+   "ln": 80.0,
+   "gid": "HOU-LAC",
+   "ko": 1794171900000,
+   "built": 154,
+   "now": 136.0,
+   "pts": 3.0,
+   "p": 0.34,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-06 0:11",
+   "detail": "Nico Collins rec yds 80+: FanDuel +154 at build -> +136 now (+3.0 implied pts toward the model)"
   },
   {
    "key": "Sam LaPorta|Receiving Yards|50",
@@ -1319,9 +1442,11 @@
    "built": 122,
    "now": 108.0,
    "pts": 3.0,
+   "p": 0.349,
+   "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-05 18:09",
+   "pulled": "2026-11-06 0:11",
    "detail": "Sam LaPorta rec yds 50+: FanDuel +122 at build -> +108 now (+3.0 implied pts toward the model)"
   }
  ]
