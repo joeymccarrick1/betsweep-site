@@ -66,6 +66,21 @@ def main():
             if t == "V2 - Boards Results Feed" and r.startswith("AJ"): name = "results_legs.json"
             vals = vr.get("values", [])
             json.dump({"values": vals}, open(f"out/in/{name}", "w")); rows[name] = len(vals)
+    # owner 11/5: closing prices captured by price_moves.py (data/closing-w<W>.json on main) fill in/closing.json in the tab's own
+    # columns, merged under any rows the sheet tab itself has (the Apps Script copy, if it is ever installed, wins on the same week + key).
+    try:
+        import glob
+        have = json.load(open("out/in/closing.json"))["values"] if os.path.exists("out/in/closing.json") else []
+        hdr = ["Week", "Key", "Player", "Market", "Line (X+)", "Close odds", "Close implied", "Pulled at (CT)", "Kickoff (CT)", "Captured (CT)"]
+        if not have: have = [hdr]
+        seen = {(str(r[0]), str(r[1]).lower()) for r in have[1:] if len(r) > 1}; add = 0
+        for f in sorted(glob.glob("data/closing-w*.json")):
+            d = json.load(open(f)); w = str(d.get("week"))
+            for k, x in d.get("rows", {}).items():
+                if (w, k) in seen: continue
+                have.append([w, k, x["pl"], x["m"], x["ln"], x["o"], x["imp"], x["pulled"], x["ko"], x.get("cap", "")]); add += 1
+        json.dump({"values": have}, open("out/in/closing.json", "w")); rows["closing.json"] = len(have); print("closing lines from data/:", add, "rows added")
+    except Exception as e: print("closing merge skipped:", e)
     subprocess.run(["curl", "-sSLf", "-o", "out/in/games.csv", "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv"], check=True)
     json.dump({"pulled": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "ranges": len(RANGES), "rows": rows}, open("out/in/MIRROR.json", "w"), indent=1)
     print("mirrored", len(rows), "ranges:", {k: v for k, v in rows.items()})
