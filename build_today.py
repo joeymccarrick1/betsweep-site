@@ -89,7 +89,10 @@ def sections(IN_, OUT_):
                 "News: back / practising": "Back", "News: trade / signing": "Trade"}.get(n.get("tag"), n.get("tag", ""))
     def script_line(g):
         fav = g["a"] if g["pa"] > g["pb"] else g["b"]; marg = abs(g["pa"] - g["pb"])
-        return f"Model {E(g['a'])} {g['pa']:.0f} – {E(g['b'])} {g['pb']:.0f} · {E(fav)} by {marg:.1f} · {E(g.get('most', ''))}"
+        try: _pr = json.loads(g["probs"]) if isinstance(g.get("probs"), str) else g.get("probs"); _pct = f" ({max(_pr):.0f}%)" if _pr and len(_pr) == 4 else ""
+        except Exception: _pct = ""
+        # owner 11/5: label the likeliest script so it doesn't read as a second, different projection
+        return f"Model {E(g['a'])} {g['pa']:.0f} – {E(g['b'])} {g['pb']:.0f} · {E(fav)} by {marg:.1f}" + (f" · likeliest script: {E(g['most'])}{_pct}" if g.get('most') else "")
     def market_line(g):
         L = GL.get(g["gid"]) or {}
         if "spread" not in L and "total" not in L: return ""
