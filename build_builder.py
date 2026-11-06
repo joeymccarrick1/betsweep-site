@@ -1612,6 +1612,9 @@ BUILDER_JS = r"""
     var pls = {}; ls.forEach(function(l){ pls[l.pl] = (pls[l.pl]||0)+1; }); var dupe = Object.keys(pls).filter(function(p){ return pls[p] > 1; }); if(dupe.length) flags.push('same player twice: ' + dupe.join(', '));
     var hiR = ls.filter(function(l){ return !isGL(l) && riskScore(l) >= 4; }); if(hiR.length) flags.push(hiR.length + ' high-risk leg' + (hiR.length>1?'s':'') + ' (' + hiR.map(function(l){ return l.pl; }).join(', ') + ')');
     var warned = ls.filter(function(l){ return l.w; }); if(warned.length) flags.push(warned.length + ' leg' + (warned.length>1?'s':'') + ' carr' + (warned.length>1?'y':'ies') + ' a model warning');
+    // owner 11/6 (parlay size): graded Weeks 6-8, legs at -130 or shorter returned about -9% each, and -8% to -23% even with a model edge -
+    // a favorite adds price cost to a parlay, not safety
+    var fav = ls.filter(function(l){ return !isGL(l) && l.o != null && l.o <= -130; }); if(fav.length >= 2) flags.push(fav.length + ' legs at -130 or shorter: graded Weeks 6-8, favorites returned about -9% per leg (-8% to -23% even with a model edge) - each one costs price without making the slip safer');
     var neg = ls.filter(function(l){ return l.e < 0; }); if(neg.length) flags.push(neg.length + ' leg' + (neg.length>1?'s':'') + ' priced worse than the model');
     var mixG = {}; ls.forEach(function(l){ mixG[l.g] = mixG[l.g] || {gl:0, pr:0}; mixG[l.g][isGL(l) ? 'gl' : 'pr']++; });
     if(Object.keys(mixG).some(function(g){ return mixG[g].gl && mixG[g].pr; })) flags.push('game lines and player legs from the same game are priced together: the model uses how each stat moves with the margin and the total (e.g. QB passing yards rise with the total, RB rushing yards with a lead)');

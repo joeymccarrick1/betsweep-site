@@ -198,6 +198,7 @@ table.bx.sc td{text-align:left} table.bx.sc td.q,table.bx.sc td.tm{white-space:n
 .lvhelp[open]{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px} .lvhelp p{margin:6px 0;line-height:1.5}
 .fingrp .ghd2.fin{grid-template-columns:1fr;grid-template-areas:"a" "s"} .fingrp .ghd2.fin .t{font-size:18px} .finin .lg2{margin:8px 10px;border-radius:8px}
 .lvt td.who small{white-space:normal}
+.ovl{margin:8px 12px 10px;padding:9px 12px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);border-radius:6px;font-size:12.5px;line-height:1.4} .ovl b{color:var(--warn)}
 .lg2.slipcard{transition:box-shadow .3s;scroll-margin-top:96px} .lg2.slipcard.hl{box-shadow:0 0 0 3px var(--red)}
 table.lvt td.st,table.lvt td.who{display:table-cell;background:none;border-radius:0;gap:0;line-height:1.3;font-size:13px;white-space:normal;flex:none;padding:7px 14px;text-align:left} table.lvt td.st{width:28px;padding-right:0;vertical-align:top;text-align:center;padding-top:6px} .star{margin-top:-1px} .star{font:inherit;font-size:17px;line-height:1;background:none;border:0;color:var(--mute);cursor:pointer;padding:2px 4px} tr.starred .star{color:var(--warn)}
 table.lvt .chip.slip{background:var(--ink);border-color:var(--ink);color:var(--bg)} table.lvt .chip.rz{background:var(--red);border-color:var(--red);color:#fff}
@@ -427,6 +428,19 @@ JS = r"""
       }
     }
     return h + '</div>'; }
+  // owner 11/6 ("don't stack the same bet across slips"): the same leg in 2+ open slips, or one game carrying legs in 3+ slips, is really one
+  // bigger bet - say so above the cards so the stakes can be sized as one.
+  function overlapNote(all){
+    var byLeg = {}, byGame = {};
+    all.forEach(function(sl){ var gs = {}; slipLegs(sl).forEach(function(l){ var st = live(l, games[l.g], STATE[l.g] || {st: 'pre'}).status; if(st === 'hit' || st === 'dead') return;
+      var k = legKey(l); (byLeg[k] = byLeg[k] || {l: l, n: 0}).n++; gs[l.g] = 1; }); Object.keys(gs).forEach(function(g){ byGame[g] = (byGame[g] || 0) + 1; }); });
+    var legs = Object.keys(byLeg).filter(function(k){ return byLeg[k].n >= 2; }).sort(function(a, b){ return byLeg[b].n - byLeg[a].n; });
+    var gms = Object.keys(byGame).filter(function(g){ return byGame[g] >= 3; });
+    if(!legs.length && !gms.length) return '';
+    var t = [];
+    if(legs.length) t.push(legs.slice(0, 4).map(function(k){ return esc(legText(byLeg[k].l)) + ' (' + byLeg[k].n + ' slips)'; }).join(', '));
+    if(gms.length) t.push(gms.map(function(g){ return esc(matchup(g)) + ' in ' + byGame[g] + ' slips'; }).join(', '));
+    return '<p class="ovl"><b>Same bet, several slips:</b> ' + t.join(' · ') + '. If that leg or game goes wrong they all lose together - size them as one bet.</p>'; }
   function slipCard(sl){
     var ls = slipLegs(sl); var missing = sl.keys.length - ls.length;
     var sr = ls.map(function(l){ var g = games[l.g], s = STATE[l.g] || {st:'pre'}; return {l: l, r: live(l, g, s), s: s}; });
@@ -585,7 +599,7 @@ JS = r"""
       cards.forEach(function(h){ if(/class="scp cashed"/.test(h)) nc++; else if(/class="scp dead"/.test(h)) nd2++; else { var m = h.match(/class="scp "><b>(\d+)%/); if(m) chances.push(+m[1]); } });
       var yo = ('__slips' in OPEN) ? OPEN.__slips : !!FOCUS;
       var sum = ALLS.length + ' slip' + (ALLS.length === 1 ? '' : 's') + (nc ? ' · ' + nc + ' cashed' : '') + (nd2 ? ' · ' + nd2 + ' dead' : '') + (chances.length ? ' · ' + chances.length + ' alive' : '');
-      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + cards.join('') + '</div>' : '') + '</section>']);
+      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + overlapNote(ALLS) + cards.join('') + '</div>' : '') + '</section>']);
     }
     // week log: the legs you pinned or carried in your slip, as they resolve - copy or download it after the games
     var mine = legs.concat(D.extra || []).filter(function(l){ var k = legKey(l); return STARS[k] || INSLIP[k]; });
@@ -802,7 +816,8 @@ JS = r"""
         var pm = x[1] || {};
         if(String(pm.week) === String(D.week)) (pm.moves || []).forEach(function(m){ var my = MYPL[String(m.pl).toLowerCase()];
           if(!my && Math.abs(m.pts) < 8) return;   // every move on your legs; elsewhere only the big ones (8+ implied pts)
-          var t = m.pulled ? new Date(String(m.pulled).replace(' ', 'T') + ':00-06:00').toISOString() : pm.checked;
+          var mm = /^(\d{4}-\d\d-\d\d) (\d{1,2}):(\d\d)/.exec(String(m.pulled || '')), dd = mm ? new Date(mm[1] + 'T' + ('0' + mm[2]).slice(-2) + ':' + mm[3] + ':00-06:00') : null;   // 11/6: '0:11' (one-digit hour) made an invalid date and killed the feed
+          var t = dd && !isNaN(dd) ? dd.toISOString() : pm.checked;
           ev.push({ts: t, k: 'move', pl: m.pl, t: m.detail}); });
         CHG = ev; render(); });
     } catch(e){}
