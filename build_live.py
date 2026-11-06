@@ -196,6 +196,9 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
   .sc2 .slipbar label{display:flex;align-items:center;gap:6px;min-width:0} .sc2 .slipbar label input{width:100%;min-width:0} }
 .slipsgrp .finin{padding:8px 10px 10px;display:grid;gap:10px} .slipsgrp .finin .lg2{margin:0}
 .tmsel{display:flex;gap:8px;padding:10px 0 6px;margin-top:-10px;position:sticky;top:-10px;background:var(--card);z-index:2} .tmb{flex:1;font:inherit;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);cursor:pointer} .tmb.on{background:var(--red);border-color:var(--red);color:#fff}
+.tfbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.tfb{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font:inherit;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;text-align:left}
+.tfb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .tfb.on{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--chalk))}
 /* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
@@ -217,6 +220,7 @@ JS = r"""
     if(p<0.02425){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
     if(p>1-0.02425){q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
     q=p-0.5;r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+  var TF = {};
   var STATE = {}, BOX = {}, FIRST = {}, lastBox = {}, mode = 'likes', OPEN = {}, SUMM = {}, DRILL = null;
   var SKEY = 'bs_livestar_w' + D.week, STARS = {}; try { (JSON.parse(localStorage.getItem(SKEY) || '[]')).forEach(function(k){ STARS[k] = true; }); } catch(e){}
   function saveStars(){ try { localStorage.setItem(SKEY, JSON.stringify(Object.keys(STARS))); } catch(e){} }
@@ -416,6 +420,8 @@ JS = r"""
         var OTHER = gl.filter(function(l){ return keep.indexOf(l) < 0; });
         gl = keep;
       } else var OTHER = [];
+      var TFv = TF[gid];   // owner 11/5: team buttons - show one team's legs at a time (totals stay, they belong to both)
+      if(TFv){ var byT = function(l){ return l.tm === TFv || (l.gl && l.m === 'Total'); }; gl = gl.filter(byT); OTHER = OTHER.filter(byT); }
       var rows = gl.map(function(l){ var r = live(l, g, s); return {l: l, r: r}; });
       var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = STARS[legKey(a.l)] ? 1 : 0, sb_ = STARS[legKey(b.l)] ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
       var hit = rows.filter(function(x){ return x.r.status === 'hit'; }), dead = rows.filter(function(x){ return x.r.status === 'dead'; });
@@ -442,9 +448,11 @@ JS = r"""
             body += '<table class="lvt">' + orows.map(tr).join('') + '</table>'; } }
         if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
       }
+      var tbtn = function(t, nm, c){ return '<button type="button" class="tfb' + (TFv === t ? ' on' : '') + '" data-g="' + gid + '" data-t="' + t + '">' + badge(t, c) + '<span>' + esc(nm || t) + '</span></button>'; };
+      var teamBar = rows.length || OTHER.length || TFv ? '<div class="tfbar">' + tbtn(g.b, g.nb, g.cb) + tbtn(g.a, g.na, g.ca) + '</div>' : '';
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
       if(s.st === 'in' && SUMM[gid]) sit = gamecast(gid);
-      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? sit + drill + body : '') + '</section>';
+      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? sit + drill + teamBar + body : '') + '</section>';
       if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length]); else if(s.st === 'pre' && liveG.length) UP.push([gid, sec, g]); else parts.push([gid, sec]);
     });
     if(UP.length){   // owner 11/5: "more collapsible" - while a game is live, the rest of the week folds into one group
@@ -590,6 +598,7 @@ JS = r"""
     var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; saveBuilderSlip(); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
+    var tfb = ev.target.closest('.tfb'); if(tfb){ var tg = tfb.dataset.g, tt = tfb.dataset.t; TF[tg] = TF[tg] === tt ? null : tt; render(); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
     var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log === false; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
