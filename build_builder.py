@@ -459,6 +459,7 @@ except Exception as e: print("warn: ratio recalibration skipped:", e)
 # ---- red-zone / opportunity TD model (rztd.py, owner 11/1 study -> 11/3): anytime-TD legs use the average of the projection model's Poisson
 # chance and the red-zone model's (Weeks 6-8 graded legs: log loss 0.6057 vs 0.6124 raw, best Brier; see rztd.py for the revert rule) ----
 try:
+    import math
     import rztd as RZ
     _rz = json.load(open(os.path.join(OUT, "rztd.json")))
     if int(_rz.get("week", 0)) != WEEK: raise ValueError(f"out/rztd.json is for week {_rz.get('week')}, not {WEEK} - run python3 rztd.py {WEEK}")
@@ -468,6 +469,13 @@ try:
         v = RZ.lookup(_rz["players"], l["pl"], l["tm"])
         if not v: continue
         _old = l["p"]; l["p"] = round((1 - RZ.RZ_W) * _old + RZ.RZ_W * v["p"], 4); l["rz"] = v["p"]; _nrz += 1
+        # owner 11/6: the same red-zone view moves his 2+ / 3+ TD legs (Poisson mean from the anytime chance, before -> after)
+        _lo, _ln = -math.log(max(1e-6, 1 - min(_old, 0.99))), -math.log(max(1e-6, 1 - min(l["p"], 0.99)))
+        _P = lambda lam, k: 1 - math.exp(-lam) * (1 + lam + (lam * lam / 2 if k == 3 else 0))
+        for _l2 in LEGS:
+            if _l2.get("pl") == l["pl"] and _l2.get("tm") == l["tm"] and _l2.get("m") in ("2+ TD", "3+ TD") and _l2.get("p") is not None:
+                _k = 2 if _l2["m"] == "2+ TD" else 3; _b0 = _P(_lo, _k)
+                if _b0 > 0: _l2["p"] = round(min(0.95, _l2["p"] * _P(_ln, _k) / _b0), 4)
         l.setdefault("fh", []).append(["info", "Red-zone model", f"Red-zone model {v['p']*100:.0f}% (red-zone share {v['rz_share']*100:.0f}%, {v['opp_pg']:.0f} touches/g, team implied {v['impl']:.0f} pts) vs the projection model {_old*100:.0f}% - shown number is the average."])
     print(f"red-zone TD model: {_nrz} anytime-TD legs blended ({len(_rz['players'])} players in out/rztd.json)")
 except Exception as e: print("warn: red-zone TD model not applied:", e)
