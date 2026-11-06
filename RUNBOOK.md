@@ -341,3 +341,6 @@ Rules for new pages: use the tokens (never a new colour), the control classes ab
 - My season: the Live page saves each week's settled My week legs as localStorage bs_log_w<W> (account.py SYNC includes it, so it syncs per account) and totals them by week / market / price band at 1u each.
 - Share my week: html2canvas image card (record, units, cashed legs, still-alive legs) -> native share sheet, download fallback.
 - Inactive alerts (push/slip-alerts.ts): swap suggestion prefers a teammate in the same stat, then a teammate, then the game; the push opens /build/?drop=<player>&add=<key>#slip (builder handles ?drop=). OWNER must redeploy the slip-alerts Edge Function for this.
+
+## Our number vs the line (owner 11/5)
+- Tuesday (after grading): `python3 -I research/gl_disagree.py <dir with games.csv + stats_player_week_2023..2026.csv> out/gl_disagree.json` (copy to research/gl_disagree.json and commit). build_season.py gl_record_block() shows the walk-forward formula's record vs the closing spread / total when 3+ / 5+ apart, plus the paper-tracked "fade our total when 5+ off" line. Through Week 9: sides 3+ 157-167 (48.5%), 5+ 68-82 - the line wins; fading sides failed the 2026 holdout (2023-25 76-58 -> 2026 6-10). Never promote a side or total because the formula disagrees with the line.

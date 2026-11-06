@@ -48,6 +48,7 @@ for s in sorted(X.season.unique()):
     out["by_season"][str(s)] = {str(gap): grade(X[X.season == s], gap) for gap in (1.5, 3, 5)}
 cur = X[X.season == 2026]
 out["2026_weeks"] = {str(w): grade(cur[cur.week == w], 3) for w in sorted(cur.week.unique())}
+out["2026_weeks5"] = {str(w): grade(cur[cur.week == w], 5) for w in sorted(cur.week.unique())}   # paper bet: fade our total when 5+ off
 pc = lambda a: f"{a[0]}-{a[1]-a[0]} ({a[0]/a[1]*100:.1f}%)" if a[1] else "-"
 for gap, r in out["by_gap"].items(): print(f"all 2023-26, gap >= {gap}: side {pc(r['side'])}, total {pc(r['total'])}")
 for s, d in out["by_season"].items(): print(s, {g: (pc(r['side']), pc(r['total'])) for g, r in d.items()})

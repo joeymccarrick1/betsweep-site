@@ -347,11 +347,17 @@ def gl_record_block():
     al = J["by_gap"]
     rows += '<tr><td><b>All</b></td>' + "".join(f'<td><b>{pc(al[g]["side"])}</b></td><td><b>{pc(al[g]["total"])}</b></td>' for g in ("3", "5")) + '</tr>'
     wk = "".join(f'<span>W{w}: {J["2026_weeks"][w]["side"][0]}-{J["2026_weeks"][w]["side"][1]-J["2026_weeks"][w]["side"][0]} sides</span> ' for w in sorted(J["2026_weeks"], key=int) if J["2026_weeks"][w]["side"][1])
+    fade = ""
+    if J.get("2026_weeks5"):   # owner 11/5 "can we assume the opposite": paper-tracked only - fading sides failed the 2026 holdout
+        fw = [(w, J["2026_weeks5"][w]["total"]) for w in sorted(J["2026_weeks5"], key=int) if J["2026_weeks5"][w]["total"][1]]
+        fwin = sum(t[1] - t[0] for _, t in fw); fn = sum(t[1] for _, t in fw)
+        if fn: fade = (f'<p style="font-size:12px"><b>Paper bet (not a pick):</b> fade our total when it is 5+ pts off the line - 2026 {fwin}-{fn-fwin} ({fwin/fn*100:.0f}%); 2023-25 it went 45-35. '
+                       'Fading our sides failed the same test (2023-25 76-58, 2026 6-10), so it is not tracked. Weeks: ' + ", ".join(f'W{w} {t[1]-t[0]}-{t[0]}' for w, t in fw) + '</p>')
     s3 = al["3"]["side"]; verdict = "the line has been right more often - do not bet a side just because our number differs" if s3[1] and s3[0] / s3[1] < 0.524 else "our number has beaten the line - worth a look when they disagree"
     return (f'<section class="card calib"><h2>Our number vs the line <small>game sides and totals · 2023-2026, walk-forward</small></h2>'
             f'<p>Our own team-score formula (season averages, injury-adjusted) against the closing spread and total, only in games where they disagree (3+ or 5+ points apart). Break-even at -110 is 52.4%. So far: {verdict}.</p>'
             f'<div class="tblwrap"><table class="season" style="min-width:0;width:100%"><thead><tr><th>Season</th><th>Side 3+</th><th>Total 3+</th><th>Side 5+</th><th>Total 5+</th></tr></thead><tbody>{rows}</tbody></table></div>'
-            f'<p style="font-size:12px;color:var(--mute)">2026 by week (3+ pts apart): {wk}</p></section>')
+            f'<p style="font-size:12px;color:var(--mute)">2026 by week (3+ pts apart): {wk}</p>' + fade + '</section>')
 try: gl_html = gl_record_block()
 except Exception as _e: print("warn: game-line record skipped:", _e); gl_html = ""
 try: clv_html = clv_block()
