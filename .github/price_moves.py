@@ -78,6 +78,8 @@ def main():
                       "dir": "SHORTENED" if d > 0 else "DRIFTED", "tier": tier.get(key, ""), "pulled": cur[1],
                       "detail": f"{l['pl']} {short}{line}: FanDuel {am(l['o'])} at build -> {am(cur[0])} now ({d:+.1f} implied pts {'toward the model' if d > 0 else 'against us'})"})
     moves.sort(key=lambda m: -abs(m["pts"]))
+    try: offmarket(RAW, live, now_px, nowms)
+    except Exception as e: print("off-market log skipped:", e)
     try: news = news_edge(RAW, live, now_px, nowms)
     except Exception as e: print("news edge skipped:", e); news = []
     out = {"news": news, "week": live.get("week") or plus.get("week"), "built": live.get("built") or plus.get("built"), "checked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "legs_checked": n_seen, "moves": moves}
@@ -86,6 +88,32 @@ def main():
     for m in moves[:12]: print(" ", m["dir"], m["detail"])
     return 0
 
+
+# ---- off-market log (owner 11/6 "compare FanDuel against the other books"): every board leg whose FanDuel price is 3+ implied points longer
+# than BOTH DraftKings and Hard Rock on the same line (mirror bookodds.json), first time seen, kept per week in data/offmarket-w<W>.json so
+# research/offmarket_grade.py can grade them against the box scores: does FanDuel being out of line with the market win?
+def offmarket(RAW, live, now_px, nowms):
+    bo = get(f"{RAW}/sheet-mirror/in/bookodds.json")["values"]; ob = {}
+    for r in bo[1:]:
+        try: ob.setdefault(str(r[1]).strip().lower(), {})[r[0]] = (float(r[5]), r[11] if len(r) > 11 else "")
+        except Exception: pass
+    W = live.get("week"); path = f"data/offmarket-w{W}.json"
+    try: log = json.load(open(path))
+    except Exception: log = {"week": W, "legs": {}}
+    ko = {g["gid"]: g.get("ko") for g in live.get("games", [])}; n = 0
+    for l in live.get("legs", []):
+        m = l.get("m", "")
+        if m.startswith("Under ") or (ko.get(l.get("g")) and ko[l["g"]] <= nowms): continue
+        ln = l.get("ln"); lns = str(int(float(ln))) if float(ln) == int(float(ln)) else str(ln)
+        fk = f"{l['pl']}|{m}|{lns}".lower(); cur = now_px.get(fk); b = ob.get(fk, {})
+        if not cur or "draftkings" not in b or "hardrockbet" not in b: continue
+        f, dk, hr = imp(cur[0]), imp(b["draftkings"][0]), imp(b["hardrockbet"][0])
+        gap = (min(dk, hr) - f) * 100
+        k = slipkey(l["pl"], m, ln)
+        if gap >= 3 and k not in log["legs"]:
+            log["legs"][k] = {"pl": l["pl"], "m": m, "ln": ln, "g": l.get("g"), "fd": cur[0], "dk": b["draftkings"][0], "hr": b["hardrockbet"][0], "gap": round(gap, 1), "p": l.get("p"), "seen": cur[1]}; n += 1
+    json.dump(log, open(path, "w"), indent=1)
+    print(f"off-market: {n} new FanDuel-longer-than-both legs ({len(log['legs'])} this week)")
 
 # ---- news edge (owner 11/6: "beat FanDuel after injury news"): when a player who had props at the build is ruled out (feeds changes.json:
 # an injury status of Out / Doubtful / IR, or a game-day inactive), his teammates who soak up the work - other WR/TEs for a pass catcher, other
