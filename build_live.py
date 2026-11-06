@@ -107,6 +107,13 @@ try:
     print(f"live page: {_add} legs restored from the pre-kickoff snapshots (no longer priced by FanDuel)")
 except Exception as _e:
     print("note: no leg snapshots for the live page:", _e)
+# owner 11/5 ("better way of knowing when to fade"): the game preview's tested situational spots (beat -110 in both 2006-15 and 2016-25)
+try:
+    _DS = json.load(open(os.path.join(OUT, "dossier.json"))).get("games", {})
+    for _g in games:
+        _sp = [s["t"].split(";")[0] for s in (_DS.get(_g["gid"]) or {}).get("spots", []) if s.get("k") == "lean"]
+        if _sp: _g["sp"] = _sp
+except Exception as _e: print("note: situational spots unavailable on the live page:", _e)
 SKILL = set()   # owner 11/5 "what changed": every projected QB / RB / WR / TE / K, so injuries to players with no props left still show
 for _f in ("proj_qb.json", "proj_rb.json", "proj_wr.json", "proj_te.json", "proj_k.json"):
     try:
@@ -737,6 +744,7 @@ JS = r"""
     if(i.rest && i.rest[0] != null) d.push(['Rest', esc(home + ' ' + i.rest[0] + ' days · ' + away + ' ' + i.rest[1] + ' days')]);
     if(i.coach && i.coach[0]) d.push(['Coaches', esc(home + ' ' + i.coach[0] + ' · ' + away + ' ' + i.coach[1])]);
     if(i.div) d.push(['Division', 'Divisional game']);
+    (g.sp || []).forEach(function(t){ d.push(['Tested spot', esc(t) + ' (2006-25, small edge)']); });
     if(i.ref) d.push(['Referee', esc(i.ref)]);
     if(w && w.upd && wxText(w) && !/Indoors|No forecast/.test(wxText(w))) d.push(['Forecast', 'kickoff hour, updated ' + esc(String(w.upd).replace(/^\d{4}-\d\d-\d\d /, ''))]);
     return '<div class="gdet">' + d.map(function(x){ return '<span><b>' + x[0] + '</b>' + x[1] + '</span>'; }).join('') + '</div>'; }

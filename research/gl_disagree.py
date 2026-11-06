@@ -32,7 +32,15 @@ for _, g in G.iterrows():
     if len(h) < 3 or len(a) < 3: continue
     fh = 0.65 * h.pf.mean() + 0.35 * a.pa.mean() + inj(g.season, g.home_team, g.week)
     fa = 0.65 * a.pf.mean() + 0.35 * h.pa.mean() + inj(g.season, g.away_team, g.week)
-    rows.append(dict(season=int(g.season), week=int(g.week), home=g.home_team, away=g.away_team, mm=fh - fa, mt=fh + fa, sp=g.spread_line, tl=g.total_line, am=g.home_score - g.away_score, atot=g.home_score + g.away_score))
+    X_ROWS = None
+    ih, ia = inj(g.season, g.home_team, g.week), inj(g.season, g.away_team, g.week)
+    def _f(x):
+        try: return float(x)
+        except Exception: return None
+    wind, temp = _f(g.get("wind")), _f(g.get("temp"))
+    rows.append(dict(season=int(g.season), week=int(g.week), home=g.home_team, away=g.away_team, mm=fh - fa, mt=fh + fa, sp=g.spread_line, tl=g.total_line, am=g.home_score - g.away_score, atot=g.home_score + g.away_score,
+                     qbchg=int(ih <= -2.5 or ia <= -2.5), early=int(g.week <= 6), div=int(g.div_game == 1), wx=int((wind or 0) >= 15 or (temp is not None and temp <= 32)),
+                     short=int(min(_f(g.home_rest) or 7, _f(g.away_rest) or 7) <= 5), bigfav=int(abs(g.spread_line) >= 7)))
 X = pd.DataFrame(rows)
 def grade(df, gap):
     side = df[(df.mm - df.sp).abs() >= gap].copy()
@@ -53,4 +61,18 @@ pc = lambda a: f"{a[0]}-{a[1]-a[0]} ({a[0]/a[1]*100:.1f}%)" if a[1] else "-"
 for gap, r in out["by_gap"].items(): print(f"all 2023-26, gap >= {gap}: side {pc(r['side'])}, total {pc(r['total'])}")
 for s, d in out["by_season"].items(): print(s, {g: (pc(r['side']), pc(r['total'])) for g, r in d.items()})
 print("2026 by week (gap>=3):", {w: (pc(r['side']), pc(r['total'])) for w, r in out["2026_weeks"].items()})
+if len(sys.argv) > 2: json.dump(out, open(sys.argv[2], "w")); print("wrote", sys.argv[2])
+
+# ---- 11/5 "is there a better way of knowing when to fade": the same disagreements split by situation, before 2026 vs 2026 ----
+X.to_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gl_disagree_rows.csv"), index=False)
+SEG = {"QB change (either team)": "qbchg", "Weeks 4-6": "early", "Divisional": "div", "Wind 15+ or 32F-": "wx", "Short rest (<=5 days)": "short", "Spread 7+": "bigfav"}
+print("\nmodel side record when 3+ pts off the line, by situation (pre-2026 | 2026):")
+seg_out = {}
+for lab, col in SEG.items():
+    for val in (1, 0):
+        sub = X[X[col] == val]
+        a_, b_ = grade(sub[sub.season < 2026], 3), grade(sub[sub.season == 2026], 3)
+        seg_out[f"{lab}={'yes' if val else 'no'}"] = {"pre": a_, "y2026": b_}
+        print(f"  {lab:24s} {'yes' if val else 'no ':3s}: sides {pc(a_['side'])} | {pc(b_['side'])}   totals {pc(a_['total'])} | {pc(b_['total'])}")
+out["segments"] = seg_out
 if len(sys.argv) > 2: json.dump(out, open(sys.argv[2], "w")); print("wrote", sys.argv[2])
