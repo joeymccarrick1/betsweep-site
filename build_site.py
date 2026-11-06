@@ -126,7 +126,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
 NAV_GROUPS = [("/", "Home", None),
-              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game dossiers", "The read before the bet"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
@@ -837,7 +837,7 @@ _API = [
     ("/b/today.json", "The morning briefs per game day: {week, briefs:{YYYY-MM-DD:{title, body, url, games}}, days}. Weather risks lead the body.", "every rebuild"),
     ("/b/teasers.json", "The teaser finder: every spread and total teased 6, 6.5 and 7 points with the model's chance before and after the move, which cross 3 and 7, and the best pairs.", "every rebuild"),
     ("/b/beat.json", "Beat the model: the week's pool (every player prop priced -150 to +150, as [key, player, team, opp, game, market, line, odds, model chance, kickoff]) and the model's five keys.", "every rebuild"),
-    ("/b/dossier.json", "Game dossiers: per game, the model script, weather / injury / news flags, situational spots (tested on 2006-2025), each offense's results against the most similar defenses and each defense's leaks by role.", "every rebuild"),
+    ("/b/dossier.json", "Game previews: per game, the model script, weather / injury / news flags, situational spots (tested on 2006-2025), each offense's results against the most similar defenses and each defense's leaks by role.", "every rebuild"),
     ("/b/startsit.json", "Who-should-I-start inputs: {week, players:[{n, t, p, o, fp, av}]} - name, team, position, opponent, projected fantasy points, availability.", "every rebuild"),
     ("/b/books.json", "DraftKings / Hard Rock selection ids for the week's legs, keyed like the slip keys, for deep links.", "every rebuild"),
     ("/b/promos.json", "The promo desk's posted slips with their short links and grades.", "every rebuild"),
