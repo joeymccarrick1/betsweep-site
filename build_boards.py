@@ -786,6 +786,14 @@ try:
     import edgemap as _EMAPB
     _EMB = _EMAPB.load(IN, WEEK)
 except Exception as _e: print("note: edge map unavailable on the boards:", _e); _EMB = None
+def _team_total(tm):
+    """Market implied points for team tm this week (schedule feed spread / total), None when the feed has no line."""
+    for k, gi in (GL_SCHED or {}).items():
+        if tm not in k: continue
+        sp, tot = num(gi.get("spread_line")), num(gi.get("total_line"))
+        if tot is None or sp is None: return None
+        return tot / 2 + (sp / 2 if gi.get("home_team") == tm else -sp / 2)
+    return None
 def best_parlay(a, b, players, s, wts=None):
     """Legs come from the four script strips (top plays under each ending); each leg's chance is averaged over the model's
     script odds so the slip does not depend on one ending. Pick the combination (2-4 legs, distinct players, 2+ scripts
@@ -808,6 +816,9 @@ def best_parlay(a, b, players, s, wts=None):
         if _zz and _zz["z"] == "r": continue   # 11/6 edge map: no listed-parlay leg from a losing zone
         if l["market"] == "Longest Reception": continue   # owner 11/1: the model's weakest market stays out of listed parlays
         if l["market"] == "Rushing Yards": continue   # 11/4 audit: rushing yards -19% at every depth, both sides (Weeks 6-8) - out of listed parlays
+        # owner 11/6 (Ravens TNF, implied 15 pts): receiving-yards overs on teams the market expects under 19 points went -21% / -11% / +3% in
+        # Weeks 6-8 and -79% on TNF (research/team_total_overs.py). Provisional - out of listed parlays; re-check Tuesdays.
+        if l["market"] == "Receiving Yards" and _team_total(l["team"]) is not None and _team_total(l["team"]) < 19: continue
         if _o is not None and _o <= -250 and not (_rp is not None and _rp >= l["book"] and l["p"] >= l["book"]): continue   # no paying up for -250 and shorter
         if l["market"] != "Anytime TD" and not (_rp is not None and l["book"] is not None and ((l["p"] >= 0.65 and _rp >= l["book"]) or (_o is not None and -135 <= _o <= 115 and _rp - l["book"] >= 0.08))): continue
         if l["market"] == "Anytime TD" and not (_rp is not None and _rp >= l["book"] and _o is not None and _o <= 200): continue
@@ -841,6 +852,12 @@ def best_parlay(a, b, players, s, wts=None):
         if l["warn"]: continue
         ps = l["ps"]; prob = sum(w[k] * ps[k] for k in range(4))
         rows[id(l)] = {"l": l, "ps": ps, "prob": prob, "padj": prob, "nbad": 0, "pmin": min(ps), "scripts": set(), "floor": 0.55, "tb": False}
+    # owner 11/6 (Ravens TNF: every Ravens catch / yardage over died together in the 31-? blowout): a leg is blowout-exposed when its own team is
+    # 35%+ to lose by 10+ and the leg's chance in that ending is 10+ pts under its mixed chance. One such leg per listed parlay at most - a
+    # stack of them is one bet on the trailing offense showing up.
+    for r in rows.values():
+        tm = r["l"].get("team"); kt = 3 if tm == a else 0 if tm == b else None
+        r["bx"] = bool(kt is not None and not (r["l"].get("gl") and r["l"]["market"] == "Total") and w[kt] >= 0.35 and r["ps"][kt] <= r["prob"] - 0.10)
     BP_ROWS[f"{a}-{b}"] = rows
     # script membership: a leg "belongs" to an ending when it is a play under that ending - clears the strip's probability floor
     # and is priced at or better than fair there (the card's strip shows the top four of these; the parlay may use any of them)
@@ -869,6 +886,7 @@ def best_parlay(a, b, players, s, wts=None):
                 if len({r["l"]["player"] for r in combo}) < n: continue
                 gk = [r["l"]["gl"]["k"] for r in combo if r["l"].get("gl")]
                 if len(gk) != len(set(gk)): continue   # one margin leg (ML or spread) and one total leg at most
+                if sum(1 for r in combo if r.get("bx")) > 1: continue   # 11/6: at most one leg that needs a likely blowout loser to show up
                 d = 1.0
                 for r in combo: d *= dec_odds(r["l"]["odds"])
                 if d < BP_LO or d > BP_HI: continue
