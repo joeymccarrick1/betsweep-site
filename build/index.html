@@ -354,6 +354,14 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
 .zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
 .zn.b{background:color-mix(in srgb,#d7a22a 22%,transparent);color:#f0c45a}
+.scen:empty{display:none} .scen{margin:10px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.scen h4{margin:0 0 4px;font-family:var(--display);font-size:13px;letter-spacing:.06em;text-transform:uppercase} .scen h4 small{display:block;font-family:var(--body);font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--mute);font-weight:500;margin-top:2px}
+.scg{margin-top:8px} .sgh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:2px} .sgh small{color:var(--mute);font-size:11px}
+.scr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 40px;align-items:center;gap:8px;width:100%;font:inherit;font-size:12.5px;text-align:left;padding:5px 6px;margin:1px 0;border:1px solid transparent;border-radius:6px;background:none;color:var(--ink);cursor:pointer}
+.scr:hover{border-color:var(--line)} .scr.on{border-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent)} .scr.best .l{font-weight:700}
+.scr .l small{display:block;color:var(--mute);font-size:10.5px;font-weight:400} .scr .b{height:8px;border-radius:4px;background:color-mix(in srgb,var(--line) 70%,transparent);overflow:hidden} .scr .b i{display:block;height:100%;background:var(--good)}
+.scr .v{text-align:right;font-family:var(--display);font-weight:800} .scnote{margin:8px 0 0;font-size:12.5px} .scnote.m{color:var(--mute);font-size:11px} .scnote .scclr{font:inherit;font-size:12px;background:none;border:0;color:var(--red);text-decoration:underline;cursor:pointer;padding:0}
+.scc{display:block;font-size:10.5px;color:var(--mute);white-space:nowrap} .scc.up{color:var(--good)} .scc.dn{color:var(--bad)}
 </style>
 
 <link rel="stylesheet" href="/s/site-7ac6fac2b2.css"></head>
@@ -464,7 +472,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-973a1bb9d569.js"></script>
+<script src="/build/data-0cbc775eebb6.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -683,7 +691,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var n = ls.length; if(!n) return 0;
     var z = ls.map(function(l){ return nppf(Math.min(0.995, Math.max(0.005, l.p))); });
     var C = []; var anyCorr = false;
-    for(var i=0;i<n;i++){ C.push([]); for(var j=0;j<n;j++){ C[i][j] = i===j ? 1 : corr(ls[i], ls[j]); if(i!==j && C[i][j]) anyCorr = true; } }
+    for(var i=0;i<n;i++){ C.push([]); for(var j=0;j<n;j++){ C[i][j] = i===j ? 1 : corr(ls[i], ls[j]) * (ls[i]._sc && ls[j]._sc && ls[i].g === ls[j].g ? 0.5 : 1); /* 11/6 scenario explorer: ending fixed -> about half the same-game pull is gone */ if(i!==j && C[i][j]) anyCorr = true; } }
     if(!anyCorr){ return ls.reduce(function(a,l){ return a*l.p; }, 1); }
     var L = chol(C), R = rng(7), N = 20000, hits = 0, g = new Array(n);
     for(var t=0;t<N;t++){
@@ -737,7 +745,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return '<li class="lg' + (openPl[l.pl + '|' + l.m] ? ' open' : '') + '" data-i="' + l.i + '" data-orig="' + esc(ok) + '"><span class="pz">' + l.pos + '</span>' +
       '<span class="who"><b><a class="pname" href="/player/' + plSlug(l.pl) + '/" title="' + esc(l.pl) + ': lines at every book, hit rates, game log">' + esc(l.pl) + '</a>' + flagMark(l) + (l.gd ? ' <span class="gdo">' + esc(l.gd) + '</span>' : '') + '</b><span>' + l.tm + ' vs ' + l.opp + ' · ' + esc(g.kick) + '</span>' + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow">' + mupill(l) + '</span>' : '') + tierChip(l) + '</span>' +
       '<span class="mk">' + (cyc.length > 1 ? '<span class="pn cyc" role="button" tabindex="0" data-orig="' + esc(ok) + '" title="Next prop for ' + esc(l.pl) + ' (' + (ci + 1) + ' of ' + cyc.length + ')"><i class="car">›</i><small>' + (ci + 1) + '/' + cyc.length + '</small></span>' : '') + '<span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(l.ms) + l5(l) + '</span>' + (isTD(l) ? '' : isGL(l) ? '<small class="glsrc">' + (l.src === 'fd' ? 'FanDuel' : 'consensus') + '</small>' : (ladderOf(l).length > 1 && st.best ? ' ' + fader(l) : ' ' + lnTxt(l))) + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow m">' + mupill(l) + '</span>' : '') + '<small class="d">' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + '</small>' + bookStrip(l) + '<small class="bkl m">' + booksLine(l) + '</small><small class="mp">Model ' + pc(l.p) + ' · book ' + pc(l.bk) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + ' · <b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + ' edge</b></small></span>' +
-      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
+      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + scChip(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
       '<span class="nums"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
       (started(l.g) && !sel[l.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[l.i] ? 'in' : '') + '">' + (sel[l.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(l) + histBlock(l) + altsBlock(l) + '</li>';
   }
@@ -985,8 +993,37 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return '<div class="wide stake"><small>Suggested stake · quarter Kelly · 1u = 1% of bankroll</small><b style="color:' + (f > 0 ? 'var(--good)' : 'var(--mute)') + '">' + txt + '</b>' +
       '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" style="width:90px"></span></div>'; }
   document.addEventListener('change', function(ev){ if(ev.target && ev.target.id === 'bkroll'){ try { localStorage.setItem('bs_bankroll', String(Math.max(0, +ev.target.value || 0))); } catch(e){} renderSlip(); } });
+  // ---- owner 11/6 scenario explorer ("pick a game ending -> legs and slip reprice"): l.sc = the leg's chance under each of its game's four
+  // endings [a by 10+, close & low, shootout, b by 10+] (build_builder.py: the boards' tested script tables, mixed back to the shown %).
+  // The slip panel shows the slip's chance under each ending of each of its games; tapping one fixes that ending - every leg of that game
+  // in the list shows its chance under it, and the slip reprices.
+  var SCN = {};
+  function scLab(g, k){ return [g.a + ' by 10+', 'Close, low', 'Shootout', g.b + ' by 10+'][k]; }
+  function scLegs(ls, gid, k){ return ls.map(function(l){ var kk = l.g === gid ? k : SCN[l.g]; if(kk == null || !l.sc) return l; var c = Object.assign({}, l); c.p = l.sc[kk]; c._sc = 1; return c; }); }
+  function scChip(l){ var k = SCN[l.g]; if(k == null || !l.sc) return ''; var g = games[l.g], d = l.sc[k] - l.p;
+    return '<small class="scc' + (d >= 0.02 ? ' up' : d <= -0.02 ? ' dn' : '') + '" title="This leg\'s chance if the game ends ' + esc(scLab(g, k)) + '">if ' + esc(scLab(g, k).toLowerCase()) + ': ' + pc(l.sc[k]) + '</small>'; }
+  function scenBlock(ls){
+    var gids = []; ls.forEach(function(l){ if(l.sc && gids.indexOf(l.g) < 0 && !started(l.g)) gids.push(l.g); });
+    if(!gids.length) return '';
+    var h = '<h4>What does this slip need?<small>its chance to hit by how each game ends · tap one to explore it</small></h4>';
+    gids.slice(0, 4).forEach(function(gid){
+      var g = games[gid], w = (g.probs || []).map(function(x){ return Math.max(0, +x || 0); }), sw = w.reduce(function(a, b){ return a + b; }, 0) || 1, nl = ls.filter(function(l){ return l.g === gid; }).length;
+      var rows = [0, 1, 2, 3].map(function(k){ return {k: k, gp: w[k] / sw, sp: joint(scLegs(ls, gid, k))}; });
+      var best = rows.reduce(function(a, r){ return r.sp > a.sp ? r : a; }), mx = Math.max(best.sp, 0.01);
+      h += '<div class="scg"><div class="sgh"><b>' + esc(g.a) + ' vs ' + esc(g.b) + '</b><small>' + nl + ' leg' + (nl > 1 ? 's' : '') + ' in this game</small></div>' +
+        rows.map(function(r){ return '<button type="button" class="scr' + (SCN[gid] === r.k ? ' on' : '') + (r === best ? ' best' : '') + '" data-g="' + esc(gid) + '" data-k="' + r.k + '"><span class="l">' + esc(scLab(g, r.k)) + '<small>' + pc(r.gp) + ' of the time</small></span><span class="b"><i style="width:' + Math.max(2, Math.round(r.sp / mx * 100)) + '%"></i></span><span class="v">' + (r.sp < 0.005 ? '<1%' : pc(r.sp)) + '</span></button>'; }).join('') + '</div>';
+    });
+    var on = Object.keys(SCN).filter(function(k){ return SCN[k] != null && games[k]; });
+    if(on.length){ var pj = joint(scLegs(ls)); h += '<p class="scnote">If ' + on.map(function(gid){ return esc(scLab(games[gid], SCN[gid])); }).join(' and ') + ': this slip hits <b>' + pc(pj) + '</b> (fair ' + toAm(pj) + ') · <button type="button" class="scclr">clear</button></p>'; }
+    return h + '<p class="scnote m">Other games as projected. Same-game legs keep about half their pull once the ending is fixed.</p>';
+  }
+  document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return;
+    var b = t.closest('#scen .scr'); if(b){ var gid = b.getAttribute('data-g'), k = +b.getAttribute('data-k'); if(SCN[gid] === k) delete SCN[gid]; else SCN[gid] = k; renderSlip(); renderList(); return; }
+    if(t.closest('#scen .scclr')){ SCN = {}; renderSlip(); renderList(); } });
   function renderSlip(){
+    var scb = $('#scen'); if(!scb){ var tk = $('#take'); if(tk){ scb = document.createElement('div'); scb.id = 'scen'; scb.className = 'scen'; tk.parentNode.insertBefore(scb, tk.nextSibling); } }
     var ls = slipLegs(); var ul = $('#slipLegs');
+    if(scb){ try { scb.innerHTML = ls.length ? scenBlock(ls) : ''; } catch(e){ scb.innerHTML = ''; } }
     $$('.slipbar .n').forEach(function(n){ n.textContent = ls.length; });
     if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
     ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
@@ -1295,7 +1332,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function addBtn(l){ return started(l.g) && !sel[l.i] ? '<button type="button" class="add lockd" disabled>Started</button>' : '<button type="button" class="add' + (sel[l.i] ? ' in' : '') + '">' + (sel[l.i] ? 'In slip ✓' : '+ Add') + '</button>'; }
   function boxBody(l){   // the parts that change with the slider / switch
     return '<div class="pbm">' + l5(l) + mupill(l) + (l.proj != null && !isTD(l) ? '<small class="proj">proj ' + l.proj + '</small>' : '') + '</div>' +
-      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small></span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
+      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small>' + scChip(l) + '</span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
   }
   function statBox(pl, m, pos){
     var g = ladder(pl, m); if(!g.length) return ''; var l = boxLeg(pl, m); var s = BOX[pl + '|' + m] || {}; var u = UND[pl + '|' + m]; var under = s.side === 'u' && u;
