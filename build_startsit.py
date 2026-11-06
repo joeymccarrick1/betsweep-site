@@ -59,7 +59,7 @@ def build(PLAYERS, WEEK, IN, OUT):
             try: fl = [[f["k"], f["tag"], f["txt"]] for f in FE.player(p["n"], p["t"], p["p"], p["o"]) if f["k"] in ("good", "bad", "watch")][:6]
             except Exception: fl = []
         rows.append({"n": p["n"], "t": p["t"], "p": p["p"], "o": p["o"], "k": p.get("k", ""), "fp": p["fp"], "rec": p.get("rec", 0),
-                     "py": p.get("py", 0), "ptd": p.get("ptd", 0), "ry": p.get("ry", 0), "rtd": p.get("rtd", 0), "rcy": p.get("rcy", 0), "rctd": p.get("rctd", 0),
+                     "py": p.get("py", 0), "ptd": p.get("ptd", 0), "int": p.get("int", 0), "fd": p.get("fd"), "ry": p.get("ry", 0), "rtd": p.get("rtd", 0), "rcy": p.get("rcy", 0), "rctd": p.get("rctd", 0),
                      "act": p.get("act"), "av": p.get("av", ""), "st": p.get("st", ""), "role": p.get("role", ""), "dr": p.get("dr"), "or": p.get("or"), "sos": p.get("sos", 0),
                      "avg": round(sum(fps) / len(fps), 1) if fps else None, "gp": len(fps), "sd": round(sd, 1) if sd is not None else None,
                      "g": games[-4:], "fl": fl, "s": slug(p["n"])})
@@ -154,6 +154,12 @@ def page(WEEK):
   function esc(s){{ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){{ return {{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]; }}); }}
   function norm(s){{ return String(s || '').toLowerCase().replace(/[.']/g, '').replace(/\\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/\\s+/g, ' ').trim(); }}
   function pts(p){{ return p.fp - (1 - REC) * (p.rec || 0); }}
+  // owner 11/6: what his FanDuel props add up to (fdimplied.py via build_team) in this page's scoring - our stat line with each priced stat swapped in
+  function fdp(p){{ if (!p.fd || out(p)) return null; var f = p.fd, d = 0;
+    if (f.py != null) d += 0.04 * (f.py - (p.py || 0)); if (f.ptd != null) d += 4 * (f.ptd - (p.ptd || 0)); if (f.int != null) d -= 2 * (f.int - (p.int || 0));
+    if (f.ry != null) d += 0.1 * (f.ry - (p.ry || 0)); if (f.rec != null) d += REC * (f.rec - (p.rec || 0)); if (f.rcy != null) d += 0.1 * (f.rcy - (p.rcy || 0));
+    if (f.td != null) d += 6 * (f.td - (p.rtd || 0) - (p.rctd || 0));
+    return Math.max(0, pts(p) + d); }}
   function band(p){{ var f = pts(p), sd = p.sd; if (sd == null || p.gp < 3) sd = Math.max(3, f * 0.45); sd = Math.min(sd, Math.max(4, f * 0.8)); return [Math.max(0, f - 0.84 * sd), f + 0.84 * sd]; }}
   function rkColor(r){{ if (r == null) return '#888'; var h = Math.round(120 - (r - 1) * (120 / 31)); return 'hsl(' + h + ' 55% 36%)'; }}
   function out(p){{ return !p.act || /^(OUT|IR|DOUBTFUL)/.test(p.av) || p.st === 'BYE'; }}
@@ -218,6 +224,7 @@ def page(WEEK):
       '<div class="rng"><i style="left:' + Math.min(100, b[0] / mx * 100) + '%;width:' + Math.max(2, Math.min(100, (b[1] - b[0]) / mx * 100)) + '%"></i><em style="left:' + Math.min(99, f / mx * 100) + '%"></em></div>' +
       '<div class="rngl"><span>floor ' + b[0].toFixed(1) + '</span><span>ceiling ' + b[1].toFixed(1) + '</span></div>' +
       '<div class="kv"><span>Projection</span><b>' + esc(line(p)) + '</b>' +
+      (fdp(p) != null ? '<span>His FanDuel props add up to</span><b>' + fdp(p).toFixed(1) + ' pts</b>' : '') +
       (p.dr != null ? '<span>' + esc(p.o) + ' defense vs ' + POSD[p.p] + '</span><b><i class="rk" style="background:' + rkColor(p.dr) + '">#' + p.dr + '</i></b>' : '') +
       (p.or != null ? '<span>' + esc(p.t) + ' offense, same stat</span><b><i class="rk" style="background:' + rkColor(p.or) + '">#' + p.or + '</i></b>' : '') +
       (vol(p) ? '<span>' + vol(p).lab + ' (last ' + p.g.length + ')</span><b>' + vol(p).v.toFixed(1) + '</b>' : '') +
@@ -227,6 +234,9 @@ def page(WEEK):
       ((p.fl.length || lv) ? '<ul class="fl">' + (lv ? '<li class="' + (lv.level === 'good' ? 'good' : lv.level === 'block' ? 'bad' : 'watch') + '"><b>' + esc(lv.label || lv.short || 'Live') + '</b>' + esc(lv.why) + '</li>' : '') +
         p.fl.slice(0, 4).map(function(x){{ return '<li class="' + x[0] + '"><b>' + esc(x[1]) + '</b>' + esc(x[2]) + '</li>'; }}).join('') + '</ul>' : '') + '</div>';
   }}
+  function fdLine(a, b){{ var fa = fdp(a), fb = fdp(b); if (fa == null || fb == null) return '';
+    return '<li>' + (fb > fa + 0.5 ? '<b>FanDuel disagrees:</b> ' + esc(b.n) + "'s props add up to " + fb.toFixed(1) + ' pts, ' + esc(a.n) + "'s to " + fa.toFixed(1) + '.' :
+      fa > fb + 0.5 ? 'FanDuel agrees: his props add up to ' + fa.toFixed(1) + ' pts to ' + fb.toFixed(1) + '.' : "FanDuel's props have them even (" + fa.toFixed(1) + ' vs ' + fb.toFixed(1) + ').') + '</li>'; }}
   function render(){{
     var ps = sel.filter(Boolean).map(function(n){{ return BY[norm(n)]; }}).filter(Boolean);
     var o = document.getElementById('out');
@@ -234,7 +244,7 @@ def page(WEEK):
     var ranked = ps.slice().sort(function(a, b){{ return score(b) - score(a); }}), top = ranked[0], nxt = ranked[1];
     var gap = score(top) - score(nxt);
     var h = '<div class="verdict"><h2>Start ' + esc(top.n) + ' <small>' + (gap < 0.75 ? 'coin flip - lean' : gap < 2 ? 'slight edge' : 'clear call') + (ps.length > 2 ? ' · then ' + ranked.slice(1).map(function(p){{ return esc(p.n); }}).join(', ') : '') + '</small></h2>' +
-      '<ul>' + reasons(top, nxt).map(function(x){{ return '<li>' + x + '</li>'; }}).join('') + '</ul>' +
+      '<ul>' + reasons(top, nxt).map(function(x){{ return '<li>' + x + '</li>'; }}).join('') + fdLine(top, nxt) + '</ul>' +
       (gap < 0.75 ? '<p class="close">These two are within a point. Tiebreakers: ' + (MODE === 'mid' ? 'switch to <b>Safe floor</b> if you are favored this week, <b>Big upside</b> if you are the underdog.' : 'go with the later kickoff so you can pivot if news breaks.') + '</p>' : '') + '</div>';
     o.innerHTML = h + '<div class="cards">' + ranked.map(function(p, i){{ return card(p, i === 0); }}).join('') + '</div>';
   }}
