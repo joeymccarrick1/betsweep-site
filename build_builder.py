@@ -1018,6 +1018,9 @@ BUILDER_JS = r"""
     if(adds.length){
       ADDED = {ok: [], late: [], missing: []};
       if(new URLSearchParams(location.search).get('new')) { Object.keys(sel).forEach(function(k){ delete sel[k]; }); extraKeys.length = 0; }   // owner 11/1: promo-swap links replace the slip
+      // owner 11/5: inactive-alert swap links (?drop=Player&add=key) take the ruled-out player's legs off the open slip first
+      new URLSearchParams(location.search).getAll('drop').forEach(function(nm){ var n = String(nm).toLowerCase(); Object.keys(sel).forEach(function(i){ if(legs[i] && String(legs[i].pl).toLowerCase() === n) delete sel[i]; });
+        for(var x = extraKeys.length - 1; x >= 0; x--) if(String(extraKeys[x]).split('|')[0].toLowerCase() === n) extraKeys.splice(x, 1); });
       adds.forEach(function(k){ if(k in KEYIDX){ var i = KEYIDX[k]; if(started(legs[i].g)) ADDED.late.push(legs[i]); else { sel[i] = true; ADDED.ok.push(legs[i]); } } else ADDED.missing.push(k); });
       save(); history.replaceState(null, '', location.pathname + location.hash);
     }

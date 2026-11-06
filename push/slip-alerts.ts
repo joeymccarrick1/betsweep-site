@@ -295,14 +295,19 @@ export async function run(now = Date.now()) {
     if (!hits.size) continue;
     const us = subs.filter((s) => s.user_id === uid);
     for (const [n, h] of hits) {
-      const swap = (D.legs || []).filter((l: any) => l.g === h.g && PROPS.has(l.m) && l.e > 0 && l.p >= 0.45 && l.p <= 0.75 && !(l.pos === "QB" && l.m === "Rushing Yards")
-          && (l.m === "Receptions" || l.m === "Anytime TD" || (l.ln || 0) >= 15) && !mine.has(norm(l.pl)) && !ST.get(norm(l.pl)))
-        .sort((a: any, b: any) => b.e - a.e)[0];
+      // owner 11/5: the swap prefers a TEAMMATE in the same stat (he usually absorbs the volume), then a teammate, then anyone in the game;
+      // the push opens the builder with the ruled-out player dropped and the swap added (?drop=&add=), one tap.
+      const outLeg = (D.legs || []).find((l: any) => norm(l.pl) === n); const outMk = new Set(slips.flatMap((s2) => s2.keys.filter((k) => norm(String(k).split("|")[0]) === n).map((k) => String(k).split("|")[1])));
+      const ok = (l: any) => l.g === h.g && PROPS.has(l.m) && l.e > 0 && l.p >= 0.45 && l.p <= 0.75 && !(l.pos === "QB" && l.m === "Rushing Yards")
+          && (l.m === "Receptions" || l.m === "Anytime TD" || (l.ln || 0) >= 15) && !mine.has(norm(l.pl)) && !ST.get(norm(l.pl));
+      const tier = (l: any) => (outLeg && l.tm === outLeg.tm ? (outMk.has(l.m) ? 2 : 1) : 0);
+      const swap = (D.legs || []).filter(ok).sort((a: any, b: any) => (tier(b) - tier(a)) || (b.e - a.e))[0];
+      const swapKey = swap ? `${swap.pl}|${swap.m}|${Math.round(swap.ln || 1)}` : "";
       const where = h.slips.length === 1 ? (h.slips[0] === "your open betslip" ? "He's on your open betslip." : `He's on "${h.slips[0]}".`) : `He's on ${h.slips.length} of your slips (${h.slips.slice(0, 3).map((x) => x === "your open betslip" ? "open betslip" : `"${x}"`).join(", ")}).`;
       const msg = { title: h.why === "Inactive" ? `${h.name} is INACTIVE tonight` : `${h.name} is ${h.st === "OUT" ? "OUT" : "DOUBTFUL"}${h.why ? " (" + h.why + ")" : ""}`,
         body: where + (h.st === "OUT" ? " Check the slip before kickoff." : " Doubtful players rarely play - check the slip before kickoff.") +
-          (swap ? ` Swap idea: ${legLabel(swap)} (FD ${am(swap.o)}, model ${Math.round(swap.p * 100)}%).` : ""),
-        url: "/me/", tag: `bs-${W}-${n}` };
+          (swap ? ` Swap idea${tier(swap) ? " (teammate)" : ""}: ${legLabel(swap)} (FD ${am(swap.o)}, model ${Math.round(swap.p * 100)}%) - tap to swap him out.` : ""),
+        url: swap ? `/build/?drop=${encodeURIComponent(h.name)}&add=${encodeURIComponent(swapKey)}#slip` : "/me/", tag: `bs-${W}-${n}` };
       nalerts++;
       for (const s of us) {
         try { const code = await sendPush(s, msg); if (code === 404 || code === 410) gone.push(s.endpoint); else if (code < 300) nsent++; }
