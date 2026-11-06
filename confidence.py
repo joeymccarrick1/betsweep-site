@@ -94,6 +94,7 @@ class Conf:
             if len(r) < 5 or str(r[0]).strip() != str(self.WEEK): continue
             if r[4] == "OUT": self.out[r[2]].append((r[1], r[3]))
             if r[4] == "QUESTIONABLE" and r[3] == "QB": self.qb_q[r[2]].append(r[1])
+            if r[3] == "QB" and len(r) > 6 and str(r[6]).strip().upper() in ("QB1", "STARTER") and r[4] != "OUT": self.exp_qb[r[2]] = r[1]   # 11/5: the tab's named starter beats the projections role
         # pass-defense ranks (1 = allows the most) for the boom/bust QB split
         self.prank = {}
         rk = [x for x in vals("ranks.json") if x]
@@ -101,6 +102,35 @@ class Conf:
             RH = {c: i for i, c in enumerate(rk[0])}
             for x in rk[1:33]:
                 if "QB Pass Yds" in RH and len(x) > RH["QB Pass Yds"]: self.prank[x[0]] = _num(x[RH["QB Pass Yds"]])
+        # owner 11/5: the formula team score reacts to who is OUT (research/injury_team_pts.py, nflverse 2023-26, every season held out
+        # in turn: own starting QB out -2.6 pts, absent regular pass catchers -2.4 pts per 100% of the team's target share; both cut the
+        # formula's error in all four held-out seasons. Opponent absences and backs flipped sign between seasons - not used.)
+        self.formula_raw = dict(self.formula); self.inj = {}
+        for t in list(self.formula):
+            pts, why = self.injury_adj(t)
+            if pts: self.formula[t] = round(self.formula[t] + pts, 2); self.inj[t] = (pts, why)
+
+    def injury_adj(self, t):
+        wks = len(set().union(*[w for (pl, tm), w in self.played.items() if tm == t])) if any(tm == t for (pl, tm) in self.played) else 0
+        if wks < 3: return 0.0, []
+        outs = {pl for pl, pos in self.out.get(t, [])}; why = []; pts = 0.0
+        # main passer to date = most starts for this team
+        st = defaultdict(int)
+        for q, games in self.qb_games.items():
+            for (w, opp, yds) in games:
+                if (q, t) in self.played and w in self.played[(q, t)]: st[q] += 1
+        main = max(st, key=st.get) if st else None
+        exp = self.exp_qb.get(t)
+        if main and st[main] >= 0.6 * wks and (main in outs or (exp and exp != main)):
+            pts -= 2.6; why.append(f"QB {main.split()[-1]} out" + (f", {exp.split()[-1]} starts" if exp and exp != main else ""))
+        ts = 0.0; names = []
+        for pl in outs:
+            n = len(self.played.get((pl, t), ()))
+            if n < 0.6 * wks: continue
+            s_t = self.share.get((pl, t), (0, 0))[0]
+            if s_t >= 0.02: ts += s_t; names.append((s_t, pl.split()[-1] if pl.split()[-1] not in ("Jr.", "Sr.", "II", "III") else pl.split()[-2]))
+        if ts: pts -= 2.4 * ts; why.append(", ".join(n for _, n in sorted(names, reverse=True)) + f" out ({ts*100:.0f}% of targets)")
+        return round(pts, 2), why
 
     def market(self, a, b):
         """(FanDuel main spread for A, main total) - the lines priced closest to even; schedule closing line as fallback."""
@@ -121,7 +151,7 @@ class Conf:
         flags, ctx = [], []
         sp, tot = self.market(a, b); mkt = None
         fa, fb = self.formula.get(a, pa), self.formula.get(b, pb); mm = fa - fb; mt = fa + fb
-        form = {"pa": fa, "pb": fb, "probs": endings(mm, mt), "used": self.src.get(a) == "FanDuel"}
+        form = {"pa": fa, "pb": fb, "probs": endings(mm, mt), "used": self.src.get(a) == "FanDuel", "inj": [self.inj.get(a), self.inj.get(b)]}
         if sp is not None:
             m_mkt = -sp
             gap = abs(mm - m_mkt)
