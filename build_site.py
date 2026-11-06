@@ -290,11 +290,11 @@ def _write_shared():
 _H2C_STUB = ('<script>window.html2canvas=window.html2canvas||function(el,o){return (window.__bsh2c||(window.__bsh2c=new Promise(function(res,rej){var s=document.createElement("script");'
              's.src="/s/html2canvas.min.js";s.onload=function(){res(window.html2canvas)};s.onerror=rej;document.head.appendChild(s)}))).then(function(h){return h(el,o)})};</script>')
 # owner 11/5: "merge Today and the Home Screen together. Lose the today button and give back the social button" - Today's content is the home page now (the logo goes home)
-APP_TABS = [("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>'),
-            ("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
+APP_TABS = [("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
             ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
             ("/team/", "Fantasy", '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'),
-            ("/live/", "Live", '<svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg>')]
+            ("/live/", "Live", '<svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg>'),
+            ("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>')]   # owner 11/5: Boards, Builder, Fantasy, Live, Social
 def apptabs(path):
     # five bottom tabs; Fantasy lights up for every page in the Fantasy group
     def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/team/" and path.startswith(("/trade/", "/dfs/")))
