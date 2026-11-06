@@ -287,9 +287,9 @@ for g in B.get("games", []):
     fl = "".join(f'<li class="{k}">{E(t)}</li>' for k, t in flags) or '<li>No weather, defensive-injury or news flags in this build.</li>'
     sp = "".join(f'<li class="{"good" if k == "lean" else ""}">{E(t)}</li>' for k, t in spot) or '<li>No tested spot applies to this game.</li>'
     desc = f'{away} at {home}, Week {W}: how each offense has done against defenses like this one, where each defense leaks by position, game script, weather, injuries, news and the situational spots that actually hold up.'
-    body = (head(f'{away} @ {home} game dossier · Week {W} · BetSweep', desc) +
-            f'<div class="pp"><p class="crumb"><a href="/dossier/">Game dossiers</a> › {E(away)} @ {E(home)}</p>'
-            f'<header><span class="tb" style="--p:#d7332a;--s:#8f1d17">{W}</span><h1>{E(away)} @ {E(home)}</h1><div class="sub"><span>{E(g.get("kick", ""))}</span><span>Week {W} game dossier</span></div>'
+    body = (head(f'{away} @ {home} game preview · Week {W} · BetSweep', desc) +
+            f'<div class="pp"><p class="crumb"><a href="/dossier/">Game previews</a> › {E(away)} @ {E(home)}</p>'
+            f'<header><span class="tb" style="--p:#d7332a;--s:#8f1d17">{W}</span><h1>{E(away)} @ {E(home)}</h1><div class="sub"><span>{E(g.get("kick", ""))}</span><span>Week {W} game preview</span></div>'
             f'<div class="acts"><a class="pri" href="/boards/#{E(gid)}">Matchup board</a><a href="/build/?g={E(gid)}">Parlay Builder</a><a href="/teams/{a.lower()}/">{E(a)}</a><a href="/teams/{b.lower()}/">{E(b)}</a></div></header>'
             f'<section><h2>Game script</h2>{script or "<p class=lede>No script for this game in the build.</p>"}</section>'
             f'<section><h2>Injuries, weather, news</h2><ul class="fl">{fl}</ul></section>'
@@ -299,10 +299,10 @@ for g in B.get("games", []):
     J["games"][gid] = {"a": a, "b": b, "kick": g.get("kick"), "script": probs, "flags": [t for _, t in flags], "spots": [{"k": k, "t": t} for k, t in spot], "similar": sims, "leak": leaks}
     cards.append((g.get("sort", ""), f'<a href="/dossier/{E(gid)}/"><b>{E(away)} @ {E(home)}</b><small>{E(g.get("kick", ""))} · {E(g.get("most", "") or "")}</small>'
                   + "".join(f'<small>{E(t[:110])}</small>' for k, t in spot if k == "lean") + '</a>'))
-idx = (head(f"Game dossiers · Week {W} · BetSweep", "Every game this week: similar-defense splits, where each defense leaks, game script, weather, injuries, news and tested situational spots.") +
-       f'<div class="pp"><p class="crumb"><a href="/">Home</a> › Game dossiers</p><header><span class="tb" style="--p:#d7332a;--s:#8f1d17">{W}</span><h1>Game dossiers</h1>'
+idx = (head(f"Game previews · Week {W} · BetSweep", "Every game this week: similar-defense splits, where each defense leaks, game script, weather, injuries, news and tested situational spots.") +
+       f'<div class="pp"><p class="crumb"><a href="/">Home</a> › Game previews</p><header><span class="tb" style="--p:#d7332a;--s:#8f1d17">{W}</span><h1>Game previews</h1>'
        '<div class="sub"><span>the read before the bet</span><span>similar defenses · leaks by role · script · weather · injuries · news · spots</span></div></header>'
        '<div class="dsgrid">' + "".join(h for _, h in sorted(cards)) + '</div></div>')
 open(os.path.join(OUT, "dossier", "index.html"), "w").write(idx)
 json.dump(J, open(os.path.join(OUT, "dossier.json"), "w"), separators=(",", ":"))
-print(f"wrote out/dossier: {len(cards)} game dossiers for week {W}, {sum(1 for v in J['games'].values() for s in v['spots'] if s['k'] == 'lean')} situational leans, defense profiles for {len(PROF)} teams")
+print(f"wrote out/dossier: {len(cards)} game previews for week {W}, {sum(1 for v in J['games'].values() for s in v['spots'] if s['k'] == 'lean')} situational leans, defense profiles for {len(PROF)} teams")
