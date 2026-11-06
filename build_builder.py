@@ -541,11 +541,27 @@ _safe_best = {}
 # 11/4 audit of 4,929 graded legs (Weeks 6-8): Rushing Yards lost at every depth, both sides (-19% overs; Model's Best Week 8 rushing overs
 # 24% hit, unders 31%) - out of every tier. The one cut that paid in all three weeks: plus-money legs (+150 or longer) where the raw model is
 # 5+ points over FanDuel's implied %, in receptions / receiving yards / anytime TD / passing yards: 150 legs, 41% hit vs 32% implied, +31% at 1u.
+# owner 11/6 edge map (edgemap.py): every model-edge leg gets its zone from the graded record of edges in its market x price band;
+# a losing-zone leg never makes a Model's Best tier, a quick build or a listed parlay, and every edge leg shows the record behind it.
+try:
+    import edgemap as _EMAP
+    _EM = _EMAP.load(IN, WEEK); _nz = {"g": 0, "r": 0, "n": 0}
+    for l in LEGS:
+        if l.get("gl") or l.get("o") is None: continue
+        _z = _EM.zone(l["m"], l["o"], l.get("raw_p") if l.get("raw_p") is not None else l.get("p"))
+        if not _z: continue
+        l["z"] = [_z["z"], _z["roi"], _z["n"]]; _nz[_z["z"]] += 1
+        if _z["z"] in ("g", "r"): l.setdefault("fh", []).append(["good" if _z["z"] == "g" else "bad", "Proven zone" if _z["z"] == "g" else "Losing zone", _z["txt"]])
+    print(f"edge map: {_nz['g']} legs in proven zones, {_nz['r']} in losing zones, {_nz['n']} neutral")
+    os.makedirs(os.path.join(OUT, "data"), exist_ok=True)   # risk.js flags listed-parlay legs in losing zones on every page (data/zones.json)
+    json.dump({"week": WEEK, "zones": {f"{l['pl']}|{l['m']}|{int(round(float(l.get('ln') or 1)))}": l["z"] for l in LEGS if l.get("z") and l["z"][0] in ("g", "r")}}, open(os.path.join(OUT, "data", "zones.json"), "w"), separators=(",", ":"))
+except Exception as _e: print("warn: edge map skipped:", _e)
 _PLUS_MK = ("Receiving Yards", "Receptions", "Passing Yards", "Anytime TD", "Longest Reception")
 for l in LEGS:
     if l.get("gl") or l.get("raw_p") is None or l.get("bk") is None or l.get("status") in ("OUT", "BYE"): continue
     o = l.get("o")
     if l["m"] == "Rushing Yards" or l.get("ms") == "Rush yds": continue
+    if (l.get("z") or [""])[0] == "r": continue   # 11/6 edge map: never a tier pick from a losing zone
     if not l.get("u") and l["m"] in _PLUS_MK and o is not None and o >= 150 and l["raw_p"] - l["bk"] >= 0.05 and "/" not in l["pl"]: l["tier"] = "plus"; continue
     if l.get("u"):
         bo = l.get("bko") if l.get("bko") is not None else 1 - l["bk"]
@@ -721,7 +737,8 @@ try:
 except Exception as _e: print("warn: track record skipped:", _e)
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
-BUILDER_CSS = r""".trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
+BUILDER_CSS = r""".zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
+.trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
 .askbox{max-width:1100px;margin:10px auto 6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#16202b)} .askbox label b{font-family:var(--display);font-size:18px;letter-spacing:.02em} .askbox label small{color:var(--mute);margin-left:6px}
 .askrow{display:flex;gap:8px;margin-top:8px} .askrow input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--chalk,#0f141c);color:inherit;font:inherit;font-size:16px} .askrow button{padding:0 16px;border-radius:10px;border:0;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;letter-spacing:.05em}
 .askc{margin-top:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--chalk,#0f141c) 70%,transparent);font-size:14px} .askc p{margin:6px 0} .askh{display:flex;justify-content:space-between;gap:8px;align-items:baseline} .askh b{font-size:16px} .askh small{color:var(--mute)}
@@ -1328,7 +1345,9 @@ BUILDER_JS = r"""
         (started(x.g) && !sel[x.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[x.i] ? 'in' : '') + '">' + (sel[x.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(x) + histBlock(x) + '</div>';
     }).join('') + '</div>';
   }
-  function trk(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
+  function zoneTag(l){ if(!l.z || l.z[0] === 'n') return ''; var g = l.z[0] === 'g'; return '<span class="zn ' + (g ? 'g' : 'r') + '" title="' + (g ? 'Proven zone' : 'Losing zone') + ': model edges in this market at this price have returned ' + (l.z[1] >= 0 ? '+' : '') + Math.round(l.z[1] * 100) + '% (shrunk) over ' + l.z[2] + ' graded legs">' + (g ? '✓ proven zone' : '✗ losing zone') + '</span>'; }
+  function trk(l){ return zoneTag(l) + trk0(l); }
+  function trk0(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
     return r && r[1] >= 40 ? '<span class="trk" title="Graded Weeks 6+: legs in this market the site showed at ' + Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + '-' + (Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + 10) + '% hit ' + Math.round(r[0] / r[1] * 100) + '% (' + r[1] + ' legs)">hit ' + Math.round(r[0] / r[1] * 100) + '% of ' + r[1] + '</span>' : ''; }
   function flagMark(l){
     var fl = l.fl || [];
@@ -1657,7 +1676,7 @@ BUILDER_JS = r"""
     return out;
   }
   function quick(kind){
-    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: skip live injury / weather / owner-note risks; smartLeg = the 11/1 leg rules
+    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(l.z && l.z[0] === 'r') && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: skip live injury / weather / owner-note risks; smartLeg = the 11/1 leg rules
     var bestOf = {}; pool.forEach(function(l){ var k = l.pl + '|' + l.m; if(!bestOf[k] || l.e > bestOf[k].e) bestOf[k] = l; }); pool = Object.keys(bestOf).map(function(k){ return bestOf[k]; });
     var picks = [];
     if(kind === 'anchor'){ picks = pickLegs(pool.filter(function(l){ return l.o <= -130 && l.e >= -0.005 && (l.o > -250 || l.p >= l.bk); }).sort(function(a,b){ return b.p - a.p; }), 3, {distinctGames: st.game === 'all'}); }
@@ -1682,7 +1701,7 @@ BUILDER_JS = r"""
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && (l.o > -250 || l.p >= l.bk) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: no paying up for -250 and shorter unless model + market rate it above the price
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && (l.o > -250 || l.p >= l.bk) && !(l.z && l.z[0] === 'r') && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: no paying up for -250 and shorter unless model + market rate it above the price
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
