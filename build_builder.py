@@ -774,7 +774,7 @@ try:
         if str(_r[_H["Latest Snapshot"]]).upper() != "TRUE" or _r[_H["Result"]] not in ("HIT", "MISS"): continue
         _rp, _bk = num(_r[_H["Raw model %"]]), num(_r[_H["Book implied %"]])
         if _rp is None or _bk is None: continue
-        _sp = CALIB.shrink(_rp, _bk); _bd = str(min(80, max(10, int(_sp * 10) * 10)))
+        _sp = CALIB.shown(_rp, _bk, _r[_H["Market"]]); _bd = str(min(80, max(10, int(_sp * 10) * 10)))
         _x = REC.setdefault(_r[_H["Market"]], {}).setdefault(_bd, [0, 0]); _x[0] += int(_r[_H["Result"]] == "HIT"); _x[1] += 1
     print("track record:", {m: sum(v[1] for v in d.values()) for m, d in REC.items()})
 except Exception as _e: print("warn: track record skipped:", _e)

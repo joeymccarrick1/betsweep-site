@@ -30,6 +30,12 @@ def shrink(p, book, w=W_MODEL):
 import math as _m
 RECAL = {"Rushing Yards": (0.1, 0.85, -0.4), "Longest Reception": (0.1, 0.9, -0.25)}
 def _lg(p): p = min(max(p, 1e-4), 1 - 1e-4); return _m.log(p / (1 - p))
+# owner 11/6 ("make the change now"): per-market model weight from research/blend_weight.py (graded frozen legs Weeks 6-8, leave-one-week-out
+# log loss): FanDuel alone beat the 50/50 blend pooled. Passing yards: weight 0 won every held-out week (0.1 kept so the model still moves it a
+# little); receptions ~0.3; receiving yards 0.2-0.3; anytime TD 0.6-0.7 (the model adds real value there). Markets not listed keep W_MODEL.
+# Rushing yards and longest reception keep their RECAL rows below (model weight ~0.1 already). Re-run blend_weight.py every Tuesday.
+W_MARKET = {"Passing Yards": 0.1, "Receptions": 0.3, "Receiving Yards": 0.25, "Anytime TD": 0.65}
+
 def shown(p, book, market=None, w=W_MODEL):
     """The shown % for a leg: per-market recalibration where research/recal.py found one (unders use the over side), else shrink()."""
     if p is None: return None
@@ -40,4 +46,5 @@ def shown(p, book, market=None, w=W_MODEL):
         po, bo = (1 - p, 1 - book) if under else (p, book)
         v = 1 / (1 + _m.exp(-(c + a * _lg(po) + b * _lg(bo))))
         return max(0.01, min(0.99, 1 - v if under else v))
+    if w == W_MODEL: w = W_MARKET.get(base, w)
     return shrink(p, book, w)
