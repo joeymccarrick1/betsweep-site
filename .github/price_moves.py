@@ -78,12 +78,83 @@ def main():
                       "dir": "SHORTENED" if d > 0 else "DRIFTED", "tier": tier.get(key, ""), "pulled": cur[1],
                       "detail": f"{l['pl']} {short}{line}: FanDuel {am(l['o'])} at build -> {am(cur[0])} now ({d:+.1f} implied pts {'toward the model' if d > 0 else 'against us'})"})
     moves.sort(key=lambda m: -abs(m["pts"]))
-    out = {"week": live.get("week") or plus.get("week"), "built": live.get("built") or plus.get("built"), "checked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "legs_checked": n_seen, "moves": moves}
+    try: news = news_edge(RAW, live, now_px, nowms)
+    except Exception as e: print("news edge skipped:", e); news = []
+    out = {"news": news, "week": live.get("week") or plus.get("week"), "built": live.get("built") or plus.get("built"), "checked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "legs_checked": n_seen, "moves": moves}
     os.makedirs("data", exist_ok=True); json.dump(out, open("data/price-moves.json", "w"), indent=1)
     print(f"price moves: {len(moves)} of {n_seen} legs moved 3+ pts ({sum(1 for m in moves if m['dir'] == 'SHORTENED')} toward us; {sum(1 for m in moves if m['tier'])} tier legs)")
     for m in moves[:12]: print(" ", m["dir"], m["detail"])
     return 0
 
+
+# ---- news edge (owner 11/6: "beat FanDuel after injury news"): when a player who had props at the build is ruled out (feeds changes.json:
+# an injury status of Out / Doubtful / IR, or a game-day inactive), his teammates who soak up the work - other WR/TEs for a pass catcher, other
+# RBs for a back - should get more expensive. For each of their over legs this logs the first FanDuel pull after the news and the first pull
+# where the price moved 3+ implied points (data/news-edge.json, the latency study), and flags the legs FanDuel has re-pulled since the news
+# without moving ("news" in price-moves.json -> risk.js chip, owner push). Only news that came after the build counts: earlier news is
+# already in the build's numbers.
+import datetime as _dt
+def _ct_to_utc(txt):   # mirror pull stamps are Central ('2026-11-06 0:11'); CST = UTC-6 Nov-Mar, CDT = UTC-5 before
+    try: d = _dt.datetime.strptime(str(txt).strip(), "%Y-%m-%d %H:%M")
+    except Exception: return None
+    return d + _dt.timedelta(hours=6 if d.month in (11, 12, 1, 2) or (d.month == 3 and d.day < 9) else 5)
+def _built_utc(txt):   # 'Thu 11/5 5:31 PM' (Central) -> UTC
+    import re
+    m = re.match(r"\w+ (\d+)/(\d+) (\d+):(\d+) (AM|PM)", str(txt or "").strip())
+    if not m: return None
+    y = _dt.datetime.utcnow().year; h = int(m[3]) % 12 + (12 if m[5] == "PM" else 0)
+    return _ct_to_utc(f"{y}-{int(m[1]):02d}-{int(m[2]):02d} {h}:{int(m[4]):02d}")
+SHARE = {"WR": ("WR", "TE"), "TE": ("WR", "TE"), "RB": ("RB",)}
+GAIN = {"WR": ("Receptions", "Receiving Yards", "Longest Reception"), "TE": ("Receptions", "Receiving Yards", "Longest Reception"),
+        "RB": ("Rushing Yards", "Rush Attempts", "Receptions", "Receiving Yards", "Rush + Rec Yards")}
+def news_edge(RAW, live, now_px, nowms):
+    ch = get(f"{RAW}/feeds/changes.json"); evs = ch.get("events", ch) if isinstance(ch, dict) else ch
+    pos = {}
+    for f, P in (("proj_qb.json", "QB"), ("proj_rb.json", "RB"), ("proj_wr.json", "WR"), ("proj_te.json", "TE")):
+        try:
+            for r in get(f"{RAW}/sheet-mirror/in/{f}")["values"][1:]:
+                if r and r[0]: pos.setdefault(r[0], P)
+        except Exception: pass
+    legs = live.get("legs", []); built = _built_utc(live.get("built")); W = live.get("week")
+    team = {}
+    for l in legs: team.setdefault(l["pl"], l.get("tm"))
+    try: log = json.load(open("data/news-edge.json"))
+    except Exception: log = {}
+    if log.get("week") != W: log = {"week": W, "events": {}}
+    ko = {g["gid"]: g.get("ko") for g in live.get("games", [])}
+    for e in evs:
+        if e.get("k") not in ("injury", "inactive"): continue
+        st = str(e.get("st") or ("Inactive" if e.get("k") == "inactive" else "")).lower()
+        if e.get("k") == "injury" and not any(x in st for x in ("out", "doubtful", "injured reserve")): continue
+        pl = e.get("pl"); tm = team.get(pl) or e.get("tm"); ps = pos.get(pl)
+        if not pl or pl not in team or ps not in SHARE: continue   # no props at the build = not a player the market cared about
+        try: ts = _dt.datetime.strptime(e["ts"][:19], "%Y-%m-%dT%H:%M:%S")
+        except Exception: continue
+        if built and ts <= built: continue
+        ek = f"{pl}|{e['ts'][:16]}"
+        ev = log["events"].setdefault(ek, {"pl": pl, "tm": tm, "pos": ps, "st": e.get("st") or "Inactive", "ts": e["ts"], "legs": {}})
+        for l in legs:
+            if l.get("tm") != tm or l["pl"] == pl or pos.get(l["pl"]) not in SHARE[ps] or l.get("m") not in GAIN[ps] or l.get("o") is None: continue
+            if ko.get(l.get("g")) and ko[l["g"]] <= nowms: continue
+            ln = l.get("ln"); lns = str(int(float(ln))) if float(ln) == int(float(ln)) else str(ln)
+            cur = now_px.get(f"{l['pl']}|{l['m']}|{lns}".lower())
+            if not cur: continue
+            k = slipkey(l["pl"], l["m"], ln); pu = _ct_to_utc(cur[1])
+            x = ev["legs"].setdefault(k, {"pl": l["pl"], "m": l["m"], "ln": ln, "built": l["o"], "p": l.get("p"), "first": None, "moved": None})
+            if pu and pu > ts:
+                if not x["first"]: x["first"] = [cur[1], cur[0]]
+                if not x["moved"] and abs(imp(cur[0]) - imp(l["o"])) * 100 >= 3: x["moved"] = [cur[1], cur[0]]
+            x["now"] = cur[0]; x["pulled"] = cur[1]
+    json.dump(log, open("data/news-edge.json", "w"), indent=1)
+    out = []
+    for ev in log["events"].values():
+        for k, x in ev["legs"].items():
+            if x.get("first") and not x.get("moved"):
+                out.append({"key": k, "pl": x["pl"], "m": x["m"], "out": ev["pl"], "st": ev["st"], "news": ev["ts"], "built": x["built"], "now": x.get("now"), "pulled": x.get("pulled"),
+                            "detail": f"{ev['pl']} ruled {ev['st'].lower()} after the build - FanDuel has re-pulled {x['pl']} since and the price has not moved ({am(x['built'])} -> {am(x.get('now'))})"})
+    n_ev = len(log["events"]); n_mv = sum(1 for ev in log["events"].values() for x in ev["legs"].values() if x.get("moved"))
+    print(f"news edge: {n_ev} outs since the build, {len(out)} teammate legs not repriced yet, {n_mv} repriced")
+    return out
 
 # ---- closing lines (owner 11/5 "do all of these"): 'V2 - Closing Lines' needed an Apps Script that was never installed, so the tab stayed
 # empty and the season page's CLV card never filled. This keeps, for every frozen leg (legsnaps, Latest Snapshot TRUE), the newest FanDuel
