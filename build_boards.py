@@ -786,6 +786,10 @@ try:
     import edgemap as _EMAPB
     _EMB = _EMAPB.load(IN, WEEK)
 except Exception as _e: print("note: edge map unavailable on the boards:", _e); _EMB = None
+try:
+    import simdef as _SDF
+    _SDD = _SDF.load(IN, WEEK)
+except Exception as _e: print("note: similar defenses unavailable on the boards:", _e); _SDF = None; _SDD = {}
 def _team_total(tm):
     """Market implied points for team tm this week (schedule feed spread / total), None when the feed has no line."""
     for k, gi in (GL_SCHED or {}).items():
@@ -875,7 +879,11 @@ def best_parlay(a, b, players, s, wts=None):
     for r in cands:
         pl = (r["l"]["player"], r["l"]["market"])
         if pl not in byp or r["prob"] > byp[pl]["prob"]: byp[pl] = r
-    cands = sorted(byp.values(), key=lambda r: -(r["padj"] + (r["prob"] - r["l"]["book"])))[:18]
+    # owner 11/6: the similar-defense split breaks ties between qualifying legs (+-3 pts of ranking at +-50%) - never the leg's probability
+    def _sdb(r):
+        x = _SDF.for_leg(_SDD, r["l"].get("player"), r["l"].get("team"), r["l"].get("market")) if _SDD else None
+        return 0.06 * max(-0.5, min(0.5, x["pct"])) if x else 0.0
+    cands = sorted(byp.values(), key=lambda r: -(r["padj"] + (r["prob"] - r["l"]["book"]) + _sdb(r)))[:18]
     if len(cands) < 2: return "", None
     codes = {id(r): (leg_code(r["l"], players) or "") for r in cands}
     import itertools
