@@ -46,7 +46,7 @@ extra = [_slim(l) for l in D["legs"] if l["i"] not in keep_ids]
 for _x in extra:   # 11/5 speed: extra legs are only tracked on slips / matched on import - no long notes, projections or sources
     for _k in ("proj", "c", "src"): _x.pop(_k, None)   # keep "ms" - the leg label uses it
     if _x.get("w"): _x["w"] = str(_x["w"])[:70]   # everything else, so a slip leg of any kind can be tracked
-games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort", "fa", "fb") if k in g} for g in D["games"]]
+games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort", "fa", "fb", "ia", "ib") if k in g} for g in D["games"]]
 # owner 11/5: "show me home teams on the left and away teams on the right" + "put weather, stadium, all that info on live page".
 # The builder orders a game by the scripts tab (not home/away), so flip the display fields here; live scores match by team abbreviation
 # and the gamecast reads ESPN's homeAway, so nothing downstream depends on which side a team is on. gid is left alone (legs point at it).
@@ -64,7 +64,7 @@ except Exception: pass
 WX = {}
 for _r in _rows("weather.json")[1:]:
     if len(_r) >= 15 and str(_r[0]) == str(WEEK): WX[frozenset([_r[2], _r[3]])] = _r
-_PAIRS = (("a", "b"), ("pa", "pb"), ("fa", "fb"), ("na", "nb"), ("ca", "cb"))
+_PAIRS = (("a", "b"), ("pa", "pb"), ("fa", "fb"), ("na", "nb"), ("ca", "cb"), ("ia", "ib"))
 def _ni(x):
     try: return int(float(x))
     except Exception: return None
@@ -249,6 +249,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .lg2[id^="lv-"] .ghd2 .mid b{font-size:46px;letter-spacing:.01em} .lg2[id^="lv-"] .ghd2 .mid b i{margin:0 10px} .lg2[id^="lv-"] .ghd2 .mid b.vs{font-size:28px}
 .lg2 .ghd2 .mdl .pj em{font-size:14px;font-weight:600} .lg2 .ghd2 .mdl .pj.lk em{font-size:12.5px;font-weight:500}
 @media (max-width:560px){ .lg2[id^="lv-"] .ghd2 .mid b{font-size:40px} .lg2[id^="lv-"] .ghd2 .mid b i{margin:0 7px} .lg2[id^="lv-"] .ghd2 .mid b.vs{font-size:24px} .lg2 .ghd2 .mdl .pj em{font-size:13.5px} }
+.lg2 .ghd2 .mdl .gi.inj{white-space:normal;font-size:11.5px;line-height:1.4;max-width:100%} .lg2 .ghd2 .mdl .gi.inj b{display:block;font-family:var(--display);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#c98a12} .lg2 .ghd2 .mdl .gi.inj span{display:block;font-family:var(--body);text-transform:none;letter-spacing:0;font-weight:400;font-size:11.5px;color:var(--mute)}
 .wxr.high{background:var(--bad)} .wxr.moderate{background:#c98a12}
 .gdet{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--chalk) 60%,var(--card))}
 .gdet span{white-space:nowrap} .gdet b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
@@ -665,6 +666,8 @@ JS = r"""
     var row = function(lab, a, b, tail){ return '<span class="pj"><b>' + lab + '</b><em>' + esc(g.a) + ' ' + one(a) + ' – ' + one(b) + ' ' + esc(g.b) + '</em>' + (tail ? '<i>' + tail + '</i>' : '') + '</span>'; };
     var fdTail = f ? esc((f.sp < 0 ? g.b + ' ' + f.sp : g.a + ' ' + (-f.sp)) + ' · o/u ' + f.tot) : '';
     var out = row('Model', ma, mb, esc(pick + ' · o/u ' + one(ma + mb))) + (f ? row('FanDuel', f.pa, f.pb, fdTail) : '');
+    var injs = [[g.a, g.ia], [g.b, g.ib]].filter(function(x){ return x[1] && Math.abs(x[1].pts) >= 0.5; });   // 11/5: injury-adjusted model score (every adjustment is in the score; only 0.5+ pt ones get a note)
+    if(injs.length) out += '<span class="gi inj"><b>Model adjusted for injuries</b>' + injs.map(function(x){ return '<span>' + esc(x[0] + ' ' + x[1].pts.toFixed(1) + ' pts (' + x[1].why.join('; ') + ')') + '</span>'; }).join('') + '</span>';
     if(st !== 'in' && st !== 'post' && g.most) out += '<span class="pj lk"><b>Likeliest</b><em>' + esc(g.most) + (pct != null ? ' (' + pct + '%)' : '') + '</em><i>by FanDuel line</i></span>';
     return out + infoLine(g);
   }

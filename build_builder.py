@@ -89,18 +89,23 @@ SCRIPTS = {}
 for r in scripts_raw[1:]:
     if len(r) < 11 or not r[0]: continue
     SCRIPTS[r[0]] = (r[0], r[1], num(r[2]), num(r[3]), num(r[5]), num(r[6]), num(r[7]), num(r[8]), num(r[9]), r[10])
-FORMULA = {}   # our own season-average team score ('AUTO - Market Team Points' col H) - the scripts use FanDuel's line once posted
+FORMULA = {}; FINJ = {}   # our own season-average team score ('AUTO - Market Team Points' col H), injury-adjusted by confidence.py (11/5)
 try:
-    for _r in vals("teammkt.json")[1:]:
-        if len(_r) >= 8 and _r[0] and num(_r[7]) is not None: FORMULA[_r[0]] = num(_r[7])
-except Exception: pass
+    import confidence as _CONF
+    _cf = _CONF.Conf(IN, WEEK); FORMULA = dict(_cf.formula); FINJ = {t: {"pts": p, "why": w} for t, (p, w) in _cf.inj.items()}
+except Exception as _e:
+    print("warn: confidence formula unavailable, raw tab used:", _e)
+    try:
+        for _r in vals("teammkt.json")[1:]:
+            if len(_r) >= 8 and _r[0] and num(_r[7]) is not None: FORMULA[_r[0]] = num(_r[7])
+    except Exception: pass
 GID = {}; GAMES = []
 for a, b, pl in blocks:
     s = SCRIPTS.get(a) or SCRIPTS.get(b)
     if not s: continue
     if s[0] != a: a, b = b, a
     gid = f"{a}-{b}"; GID[a] = GID[b] = gid
-    GAMES.append({"gid": gid, "a": a, "b": b, "pa": s[2], "pb": s[3], "tot": s[4], "probs": [s[5], s[6], s[7], s[8]], "most": s[9], "fa": FORMULA.get(a), "fb": FORMULA.get(b),
+    GAMES.append({"gid": gid, "a": a, "b": b, "pa": s[2], "pb": s[3], "tot": s[4], "probs": [s[5], s[6], s[7], s[8]], "most": s[9], "fa": FORMULA.get(a), "fb": FORMULA.get(b), "ia": FINJ.get(a), "ib": FINJ.get(b),
                   "na": NAMES.get(a, a), "nb": NAMES.get(b, b), "ca": list(TEAMCOL.get(a, ("#444", "#999"))), "cb": list(TEAMCOL.get(b, ("#444", "#999")))})
 kick = {}
 try:
