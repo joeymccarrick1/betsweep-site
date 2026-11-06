@@ -91,7 +91,7 @@ def top_plays(D, n=8):
         if mk == "Longest Reception": continue   # no edge in this market yet (week 6: 0-for-6 at edge >= +10, fades hit 47%)
         if mk == "Rushing Yards": continue   # 11/4 audit: -19% at every depth, both sides, Weeks 6-8
         if bp_f is not None and bp_f >= 0.667: continue   # 11/4 audit: -200 and shorter hit 5-9 pts under the price (-9% to -12%) - no top play pays that vig
-        sp_f = CALIB.shrink(mp_f, bp_f)   # the number the whole site shows (calib.py): raw model blended toward the price
+        sp_f = CALIB.shown(mp_f, bp_f, mk)   # the number the whole site shows (calib.py): raw model blended toward the price
         if bp_f is not None and sp_f < 0.55: continue   # the leg must still be likely when the price gets its vote
         gid = l["g"] if l else None
         if not gid:   # fall back to the team in the game text

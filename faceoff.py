@@ -73,7 +73,7 @@ def _ceiling(LEGS, name, proj):
         raw = p_ceiling(proj, t)
         if raw is None: continue
         fd = next((l for l in LEGS if l["player"] == name and l["market"] == "Receiving Yards" and l.get("line") == t and l.get("book") is not None), None)
-        out[t] = (CALIB.shrink(raw, fd["book"]), fd["odds"], True) if fd else (raw, None, False)
+        out[t] = (CALIB.shown(raw, fd["book"], "Receiving Yards"), fd["odds"], True) if fd else (raw, None, False)
     return out
 
 def _odds(o):

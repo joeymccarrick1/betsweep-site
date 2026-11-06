@@ -104,7 +104,7 @@ def attach(slip_legs, ladders, bookodds):
             if abs(hl - ln) > MAX_GAP[m] or abs(hl - ln) < 1e-9: continue
             raw = p_at(f, hl, lad)
             if rp is not None: raw = min(raw, rp) if hl > ln else max(raw, rp)   # a higher line can never be likelier than ours, nor a lower one less likely
-            bk = round(1 / _dec(hv["o"]), 4); p = round(CALIB.shrink(raw, bk), 4)
+            bk = round(1 / _dec(hv["o"]), 4); p = round(CALIB.shown(raw, bk, m), 4)
             l.setdefault("ba", {})[short] = {"ln": int(hl) if float(hl).is_integer() else hl, "o": int(hv["o"]), "s": hv["s"], "p": p, "bk": bk, "e": round(p - bk, 4), "raw": round(raw, 4)}
             n += 1
     return n
