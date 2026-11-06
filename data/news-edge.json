@@ -28,6 +28,180 @@
      "pulled": "2026-11-06 6:24"
     }
    }
+  },
+  "Cam Skattebo|2026-11-06T21:56": {
+   "pl": "Cam Skattebo",
+   "tm": "NYG",
+   "pos": "RB",
+   "st": "Doubtful",
+   "ts": "2026-11-06T21:56:53Z",
+   "legs": {}
+  },
+  "Rashid Shaheed|2026-11-06T21:56": {
+   "pl": "Rashid Shaheed",
+   "tm": "SEA",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-06T21:56:53Z",
+   "legs": {
+    "Jaxon Smith-Njigba|Receiving Yards|70": {
+     "pl": "Jaxon Smith-Njigba",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "built": -280,
+     "p": 0.77,
+     "first": null,
+     "moved": null,
+     "now": -290.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "AJ Barner|Receiving Yards|30": {
+     "pl": "AJ Barner",
+     "m": "Receiving Yards",
+     "ln": 30.0,
+     "built": 126,
+     "p": 0.408,
+     "first": null,
+     "moved": null,
+     "now": 126.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Jaxon Smith-Njigba|Receptions|9": {
+     "pl": "Jaxon Smith-Njigba",
+     "m": "Receptions",
+     "ln": 9.0,
+     "built": 198,
+     "p": 0.299,
+     "first": null,
+     "moved": null,
+     "now": 194.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "AJ Barner|Receptions|4": {
+     "pl": "AJ Barner",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 172,
+     "p": 0.327,
+     "first": null,
+     "moved": null,
+     "now": 178.0,
+     "pulled": "2026-11-06 6:24"
+    }
+   }
+  },
+  "Treylon Burks|2026-11-06T21:56": {
+   "pl": "Treylon Burks",
+   "tm": "WAS",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-06T21:56:53Z",
+   "legs": {
+    "Chig Okonkwo|Longest Reception|20": {
+     "pl": "Chig Okonkwo",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 200,
+     "p": 0.315,
+     "first": null,
+     "moved": null,
+     "now": 185.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Stefon Diggs|Receptions|5": {
+     "pl": "Stefon Diggs",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 122,
+     "p": 0.4745,
+     "first": null,
+     "moved": null,
+     "now": 106.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Stefon Diggs|Longest Reception|15": {
+     "pl": "Stefon Diggs",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -220,
+     "p": 0.698,
+     "first": null,
+     "moved": null,
+     "now": -210.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Stefon Diggs|Receiving Yards|50": {
+     "pl": "Stefon Diggs",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "built": 134,
+     "p": 0.4225,
+     "first": null,
+     "moved": null,
+     "now": 136.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Antonio Williams|Longest Reception|15": {
+     "pl": "Antonio Williams",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -240,
+     "p": 0.687,
+     "first": null,
+     "moved": null,
+     "now": -230.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Antonio Williams|Receptions|6": {
+     "pl": "Antonio Williams",
+     "m": "Receptions",
+     "ln": 6.0,
+     "built": 290,
+     "p": 0.224,
+     "first": null,
+     "moved": null,
+     "now": 270.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Chig Okonkwo|Receptions|5": {
+     "pl": "Chig Okonkwo",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 220,
+     "p": 0.2785,
+     "first": null,
+     "moved": null,
+     "now": 188.0,
+     "pulled": "2026-11-06 6:24"
+    },
+    "Antonio Williams|Receiving Yards|50": {
+     "pl": "Antonio Williams",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "built": 134,
+     "p": 0.3845,
+     "first": null,
+     "moved": null,
+     "now": 132.0,
+     "pulled": "2026-11-06 6:24"
+    }
+   }
+  },
+  "Mike Evans|2026-11-06T22:36": {
+   "pl": "Mike Evans",
+   "tm": "SF",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-06T22:36:04Z",
+   "legs": {}
+  },
+  "Deebo Samuel Sr.|2026-11-06T22:36": {
+   "pl": "Deebo Samuel Sr.",
+   "tm": "SF",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-06T22:36:04Z",
+   "legs": {}
   }
  }
 }
