@@ -766,6 +766,10 @@ def gl_legs(a, b, s):
         out.append(l); GL_LEGS.append(l)
     return out
 BP_ROWS = {}   # gid -> best_parlay's scored legs (each with its chance under all four endings) - reused for "legs that hit either way"
+try:
+    import edgemap as _EMAPB
+    _EMB = _EMAPB.load(IN, WEEK)
+except Exception as _e: print("note: edge map unavailable on the boards:", _e); _EMB = None
 def best_parlay(a, b, players, s, wts=None):
     """Legs come from the four script strips (top plays under each ending); each leg's chance is averaged over the model's
     script odds so the slip does not depend on one ending. Pick the combination (2-4 legs, distinct players, 2+ scripts
@@ -784,6 +788,8 @@ def best_parlay(a, b, players, s, wts=None):
         # owner 10/27: best-parlay player legs come from the Model's Best tier only (Weeks 6-7: 65%+ legs at or above the price hit 64.9%;
         # even-money lines the model is 8+ pts above hit 55%) - TDs keep their own rule below
         _rp = l.get("raw_p"); _o = l.get("odds")
+        _zz = _EMB.zone(l["market"], l.get("odds"), l.get("raw_p")) if _EMB else None
+        if _zz and _zz["z"] == "r": continue   # 11/6 edge map: no listed-parlay leg from a losing zone
         if l["market"] == "Longest Reception": continue   # owner 11/1: the model's weakest market stays out of listed parlays
         if l["market"] == "Rushing Yards": continue   # 11/4 audit: rushing yards -19% at every depth, both sides (Weeks 6-8) - out of listed parlays
         if _o is not None and _o <= -250 and not (_rp is not None and _rp >= l["book"] and l["p"] >= l["book"]): continue   # no paying up for -250 and shorter

@@ -110,6 +110,8 @@ RISK_JS = r"""(function(){
     } catch(e){} busy = false; }
   // owner 11/5 "lists that don't go stale on Sunday morning": a ruled-out player (injury report, game-day inactive, owner OUT note) drops off
   // Model's Best / single-pick cards right away, and any listed parlay holding him gets a red "swap this leg" banner - no rebuild needed.
+  var ZONES = null; function loadZones(){ try { fetch('/data/zones.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ ZONES = (j && j.zones) || {}; decorate(); }).catch(function(){}); } catch(e){} }
+  setTimeout(loadZones, 800);
   function stale(){
     var nameOf = function(el){ var t = (el.firstChild && el.firstChild.nodeType === 3) ? el.firstChild.nodeValue : el.textContent; return String(t || '').trim(); };
     var hidden = new Map();
@@ -119,6 +121,10 @@ RISK_JS = r"""(function(){
       var out = names.filter(function(n){ var v = verdict(n, null); return v && v.level === 'block'; });
       var multi = card.matches('.bestslip') || !!card.querySelector('ul.plegs, ul.pl, ul.legs');
       var ban = card.querySelector(':scope > .bsrdead');
+      // 11/6 edge map: a listed parlay leg in a losing zone gets an amber note (the next rebuild leaves it out)
+      if (ZONES && card.matches('.bestslip')){ var lz = []; card.querySelectorAll('[data-k]').forEach(function(e){ var k = e.getAttribute('data-k'), z = ZONES[k]; if (z && z[0] === 'r' && lz.indexOf(k.split('|')[0]) < 0) lz.push(k.split('|')[0]); });
+        var zb = card.querySelector(':scope > .bsrzone'), zh = lz.length ? '<div class="bsrzone">⚠ ' + esc(lz.join(', ')) + ': this kind of leg sits in a losing zone (model edges there have lost money) - consider a swap.</div>' : '';
+        if (zh && (!zb || zb.outerHTML !== zh)){ if (zb) zb.remove(); card.insertAdjacentHTML('afterbegin', zh); } else if (!zh && zb) zb.remove(); }
       if (!out.length){ if (ban) ban.remove(); card.classList.remove('bsr-dead'); if (card.dataset.bsrHid){ card.style.display = ''; delete card.dataset.bsrHid; } return; }
       if (multi){ var html = '<div class="bsrdead">⛔ ' + esc(out.join(', ')) + ' ruled out since this was built - swap ' + (out.length > 1 ? 'those legs' : 'that leg') + ' before betting.</div>';
         if (!ban || ban.outerHTML !== html){ if (ban) ban.remove(); card.insertAdjacentHTML('afterbegin', html); } card.classList.add('bsr-dead'); }
@@ -179,7 +185,7 @@ RISK_JS = r"""(function(){
 
 RISK_CSS = r"""
 .bsrmv{display:inline-flex;align-items:center;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;border:1px solid #2a8a4a;color:#2a8a4a;white-space:nowrap} .bsrmv.dn{border-color:#b7791f;color:#b7791f}
-.bsrdead{margin:0 0 8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,#d7332a 18%,transparent);border:1px solid #d7332a;color:inherit;font-size:13px;font-weight:600} .bsr-dead{outline:2px solid #d7332a;outline-offset:-2px} .bsrhid{grid-column:1/-1;margin:6px 0;font-size:12.5px;color:#d7332a} .bsrc{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:0;text-transform:none;vertical-align:middle;white-space:nowrap;cursor:help}
+.bsrzone{margin:0 0 8px;padding:7px 10px;border-radius:8px;background:color-mix(in srgb,#c98a12 16%,transparent);border:1px solid #c98a12;font-size:12.5px} .bsrdead{margin:0 0 8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,#d7332a 18%,transparent);border:1px solid #d7332a;color:inherit;font-size:13px;font-weight:600} .bsr-dead{outline:2px solid #d7332a;outline-offset:-2px} .bsrhid{grid-column:1/-1;margin:6px 0;font-size:12.5px;color:#d7332a} .bsrc{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:0;text-transform:none;vertical-align:middle;white-space:nowrap;cursor:help}
 .bsr-block{background:#b3261e;color:#fff} .bsr-warn{background:#f6e3b4;color:#6b4a00} .bsr-good{background:#dcefdc;color:#1f5d2b}
 button.bsrblock{opacity:.35;filter:grayscale(1)}
 #bsrpill{position:fixed;left:12px;right:12px;bottom:calc(var(--bs-tabs, 0px) + 74px);z-index:65;max-width:420px;margin:0 auto;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);font:14px/1.4 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;overflow:hidden}
