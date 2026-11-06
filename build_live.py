@@ -35,7 +35,7 @@ for l in sorted(D["legs"], key=lambda l: -(l["e"] + (0.5 if not l["w"] else 0)))
     seen[k] = 1; keep.append(l)
 bp_keys = {(p, m, int(ln) if m not in ("Spread", "Total") else ln) for b in BP.values() for (p, m, ln, o, pr, e) in b["legs"]}
 for l in keep: l["bp"] = (l["pl"], l["m"], int(l["ln"]) if l["m"] not in ("Spread", "Total") else l["ln"]) in bp_keys
-FIELDS = ("i", "pl", "pos", "tm", "opp", "g", "m", "ms", "ln", "o", "p", "bk", "e", "w", "proj", "c", "gl", "src", "bp", "alt")
+FIELDS = ("i", "pl", "pos", "tm", "opp", "g", "m", "ms", "ln", "o", "p", "bk", "e", "w", "proj", "c", "gl", "src", "bp", "alt", "u")   # 11/6: "u" was missing, so the Live page graded unders as overs
 def _slim(l):
     o = {k: l[k] for k in FIELDS if k in l}
     if l.get("fd") and l["fd"].get("m"): o["fd"] = {"m": l["fd"]["m"], "s": l["fd"]["s"]}   # FanDuel market/selection ids: "Open in FanDuel" on a slip
@@ -114,13 +114,29 @@ try:
         _sp = [s["t"].split(";")[0] for s in (_DS.get(_g["gid"]) or {}).get("spots", []) if s.get("k") == "lean"]
         if _sp: _g["sp"] = _sp
 except Exception as _e: print("note: situational spots unavailable on the live page:", _e)
+# owner 11/6 "bad beat or bad bet?": each tracked player's usual volume this season (games before this week) - targets, carries, pass
+# attempts per game - so a settled leg can say whether he got the work and missed (bad beat) or the role shrank (bad read).
+VOL = {}
+try:
+    import csv as _csv
+    _need = {l["pl"] for l in slim} | {l["pl"] for l in extra}
+    _acc = {}
+    for _r in _csv.DictReader(open(os.path.join(IN, "stats_player_week_2026.csv"))):
+        if _r.get("season_type") != "REG" or _r.get("player_display_name") not in _need: continue
+        try: _w = int(float(_r["week"]))
+        except Exception: continue
+        if _w >= WEEK: continue
+        a = _acc.setdefault(_r["player_display_name"], [0, 0.0, 0.0, 0.0])
+        a[0] += 1; a[1] += float(_r.get("targets") or 0); a[2] += float(_r.get("carries") or 0); a[3] += float(_r.get("attempts") or 0)
+    VOL = {n: [round(a[1] / a[0], 1), round(a[2] / a[0], 1), round(a[3] / a[0], 1)] for n, a in _acc.items() if a[0] >= 2}
+except Exception as _e: print("note: usual volume unavailable on the live page:", _e)
 SKILL = set()   # owner 11/5 "what changed": every projected QB / RB / WR / TE / K, so injuries to players with no props left still show
 for _f in ("proj_qb.json", "proj_rb.json", "proj_wr.json", "proj_te.json", "proj_k.json"):
     try:
         for _r in json.load(open(os.path.join(IN, _f)))["values"][1:]:
             if _r and _r[0]: SKILL.add(str(_r[0]))
     except Exception: pass
-LD = {"week": WEEK, "games": games, "legs": slim, "extra": extra, "built": D["built"], "sk": sorted(SKILL)}
+LD = {"week": WEEK, "games": games, "legs": slim, "extra": extra, "built": D["built"], "sk": sorted(SKILL), "vol": VOL}
 # 11/4 (owner: grade the live page's "from here" numbers): the tracked legs with their pregame chance go to out/live_legs.json; build_site publishes it
 # as /b/live-legs.json and the feeds workflow pins the first in-game copy of each week on the `feeds` branch, so live_grade.py can replay every
 # snapshot against the pregame numbers the page actually showed.
@@ -271,6 +287,8 @@ table.lvt td.pr i.fair{display:block;font-style:normal;font-size:10.5px;color:va
 .wkshare h5{margin:14px 0 4px;font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9aa4b2} .wkshare p{margin:3px 0;font-size:14px} .wkshare p.ok{color:#5fd18b} .wkshare p i{font-style:normal;color:#f3efe6} .wkshare p em{font-style:normal;color:#9aa4b2;margin-left:4px}
 .wkshare .wf{margin-top:16px;font-size:11px;color:#9aa4b2;letter-spacing:.04em}
 ul.chg{list-style:none;margin:0;padding:0} ul.chg li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;padding:9px 14px;border-top:1px solid var(--line);font-size:13px;line-height:1.35} ul.chg li.mine{background:color-mix(in srgb,var(--red) 10%,transparent)} ul.chg li small{color:var(--mute);font-size:11px} ul.chg li a{color:inherit} ul.chg li.none{display:block;color:var(--mute)} .chgn{display:inline-block;min-width:20px;padding:1px 6px;margin-right:6px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;text-align:center}
+.vd{display:inline-block;margin:0 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:1px;white-space:nowrap}
+.vd.bb{background:color-mix(in srgb,#c98a12 25%,transparent);color:#f0c45a} .vd.br{background:color-mix(in srgb,#d7332a 25%,transparent);color:#ff7b72} .vd.cl{background:color-mix(in srgb,#8a94a6 25%,transparent);color:#c7cedb} .vd.ea{background:color-mix(in srgb,#2fae6a 25%,transparent);color:#5fd18b} .vd.lk{background:color-mix(in srgb,#6a7cff 25%,transparent);color:#a8b3ff}
 .wxr.high{background:var(--bad)} .wxr.moderate{background:#c98a12}
 .gdet{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--chalk) 60%,var(--card))}
 .gdet span{white-space:nowrap} .gdet b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
@@ -289,6 +307,28 @@ JS = r"""
   function am(o){ return o > 0 ? '+' + o : '' + o; }
   function fairAm(p){ var o = p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); o = Math.abs(o) >= 1000 ? Math.round(o / 50) * 50 : Math.abs(o) >= 200 ? Math.round(o / 5) * 5 : o; return o > 0 ? '+' + o : '' + o; }
   function pc(p){ return Math.round(p*100) + '%'; }
+  // owner 11/6 "bad beat or bad bet?": a settled leg's volume vs the player's usual (D.vol: targets, carries, pass attempts per game)
+  function verdictOf(l, r){
+    if(!r || (r.status !== 'hit' && r.status !== 'dead')) return null;
+    var gs = STATE[l.g]; if(!gs || gs.st !== 'post') return null;   // only once the game is final - volume so far is not the whole game
+    var v = (D.vol || {})[l.pl], b = BOX[norm(l.pl)]; if(!v || !b) return null;
+    var m = String(l.m || '').replace(/^Under /, ''), under = /^Under /.test(l.m || ''), exp, act, what;
+    if(/Rushing|Rush Att/.test(m)){ exp = v[1]; act = b.ratt || 0; what = 'carries'; }
+    else if(/Passing|Completions|Interceptions/.test(m)){ exp = v[2]; act = b.patt || 0; what = 'pass attempts'; }
+    else if(/Rec|Longest/.test(m)){ exp = v[0]; act = b.tgt || 0; what = 'targets'; }
+    else if(/TD/.test(m)){ exp = v[0] + v[1]; act = (b.tgt || 0) + (b.ratt || 0); what = 'touches + targets'; }
+    else return null;
+    if(!(exp > 0.5)) return null;
+    var ratio = act / exp, got = act + ' ' + what + ' vs ~' + (Math.round(exp * 10) / 10) + ' usual', won = r.status === 'hit';
+    var vol = under ? (ratio <= 0.75 ? 'low' : ratio >= 1.1 ? 'high' : 'ok') : (ratio >= 0.9 ? 'high' : ratio <= 0.6 ? 'low' : 'ok');
+    if(!under){
+      if(!won) return vol === 'high' ? {k: 'bb', t: 'Bad beat', w: 'Got the work (' + got + ') - it just did not convert'} : vol === 'low' ? {k: 'br', t: 'Bad read', w: 'Role shrank (' + got + ')'} : {k: 'cl', t: 'Close', w: 'A bit under his usual work (' + got + ')'};
+      return vol === 'low' ? {k: 'lk', t: 'Lucky', w: 'Hit on light work (' + got + ')'} : {k: 'ea', t: 'Earned', w: 'Got the work (' + got + ')'};
+    }
+    if(!won) return vol === 'high' ? {k: 'br', t: 'Bad read', w: 'Role grew (' + got + ')'} : {k: 'bb', t: 'Bad beat', w: 'Normal-or-less work (' + got + ') and still went over'};
+    return vol === 'high' ? {k: 'lk', t: 'Lucky', w: 'More work than usual (' + got + ') and still stayed under'} : {k: 'ea', t: 'Earned', w: (vol === 'low' ? 'Light work, as the under needed (' : 'Usual work and stayed under (') + got + ')'};
+  }
+  function verdictChip(l, r){ var x = verdictOf(l, r); return x ? '<span class="vd ' + x.k + '" title="' + esc(x.w) + '">' + x.t + '</span>' : ''; }
   // owner 11/5: a shareable My week card (image) - record, units, best hits, the open legs still alive
   function shareWeek(btn){
     var rows = window.__BSLOG || []; if(!rows.length) return;
@@ -390,12 +430,12 @@ JS = r"""
           var keys = cat.keys || cat.labels || [];
           (cat.athletes || []).forEach(function(a){
             var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
-            var row = box[n] = box[n] || {pass:0, rush:0, rec:0, recy:0, long:0, td:0, ptd:0, int:0, cmp:0, ratt:0, name: a.athlete.displayName};
+            var row = box[n] = box[n] || {pass:0, rush:0, rec:0, recy:0, long:0, td:0, ptd:0, int:0, cmp:0, ratt:0, tgt:0, patt:0, name: a.athlete.displayName};
             var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
             var num = function(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; };
-            if(cat.name === 'passing'){ row.pass = num(S.passingYards != null ? S.passingYards : S.YDS); row.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); row.int = num(S.interceptions != null ? S.interceptions : S.INT); row.cmp = num(String(S['completions/passingAttempts'] != null ? S['completions/passingAttempts'] : (S['C/ATT'] || '0')).split('/')[0]); }
+            if(cat.name === 'passing'){ row.pass = num(S.passingYards != null ? S.passingYards : S.YDS); row.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); row.int = num(S.interceptions != null ? S.interceptions : S.INT); row.cmp = num(String(S['completions/passingAttempts'] != null ? S['completions/passingAttempts'] : (S['C/ATT'] || '0')).split('/')[0]); row.patt = num(String(S['completions/passingAttempts'] != null ? S['completions/passingAttempts'] : (S['C/ATT'] || '0/0')).split('/')[1]); }
             if(cat.name === 'rushing'){ row.ratt = num(S.rushingAttempts != null ? S.rushingAttempts : S.CAR); row.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); row.td += num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
-            if(cat.name === 'receiving'){ row.rec = num(S.receptions != null ? S.receptions : S.REC); row.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); row.long = Math.max(row.long, num(S.longReception != null ? S.longReception : S.LONG)); row.td += num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
+            if(cat.name === 'receiving'){ row.tgt = num(S.receivingTargets != null ? S.receivingTargets : S.TGTS); row.rec = num(S.receptions != null ? S.receptions : S.REC); row.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); row.long = Math.max(row.long, num(S.longReception != null ? S.longReception : S.LONG)); row.td += num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
           });
         });
       });
@@ -413,7 +453,7 @@ JS = r"""
   function statFor(l, b){ return l.m === 'Passing TDs' ? (b.ptd || 0) : l.m === 'Interceptions' ? (b.int || 0) : l.m === 'Completions' ? (b.cmp || 0) : l.m === 'Rush Attempts' ? (b.ratt || 0) : l.m === 'Passing Yards' ? b.pass : l.m === 'Rushing Yards' ? b.rush : l.m === 'Receiving Yards' ? b.recy : l.m === 'Receptions' ? b.rec : l.m === 'Longest Reception' ? b.long : (l.m === 'Anytime TD' || l.m === 'First TD' || l.m === '2+ TD' || l.m === '3+ TD') ? b.td : null; }
   // live chance for one leg; returns {p, status: 'open'|'hit'|'dead'|'pre', now: text}
   function live(l, g, s){
-    if(l.u){ var o2 = Object.assign({}, l, {m: l.m.replace(/^Under /, ''), u: 0, p: 1 - l.p, ln: Math.floor(l.ln) + 1}); var r2 = live(o2, g, s);   // under = the other side of the (X+1)+ over
+    if(l.u || /^Under /.test(l.m || '')){ var o2 = Object.assign({}, l, {m: l.m.replace(/^Under /, ''), u: 0, p: 1 - l.p, ln: Math.floor(l.ln) + 1}); var r2 = live(o2, g, s);   // under = the other side of the (X+1)+ over
       return {p: 1 - r2.p, status: r2.status === 'hit' ? 'dead' : r2.status === 'dead' ? 'hit' : r2.status, now: r2.now}; }
     var f = remainingFrac(s);
     if(!s || s.st === 'pre') return {p: l.p, status: 'pre', now: ''};
@@ -454,7 +494,7 @@ JS = r"""
     var onp = cur / el; var rel = onp / l.ln;
     return rel >= 1.15 ? '<span class="pace up">ahead of pace</span>' : rel >= 0.9 ? '' : '<span class="pace dn">behind</span>';
   }
-  function legText(l){ if(l.gl) return l.pl; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : l.m === 'Anytime TD' ? 'anytime TD' : (l.m === '2+ TD' || l.m === '3+ TD') ? l.m : l.ms.toLowerCase() + ' ' + (l.u ? 'under ' + l.ln : Math.round(l.ln) + '+')); }
+  function legText(l){ if(l.gl) return l.pl; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : l.m === 'Anytime TD' ? 'anytime TD' : (l.m === '2+ TD' || l.m === '3+ TD') ? l.m : l.ms.toLowerCase() + ' ' + ((l.u || /^Under /.test(l.m || '')) ? 'under ' + l.ln : Math.round(l.ln) + '+')); }
   function liked(l){ return l.bp || (l.e >= 0.05 && !l.w) || (l.m === 'Anytime TD' && l.e >= 0.03 && !l.w); }
   function pickScore(l){ var k = legKey(l); return (INSLIP[k] ? 400 : 0) + (STARS[k] ? 300 : 0) + (l.bp ? 200 : 0) + (l.e || 0) * 100; }
   // ---- DOM diff: replace only the cards whose HTML changed, keep the rest (and the scroll position) in place ----
@@ -508,7 +548,7 @@ JS = r"""
       var mr = mine.map(function(l){ var g = games[l.g], s = STATE[l.g] || {st:'pre'}; return {l: l, r: live(l, g, s), s: s}; });
       var w = mr.filter(function(x){ return x.r.status === 'hit'; }).length, lz = mr.filter(function(x){ return x.r.status === 'dead'; }).length, op = mr.length - w - lz;
       var units = mr.reduce(function(a, x){ return a + (x.r.status === 'hit' ? (x.l.o > 0 ? x.l.o / 100 : 100 / -x.l.o) : x.r.status === 'dead' ? -1 : 0); }, 0);
-      var lrow = function(x){ var l = x.l, r = x.r; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st">' + (r.status === 'hit' ? '✓' : r.status === 'dead' ? '✗' : '·') + '</td><td class="who"><b>' + esc(legText(l)) + '</b><small>' + esc(matchup(l.g)) + ' · FD ' + am(l.o) + ' · model ' + pc(l.p) + (INSLIP[legKey(l)] ? ' · ' + INSLIP[legKey(l)].map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join(', ') : '') + '</small></td><td class="now"><b>' + esc(r.now || (x.s.st === 'pre' ? 'not started' : '')) + '</b></td><td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + (r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : pc(r.p)) + '</b></td></tr>'; };
+      var lrow = function(x){ var l = x.l, r = x.r; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st">' + (r.status === 'hit' ? '✓' : r.status === 'dead' ? '✗' : '·') + '</td><td class="who"><b>' + esc(legText(l)) + '</b> ' + verdictChip(l, r) + '<small>' + esc(matchup(l.g)) + ' · FD ' + am(l.o) + ' · model ' + pc(l.p) + (INSLIP[legKey(l)] ? ' · ' + INSLIP[legKey(l)].map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join(', ') : '') + '</small></td><td class="now"><b>' + esc(r.now || (x.s.st === 'pre' ? 'not started' : '')) + '</b></td><td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + (r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : pc(r.p)) + '</b></td></tr>'; };
       // owner 11/5: separate folders for live, not started, won and lost legs; My week itself starts folded
       var srt = function(a, b){ return (a.l.g > b.l.g ? 1 : a.l.g < b.l.g ? -1 : 0) || (b.r.p - a.r.p); };
       var FOLD = [['live', 'Live', function(x){ return x.r.status !== 'hit' && x.r.status !== 'dead' && x.s.st === 'in'; }, true],
@@ -575,7 +615,7 @@ JS = r"""
         '<span class="tog">' + (s.st === 'in' ? open.length + ' open · ' + hit.length + ' hit' : s.st === 'pre' ? open.length + ' on the watch list' : hit.length + ' hit · ' + dead.length + ' gone') + '<i class="car">' + (isOpen ? '▴' : '▾') + '</i></span></button>';
       var sit = s.st === 'in' ? '<div class="sit">' + (s.poss ? '<b>' + esc(s.poss) + ' ball</b>' + (s.dd ? ', ' + esc(s.dd) : '') + ' · ' : '') + Math.round(f*100) + '% of regulation left' + (s.last ? ' · last: ' + esc(s.last) : '') + (BOX && Object.keys(BOX).length ? '' : ' · box score loading…') + '</div>' : '';
       var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[k] ? ' starred' : '');
-        var chips = (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : '') + (INSLIP[k] ? '<span class="chip slip">' + (INSLIP[k].length > 1 ? INSLIP[k].length + ' slips' : esc((slipById(INSLIP[k][0]) || {name: 'slip'}).name)) + '</span>' : '') + (l.bp ? '<span class="chip bp">Best parlay</span>' : '') + (r.rz ? '<span class="chip rz">Red zone</span>' : '') + (l.w ? '<span class="chip warn" title="' + esc(l.w) + '">⚠</span>' : '') + pace(l, r, s);
+        var chips = verdictChip(l, r) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : '') + (INSLIP[k] ? '<span class="chip slip">' + (INSLIP[k].length > 1 ? INSLIP[k].length + ' slips' : esc((slipById(INSLIP[k][0]) || {name: 'slip'}).name)) + '</span>' : '') + (l.bp ? '<span class="chip bp">Best parlay</span>' : '') + (r.rz ? '<span class="chip rz">Red zone</span>' : '') + (l.w ? '<span class="chip warn" title="' + esc(l.w) + '">⚠</span>' : '') + pace(l, r, s);
         var prog = (!l.gl && r.status === 'open' && /\//.test(r.now)) ? '<div class="bar' + (r.p >= 0.5 ? ' ok' : '') + '"><i style="width:' + Math.min(100, Math.round(100*(+r.now.split(' / ')[0].replace(/[^\d.]/g,'') || 0)/l.ln)) + '%"></i></div>' : '';
         return '<tr class="' + cls + '" data-k="' + esc(k) + '"><td class="st"><button type="button" class="star" data-k="' + esc(k) + '" title="' + (STARS[k] ? 'Unpin' : 'Pin to the top') + '">' + (STARS[k] ? '★' : '☆') + '</button><button type="button" class="add' + (INSLIP[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="Add to a slip">+</button></td><td class="who"><b>' + esc(legText(l)) + chips + '</b><small>' + esc(l.tm) + ' · ' + (l.src === 'cons' ? 'mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + '</small></td>' +
           '<td class="now"><b>' + esc(r.now || (s.st === 'pre' ? '' : '—')) + '</b>' + prog + '</td>' +
