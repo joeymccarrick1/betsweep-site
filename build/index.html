@@ -353,6 +353,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .askb .askadd{padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:700;margin-right:8px} .askl{margin:6px 0 0;padding-left:18px} .askl li{margin:4px 0} .askl small{color:var(--mute)}
 .trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
 .zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
+.zn.b{background:color-mix(in srgb,#d7a22a 22%,transparent);color:#f0c45a}
 </style>
 
 <link rel="stylesheet" href="/s/site-7ac6fac2b2.css"></head>
@@ -463,7 +464,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-d21ed81f7aaa.js"></script>
+<script src="/build/data-973a1bb9d569.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -850,7 +851,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     }).join('') + '</div>';
   }
   function zoneTag(l){ if(!l.z || l.z[0] === 'n') return ''; var g = l.z[0] === 'g'; return '<span class="zn ' + (g ? 'g' : 'r') + '" title="' + (g ? 'Proven zone' : 'Losing zone') + ': model edges in this market at this price have returned ' + (l.z[1] >= 0 ? '+' : '') + Math.round(l.z[1] * 100) + '% (shrunk) over ' + l.z[2] + ' graded legs">' + (g ? '✓ proven zone' : '✗ losing zone') + '</span>'; }
-  function trk(l){ return zoneTag(l) + trk0(l); }
+  function trk(l){ return (l.br ? '<span class="zn b" title="Best rung on this ladder: the highest expected return per unit at the model\'s shown chance">★ best rung +' + Math.round(l.br * 100) + '% EV</span>' : '') + zoneTag(l) + trk0(l); }
   function trk0(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
     return r && r[1] >= 40 ? '<span class="trk" title="Graded Weeks 6+: legs in this market the site showed at ' + Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + '-' + (Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + 10) + '% hit ' + Math.round(r[0] / r[1] * 100) + '% (' + r[1] + ' legs)">hit ' + Math.round(r[0] / r[1] * 100) + '% of ' + r[1] + '</span>' : ''; }
   function flagMark(l){
