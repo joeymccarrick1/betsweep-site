@@ -46,7 +46,7 @@ extra = [_slim(l) for l in D["legs"] if l["i"] not in keep_ids]
 for _x in extra:   # 11/5 speed: extra legs are only tracked on slips / matched on import - no long notes, projections or sources
     for _k in ("proj", "c", "src"): _x.pop(_k, None)   # keep "ms" - the leg label uses it
     if _x.get("w"): _x["w"] = str(_x["w"])[:70]   # everything else, so a slip leg of any kind can be tracked
-games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort")} for g in D["games"]]
+games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort", "fa", "fb") if k in g} for g in D["games"]]
 # owner 11/1: FanDuel stops pricing a leg at kickoff, so a rebuild during the games drops it from the builder data and a saved slip (or a promo)
 # with that leg could no longer be tracked here. Add the latest pre-kickoff frozen copy of every leg this week ('V2 - FanDuel Leg Snapshots',
 # in/legsnaps.json) that the builder no longer carries, so every slip leg keeps its live line, status and model chance.
@@ -85,7 +85,7 @@ CSS = r"""
 .lvbar .upd{font-variant-numeric:tabular-nums}
 .lg2{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
 .lg2.live{border-color:var(--red)} .lg2.pre{opacity:.85}
-.lg2 .ghd2{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"a m b" "s s s";align-items:center;gap:6px 10px;padding:12px 14px;background:var(--chalk);border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.lg2 .ghd2{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"a m b" "p p p" "s s s";align-items:center;gap:6px 10px;padding:12px 14px;background:var(--chalk);border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .lg2 .ghd2 > .t:first-child{grid-area:a} .lg2 .ghd2 > .mid{grid-area:m} .lg2 .ghd2 > .t.r{grid-area:b}
 .lg2 .ghd2 .tog{grid-area:s;display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding-top:6px;border-top:1px dashed var(--line);font-size:12px;color:var(--mute)}
 .lg2 .ghd2 .tog .car{font-style:normal;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:3px 10px}
@@ -199,7 +199,11 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .tfbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .tfb{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font:inherit;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;text-align:left}
 .tfb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .tfb.on{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--chalk))}
-.lg2 .ghd2 .mid small.mdl{display:block;margin-top:2px;font-size:11px;color:var(--mute);white-space:normal;line-height:1.3}
+.lg2 .ghd2 > .mdl{grid-area:p;font-family:var(--body);display:grid;gap:3px;margin-top:2px;font-size:11.5px;color:var(--mute);line-height:1.3;text-align:left;justify-items:center}
+.lg2 .ghd2 .mdl .pj{display:flex;gap:6px;align-items:baseline;white-space:nowrap;flex-wrap:wrap;justify-content:center}
+.lg2 .ghd2 .mdl .pj b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);min-width:58px;text-align:right}
+.lg2 .ghd2 .mdl .pj em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--ink)} .lg2 .ghd2 .mdl .pj i{font-style:normal}
+.lg2 .ghd2 .mdl .pj.lk em{color:var(--mute)}
 /* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
@@ -427,7 +431,7 @@ JS = r"""
       var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = STARS[legKey(a.l)] ? 1 : 0, sb_ = STARS[legKey(b.l)] ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
       var hit = rows.filter(function(x){ return x.r.status === 'hit'; }), dead = rows.filter(function(x){ return x.r.status === 'dead'; });
       var isOpen = (gid in OPEN) ? OPEN[gid] : (s.st === 'in' && rows.length > 0);
-      var head = '<button type="button" class="ghd2" data-g="' + gid + '" aria-expanded="' + isOpen + '"><span class="t">' + badge(g.a, g.ca) + g.a + '<small>' + esc(g.na) + '</small></span><span class="mid"><b>' + (s.st === 'pre' ? g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) : (s.sa != null ? s.sa : '–') + '<i>–</i>' + (s.sb != null ? s.sb : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick)) + '</small><small class="mdl">' + modelLine(g, s.st) + '</small></span><span class="t r"><small>' + esc(g.nb) + '</small>' + g.b + badge(g.b, g.cb) + '</span>' +
+      var head = '<button type="button" class="ghd2" data-g="' + gid + '" aria-expanded="' + isOpen + '"><span class="t">' + badge(g.a, g.ca) + g.a + '<small>' + esc(g.na) + '</small></span><span class="mid"><b>' + (s.st === 'pre' ? '<i>vs</i>' : (s.sa != null ? s.sa : '–') + '<i>–</i>' + (s.sb != null ? s.sb : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick)) + '</small></span><span class="t r"><small>' + esc(g.nb) + '</small>' + g.b + badge(g.b, g.cb) + '</span><span class="mdl">' + modelLine(g, s.st) + '</span>' +
         '<span class="tog">' + (s.st === 'in' ? open.length + ' open · ' + hit.length + ' hit' : s.st === 'pre' ? open.length + ' on the watch list' : hit.length + ' hit · ' + dead.length + ' gone') + '<i class="car">' + (isOpen ? '▴' : '▾') + '</i></span></button>';
       var sit = s.st === 'in' ? '<div class="sit">' + (s.poss ? '<b>' + esc(s.poss) + ' ball</b>' + (s.dd ? ', ' + esc(s.dd) : '') + ' · ' : '') + Math.round(f*100) + '% of regulation left' + (s.last ? ' · last: ' + esc(s.last) : '') + (BOX && Object.keys(BOX).length ? '' : ' · box score loading…') + '</div>' : '';
       var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[k] ? ' starred' : '');
@@ -548,14 +552,28 @@ JS = r"""
   }
   // owner 11/5: "show both scores ... it's confusing when we say model CIN by 10+ but the projection says CIN by 3" - the model's projected score
   // and its pick always show as the projection; the most likely script is labelled as what it is (the single likeliest of four game shapes, with its chance)
+  // owner 11/5: "I want FanDuel's score ... but also the actual score that the model is projecting" - both projected scores on every game:
+  // FanDuel's is implied by its main spread and total (favorite = (total + spread) / 2), the model's is its projection
+  var FDL = {};
+  function fdLine(g){
+    if(g.gid in FDL) return FDL[g.gid]; var sp = null, tot = null;
+    legs.forEach(function(l){ if(l.g !== g.gid || !l.gl || l.alt) return; if(l.m === 'Spread' && l.tm === g.b) sp = +l.ln; if(l.m === 'Total' && tot == null) tot = +l.ln; });
+    if(sp == null) legs.forEach(function(l){ if(l.g === g.gid && l.gl && !l.alt && l.m === 'Spread' && l.tm === g.a) sp = -l.ln; });
+    var r = (sp == null || tot == null) ? null : {pb: (tot - sp) / 2, pa: (tot + sp) / 2, sp: sp, tot: tot};   // sp = g.b's line (negative = g.b favored)
+    FDL[g.gid] = r; return r;
+  }
   function modelLine(g, st){
-    var m = (g.pb || 0) - (g.pa || 0), fav = m > 0 ? g.b : g.a, am_ = Math.abs(m);
+    var ma = g.fa != null ? g.fa : g.pa, mb = g.fb != null ? g.fb : g.pb;
+    var m = (mb || 0) - (ma || 0), fav = m > 0 ? g.b : g.a, am_ = Math.abs(m);
     var pick = am_ < 1 ? "pick'em" : fav + ' by ' + (Math.round(am_ * 2) / 2);
     var pr = g.probs; try { if(typeof pr === 'string') pr = JSON.parse(pr); } catch(e){ pr = null; }
     var pct = Array.isArray(pr) && pr.length === 4 ? Math.round(Math.max.apply(null, pr)) : null;
-    var proj = g.a + ' ' + (+g.pa).toFixed(1) + '–' + (+g.pb).toFixed(1) + ' ' + g.b;
-    if(st === 'in' || st === 'post') return 'Model had ' + esc(proj) + ' (' + esc(pick) + ')';
-    return 'Model ' + esc(pick) + (g.most ? ' · likeliest script: ' + esc(g.most) + (pct != null ? ' (' + pct + '%)' : '') : '');
+    var f = fdLine(g), one = function(x){ return (Math.round(x * 2) / 2).toFixed(1); };
+    var row = function(lab, a, b, tail){ return '<span class="pj"><b>' + lab + '</b><em>' + esc(g.a) + ' ' + one(a) + ' – ' + one(b) + ' ' + esc(g.b) + '</em>' + (tail ? '<i>' + tail + '</i>' : '') + '</span>'; };
+    var fdTail = f ? esc((f.sp < 0 ? g.b + ' ' + f.sp : g.a + ' ' + (-f.sp)) + ' · o/u ' + f.tot) : '';
+    var out = row('Model', ma, mb, esc(pick + ' · o/u ' + one(ma + mb))) + (f ? row('FanDuel', f.pa, f.pb, fdTail) : '');
+    if(st !== 'in' && st !== 'post' && g.most) out += '<span class="pj lk"><b>Likeliest</b><em>' + esc(g.most) + (pct != null ? ' (' + pct + '%)' : '') + '</em><i>by FanDuel line</i></span>';
+    return out;
   }
   function drawDrill(){
     if(!DRILL) return; var gid = DRILL.gid, js = SUMM[gid], g = games[gid], s = STATE[gid] || {}; var box = $('#lvdrill');
