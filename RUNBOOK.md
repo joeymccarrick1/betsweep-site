@@ -335,3 +335,9 @@ Rules for new pages: use the tokens (never a new colour), the control classes ab
 ## Defense vs role (owner 11/5)
 - defrole.py: per defense, the opposing QB1 / RB1 / WR1 / WR2 / TE1 (roles from per-game attempts / carries / targets before that week) - beat his own season average? (stats_player_week_2026.csv, every game) and cleared FanDuel's main line? (legsnaps main rung closest to -110). research/def_role.py is the leave-one-week-out test (Weeks 6-8): adding the defense's shrunk rate (K=4) to the model's % helped Weeks 6-7 slightly and hurt Week 8; vs FanDuel's price ~nothing. So: B = 0.25 logit per unit of rate gap (0-2 pts on a leg).
 - Used in: build_builder.py (leg p / e + an info flag "vs WR1s: x/n" + l["dv"]), build_boards.py (shown %, so best parlays and edges see it, + good/watch flag), build_teams.py ("Against each role" section). Re-run research/def_role.py on Tuesdays as weeks are graded; if adding it keeps losing log loss two weeks running, set defrole.B = 0.
+
+## Live page additions (owner 11/5 "do all of these")
+- Fair live price: every open leg in a live game shows "fair <American odds>" from the live chance (no live FanDuel feed exists for props; ESPN's pickcenter is DraftKings game lines only and not confirmed live) - the user compares it with FanDuel's live price.
+- My season: the Live page saves each week's settled My week legs as localStorage bs_log_w<W> (account.py SYNC includes it, so it syncs per account) and totals them by week / market / price band at 1u each.
+- Share my week: html2canvas image card (record, units, cashed legs, still-alive legs) -> native share sheet, download fallback.
+- Inactive alerts (push/slip-alerts.ts): swap suggestion prefers a teammate in the same stat, then a teammate, then the game; the push opens /build/?drop=<player>&add=<key>#slip (builder handles ?drop=). OWNER must redeploy the slip-alerts Edge Function for this.
