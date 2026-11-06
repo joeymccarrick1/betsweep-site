@@ -756,7 +756,7 @@ JS = r"""
     var fdTail = f ? esc((f.sp < 0 ? g.b + ' ' + f.sp : g.a + ' ' + (-f.sp)) + ' · o/u ' + f.tot) : '';
     var out = row('Model', ma, mb, esc(pick + ' · o/u ' + one(ma + mb))) + (f ? row('FanDuel', f.pa, f.pb, fdTail) : '');
     var injs = [[g.a, g.ia], [g.b, g.ib]].filter(function(x){ return x[1] && Math.abs(x[1].pts) >= 0.5; });   // 11/5: injury-adjusted model score (every adjustment is in the score; only 0.5+ pt ones get a note)
-    if(injs.length) out += '<span class="gi inj"><b>Model adjusted for injuries</b>' + injs.map(function(x){ return '<span>' + esc(x[0] + ' ' + x[1].pts.toFixed(1) + ' pts (' + x[1].why.join('; ') + ')') + '</span>'; }).join('') + '</span>';
+    // owner 11/5: the score is injury-adjusted silently - no note
     if(st !== 'in' && st !== 'post' && g.most) out += '<span class="pj lk"><b>Likeliest</b><em>' + esc(g.most) + (pct != null ? ' (' + pct + '%)' : '') + '</em><i>by FanDuel line</i></span>';
     return out + infoLine(g);
   }
