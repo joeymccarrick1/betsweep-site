@@ -47,6 +47,45 @@ for _x in extra:   # 11/5 speed: extra legs are only tracked on slips / matched 
     for _k in ("proj", "c", "src"): _x.pop(_k, None)   # keep "ms" - the leg label uses it
     if _x.get("w"): _x["w"] = str(_x["w"])[:70]   # everything else, so a slip leg of any kind can be tracked
 games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort", "fa", "fb") if k in g} for g in D["games"]]
+# owner 11/5: "show me home teams on the left and away teams on the right" + "put weather, stadium, all that info on live page".
+# The builder orders a game by the scripts tab (not home/away), so flip the display fields here; live scores match by team abbreviation
+# and the gamecast reads ESPN's homeAway, so nothing downstream depends on which side a team is on. gid is left alone (legs point at it).
+def _rows(n):
+    try: j = json.load(open(os.path.join(IN, n)))
+    except Exception: return []
+    if isinstance(j, dict) and "rows" in j: return [j.get("header", [])] + j["rows"]
+    return j.get("values", []) if isinstance(j, dict) else []
+SCHED = {}
+try:
+    import csv as _csv
+    for _r in _csv.DictReader(open(os.path.join(IN, "games.csv"))):
+        if _r.get("season") == "2026" and str(_r.get("week")) == str(WEEK): SCHED[frozenset([_r["home_team"], _r["away_team"]])] = _r
+except Exception: pass
+WX = {}
+for _r in _rows("weather.json")[1:]:
+    if len(_r) >= 15 and str(_r[0]) == str(WEEK): WX[frozenset([_r[2], _r[3]])] = _r
+_PAIRS = (("a", "b"), ("pa", "pb"), ("fa", "fb"), ("na", "nb"), ("ca", "cb"))
+def _ni(x):
+    try: return int(float(x))
+    except Exception: return None
+for g in games:
+    k = frozenset([g["a"], g["b"]]); s_ = SCHED.get(k); w_ = WX.get(k)
+    home = s_["home_team"] if s_ else None
+    if not home and w_:
+        m_ = re.search(r"\((\w+) home\)", w_[4] or ""); home = m_.group(1) if m_ else None
+    if home and home == g["b"]:
+        for x, y in _PAIRS:
+            if x in g or y in g: g[x], g[y] = g.get(y), g.get(x)
+        if isinstance(g.get("probs"), list) and len(g["probs"]) == 4: g["probs"] = [g["probs"][3], g["probs"][1], g["probs"][2], g["probs"][0]]   # [A by 10+, close-low, shootout, B by 10+]
+    info = {"home": home}
+    if s_:
+        info.update({"st": s_.get("stadium") or "", "neu": s_.get("location") == "Neutral", "roof": s_.get("roof") or "", "surf": s_.get("surface") or "",
+                     "div": s_.get("div_game") == "1", "ref": s_.get("referee") or "",
+                     "rest": [_ni(s_.get("home_rest")), _ni(s_.get("away_rest"))], "coach": [s_.get("home_coach") or "", s_.get("away_coach") or ""]})
+    if w_:
+        info["wx"] = {"roof": w_[5], "t": w_[8], "w": w_[9], "gu": w_[10], "pt": w_[11], "pc": w_[12], "risk": w_[14], "upd": w_[7]}
+        if not info.get("st"): info["st"] = re.sub(r"\s*\(.*$", "", w_[4] or "")
+    g["info"] = info
 # owner 11/1: FanDuel stops pricing a leg at kickoff, so a rebuild during the games drops it from the builder data and a saved slip (or a promo)
 # with that leg could no longer be tracked here. Add the latest pre-kickoff frozen copy of every leg this week ('V2 - FanDuel Leg Snapshots',
 # in/legsnaps.json) that the builder no longer carries, so every slip leg keeps its live line, status and model chance.
@@ -204,6 +243,12 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .lg2 .ghd2 .mdl .pj b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);min-width:58px;text-align:right}
 .lg2 .ghd2 .mdl .pj em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--ink)} .lg2 .ghd2 .mdl .pj i{font-style:normal}
 .lg2 .ghd2 .mdl .pj.lk em{color:var(--mute)}
+.lg2 .ghd2 .mdl .gi{display:block;text-align:center;margin-top:3px;font-size:11.5px;color:var(--mute);white-space:normal;line-height:1.35}
+.wxr{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-family:var(--display);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#fff;vertical-align:1px}
+.wxr.high{background:var(--bad)} .wxr.moderate{background:#c98a12}
+.gdet{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--chalk) 60%,var(--card))}
+.gdet span{white-space:nowrap} .gdet b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
+@media (max-width:560px){ .gdet{padding:9px 10px;gap:5px 12px;font-size:11.5px} .gdet span{white-space:normal} }
 /* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
@@ -457,7 +502,7 @@ JS = r"""
       var teamBar = rows.length || OTHER.length || TFv ? '<div class="tfbar">' + tbtn(g.b, g.nb, g.cb) + tbtn(g.a, g.na, g.ca) + '</div>' : '';
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
       if(s.st === 'in' && SUMM[gid]) sit = gamecast(gid);
-      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? sit + drill + teamBar + body : '') + '</section>';
+      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? details(g, s) + sit + drill + teamBar + body : '') + '</section>';
       if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length]); else if(s.st === 'pre' && liveG.length) UP.push([gid, sec, g]); else parts.push([gid, sec]);
     });
     if(UP.length){   // owner 11/5: "more collapsible" - while a game is live, the rest of the week folds into one group
@@ -562,6 +607,41 @@ JS = r"""
     var r = (sp == null || tot == null) ? null : {pb: (tot - sp) / 2, pa: (tot + sp) / 2, sp: sp, tot: tot};   // sp = g.b's line (negative = g.b favored)
     FDL[g.gid] = r; return r;
   }
+  // owner 11/5: stadium, weather and game details. Weather starts from the build's snapshot and refreshes from the feeds mirror
+  // (raw.githubusercontent, public repo; the feeds job re-pulls Open-Meteo every few minutes in game windows).
+  var WXL = {}, WXURL = 'https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/weather.json';
+  function pairK(a, b){ return [a, b].sort().join('|'); }
+  function wxOf(g){ return WXL[pairK(g.a, g.b)] || (g.info && g.info.wx) || null; }
+  function wxText(w){ if(!w) return ''; var r = String(w.risk || '');
+    if(/dome|closed/i.test(w.roof || '') || /^NONE/.test(r)) return 'Indoors';
+    if(/^UNKNOWN/.test(r)) return 'No forecast';
+    var t = []; if(w.t !== '' && w.t != null) t.push(w.t + '°F');
+    if(w.w !== '' && w.w != null) t.push('wind ' + w.w + ((+w.gu > +w.w + 4) ? ', gusts ' + w.gu : '') + ' mph');
+    if(w.pt && w.pt !== 'none' && !/dome/.test(w.pt)) t.push((w.pc !== '' ? w.pc + '% ' : '') + w.pt); else if(+w.pc >= 20) t.push(w.pc + '% chance of rain'); else t.push('dry');
+    return t.join(' · ') + (/roof can close/.test(r) ? ' · roof can close' : ''); }
+  function riskTag(w){ var r = String(w && w.risk || '').split(' ')[0]; return r === 'HIGH' ? '<b class="wxr high">Weather risk</b>' : r === 'MODERATE' ? '<b class="wxr moderate">Weather watch</b>' : ''; }
+  function infoLine(g){ var i = g.info || {}, w = wxOf(g), bits = [];
+    if(i.st) bits.push(esc(i.st) + (i.neu ? ' (neutral site)' : ''));
+    var wt = wxText(w); if(wt) bits.push(esc(wt));
+    return bits.length ? '<span class="gi">' + bits.join(' · ') + riskTag(w) + '</span>' : ''; }
+  var SURF = {grass: 'Grass', fieldturf: 'FieldTurf', sportturf: 'SportTurf', matrixturf: 'Matrix Turf', a_turf: 'A-Turf', astroturf: 'AstroTurf'};
+  var ROOF = {outdoors: 'Open air', dome: 'Dome', closed: 'Roof closed', open: 'Roof open', retractable: 'Retractable roof'};
+  function details(g, s){ var i = g.info || {}, d = [], w = wxOf(g), home = g.a, away = g.b;
+    var roof = (w && w.roof) || i.roof; var fld = [ROOF[roof] || roof || '', SURF[i.surf] || i.surf || ''].filter(Boolean).join(' · ');
+    d.push(['Home', esc(g.na || home)]);
+    if(fld) d.push(['Field', esc(fld)]);
+    if(s.tv) d.push(['TV', esc(s.tv)]);
+    if(i.rest && i.rest[0] != null) d.push(['Rest', esc(home + ' ' + i.rest[0] + ' days · ' + away + ' ' + i.rest[1] + ' days')]);
+    if(i.coach && i.coach[0]) d.push(['Coaches', esc(home + ' ' + i.coach[0] + ' · ' + away + ' ' + i.coach[1])]);
+    if(i.div) d.push(['Division', 'Divisional game']);
+    if(i.ref) d.push(['Referee', esc(i.ref)]);
+    if(w && w.upd && wxText(w) && !/Indoors|No forecast/.test(wxText(w))) d.push(['Forecast', 'kickoff hour, updated ' + esc(String(w.upd).replace(/^\d{4}-\d\d-\d\d /, ''))]);
+    return '<div class="gdet">' + d.map(function(x){ return '<span><b>' + x[0] + '</b>' + x[1] + '</span>'; }).join('') + '</div>'; }
+  function pullWx(){ try { fetch(WXURL, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      if(!j || !j.rows || String(j.week) !== String(D.week)) return; var ch = false;
+      j.rows.forEach(function(r){ var k = pairK(r[2], r[3]), v = {roof: r[5], t: r[8], w: r[9], gu: r[10], pt: r[11], pc: r[12], risk: r[14], upd: r[7]}; if(JSON.stringify(WXL[k]) !== JSON.stringify(v)){ WXL[k] = v; ch = true; } });
+      if(ch) render(); }).catch(function(){}); } catch(e){} }
+  setTimeout(pullWx, 1500); setInterval(pullWx, 6e5);
   function modelLine(g, st){
     var ma = g.fa != null ? g.fa : g.pa, mb = g.fb != null ? g.fb : g.pb;
     var m = (mb || 0) - (ma || 0), fav = m > 0 ? g.b : g.a, am_ = Math.abs(m);
@@ -573,7 +653,7 @@ JS = r"""
     var fdTail = f ? esc((f.sp < 0 ? g.b + ' ' + f.sp : g.a + ' ' + (-f.sp)) + ' · o/u ' + f.tot) : '';
     var out = row('Model', ma, mb, esc(pick + ' · o/u ' + one(ma + mb))) + (f ? row('FanDuel', f.pa, f.pb, fdTail) : '');
     if(st !== 'in' && st !== 'post' && g.most) out += '<span class="pj lk"><b>Likeliest</b><em>' + esc(g.most) + (pct != null ? ' (' + pct + '%)' : '') + '</em><i>by FanDuel line</i></span>';
-    return out;
+    return out + infoLine(g);
   }
   function drawDrill(){
     if(!DRILL) return; var gid = DRILL.gid, js = SUMM[gid], g = games[gid], s = STATE[gid] || {}; var box = $('#lvdrill');

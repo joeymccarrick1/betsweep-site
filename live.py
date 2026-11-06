@@ -42,7 +42,8 @@ window.BSLive = (function(){
         var st = ev.status || c.status || {}, ty = st.type || {}, si = c.situation || {};
         out[g.gid] = { eid: ev.id, period: st.period || 0, clock: st.displayClock || '', st: ty.state || 'pre', done: !!ty.completed, sa: by[g.a], sb: by[g.b], det: ty.shortDetail || ty.detail || '',
           poss: si.possession ? idab[si.possession] || '' : '', dd: si.downDistanceText || si.shortDownDistanceText || '', rz: !!si.isRedZone,
-          last: (si.lastPlay && si.lastPlay.text) || '' };
+          last: (si.lastPlay && si.lastPlay.text) || '',
+          tv: (c.broadcasts || []).map(function(b){ return (b.names || []).join('/'); }).filter(Boolean).join(', ') || ((c.geoBroadcasts || [])[0] && c.geoBroadcasts[0].media && c.geoBroadcasts[0].media.shortName) || '' };
       });
     });
     return out;
