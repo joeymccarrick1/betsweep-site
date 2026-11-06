@@ -72,7 +72,9 @@ def main():
         m = l["m"]; under = m.startswith("Under ")
         short = ("under " if under else "") + SHORT.get(m[6:] if under else m, m[6:] if under else m)
         line = "" if m in ("Anytime TD", "First TD", "2+ TD", "3+ TD") else (f" {line_s(l.get('ln'))}" if under else f" {int(math.floor(float(l.get('ln') or 1) + 0.5))}+")
-        moves.append({"key": key, "pl": l["pl"], "m": m, "ln": l.get("ln"), "gid": gid, "ko": ko, "built": l["o"], "now": cur[0], "pts": round(d, 1),
+        # owner 11/6 value alerts: a drift on a leg the model still likes at the NEW price (model % - new implied >= 4 pts) is a better bet now
+        pm_ = l.get("p"); val = bool(d < 0 and pm_ is not None and pm_ - imp(cur[0]) >= 0.04)
+        moves.append({"key": key, "pl": l["pl"], "m": m, "ln": l.get("ln"), "gid": gid, "ko": ko, "built": l["o"], "now": cur[0], "pts": round(d, 1), "p": pm_, "value": val,
                       "dir": "SHORTENED" if d > 0 else "DRIFTED", "tier": tier.get(key, ""), "pulled": cur[1],
                       "detail": f"{l['pl']} {short}{line}: FanDuel {am(l['o'])} at build -> {am(cur[0])} now ({d:+.1f} implied pts {'toward the model' if d > 0 else 'against us'})"})
     moves.sort(key=lambda m: -abs(m["pts"]))
