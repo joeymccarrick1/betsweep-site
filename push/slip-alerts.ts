@@ -207,7 +207,12 @@ export function wxBad(w: Wx): string[] {   // same bar as flags.py's Wind flag, 
   const out: string[] = [];
   if (w.wind >= 15 || w.gust >= 28) out.push(`wind ${Math.round(w.wind)} mph` + (w.gust >= 20 ? `, gusts ${Math.round(w.gust)}` : ""));
   if (w.pop >= 60 && w.rain >= 0.04) out.push(`${w.rain >= 0.15 ? "heavy rain" : "rain"} ${Math.round(w.pop)}%`);
+  else if (w.pop >= 40) out.push(`rain possible (${Math.round(w.pop)}% chance)`);   // owner 11/5 TNF: "WHERE WAS THE UPDATE THAT IT COULD BE RAINING?"
   return out;
+}
+export function wxSummary(w: Wx): string {   // the plain kickoff report every outdoor game gets, good weather or not
+  const rain = w.pop >= 60 ? `rain likely (${Math.round(w.pop)}%)` : w.pop >= 20 ? `${Math.round(w.pop)}% chance of rain` : "dry";
+  return `wind ${Math.round(w.wind)} mph${w.gust >= 20 ? ` (gusts ${Math.round(w.gust)})` : ""}, ${rain}`;
 }
 export const WXLEG = (m: string) => /^(Passing Yards|Receiving Yards|Receptions|Longest Reception|Rush \+ Rec Yards)$/.test(m);   // overs that wind / rain hurt
 export function wxWindow(j: any, ko: number): Wx | null {   // kickoff hour through the next 3 hours, worst value of each
@@ -335,12 +340,23 @@ export async function run(now = Date.now()) {
   const LEG = new Map<string, any>(); for (const l of (D.legs || [])) { const k = `${l.pl}|${l.m}|${Math.floor(Number(l.ln || 1) + 0.5)}`; if (!LEG.has(k)) LEG.set(k, l); }
   const soon = (D.games || []).filter((g: any) => g.ko && g.ko > now && g.ko - now <= 6 * 3600e3);
   if (soon.length) {
-    const HOME = await homesOf(soon); const WX = new Map<string, { bad: string[]; title: string }>();
+    const HOME = await homesOf(soon); const WX = new Map<string, { bad: string[]; title: string }>(); const REPORT = new Map<string, { txt: string; title: string }>();
     for (const g of soon) {
       const h = HOME.get(g.gid) as any; if (!h || h.indoor || h.neutral) continue;
       const st = STADIUM[h.home]; if (!st || st[2] !== "open") continue;
       const w = await wxAt(st[0], st[1], g.ko); if (!w) continue;
       const bad = wxBad(w); if (bad.length) { WX.set(g.gid, { bad, title: `${h.away} @ ${h.home}` }); wxGames.push(`${h.away}@${h.home}: ${bad.join(", ")}`); }
+      else REPORT.set(g.gid, { txt: wxSummary(w), title: `${h.away} @ ${h.home}` });
+    }
+    // owner 11/5 TNF: every outdoor game gets a kickoff weather report once (within 6 hours of kickoff), even when it is fine - a later
+    // turn for the worse still pushes the bad-weather alert below (its own tag), so nobody is left guessing.
+    for (const [gid, x] of REPORT) {
+      for (const uid of users) {
+        if (done.has(`${uid}|wxr|${gid}|WXR`)) continue;
+        const msg = { title: `🌤 Weather: ${x.title}`.slice(0, 90), body: `Kickoff forecast: ${x.txt}. No weather flag on this game's legs.`, url: `/boards/#${gid}`, tag: `bs-wxr-${W}-${gid}` };
+        for (const s of subs.filter((s) => s.user_id === uid)) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nwx++; } catch (e) { console.warn("push", String(e)); } }
+        done.add(`${uid}|wxr|${gid}|WXR`); await mark(uid, W, `wxr|${gid}`, "WXR");
+      }
     }
     // owner 11/5 ("always push weather updates"): every subscriber hears about every bad-weather kickoff once, legs or no legs; the legs
     // on their slips are named when there are any. Discord gets one message per game.
