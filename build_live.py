@@ -147,6 +147,41 @@ table.lvt td.st .rm{font:inherit;font-size:14px;line-height:1;background:none;bo
 .imp .rfr{font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:4px;padding:6px 12px;cursor:pointer} .imp .rfr.go{background:var(--red);border-color:var(--red);color:#fff} .imp .rfr[disabled]{opacity:.5;cursor:default}
 @media (max-width:560px){ .lg2.slipcard .ghd2{grid-template-columns:minmax(0,1.4fr) auto minmax(0,1fr)} .lg2.slipcard .ghd2 .t small{display:block} .lg2.slipcard .ghd2 .t.r small{font-size:10.5px} .slipbar{padding:8px 8px} }
 @media (max-width:560px){ .lg2 .ghd2{gap:6px 6px;padding:10px 10px} .lg2 .ghd2 .t{font-size:15px;gap:5px} .lg2 .ghd2 .t small{display:none} .lg2 .ghd2 .t .badge{width:30px;height:30px;font-size:9px;border-radius:6px} .lg2 .ghd2 .mid b{font-size:22px} .lg2 .ghd2 .mid small{font-size:10.5px} table.lvt td,table.lvt td.st,table.lvt td.who{padding:8px 6px} table.lvt td.who{padding-left:2px} table.lvt td.who b{font-size:13.5px} table.lvt td.who small{font-size:11px;line-height:1.35} table.lvt td.now{padding-left:4px;padding-right:4px} table.lvt td.now b{font-size:13px} table.lvt td.pr{padding-right:8px} table.lvt td.pr b{font-size:17px} table.lvt td.pr small{font-size:10px;max-width:84px;white-space:normal;line-height:1.2} table.lvt .chip{font-size:9px;padding:1px 5px;margin-left:4px} }
+/* ---- 11/5 evening (owner: "buggy and words not lined up", "more collapsible", "scrolling on the box score is a little wrong", "a ticker with a football field ... Gamecast") ---- */
+.lvbar .seg{margin-left:0} .lvtools{justify-content:flex-start}
+.lvtools .seg{display:inline-flex;gap:6px}
+@media (max-width:620px){
+  .lvt, .lvt tbody{display:block}
+  .lvt tr{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"st who pr" "st now pr";column-gap:8px;padding:9px 12px 9px 6px;border-top:1px solid var(--line);align-items:start}
+  .lvt td, .lvt td.st, table.lvt td.who, .lvt td.now, .lvt td.pr{display:block;padding:0;border:0 !important;box-shadow:none;background:none}
+  .lvt td.st{grid-area:st;width:auto;padding-top:2px} .lvt td.who{grid-area:who;min-width:0} .lvt td.now{grid-area:now;white-space:normal;margin-top:4px}
+  .lvt td.now b{font-size:13.5px;font-weight:600} .lvt td.now b:empty{display:none} .lvt td.pr{grid-area:pr;align-self:center;min-width:64px}
+  .lvt td.who b{line-height:1.25} .lvt .chip{margin:3px 4px 0 0;vertical-align:baseline}
+  .lvt td.who b .chip:first-of-type{margin-left:6px}
+}
+.lg2 h4.subtog{cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.lg2 h4.subtog i{font-style:normal;font-size:12px}
+.upgrp .finin, .fingrp .finin{padding:0 0 4px}
+/* the box score sheet: fixed header and tabs, one scroll area, above the bottom tabs, background locked */
+#lvdrill{z-index:95;overflow:hidden;padding:max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom))}
+#lvdrill .dwrap{display:flex;flex-direction:column;height:100%;max-height:100%;min-height:0}
+#lvdrill .dhd, #lvdrill .dtabs, #lvdrill .gcw{flex:none}
+#lvdrill .dbody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:auto}
+#lvdrill .bxw{overflow-x:auto;overscroll-behavior-x:contain}
+body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
+/* Gamecast */
+.gcw{padding:10px 14px 12px;border-bottom:1px solid var(--line);background:var(--card)}
+.gc-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.gc-dd{font-family:var(--display);font-weight:800;font-size:17px} .gc-dd small{font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute);margin-left:6px}
+.gc-wp{font-size:11.5px;color:var(--mute);text-align:right;white-space:nowrap} .gc-wp b{color:var(--ink)}
+.gc-field{display:block;width:100%;height:auto;border-radius:8px;overflow:hidden}
+.gc-last{margin-top:8px;font-size:13px;line-height:1.4} .gc-last b{font-family:var(--display);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px;color:var(--mute);margin-right:6px}
+.gc-tick{display:flex;gap:8px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none} .gc-tick::-webkit-scrollbar{display:none}
+.gc-tick span{flex:none;max-width:250px;font-size:11.5px;line-height:1.35;color:var(--mute);background:var(--chalk);border-radius:8px;padding:6px 8px;white-space:normal}
+.gc-tick span.td{color:#fff;background:var(--good)} .gc-tick span.to{color:#fff;background:var(--bad)}
+#lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
+.gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
+
 """
 
 JS = r"""
@@ -328,7 +363,7 @@ JS = r"""
     var doneG = order.filter(function(gid){ var s = STATE[gid]; return s && s.st === 'post'; });
     var seq = liveG.concat(preG).concat(doneG);
     if(!liveG.length){ var nxt = preG.length ? games[preG[0]] : null; parts.push(['bar', '<div class="lvbar"><span>No game in progress' + (nxt ? ' · next kickoff <b>' + esc(nxt.kick) + '</b> (' + nxt.a + '·' + nxt.b + ')' : '') + ' · the watch list below is what the model likes going in</span></div>']); }
-    var FIN = [];
+    var FIN = [], UP = [];
     seq.forEach(function(gid){
       var g = games[gid], s = STATE[gid] || {st:'pre'}; var f = remainingFrac(s);
       var gl = legs.filter(function(l){ return l.g === gid; });
@@ -356,13 +391,19 @@ JS = r"""
       if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' at the "model likes" filter - switch to All' : '') + '.</div>';
       else {
         body += '<h4 class="' + (s.st === 'in' ? 'hot' : '') + '">' + (s.st === 'in' ? 'Still open · ' + open.length : s.st === 'pre' ? 'Watch list · ' + open.length : 'Open at the end · ' + open.length) + '</h4><table class="lvt">' + open.map(tr).join('') + '</table>';
-        if(hit.length) body += '<h4>Already hit · ' + hit.length + '</h4><table class="lvt">' + hit.map(tr).join('') + '</table>';
-        if(dead.length) body += '<h4>Gone · ' + dead.length + '</h4><table class="lvt">' + dead.map(tr).join('') + '</table>';
+        var subOpen = function(k, def){ return (k in OPEN) ? OPEN[k] : def; };
+        if(hit.length){ var ho = subOpen(gid + '|hit', true); body += '<h4 class="subtog" data-g="' + gid + '|hit" aria-expanded="' + ho + '">Already hit · ' + hit.length + '<i>' + (ho ? '▴' : '▾') + '</i></h4>' + (ho ? '<table class="lvt">' + hit.map(tr).join('') + '</table>' : ''); }
+        if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
       }
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
+      if(s.st === 'in' && SUMM[gid]) sit = gamecast(gid);
       var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? sit + drill + body : '') + '</section>';
-      if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length]); else parts.push([gid, sec]);
+      if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length]); else if(s.st === 'pre' && liveG.length) UP.push([gid, sec, g]); else parts.push([gid, sec]);
     });
+    if(UP.length){   // owner 11/5: "more collapsible" - while a game is live, the rest of the week folds into one group
+      var uo = OPEN.__up === true;
+      parts.push(['__up', '<section class="lg2 fingrp upgrp' + (uo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__up" aria-expanded="' + uo + '"><span class="t">Later this week<small>' + UP.length + ' game' + (UP.length === 1 ? '' : 's') + '</small></span><span class="tog">next ' + esc(UP[0][2].kick || '') + '<i class="car">' + (uo ? '▴' : '▾') + '</i></span></button>' + (uo ? '<div class="finin">' + UP.map(function(x){ return x[1]; }).join('') + '</div>' : '') + '</section>']);
+    }
     if(FIN.length){   // owner 11/1 cleanup: finished games fold into one group at the bottom
       var fo = OPEN.__fin === true, fh = FIN.reduce(function(a, x){ return a + x[2]; }, 0), fd = FIN.reduce(function(a, x){ return a + x[3]; }, 0);
       parts.push(['__fin', '<section class="lg2 fingrp' + (fo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__fin" aria-expanded="' + fo + '"><span class="t">Final<small>' + FIN.length + ' game' + (FIN.length === 1 ? '' : 's') + '</small></span><span class="tog">' + fh + ' hit · ' + fd + ' gone<i class="car">' + (fo ? '▴' : '▾') + '</i></span></button>' + (fo ? '<div class="finin">' + FIN.map(function(x){ return x[1]; }).join('') + '</div>' : '') + '</section>']); }
@@ -410,19 +451,58 @@ JS = r"""
           return '<div class="pl' + (p.scoringPlay ? ' td' : '') + (hit ? ' mine' : '') + '"><span class="dd">' + esc(p.start && p.start.shortDownDistanceText || (p.start && p.start.downDistanceText) || '') + '</span><span class="tx">' + (p.scoringPlay ? '<b class="sc">' + esc(p.type && p.type.text || 'Score') + '</b> ' : '') + esc(t) + '</span><span class="ck">' + esc(p.clock && p.clock.displayValue || '') + (p.period ? ' Q' + p.period.number : '') + '</span></div>'; }).join('') + '</div>';
     }).join('');
   }
+  // ---- Gamecast (owner 11/5: "a ticker with a football field that showed like a Gamecast") ----
+  // ESPN yardLine = yards from the HOME team's goal line; the home end zone is drawn on the left.
+  function gamecast(gid){
+    var js = SUMM[gid]; if(!js) return '';
+    var comp = (js.header && js.header.competitions && js.header.competitions[0]) || {}, cs = {}; (comp.competitors || []).forEach(function(c){ cs[c.homeAway] = c; });
+    var home = cs.home && cs.home.team || {}, away = cs.away && cs.away.team || {}, idAb = {}; idAb[home.id] = home.abbreviation; idAb[away.id] = away.abbreviation;
+    var col = function(t, fb){ return '#' + ((t && (t.color || t.alternateColor)) || fb); };
+    var dr = js.drives || {}, cur = dr.current || null, prev = dr.previous || [];
+    var all = []; prev.forEach(function(d){ (d.plays || []).forEach(function(p){ all.push(p); }); }); if(cur && (!prev.length || prev[prev.length - 1].id !== cur.id)) (cur.plays || []).forEach(function(p){ all.push(p); });
+    var last = all.length ? all[all.length - 1] : null, e = last && last.end || {}, yl = (typeof e.yardLine === 'number') ? e.yardLine : null;
+    var possId = e.team && e.team.id || (cur && cur.team && cur.team.id), poss = idAb[possId] || '', homePoss = possId && possId === home.id;
+    var X = function(y){ return 100 + y * 10; }, svg = '<svg class="gc-field" viewBox="0 0 1200 230" role="img" aria-label="Field position">';
+    svg += '<rect x="0" y="0" width="1200" height="230" fill="#2f6b3a"/>';
+    for(var i = 0; i < 10; i++) if(i % 2) svg += '<rect x="' + (100 + i * 100) + '" y="0" width="100" height="230" fill="#2a6234"/>';
+    svg += '<rect x="0" y="0" width="100" height="230" fill="' + col(home, '334') + '"/><rect x="1100" y="0" width="100" height="230" fill="' + col(away, '334') + '"/>';
+    svg += '<text x="50" y="115" fill="#fff" font-size="34" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 50 115)" font-family="Barlow, sans-serif">' + esc(home.abbreviation || '') + '</text>';
+    svg += '<text x="1150" y="115" fill="#fff" font-size="34" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(90 1150 115)" font-family="Barlow, sans-serif">' + esc(away.abbreviation || '') + '</text>';
+    for(var y = 10; y <= 90; y += 10){ var n = y <= 50 ? y : 100 - y; svg += '<line x1="' + X(y) + '" y1="0" x2="' + X(y) + '" y2="230" stroke="rgba(255,255,255,.55)" stroke-width="2"/><text x="' + X(y) + '" y="40" fill="rgba(255,255,255,.75)" font-size="26" font-weight="700" text-anchor="middle" font-family="Barlow, sans-serif">' + n + '</text><text x="' + X(y) + '" y="210" fill="rgba(255,255,255,.75)" font-size="26" font-weight="700" text-anchor="middle" font-family="Barlow, sans-serif">' + n + '</text>'; }
+    svg += '<line x1="100" y1="0" x2="100" y2="230" stroke="#fff" stroke-width="3"/><line x1="1100" y1="0" x2="1100" y2="230" stroke="#fff" stroke-width="3"/>';
+    if(yl != null && poss){
+      var ds = cur && cur.start && typeof cur.start.yardLine === 'number' ? cur.start.yardLine : null;
+      if(ds != null && cur && cur.team && cur.team.id === possId){ var a0 = Math.min(X(ds), X(yl)), a1 = Math.max(X(ds), X(yl)); svg += '<rect x="' + a0 + '" y="92" width="' + Math.max(4, a1 - a0) + '" height="46" rx="8" fill="rgba(255,255,255,.22)"/>'; }
+      var dist = e.distance || 0; if(dist && e.down){ var fd = homePoss ? yl + dist : yl - dist; fd = Math.max(0, Math.min(100, fd)); svg += '<line x1="' + X(fd) + '" y1="0" x2="' + X(fd) + '" y2="230" stroke="#f5d33b" stroke-width="5"/>'; }
+      svg += '<line x1="' + X(yl) + '" y1="0" x2="' + X(yl) + '" y2="230" stroke="#4aa3ff" stroke-width="5"/>';
+      var dir = homePoss ? 1 : -1, bx = X(yl);
+      svg += '<ellipse cx="' + bx + '" cy="115" rx="22" ry="14" fill="#8a4b22" stroke="#fff" stroke-width="3"/><path d="M' + (bx + dir * 30) + ' 115 l' + (-dir * 14) + ' -11 v22 z" fill="#fff"/>';
+    }
+    svg += '</svg>';
+    var wpArr = js.winprobability || [], wp = wpArr.length ? wpArr[wpArr.length - 1].homeWinPercentage : null;
+    var dd = e.downDistanceText || (STATE[gid] && STATE[gid].dd) || '';
+    var tick = all.slice(-6).reverse().map(function(p){ var t = p.text || '', to = /intercept|fumble/i.test(t) && /recovered by|intercepted/i.test(t); return '<span class="' + (p.scoringPlay ? 'td' : to ? 'to' : '') + '">' + esc((p.period ? 'Q' + p.period.number + ' ' : '') + (p.clock ? p.clock.displayValue + ' · ' : '') + (p.start && p.start.shortDownDistanceText ? p.start.shortDownDistanceText + ' · ' : '') + t) + '</span>'; }).join('');
+    return '<div class="gcw"><div class="gc-top"><div class="gc-dd">' + (poss ? esc(poss) + ' ball' : 'Between plays') + (dd ? '<small>' + esc(dd) + '</small>' : '') + '</div>' +
+      (wp != null ? '<div class="gc-wp">Win chance <b>' + esc(home.abbreviation || '') + ' ' + Math.round(wp * 100) + '%</b> · ' + esc(away.abbreviation || '') + ' ' + Math.round((1 - wp) * 100) + '%<div class="gc-wpbar"><i style="width:' + Math.round(wp * 100) + '%;background:' + col(home, '555') + '"></i><i style="width:' + (100 - Math.round(wp * 100)) + '%;background:' + col(away, '999') + '"></i></div></div>' : '') + '</div>' + svg +
+      (last ? '<div class="gc-last"><b>Last play</b>' + esc(last.text || '') + '</div>' : '') + (cur && cur.description ? '<div class="gc-last"><b>Drive</b>' + esc((cur.team && cur.team.abbreviation ? cur.team.abbreviation + ' · ' : '') + cur.description) + '</div>' : '') +
+      (tick ? '<div class="gc-tick">' + tick + '</div>' : '') + '</div>';
+  }
   function drawDrill(){
     if(!DRILL) return; var gid = DRILL.gid, js = SUMM[gid], g = games[gid], s = STATE[gid] || {}; var box = $('#lvdrill');
     var tabs = ['box', 'plays', 'scoring'].map(function(t){ return '<button type="button" class="dtab' + (DRILL.tab === t ? ' on' : '') + '" data-t="' + t + '">' + ({box: 'Box score', plays: 'Play by play', scoring: 'Scoring'})[t] + '</button>'; }).join('');
     var body = !js ? '<p class="none">Loading from ESPN…</p>' : DRILL.tab === 'box' ? drillBox(js, gid) : DRILL.tab === 'plays' ? drillPlays(js, gid) : drillScoring(js);
-    box.innerHTML = '<div class="dwrap"><div class="dhd"><div class="dt">' + badge(g.a, g.ca) + ' ' + g.a + ' <b>' + (s.sa != null ? s.sa : '–') + '–' + (s.sb != null ? s.sb : '–') + '</b> ' + g.b + ' ' + badge(g.b, g.cb) + '<small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> ' + esc(s.det || '') : s.st === 'post' ? 'Final' : '') + ' · refreshes every 30 s</small></div><button type="button" class="dclose" aria-label="Close">×</button></div><div class="dtabs">' + tabs + '</div><div class="dbody">' + body + '</div></div>';
-    box.hidden = false; document.body.classList.add('drillopen');
+    box.innerHTML = '<div class="dwrap"><div class="dhd"><div class="dt">' + badge(g.a, g.ca) + ' ' + g.a + ' <b>' + (s.sa != null ? s.sa : '–') + '–' + (s.sb != null ? s.sb : '–') + '</b> ' + g.b + ' ' + badge(g.b, g.cb) + '<small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> ' + esc(s.det || '') : s.st === 'post' ? 'Final' : '') + ' · refreshes every 30 s</small></div><button type="button" class="dclose" aria-label="Close">×</button></div>' + (s.st === 'in' && js ? gamecast(gid) : '') + '<div class="dtabs">' + tabs + '</div><div class="dbody">' + body + '</div></div>';
+    var keepScroll = DRILL.sy, bodyEl = box.querySelector('.dbody'); if(keepScroll != null && bodyEl) bodyEl.scrollTop = keepScroll;
+    if(bodyEl) bodyEl.addEventListener('scroll', function(){ if(DRILL) DRILL.sy = bodyEl.scrollTop; }, {passive: true});
+    if(box.hidden){ box.hidden = false; LOCKY = window.scrollY || 0; document.body.style.top = (-LOCKY) + 'px'; document.body.classList.add('drillopen'); }
   }
-  function openDrill(gid, tab){ DRILL = {gid: gid, tab: tab || (DRILL && DRILL.tab) || 'box'}; drawDrill(); if(!SUMM[gid]){ lastBox[gid] = 0; busy[gid] = false; pullBox(gid); } try { history.replaceState(null, '', '#box-' + gid); } catch(e){} }
-  function closeDrill(){ DRILL = null; var box = $('#lvdrill'); box.hidden = true; box.innerHTML = ''; document.body.classList.remove('drillopen'); try { history.replaceState(null, '', location.pathname + location.search); } catch(e){} }
+  function openDrill(gid, tab){ DRILL = {gid: gid, tab: tab || (DRILL && DRILL.tab) || 'box', sy: 0}; drawDrill(); if(!SUMM[gid]){ lastBox[gid] = 0; busy[gid] = false; pullBox(gid); } try { history.replaceState(null, '', '#box-' + gid); } catch(e){} }
+  var LOCKY = 0;
+  function closeDrill(){ DRILL = null; var box = $('#lvdrill'); box.hidden = true; box.innerHTML = ''; document.body.classList.remove('drillopen'); document.body.style.top = ''; window.scrollTo(0, LOCKY); try { history.replaceState(null, '', location.pathname + location.search); } catch(e){} }
   document.addEventListener('click', function(ev){
     var b = ev.target.closest('.drill'); if(b){ openDrill(b.dataset.g); return; }
     if(ev.target.closest('.dclose') || (ev.target.id === 'lvdrill')){ closeDrill(); return; }
-    var t = ev.target.closest('.dtab'); if(t && DRILL){ DRILL.tab = t.dataset.t; drawDrill(); } });
+    var t = ev.target.closest('.dtab'); if(t && DRILL){ DRILL.tab = t.dataset.t; DRILL.sy = 0; drawDrill(); } });
   document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && DRILL) closeDrill(); });
   (function(){ var m = (location.hash || '').match(/^#box-([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && games[m[1]]) setTimeout(function(){ openDrill(m[1]); }, 1200); })();
   // ---- polling: scoreboard (BSLive) + one summary call per live game every 30 s ----
@@ -447,6 +527,7 @@ JS = r"""
     var rm = ev.target.closest('.rm'); if(rm){ toggleIn(rm.dataset.sid, rm.dataset.k); return; }
     var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; saveBuilderSlip(); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
+    var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
     var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log === false; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
   $('#lv').addEventListener('change', function(ev){
