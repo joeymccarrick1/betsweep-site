@@ -361,3 +361,10 @@ Rules for new pages: use the tokens (never a new colour), the control classes ab
 - Line movement (research/line_move.py, first vs last freeze in the calls archive): spread moves 1+ bet with the move 4-3, totals 1.5+ 2-1 - too few (Weeks 6-9). Rerun Tuesdays; with data/closing-w*.json the prop version is the season page's CLV card.
 - Tested situational spots (2006-25, both decades) now show on each Live game's details strip ("Tested spot") from out/dossier.json.
 - Popular players (research/star_unders.py, Weeks 6-8 main lines): no star effect - big-line overs 47.0% vs rest 47.1%. Market-wide main-line overs hit 47%. Rushing-yard unders on main lines under 40 yds went 33-25, 37-20, 37-26 (all three weeks) - unders_check.py now prints this cut at real under prices; same promotion rule (two graded weeks, 60+ legs, positive units).
+
+## 11/6 batch ("do all of it")
+- Fresh lists: risk.js stale() - a ruled-out player (risk_feed block: injury report, game-day inactive, owner OUT) hides his single-pick cards (article.play, with a "Hidden since the build" note) and puts a red swap banner on any listed parlay (.bestslip / cards with leg lists) holding him. Live, every page, no rebuild.
+- Pace / PROE (research/pace_proe.py, pbp 2022-26): adding pace + neutral pass rate over expected to the dropback projection did NOT help (2025: MAE 6.34 -> 6.54 with all terms, 6.343 with PROE only). Not shipped; season averages already carry it.
+- Your CLV: the Live page stores each tracked leg's price per week (bs_clv_w<W>, synced) and My season compares it with data/closing-w<W>.json.
+- Value alerts: price_moves.py marks a DRIFTED move value=true when the leg's model % is 4+ pts above the new implied; risk.js chip "better price now +X"; slip-alerts pushes the owner once per key (VALUE). Owner redeploys slip-alerts.
+- Track record: build_builder.py D.rec[market][band] from graded legsnaps (shown % band, 10-pt); trk() badge "hit X% of N" on builder rows when 40+ legs. Weeks 6-8: rushing yards shown 60-70% hit 56%, receptions / rec yds within ~3 pts.
