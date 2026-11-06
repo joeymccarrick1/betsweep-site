@@ -16,10 +16,16 @@
     if ((!out || out.level !== 'block') && (WX[n] || []).length && (!m || WXM.test(String(m).replace(/^Under /, '')))){
       var w = WX[n][0]; if (!/^Under /.test(m || '')){ var v2 = {level: 'warn', label: 'Weather', why: w.detail || 'wind / rain at kickoff', short: 'Weather'}; if (!out || out.level === 'good') out = v2; } }
     return out; }
+  // owner 11/6 Questionable translator: feeds q.json (this week's official report) adds the last practice and the chance he plays
+  var QT = {}; function loadQ(){ try { fetch('https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/q.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ var o = {}; Object.keys((j && j.players) || {}).forEach(function(k){ o[nrm(k)] = j.players[k]; }); QT = o; decorate(); }).catch(function(){}); } catch(e){} }
+  setTimeout(loadQ, 900); setInterval(loadQ, 6e5);
+  var PW = {Full: 'full practice', Limited: 'limited in practice', DNP: 'did not practice', none: 'no practice listed'};
+  function qtx(n){ var q = QT[nrm(n)]; return q && q.play != null ? q : null; }
   function injV(r){ var s = r.status;
     if (s === 'OUT') return {level: 'block', label: 'Ruled out', why: 'Out' + (r.detail ? ' (' + r.detail + ')' : '') + ' on the injury report', short: 'Out'};
-    if (s === 'DOUBTFUL') return {level: 'warn', label: 'Doubtful', why: 'Doubtful' + (r.detail ? ' (' + r.detail + ')' : '') + ' - doubtful players rarely play', short: 'Doubtful'};
-    if (s === 'QUESTIONABLE') return {level: 'warn', label: 'Questionable', why: 'Questionable' + (r.detail ? ' (' + r.detail + ')' : ''), short: 'Q'};
+    var q = qtx(r.player || '');
+    if (s === 'DOUBTFUL') return {level: 'warn', label: 'Doubtful', why: 'Doubtful' + (r.detail ? ' (' + r.detail + ')' : '') + ' - none of 61 doubtful starters played in 2024-25', short: 'Doubtful'};
+    if (s === 'QUESTIONABLE') return {level: 'warn', label: q ? 'Q · plays ~' + Math.round(q.play * 100) + '%' : 'Questionable', why: 'Questionable' + (r.detail ? ' (' + r.detail + ')' : '') + (q ? ' - ' + PW[q.ps] + ': players in this spot played ' + Math.round(q.play * 100) + '% of the time in 2024-25, and when they played got ~' + Math.round((q.snap || 0.9) * 100) + '% of their usual snaps' : ''), short: 'Q'};
     return null; }
   function noteV(r){ var d = r.detail ? ': ' + r.detail : '';
     if (r.status === 'OUT') return {level: 'block', label: 'Ruled out', why: 'BetSweep note - out' + d, short: 'Out'};
