@@ -301,7 +301,7 @@ JS = r"""
       var f = new File([blob], 'betsweep-week-' + D.week + '.png', {type: 'image/png'});
       if(navigator.canShare && navigator.canShare({files: [f]})) return navigator.share({files: [f], title: 'My week on BetSweep', text: 'Week ' + D.week + ' on BetSweep - betsweep.co'});
       var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'betsweep-week-' + D.week + '.png'; a.click(); }).catch(function(e){ console.warn(e); }).then(done); }
-  var SHORTM = {'Receiving Yards': 'rec yds', 'Rushing Yards': 'rush yds', 'Passing Yards': 'pass yds', 'Receptions': 'rec', 'Longest Reception': 'long rec', 'Anytime TD': 'anytime TD', 'Rush + Rec Yards': 'rush+rec'};
+  var SHORTM = {'Passing TDs': 'pass TDs', 'Interceptions': 'INTs', 'Completions': 'completions', 'Rush Attempts': 'rush att', 'Receiving Yards': 'rec yds', 'Rushing Yards': 'rush yds', 'Passing Yards': 'pass yds', 'Receptions': 'rec', 'Longest Reception': 'long rec', 'Anytime TD': 'anytime TD', 'Rush + Rec Yards': 'rush+rec'};
   function lum(h){ h = h.replace('#',''); return 0.2126*parseInt(h.substr(0,2),16)/255 + 0.7152*parseInt(h.substr(2,2),16)/255 + 0.0722*parseInt(h.substr(4,2),16)/255; }
   function badge(t, col){ return '<span class="badge" style="--p:' + col[0] + ';--s:' + col[1] + ';--ink:' + (lum(col[0]) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   function norm(s){ return String(s||'').replace(/\./g,'').replace(/\s+(jr|sr|ii|iii|iv|v)$/i,'').replace(/\s+/g,' ').toLowerCase().trim(); }
@@ -383,11 +383,11 @@ JS = r"""
           var keys = cat.keys || cat.labels || [];
           (cat.athletes || []).forEach(function(a){
             var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
-            var row = box[n] = box[n] || {pass:0, rush:0, rec:0, recy:0, long:0, td:0, name: a.athlete.displayName};
+            var row = box[n] = box[n] || {pass:0, rush:0, rec:0, recy:0, long:0, td:0, ptd:0, int:0, cmp:0, ratt:0, name: a.athlete.displayName};
             var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
             var num = function(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; };
-            if(cat.name === 'passing'){ row.pass = num(S.passingYards != null ? S.passingYards : S.YDS); }
-            if(cat.name === 'rushing'){ row.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); row.td += num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
+            if(cat.name === 'passing'){ row.pass = num(S.passingYards != null ? S.passingYards : S.YDS); row.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); row.int = num(S.interceptions != null ? S.interceptions : S.INT); row.cmp = num(String(S['completions/passingAttempts'] != null ? S['completions/passingAttempts'] : (S['C/ATT'] || '0')).split('/')[0]); }
+            if(cat.name === 'rushing'){ row.ratt = num(S.rushingAttempts != null ? S.rushingAttempts : S.CAR); row.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); row.td += num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
             if(cat.name === 'receiving'){ row.rec = num(S.receptions != null ? S.receptions : S.REC); row.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); row.long = Math.max(row.long, num(S.longReception != null ? S.longReception : S.LONG)); row.td += num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
           });
         });
@@ -403,7 +403,7 @@ JS = r"""
     if(per > 4) return Math.max(0.02, secs/3600);   // overtime: a little time left
     return Math.max(0, ((4 - per)*900 + secs)/3600);
   }
-  function statFor(l, b){ return l.m === 'Passing Yards' ? b.pass : l.m === 'Rushing Yards' ? b.rush : l.m === 'Receiving Yards' ? b.recy : l.m === 'Receptions' ? b.rec : l.m === 'Longest Reception' ? b.long : (l.m === 'Anytime TD' || l.m === 'First TD' || l.m === '2+ TD' || l.m === '3+ TD') ? b.td : null; }
+  function statFor(l, b){ return l.m === 'Passing TDs' ? (b.ptd || 0) : l.m === 'Interceptions' ? (b.int || 0) : l.m === 'Completions' ? (b.cmp || 0) : l.m === 'Rush Attempts' ? (b.ratt || 0) : l.m === 'Passing Yards' ? b.pass : l.m === 'Rushing Yards' ? b.rush : l.m === 'Receiving Yards' ? b.recy : l.m === 'Receptions' ? b.rec : l.m === 'Longest Reception' ? b.long : (l.m === 'Anytime TD' || l.m === 'First TD' || l.m === '2+ TD' || l.m === '3+ TD') ? b.td : null; }
   // live chance for one leg; returns {p, status: 'open'|'hit'|'dead'|'pre', now: text}
   function live(l, g, s){
     if(l.u){ var o2 = Object.assign({}, l, {m: l.m.replace(/^Under /, ''), u: 0, p: 1 - l.p, ln: Math.floor(l.ln) + 1}); var r2 = live(o2, g, s);   // under = the other side of the (X+1)+ over
