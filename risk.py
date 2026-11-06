@@ -104,7 +104,7 @@ RISK_JS = r"""(function(){
         b.classList.toggle('bsrblock', !!(v && v.level === 'block')); if (v && v.level === 'block') b.title = q[0] + ': ' + v.why;
         // price moves (11/4): a chip on any leg button whose FanDuel price moved 3+ implied points since the build (data/price-moves.json)
         var mv = MOVES[b.getAttribute('data-k')]; var host = b.closest('tr, .pb, .lg, .gdp, .sp, li') || b.parentNode; if (!host) return; var cur = host.querySelector(':scope .bsrmv');
-        var html = mv ? '<span class="bsrmv ' + (mv.dir === 'SHORTENED' ? 'up' : 'dn') + '" title="' + esc(mv.detail) + '">' + (mv.dir === 'SHORTENED' ? '📈 market moving our way ' : '📉 market drifted ') + (mv.pts > 0 ? '+' : '') + mv.pts + '</span>' : '';
+        var html = mv ? '<span class="bsrmv ' + (mv.value ? 'up' : mv.dir === 'SHORTENED' ? 'up' : 'dn') + '" title="' + esc(mv.detail) + '">' + (mv.value ? '💰 better price now ' + (mv.now > 0 ? '+' : '') + Math.round(mv.now) : (mv.dir === 'SHORTENED' ? '📈 market moving our way ' : '📉 market drifted ') + (mv.pts > 0 ? '+' : '') + mv.pts) + '</span>' : '';
         if (cur && cur.outerHTML === html) return; if (cur) cur.remove(); if (mv) { var anchor = host.querySelector('.who b, .pbn, b') || b; anchor.insertAdjacentHTML('afterend', ' ' + html); } });
       pill(); stale();
     } catch(e){} busy = false; }

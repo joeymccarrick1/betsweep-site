@@ -475,6 +475,17 @@ export async function run(now = Date.now()) {
     try {
       const pm: any = await (await fetch(`${SITE}/data/price-moves.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
       if (owner && pm && pm.week === W && Array.isArray(pm.moves)) for (const mv of pm.moves) {
+        // owner 11/6 value alerts: a leg the model still likes whose price got LONGER is a better bet now - push those too
+        if (mv.value && mv.ko && mv.ko > now) {
+          const vk = `value|${mv.key}`;
+          if (!done.has(`${owner}|${vk}|VALUE`)) {
+            const am_ = (o: number) => (o > 0 ? "+" : "") + Math.round(o);
+            const vmsg = { title: `💰 Better price: ${mv.pl}`.slice(0, 90), body: `${mv.detail.split(":")[0]} is ${am_(mv.now)} now (was ${am_(mv.built)}); the model still has it at ${Math.round((mv.p || 0) * 100)}%.`.slice(0, 300),
+              url: `/build/?new=1&add=${encodeURIComponent(mv.key)}#slip`, tag: `bs-value-${String(mv.key).slice(0, 40)}` };
+            for (const s of osubs) { try { const c = await sendPush(s, vmsg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) npromo++; } catch (e) { console.warn("push", String(e)); } }
+            done.add(`${owner}|${vk}|VALUE`); await mark(String(owner), W, vk, "VALUE");
+          }
+        }
         if (mv.dir !== "SHORTENED" || !mv.ko || mv.ko <= now || Math.abs(mv.pts || 0) < 3) continue;
         const key = `price|${mv.key}`; if (done.has(`${owner}|${key}|PRICE`)) continue;
         const msg = { title: `📈 Market moving our way: ${mv.pl}`.slice(0, 90), body: `${mv.detail}. Still on the board - the price is going.`.slice(0, 300), url: `/build/?new=1&add=${encodeURIComponent(mv.key)}#slip`, tag: `bs-price-${String(mv.key).replace(/[^a-z0-9]/gi, "").slice(0, 40)}` };
