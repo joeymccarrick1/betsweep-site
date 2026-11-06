@@ -111,6 +111,22 @@ for p in PLAYERS:
     e = ELIG.get((p["n"], p["p"]))
     if e in ("OUT", "IR", "DOUBTFUL", "PUP", "SUSPENDED"): p["act"] = False; p["av"] = e
     elif e == "QUESTIONABLE": p["q"] = True
+# owner 11/6 Questionable translator (qtrans.py): the official report's last practice -> chance he plays; his projection is the one for the
+# snaps he gets IF he plays (~88-90% of usual), and a Doubtful listing (0 of 61 played in 2024-25) takes him out of the lineup math.
+try:
+    import qtrans as _QT
+    _QI = _QT.load(IN, WEEK); _nq = 0
+    for p in PLAYERS:
+        if p["p"] not in ("QB", "RB", "WR", "TE"): continue
+        q = _QI.get(_QT.norm(p["n"]))
+        if not q: continue
+        if q["st"] == "D": p["act"] = False; p["av"] = p.get("av") or "DOUBTFUL"; continue
+        p["q"] = True; p["qp"] = q["play"]; p["qps"] = q["ps"]; r = q["snap"] or 1.0
+        for k in ("fp", "py", "ptd", "int", "ry", "rtd", "rec", "rcy", "rctd"):
+            if isinstance(p.get(k), (int, float)): p[k] = round(p[k] * r, 2)
+        _nq += 1
+    print(f"questionable translator (fantasy): {_nq} players scaled, {sum(1 for q in _QI.values() if q['st'] == 'D')} doubtful")
+except Exception as _e: print("warn: questionable translator (fantasy) skipped:", _e)
 
 # kickoffs for the week (CT) so the page can say who has already played / is on Thursday
 KICK = {}
@@ -504,7 +520,7 @@ TEAM_JS = r"""
   }
   function sosTag(mp){ var d = mp && mp.sos; if(!d || Math.abs(d) < 0.3) return ''; return '<span class="bt sos ' + (d > 0 ? 'up' : 'dn') + '" title="Strength of schedule: the defenses this player has faced so far made his season numbers look ' + (d > 0 ? 'worse' : 'better') + ' than they are; projection ' + (d > 0 ? 'raised' : 'lowered') + ' ' + Math.abs(d).toFixed(1) + ' pts for this matchup">SOS ' + (d > 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + '</span>'; }
   function snapTag(mp){ return mp && mp.sd ? '<span class="bt sd" title="Snap share down: ' + mp.sd[0] + '% of snaps over the last 2 games vs ' + mp.sd[1] + '% for the season; projection trimmed ' + mp.sd[2] + '%">snaps ↓' + mp.sd[2] + '%</span>' : ''; }
-  function tagFor(e){ return (e.mp ? snapTag(e.mp) + sosTag(e.mp) : '') + (e.flag === 'out' ? '<span class="bt out">' + (e.sp.i && /IR|PUP|Sus/i.test(e.sp.i) ? esc(e.sp.i) : 'OUT') + '</span>' : e.flag === 'bye' ? '<span class="bt bye">BYE</span>' : e.flag === 'q' ? '<span class="bt q">Q</span>' : e.flag === 'np' ? '<span class="bt np">no proj</span>' : ''); }
+  function tagFor(e){ return (e.mp ? snapTag(e.mp) + sosTag(e.mp) : '') + (e.flag === 'out' ? '<span class="bt out">' + (e.sp.i && /IR|PUP|Sus/i.test(e.sp.i) ? esc(e.sp.i) : 'OUT') + '</span>' : e.flag === 'bye' ? '<span class="bt bye">BYE</span>' : e.flag === 'q' ? '<span class="bt q" title="' + (e.mp && e.mp.qp ? 'Questionable: players in this spot played ' + Math.round(e.mp.qp * 100) + '% of the time in 2024-25; projection uses the snaps he gets if he plays' : 'Questionable') + '">Q' + (e.mp && e.mp.qp ? ' · plays ~' + Math.round(e.mp.qp * 100) + '%' : '') + '</span>' : e.flag === 'np' ? '<span class="bt np">no proj</span>' : ''); }
 
 
   // ---- Manual roster builder (no Sleeper) ----
