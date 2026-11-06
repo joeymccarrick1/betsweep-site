@@ -1,0 +1,53 @@
+{
+ "week": 9,
+ "legs": {
+  "Kalif Raymond|Receptions|3": {
+   "pl": "Kalif Raymond",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "CHI-TB",
+   "fd": 164.0,
+   "dk": 142.0,
+   "hr": 125.0,
+   "gap": 3.4,
+   "p": 0.452,
+   "seen": "2026-11-06 6:24"
+  },
+  "Kayshon Boutte|Anytime TD|1": {
+   "pl": "Kayshon Boutte",
+   "m": "Anytime TD",
+   "ln": 1,
+   "g": "HOU-LAC",
+   "fd": 800.0,
+   "dk": 600.0,
+   "hr": 600.0,
+   "gap": 3.2,
+   "p": 0.1327,
+   "seen": "2026-11-06 6:24"
+  },
+  "Evan Engram|Receiving Yards|25": {
+   "pl": "Evan Engram",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "CAR-DEN",
+   "fd": 142.0,
+   "dk": 125.0,
+   "hr": 125.0,
+   "gap": 3.1,
+   "p": 0.3835,
+   "seen": "2026-11-06 6:24"
+  },
+  "Colston Loveland|Longest Reception|20": {
+   "pl": "Colston Loveland",
+   "m": "Longest Reception",
+   "ln": 20.0,
+   "g": "CHI-TB",
+   "fd": 110.0,
+   "dk": -113.0,
+   "hr": -115.0,
+   "gap": 5.4,
+   "p": 0.418,
+   "seen": "2026-11-06 6:24"
+  }
+ }
+}
