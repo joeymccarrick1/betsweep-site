@@ -368,3 +368,8 @@ Rules for new pages: use the tokens (never a new colour), the control classes ab
 - Your CLV: the Live page stores each tracked leg's price per week (bs_clv_w<W>, synced) and My season compares it with data/closing-w<W>.json.
 - Value alerts: price_moves.py marks a DRIFTED move value=true when the leg's model % is 4+ pts above the new implied; risk.js chip "better price now +X"; slip-alerts pushes the owner once per key (VALUE). Owner redeploys slip-alerts.
 - Track record: build_builder.py D.rec[market][band] from graded legsnaps (shown % band, 10-pt); trk() badge "hit X% of N" on builder rows when 40+ legs. Weeks 6-8: rushing yards shown 60-70% hit 56%, receptions / rec yds within ~3 pts.
+
+## Outcome ranges / recalibration + best rung (owner 11/6)
+- research/ranges.py: pricing lines from each player's own game-to-game shape (pooled by position) was LESS accurate than the model in every market - not shipped.
+- research/recal.py (Tuesday re-run): shown = sigmoid(c + a*logit(raw) + b*logit(book)) per market, leave-one-week-out. Rushing yards c = -0.4 in every held-out week (X+ overs near the projection miss ~10 pts more than priced at every line size: <40 46% vs 56% implied, 70+ 41% vs 54%, lead backs 49% vs 58%), log loss 0.6954 -> 0.6713; longest reception c = -0.25. calib.shown() applies RECAL (a=0.1 keeps the model's ordering); passing yards improved overall but not Week 8 - re-test with Week 9 before adding. Receiving yards / receptions / TDs keep the 50/50 blend.
+- Best rung: build_builder marks l["br"] (EV per unit at the shown %) on the best rung of each graded-market ladder priced -200..+400 when +2% or better and not in a losing zone; builder chip "★ best rung +X% EV".

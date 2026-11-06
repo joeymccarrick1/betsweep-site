@@ -1,0 +1,62 @@
+{
+ "4|Longest Reception": {
+  "n": 857,
+  "model": 0.6677,
+  "ranges": 1.6496,
+  "ranges_book": 0.7365
+ },
+ "4|Passing Yards": {
+  "n": 277,
+  "model": 0.7256,
+  "ranges": 0.7643,
+  "ranges_book": 0.7084
+ },
+ "4|Receiving Yards": {
+  "n": 1633,
+  "model": 0.6946,
+  "ranges": 0.7224,
+  "ranges_book": 0.6845
+ },
+ "4|Receptions": {
+  "n": 1054,
+  "model": 0.6752,
+  "ranges": 0.6875,
+  "ranges_book": 0.6659
+ },
+ "4|Rushing Yards": {
+  "n": 752,
+  "model": 0.7218,
+  "ranges": 0.7667,
+  "ranges_book": 0.7079
+ },
+ "8|Longest Reception": {
+  "n": 857,
+  "model": 0.6677,
+  "ranges": 1.6425,
+  "ranges_book": 0.7362
+ },
+ "8|Passing Yards": {
+  "n": 277,
+  "model": 0.7256,
+  "ranges": 0.759,
+  "ranges_book": 0.7071
+ },
+ "8|Receiving Yards": {
+  "n": 1633,
+  "model": 0.6946,
+  "ranges": 0.7144,
+  "ranges_book": 0.6827
+ },
+ "8|Receptions": {
+  "n": 1054,
+  "model": 0.6752,
+  "ranges": 0.683,
+  "ranges_book": 0.6649
+ },
+ "8|Rushing Yards": {
+  "n": 752,
+  "model": 0.7218,
+  "ranges": 0.7533,
+  "ranges_book": 0.7045
+ }
+}

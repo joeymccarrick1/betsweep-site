@@ -510,7 +510,7 @@ except Exception as _e: print("warn: questionable translator skipped:", _e)
 import calib as CALIB
 for l in LEGS:
     if l.get("p") is None or l.get("bk") is None: continue
-    l["raw_p"] = l["p"]; l["p"] = round(CALIB.shrink(l["p"], l["bk"]), 4); l["e"] = round(l["p"] - l["bk"], 4)
+    l["raw_p"] = l["p"]; l["p"] = round(CALIB.shown(l["p"], l["bk"], l.get("m")), 4); l["e"] = round(l["p"] - l["bk"], 4)
 # ---- FanDuel UNDERS on the main lines (owner 10/27) ------------------------------------------------------------------------------------
 # 'AUTO - FanDuel Unders' (FanDuelOdds.gs v2026-10-27) carries each main line's Under price + betslip ids. A main line X.5 is the same event as
 # the alt rung (X+1)+ on the Leg Board, so the under's model chance = 1 - that rung's model chance (raw = 1 - raw over; shown = the same
@@ -540,7 +540,7 @@ try:
         ov = num(r[5]); bko = ((100 / (ov + 100)) if ov > 0 else (-ov / (-ov + 100))) if ov is not None else None
         raw_u = round(1 - base["raw_p"], 4)
         LEGS.append({"i": len(LEGS), "pl": base["pl"], "pos": base["pos"], "tm": base["tm"], "opp": base["opp"], "g": base["g"], "m": "Under " + mk, "ms": SHORT.get(mk, mk),
-                     "ln": pt, "o": int(uo), "raw_p": raw_u, "p": round(CALIB.shrink(raw_u, bku), 4), "bk": round(bku, 4), "e": round(CALIB.shrink(raw_u, bku) - bku, 4), "u": 1,
+                     "ln": pt, "o": int(uo), "raw_p": raw_u, "p": round(CALIB.shown(raw_u, bku, "Under " + mk), 4), "bk": round(bku, 4), "e": round(CALIB.shown(raw_u, bku, "Under " + mk) - bku, 4), "u": 1,
                      "bko": round(bko, 4) if bko is not None else None, "w": "",
                      "fh": [["info", "Under", f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Model projects {base.get('proj')} - {(1 - base['raw_p']) * 100:.0f}% that he stays under {pt:g}."]],
                      "proj": base.get("proj"), "avg": base.get("avg"), "n": base.get("n"), "c": base.get("c", ""), "gd": base.get("gd", ""),
@@ -737,7 +737,7 @@ for _l in LEGS:
 # were shown at 25% model / 75% book while the boards showed 50/50. One blend now: pm = the raw model %, p = calib.shrink(raw, book).
 for _l in LEGS:
     if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None or _l.get("raw_p") is None: continue
-    _l["pm"] = _l["raw_p"]; _l["p"] = round(CALIB.shrink(_l["raw_p"], _l["bk"]), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
+    _l["pm"] = _l["raw_p"]; _l["p"] = round(CALIB.shown(_l["raw_p"], _l["bk"], _l.get("m")), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
 # owner 11/5 ("how each team does against each stat percentage wise ... WR1 ... considered in our projections and parlays"): defense vs
 # role (defrole.py) - the opposing QB1 / RB1 / WR1 / WR2 / TE1's record vs this defense (beat his own average; FanDuel main line when
 # graded). Small tested weight (logit +0.25 x shrunk rate gap, research/def_role.py) on p, plus a flag with the numbers on the leg.
@@ -770,9 +770,24 @@ try:
         _x = REC.setdefault(_r[_H["Market"]], {}).setdefault(_bd, [0, 0]); _x[0] += int(_r[_H["Result"]] == "HIT"); _x[1] += 1
     print("track record:", {m: sum(v[1] for v in d.values()) for m, d in REC.items()})
 except Exception as _e: print("warn: track record skipped:", _e)
+# owner 11/6 "best rung on the ladder": for every player-market ladder, the rung with the best expected return per unit at the final shown %
+# (p x decimal odds - 1) gets l["br"] when it is positive and 2+ % - the line to bet if you like the player at all.
+_lad = {}
+for l in LEGS:
+    if l.get("gl") or l.get("p") is None or l.get("o") is None or l.get("status") == "OUT": continue
+    if str(l["m"]).replace("Under ", "") not in ("Receiving Yards", "Receptions", "Rushing Yards", "Passing Yards", "Anytime TD", "Longest Reception") or not (-200 <= l["o"] <= 400): continue   # graded markets and prices only
+    _dec = (1 + l["o"] / 100) if l["o"] > 0 else (1 + 100 / -l["o"])
+    _ev = l["p"] * _dec - 1
+    k = (l["pl"], l["m"])
+    if k not in _lad or _ev > _lad[k][0]: _lad[k] = (_ev, l)
+_nbr = 0
+for _ev, l in _lad.values():
+    if _ev >= 0.02 and (l.get("z") or [""])[0] != "r": l["br"] = round(_ev, 3); _nbr += 1
+print(f"best rung: {_nbr} ladders have a +EV best rung")
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
-BUILDER_CSS = r""".zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
+BUILDER_CSS = r""".zn.b{background:color-mix(in srgb,#d7a22a 22%,transparent);color:#f0c45a}
+.zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
 .trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
 .askbox{max-width:1100px;margin:10px auto 6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#16202b)} .askbox label b{font-family:var(--display);font-size:18px;letter-spacing:.02em} .askbox label small{color:var(--mute);margin-left:6px}
 .askrow{display:flex;gap:8px;margin-top:8px} .askrow input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--chalk,#0f141c);color:inherit;font:inherit;font-size:16px} .askrow button{padding:0 16px;border-radius:10px;border:0;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;letter-spacing:.05em}
@@ -1381,7 +1396,7 @@ BUILDER_JS = r"""
     }).join('') + '</div>';
   }
   function zoneTag(l){ if(!l.z || l.z[0] === 'n') return ''; var g = l.z[0] === 'g'; return '<span class="zn ' + (g ? 'g' : 'r') + '" title="' + (g ? 'Proven zone' : 'Losing zone') + ': model edges in this market at this price have returned ' + (l.z[1] >= 0 ? '+' : '') + Math.round(l.z[1] * 100) + '% (shrunk) over ' + l.z[2] + ' graded legs">' + (g ? '✓ proven zone' : '✗ losing zone') + '</span>'; }
-  function trk(l){ return zoneTag(l) + trk0(l); }
+  function trk(l){ return (l.br ? '<span class="zn b" title="Best rung on this ladder: the highest expected return per unit at the model\'s shown chance">★ best rung +' + Math.round(l.br * 100) + '% EV</span>' : '') + zoneTag(l) + trk0(l); }
   function trk0(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
     return r && r[1] >= 40 ? '<span class="trk" title="Graded Weeks 6+: legs in this market the site showed at ' + Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + '-' + (Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + 10) + '% hit ' + Math.round(r[0] / r[1] * 100) + '% (' + r[1] + ' legs)">hit ' + Math.round(r[0] / r[1] * 100) + '% of ' + r[1] + '</span>' : ''; }
   function flagMark(l){

@@ -199,7 +199,7 @@ LEGS = []
 for r in legs_raw[1:]:
     if len(r) < 17 or not r[0]: continue
     r = r + [""] * (18 - len(r))
-    _p, _bk = pct(r[10]), pct(r[12]); _ps = CALIB.shrink(_p, _bk)   # shown % = raw model blended toward the price (calib.py); edge follows it
+    _p, _bk = pct(r[10]), pct(r[12]); _ps = CALIB.shown(_p, _bk, r[1])   # shown % = raw model blended toward the price (calib.py); edge follows it
     LEGS.append({"player": r[0], "market": r[1], "line": num(r[2]), "odds": num(r[3]), "team": r[4], "opp": r[5], "status": r[6], "proj": num(r[7]),
                  "p": _ps, "fair": r[11], "book": _bk, "edge": (_ps - _bk) if _ps is not None and _bk is not None else pct(r[13]), "verdict": r[14], "warn": r[15], "game": r[16], "kick": r[17], "raw_p": _p})
 def odds_str(o):
