@@ -344,3 +344,6 @@ Rules for new pages: use the tokens (never a new colour), the control classes ab
 
 ## Our number vs the line (owner 11/5)
 - Tuesday (after grading): `python3 -I research/gl_disagree.py <dir with games.csv + stats_player_week_2023..2026.csv> out/gl_disagree.json` (copy to research/gl_disagree.json and commit). build_season.py gl_record_block() shows the walk-forward formula's record vs the closing spread / total when 3+ / 5+ apart, plus the paper-tracked "fade our total when 5+ off" line. Through Week 9: sides 3+ 157-167 (48.5%), 5+ 68-82 - the line wins; fading sides failed the 2026 holdout (2023-25 76-58 -> 2026 6-10). Never promote a side or total because the formula disagrees with the line.
+
+## What changed feed (owner 11/5)
+- .github/feeds.py (feeds Action, every 10 min / 3 min in game windows) diffs each run against the previous feeds-branch files and appends to changes.json (7 days, 400 events): injury status changes, game-day inactives, weather tier / rain-chance (20+ pts) / wind (5+ mph) changes, new player-news items. The Live page "What changed" card fetches it from raw.githubusercontent plus /data/price-moves.json (every move on your legs, 8+ implied pts elsewhere), filters to projected skill players (live data "sk") and shows events since the user last closed the card (bs_chg_seen).
