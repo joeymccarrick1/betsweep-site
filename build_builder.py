@@ -1400,6 +1400,15 @@ BUILDER_JS = r"""
   function riskTag(l){ if(isGL(l)) return ''; var s = riskScore(l); if(s < 2) return ''; var hi = s >= 4;
     return ' <span class="rsk' + (hi ? ' hi' : '') + '" title="Risk score ' + s + ': model flags plus live injury / weather / BetSweep notes">' + (hi ? 'High risk' : 'Some risk') + '</span>'; }
   document.addEventListener('bs-risk', function(){ try{ renderSlip(); }catch(e){} });
+  // owner 11/5 "bet sizing": quarter Kelly on the model's fair chance vs FanDuel's price, in units (1u = 1% of bankroll), capped at 3u for a
+  // single, 2u for two legs, 1u for three or more (the model's % is an estimate; full Kelly on an estimate overbets). Bankroll is optional.
+  function stakeRow(p, decO, n){
+    var bkr = 0; try { bkr = +localStorage.getItem('bs_bankroll') || 0; } catch(e){}
+    var f = (p * decO - 1) / (decO - 1), cap = n >= 3 ? 1 : n === 2 ? 2 : 3, u = Math.max(0, Math.min(cap, f / 4 * 100));
+    var txt = f <= 0 ? 'No bet by the model (negative EV) - fun money only' : (u < 0.1 ? 'Tiny edge - 0.1u at most' : (Math.round(u * 10) / 10) + 'u' + (u >= cap ? ' (capped)' : '') + (bkr ? ' = $' + (bkr * u / 100).toFixed(2) : ''));
+    return '<div class="wide stake"><small>Suggested stake · quarter Kelly · 1u = 1% of bankroll</small><b style="color:' + (f > 0 ? 'var(--good)' : 'var(--mute)') + '">' + txt + '</b>' +
+      '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" style="width:90px"></span></div>'; }
+  document.addEventListener('change', function(ev){ if(ev.target && ev.target.id === 'bkroll'){ try { localStorage.setItem('bs_bankroll', String(Math.max(0, +ev.target.value || 0))); } catch(e){} renderSlip(); } });
   function renderSlip(){
     var ls = slipLegs(); var ul = $('#slipLegs');
     $$('.slipbar .n').forEach(function(n){ n.textContent = ls.length; });
@@ -1415,7 +1424,7 @@ BUILDER_JS = r"""
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="e ' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="e ' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+$':'−$') + Math.abs(ev).toFixed(2) + '</b></div>' +
-      '<div class="wide"><small>Payout on $10 at the FanDuel price</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>' + bookRow(ls, bookDec);
+      '<div class="wide"><small>Payout on $10 at the FanDuel price</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>' + stakeRow(fair, bookDec, ls.length) + bookRow(ls, bookDec);
     $('#take').style.display = ''; $('#take').innerHTML = 'Take it at <b>' + toAm(fair*0.95) + '</b> or better' + (sgp.length ? ' — it has same-game legs, so compare that number to FanDuel\'s same-game quote, not the multiplied price.' : '.');
     var flags = [];
     if(sgp.length) flags.push(sgp.length + ' game' + (sgp.length>1?'s':'') + ' with multiple legs (correlation priced in)');
