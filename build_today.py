@@ -197,7 +197,7 @@ def sections(IN_, OUT_):
     body = f'''<title>Today · BetSweep</title>
 <meta name="description" content="Today on BetSweep: what kicks off, the model's plus-money looks for today's games, the news that moved the numbers, your slips and your Sleeper team.">
 <style>{TODAY_CSS}</style>
-<section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><button type="button" class="tdlisten" id="tdlisten" hidden title="Read today's brief aloud">▶ Listen</button><button type="button" class="tdshare" id="tdshare" title="Share today's card as an image">Share</button><a class="tdlive" href="/live/">Live</a></div></section>
+<section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdlive" href="/live/">Live</a></div></section>
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p></section>
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>
