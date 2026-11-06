@@ -216,9 +216,23 @@ except Exception as e: FO = {}; print("note: receiver face-off unavailable:", e)
 def faceoff_block(a, b):
     try: return FACEOFF.block(FO, LEGS, FE.WRCB, a, b)
     except Exception as e: print("note: face-off failed for", a, b, e); return ""
+# owner 11/5: defense vs role (defrole.py) - small tested nudge on the shown % (so the best parlays and edges see it) + a note flag
+try:
+    import defrole as DEFROLE
+    _DRD = DEFROLE.load(IN, WEEK)
+except Exception as e: print("note: defense vs role unavailable:", e); _DRD = None
 for l in LEGS:
     try: fl = FE.leg(l)
     except Exception: fl = []
+    if _DRD and l.get("p") is not None:
+        try:
+            _p2, _note, _inf = _DRD.adjust(l["player"], l["team"], l["opp"], l["market"], l["p"])
+            if _inf:
+                l["p"] = _p2
+                if l.get("book") is not None: l["edge"] = _p2 - l["book"]
+                _gap = _inf["shr"] - _inf["lg"]
+                fl = list(fl) + [{"k": "good" if _gap > 0.05 else "watch" if _gap < -0.05 else "info", "tag": f"vs {_inf['role']}s", "txt": _note}]
+        except Exception: pass
     l["flags"] = fl; l["warn"] = FLAGS.warn_text(fl); l["note"] = FLAGS.note_text(fl); l["good"] = FLAGS.good_text(fl); l["hit"] = FLAGS.hit_of(fl)
 # ---- projected snap share (projsnaps.py): recency-weighted share, redistributed for same-position OUTs / returners; computed once
 # per build, out/projsnaps.json is read by build_builder.py. Shown as a small chip on each player's row; nothing else uses it. ----

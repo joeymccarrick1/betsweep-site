@@ -658,6 +658,24 @@ for _l in LEGS:
 for _l in LEGS:
     if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None or _l.get("raw_p") is None: continue
     _l["pm"] = _l["raw_p"]; _l["p"] = round(CALIB.shrink(_l["raw_p"], _l["bk"]), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
+# owner 11/5 ("how each team does against each stat percentage wise ... WR1 ... considered in our projections and parlays"): defense vs
+# role (defrole.py) - the opposing QB1 / RB1 / WR1 / WR2 / TE1's record vs this defense (beat his own average; FanDuel main line when
+# graded). Small tested weight (logit +0.25 x shrunk rate gap, research/def_role.py) on p, plus a flag with the numbers on the leg.
+try:
+    import defrole as _DR
+    _DRD = _DR.load(IN, WEEK); _ndr = 0
+    for _l in LEGS:
+        if _l.get("gl") or _l.get("p") is None: continue
+        _m = _l.get("m", ""); _under = _m.startswith("Under ")
+        _p2, _note, _inf = _DRD.adjust(_l.get("pl"), _l.get("tm"), _l.get("opp"), _m[6:] if _under else _m, _l["p"], under=_under)
+        if not _inf: continue
+        _l["p"] = round(_p2, 4)
+        if _l.get("bk") is not None: _l["e"] = round(_l["p"] - _l["bk"], 4)
+        _gap = (_inf["shr"] - _inf["lg"]) * (-1 if _under else 1)
+        _l.setdefault("fh", []).append(["info", f"vs {_inf['role']}s: {_inf['over']}/{_inf['n']}" + (" (helps)" if _gap > 0.03 else " (hurts)" if _gap < -0.03 else ""), _note])
+        _l["dv"] = [_inf["role"], _inf["over"], _inf["n"], round(_inf["lg"], 3), _inf["fd"][0], _inf["fd"][1]]; _ndr += 1
+    print(f"defense vs role: {_ndr} legs nudged")
+except Exception as _e: print("warn: defense vs role skipped:", _e)
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 BUILDER_CSS = r"""

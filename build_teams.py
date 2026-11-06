@@ -268,6 +268,28 @@ def leaders(t):
               tbl("Defense", "def_sacks", ["G", "Tkl", "Sacks", "INT"], lambda a: [f'{a["g"]:.0f}', f'{a["def_tackles_solo"] + a["def_tackle_assists"]:.0f}', f'{a["def_sacks"]:.1f}', f'{a["def_interceptions"]:.0f}'])]
     return '<section><h2>Season leaders <small>2026 regular season · names link to the player pages</small></h2><div class="gm"><div class="bx">' + "".join(blocks) + '</div></div></section>'
 
+# owner 11/5: "how each team does against each stat percentage wise ... did they let the WR1 of the opposite team hit their prop line"
+try:
+    import defrole as _DEFROLE
+    _DRD = _DEFROLE.load(IN, 99)   # every game played so far
+except Exception as _e: print("note: defense vs role table skipped:", _e); _DRD = None
+def vs_roles(t):
+    if not _DRD: return ""
+    rows = []
+    for role in ("QB1", "RB1", "WR1", "WR2", "TE1"):
+        for m in _DEFROLE.MK[role]:
+            r = _DRD.rate(t, role, m)
+            if not r or not r["n"]: continue
+            pct = r["over"] / r["n"]; d = pct - r["lg"]
+            cls = "color:var(--good)" if d >= 0.15 else "color:var(--bad)" if d <= -0.15 else ""
+            fd = f'{r["fd"][0]}/{r["fd"][1]}' if r["fd"][1] else "-"
+            games = "; ".join(f'W{e[0]} {e[1]} {e[2]:g} vs avg {e[3]:g}' for e in sorted(_DRD.ev[(t, role, m)]))
+            rows.append(f'<tr title="{E(games)}"><td><b>{role}</b> {E(m.lower())}</td><td>{r["over"]}/{r["n"]}</td><td style="{cls}"><b>{pct*100:.0f}%</b></td><td>{r["lg"]*100:.0f}%</td><td>{fd}</td></tr>')
+    if not rows: return ""
+    return ('<section><h2>Against each role <small>how often the opponent\'s QB1, RB1, WR1, WR2 and TE1 beat their own season average against this defense '
+            '· FD = cleared FanDuel\'s main line (weeks with frozen lines)</small></h2><div class="tw"><table class="vsr"><thead><tr><th>Role</th><th>Beat avg</th><th>%</th><th>Lg</th><th>FD</th></tr></thead><tbody>'
+            + "".join(rows) + '</tbody></table></div><p class="ld" style="font-size:12px;color:var(--mute);padding:0 14px 12px">Green = 15+ pts above the league rate (soft spot), red = 15+ below. '
+            'These feed the builder and the best parlays with a small weight: tested on Weeks 6-8, a defense\'s record against a role only slightly sharpened the model\'s own chances.</p></section>')
 TJS = r"""(function(){
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function nm(p){ return p.s ? '<a href="/player/' + p.s + '/">' + esc(p.n) + '</a>' : esc(p.n); }
@@ -303,7 +325,7 @@ for t in TEAMS:
     body = (head(f'{full(t)} stats, results & box scores · BetSweep', desc) +
             f'<div class="pp tpage" data-team="{t}"><p class="crumb"><a href="/teams/">Teams</a> › {E(DIV.get(t, ""))} › {E(full(t))}</p>'
             f'<header><span class="tb" style="--p:{c1};--s:{c2}">{E(t)}</span><h1>{E(full(t))}</h1><div class="sub">{sub}</div><div class="acts">{acts}</div></header>'
-            + sheet(t) + stat_table(t) + games_block(t) + leaders(t) + '</div><script src="/teams/teams.js" defer></script>')
+            + sheet(t) + stat_table(t) + vs_roles(t) + games_block(t) + leaders(t) + '</div><script src="/teams/teams.js" defer></script>')
     open(os.path.join(OUT, "teams", t.lower() + ".html"), "w").write(body)
 # ---- directory: divisions + a sortable league table ------------------------------------------------------------------------------------
 divs = collections.OrderedDict()
