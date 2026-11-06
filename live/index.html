@@ -148,6 +148,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .tfbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .tfb{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font:inherit;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;text-align:left}
 .tfb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .tfb.on{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--chalk))}
+.lg2 .ghd2 .mid small.mdl{display:block;margin-top:2px;font-size:11px;color:var(--mute);white-space:normal;line-height:1.3}
 /* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
@@ -476,7 +477,7 @@ window.BSLive = (function(){
       var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = STARS[legKey(a.l)] ? 1 : 0, sb_ = STARS[legKey(b.l)] ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
       var hit = rows.filter(function(x){ return x.r.status === 'hit'; }), dead = rows.filter(function(x){ return x.r.status === 'dead'; });
       var isOpen = (gid in OPEN) ? OPEN[gid] : (s.st === 'in' && rows.length > 0);
-      var head = '<button type="button" class="ghd2" data-g="' + gid + '" aria-expanded="' + isOpen + '"><span class="t">' + badge(g.a, g.ca) + g.a + '<small>' + esc(g.na) + '</small></span><span class="mid"><b>' + (s.st === 'pre' ? g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) : (s.sa != null ? s.sa : '–') + '<i>–</i>' + (s.sb != null ? s.sb : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick) + ' · model ' + esc(g.most)) + '</small></span><span class="t r"><small>' + esc(g.nb) + '</small>' + g.b + badge(g.b, g.cb) + '</span>' +
+      var head = '<button type="button" class="ghd2" data-g="' + gid + '" aria-expanded="' + isOpen + '"><span class="t">' + badge(g.a, g.ca) + g.a + '<small>' + esc(g.na) + '</small></span><span class="mid"><b>' + (s.st === 'pre' ? g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) : (s.sa != null ? s.sa : '–') + '<i>–</i>' + (s.sb != null ? s.sb : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick)) + '</small><small class="mdl">' + modelLine(g, s.st) + '</small></span><span class="t r"><small>' + esc(g.nb) + '</small>' + g.b + badge(g.b, g.cb) + '</span>' +
         '<span class="tog">' + (s.st === 'in' ? open.length + ' open · ' + hit.length + ' hit' : s.st === 'pre' ? open.length + ' on the watch list' : hit.length + ' hit · ' + dead.length + ' gone') + '<i class="car">' + (isOpen ? '▴' : '▾') + '</i></span></button>';
       var sit = s.st === 'in' ? '<div class="sit">' + (s.poss ? '<b>' + esc(s.poss) + ' ball</b>' + (s.dd ? ', ' + esc(s.dd) : '') + ' · ' : '') + Math.round(f*100) + '% of regulation left' + (s.last ? ' · last: ' + esc(s.last) : '') + (BOX && Object.keys(BOX).length ? '' : ' · box score loading…') + '</div>' : '';
       var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[k] ? ' starred' : '');
@@ -594,6 +595,17 @@ window.BSLive = (function(){
       (wp != null ? '<div class="gc-wp">Win chance <b>' + esc(home.abbreviation || '') + ' ' + Math.round(wp * 100) + '%</b> · ' + esc(away.abbreviation || '') + ' ' + Math.round((1 - wp) * 100) + '%<div class="gc-wpbar"><i style="width:' + Math.round(wp * 100) + '%;background:' + col(home, '555') + '"></i><i style="width:' + (100 - Math.round(wp * 100)) + '%;background:' + col(away, '999') + '"></i></div></div>' : '') + '</div>' + svg +
       (last ? '<div class="gc-last"><b>Last play</b>' + esc(last.text || '') + '</div>' : '') + (cur && cur.description ? '<div class="gc-last"><b>Drive</b>' + esc((cur.team && cur.team.abbreviation ? cur.team.abbreviation + ' · ' : '') + cur.description) + '</div>' : '') +
       (tick ? '<div class="gc-tick">' + tick + '</div>' : '') + '</div>';
+  }
+  // owner 11/5: "show both scores ... it's confusing when we say model CIN by 10+ but the projection says CIN by 3" - the model's projected score
+  // and its pick always show as the projection; the most likely script is labelled as what it is (the single likeliest of four game shapes, with its chance)
+  function modelLine(g, st){
+    var m = (g.pb || 0) - (g.pa || 0), fav = m > 0 ? g.b : g.a, am_ = Math.abs(m);
+    var pick = am_ < 1 ? "pick'em" : fav + ' by ' + (Math.round(am_ * 2) / 2);
+    var pr = g.probs; try { if(typeof pr === 'string') pr = JSON.parse(pr); } catch(e){ pr = null; }
+    var pct = Array.isArray(pr) && pr.length === 4 ? Math.round(Math.max.apply(null, pr)) : null;
+    var proj = g.a + ' ' + (+g.pa).toFixed(1) + '–' + (+g.pb).toFixed(1) + ' ' + g.b;
+    if(st === 'in' || st === 'post') return 'Model had ' + esc(proj) + ' (' + esc(pick) + ')';
+    return 'Model ' + esc(pick) + (g.most ? ' · likeliest script: ' + esc(g.most) + (pct != null ? ' (' + pct + '%)' : '') : '');
   }
   function drawDrill(){
     if(!DRILL) return; var gid = DRILL.gid, js = SUMM[gid], g = games[gid], s = STATE[gid] || {}; var box = $('#lvdrill');
