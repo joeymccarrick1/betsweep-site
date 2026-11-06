@@ -352,6 +352,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .askf{list-style:none;margin:6px 0;padding:0;font-size:12.5px;color:var(--mute)} .askf li{margin:3px 0} .askf li b{color:var(--ink)} .askf li.bad b{color:var(--bad)} .askf li.good b{color:var(--good)} .askc .wr{color:var(--bad);font-size:12.5px} .askc .nt{color:var(--mute);font-size:12.5px}
 .askb .askadd{padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:700;margin-right:8px} .askl{margin:6px 0 0;padding-left:18px} .askl li{margin:4px 0} .askl small{color:var(--mute)}
 .trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
+.zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
 </style>
 
 <link rel="stylesheet" href="/s/site-7ac6fac2b2.css"></head>
@@ -462,7 +463,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-c33b09e037c8.js"></script>
+<script src="/build/data-d21ed81f7aaa.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -848,7 +849,9 @@ window.BSBooks = { attach: function(btn, panel, getText){
         (started(x.g) && !sel[x.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[x.i] ? 'in' : '') + '">' + (sel[x.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(x) + histBlock(x) + '</div>';
     }).join('') + '</div>';
   }
-  function trk(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
+  function zoneTag(l){ if(!l.z || l.z[0] === 'n') return ''; var g = l.z[0] === 'g'; return '<span class="zn ' + (g ? 'g' : 'r') + '" title="' + (g ? 'Proven zone' : 'Losing zone') + ': model edges in this market at this price have returned ' + (l.z[1] >= 0 ? '+' : '') + Math.round(l.z[1] * 100) + '% (shrunk) over ' + l.z[2] + ' graded legs">' + (g ? '✓ proven zone' : '✗ losing zone') + '</span>'; }
+  function trk(l){ return zoneTag(l) + trk0(l); }
+  function trk0(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
     return r && r[1] >= 40 ? '<span class="trk" title="Graded Weeks 6+: legs in this market the site showed at ' + Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + '-' + (Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + 10) + '% hit ' + Math.round(r[0] / r[1] * 100) + '% (' + r[1] + ' legs)">hit ' + Math.round(r[0] / r[1] * 100) + '% of ' + r[1] + '</span>' : ''; }
   function flagMark(l){
     var fl = l.fl || [];
@@ -1177,7 +1180,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return out;
   }
   function quick(kind){
-    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: skip live injury / weather / owner-note risks; smartLeg = the 11/1 leg rules
+    var pool = legs.filter(function(l){ return !l.w && !l.alt && l.gd.indexOf('CONFIRMED') !== 0 && !started(l.g) && (st.game === 'all' || l.g === st.game) && !(l.z && l.z[0] === 'r') && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: skip live injury / weather / owner-note risks; smartLeg = the 11/1 leg rules
     var bestOf = {}; pool.forEach(function(l){ var k = l.pl + '|' + l.m; if(!bestOf[k] || l.e > bestOf[k].e) bestOf[k] = l; }); pool = Object.keys(bestOf).map(function(k){ return bestOf[k]; });
     var picks = [];
     if(kind === 'anchor'){ picks = pickLegs(pool.filter(function(l){ return l.o <= -130 && l.e >= -0.005 && (l.o > -250 || l.p >= l.bk); }).sort(function(a,b){ return b.p - a.p; }), 3, {distinctGames: st.game === 'all'}); }
@@ -1202,7 +1205,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var xs = $('#genX').value.toLowerCase().split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
     var one = st.game !== 'all';
     var pool = legs.filter(function(l){ return !started(l.g) && l.gd.indexOf('CONFIRMED') !== 0 && (!one || l.g === st.game) && l.p >= 0.18 && l.o >= -800 && l.o <= 1500 && l.m !== 'First TD'
-      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && (l.o > -250 || l.p >= l.bk) && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: no paying up for -250 and shorter unless model + market rate it above the price
+      && (!clean || !l.w) && (!soft || isSoft(l)) && (!green || isGreen(l)) && !xs.some(function(x){ return l.pl.toLowerCase().indexOf(x) >= 0; }) && l.e >= -0.02 && (l.o > -250 || l.p >= l.bk) && !(l.z && l.z[0] === 'r') && !(window.BSRisk && window.BSRisk.avoid(l.pl, l.m)) && smartLeg(l); });   // owner 11/1: no paying up for -250 and shorter unless model + market rate it above the price
     pool.sort(function(a, b){ return b.p - a.p; }); pool = pool.slice(0, one ? 80 : 160);
     if(pool.length < 2){ out.innerHTML = '<p class="note">Not enough open legs with these settings.</p>'; return; }
     var hiMul = one ? 2.6 : 1.25, loMul = one ? 0.9 : 0.8;
