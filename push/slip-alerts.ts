@@ -492,6 +492,19 @@ export async function run(now = Date.now()) {
         for (const s of osubs) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) npromo++; } catch (e) { console.warn("push", String(e)); } }
         done.add(`${owner}|${key}|PRICE`); await mark(String(owner), W, key, "PRICE");
       }
+      // owner 11/6 news edge: a player ruled out after the build whose teammates' FanDuel prices have not moved since - push the owner once per out
+      if (owner && pm && pm.week === W && Array.isArray(pm.news)) {
+        const byOut: Record<string, any[]> = {};
+        for (const n of pm.news) (byOut[n.out] = byOut[n.out] || []).push(n);
+        for (const out of Object.keys(byOut)) {
+          const nk = `news|${out}`; if (done.has(`${owner}|${nk}|NEWS`)) continue;
+          const ls = byOut[out]; const names = Array.from(new Set(ls.map((n: any) => n.pl))).slice(0, 3).join(", ");
+          const nmsg = { title: `⚡ ${out} out - prices haven't moved`.slice(0, 90), body: `FanDuel re-pulled ${names} since the news and ${ls.length} of their over line${ls.length > 1 ? "s are" : " is"} at the old price. Check them before it moves.`.slice(0, 300),
+            url: `/build/?ask=${encodeURIComponent(String(ls[0].pl))}`, tag: `bs-news-${out.slice(0, 40)}` };
+          for (const s of osubs) { try { const c = await sendPush(s, nmsg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) npromo++; } catch (e) { console.warn("push", String(e)); } }
+          done.add(`${owner}|${nk}|NEWS`); await mark(String(owner), W, nk, "NEWS");
+        }
+      }
     } catch (e) { console.warn("price moves", String(e).slice(0, 200)); }
   } catch (e) { console.warn("risk", String(e).slice(0, 200)); }
   // ---- live slip updates (owner 10/30): during games, a note when a leg on a saved slip hits or busts, and when a slip cashes ----
