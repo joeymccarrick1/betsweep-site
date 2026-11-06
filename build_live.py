@@ -250,6 +250,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .lg2 .ghd2 .mdl .pj em{font-size:14px;font-weight:600} .lg2 .ghd2 .mdl .pj.lk em{font-size:12.5px;font-weight:500}
 @media (max-width:560px){ .lg2[id^="lv-"] .ghd2 .mid b{font-size:40px} .lg2[id^="lv-"] .ghd2 .mid b i{margin:0 7px} .lg2[id^="lv-"] .ghd2 .mid b.vs{font-size:24px} .lg2 .ghd2 .mdl .pj em{font-size:13.5px} }
 .lg2 .ghd2 .mdl .gi.inj{white-space:normal;font-size:11.5px;line-height:1.4;max-width:100%} .lg2 .ghd2 .mdl .gi.inj b{display:block;font-family:var(--display);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#c98a12} .lg2 .ghd2 .mdl .gi.inj span{display:block;font-family:var(--body);text-transform:none;letter-spacing:0;font-weight:400;font-size:11.5px;color:var(--mute)}
+table.lvt td.pr i.fair{display:block;font-style:normal;font-size:10.5px;color:var(--ink);font-family:var(--display);letter-spacing:.04em;margin-top:2px;white-space:nowrap}
 .wxr.high{background:var(--bad)} .wxr.moderate{background:#c98a12}
 .gdet{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--chalk) 60%,var(--card))}
 .gdet span{white-space:nowrap} .gdet b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
@@ -265,7 +266,9 @@ JS = r"""
   var D = window.__LV, legs = D.legs, games = {}, order = []; D.games.forEach(function(g){ games[g.gid] = g; order.push(g.gid); });
   var $ = function(s, r){ return (r||document).querySelector(s); };
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]; }); }
-  function am(o){ return o > 0 ? '+' + o : '' + o; } function pc(p){ return Math.round(p*100) + '%'; }
+  function am(o){ return o > 0 ? '+' + o : '' + o; }
+  function fairAm(p){ var o = p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); o = Math.abs(o) >= 1000 ? Math.round(o / 50) * 50 : Math.abs(o) >= 200 ? Math.round(o / 5) * 5 : o; return o > 0 ? '+' + o : '' + o; }
+  function pc(p){ return Math.round(p*100) + '%'; }
   function lum(h){ h = h.replace('#',''); return 0.2126*parseInt(h.substr(0,2),16)/255 + 0.7152*parseInt(h.substr(2,2),16)/255 + 0.0722*parseInt(h.substr(4,2),16)/255; }
   function badge(t, col){ return '<span class="badge" style="--p:' + col[0] + ';--s:' + col[1] + ';--ink:' + (lum(col[0]) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   function norm(s){ return String(s||'').replace(/\./g,'').replace(/\s+(jr|sr|ii|iii|iv|v)$/i,'').replace(/\s+/g,' ').toLowerCase().trim(); }
@@ -497,7 +500,7 @@ JS = r"""
         var prog = (!l.gl && r.status === 'open' && /\//.test(r.now)) ? '<div class="bar' + (r.p >= 0.5 ? ' ok' : '') + '"><i style="width:' + Math.min(100, Math.round(100*(+r.now.split(' / ')[0].replace(/[^\d.]/g,'') || 0)/l.ln)) + '%"></i></div>' : '';
         return '<tr class="' + cls + '" data-k="' + esc(k) + '"><td class="st"><button type="button" class="star" data-k="' + esc(k) + '" title="' + (STARS[k] ? 'Unpin' : 'Pin to the top') + '">' + (STARS[k] ? '★' : '☆') + '</button><button type="button" class="add' + (INSLIP[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="Add to a slip">+</button></td><td class="who"><b>' + esc(legText(l)) + chips + '</b><small>' + esc(l.tm) + ' · ' + (l.src === 'cons' ? 'mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + '</small></td>' +
           '<td class="now"><b>' + esc(r.now || (s.st === 'pre' ? '' : '—')) + '</b>' + prog + '</td>' +
-          '<td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : (d >= 0 ? 'up' : '')) + '">' + (s.st === 'pre' ? pc(l.p) : pc(r.p)) + '</b><small>' + (s.st === 'pre' ? 'pregame' : r.status === 'hit' ? 'cashed' : r.status === 'dead' ? 'gone' : (Math.round(d*100) ? (d >= 0 ? '▲' : '▼') + Math.abs(Math.round(d*100)) + ' since kickoff' : 'from here')) + '</small></td></tr>'; };
+          '<td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : (d >= 0 ? 'up' : '')) + '">' + (s.st === 'pre' ? pc(l.p) : pc(r.p)) + '</b><small>' + (s.st === 'pre' ? 'pregame' : r.status === 'hit' ? 'cashed' : r.status === 'dead' ? 'gone' : (Math.round(d*100) ? (d >= 0 ? '▲' : '▼') + Math.abs(Math.round(d*100)) + ' since kickoff' : 'from here')) + '</small>' + (s.st === 'in' && r.status === 'open' && r.p > 0.02 && r.p < 0.98 ? '<i class="fair" title="Our fair live price for this leg from here. If FanDuel\'s live price pays more than this, the live bet has value by our numbers.">fair ' + fairAm(r.p) + '</i>' : '') + '</td></tr>'; };
       var body = '';
       if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' in the picks yet' : '') + '.</div>';
       else {
