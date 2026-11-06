@@ -169,7 +169,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 
 <div class="grid" style="display:block">
 <div class="lv">
- <div class="lvbar lvtools"><span class="seg" id="lvmode"><button type="button" class="on" data-v="likes">Picks</button><button type="button" data-v="all">Every leg</button></span><button type="button" class="rfr" id="impnew">+ New slip</button><button type="button" class="rfr" id="impopen">Import</button><button type="button" class="rfr" id="lvrefresh" title="Pull the scores and box scores again now">↻</button><span class="upd" id="upd"></span></div>
+ <div class="lvbar lvtools"><button type="button" class="rfr" id="impopen">Import</button><button type="button" class="rfr" id="lvrefresh" title="Pull the scores and box scores again now">↻</button><span class="upd" id="upd"></span></div>
  <details class="lvhelp"><summary>How this page works</summary><p><b>Picks</b> shows your slip, anything you pinned (☆), the best parlay legs and the model's clearest edges for each game; Every leg shows the whole board. During a game each leg shows the live stat against its line and the model's chance from here. Pin the legs you bet and "My week" keeps the running record you can copy or download when the games are done.</p><p><b>Slips:</b> every slip here is tracked live as one parlay. Tap <b>+</b> on any leg to put it in a slip, build a new one, or paste a bet you already placed and the page matches it to this week's legs.</p><p class="lvnote2">Live score, clock, possession and box scores come from ESPN's public scoreboard, refreshed every 30 seconds while a game is on. "From here" pushes the pregame model forward with the time left: yardage and reception legs assume the rest of the game runs at the pregame rate with the pregame spread of outcomes; a touchdown leg keeps the pregame scoring rate for the minutes left; first-TD legs settle on the game's first touchdown; game lines use the same margin and total spreads as the pregame price. After halftime the rest-of-game rates tilt with the score (a team down 7+ throws more, a team up 10+ runs more) and a team in the red zone lifts its players' touchdown chances. None of it knows about an in-game injury, a blowout that benches a starter, or a team sitting on the ball - read the situation line before you trust the number. ☆ pins a leg to the top of its game (saved on this device); + puts a leg in a slip; every slip (the builder slip, slips you build here, slips you import) is tracked at the top of the page as one parlay with the model's chance from here, the ticket price or the price the legs imply, and a fair price from here; slips live on this device only; rows flash when their status changes; "on pace / behind pace" compares the current stat to the share of the game played.</p></details>
  <div class="imp" id="impwrap" hidden><h3>Import a slip</h3><p>One leg per line, the way you'd say it or the way FanDuel shows it: <em>Bijan Robinson 60+ rushing yards</em> · <em>Drake London anytime TD</em> · <em>Commanders -3.5</em> · <em>Over 48.5 SF/WAS</em> · <em>Kittle 4+ receptions</em>. Lines are matched to this week's board; a leg at a line the board doesn't carry is matched to the closest one and marked ≈.</p>
   <textarea id="imptxt" placeholder="Paste or type your legs here…"></textarea>
@@ -462,8 +462,9 @@ window.BSLive = (function(){
         var rest = gl.filter(function(l){ return keep.indexOf(l) < 0 && !l.w && (l.e || 0) > 0; }).sort(function(a, b){ return (liked(b) ? 1 : 0) - (liked(a) ? 1 : 0) || (b.e - a.e); });
         var seenPM = {}; keep.forEach(function(l){ seenPM[l.pl + '|' + l.m] = true; });
         rest.forEach(function(l){ var pm = l.pl + '|' + l.m; if(keep.length < 8 && !seenPM[pm]){ keep.push(l); seenPM[pm] = true; } });
+        var OTHER = gl.filter(function(l){ return keep.indexOf(l) < 0; });
         gl = keep;
-      }
+      } else var OTHER = [];
       var rows = gl.map(function(l){ var r = live(l, g, s); return {l: l, r: r}; });
       var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = STARS[legKey(a.l)] ? 1 : 0, sb_ = STARS[legKey(b.l)] ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
       var hit = rows.filter(function(x){ return x.r.status === 'hit'; }), dead = rows.filter(function(x){ return x.r.status === 'dead'; });
@@ -478,12 +479,16 @@ window.BSLive = (function(){
           '<td class="now"><b>' + esc(r.now || (s.st === 'pre' ? '' : '—')) + '</b>' + prog + '</td>' +
           '<td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : (d >= 0 ? 'up' : '')) + '">' + (s.st === 'pre' ? pc(l.p) : pc(r.p)) + '</b><small>' + (s.st === 'pre' ? 'pregame' : r.status === 'hit' ? 'cashed' : r.status === 'dead' ? 'gone' : (Math.round(d*100) ? (d >= 0 ? '▲' : '▼') + Math.abs(Math.round(d*100)) + ' since kickoff' : 'from here')) + '</small></td></tr>'; };
       var body = '';
-      if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' at the "model likes" filter - switch to All' : '') + '.</div>';
+      if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' in the picks yet' : '') + '.</div>';
       else {
         var oo = (gid + '|open') in OPEN ? OPEN[gid + '|open'] : false;   // owner 11/5: start folded   // owner 11/5: "Make it so I can collapse the still open legs"
         body += '<h4 class="subtog' + (s.st === 'in' ? ' hot' : '') + '" data-g="' + gid + '|open" aria-expanded="' + oo + '">' + (s.st === 'in' ? 'Still open · ' + open.length : s.st === 'pre' ? 'Watch list · ' + open.length : 'Open at the end · ' + open.length) + '<i>' + (oo ? '▴' : '▾') + '</i></h4>' + (oo ? '<table class="lvt">' + open.map(tr).join('') + '</table>' : '');
         var subOpen = function(k, def){ return (k in OPEN) ? OPEN[k] : def; };
         if(hit.length){ var ho = subOpen(gid + '|hit', false); body += '<h4 class="subtog" data-g="' + gid + '|hit" aria-expanded="' + ho + '">Already hit · ' + hit.length + '<i>' + (ho ? '▴' : '▾') + '</i></h4>' + (ho ? '<table class="lvt">' + hit.map(tr).join('') + '</table>' : ''); }
+        if(OTHER.length){ var otv = subOpen(gid + '|other', false);   // owner 11/5: "Make an other legs folder under already hit"
+          body += '<h4 class="subtog" data-g="' + gid + '|other" aria-expanded="' + otv + '">Other legs · ' + OTHER.length + '<i>' + (otv ? '▴' : '▾') + '</i></h4>';
+          if(otv){ var orows = OTHER.map(function(l){ return {l: l, r: live(l, g, s)}; }).sort(function(a, b){ var ra = a.r.status === 'hit' ? 0 : a.r.status === 'dead' ? 2 : 1, rb = b.r.status === 'hit' ? 0 : b.r.status === 'dead' ? 2 : 1; return (ra - rb) || (b.r.p - a.r.p); });
+            body += '<table class="lvt">' + orows.map(tr).join('') + '</table>'; } }
         if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
       }
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
@@ -705,7 +710,7 @@ window.BSLive = (function(){
     $('#impgo').disabled = !ok.length; $('#impgo').textContent = ok.length ? 'Track ' + ok.length + ' leg' + (ok.length > 1 ? 's' : '') + ' as a slip' : 'Nothing matched yet';
   }
   $('#impopen').addEventListener('click', function(){ var w = $('#impwrap'); w.hidden = !w.hidden; if(!w.hidden) $('#imptxt').focus(); });
-  $('#impnew').addEventListener('click', function(){ var nm = prompt('Name this slip', 'Slip ' + (SLIPS.length + 1)); if(nm === null) return; newSlip(nm.trim(), []); render(); window.scrollTo({top: 0, behavior: 'smooth'}); });
+  if($('#impnew')) $('#impnew').addEventListener('click', function(){ var nm = prompt('Name this slip', 'Slip ' + (SLIPS.length + 1)); if(nm === null) return; newSlip(nm.trim(), []); render(); window.scrollTo({top: 0, behavior: 'smooth'}); });
   $('#impmatch').addEventListener('click', runImport); $('#imptxt').addEventListener('input', function(){ clearTimeout(window.__impT); window.__impT = setTimeout(runImport, 400); });
   $('#impgo').addEventListener('click', function(){ var ok = IMPM.filter(function(x){ return x.leg; }); if(!ok.length) return; var keys = []; ok.forEach(function(x){ var k = legKey(x.leg); if(keys.indexOf(k) < 0) keys.push(k); });
     var stake = parseFloat(String($('#impstake').value).replace(/[^\d.]/g, ''));
@@ -716,7 +721,7 @@ window.BSLive = (function(){
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible'){ loadSlips(); render(); } });
   document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.changed){ loadSlips(); render(); } });
   window.addEventListener('storage', function(e){ if(e.key === 'bs_slipk_w' + D.week || e.key === SLKEY || e.key === SKEY){ if(e.key === SKEY){ STARS = {}; try { (JSON.parse(e.newValue || '[]')).forEach(function(k){ STARS[k] = true; }); } catch(x){} } render(); } });
-  document.querySelectorAll('#lvmode button').forEach(function(b){ b.addEventListener('click', function(){ document.querySelectorAll('#lvmode button').forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); mode = b.dataset.v; render(); }); });
+  [].forEach.call(document.querySelectorAll('#lvmode button'), function(){}); document.querySelectorAll('#lvmode button').forEach(function(b){ b.addEventListener('click', function(){ document.querySelectorAll('#lvmode button').forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); mode = b.dataset.v; render(); }); });
   render();
 })();
 </script>
