@@ -486,8 +486,10 @@ export async function run(now = Date.now()) {
     const BOX = await liveBox(recent);
     for (const uid of [...new Set(liveSubs.map((s) => s.user_id))]) {
       const events: string[] = []; const evSid: string[] = [];   // owner 11/1: a tap opens that slip on the Live page
-      for (const r of states.filter((x) => x.user_id === uid && x.key.startsWith("bs_slips_w"))) {
+      for (const r of states.filter((x) => x.user_id === uid && (x.key.startsWith("bs_slips_w") || x.key.startsWith("bs_slipk_w")))) {
         let v: any = null; try { v = JSON.parse(r.value?.v ?? "null"); } catch { v = null; }
+        // owner 11/5 ("how come I'm not getting live notifications about legs hitting?"): the working Builder slip counts too, not only saved slips
+        if (r.key.startsWith("bs_slipk_w")) v = (Array.isArray(v) && v.length) ? [{ id: "builder", name: "Builder slip", keys: v }] : [];
         for (const sl of (Array.isArray(v) ? v : [])) {
           if (!sl || !Array.isArray(sl.keys) || !sl.keys.length) continue;
           const name = String(sl.name || "Saved slip"), sid = String(sl.id || name);
