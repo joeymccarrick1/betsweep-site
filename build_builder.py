@@ -705,9 +705,24 @@ try:
         _l["dv"] = [_inf["role"], _inf["over"], _inf["n"], round(_inf["lg"], 3), _inf["fd"][0], _inf["fd"][1]]; _ndr += 1
     print(f"defense vs role: {_ndr} legs nudged")
 except Exception as _e: print("warn: defense vs role skipped:", _e)
-DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
+# owner 11/6 "a track record on every leg": graded frozen legs ('V2 - FanDuel Leg Snapshots', Latest Snapshot TRUE, HIT / MISS) by market and
+# 10-point band of the % the site showed at the freeze (raw model blended toward the price, calib.shrink) -> D.rec[market][band] = [hits, n]
+REC = {}
+try:
+    _ls = vals("legsnaps.json"); _H = {c: i for i, c in enumerate(_ls[0])}
+    for _r in _ls[1:]:
+        _r = _r + [""] * (len(_ls[0]) - len(_r))
+        if str(_r[_H["Latest Snapshot"]]).upper() != "TRUE" or _r[_H["Result"]] not in ("HIT", "MISS"): continue
+        _rp, _bk = num(_r[_H["Raw model %"]]), num(_r[_H["Book implied %"]])
+        if _rp is None or _bk is None: continue
+        _sp = CALIB.shrink(_rp, _bk); _bd = str(min(80, max(10, int(_sp * 10) * 10)))
+        _x = REC.setdefault(_r[_H["Market"]], {}).setdefault(_bd, [0, 0]); _x[0] += int(_r[_H["Result"]] == "HIT"); _x[1] += 1
+    print("track record:", {m: sum(v[1] for v in d.values()) for m, d in REC.items()})
+except Exception as _e: print("warn: track record skipped:", _e)
+DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
-BUILDER_CSS = r""".askbox{max-width:1100px;margin:10px auto 6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#16202b)} .askbox label b{font-family:var(--display);font-size:18px;letter-spacing:.02em} .askbox label small{color:var(--mute);margin-left:6px}
+BUILDER_CSS = r""".trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
+.askbox{max-width:1100px;margin:10px auto 6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#16202b)} .askbox label b{font-family:var(--display);font-size:18px;letter-spacing:.02em} .askbox label small{color:var(--mute);margin-left:6px}
 .askrow{display:flex;gap:8px;margin-top:8px} .askrow input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--chalk,#0f141c);color:inherit;font:inherit;font-size:16px} .askrow button{padding:0 16px;border-radius:10px;border:0;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;letter-spacing:.05em}
 .askc{margin-top:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--chalk,#0f141c) 70%,transparent);font-size:14px} .askc p{margin:6px 0} .askh{display:flex;justify-content:space-between;gap:8px;align-items:baseline} .askh b{font-size:16px} .askh small{color:var(--mute)}
 .askg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0} .askg span{display:flex;flex-direction:column} .askg small{font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em} .askg b{font-family:var(--display);font-size:20px} .askg b.up{color:var(--good)} .askg b.dn{color:var(--bad)}
@@ -1200,7 +1215,7 @@ BUILDER_JS = r"""
     return '<li class="lg' + (openPl[l.pl + '|' + l.m] ? ' open' : '') + '" data-i="' + l.i + '" data-orig="' + esc(ok) + '"><span class="pz">' + l.pos + '</span>' +
       '<span class="who"><b><a class="pname" href="/player/' + plSlug(l.pl) + '/" title="' + esc(l.pl) + ': lines at every book, hit rates, game log">' + esc(l.pl) + '</a>' + flagMark(l) + (l.gd ? ' <span class="gdo">' + esc(l.gd) + '</span>' : '') + '</b><span>' + l.tm + ' vs ' + l.opp + ' · ' + esc(g.kick) + '</span>' + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow">' + mupill(l) + '</span>' : '') + tierChip(l) + '</span>' +
       '<span class="mk">' + (cyc.length > 1 ? '<span class="pn cyc" role="button" tabindex="0" data-orig="' + esc(ok) + '" title="Next prop for ' + esc(l.pl) + ' (' + (ci + 1) + ' of ' + cyc.length + ')"><i class="car">›</i><small>' + (ci + 1) + '/' + cyc.length + '</small></span>' : '') + '<span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(l.ms) + l5(l) + '</span>' + (isTD(l) ? '' : isGL(l) ? '<small class="glsrc">' + (l.src === 'fd' ? 'FanDuel' : 'consensus') + '</small>' : (ladderOf(l).length > 1 && st.best ? ' ' + fader(l) : ' ' + lnTxt(l))) + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow m">' + mupill(l) + '</span>' : '') + '<small class="d">' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + '</small>' + bookStrip(l) + '<small class="bkl m">' + booksLine(l) + '</small><small class="mp">Model ' + pc(l.p) + ' · book ' + pc(l.bk) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + ' · <b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + ' edge</b></small></span>' +
-      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small><span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
+      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
       '<span class="nums"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
       (started(l.g) && !sel[l.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[l.i] ? 'in' : '') + '">' + (sel[l.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(l) + histBlock(l) + altsBlock(l) + '</li>';
   }
@@ -1308,11 +1323,13 @@ BUILDER_JS = r"""
     var snrow = snChip(l) ? '<div class="snrow">' + snChip(l) + '</div>' : '';
     if(!rows.length) return '<div class="alts">' + snrow + '<div class="none">No other FanDuel markets for ' + esc(l.pl) + ' this week.</div></div>';
     return '<div class="alts">' + snrow + rows.map(function(x){
-      return '<div class="ar" data-i="' + x.i + '"><span class="mk"><span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(x.ms) + l5(x) + '</span>' + (isTD(x) ? '' : isGL(x) ? ' ' + esc(x.pl) : (ladderOf(x).length > 1 ? ' ' + fader(x) : ' ' + lnTxt(x))) + '<small>' + (x.src === 'cons' ? 'Mkt ' : 'FD ') + am(x.o) + (x.proj != null && x.m !== 'Anytime TD' ? ' · proj ' + x.proj : '') + ' · model ' + pc(x.p) + ' · book ' + pc(x.bk) + '</small>' + dpill(x) + flagMark(x) + '</span>' +
+      return '<div class="ar" data-i="' + x.i + '"><span class="mk"><span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(x.ms) + l5(x) + '</span>' + (isTD(x) ? '' : isGL(x) ? ' ' + esc(x.pl) : (ladderOf(x).length > 1 ? ' ' + fader(x) : ' ' + lnTxt(x))) + '<small>' + (x.src === 'cons' ? 'Mkt ' : 'FD ') + am(x.o) + (x.proj != null && x.m !== 'Anytime TD' ? ' · proj ' + x.proj : '') + ' · model ' + pc(x.p) + trk(x) + ' · book ' + pc(x.bk) + '</small>' + dpill(x) + flagMark(x) + '</span>' +
         '<span class="nums"><b class="e ' + (x.e >= 0 ? 'up' : 'dn') + '">' + (x.e >= 0 ? '+' : '') + (x.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
         (started(x.g) && !sel[x.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[x.i] ? 'in' : '') + '">' + (sel[x.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(x) + histBlock(x) + '</div>';
     }).join('') + '</div>';
   }
+  function trk(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
+    return r && r[1] >= 40 ? '<span class="trk" title="Graded Weeks 6+: legs in this market the site showed at ' + Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + '-' + (Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + 10) + '% hit ' + Math.round(r[0] / r[1] * 100) + '% (' + r[1] + ' legs)">hit ' + Math.round(r[0] / r[1] * 100) + '% of ' + r[1] + '</span>' : ''; }
   function flagMark(l){
     var fl = l.fl || [];
     if(l.w) return ' <span class="wf" role="button" tabindex="0" aria-label="flags on this leg" title="Risk flags - tap to read">!</span>';
@@ -1754,7 +1771,7 @@ BUILDER_JS = r"""
   function addBtn(l){ return started(l.g) && !sel[l.i] ? '<button type="button" class="add lockd" disabled>Started</button>' : '<button type="button" class="add' + (sel[l.i] ? ' in' : '') + '">' + (sel[l.i] ? 'In slip ✓' : '+ Add') + '</button>'; }
   function boxBody(l){   // the parts that change with the slider / switch
     return '<div class="pbm">' + l5(l) + mupill(l) + (l.proj != null && !isTD(l) ? '<small class="proj">proj ' + l.proj + '</small>' : '') + '</div>' +
-      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model</small></span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
+      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small></span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
   }
   function statBox(pl, m, pos){
     var g = ladder(pl, m); if(!g.length) return ''; var l = boxLeg(pl, m); var s = BOX[pl + '|' + m] || {}; var u = UND[pl + '|' + m]; var under = s.side === 'u' && u;
