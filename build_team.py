@@ -128,8 +128,16 @@ try:
     print(f"questionable translator (fantasy): {_nq} players scaled, {sum(1 for q in _QI.values() if q['st'] == 'D')} doubtful")
 except Exception as _e: print("warn: questionable translator (fantasy) skipped:", _e)
 
+# owner 11/6 "Fantasy x betting" (fdimplied.py): FanDuel's ladders -> the market's expected stat line for each player (scored per league in
+# the browser: "FD 13.9", and a Model / FanDuel / Blend switch) and his insurance bet for the opponent-stars card.
+try:
+    import fdimplied as _FDI
+    _FDI.attach(PLAYERS, IN)
+except Exception as _e: print("warn: FanDuel-implied fantasy stats skipped:", _e)
+
 # kickoffs for the week (CT) so the page can say who has already played / is on Thursday
 KICK = {}
+KICKTS = {}   # team -> kickoff epoch ms (insurance bets disappear once the game starts)
 try:
     with open(os.path.join(IN, "games.csv"), newline="") as f:
         for g in csv.DictReader(f):
@@ -137,6 +145,10 @@ try:
                 hh, mm = g["gametime"].split(":"); ct = (int(hh) - 1) % 24; ap = "PM" if ct >= 12 else "AM"; h12 = ct - 12 if ct > 12 else (12 if ct == 0 else ct)
                 dt = datetime.date.fromisoformat(g["gameday"]); lab = f"{dt.strftime('%a')} {h12}:{mm} {ap}"
                 KICK[g["away_team"]] = lab; KICK[g["home_team"]] = lab
+                try:
+                    _ts = int(datetime.datetime.fromisoformat(g["gameday"] + "T" + g["gametime"]).replace(tzinfo=__import__("zoneinfo").ZoneInfo("America/New_York")).timestamp() * 1000)
+                    KICKTS[g["away_team"]] = _ts; KICKTS[g["home_team"]] = _ts
+                except Exception: pass
 except Exception: pass
 
 # defense ranks for the opponent pill (season), 1 = allows the most
@@ -158,6 +170,7 @@ for p in PLAYERS:
     p["dr"] = RANKS.get(opp, [None] * 15)[DCOL[c]] if c and c in DCOL and opp in RANKS else None
     p["or"] = _ORK.rank(_OR, p["t"].replace("LAR", "LA"), c) if (_OR and c) else None   # owner 10/29: his own offense's rank in the same stat
     p["k"] = KICK.get(p["t"].replace("LAR", "LA"), "")
+    if p.get("ins"): p["ins"].append(KICKTS.get(p["t"].replace("LAR", "LA"), 0))
 
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
 DATA = {"week": WEEK, "stamp": stamp, "players": PLAYERS}
@@ -199,6 +212,13 @@ TEAM_CSS = r"""
 .lineup .who span{color:var(--mute);font-size:11.5px}
 .lineup .pts{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} .lineup .pts b{display:block;font-family:var(--display);font-size:17px}
 .lineup .pts small{color:var(--mute);font-size:11px}
+.pts small.fdx{display:block;font-size:11px;color:var(--mute);font-family:var(--body)} .pts small.fdx.up{color:var(--good)} .pts small.fdx.dn{color:var(--bad)}
+.fdm{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 14px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute)} .fdm>span{font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px;margin-right:2px}
+.fdm button{font:inherit;font-size:12px;font-weight:600;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--chalk);color:var(--ink);cursor:pointer} .fdm button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.fdm small{flex-basis:100%;font-size:11.5px;line-height:1.35} .fdm[hidden],.ins[hidden]{display:none}
+.ins{padding:10px 14px 12px;border-top:1px solid var(--line)} .ins h3{margin:0;font-family:var(--display);font-size:13px;letter-spacing:.06em;text-transform:uppercase} .ins p.r{margin:2px 0 6px;color:var(--mute);font-size:12px}
+.ins ul{list-style:none;margin:0;padding:0} .ins li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px dashed var(--line)} .ins li:first-child{border-top:0}
+.ins li span{color:var(--mute);font-size:12.5px} .ins li small{display:block;font-size:12px;margin-top:2px} .ins .fdb{flex:none;font-size:12px;font-weight:700;text-decoration:none;color:#fff;background:#1493ff;border-radius:6px;padding:7px 11px;white-space:nowrap}
 .lineup li.chg{box-shadow:inset 4px 0 0 var(--good)}
 .lineup .was{grid-column:2/-1;font-size:12px;color:var(--mute);padding:2px 0 0}
 .lineup .was b{color:var(--good);font-weight:600}
@@ -300,6 +320,36 @@ TEAM_JS = r"""
     pts += sc(s,'bonus_rush_yd_100',0) * pb(p.ry, 100, 28) + sc(s,'bonus_rec_yd_100',0) * pb(p.rcy, 100, 30);
     return Math.max(0, pts);
   }
+  // owner 11/6 "Fantasy x betting": p.fd = what FanDuel's ladders add up to (fdimplied.py); scored here under this league's settings by
+  // swapping each stat FanDuel prices into our projection. FPM = which points drive the page: m (our model), f (FanDuel), b (half and half).
+  var FPM = 'm'; try { FPM = localStorage.getItem('bs_fp_mode') || 'm'; } catch(e){}
+  if(!/^[mfb]$/.test(FPM)) FPM = 'm';
+  var LASTR = null;
+  function fdPts(p, s){
+    if(!p || !p.fd || p.p === 'K' || p.p === 'DEF') return null; var base = scorePlayer(p, s); if(base == null) return null;
+    var f = p.fd, d = 0, te = p.p === 'TE' ? sc(s,'bonus_rec_te',0) : 0;
+    if(f.py != null) d += sc(s,'pass_yd',0.04) * (f.py - (p.py || 0));
+    if(f.ptd != null) d += sc(s,'pass_td',4) * (f.ptd - (p.ptd || 0));
+    if(f.int != null) d += sc(s,'pass_int',-1) * (f.int - (p.int || 0));
+    if(f.ry != null) d += sc(s,'rush_yd',0.1) * (f.ry - (p.ry || 0));
+    if(f.rec != null) d += (sc(s,'rec',1) + te) * (f.rec - (p.rec || 0));
+    if(f.rcy != null) d += sc(s,'rec_yd',0.1) * (f.rcy - (p.rcy || 0));
+    if(f.td != null){ var mt = (p.rtd || 0) + (p.rctd || 0), sh = mt > 0 ? (p.rtd || 0) / mt : (p.p === 'WR' || p.p === 'TE' ? 0.05 : 0.8);
+      d += (f.td - mt) * (sh * sc(s,'rush_td',6) + (1 - sh) * sc(s,'rec_td',6)); }
+    return Math.max(0, base + d); }
+  function ptsFor(p, s){ var m = scorePlayer(p, s); if(m == null || FPM === 'm') return m; var f = fdPts(p, s); if(f == null) return m; return FPM === 'f' ? f : (m + f) / 2; }
+  function altPts(e, s){
+    if(!e || !e.mp || !e.mp.fd || e.flag === 'out' || e.flag === 'bye') return ''; var m = scorePlayer(e.mp, s), f = fdPts(e.mp, s); if(f == null || m == null) return '';
+    var d = f - m, cls = d >= 1.5 ? ' up' : d <= -1.5 ? ' dn' : '';
+    return '<small class="fdx' + cls + '" title="FanDuel\'s props add up to ' + f1(f) + ' pts in this league\'s scoring; our model says ' + f1(m) + '">' + (FPM === 'm' ? 'FD ' + f1(f) : FPM === 'f' ? 'Model ' + f1(m) : 'M ' + f1(m) + ' · FD ' + f1(f)) + '</small>'; }
+  function invNorm(p){   // Acklam's inverse normal
+    var a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.3577518672690, -30.66479806614716, 2.506628277459239],
+        b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572],
+        c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783],
+        d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416], q, r;
+    if(p < 0.02425){ q = Math.sqrt(-2 * Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    if(p > 0.97575){ q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    q = p - 0.5; r = q * q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
   function scoringLabel(s){
     var rec = sc(s,'rec',1), ptd = sc(s,'pass_td',4), te = sc(s,'bonus_rec_te',0);
     var out = [rec === 1 ? 'Full PPR' : rec === 0.5 ? 'Half PPR' : rec === 0 ? 'Standard (no PPR)' : rec + ' per catch'];
@@ -369,6 +419,7 @@ TEAM_JS = r"""
   function badInjury(sp){ return sp && /^(Out|IR|PUP|Sus|Doubtful|NA)$/i.test(sp.i || ''); }
 
   var state = {user: null, leagues: [], league: null, week: WEEK, season: null};
+  document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('#fdm [data-fm]'); if(!b) return; FPM = b.getAttribute('data-fm'); try { localStorage.setItem('bs_fp_mode', FPM); } catch(e){} if(LASTR) render.apply(null, LASTR); });
   var msg = $('#msg'), out = $('#out');
   function say(t, err){ msg.hidden = !t; msg.textContent = t || ''; msg.classList.toggle('err', !!err); }
 
@@ -401,6 +452,7 @@ TEAM_JS = r"""
   }
 
   function render(l, pm, rosters, users, matchups, trending, wk){
+    LASTR = [l, pm, rosters, users, matchups, trending, wk];
     var s = l.scoring_settings || {}; var slots = l.roster_positions || [];
     var me = l.me || (state.user && state.user.user_id); var manual = !!l.manual;
     var mine = rosters.filter(function(r){ return r.owner_id === me || (r.co_owners || []).indexOf(me) >= 0; })[0];
@@ -410,7 +462,7 @@ TEAM_JS = r"""
     var owned = {}; rosters.forEach(function(r){ (r.players || []).forEach(function(id){ owned[id] = r.roster_id; }); });
 
     function entry(id){
-      var sp = pm[id] || {n: id, t: '', p: '?', i: ''}; var mp = modelFor(sp); var pts = mp ? scorePlayer(mp, s) : null;
+      var sp = pm[id] || {n: id, t: '', p: '?', i: ''}; var mp = modelFor(sp); var pts = mp ? ptsFor(mp, s) : null;
       var flag = '';
       if(mp && mp.o === 'BYE'){ pts = 0; flag = 'bye'; }
       else if(badInjury(sp)){ pts = 0; flag = 'out'; }
@@ -447,6 +499,29 @@ TEAM_JS = r"""
       (oppM ? '<div><small>' + esc(oppName) + '</small><b>' + f1(oppTotal) + '</b><span>their current starters, same model</span></div><div class="wp"><small>Win chance</small><b>' + pct(wp) + '</b><span>model lineup vs their current one</span></div>' : '<div><small>Matchup</small><b>—</b><span>no Week ' + wk + ' matchup found</span></div>');
     $('#oppbar').innerHTML = oppM ? '<div class="side"><b>' + f1(bestTotal) + '</b><span>' + esc(myName) + '</span></div><div class="vs">VS</div><div class="side r"><b>' + f1(oppTotal) + '</b><span>' + esc(oppName) + '</span></div>' : '';
     $('#meter').innerHTML = oppM ? '<i style="width:' + (wp * 100).toFixed(1) + '%"></i>' : ''; $('#meter').hidden = !oppM;
+    // owner 11/6 insurance: their best starters and the FanDuel over that cashes in exactly the game where he beats you. The win chance
+    // "if it hits" moves their total by what an over has meant for a fantasy day: research/insurance_shift.py (2024-26, his own median as
+    // the line) - over on the main stat = +24% of his average for a QB, +34% RB, +46% WR, +45% TE; a TD = +34 / 61 / 74 / 78%. Lines that
+    // are not coin flips scale by the normal tail (E[x | over] grows as the over gets less likely).
+    var OVUP = {QB: 0.24, RB: 0.34, WR: 0.46, TE: 0.45}, TDUP = {QB: 0.34, RB: 0.61, WR: 0.74, TE: 0.78};
+    var insH = '';
+    if(oppM){
+      var ostars = (oppM.starters || []).filter(function(id){ return id && id !== '0'; }).map(entry)
+        .filter(function(e){ var b = e.mp && e.mp.ins; return b && e.flag !== 'out' && e.flag !== 'bye' && !(b[7] && Date.now() > b[7]); })
+        .sort(function(a, b){ return b.pts - a.pts; }).slice(0, 3);
+      if(ostars.length) insH = '<h3>Insure against their stars</h3><p class="r">If one of these goes off you probably lose your matchup - each bet cashes in exactly that game.</p><ul>' + ostars.map(function(e){
+        var b = e.mp.ins, ph = Math.min(0.95, Math.max(0.05, b[5])), z = invNorm(1 - ph), ps = e.mp.p;
+        var up = e.pts * (b[6] === 't' ? (TDUP[ps] || 0.6) : (OVUP[ps] || 0.4) * (Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI) / ph) / 0.7979);
+        var wpHit = normalCdf((bestTotal - oppTotal - up) / (sd * Math.SQRT2));
+        var url = 'https://sportsbook.fanduel.com/addToBetslip?marketId[0]=' + encodeURIComponent(b[3]) + '&selectionId[0]=' + encodeURIComponent(b[4]);
+        return '<li><div><b>' + esc(e.name) + '</b> <span>' + (b[6] === 't' ? 'anytime TD' : 'over ' + b[1] + ' ' + esc(b[0])) + ' · ' + (b[2] > 0 ? '+' + b[2] : b[2]) + '</span>' +
+          '<small>If it hits, your win chance goes ' + pct(wp) + ' → <b>' + pct(wpHit) + '</b></small></div><a class="fdb" href="' + url + '" target="_blank" rel="noopener">FanDuel</a></li>'; }).join('') + '</ul>';
+    }
+    $('#ins').innerHTML = insH; $('#ins').hidden = !insH;
+    var nfd = roster.filter(function(e){ return e.mp && e.mp.fd; }).length;
+    $('#fdm').hidden = !nfd;
+    $('#fdm').innerHTML = '<span>Points</span>' + [['m', 'Our model'], ['f', 'FanDuel lines'], ['b', 'Blend']].map(function(x){ return '<button type="button" data-fm="' + x[0] + '" class="' + (FPM === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') +
+      '<small>' + (FPM === 'f' ? 'Each player\'s FanDuel props added up and scored your league\'s way (our model where FanDuel has no line).' : FPM === 'b' ? 'Half our model, half FanDuel\'s lines - on single props that mix has graded better than either alone.' : '<b>FD</b> under each player = what his FanDuel props add up to in your scoring.') + '</small>';
 
     // lineup list
     var li = ''; var changes = 0;
@@ -460,7 +535,7 @@ TEAM_JS = r"""
       var wasStarting = p && curStarters.indexOf(p.id) >= 0; var chg = p && !wasStarting && !noCur;
       if(chg) changes++;
       li += '<li class="' + (chg ? 'chg' : '') + '"><span class="slot">' + esc(sl.replace('SUPER_FLEX', 'SFLX').replace('REC_FLEX', 'W/T').replace('WRRB_FLEX', 'W/R')) + '</span>' +
-        (p ? '<span class="who"><b>' + esc(p.e.name) + tagFor(p.e) + '</b><span>' + esc(p.pos) + (p.e.mp ? ' · ' + esc(p.e.mp.t) + (p.e.mp.k ? ' · ' + esc(p.e.mp.k) : '') : '') + '</span></span><span class="pts"><b>' + f1(p.pts) + '</b>' + dpill(p.e.mp) + '</span>' : '<span class="who"><b style="color:var(--mute)">nobody healthy fits</b></span><span class="pts"><b>0.0</b></span>') +
+        (p ? '<span class="who"><b>' + esc(p.e.name) + tagFor(p.e) + '</b><span>' + esc(p.pos) + (p.e.mp ? ' · ' + esc(p.e.mp.t) + (p.e.mp.k ? ' · ' + esc(p.e.mp.k) : '') : '') + '</span></span><span class="pts"><b>' + f1(p.pts) + '</b>' + dpill(p.e.mp) + altPts(p.e, s) + '</span>' : '<span class="who"><b style="color:var(--mute)">nobody healthy fits</b></span><span class="pts"><b>0.0</b></span>') +
         (chg ? '<span class="was">' + (cur ? 'over <b>' + esc(cur.name) + '</b> (' + f1(cur.pts) + (cur.flag === 'out' ? ', out' : cur.flag === 'bye' ? ', bye' : '') + ')' : 'moves into the lineup') + '</span>' : '') + '</li>';
     });
     $('#lineup').innerHTML = li;
@@ -475,11 +550,11 @@ TEAM_JS = r"""
         if (row.league_id) acct.client.from('fantasy_rosters').upsert(row, {onConflict: 'user_id,league_id'}).then(function(r){ if (r.error && !/relation|does not exist/i.test(r.error.message)) console.warn('roster sync', r.error.message); }); } } catch(e){}
     // full roster
     roster.sort(function(a, b){ return b.pts - a.pts || a.name.localeCompare(b.name); });
-    $('#roster').innerHTML = roster.map(function(e){ return '<li class="' + (startSet[e.id] ? 'st' : '') + '"><span class="pz">' + esc(e.pos) + '</span><span class="who"><b>' + esc(e.name) + tagFor(e) + '</b><span>' + (e.mp ? esc(e.mp.t) + (e.mp.o ? ' vs ' + esc(e.mp.o) : '') + (e.mp.role && e.mp.role !== e.pos ? ' · ' + esc(e.mp.role) : '') : 'not in the model this week') + '</span></span><span class="pts"><b>' + f1(e.pts) + '</b><small>' + (startSet[e.id] ? 'start' : 'bench') + '</small></span></li>'; }).join('');
+    $('#roster').innerHTML = roster.map(function(e){ return '<li class="' + (startSet[e.id] ? 'st' : '') + '"><span class="pz">' + esc(e.pos) + '</span><span class="who"><b>' + esc(e.name) + tagFor(e) + '</b><span>' + (e.mp ? esc(e.mp.t) + (e.mp.o ? ' vs ' + esc(e.mp.o) : '') + (e.mp.role && e.mp.role !== e.pos ? ' · ' + esc(e.mp.role) : '') : 'not in the model this week') + '</span></span><span class="pts"><b>' + f1(e.pts) + '</b><small>' + (startSet[e.id] ? 'start' : 'bench') + '</small>' + altPts(e, s) + '</span></li>'; }).join('');
 
     // waivers: best unowned by position, with trending-add flag; compare to your weakest starter at that position
     var worst = {}; Object.keys(best).forEach(function(i){ var p = best[i]; if(!(p.pos in worst) || p.pts < worst[p.pos]) worst[p.pos] = p.pts; });
-    var fa = []; Object.keys(pm).forEach(function(id){ if(owned[id]) return; var sp = pm[id]; var mp = modelFor(sp); if(!mp || !mp.act || mp.o === 'BYE' || badInjury(sp)) return; var pts = scorePlayer(mp, s); if(pts > 1) fa.push({id: id, sp: sp, mp: mp, pts: pts, hot: hot[id] || 0}); });
+    var fa = []; Object.keys(pm).forEach(function(id){ if(owned[id]) return; var sp = pm[id]; var mp = modelFor(sp); if(!mp || !mp.act || mp.o === 'BYE' || badInjury(sp)) return; var pts = ptsFor(mp, s); if(pts > 1) fa.push({id: id, sp: sp, mp: mp, pts: pts, hot: hot[id] || 0}); });
     var wh = ''; ['QB','RB','WR','TE','K','DEF'].forEach(function(pos){
       if(!slots.some(function(sl){ return (FLEX[sl] || []).indexOf(pos) >= 0; })) return;
       var list = fa.filter(function(x){ return x.mp.p === pos; }).sort(function(a, b){ return b.pts - a.pts; }).slice(0, 5);
@@ -647,9 +722,11 @@ body = f'''<div class="tm-wrap">
    <div class="tiles" id="tiles"></div>
    <div class="oppbar" id="oppbar"></div>
    <div class="meter" id="meter" hidden></div>
+   <div class="ins" id="ins" hidden></div>
   </section>
   <section class="panel" style="margin-bottom:14px">
    <h2 id="lineupH"><b>Lineup check</b></h2>
+   <div class="fdm" id="fdm" hidden></div>
    <ul class="lineup" id="lineup"></ul>
    <p class="note">Green bar = a player the model would start who is not in your lineup right now. Points are the model's projection under this league's scoring. Players Sleeper lists as Out, IR or Doubtful, players on bye, and players the model has inactive are scored 0 and never recommended. Sleeper has no public way to set a lineup from here, so make the swaps in the Sleeper app.</p>
   </section>
