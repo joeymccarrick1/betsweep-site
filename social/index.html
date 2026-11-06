@@ -53,6 +53,13 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 
 a{color:var(--ink)}
+.sharps h2{font-family:var(--display);font-size:22px;margin:4px 0 2px} .sharps ol{list-style:none;margin:8px 0 10px;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.sharps li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)} .sharps li:first-child{border-top:0}
+.sharps .rk{font-family:var(--display);font-weight:800;font-size:18px;color:var(--mute);text-align:center} .sharps li:nth-child(-n+3) .rk{color:var(--red)}
+.sharps .who b{font-size:15px} .sharps .who small{display:block;color:var(--mute);font-size:12px;margin-top:1px}
+.sharps .cv{text-align:right} .sharps .cv b{display:block;font-family:var(--display);font-size:20px;font-weight:800} .sharps .cv small{color:var(--mute);font-size:11px}
+.sharps li.up .cv b{color:var(--good)} .sharps li.dn .cv b{color:var(--bad)}
+.shp{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;vertical-align:2px;background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
 
 .soc{max-width:760px;margin:0 auto;padding:6px 0 40px}
 .soc h1{font-family:var(--display);font-size:32px;margin:16px 0 2px;letter-spacing:.02em}
@@ -95,7 +102,7 @@ a{color:var(--ink)}
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips posted by BetSweep users this week. Upvote the ones you like - the most-upvoted sit on top. Tail on FanDuel in one tap, or load a slip into the Parlay Builder to see the model's price. A slip comes down on its own once a leg loses or every game in it is over.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  <p class="lede" id="feedinfo">Loading…</p>
  <div id="feed"></div>
  <p class="rules">Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
@@ -122,7 +129,40 @@ a{color:var(--ink)}
   function fdUrl(ls){ var ok = ls.map(function(l){ return (l.ko && Date.now() >= l.ko) ? null : fdIds(l); }).filter(Boolean); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(f, i){ return 'marketId[' + i + ']=' + encodeURIComponent(f.m) + '&selectionId[' + i + ']=' + encodeURIComponent(f.s); }).join('&'); }
   function ago(t){ var m = Math.round((Date.now() - new Date(t).getTime()) / 6e4); return m < 60 ? m + 'm ago' : m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'; }
+  // ---- owner 11/6 sharp leaderboard: every poster ranked by closing-line value - how much better each posted leg's price was than FanDuel's
+  // final price before kickoff (data/closing-w<W>.json, the price-moves job's last pull before each game). Beating the close is the earliest
+  // reliable sign of a sharp bettor; win-loss records need hundreds of bets to say the same thing. Score = total CLV / (legs + 15), so a
+  // handful of lucky legs cannot top the board. Proven sharps (15+ graded legs, positive score) get a badge on their posts.
+  var SHARP = null, SHARP_BUSY = false, SHARP_BADGE = {};
+  function imp(o){ o = +o; return o > 0 ? 100 / (o + 100) : -o / (-o + 100); }
+  function closeKeys(l){ var ln = +l.ln, out = [], m = String(l.m || '').toLowerCase(), pl = String(l.pl || '').toLowerCase();
+    [String(l.ln), String(Math.round(ln)), ln % 1 ? ln.toFixed(1) : String(ln)].forEach(function(x){ var k = pl + '|' + m + '|' + x; if(out.indexOf(k) < 0) out.push(k); }); return out; }
+  function sharpLoad(cb){
+    if(SHARP){ cb && cb(); return; } if(SHARP_BUSY){ setTimeout(function(){ sharpLoad(cb); }, 400); return; } SHARP_BUSY = true;
+    A.client.from('feed_posts').select('handle,week,legs,created_at').eq('status', 'open').order('created_at', {ascending: false}).limit(1000).then(function(r){
+      var posts = (r && r.data) || [], weeks = {}; posts.forEach(function(p){ if(p.week) weeks[p.week] = 1; });
+      return Promise.all(Object.keys(weeks).map(function(w){ return fetch('/data/closing-w' + w + '.json', {cache: 'no-cache'}).then(function(x){ return x.ok ? x.json() : null; }).catch(function(){ return null; })
+        .then(function(j){ return [w, (j && j.rows) || {}]; }); })).then(function(cl){
+        var C = {}; cl.forEach(function(x){ C[x[0]] = x[1]; }); var H = {};
+        posts.forEach(function(p){ var rows = C[p.week] || {}, h = H[p.handle] || (H[p.handle] = {h: p.handle, n: 0, sum: 0, beat: 0, posts: 0, last: p.created_at}), used = false;
+          (p.legs || []).forEach(function(l){ if(l.gl || l.o == null) return; var c = null; closeKeys(l).some(function(k){ c = rows[k]; return !!c; }); if(!c || c.o == null) return;
+            var d = (imp(c.o) - imp(l.o)) * 100; h.n++; h.sum += d; if(d > 0.05) h.beat++; used = true; });
+          if(used) h.posts++; });
+        SHARP = Object.keys(H).map(function(k){ var x = H[k]; x.avg = x.n ? x.sum / x.n : 0; x.score = x.sum / (x.n + 15); return x; }).filter(function(x){ return x.n >= 5; }).sort(function(a, b){ return b.score - a.score; });
+        SHARP_BADGE = {}; SHARP.filter(function(x){ return x.n >= 15 && x.score > 0.3; }).slice(0, 5).forEach(function(x){ SHARP_BADGE[x.h] = 1; });
+        SHARP_BUSY = false; cb && cb(); }); }).catch(function(){ SHARP = []; SHARP_BUSY = false; cb && cb(); });
+  }
+  function sharps(){
+    if(!SHARP){ list.innerHTML = '<div class="empty">Grading every posted leg against FanDuel\'s closing price…</div>'; sharpLoad(function(){ if(sort === 'sharp') sharps(); }); return; }
+    info.textContent = 'Closing-line value of every posted leg, this season';
+    var me = A && A.user ? A.user.id : null;
+    list.innerHTML = '<section class="sharps"><h2>Sharpest posters</h2><p class="lede">Ranked by <b>closing-line value</b>: how much better each posted leg\'s price was than FanDuel\'s last price before kickoff. Beating the close is the earliest reliable sign of a sharp bettor - a win-loss record needs hundreds of bets to say the same thing. Player props only; at least 5 graded legs to be listed.</p>' +
+      (SHARP.length ? '<ol>' + SHARP.slice(0, 25).map(function(x, i){ return '<li class="' + (x.avg > 0 ? 'up' : 'dn') + '"><span class="rk">' + (i + 1) + '</span><span class="who"><b>@' + esc(x.h) + '</b>' + (SHARP_BADGE[x.h] ? '<span class="shp">Sharp</span>' : '') + '<small>beat the close on ' + x.beat + ' of ' + x.n + ' legs (' + Math.round(x.beat / x.n * 100) + '%) · ' + x.posts + ' slip' + (x.posts > 1 ? 's' : '') + '</small></span><span class="cv"><b>' + (x.avg >= 0 ? '+' : '') + x.avg.toFixed(1) + '</b><small>pts / leg</small></span></li>'; }).join('') + '</ol>'
+        : '<div class="empty">Not enough graded legs yet - closing prices are captured for player props from Week 9 on. Post slips before the lines move to climb this board.</div>') +
+      '<p class="rules">CLV = FanDuel\'s closing chance minus the chance in the price when the slip was posted (the BetSweep price at that moment), in points per leg. Game lines are not counted yet.</p></section>';
+  }
   function render(){
+    if(sort === 'sharp'){ sharps(); return; }
     var me = A && A.user ? A.user.id : null;
     var ps = POSTS.slice().sort(sort === 'new' ? function(a, b){ return new Date(b.created_at) - new Date(a.created_at); }
                                               : function(a, b){ return (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)); });
@@ -131,7 +171,7 @@ a{color:var(--ink)}
       var ls = p.legs || [], url = fdUrl(ls), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
       return '<article class="post' + (p.user_id === me ? ' mine' : '') + '" id="p' + p.id + '" data-id="' + p.id + '">' +
         '<div class="ph"><button type="button" class="vote' + (MYV[p.id] ? ' on' : '') + '" data-v="' + p.id + '" aria-pressed="' + !!MYV[p.id] + '" aria-label="Upvote"><i>▲</i><b>' + p.score + '</b></button>' +
-        '<div class="who"><b>@' + esc(p.handle) + '</b>' + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
+        '<div class="who"><b>@' + esc(p.handle) + '</b>' + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
         '<div class="od">' + esc(am(p.fd_odds)) + '</div></div>' +
         '<ul>' + ls.map(function(l, i){ return '<li data-i="' + i + '"><span class="lg">' + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
         '<div class="pf">' + (url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '') +
@@ -148,7 +188,8 @@ a{color:var(--ink)}
       .order('score', {ascending: false}).order('created_at', {ascending: false}).limit(150).then(function(r){
         if(r.error){ info.textContent = (r.error.code === '42P01' || r.error.code === 'PGRST205') ? 'Social is being set up - check back soon.' : 'Could not load the feed (' + r.error.message + (r.error.code ? ', ' + r.error.code : '') + ').'; try{ console.error('feed load', r.error); }catch(e){} list.innerHTML = ''; return; }
         POSTS = (r.data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; });
-        info.textContent = POSTS.length + ' open slip' + (POSTS.length === 1 ? '' : 's') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
+        if(sort !== 'sharp') info.textContent = POSTS.length + ' open slip' + (POSTS.length === 1 ? '' : 's') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
+        if(!SHARP && !SHARP_BUSY) setTimeout(function(){ sharpLoad(function(){ if(sort !== 'sharp' && Object.keys(SHARP_BADGE).length) render(); }); }, 1200);
         var me = A.user ? A.user.id : null;
         if(!me || !POSTS.length){ MYV = {}; render(); return; }
         A.client.from('feed_votes').select('post_id').eq('user_id', me).in('post_id', POSTS.map(function(p){ return p.id; })).then(function(v){ MYV = {}; (v.data || []).forEach(function(x){ MYV[x.post_id] = 1; }); render(); });
@@ -170,7 +211,7 @@ a{color:var(--ink)}
   });
   function confirmInline(b, q){ if(b.dataset.armed) return true; b.dataset.armed = 1; var t = b.textContent; b.textContent = q + ' tap again'; setTimeout(function(){ delete b.dataset.armed; if(!b.disabled) b.textContent = t; }, 3000); return false; }
   document.querySelectorAll('.soc .seg button').forEach(function(b){ b.classList.toggle('on', b.dataset.s === sort); b.addEventListener('click', function(){ sort = b.dataset.s; try { localStorage.setItem('bs_social_sort', sort); } catch(e){}
-    document.querySelectorAll('.soc .seg button').forEach(function(x){ x.classList.toggle('on', x === b); }); info.textContent = POSTS.length + ' open slips · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes'); render(); }); });
+    document.querySelectorAll('.soc .seg button').forEach(function(x){ x.classList.toggle('on', x === b); }); info.textContent = sort === 'sharp' ? '' : POSTS.length + ' open slips · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes'); render(); }); });
   // ---- live grading (same rules as the home page's promoted bets): a slip leaves the feed when a leg loses or every game is over ----
   var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
   function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
