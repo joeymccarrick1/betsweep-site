@@ -146,3 +146,7 @@ For each promo: `NAME - price (chance %)`, the legs (player, line, odds, BetSwee
 post and an Instagram caption from the templates in the playbook (end with "21+ | gamble responsibly"). Thursday / Sunday main / prime-time
 runs add a 4-line Reel/TikTok script (hook, the slip, the one stat, the call to action). Finish with "Assumed:" (one line) and
 "Skipped:" (legs dropped for injury / weather / flags, one line).
+
+
+## Similar defenses (owner 11/6)
+Every builder leg on a player's main stat carries `sd` = [split vs his 3 most similar past opponents, avg in those games, season avg, opponents, games above average]. When choosing a best bet or the legs of a promo, among legs that already pass this desk's leg filter and parlay rules, prefer the leg with the higher split (and 3/3 consistency); say the split in the write-up ("averaged 62 rec yds against defenses like Baltimore's"). Never use it to let in a leg the filter rejects.
