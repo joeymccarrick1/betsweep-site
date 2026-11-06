@@ -82,4 +82,54 @@ def main():
     for m in moves[:12]: print(" ", m["dir"], m["detail"])
     return 0
 
-if __name__ == "__main__": sys.exit(main())
+
+# ---- closing lines (owner 11/5 "do all of these"): 'V2 - Closing Lines' needed an Apps Script that was never installed, so the tab stayed
+# empty and the season page's CLV card never filled. This keeps, for every frozen leg (legsnaps, Latest Snapshot TRUE), the newest FanDuel
+# price from the mirror that was PULLED BEFORE that leg's kickoff - so the last write before kickoff is the closing price. Stored in
+# data/closing-w<W>.json; sheets_pull.py turns it into in/closing.json (same columns as the tab) when the tab is empty.
+def closing():
+    import datetime as dt, re
+    RAW = "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site"
+    snaps = get(f"{RAW}/sheet-mirror/in/legsnaps.json")["values"]; S = {c: i for i, c in enumerate(snaps[0])}
+    links = get(f"{RAW}/sheet-mirror/in/links.json")["values"]; H = {c: i for i, c in enumerate(links[0])}
+    px = {}
+    for r in links[1:]:
+        if len(r) <= H["Updated"]: continue
+        try: px[str(r[H["Key"]]).strip().lower()] = (float(r[H["FanDuel odds"]]), str(r[H["Updated"]]))
+        except Exception: pass
+    def ko_of(txt, year):   # 'Thu 11/5 7:15 PM' (CT) -> 'YYYY-MM-DD HH:MM'
+        m = re.match(r"\w+ (\d+)/(\d+) (\d+):(\d+) (AM|PM)", str(txt or "").strip())
+        if not m: return None
+        mo, d, h, mi, ap = int(m[1]), int(m[2]), int(m[3]) % 12, int(m[4]), m[5]
+        return f"{year}-{mo:02d}-{d:02d} {h + (12 if ap == 'PM' else 0):02d}:{mi:02d}"
+    ct = dt.datetime.now(dt.timezone(dt.timedelta(hours=-6))); cap = ct.strftime("%Y-%m-%d %H:%M")
+    weeks = {}
+    for r in snaps[1:]:
+        r = r + [""] * (len(snaps[0]) - len(r))
+        if str(r[S["Latest Snapshot"]]).upper() != "TRUE": continue
+        try: w = int(float(r[0]))
+        except Exception: continue
+        weeks.setdefault(w, []).append(r)
+    if not weeks: return
+    W = max(weeks); path = f"data/closing-w{W}.json"
+    try: cur = json.load(open(path))
+    except Exception: cur = {"week": W, "rows": {}}
+    rows = cur["rows"]; n_new = 0
+    for r in weeks[W]:
+        ln = r[S["Line (X+)"]]
+        try: f = float(ln); ln = str(int(f)) if f == int(f) else str(f)
+        except Exception: pass
+        key = f"{str(r[S['Player']]).strip()}|{r[S['Market']]}|{ln}".lower()
+        p = px.get(key); ko = ko_of(r[S["Kickoff (CT)"]], ct.year)
+        if not p or not ko or not p[1] or p[1][:16] >= ko: continue          # only prices pulled before kickoff
+        if p[1][:16] <= str(r[S["Frozen At"]])[:16]: continue                # and after our freeze (otherwise it is the freeze price)
+        old = rows.get(key)
+        if old and old["pulled"] >= p[1][:16]: continue
+        rows[key] = {"pl": r[S["Player"]], "m": r[S["Market"]], "ln": ln, "o": p[0], "imp": round(imp(p[0]), 4), "pulled": p[1][:16], "ko": ko, "cap": cap}; n_new += 1
+    cur["updated"] = cap; json.dump(cur, open(path, "w"), indent=0)
+    print(f"closing lines week {W}: {len(rows)} legs ({n_new} new/updated)")
+
+if __name__ == "__main__":
+    try: closing()
+    except Exception as e: print("closing lines skipped:", e)
+    sys.exit(main())
