@@ -79,6 +79,9 @@ if sb:
         if st.get("state") != "in": continue
         sm = get(f"{S}/summary?event={ev['id']}")
         if not sm: continue
+        # 11/5: the raw summary of every live game (play-by-play, drives, box score) - a mirror for testing the live page / Gamecast and a fallback when ESPN is slow
+        try: json.dump(sm, open(f"out/summary-{ev['id']}.json", "w"), separators=(",", ":"))
+        except Exception as e: print("summary mirror", e)
         comp = (ev.get("competitions") or [{}])[0]; cs = {c["homeAway"]: c for c in comp.get("competitors", [])}
         sit = comp.get("situation") or {}
         LOG.append({"ts": now.isoformat(), "eid": ev["id"], "home": cs.get("home", {}).get("team", {}).get("abbreviation"), "away": cs.get("away", {}).get("team", {}).get("abbreviation"),
