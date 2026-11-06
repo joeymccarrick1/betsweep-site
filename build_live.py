@@ -195,6 +195,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
   .sc2 .slipbar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center} .sc2 .slipbar .fd{grid-column:1/-1;text-align:center}
   .sc2 .slipbar label{display:flex;align-items:center;gap:6px;min-width:0} .sc2 .slipbar label input{width:100%;min-width:0} }
 .slipsgrp .finin{padding:8px 10px 10px;display:grid;gap:10px} .slipsgrp .finin .lg2{margin:0}
+.tmsel{display:flex;gap:8px;padding:10px 0 6px;margin-top:-10px;position:sticky;top:-10px;background:var(--card);z-index:2} .tmb{flex:1;font:inherit;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);cursor:pointer} .tmb.on{background:var(--red);border-color:var(--red);color:#fff}
 /* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
@@ -470,8 +471,11 @@ JS = r"""
   function legMark(l){ var g = games[l.g], s = STATE[l.g] || {st: 'in'}; var r = live(l, g, s); var cls = r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : 'open'; return '<span class="lm ' + cls + '">' + (r.status === 'hit' ? '✓ ' : r.status === 'dead' ? '✗ ' : '') + esc(legText(l).replace(l.pl, '').trim()) + (r.now ? ' · ' + esc(r.now) : '') + '</span>'; }
   function drillBox(js, gid){
     var mine = myLegsFor(gid), html = '';
-    (js.boxscore && js.boxscore.players || []).forEach(function(tm){
-      var ab = tm.team && tm.team.abbreviation || ''; html += '<h4>' + esc(tm.team && tm.team.displayName || ab) + '</h4>';
+    // owner 11/5: a button per team (left team first) so the box score shows one team at a time
+    var TMS = (js.boxscore && js.boxscore.players || []), pick = (DRILL && DRILL.team) || (TMS[0] && TMS[0].team && TMS[0].team.abbreviation);
+    if(TMS.length > 1) html += '<div class="tmsel">' + TMS.map(function(tm){ var a2 = tm.team && tm.team.abbreviation || ''; return '<button type="button" class="tmb' + (a2 === pick ? ' on' : '') + '" data-tm="' + esc(a2) + '">' + esc(tm.team && tm.team.displayName || a2) + '</button>'; }).join('') + '</div>';
+    TMS.forEach(function(tm){
+      var ab = tm.team && tm.team.abbreviation || ''; if(TMS.length > 1 && ab !== pick) return; if(TMS.length < 2) html += '<h4>' + esc(tm.team && tm.team.displayName || ab) + '</h4>';
       (tm.statistics || []).forEach(function(cat){
         if(['passing', 'rushing', 'receiving', 'fumbles', 'interceptions', 'kicking', 'kickReturns', 'puntReturns', 'defensive'].indexOf(cat.name) < 0) return;
         var labs = cat.labels || []; if(!(cat.athletes || []).length) return;
@@ -548,7 +552,8 @@ JS = r"""
   document.addEventListener('click', function(ev){
     var b = ev.target.closest('.drill'); if(b){ openDrill(b.dataset.g); return; }
     if(ev.target.closest('.dclose') || (ev.target.id === 'lvdrill')){ closeDrill(); return; }
-    var t = ev.target.closest('.dtab'); if(t && DRILL){ DRILL.tab = t.dataset.t; DRILL.sy = 0; drawDrill(); } });
+    var t = ev.target.closest('.dtab'); if(t && DRILL){ DRILL.tab = t.dataset.t; DRILL.sy = 0; drawDrill(); return; }
+    var tb = ev.target.closest('.tmb'); if(tb && DRILL){ DRILL.team = tb.dataset.tm; DRILL.sy = 0; drawDrill(); } });
   document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && DRILL) closeDrill(); });
   (function(){ var m = (location.hash || '').match(/^#box-([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && games[m[1]]) setTimeout(function(){ openDrill(m[1]); }, 1200); })();
   // ---- polling: scoreboard (BSLive) + one summary call per live game every 30 s ----
