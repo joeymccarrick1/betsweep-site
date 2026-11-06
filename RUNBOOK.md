@@ -347,3 +347,7 @@ Rules for new pages: use the tokens (never a new colour), the control classes ab
 
 ## What changed feed (owner 11/5)
 - .github/feeds.py (feeds Action, every 10 min / 3 min in game windows) diffs each run against the previous feeds-branch files and appends to changes.json (7 days, 400 events): injury status changes, game-day inactives, weather tier / rain-chance (20+ pts) / wind (5+ mph) changes, new player-news items. The Live page "What changed" card fetches it from raw.githubusercontent plus /data/price-moves.json (every move on your legs, 8+ implied pts elsewhere), filters to projected skill players (live data "sk") and shows events since the user last closed the card (bs_chg_seen).
+
+## Ask BetSweep + bet sizing (owner 11/5)
+- Ask BetSweep: build_builder.py BUILDER_JS askAnswer() - a search box above the builder grid (also /build/?ask=<query>, in the menu). Parses player (legs + game logs + flags; last name / unique first name; ties go to the player who has the asked stat), stat (rec yds, rush, pass, rec, long, TD, rush+rec), line number and "under"; answers with FanDuel price, model %, edge, fair odds, projection, warnings and flags (incl. defense vs role) + Add to slip. "who benefits X out" lists legs whose leg or player flags mention X. No AI call - deterministic, nothing leaves the page.
+- Bet sizing: stakeRow() in the builder slip and the shared template slip: quarter Kelly on the model's fair chance vs FanDuel's price, units (1u = 1% bankroll, optional bankroll field, bs_bankroll synced), capped 3u single / 2u two legs / 1u three+.
