@@ -468,7 +468,8 @@ window.BSLive = (function(){
       var body = '';
       if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' at the "model likes" filter - switch to All' : '') + '.</div>';
       else {
-        body += '<h4 class="' + (s.st === 'in' ? 'hot' : '') + '">' + (s.st === 'in' ? 'Still open · ' + open.length : s.st === 'pre' ? 'Watch list · ' + open.length : 'Open at the end · ' + open.length) + '</h4><table class="lvt">' + open.map(tr).join('') + '</table>';
+        var oo = (gid + '|open') in OPEN ? OPEN[gid + '|open'] : true;   // owner 11/5: "Make it so I can collapse the still open legs"
+        body += '<h4 class="subtog' + (s.st === 'in' ? ' hot' : '') + '" data-g="' + gid + '|open" aria-expanded="' + oo + '">' + (s.st === 'in' ? 'Still open · ' + open.length : s.st === 'pre' ? 'Watch list · ' + open.length : 'Open at the end · ' + open.length) + '<i>' + (oo ? '▴' : '▾') + '</i></h4>' + (oo ? '<table class="lvt">' + open.map(tr).join('') + '</table>' : '');
         var subOpen = function(k, def){ return (k in OPEN) ? OPEN[k] : def; };
         if(hit.length){ var ho = subOpen(gid + '|hit', true); body += '<h4 class="subtog" data-g="' + gid + '|hit" aria-expanded="' + ho + '">Already hit · ' + hit.length + '<i>' + (ho ? '▴' : '▾') + '</i></h4>' + (ho ? '<table class="lvt">' + hit.map(tr).join('') + '</table>' : ''); }
         if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
