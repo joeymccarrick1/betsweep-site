@@ -251,6 +251,12 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 @media (max-width:560px){ .lg2[id^="lv-"] .ghd2 .mid b{font-size:40px} .lg2[id^="lv-"] .ghd2 .mid b i{margin:0 7px} .lg2[id^="lv-"] .ghd2 .mid b.vs{font-size:24px} .lg2 .ghd2 .mdl .pj em{font-size:13.5px} }
 .lg2 .ghd2 .mdl .gi.inj{white-space:normal;font-size:11.5px;line-height:1.4;max-width:100%} .lg2 .ghd2 .mdl .gi.inj b{display:block;font-family:var(--display);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#c98a12} .lg2 .ghd2 .mdl .gi.inj span{display:block;font-family:var(--body);text-transform:none;letter-spacing:0;font-weight:400;font-size:11.5px;color:var(--mute)}
 table.lvt td.pr i.fair{display:block;font-style:normal;font-size:10.5px;color:var(--ink);font-family:var(--display);letter-spacing:.04em;margin-top:2px;white-space:nowrap}
+.seasoncard h4.sh{margin:0;padding:8px 14px;font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border-top:1px solid var(--line)} table.ssn{width:100%;border-collapse:collapse;display:table} table.ssn tr{display:table-row} table.ssn td{display:table-cell;padding:8px 10px;font-size:13px;border-top:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums} table.ssn td.lb{text-align:left;white-space:normal;width:40%} table.ssn tr.hd, table.ssn tr.hd td{background:none} table.ssn tr.hd td{font-size:10.5px;color:var(--mute);font-family:var(--display);letter-spacing:.06em;text-transform:uppercase;border-top:0} table.ssn td.up{color:var(--good)} table.ssn td.dn{color:var(--bad)}
+.wkshare{position:fixed;left:-9999px;top:0;width:360px;padding:22px;background:#0f141c;color:#f3efe6;font-family:var(--body);border:2px solid #d7332a;border-radius:16px}
+.wkshare .wh{display:flex;justify-content:space-between;align-items:center} .wkshare .wh img{height:22px} .wkshare .wh span{font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;color:#d7332a;font-weight:800}
+.wkshare .wr{margin:14px 0 6px} .wkshare .wr b{display:block;font-family:var(--display);font-size:56px;line-height:1;font-weight:800} .wkshare .wr small{color:#9aa4b2;font-size:13px}
+.wkshare h5{margin:14px 0 4px;font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9aa4b2} .wkshare p{margin:3px 0;font-size:14px} .wkshare p.ok{color:#5fd18b} .wkshare p i{font-style:normal;color:#f3efe6} .wkshare p em{font-style:normal;color:#9aa4b2;margin-left:4px}
+.wkshare .wf{margin-top:16px;font-size:11px;color:#9aa4b2;letter-spacing:.04em}
 .wxr.high{background:var(--bad)} .wxr.moderate{background:#c98a12}
 .gdet{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--chalk) 60%,var(--card))}
 .gdet span{white-space:nowrap} .gdet b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
@@ -269,6 +275,26 @@ JS = r"""
   function am(o){ return o > 0 ? '+' + o : '' + o; }
   function fairAm(p){ var o = p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); o = Math.abs(o) >= 1000 ? Math.round(o / 50) * 50 : Math.abs(o) >= 200 ? Math.round(o / 5) * 5 : o; return o > 0 ? '+' + o : '' + o; }
   function pc(p){ return Math.round(p*100) + '%'; }
+  // owner 11/5: a shareable My week card (image) - record, units, best hits, the open legs still alive
+  function shareWeek(btn){
+    var rows = window.__BSLOG || []; if(!rows.length) return;
+    var w = rows.filter(function(r){ return r[7] === 'WIN'; }), lz = rows.filter(function(r){ return r[7] === 'LOSS'; }), op = rows.filter(function(r){ return r[7] === 'OPEN'; });
+    var u = w.reduce(function(a, r){ return a + (r[5] > 0 ? r[5] / 100 : 100 / -r[5]); }, 0) - lz.length;
+    var T = window.__BSLOGT || []; rows = rows.map(function(r, i){ return r.concat([T[i] || (r[2] + ' ' + r[3])]); }); w = rows.filter(function(r){ return r[7] === 'WIN'; }); lz = rows.filter(function(r){ return r[7] === 'LOSS'; }); op = rows.filter(function(r){ return r[7] === 'OPEN'; });
+    var lab = function(r){ return esc(r[10]) + ' <em>' + (r[5] > 0 ? '+' : '') + r[5] + '</em>'; };
+    var best = w.slice().sort(function(a, b){ return b[5] - a[5]; }).slice(0, 5);
+    var el = document.createElement('div'); el.className = 'wkshare';
+    el.innerHTML = '<div class="wh"><img src="/wordmark.png" alt="BetSweep"><span>Week ' + D.week + '</span></div><div class="wr"><b>' + w.length + '–' + lz.length + '</b><small>' + (u >= 0 ? '+' : '') + u.toFixed(2) + 'u at 1u each' + (op.length ? ' · ' + op.length + ' still open' : '') + '</small></div>' +
+      (best.length ? '<h5>Cashed</h5>' + best.map(function(r){ return '<p class="ok">✓ ' + lab(r) + '</p>'; }).join('') : '') +
+      (op.length ? '<h5>Still alive</h5>' + op.slice(0, 4).map(function(r){ return '<p>· ' + lab(r) + '</p>'; }).join('') : '') + '<div class="wf">betsweep.co · track yours free</div>';
+    document.body.appendChild(el); btn.disabled = true;
+    var done = function(){ btn.disabled = false; el.remove(); };
+    if(!window.html2canvas){ done(); if(navigator.share) navigator.share({title: 'My week on BetSweep', text: 'Week ' + D.week + ': ' + w.length + '-' + lz.length + ', ' + (u >= 0 ? '+' : '') + u.toFixed(2) + 'u', url: 'https://betsweep.co/live/'}); return; }
+    html2canvas(el, {backgroundColor: '#0f141c', scale: 2, useCORS: true, logging: false}).then(function(c){ return new Promise(function(res){ c.toBlob(res, 'image/png'); }); }).then(function(blob){
+      var f = new File([blob], 'betsweep-week-' + D.week + '.png', {type: 'image/png'});
+      if(navigator.canShare && navigator.canShare({files: [f]})) return navigator.share({files: [f], title: 'My week on BetSweep', text: 'Week ' + D.week + ' on BetSweep - betsweep.co'});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'betsweep-week-' + D.week + '.png'; a.click(); }).catch(function(e){ console.warn(e); }).then(done); }
+  var SHORTM = {'Receiving Yards': 'rec yds', 'Rushing Yards': 'rush yds', 'Passing Yards': 'pass yds', 'Receptions': 'rec', 'Longest Reception': 'long rec', 'Anytime TD': 'anytime TD', 'Rush + Rec Yards': 'rush+rec'};
   function lum(h){ h = h.replace('#',''); return 0.2126*parseInt(h.substr(0,2),16)/255 + 0.7152*parseInt(h.substr(2,2),16)/255 + 0.0722*parseInt(h.substr(4,2),16)/255; }
   function badge(t, col){ return '<span class="badge" style="--p:' + col[0] + ';--s:' + col[1] + ';--ink:' + (lum(col[0]) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   function norm(s){ return String(s||'').replace(/\./g,'').replace(/\s+(jr|sr|ii|iii|iv|v)$/i,'').replace(/\s+/g,' ').toLowerCase().trim(); }
@@ -466,9 +492,31 @@ JS = r"""
       var lrows = FOLD.map(function(f){ var xs = mr.filter(f[2]).sort(srt); if(!xs.length) return ''; var key = '__log|' + f[0], ov = (key in OPEN) ? OPEN[key] : f[3];
         return '<h4 class="subtog' + (f[0] === 'live' ? ' hot' : '') + '" data-g="' + key + '" aria-expanded="' + ov + '">' + f[1] + ' · ' + xs.length + '<i>' + (ov ? '▴' : '▾') + '</i></h4>' + (ov ? '<table class="lvt">' + xs.map(lrow).join('') + '</table>' : ''); }).join('');
       parts.push(['log', '<section class="lg2 logcard' + (OPEN.__log === true ? ' open' : '') + '"><button type="button" class="ghd2" data-g="__log" aria-expanded="' + (OPEN.__log === true) + '"><span class="t">My week<small>' + mine.length + ' legs you pinned or slipped</small></span><span class="mid"><b>' + w + '–' + lz + '</b><small>' + (op ? op + ' still open · ' : '') + (units >= 0 ? '+' : '') + units.toFixed(2) + 'u at 1u each</small></span><span class="tog"><i class="car">' + (OPEN.__log === true ? '▴' : '▾') + '</i></span></button>' +
-        (OPEN.__log === true ? '<div class="logbar"><button type="button" class="rfr" id="logcopy">Copy as text</button><button type="button" class="rfr" id="logcsv">Download CSV</button><span>Pin a leg (☆) or add it to your slip and it shows up here; results fill in as the games end.</span></div>' + lrows : '') + '</section>']);
+        (OPEN.__log === true ? '<div class="logbar"><button type="button" class="rfr" id="logshare">Share my week</button><button type="button" class="rfr" id="logcopy">Copy as text</button><button type="button" class="rfr" id="logcsv">Download CSV</button><span>Pin a leg (☆) or add it to your slip and it shows up here; results fill in as the games end.</span></div>' + lrows : '') + '</section>']);
+      // owner 11/5 "a season ledger": keep this week's settled legs (synced to the account like slips) so My season can total every week
+      try { var lw = mr.filter(function(x){ return x.r.status === 'hit' || x.r.status === 'dead'; }).map(function(x){ return [x.l.pl, x.l.m, x.l.ln, x.l.o, x.r.status === 'hit' ? 1 : 0]; });
+        var lk = 'bs_log_w' + D.week, prevLog = localStorage.getItem(lk), nl = JSON.stringify(lw); if(lw.length && prevLog !== nl) localStorage.setItem(lk, nl); } catch(e){}
+      window.__BSLOGT = mr.map(function(x){ return legText(x.l); });
       window.__BSLOG = mr.map(function(x){ var l = x.l, r = x.r; return [D.week, l.g, l.pl, l.m, l.ln, l.o, Math.round(l.p * 1000) / 10, r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : 'OPEN', r.now || '', (INSLIP[legKey(l)] || []).map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join('; ')]; });
     }
+    // ---- My season (owner 11/5): every saved week's settled legs (bs_log_w*), 1u each ----
+    try {
+      var SW = []; for(var si = 0; si < localStorage.length; si++){ var sk = localStorage.key(si); var mw = /^bs_log_w(\d+)$/.exec(sk || ''); if(mw){ try { (JSON.parse(localStorage.getItem(sk)) || []).forEach(function(r){ SW.push({w: +mw[1], pl: r[0], m: r[1], o: +r[3], h: r[4]}); }); } catch(e){} } }
+      if(SW.length){
+        var u1 = function(x){ return x.h ? (x.o > 0 ? x.o / 100 : 100 / -x.o) : -1; };
+        var agg = function(xs){ var w = 0, u = 0; xs.forEach(function(x){ w += x.h; u += u1(x); }); return {n: xs.length, w: w, u: u, roi: xs.length ? u / xs.length : 0}; };
+        var tot = agg(SW), wks = {}, mks = {}, bands = {};
+        var band = function(o){ return o <= -200 ? '-200 or shorter' : o < -110 ? '-199 to -111' : o <= 110 ? '-110 to +110' : o <= 250 ? '+111 to +250' : '+251 and longer'; };
+        SW.forEach(function(x){ (wks[x.w] = wks[x.w] || []).push(x); (mks[x.m] = mks[x.m] || []).push(x); (bands[band(x.o)] = bands[band(x.o)] || []).push(x); });
+        var row = function(lab, a){ return '<tr><td class="lb"><b>' + esc(lab) + '</b></td><td>' + a.w + '–' + (a.n - a.w) + '</td><td>' + Math.round(a.w / a.n * 100) + '%</td><td class="' + (a.u >= 0 ? 'up' : 'dn') + '"><b>' + (a.u >= 0 ? '+' : '') + a.u.toFixed(2) + 'u</b></td><td>' + (a.roi >= 0 ? '+' : '') + Math.round(a.roi * 100) + '%</td></tr>'; };
+        var tbl = function(title, obj, order_){ var ks = order_ || Object.keys(obj).sort(function(a, b){ return obj[b].length - obj[a].length; }); return '<h4 class="sh">' + title + '</h4><table class="ssn"><tr class="hd"><td></td><td>W–L</td><td>Hit</td><td>Units</td><td>ROI</td></tr>' + ks.filter(function(k){ return obj[k]; }).map(function(k){ return row(k, agg(obj[k])); }).join('') + '</table>'; };
+        var so = OPEN.__season === true;
+        parts.push(['season', '<section class="lg2 logcard seasoncard' + (so ? ' open' : '') + '"><button type="button" class="ghd2" data-g="__season" aria-expanded="' + so + '"><span class="t">My season<small>' + Object.keys(wks).length + ' week' + (Object.keys(wks).length === 1 ? '' : 's') + ' · ' + tot.n + ' settled legs</small></span><span class="mid"><b>' + tot.w + '–' + (tot.n - tot.w) + '</b><small>' + (tot.u >= 0 ? '+' : '') + tot.u.toFixed(2) + 'u · ROI ' + (tot.roi >= 0 ? '+' : '') + Math.round(tot.roi * 100) + '%</small></span><span class="tog"><i class="car">' + (so ? '▴' : '▾') + '</i></span></button>' +
+          (so ? '<div class="logbar"><span>Every leg you pinned or slipped, once it settled, at 1 unit each at the price when it was tracked. Saved per week and synced to your account when signed in.</span></div>' +
+            tbl('By week', (function(){ var o = {}; Object.keys(wks).sort(function(a, b){ return b - a; }).forEach(function(k){ o['Week ' + k] = wks[k]; }); return o; })(), Object.keys(wks).sort(function(a, b){ return b - a; }).map(function(k){ return 'Week ' + k; })) +
+            tbl('By market', mks) + tbl('By price', bands, ['-200 or shorter', '-199 to -111', '-110 to +110', '+111 to +250', '+251 and longer']) : '') + '</section>']);
+      }
+    } catch(e){}
     var liveG = order.filter(function(gid){ var s = STATE[gid]; return s && s.st === 'in'; });
     var preG = order.filter(function(gid){ var s = STATE[gid]; return !s || s.st === 'pre'; });
     var doneG = order.filter(function(gid){ var s = STATE[gid]; return s && s.st === 'post'; });
@@ -718,6 +766,7 @@ JS = r"""
     order.forEach(function(gid){ var s = m[gid]; if(s && (s.st === 'in' || (s.st === 'post' && !lastBox[gid]))) pullBox(gid); });
   });
   $('#lv').addEventListener('click', function(ev){
+    if(ev.target.id === 'logshare'){ shareWeek(ev.target); return; }
     if(ev.target.id === 'logcopy' || ev.target.id === 'logcsv'){ var rows = window.__BSLOG || []; var hdr = ['week', 'game', 'player', 'market', 'line', 'fd_odds', 'model_pct', 'result', 'final_stat', 'slips'];
       if(ev.target.id === 'logcsv'){ var csv = [hdr].concat(rows).map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n'); var a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'betsweep-week' + D.week + '-log.csv'; document.body.appendChild(a); a.click(); a.remove(); }
       else { var txt = 'BetSweep week ' + D.week + ' log\n' + rows.map(function(r){ return r[7] + ' · ' + r[2] + ' ' + r[3] + ' ' + r[4] + '+ (' + am(r[5]) + ', model ' + r[6] + '%)' + (r[8] ? ' · ' + r[8] : ''); }).join('\n'); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function(){ ev.target.textContent = 'Copied'; setTimeout(function(){ ev.target.textContent = 'Copy as text'; }, 1500); }).catch(function(){ prompt('Copy your log:', txt); }); }
@@ -729,7 +778,7 @@ JS = r"""
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
     var tfb = ev.target.closest('.tfb'); if(tfb){ var tg = tfb.dataset.g, tt = tfb.dataset.t; TF[tg] = TF[tg] === tt ? null : tt; render(); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
-    var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log !== true; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
+    var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log !== true; render(); return; } if(gid === '__season'){ OPEN.__season = OPEN.__season !== true; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
   $('#lv').addEventListener('change', function(ev){
     var t = ev.target, id = t.dataset.sid; if(!id) return; var sx = slipById(id); if(!sx) return;
