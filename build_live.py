@@ -253,7 +253,7 @@ JS = r"""
     var rows = sr.map(function(x){ var l = x.l, r = x.r, st = x.s; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st"><button type="button" class="rm" data-sid="' + esc(sl.id) + '" data-k="' + esc(legKey(l)) + '" title="Remove from this slip">×</button></td><td class="who"><b>' + esc(legText(l)) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'dead' ? '<span class="chip">Dead</span>' : '') + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + ' · FD ' + am(l.o) + ' · ' + (st.st === 'in' ? esc(st.det || 'live') : st.st === 'post' ? 'final' : esc(games[l.g].kick)) + '</small></td><td class="now"><b>' + esc(r.now || '') + '</b></td><td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + pc(r.p) + '</b><small>' + (st.st === 'pre' ? 'pregame' : 'from here') + '</small></td></tr>'; }).join('');
     if(missing) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + missing + ' leg' + (missing > 1 ? 's' : '') + ' from an older board are not on this week\'s page and cannot be tracked.</small></td></tr>';
     if(!ls.length && !missing) rows = '<tr><td class="who" colspan="4"><small>Empty - tap + on any leg below to add it here.</small></td></tr>';
-    var so = !(('slip|' + sl.id) in OPEN) || OPEN['slip|' + sl.id];   // owner 11/5: "Can every betslip collapse?" - open until you fold it, remembered per slip
+    var so = OPEN['slip|' + sl.id] === true || (FOCUS && (FOCUS === 'all' || FOCUS === sl.id) && !(('slip|' + sl.id) in OPEN));   // owner 11/5: slips start folded ("make them all collapsed by default"); opening one is remembered; a ?slip= link opens its slip
     // owner 11/5: "I don't like how this looks. I like what it says though" - one clean header: name + chance on top, the facts as a strip below
     var stCls = nd ? 'dead' : (no === 0 && nh ? 'cashed' : '');
     var facts = [nh + ' hit', (nd ? nd + ' dead' : no + ' open')];
@@ -271,7 +271,7 @@ JS = r"""
       '<div class="slipbar"' + (so ? '' : ' hidden') + '>' + (fdUrl ? '<a class="rfr fd" href="' + fdUrl + '" target="_blank" rel="noopener">Open in FanDuel' + (fdOk.length < ls.length ? ' (' + fdOk.length + '/' + ls.length + ')' : '') + '</a>' : '') +
       '<label>ticket <input type="text" inputmode="numeric" class="slipodds" data-sid="' + esc(sl.id) + '" placeholder="+593" value="' + (sl.odds ? am(sl.odds) : '') + '"></label><label>stake $<input type="text" inputmode="decimal" class="slipstake" data-sid="' + esc(sl.id) + '" placeholder="10" value="' + (sl.stake || '') + '"></label>' +
       '<button type="button" class="rfr slipdel" data-sid="' + esc(sl.id) + '">' + (sl.builder ? 'Clear' : 'Delete') + '</button></div></section>'; }
-  try { (JSON.parse(localStorage.getItem('bs_live_fold') || '[]') || []).forEach(function(k){ OPEN[k] = false; }); } catch(e){}
+  try { (JSON.parse(localStorage.getItem('bs_live_open') || '[]') || []).forEach(function(k){ OPEN[k] = true; }); } catch(e){}
   var PREV = {}, FLASH = {};   // status per leg from the last render, to flash what just changed   // OPEN[gid] = true/false once the user has toggled; otherwise live games open, others closed
   // ---- ESPN game summary -> per-player box + first TD scorer ----
   function parseBox(js){
@@ -554,7 +554,7 @@ JS = r"""
     var rm = ev.target.closest('.rm'); if(rm){ toggleIn(rm.dataset.sid, rm.dataset.k); return; }
     var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; saveBuilderSlip(); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
-    var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_fold', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === false; }))); } catch(e){} render(); return; }
+    var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
     var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log === false; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
