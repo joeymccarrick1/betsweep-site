@@ -202,6 +202,22 @@ for r in legs_raw[1:]:
     _p, _bk = pct(r[10]), pct(r[12]); _ps = CALIB.shown(_p, _bk, r[1])   # shown % = raw model blended toward the price (calib.py); edge follows it
     LEGS.append({"player": r[0], "market": r[1], "line": num(r[2]), "odds": num(r[3]), "team": r[4], "opp": r[5], "status": r[6], "proj": num(r[7]),
                  "p": _ps, "fair": r[11], "book": _bk, "edge": (_ps - _bk) if _ps is not None and _bk is not None else pct(r[13]), "verdict": r[14], "warn": r[15], "game": r[16], "kick": r[17], "raw_p": _p})
+# owner 11/6: the red-zone TD model (rztd.py) graded better than the projection model and FanDuel on Weeks 6-8 anytime-TD legs (345 legs: log loss
+# 0.600 vs 0.605 raw, 0.614 FanDuel) - the builder already averaged it in; the boards' TD picks and parlays now use the same average.
+try:
+    import rztd as _RZ
+    _rzt = json.load(open(os.path.join(OUT, "rztd.json")))
+    if int(_rzt.get("week", 0)) == int(WEEK):
+        _nrzb = 0
+        for l in LEGS:
+            if l["market"] != "Anytime TD" or l.get("raw_p") is None or "/" in l["player"]: continue
+            v = _RZ.lookup(_rzt["players"], l["player"], l["team"])
+            if not v: continue
+            l["raw_p"] = (1 - _RZ.RZ_W) * l["raw_p"] + _RZ.RZ_W * v["p"]; l["p"] = CALIB.shown(l["raw_p"], l["book"], l["market"])
+            if l["p"] is not None and l.get("book") is not None: l["edge"] = l["p"] - l["book"]
+            _nrzb += 1
+        print(f"boards: red-zone TD model averaged into {_nrzb} anytime-TD legs")
+except Exception as _e: print("note: boards red-zone TD model skipped:", _e)
 def odds_str(o):
     if o is None: return ""
     return f"+{int(o)}" if o > 0 else f"{int(o)}"
