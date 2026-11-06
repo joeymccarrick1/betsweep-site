@@ -44,7 +44,7 @@ slim = [_slim(l) for l in keep]
 keep_ids = {l["i"] for l in keep}
 extra = [_slim(l) for l in D["legs"] if l["i"] not in keep_ids]
 for _x in extra:   # 11/5 speed: extra legs are only tracked on slips / matched on import - no long notes, projections or sources
-    for _k in ("proj", "c", "src", "ms"): _x.pop(_k, None)
+    for _k in ("proj", "c", "src"): _x.pop(_k, None)   # keep "ms" - the leg label uses it
     if _x.get("w"): _x["w"] = str(_x["w"])[:70]   # everything else, so a slip leg of any kind can be tracked
 games = [{k: g[k] for k in ("gid", "a", "b", "pa", "pb", "tot", "probs", "most", "na", "nb", "ca", "cb", "kick", "ko", "fin", "sort")} for g in D["games"]]
 # owner 11/1: FanDuel stops pricing a leg at kickoff, so a rebuild during the games drops it from the builder data and a saved slip (or a promo)
@@ -194,6 +194,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 @media (max-width:620px){ .lvt tr.hit{background:color-mix(in srgb,var(--good) 10%,transparent)} .lvt tr.hit td, .lvt tr.dead td{background:none !important}
   .sc2 .slipbar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center} .sc2 .slipbar .fd{grid-column:1/-1;text-align:center}
   .sc2 .slipbar label{display:flex;align-items:center;gap:6px;min-width:0} .sc2 .slipbar label input{width:100%;min-width:0} }
+.slipsgrp .finin{padding:8px 10px 10px;display:grid;gap:10px} .slipsgrp .finin .lg2{margin:0}
 /* slip fold */ .lg2.slipcard{position:relative} .lg2.slipcard .ghd2{padding-left:44px} .sliptog{position:absolute;left:8px;top:12px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font-size:13px;line-height:1;cursor:pointer;z-index:1} .lg2.slipcard.folded{opacity:.92}
 #lvdrill .gc-tick, #lvdrill .gc-last + .gc-last{display:none} #lvdrill .gcw{padding:8px 14px 10px} #lvdrill .gc-last{font-size:12.5px;margin-top:6px}
 .gc-wpbar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--chalk)} .gc-wpbar i{display:block;height:100%}
@@ -275,6 +276,7 @@ JS = r"""
       '<label>ticket <input type="text" inputmode="numeric" class="slipodds" data-sid="' + esc(sl.id) + '" placeholder="+593" value="' + (sl.odds ? am(sl.odds) : '') + '"></label><label>stake $<input type="text" inputmode="decimal" class="slipstake" data-sid="' + esc(sl.id) + '" placeholder="10" value="' + (sl.stake || '') + '"></label>' +
       '<button type="button" class="rfr slipdel" data-sid="' + esc(sl.id) + '">' + (sl.builder ? 'Clear' : 'Delete') + '</button></div></section>'; }
   try { (JSON.parse(localStorage.getItem('bs_live_open') || '[]') || []).forEach(function(k){ OPEN[k] = true; }); } catch(e){}
+  try { var so0 = localStorage.getItem('bs_live_slipsopen'); if(so0 === '1') OPEN.__slips = true; else if(so0 === '0') OPEN.__slips = false; } catch(e){}
   var PREV = {}, FLASH = {};   // status per leg from the last render, to flash what just changed   // OPEN[gid] = true/false once the user has toggled; otherwise live games open, others closed
   // ---- ESPN game summary -> per-player box + first TD scorer ----
   function parseBox(js){
@@ -376,7 +378,15 @@ JS = r"""
     var wrap = $('#lv'); var now = Date.now(); var html = ''; var parts = []; loadSlips();
     if(Date.now() - LASTSCROLL < 900){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1000); } return; }   // never re-render under a finger: iOS kills the scroll
     // slips: the builder slip plus anything built or imported on this page, each tracked live as one parlay
-    allSlips().forEach(function(sl){ parts.push(['slip:' + sl.id, slipCard(sl)]); });
+    // owner 11/5: "put all of our slips into its own collapsed folder ... call it your slips" - one folder, closed until opened (remembered); a ?slip= link opens it
+    var ALLS = allSlips();
+    if(ALLS.length){
+      var cards = ALLS.map(function(sl){ return slipCard(sl); }), nc = 0, nd2 = 0, chances = [];
+      cards.forEach(function(h){ if(/class="scp cashed"/.test(h)) nc++; else if(/class="scp dead"/.test(h)) nd2++; else { var m = h.match(/class="scp "><b>(\d+)%/); if(m) chances.push(+m[1]); } });
+      var yo = ('__slips' in OPEN) ? OPEN.__slips : !!FOCUS;
+      var sum = ALLS.length + ' slip' + (ALLS.length === 1 ? '' : 's') + (nc ? ' · ' + nc + ' cashed' : '') + (nd2 ? ' · ' + nd2 + ' dead' : '') + (chances.length ? ' · ' + chances.length + ' alive' : '');
+      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + cards.join('') + '</div>' : '') + '</section>']);
+    }
     // week log: the legs you pinned or carried in your slip, as they resolve - copy or download it after the games
     var mine = legs.concat(D.extra || []).filter(function(l){ var k = legKey(l); return STARS[k] || INSLIP[k]; });
     if(mine.length){
@@ -522,7 +532,7 @@ JS = r"""
     if(!DRILL) return; var gid = DRILL.gid, js = SUMM[gid], g = games[gid], s = STATE[gid] || {}; var box = $('#lvdrill');
     var tabs = ['box', 'plays', 'scoring'].map(function(t){ return '<button type="button" class="dtab' + (DRILL.tab === t ? ' on' : '') + '" data-t="' + t + '">' + ({box: 'Box score', plays: 'Play by play', scoring: 'Scoring'})[t] + '</button>'; }).join('');
     var body = !js ? '<p class="none">Loading from ESPN…</p>' : DRILL.tab === 'box' ? drillBox(js, gid) : DRILL.tab === 'plays' ? drillPlays(js, gid) : drillScoring(js);
-    box.innerHTML = '<div class="dwrap"><div class="dhd"><div class="dt">' + badge(g.a, g.ca) + ' ' + g.a + ' <b>' + (s.sa != null ? s.sa : '–') + '–' + (s.sb != null ? s.sb : '–') + '</b> ' + g.b + ' ' + badge(g.b, g.cb) + '<small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> ' + esc(s.det || '') : s.st === 'post' ? 'Final' : '') + ' · refreshes every 30 s</small></div><button type="button" class="dclose" aria-label="Close">×</button></div>' + (s.st === 'in' && js ? gamecast(gid) : '') + '<div class="dtabs">' + tabs + '</div><div class="dbody">' + body + '</div></div>';
+    box.innerHTML = '<div class="dwrap"><div class="dhd"><div class="dt">' + badge(g.a, g.ca) + ' ' + g.a + ' <b>' + (s.sa != null ? s.sa : '–') + '–' + (s.sb != null ? s.sb : '–') + '</b> ' + g.b + ' ' + badge(g.b, g.cb) + '<small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> ' + esc(s.det || '') : s.st === 'post' ? 'Final' : '') + ' · refreshes every 10 s</small></div><button type="button" class="dclose" aria-label="Close">×</button></div>' + (s.st === 'in' && js ? gamecast(gid) : '') + '<div class="dtabs">' + tabs + '</div><div class="dbody">' + body + '</div></div>';
     var keepScroll = DRILL.sy, bodyEl = box.querySelector('.dbody'); if(keepScroll != null && bodyEl) bodyEl.scrollTop = keepScroll;
     if(bodyEl) bodyEl.addEventListener('scroll', function(){ if(DRILL) DRILL.sy = bodyEl.scrollTop; }, {passive: true});
     if(box.hidden){ box.hidden = false; LOCKY = window.scrollY || 0; document.body.style.top = (-LOCKY) + 'px'; document.body.classList.add('drillopen'); }
@@ -539,7 +549,7 @@ JS = r"""
   // ---- polling: scoreboard (BSLive) + one summary call per live game every 30 s ----
   var busy = {};
   function pullBox(gid){
-    var s = STATE[gid]; if(!s || !s.eid || busy[gid] || !window.fetch) return; if(lastBox[gid] && Date.now() - lastBox[gid] < 28000) return;
+    var s = STATE[gid]; if(!s || !s.eid || busy[gid] || !window.fetch) return; if(lastBox[gid] && Date.now() - lastBox[gid] < 11000) return;   // owner 11/5: box score / Gamecast every ~10 s while live
     busy[gid] = true;
     fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + s.eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){
       busy[gid] = false; lastBox[gid] = Date.now(); if(!js) return; SUMM[gid] = js; cacheSave(); if(DRILL && DRILL.gid === gid) drawDrill(); var pb = parseBox(js); Object.keys(pb.box).forEach(function(k){ BOX[k] = pb.box[k]; }); if(pb.first) FIRST[gid] = pb.first; render();
@@ -571,7 +581,7 @@ JS = r"""
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
-    var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log === false; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
+    var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log === false; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
   $('#lv').addEventListener('change', function(ev){
     var t = ev.target, id = t.dataset.sid; if(!id) return; var sx = slipById(id); if(!sx) return;
