@@ -167,6 +167,7 @@ table.lvt td.pr i.fair{display:block;font-style:normal;font-size:10.5px;color:va
 .wkshare .wr{margin:14px 0 6px} .wkshare .wr b{display:block;font-family:var(--display);font-size:56px;line-height:1;font-weight:800} .wkshare .wr small{color:#9aa4b2;font-size:13px}
 .wkshare h5{margin:14px 0 4px;font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9aa4b2} .wkshare p{margin:3px 0;font-size:14px} .wkshare p.ok{color:#5fd18b} .wkshare p i{font-style:normal;color:#f3efe6} .wkshare p em{font-style:normal;color:#9aa4b2;margin-left:4px}
 .wkshare .wf{margin-top:16px;font-size:11px;color:#9aa4b2;letter-spacing:.04em}
+ul.chg{list-style:none;margin:0;padding:0} ul.chg li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;padding:9px 14px;border-top:1px solid var(--line);font-size:13px;line-height:1.35} ul.chg li.mine{background:color-mix(in srgb,var(--red) 10%,transparent)} ul.chg li small{color:var(--mute);font-size:11px} ul.chg li a{color:inherit} ul.chg li.none{display:block;color:var(--mute)} .chgn{display:inline-block;min-width:20px;padding:1px 6px;margin-right:6px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;text-align:center}
 .wxr.high{background:var(--bad)} .wxr.moderate{background:#c98a12}
 .gdet{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--chalk) 60%,var(--card))}
 .gdet span{white-space:nowrap} .gdet b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
@@ -205,7 +206,7 @@ table.lvt td.pr i.fair{display:block;font-style:normal;font-size:10.5px;color:va
  <div id="lvdrill" hidden></div>
 
 </div>
-<script src="/live/data-4164530a4433.js"></script>
+<script src="/live/data-ab736d77f531.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -480,6 +481,18 @@ window.BSLive = (function(){
     // slips: the builder slip plus anything built or imported on this page, each tracked live as one parlay
     // owner 11/5: "put all of our slips into its own collapsed folder ... call it your slips" - one folder, closed until opened (remembered); a ?slip= link opens it
     var ALLS = allSlips();
+    // ---- What changed (owner 11/5): feeds changes.json + price moves, since the last time this card was opened ----
+    try {
+      var since = CHG_SEEN || new Date(Date.now() - 864e5).toISOString();
+      var evs = CHG.filter(function(e){ return e.ts > since; }).sort(function(a, b){ return a.ts < b.ts ? 1 : -1; });
+      var co = OPEN.__chg === true;
+      var ago = function(ts){ var m = Math.round((Date.now() - Date.parse(ts)) / 6e4); return m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
+      var ico = {injury: '🩹', inactive: '⛔', weather: '🌦', news: '📰', move: '📈'};
+      var lst = evs.slice(0, 40).map(function(e){ var mine = e.pl && MYPL[String(e.pl).toLowerCase()];
+        return '<li class="' + (mine ? 'mine' : '') + '"><span class="ic">' + (ico[e.k] || '•') + '</span><span class="tx">' + (e.u ? '<a href="' + esc(e.u) + '" target="_blank" rel="noopener">' + esc(e.t) + '</a>' : esc(e.t).replace(/ -&gt; /g, ' → ')) + (mine ? ' <b class="chip slip">your leg</b>' : '') + '</span><small>' + ago(e.ts) + '</small></li>'; }).join('');
+      parts.push(['__chg', '<section class="lg2 fingrp chggrp' + (co ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__chg" aria-expanded="' + co + '"><span class="t">What changed<small>' + (evs.length ? evs.length + ' update' + (evs.length === 1 ? '' : 's') + ' since ' + (CHG_SEEN ? 'you last looked (' + ago(CHG_SEEN) + ' ago)' : 'yesterday') : 'nothing new since ' + (CHG_SEEN ? ago(CHG_SEEN) + ' ago' : 'yesterday')) + '</small></span><span class="tog">' + (evs.length ? '<b class="chgn">' + evs.length + '</b>' : '') + '<i class="car">' + (co ? '▴' : '▾') + '</i></span></button>' +
+        (co ? '<div class="finin"><ul class="chg">' + (lst || '<li class="none">Injuries, inactives, weather, line moves and player news show up here as they happen.</li>') + '</ul></div>' : '') + '</section>']);
+    } catch(e){}
     if(ALLS.length){
       var cards = ALLS.map(function(sl){ return slipCard(sl); }), nc = 0, nd2 = 0, chances = [];
       cards.forEach(function(h){ if(/class="scp cashed"/.test(h)) nc++; else if(/class="scp dead"/.test(h)) nd2++; else { var m = h.match(/class="scp "><b>(\d+)%/); if(m) chances.push(+m[1]); } });
@@ -684,6 +697,25 @@ window.BSLive = (function(){
   }
   // owner 11/5: stadium, weather and game details. Weather starts from the build's snapshot and refreshes from the feeds mirror
   // (raw.githubusercontent, public repo; the feeds job re-pulls Open-Meteo every few minutes in game windows).
+  var CHG = [], CHG_SEEN = null, MYPL = {};
+  try { CHG_SEEN = localStorage.getItem('bs_chg_seen'); } catch(e){}
+  function pullChanges(){
+    try {
+      var mp = {}; legs.concat(D.extra || []).forEach(function(l){ var k = legKey(l); if(STARS[k] || INSLIP[k]) mp[String(l.pl).toLowerCase()] = 1; }); MYPL = mp;
+      var known = {}; legs.forEach(function(l){ if(!l.gl) known[String(l.pl).toLowerCase()] = 1; }); (D.sk || []).forEach(function(n){ known[String(n).toLowerCase()] = 1; });
+      var a = fetch('https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/changes.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+      var b = fetch('/data/price-moves.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+      Promise.all([a, b]).then(function(x){
+        var ev = ((x[0] || {}).events || []).filter(function(e){ return e.k === 'weather' || !e.pl || known[String(e.pl).toLowerCase()]; });
+        var pm = x[1] || {};
+        if(String(pm.week) === String(D.week)) (pm.moves || []).forEach(function(m){ var my = MYPL[String(m.pl).toLowerCase()];
+          if(!my && Math.abs(m.pts) < 8) return;   // every move on your legs; elsewhere only the big ones (8+ implied pts)
+          var t = m.pulled ? new Date(String(m.pulled).replace(' ', 'T') + ':00-06:00').toISOString() : pm.checked;
+          ev.push({ts: t, k: 'move', pl: m.pl, t: m.detail}); });
+        CHG = ev; render(); });
+    } catch(e){}
+  }
+  setTimeout(pullChanges, 1200); setInterval(pullChanges, 3e5);
   var WXL = {}, WXURL = 'https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/weather.json';
   function matchup(gid){ var g = games[gid]; return g ? g.b + ' @ ' + g.a : String(gid).replace('-', ' @ '); }   // a = home after the 11/5 flip
   function pairK(a, b){ return [a, b].sort().join('|'); }
@@ -789,7 +821,7 @@ window.BSLive = (function(){
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
     var tfb = ev.target.closest('.tfb'); if(tfb){ var tg = tfb.dataset.g, tt = tfb.dataset.t; TF[tg] = TF[tg] === tt ? null : tt; render(); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
-    var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log !== true; render(); return; } if(gid === '__season'){ OPEN.__season = OPEN.__season !== true; render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
+    var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log !== true; render(); return; } if(gid === '__season'){ OPEN.__season = OPEN.__season !== true; render(); return; } if(gid === '__chg'){ OPEN.__chg = OPEN.__chg !== true; if(!OPEN.__chg){ CHG_SEEN = new Date().toISOString(); try { localStorage.setItem('bs_chg_seen', CHG_SEEN); } catch(e){} } render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
   $('#lv').addEventListener('change', function(ev){
     var t = ev.target, id = t.dataset.sid; if(!id) return; var sx = slipById(id); if(!sx) return;

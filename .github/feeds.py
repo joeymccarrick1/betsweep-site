@@ -295,3 +295,55 @@ rows.sort(key=lambda r: (r[2], r[3]))
 if rows:
     json.dump({"header": WX_HDR, "rows": rows, "week": wk, "mirrored": now.isoformat(), "source": "nflverse schedule" if games else "ESPN scoreboard"}, open("out/weather.json", "w"))
 print("weather rows:", len(rows), "week", wk, [(r[2], r[3], r[5], r[14]) for r in rows])
+
+# ---- changes.json (owner 11/5 "what changed" feed): every run diffs this mirror against the previous one on the feeds branch and keeps a
+# timestamped event log (7 days, 400 events): injury status changes, game-day inactives, weather tier / rain / wind changes, new news items.
+# The Live page reads it (plus data/price-moves.json for line moves) and shows what changed since the user's last visit.
+def _prev(name):
+    try: return json.loads(subprocess.check_output(["curl", "-fsSL", "--max-time", "20", f"https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/{name}"]))
+    except Exception as e: print("prev", name, e); return None
+try:
+    EV = (_prev("changes.json") or {}).get("events", [])
+    ts = now.strftime("%Y-%m-%dT%H:%M:%SZ"); add = []
+    def injmap(j):
+        m = {}
+        for t in (j or {}).get("injuries") or []:
+            ab = (t.get("team") or {}).get("abbreviation") or ""
+            for x in t.get("injuries") or []:
+                nm = (x.get("athlete") or {}).get("displayName")
+                if nm: m[nm] = (ab, str(x.get("status") or ""), (x.get("details") or {}).get("type") or (x.get("type") or {}).get("description") or "")
+        return m
+    if os.path.exists("out/injuries.json"):
+        old = injmap(_prev("injuries.json")); new = injmap(json.load(open("out/injuries.json")))
+        if old:   # first run after a gap has nothing to compare with - no flood
+            for nm, (ab, st, why) in new.items():
+                o = old.get(nm)
+                if not o or o[1] != st:
+                    add.append({"ts": ts, "k": "injury", "pl": nm, "tm": ab, "st": st, "was": o[1] if o else "", "t": f"{nm} ({ab}) {('now ' + st) if o else st}" + (f" - was {o[1]}" if o else "") + (f" ({why})" if why else "")})
+    oi = (_prev("inactives.json") or {}).get("games") or {}
+    seen = {(g_id, x.get("name")) for g_id, g in oi.items() for x in g.get("out") or []}
+    for g_id, g in ina.items():
+        for x in g.get("out") or []:
+            if (g_id, x.get("name")) not in seen: add.append({"ts": ts, "k": "inactive", "pl": x.get("name"), "tm": x.get("team"), "t": f"{x.get('name')} ({x.get('team')}) INACTIVE"})
+    if rows:
+        ow = {(r[2], r[3]): r for r in ((_prev("weather.json") or {}).get("rows") or [])}
+        for r in rows:
+            o = ow.get((r[2], r[3]))
+            if not o: continue
+            f = lambda v: float(v) if str(v).strip() not in ("", "None") else None
+            msgs = []
+            if o[14].split(" ")[0] != r[14].split(" ")[0]: msgs.append(f"weather {o[14].split(' ')[0]} -> {r[14].split(' ')[0]}")
+            pc0, pc1 = f(o[12]), f(r[12])
+            if pc0 is not None and pc1 is not None and abs(pc1 - pc0) >= 20: msgs.append(f"rain chance {pc0:.0f}% -> {pc1:.0f}%")
+            w0, w1 = f(o[9]), f(r[9])
+            if w0 is not None and w1 is not None and abs(w1 - w0) >= 5: msgs.append(f"wind {w0:.0f} -> {w1:.0f} mph")
+            if msgs: add.append({"ts": ts, "k": "weather", "g": f"{r[2]}-{r[3]}", "t": f"{r[2]}-{r[3]} ({re.sub(r' [(].*$', '', r[4])}): " + ", ".join(msgs)})
+    ON = {(x.get("title") or "") for x in ((_prev("news.json") or {}).get("items") or [])}
+    if ON:
+        for x in NEWS:
+            if (x.get("title") or "") not in ON and x.get("players"): add.append({"ts": x.get("ts") or ts, "k": "news", "pl": (x.get("players") or [""])[0], "t": x.get("title") or "", "u": x.get("link") or ""})
+    cut = (now - dt.timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    EV = [e for e in EV + add if e.get("ts", "") >= cut][-400:]
+    json.dump({"events": EV, "updated": ts}, open("out/changes.json", "w"))
+    print("changes:", len(add), "new,", len(EV), "kept")
+except Exception as e: print("changes skipped:", e)
