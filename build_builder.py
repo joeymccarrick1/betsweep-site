@@ -471,6 +471,41 @@ try:
         l.setdefault("fh", []).append(["info", "Red-zone model", f"Red-zone model {v['p']*100:.0f}% (red-zone share {v['rz_share']*100:.0f}%, {v['opp_pg']:.0f} touches/g, team implied {v['impl']:.0f} pts) vs the projection model {_old*100:.0f}% - shown number is the average."])
     print(f"red-zone TD model: {_nrz} anytime-TD legs blended ({len(_rz['players'])} players in out/rztd.json)")
 except Exception as e: print("warn: red-zone TD model not applied:", e)
+# owner 11/6 Questionable translator (qtrans.py): FanDuel voids a prop when the player sits, so a Questionable player's legs are priced on the
+# snaps he gets IF he plays (~88-90% of usual, research/q_translator.py) and carry a note with the chance he plays; Doubtful = 0 of 61 played.
+try:
+    import qtrans as _QT
+    from statistics import NormalDist as _NDq
+    _Zq = _NDq(); _QI = _QT.load(IN, WEEK); _nq = 0
+    def _sdq(pl, m):   # the spread implied by the player's own ladder in this market (median over rungs away from the projection)
+        zs = []
+        for x in LEGS:
+            if x.get("pl") != pl or x.get("m") != m or x.get("proj") is None or x.get("p") is None or not (0.08 < x["p"] < 0.92): continue
+            cut = float(x["ln"]) if m.startswith("Under ") else float(x["ln"]) - 0.5
+            zz = _Zq.inv_cdf(x["p"]) if m.startswith("Under ") else _Zq.inv_cdf(1 - x["p"])
+            if abs(zz) > 0.3 and (cut - float(x["proj"])) / zz > 0: zs.append((cut - float(x["proj"])) / zz)
+        zs.sort(); return zs[len(zs) // 2] if len(zs) >= 2 else None
+    _SDQ = {}
+    for l in LEGS:   # spreads from the untouched ladders first (the loop below changes p in place)
+        if not l.get("gl") and l.get("p") is not None and _QI.get(_QT.norm(l["pl"])) and (l["pl"], l["m"]) not in _SDQ: _SDQ[(l["pl"], l["m"])] = _sdq(l["pl"], l["m"])
+    for l in LEGS:
+        if l.get("gl") or l.get("p") is None: continue
+        q = _QI.get(_QT.norm(l["pl"]))
+        if not q: continue
+        l["q"] = [q["st"], q["ps"], q["play"]]
+        l.setdefault("fh", []).append(["bad" if q["st"] == "D" else "watch", "Doubtful" if q["st"] == "D" else f"Q · plays ~{q['play']*100:.0f}%", q["txt"] + (" - this leg is priced on those reduced snaps." if q["st"] == "Q" else "")])
+        if q["st"] != "Q" or not q["snap"]: continue
+        r = q["snap"]; m = l["m"]; under = m.startswith("Under "); p0 = min(0.98, max(0.02, l["p"]))
+        if m in ("Anytime TD", "First TD", "2+ TD"): l["p"] = round(1 - (1 - p0) ** r if m != "2+ TD" else p0 * r * r, 4); _nq += 1; continue
+        mu, ln = l.get("proj"), l.get("ln")
+        if mu is None or ln is None or float(mu) <= 0: continue
+        mu, ln = float(mu), float(ln); cut = ln if under else ln - 0.5
+        sd = _SDQ.get((l["pl"], m)) or max(0.6 * mu, 1.0)
+        p0n = _Zq.cdf((cut - mu) / sd) if under else 1 - _Zq.cdf((cut - mu) / sd)   # the same normal at the full projection: keep the model's own % and move it by the change
+        mu2 = mu * r; p1n = _Zq.cdf((cut - mu2) / sd) if under else 1 - _Zq.cdf((cut - mu2) / sd)
+        l["p"] = round(min(0.98, max(0.02, p0 + (p1n - p0n))), 4); _nq += 1
+    print(f"questionable translator: {len(_QI)} players on the report, {_nq} legs repriced")
+except Exception as _e: print("warn: questionable translator skipped:", _e)
 # ---- calibration: the shown Model % for every player-prop leg is the raw model blended toward FanDuel's price (calib.py; Weeks 5-6 Brier) ----
 import calib as CALIB
 for l in LEGS:

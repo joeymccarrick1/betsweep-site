@@ -1,0 +1,80 @@
+{
+ "Doubtful|DNP": {
+  "n": 42,
+  "play": 0.0,
+  "snap": null,
+  "low": null,
+  "by_season": {
+   "2024": 0.0,
+   "2025": 0.0
+  }
+ },
+ "Doubtful|Full": {
+  "n": 6,
+  "play": 0.0,
+  "snap": null,
+  "low": null,
+  "by_season": {
+   "2024": 0.0
+  }
+ },
+ "Doubtful|Limited": {
+  "n": 12,
+  "play": 0.0,
+  "snap": null,
+  "low": null,
+  "by_season": {
+   "2024": 0.0,
+   "2025": 0.0
+  }
+ },
+ "Doubtful|none": {
+  "n": 1,
+  "play": 0.0,
+  "snap": null,
+  "low": null,
+  "by_season": {
+   "2025": 0.0
+  }
+ },
+ "Questionable|DNP": {
+  "n": 71,
+  "play": 0.535,
+  "snap": 0.904,
+  "low": 0.289,
+  "by_season": {
+   "2024": 0.488,
+   "2025": 0.6
+  }
+ },
+ "Questionable|Full": {
+  "n": 82,
+  "play": 0.805,
+  "snap": 0.88,
+  "low": 0.288,
+  "by_season": {
+   "2024": 0.83,
+   "2025": 0.771
+  }
+ },
+ "Questionable|Limited": {
+  "n": 290,
+  "play": 0.638,
+  "snap": 0.895,
+  "low": 0.243,
+  "by_season": {
+   "2024": 0.644,
+   "2025": 0.632
+  }
+ },
+ "Questionable|none": {
+  "n": 14,
+  "play": 0.571,
+  "snap": 0.811,
+  "low": 0.5,
+  "by_season": {
+   "2024": 0.429,
+   "2025": 0.714
+  }
+ }
+}
