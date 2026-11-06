@@ -351,6 +351,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .askg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0} .askg span{display:flex;flex-direction:column} .askg small{font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em} .askg b{font-family:var(--display);font-size:20px} .askg b.up{color:var(--good)} .askg b.dn{color:var(--bad)}
 .askf{list-style:none;margin:6px 0;padding:0;font-size:12.5px;color:var(--mute)} .askf li{margin:3px 0} .askf li b{color:var(--ink)} .askf li.bad b{color:var(--bad)} .askf li.good b{color:var(--good)} .askc .wr{color:var(--bad);font-size:12.5px} .askc .nt{color:var(--mute);font-size:12.5px}
 .askb .askadd{padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:700;margin-right:8px} .askl{margin:6px 0 0;padding-left:18px} .askl li{margin:4px 0} .askl small{color:var(--mute)}
+.trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
 </style>
 
 <link rel="stylesheet" href="/s/site-7ac6fac2b2.css"></head>
@@ -461,7 +462,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-820d195dc778.js"></script>
+<script src="/build/data-c33b09e037c8.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -734,7 +735,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return '<li class="lg' + (openPl[l.pl + '|' + l.m] ? ' open' : '') + '" data-i="' + l.i + '" data-orig="' + esc(ok) + '"><span class="pz">' + l.pos + '</span>' +
       '<span class="who"><b><a class="pname" href="/player/' + plSlug(l.pl) + '/" title="' + esc(l.pl) + ': lines at every book, hit rates, game log">' + esc(l.pl) + '</a>' + flagMark(l) + (l.gd ? ' <span class="gdo">' + esc(l.gd) + '</span>' : '') + '</b><span>' + l.tm + ' vs ' + l.opp + ' · ' + esc(g.kick) + '</span>' + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow">' + mupill(l) + '</span>' : '') + tierChip(l) + '</span>' +
       '<span class="mk">' + (cyc.length > 1 ? '<span class="pn cyc" role="button" tabindex="0" data-orig="' + esc(ok) + '" title="Next prop for ' + esc(l.pl) + ' (' + (ci + 1) + ' of ' + cyc.length + ')"><i class="car">›</i><small>' + (ci + 1) + '/' + cyc.length + '</small></span>' : '') + '<span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(l.ms) + l5(l) + '</span>' + (isTD(l) ? '' : isGL(l) ? '<small class="glsrc">' + (l.src === 'fd' ? 'FanDuel' : 'consensus') + '</small>' : (ladderOf(l).length > 1 && st.best ? ' ' + fader(l) : ' ' + lnTxt(l))) + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow m">' + mupill(l) + '</span>' : '') + '<small class="d">' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + '</small>' + bookStrip(l) + '<small class="bkl m">' + booksLine(l) + '</small><small class="mp">Model ' + pc(l.p) + ' · book ' + pc(l.bk) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + ' · <b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + ' edge</b></small></span>' +
-      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small><span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
+      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
       '<span class="nums"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
       (started(l.g) && !sel[l.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[l.i] ? 'in' : '') + '">' + (sel[l.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(l) + histBlock(l) + altsBlock(l) + '</li>';
   }
@@ -842,11 +843,13 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var snrow = snChip(l) ? '<div class="snrow">' + snChip(l) + '</div>' : '';
     if(!rows.length) return '<div class="alts">' + snrow + '<div class="none">No other FanDuel markets for ' + esc(l.pl) + ' this week.</div></div>';
     return '<div class="alts">' + snrow + rows.map(function(x){
-      return '<div class="ar" data-i="' + x.i + '"><span class="mk"><span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(x.ms) + l5(x) + '</span>' + (isTD(x) ? '' : isGL(x) ? ' ' + esc(x.pl) : (ladderOf(x).length > 1 ? ' ' + fader(x) : ' ' + lnTxt(x))) + '<small>' + (x.src === 'cons' ? 'Mkt ' : 'FD ') + am(x.o) + (x.proj != null && x.m !== 'Anytime TD' ? ' · proj ' + x.proj : '') + ' · model ' + pc(x.p) + ' · book ' + pc(x.bk) + '</small>' + dpill(x) + flagMark(x) + '</span>' +
+      return '<div class="ar" data-i="' + x.i + '"><span class="mk"><span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(x.ms) + l5(x) + '</span>' + (isTD(x) ? '' : isGL(x) ? ' ' + esc(x.pl) : (ladderOf(x).length > 1 ? ' ' + fader(x) : ' ' + lnTxt(x))) + '<small>' + (x.src === 'cons' ? 'Mkt ' : 'FD ') + am(x.o) + (x.proj != null && x.m !== 'Anytime TD' ? ' · proj ' + x.proj : '') + ' · model ' + pc(x.p) + trk(x) + ' · book ' + pc(x.bk) + '</small>' + dpill(x) + flagMark(x) + '</span>' +
         '<span class="nums"><b class="e ' + (x.e >= 0 ? 'up' : 'dn') + '">' + (x.e >= 0 ? '+' : '') + (x.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
         (started(x.g) && !sel[x.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[x.i] ? 'in' : '') + '">' + (sel[x.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(x) + histBlock(x) + '</div>';
     }).join('') + '</div>';
   }
+  function trk(l){ var m = String(l.m || '').replace(/^Under /, ''); if(/^Under /.test(l.m || '')) return ''; var r = ((D.rec || {})[m] || {})[String(Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)))];
+    return r && r[1] >= 40 ? '<span class="trk" title="Graded Weeks 6+: legs in this market the site showed at ' + Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + '-' + (Math.min(80, Math.max(10, Math.floor(l.p * 10) * 10)) + 10) + '% hit ' + Math.round(r[0] / r[1] * 100) + '% (' + r[1] + ' legs)">hit ' + Math.round(r[0] / r[1] * 100) + '% of ' + r[1] + '</span>' : ''; }
   function flagMark(l){
     var fl = l.fl || [];
     if(l.w) return ' <span class="wf" role="button" tabindex="0" aria-label="flags on this leg" title="Risk flags - tap to read">!</span>';
@@ -1288,7 +1291,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function addBtn(l){ return started(l.g) && !sel[l.i] ? '<button type="button" class="add lockd" disabled>Started</button>' : '<button type="button" class="add' + (sel[l.i] ? ' in' : '') + '">' + (sel[l.i] ? 'In slip ✓' : '+ Add') + '</button>'; }
   function boxBody(l){   // the parts that change with the slider / switch
     return '<div class="pbm">' + l5(l) + mupill(l) + (l.proj != null && !isTD(l) ? '<small class="proj">proj ' + l.proj + '</small>' : '') + '</div>' +
-      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model</small></span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
+      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small></span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
   }
   function statBox(pl, m, pos){
     var g = ladder(pl, m); if(!g.length) return ''; var l = boxLeg(pl, m); var s = BOX[pl + '|' + m] || {}; var u = UND[pl + '|' + m]; var under = s.side === 'u' && u;
