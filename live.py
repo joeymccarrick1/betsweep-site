@@ -70,11 +70,13 @@ window.BSLive = (function(){
       .then(function(got){ var p = parse(got.js); Object.keys(p).forEach(function(k){ state[k] = p[k]; }); feed = {ok: true, at: Date.now(), err: '', src: got.src, n: Object.keys(p).length}; cb(merged()); })
       .catch(function(e){ feed = {ok: false, at: Date.now(), err: String(e && e.message || e), src: ''}; cb(merged()); });
   }
-  function tick(){ if(needFeed() && Date.now() - lastFetch >= 25e3) fetchNow(); else cb(merged()); }
+  // owner 11/5 ("load like instantaneously in real time"): poll every 10 s while a game is on and the page is visible; nothing while hidden; refresh the moment the page comes back
+  function tick(){ if(document.hidden) return; if(needFeed() && Date.now() - lastFetch >= 9e3) fetchNow(); else cb(merged()); }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && cb && needFeed() && Date.now() - lastFetch >= 4e3) fetchNow(); });
   return { refresh: function(){ lastFetch = 0; fetchNow(); }, status: function(){ return feed; },
     start: function(gs, onUpdate){ games = gs; cb = onUpdate;
       var now = Date.now(); if(games.some(function(g){ return g.ko && now >= g.ko - 15*60e3 && !g.fin; })) fetchNow(); else cb(merged());
-      timer = setInterval(tick, 30e3); },
+      timer = setInterval(tick, 10e3); },
     esc: function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]; }); },
     // ticker HTML for one game (a = left team, b = right team); the box link opens the game's box score + play-by-play on /live/
     tickHtml: function(g, s){
