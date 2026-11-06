@@ -792,6 +792,17 @@ _nbr = 0
 for _ev, l in _lad.values():
     if _ev >= 0.02 and (l.get("z") or [""])[0] != "r": l["br"] = round(_ev, 3); _nbr += 1
 print(f"best rung: {_nbr} ladders have a +EV best rung")
+# owner 11/6 similar defenses (simdef.py): the Game preview split on every leg of the player's main stat - a chip and the best-bet tiebreaker,
+# never a probability input (tested 2024-26 without predictive value; graded every Tuesday)
+try:
+    import simdef as _SDF
+    _SDD = _SDF.load(IN, WEEK); _nsd = 0
+    for l in LEGS:
+        if l.get("gl"): continue
+        x = _SDF.for_leg(_SDD, l.get("pl"), l.get("tm"), l.get("m"))
+        if x: l["sd"] = [x["pct"], x["near"], x["season"], "/".join(x["opps"]), x["cons"]]; _nsd += 1
+    print(f"similar defenses: {_nsd} legs carry the split ({len(_SDD)} players)")
+except Exception as _e: print("warn: similar defenses skipped:", _e)
 # owner 11/6 scenario explorer (scenario.py): every player leg's chance under each of its game's four endings [a by 10+, close & low,
 # shootout, b by 10+], mixed back to its shown chance; game lines carry gamelines' own per-script chances (set where they are built).
 try:
@@ -800,7 +811,8 @@ try:
 except Exception as _e: print("warn: scenario explorer skipped:", _e)
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
-BUILDER_CSS = r""".omc{display:block;font-size:10.5px;white-space:nowrap} .omc.up{color:var(--good)} .omc.dn{color:var(--mute)}
+BUILDER_CSS = r""".sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.up{color:var(--good)} .sdc.dn{color:var(--bad)}
+.omc{display:block;font-size:10.5px;white-space:nowrap} .omc.up{color:var(--good)} .omc.dn{color:var(--mute)}
 .scen:empty{display:none} .scen{margin:10px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .scen h4{margin:0 0 4px;font-family:var(--display);font-size:13px;letter-spacing:.06em;text-transform:uppercase} .scen h4 small{display:block;font-family:var(--body);font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--mute);font-weight:500;margin-top:2px}
 .scg{margin-top:8px} .sgh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:2px} .sgh small{color:var(--mute);font-size:11px}
@@ -1305,7 +1317,7 @@ BUILDER_JS = r"""
     return '<li class="lg' + (openPl[l.pl + '|' + l.m] ? ' open' : '') + '" data-i="' + l.i + '" data-orig="' + esc(ok) + '"><span class="pz">' + l.pos + '</span>' +
       '<span class="who"><b><a class="pname" href="/player/' + plSlug(l.pl) + '/" title="' + esc(l.pl) + ': lines at every book, hit rates, game log">' + esc(l.pl) + '</a>' + flagMark(l) + (l.gd ? ' <span class="gdo">' + esc(l.gd) + '</span>' : '') + '</b><span>' + l.tm + ' vs ' + l.opp + ' · ' + esc(g.kick) + '</span>' + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow">' + mupill(l) + '</span>' : '') + tierChip(l) + '</span>' +
       '<span class="mk">' + (cyc.length > 1 ? '<span class="pn cyc" role="button" tabindex="0" data-orig="' + esc(ok) + '" title="Next prop for ' + esc(l.pl) + ' (' + (ci + 1) + ' of ' + cyc.length + ')"><i class="car">›</i><small>' + (ci + 1) + '/' + cyc.length + '</small></span>' : '') + '<span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(l.ms) + l5(l) + '</span>' + (isTD(l) ? '' : isGL(l) ? '<small class="glsrc">' + (l.src === 'fd' ? 'FanDuel' : 'consensus') + '</small>' : (ladderOf(l).length > 1 && st.best ? ' ' + fader(l) : ' ' + lnTxt(l))) + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow m">' + mupill(l) + '</span>' : '') + '<small class="d">' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + '</small>' + bookStrip(l) + '<small class="bkl m">' + booksLine(l) + '</small><small class="mp">Model ' + pc(l.p) + ' · book ' + pc(l.bk) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + ' · <b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + ' edge</b></small></span>' +
-      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + scChip(l) + omChip(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
+      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + scChip(l) + omChip(l) + sdChip(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
       '<span class="nums"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
       (started(l.g) && !sel[l.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[l.i] ? 'in' : '') + '">' + (sel[l.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(l) + histBlock(l) + altsBlock(l) + '</li>';
   }
@@ -1568,6 +1580,8 @@ BUILDER_JS = r"""
     if(f <= lo - 0.03) return '<small class="omc up" title="FanDuel ' + (l.o > 0 ? '+' : '') + l.o + ' vs DraftKings ' + (b.dk.o > 0 ? '+' : '') + b.dk.o + ' and Hard Rock ' + (b.hr.o > 0 ? '+' : '') + b.hr.o + ' on the same line">🏷 FanDuel best by ' + Math.round((lo - f) * 100) + ' pts</small>';
     if(f >= hi + 0.03) return '<small class="omc dn" title="Both DraftKings and Hard Rock pay more on this line">cheaper at ' + (ip(b.dk.o) < ip(b.hr.o) ? 'DraftKings' : 'Hard Rock') + '</small>';
     return ''; }
+  function sdChip(l){ var x = l.sd; if(!x || Math.abs(x[0]) < 0.15) return ''; var up = x[0] > 0, u = l.pos === 'QB' ? 'pass yds' : l.pos === 'RB' ? 'rush yds' : 'rec yds';
+    return '<small class="sdc' + (up ? ' up' : ' dn') + '" title="' + esc(l.pl) + ' averaged ' + Math.round(x[1]) + ' ' + u + ' against the 3 past opponents most like ' + esc(l.opp) + '\'s defense (' + esc(x[3]) + ') vs ' + Math.round(x[2]) + ' on the season; above his average in ' + (x[4] != null ? x[4] : '?') + ' of those 3 - the Game preview split. Context and tiebreaker, not a projection input.">vs similar D ' + (up ? '+' : '') + Math.round(x[0] * 100) + '%' + (x[4] === 3 ? ' · 3/3' : x[4] === 0 ? ' · 0/3' : '') + '</small>'; }
   function scChip(l){ var k = SCN[l.g]; if(k == null || !l.sc) return ''; var g = games[l.g], d = l.sc[k] - l.p;
     return '<small class="scc' + (d >= 0.02 ? ' up' : d <= -0.02 ? ' dn' : '') + '" title="This leg\'s chance if the game ends ' + esc(scLab(g, k)) + '">if ' + esc(scLab(g, k).toLowerCase()) + ': ' + pc(l.sc[k]) + '</small>'; }
   function scenBlock(ls){
@@ -1907,7 +1921,7 @@ BUILDER_JS = r"""
   function addBtn(l){ return started(l.g) && !sel[l.i] ? '<button type="button" class="add lockd" disabled>Started</button>' : '<button type="button" class="add' + (sel[l.i] ? ' in' : '') + '">' + (sel[l.i] ? 'In slip ✓' : '+ Add') + '</button>'; }
   function boxBody(l){   // the parts that change with the slider / switch
     return '<div class="pbm">' + l5(l) + mupill(l) + (l.proj != null && !isTD(l) ? '<small class="proj">proj ' + l.proj + '</small>' : '') + '</div>' +
-      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small>' + scChip(l) + omChip(l) + '</span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
+      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small>' + scChip(l) + omChip(l) + sdChip(l) + '</span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
   }
   function statBox(pl, m, pos){
     var g = ladder(pl, m); if(!g.length) return ''; var l = boxLeg(pl, m); var s = BOX[pl + '|' + m] || {}; var u = UND[pl + '|' + m]; var under = s.side === 'u' && u;
