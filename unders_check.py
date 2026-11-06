@@ -44,6 +44,7 @@ out = [line("all main lines", rows)]
 for m in COL: g = [x for x in rows if x["m"] == m]; out.append(line(m, g)) if len(g) >= 15 else None
 for nm, f in (("under favored (under -120 or shorter)", lambda x: x["uo"] <= -120), ("near even (-119..+119)", lambda x: -119 < x["uo"] < 120), ("under plus money (+120 up)", lambda x: x["uo"] >= 120),
               ("CUT: rushing unders, over -200 or shorter", lambda x: x["m"] == "Rushing Yards" and x["oo"] is not None and x["oo"] <= -200),
+              ("CUT: rushing unders, main line under 40 yds (11/5: wk6-8 main lines 94-66)", lambda x: x["m"] == "Rushing Yards" and x["ln"] < 40),
               ("CUT: model under % >= under implied + 5", lambda x: x["ru"] is not None and x["ru"] - x["ubk"] >= 0.05),
               ("CUT: model under % <= under implied - 5", lambda x: x["ru"] is not None and x["ru"] - x["ubk"] <= -0.05)):
     g = [x for x in rows if f(x)]
