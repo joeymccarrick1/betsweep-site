@@ -14,6 +14,8 @@
  * and two menu items that write legs to 'BET - My Legs Log' with the model numbers frozen at that moment:
  *   "Log slip from Slip Builder"  - legs marked Y in column A of V2 - Slip Builder
  *   "Log legs from Alt Line Checker" - legs with Use = Y in V2 - Alt Line Checker
+ * (Version 2026-11-05: also pulls player_pass_tds, player_pass_interceptions, player_pass_completions (+ alternate) and player_rush_attempts
+ *  for the site's new markets - links tab only, about 5 more credits per game per refresh.)
  * (Version 2026-10-19: (a) FanDuel RUSH + RECEIVING YARDS ladders (player_rush_reception_yds + alternate) are pulled and written to
  *  'AUTO - FanDuel Links' as market 'Rush + Rec Yards' for the betsweep.co builder, which prices them from the rush and receiving
  *  projections; they are kept OUT of the odds tab / Leg Board (the sheet has no formula for that market). (b) When the ladder has to be
@@ -49,7 +51,7 @@ const MARKETS = {
   player_rush_reception_yds_alternate: 'Rush + Rec Yards',
   player_anytime_td: 'Anytime TD'
 };
-const LINKS_ONLY = {'Rush + Rec Yards': true};   // markets written to the links tab for the site, never to the odds tab / Leg Board
+const LINKS_ONLY = {'Rush + Rec Yards': true, 'Passing TDs': true, 'Interceptions': true, 'Completions': true, 'Rush Attempts': true};   // links tab only (site prices them; the Leg Board cannot)   // markets written to the links tab for the site, never to the odds tab / Leg Board
 const DAYS_AHEAD = 7;   // only games kicking off in the next 7 days and not yet started
 const MIN_ODDS = -1000; // skip near-locks shorter than this (they add nothing to a parlay)
 const MAX_ODDS = 500;   // skip long shots longer than this
@@ -64,7 +66,10 @@ const ODDS_MARKETS = {
   player_receptions: 'Receptions', player_reception_longest: 'Longest Reception',
   player_pass_yds_alternate: 'Passing Yards', player_rush_yds_alternate: 'Rushing Yards', player_reception_yds_alternate: 'Receiving Yards',
   player_receptions_alternate: 'Receptions', player_reception_longest_alternate: 'Longest Reception', player_anytime_td: 'Anytime TD',
-  player_rush_reception_yds: 'Rush + Rec Yards', player_rush_reception_yds_alternate: 'Rush + Rec Yards'
+  player_rush_reception_yds: 'Rush + Rec Yards', player_rush_reception_yds_alternate: 'Rush + Rec Yards',
+  // 2026-11-05 (owner: more prop markets): QB passing TDs / interceptions / completions and rush attempts - links tab only, priced on the site
+  player_pass_tds: 'Passing TDs', player_pass_interceptions: 'Interceptions', player_pass_completions: 'Completions', player_pass_completions_alternate: 'Completions',
+  player_rush_attempts: 'Rush Attempts'
 };
 
 function onOpen() {

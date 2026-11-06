@@ -198,7 +198,7 @@ except Exception as e: DEF, LG = {}, {}
 STAT_KEY = {"Passing Yards": "pass", "Rushing Yards": "rush", "Receiving Yards": "recy", "Receptions": "rec", "Longest Reception": "long", "Anytime TD": "td", "Rush + Rec Yards": "rr"}
 
 CODE_OF = {"Passing Yards": "PASS", "Rushing Yards": "RUSH", "Receiving Yards": "RECYDS", "Receptions": "REC", "Longest Reception": "LONG", "Anytime TD": "TD", "Rush + Rec Yards": "RUSH"}   # RR shares the rush correlation code (dominant component for the RBs who get the market)
-SHORT = {"Passing Yards": "Pass yds", "Rushing Yards": "Rush yds", "Receiving Yards": "Rec yds", "Receptions": "Rec", "Longest Reception": "Long rec", "Anytime TD": "Anytime TD", "Rush + Rec Yards": "Rush+rec yds"}
+SHORT = {"Passing Yards": "Pass yds", "Rushing Yards": "Rush yds", "Receiving Yards": "Rec yds", "Receptions": "Rec", "Longest Reception": "Long rec", "Anytime TD": "Anytime TD", "Rush + Rec Yards": "Rush+rec yds", "Passing TDs": "Pass TDs", "Interceptions": "INTs", "Completions": "Completions", "Rush Attempts": "Rush att"}
 LEGS = []
 for r in legs_raw[1:]:
     if len(r) < 17 or not r[0]: continue
@@ -328,6 +328,35 @@ try:
         print(f"returning starter: {name} ({team} {pos}) priced from 2025 share x {team} volume - tgt {pr['tgt']:.1f}, rec yds {pr['recy']:.0f}, rush yds {pr['rushy']:.0f}, TD lambda {pr['lam_td']:.2f}")
     if NRET: print(f"returning starters: {NRET} legs")
 except Exception as e: print("warn: returning-starter legs skipped:", e)
+# owner 11/5 new markets: Passing TDs / Interceptions / Completions / Rush Attempts (FanDuelOdds.gs 2026-11-05 pulls them to the links tab).
+# newmkt.py prices them (research/newmkt.py: walk-forward 2023-26, calibrated; TDs / INTs / completions beat the plain average). The shown %
+# is blended with FanDuel's price by the calibration pass below, like every yardage market. Until the odds pull runs with the new markets this adds nothing.
+NNM = 0
+try:
+    import newmkt as _NM
+    _NMP = _NM.Pricer(IN, WEEK); _opp_of = {}
+    for _g in GAMES: _opp_of[_g["a"]] = (_g["b"], _g["gid"]); _opp_of[_g["b"]] = (_g["a"], _g["gid"])
+    for r in vals("links.json")[1:]:
+        if len(r) < 8 or r[2] not in _NM.P: continue
+        name, mk = r[1], r[2]; ln = num(r[3]); odds = num(r[7])
+        if ln is None or odds is None or normname(name) in OUT_NOW: continue
+        tm = _NMP.team.get(name) or next((t for n, t in _NMP.team.items() if normname(n) == normname(name)), None)
+        nm2 = name if name in _NMP.team else next((n for n in _NMP.team if normname(n) == normname(name)), name)
+        if not tm or tm not in _opp_of: continue
+        opp, gid = _opp_of[tm]; res = _NMP.prob(nm2, mk, ln, opp)
+        if not res: continue
+        raw, mean, ng, avg = res
+        bk = (100 / (odds + 100)) if odds > 0 else (-odds / (-odds + 100)); pm = raw   # the calibration pass below blends it toward the price, like every leg
+        pos = _NMP.pos.get(nm2, "")
+        try: fl = leg_flags(name, mk, ln, tm, opp)
+        except Exception: fl = []
+        fl = list(fl) + [["info", "New market", f"Projection {mean:.1f} ({avg:.1f} per game over {ng} games, shrunk toward the league and adjusted for {opp}); tested 2023-26, calibrated."]]
+        LEGS.append({"i": len(LEGS), "pl": name, "pos": pos, "tm": tm, "opp": opp, "g": gid, "m": mk, "ms": SHORT.get(mk, mk), "ln": ln, "o": int(odds),
+                     "p": round(pm, 4), "bk": round(bk, 4), "e": round(pm - bk, 4), "w": "; ".join(f[2] for f in fl if f[0] == "bad"), "fh": line_flags(fl, name),
+                     "proj": round(mean, 2), "avg": round(avg, 2), "n": ng, "c": "", "gd": GAMEDAY.get(name.lower(), ""), "fd": LINKS.get(r[0]), "sk": "nm"})
+        NNM += 1
+    print(f"new markets: {NNM} legs (passing TDs / INTs / completions / rush attempts)")
+except Exception as e: print("warn: new markets skipped:", e)
 # Rush + Rec Yards (owner request): FanDuel prices it, the Leg Board does not. Priced here as the sum of the player's rushing and receiving
 # distributions: each component's mean is the model projection and its spread is backed out of the model's own alt-ladder probabilities for
 # that player (probit fit of the rungs; fallback spread = 0.5x rush proj / 0.6x rec proj when a ladder is missing); components treated as
