@@ -91,6 +91,10 @@ table.lvt td.st{width:30px} table.lvt td.st .add{display:block;font:inherit;font
 table.lvt td.st .rm{font:inherit;font-size:14px;line-height:1;background:none;border:0;color:var(--mute);cursor:pointer;padding:4px 6px} table.lvt td.st .rm:hover{color:var(--bad)}
 .slipcard .ghd2 .t input{font:inherit;font-family:var(--display);font-weight:800;font-size:18px;border:0;border-bottom:1px dashed var(--line);background:none;color:inherit;width:100%;min-width:0;padding:0} .slipcard .ghd2 .t.r small{text-align:right;white-space:normal}
 .slipbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--mute)} .slipbar .rfr{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer;text-decoration:none} .slipbar .rfr.fd{border-color:var(--red);color:var(--red)} .slipbar .rfr:hover{border-color:var(--red)}
+.cob{margin:6px 14px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.4}
+.cob h5{margin:0 0 4px;font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)} .cob h5:not(:first-child){margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.cob p{margin:4px 0} .cob p.hint{color:var(--mute);font-size:12px} .cob p.ok b,.cob b.g{color:var(--good)} .cob p.no b,.cob b.r{color:var(--bad)} .cob p.mid b{color:var(--warn)}
+.cob label{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mute)} .cob input{font:inherit;font-size:13px;width:92px;border:1px solid var(--line);border-radius:4px;padding:5px 7px;background:var(--card);color:var(--ink)}
 .slipbar label{display:inline-flex;align-items:center;gap:4px} .slipbar input{font:inherit;font-size:12px;width:64px;border:1px solid var(--line);border-radius:4px;padding:4px 6px;background:var(--card);color:var(--ink)}
 .addmenu{position:absolute;z-index:40;background:var(--card);border:1px solid var(--ink);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;min-width:190px;max-width:260px} .addmenu button{display:block;width:100%;text-align:left;font:inherit;font-size:13px;background:none;border:0;border-radius:5px;padding:7px 9px;cursor:pointer;color:var(--ink)} .addmenu button:hover{background:var(--chalk)} .addmenu button.in::before{content:"✓ ";color:var(--good);font-weight:700} .addmenu button.new{color:var(--red);font-weight:700;border-top:1px solid var(--line);border-radius:0;margin-top:4px;padding-top:9px} .addmenu small{display:block;padding:2px 9px 4px;color:var(--mute);font-size:11px}
 .imp{background:var(--card);border:1px solid var(--ink);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px} .imp h3{margin:0 0 6px;font-family:var(--display);font-size:16px} .imp p{margin:0 0 8px;color:var(--mute);font-size:12px;line-height:1.45}
@@ -356,7 +360,7 @@ window.BSLive = (function(){
   function saveSlips(){ try { localStorage.setItem(SLKEY, JSON.stringify(SLIPS)); } catch(e){} }
   var BMETA = {}; try { BMETA = JSON.parse(localStorage.getItem('bs_slipmeta_w' + D.week) || '{}') || {}; } catch(e){}
   function saveBMeta(){ try { localStorage.setItem('bs_slipmeta_w' + D.week, JSON.stringify(BMETA)); } catch(e){} }
-  function allSlips(){ var out = []; var bk = Object.keys(SLIP); if(bk.length) out.push({id: 'builder', name: BMETA.name || 'Builder slip', keys: bk, odds: BMETA.odds, stake: BMETA.stake, builder: true}); return out.concat(SLIPS); }
+  function allSlips(){ var out = []; var bk = Object.keys(SLIP); if(bk.length) out.push({id: 'builder', name: BMETA.name || 'Builder slip', keys: bk, odds: BMETA.odds, stake: BMETA.stake, co: BMETA.co, cot: BMETA.cot, ho: BMETA.ho, builder: true}); return out.concat(SLIPS); }
   function slipById(id){ return id === 'builder' ? allSlips()[0] : SLIPS.filter(function(s){ return s.id === id; })[0]; }
   function toggleIn(id, k){
     if(id === 'builder'){ if(SLIP[k]) delete SLIP[k]; else SLIP[k] = true; saveBuilderSlip(); }
@@ -367,6 +371,44 @@ window.BSLive = (function(){
   function dec(o){ return o > 0 ? 1 + o/100 : 1 + 100/(-o); } function amer(d){ return d >= 2 ? Math.round((d - 1)*100) : -Math.round(100/(d - 1)); }
   function parseOdds(v){ var m = String(v == null ? '' : v).trim().match(/^([+-])?\s*(\d{3,5})$/); return m ? (m[1] === '-' ? -1 : 1) * (+m[2]) : null; }
   function slipLegs(sl){ return sl.keys.map(function(k){ return LEGIDX[k]; }).filter(Boolean); }
+  // owner 11/6 (cash-out advisor + hedge): what riding the ticket is worth right now (our live chance x payout) against FanDuel's cash-out offer,
+  // and on the last open leg the hedge that locks the same profit either way. Live prices for the other side are not in our data, so the user types
+  // FanDuel's; until then the math runs at the fair price from our live chance.
+  function oppText(l){
+    if(l.gl) return 'the other side';
+    if(l.m === 'First TD') return l.pl + ' not first TD'; if(l.m === 'Anytime TD') return l.pl + ' no TD';
+    if(l.m === '2+ TD') return l.pl + ' under 1.5 TDs'; if(l.m === '3+ TD') return l.pl + ' under 2.5 TDs';
+    var under = l.u || /^Under /.test(l.m || '');
+    return l.pl + ' ' + String(l.ms || l.m).toLowerCase() + ' ' + (under ? 'over ' + l.ln : 'under ' + (Math.round(l.ln) - 0.5)); }
+  function cashBlock(sl, sr, pj, pay, alive, no){
+    if(!alive) return '';
+    if(pay == null) return '<div class="cob"><p class="hint">Add your stake below (and the ticket price) to see what a fair cash-out is and how to hedge.</p></div>';
+    var fair = pay * pj, co = sl.co > 0 ? +sl.co : null, coCost = null;
+    var h = '<div class="cob"><h5>Cash out or ride?</h5><p>Riding is worth <b>$' + fair.toFixed(2) + '</b> right now (' + pc(pj) + ' to cash × $' + pay.toFixed(2) + ').</p>';
+    if(co != null){
+      coCost = fair - co; var pct = coCost / fair, age = sl.cot ? Math.round((Date.now() - sl.cot) / 6e4) : 0;
+      h += pct <= 0 ? '<p class="ok"><b>Take it.</b> $' + co.toFixed(2) + ' is $' + (-coCost).toFixed(2) + ' more than riding is worth.</p>'
+        : pct <= 0.04 ? '<p class="mid"><b>Fair offer.</b> $' + co.toFixed(2) + ' is within ' + Math.max(1, Math.round(pct * 100)) + '% of fair - your call.</p>'
+        : '<p class="no"><b>Hold</b> unless you want out: $' + co.toFixed(2) + ' gives up $' + coCost.toFixed(2) + ' (' + Math.round(pct * 100) + '%) of what it is worth.</p>';
+      if(age >= 3) h += '<p class="hint">Offer typed ' + age + ' min ago - offers move every play, so re-enter it.</p>';
+    }
+    h += '<label>FanDuel cash-out $<input type="text" inputmode="decimal" class="slipco" data-sid="' + esc(sl.id) + '" placeholder="' + fair.toFixed(2) + '" value="' + (co != null ? co : '') + '"></label>';
+    if(no === 1){
+      var x = sr.filter(function(y){ return y.r.status !== 'hit' && y.r.status !== 'dead'; })[0], ph = x ? x.r.p : null;
+      if(ph != null && ph > 0.02 && ph < 0.98){
+        var fo = amer(1 / (1 - ph)), ho = sl.ho ? +sl.ho : null, dh = dec(ho || fo);
+        var H = pay / dh, back = pay - H, net = back - (+sl.stake), cost = H * (1 - (1 - ph) * dh);   // hedge H so both outcomes return the same: back = pay - H
+        h += '<h5>Hedge the last leg</h5><p>Bet <b>$' + H.toFixed(2) + '</b> on ' + esc(oppText(x.l)) + ' at ' + am(ho || fo) + (ho ? '' : ' (fair)') + ' → <b>$' + back.toFixed(2) + ' back either way</b> (' +
+          (net >= 0 ? '<b class="g">+$' + net.toFixed(2) + '</b>' : '<b class="r">-$' + (-net).toFixed(2) + '</b>') + ' on your $' + (+sl.stake).toFixed(2) + ').</p>';
+        if(co != null) h += '<p class="' + (back >= co ? 'ok' : 'mid') + '"><b>' + (back >= co ? 'Hedge beats' : 'Cash-out beats') + '</b> ' + (back >= co ? 'FanDuel\'s $' + co.toFixed(2) + ' cash-out by $' + (back - co).toFixed(2) : 'this hedge by $' + (co - back).toFixed(2)) + '.</p>';
+        if(ho) h += cost > 0.005 ? '<p class="hint">That price gives up about $' + cost.toFixed(2) + ' of value (fair is ' + am(fo) + ').</p>'
+                       : '<p class="ok"><b>Better than fair</b> (fair is ' + am(fo) + ') - the hedge itself is a good bet.</p>';
+        else h += '<p class="hint">Type FanDuel\'s price for the other side to get the real numbers.</p>';
+        if(/TD/.test(x.l.m) && !x.l.gl) h += '<p class="hint">FanDuel rarely lists a "no TD" side - if it is not there, there is no clean hedge.</p>';
+        h += '<label>other side <input type="text" inputmode="numeric" class="sliphedge" data-sid="' + esc(sl.id) + '" placeholder="' + am(fo) + '" value="' + (ho ? am(ho) : '') + '"></label>';
+      }
+    }
+    return h + '</div>'; }
   function slipCard(sl){
     var ls = slipLegs(sl); var missing = sl.keys.length - ls.length;
     var sr = ls.map(function(l){ var g = games[l.g], s = STATE[l.g] || {st:'pre'}; return {l: l, r: live(l, g, s), s: s}; });
@@ -375,6 +417,7 @@ window.BSLive = (function(){
     var pre = sr.reduce(function(a, x){ return a * x.l.p; }, 1);
     var legsDec = ls.reduce(function(a, l){ return a * dec(l.o); }, 1); var price = sl.odds || (ls.length ? amer(legsDec) : null);
     var toWin = (sl.stake && price) ? sl.stake * (dec(price) - 1) : null;
+    var pay = (sl.stake && price) ? sl.stake * dec(price) : null, alive = !nd && no > 0 && pj > 0 && pj < 1 && !missing;   // owner 11/6 cash-out advisor: gross return if it cashes
     var fdOk = ls.filter(function(l){ return l.fd && l.fd.m; });
     var fdUrl = fdOk.length ? 'https://sportsbook.fanduel.com/addToBetslip?' + fdOk.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&') : '';
     var done = nd ? 'DEAD' : (no === 0 && nh ? 'CASHED' : pc(pj));
@@ -389,14 +432,15 @@ window.BSLive = (function(){
     if(!nd && !(no === 0 && nh) && ls.length) facts.push('pregame ' + pc(pre));
     var money = [];
     if(price) money.push('<span><small>' + (sl.odds ? 'Ticket' : 'Legs imply') + '</small><b>' + am(price) + '</b></span>');
-    if(no && pj > 0 && pj < 1) money.push('<span><small>Fair from here</small><b>' + am(amer(1/pj)) + '</b></span>');
+    if(alive && pay != null) money.push('<span><small>Fair cash-out</small><b>$' + (pay * pj).toFixed(2) + '</b></span>');
+    else if(no && pj > 0 && pj < 1) money.push('<span><small>Fair from here</small><b>' + am(amer(1/pj)) + '</b></span>');
     if(toWin != null) money.push('<span><small>$' + (+sl.stake).toFixed(2) + ' wins</small><b>$' + toWin.toFixed(2) + '</b></span>');
     return '<section class="lg2 slipcard sc2' + (so ? ' open' : ' folded') + '" data-sid="' + esc(sl.id) + '"><div class="sch">' +
       '<button type="button" class="sliptog" data-sid="' + esc(sl.id) + '" aria-expanded="' + so + '" aria-label="' + (so ? 'Collapse' : 'Expand') + ' slip">' + (so ? '▴' : '▾') + '</button>' +
       '<div class="scn"><input type="text" class="slipname" data-sid="' + esc(sl.id) + '" value="' + esc(sl.name) + '" aria-label="Slip name"><small>' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + ' · ' + facts.join(' · ') + (sl.builder ? ' · shared with the builder' : '') + '</small></div>' +
       '<div class="scp ' + stCls + '"><b>' + done + '</b><small>' + (stCls ? '' : 'to cash from here') + '</small></div></div>' +
       (money.length ? '<div class="scm">' + money.join('') + '</div>' : '') +
-      (so ? '<table class="lvt">' + rows + '</table>' : '') +
+      (so ? '<table class="lvt">' + rows + '</table>' + cashBlock(sl, sr, pj, pay, alive, no) : '') +
       '<div class="slipbar"' + (so ? '' : ' hidden') + '>' + (fdUrl ? '<a class="rfr fd" href="' + fdUrl + '" target="_blank" rel="noopener">Open in FanDuel' + (fdOk.length < ls.length ? ' (' + fdOk.length + '/' + ls.length + ')' : '') + '</a>' : '') +
       '<label>ticket <input type="text" inputmode="numeric" class="slipodds" data-sid="' + esc(sl.id) + '" placeholder="+593" value="' + (sl.odds ? am(sl.odds) : '') + '"></label><label>stake $<input type="text" inputmode="decimal" class="slipstake" data-sid="' + esc(sl.id) + '" placeholder="10" value="' + (sl.stake || '') + '"></label>' +
       '<button type="button" class="rfr slipdel" data-sid="' + esc(sl.id) + '">' + (sl.builder ? 'Clear' : 'Delete') + '</button></div></section>'; }
@@ -499,9 +543,10 @@ window.BSLive = (function(){
     });
     requestAnimationFrame(function(){ wrap.style.minHeight = ''; });
   }
-  function render(){
+  function render(force){
     var wrap = $('#lv'); var now = Date.now(); var html = ''; var parts = []; loadSlips();
-    if(Date.now() - LASTSCROLL < 900){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1000); } return; }   // never re-render under a finger: iOS kills the scroll
+    var ae = document.activeElement; if(!force && ae && ae.tagName === 'INPUT' && ae.dataset && ae.dataset.sid && wrap.contains(ae)){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1500); } return; }   // 11/6: never re-render under a cursor - a live update mid-typing wiped the field
+    if(!force && Date.now() - LASTSCROLL < 900){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1000); } return; }   // never re-render under a finger: iOS kills the scroll
     // slips: the builder slip plus anything built or imported on this page, each tracked live as one parlay
     // owner 11/5: "put all of our slips into its own collapsed folder ... call it your slips" - one folder, closed until opened (remembered); a ?slip= link opens it
     var ALLS = allSlips();
@@ -867,7 +912,9 @@ window.BSLive = (function(){
     if(t.classList.contains('slipname')) set('name', t.value.trim() || sx.name);
     if(t.classList.contains('slipodds')) set('odds', parseOdds(t.value));
     if(t.classList.contains('slipstake')){ var v = parseFloat(String(t.value).replace(/[^\d.]/g, '')); set('stake', v > 0 ? v : null); }
-    loadSlips(); render(); });
+    if(t.classList.contains('slipco')){ var cv = parseFloat(String(t.value).replace(/[^\d.]/g, '')); set('co', cv > 0 ? cv : null); set('cot', cv > 0 ? Date.now() : null); }
+    if(t.classList.contains('sliphedge')) set('ho', parseOdds(t.value));
+    loadSlips(); render(true); });
   $('#lv').addEventListener('keydown', function(ev){ if(ev.key === 'Enter' && ev.target.dataset && ev.target.dataset.sid){ ev.target.blur(); } });
   // + menu: which slip to put the leg in
   var MENU = null; function closeMenu(){ if(MENU){ MENU.remove(); MENU = null; } }
