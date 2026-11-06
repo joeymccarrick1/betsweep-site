@@ -277,7 +277,7 @@ for g in B.get("games", []):
     sides = ""
     for off, d in ((a, b), (b, a)):
         sh, sd = similar_block(off, d); lh, ld = leak_block(off, d); sims[off] = sd; leaks[off] = ld
-        sides += (f'<div><section><h2>{badge(off)} {E(NAMES.get(off, off))} offense vs similar defenses</h2>{sh}</section>'
+        sides += (f'<div><section><h2>{badge(off)} {E(NAMES.get(off, off))} offense vs similar defenses</h2><p class="none">Context, not a pick: tested 2024-26, a player&#39;s numbers against the most similar past defenses did not predict his next game (players 20%+ above their average in those games hit FanDuel overs 46.5% vs 56.7% priced).</p>{sh}</section>'
                   f'<section><h2>Where the {E(NAMES.get(d, d))} defense leaks <small>by role, this season</small></h2>{lh}</section>'
                   f'<section><h2>{E(off)} running hot / cold <small>last 3 games vs season</small></h2><ul class="fl">' + ("".join(f'<li class="{k}">{E(t)}</li>' for k, t in heat(off)) or '<li>Nobody 25%+ off his season pace.</li>') + '</ul></section></div>')
     script = ""
