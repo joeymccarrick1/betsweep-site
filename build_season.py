@@ -336,6 +336,24 @@ def best_block():
 <div class="tblwrap"><table class="season" style="min-width:0;width:100%"><thead><tr><th>Tier</th>{"".join(f"<th>Wk {w}</th>" for w in weeks)}<th>Hit</th><th>Units</th></tr></thead><tbody>{rows}</tbody></table></div></section>"""
 try: best_html = best_block()
 except Exception as _e: print("warn: Model's Best block skipped:", _e); best_html = ""
+# owner 11/5 "our own record on game lines": research/gl_disagree.py rebuilds our formula walk-forward (with the 11/5 injury adjustment) and
+# grades it against the closing spread / total when they disagree. Reads out/gl_disagree.json (Tuesday step) or the committed research copy.
+def gl_record_block():
+    for p in (os.path.join(OUT, "gl_disagree.json"), os.path.join(HERE, "research", "gl_disagree.json")):
+        if os.path.exists(p): J = json.load(open(p)); break
+    else: return ""
+    pc = lambda a: (f'{a[0]}-{a[1]-a[0]} <small>({a[0]/a[1]*100:.0f}%)</small>' if a[1] else "-")
+    rows = "".join(f'<tr><td><b>{s}</b></td>' + "".join(f'<td>{pc(J["by_season"][s][g]["side"])}</td><td>{pc(J["by_season"][s][g]["total"])}</td>' for g in ("3", "5")) + '</tr>' for s in sorted(J["by_season"]))
+    al = J["by_gap"]
+    rows += '<tr><td><b>All</b></td>' + "".join(f'<td><b>{pc(al[g]["side"])}</b></td><td><b>{pc(al[g]["total"])}</b></td>' for g in ("3", "5")) + '</tr>'
+    wk = "".join(f'<span>W{w}: {J["2026_weeks"][w]["side"][0]}-{J["2026_weeks"][w]["side"][1]-J["2026_weeks"][w]["side"][0]} sides</span> ' for w in sorted(J["2026_weeks"], key=int) if J["2026_weeks"][w]["side"][1])
+    s3 = al["3"]["side"]; verdict = "the line has been right more often - do not bet a side just because our number differs" if s3[1] and s3[0] / s3[1] < 0.524 else "our number has beaten the line - worth a look when they disagree"
+    return (f'<section class="card calib"><h2>Our number vs the line <small>game sides and totals · 2023-2026, walk-forward</small></h2>'
+            f'<p>Our own team-score formula (season averages, injury-adjusted) against the closing spread and total, only in games where they disagree (3+ or 5+ points apart). Break-even at -110 is 52.4%. So far: {verdict}.</p>'
+            f'<div class="tblwrap"><table class="season" style="min-width:0;width:100%"><thead><tr><th>Season</th><th>Side 3+</th><th>Total 3+</th><th>Side 5+</th><th>Total 5+</th></tr></thead><tbody>{rows}</tbody></table></div>'
+            f'<p style="font-size:12px;color:var(--mute)">2026 by week (3+ pts apart): {wk}</p></section>')
+try: gl_html = gl_record_block()
+except Exception as _e: print("warn: game-line record skipped:", _e); gl_html = ""
 try: clv_html = clv_block()
 except Exception as _e: print("warn: CLV block skipped:", _e); clv_html = ""
 
@@ -415,7 +433,7 @@ summary = f'''<section class="card summary" id="summary">
  <footer class="ft"><span class="brand"><img src="data:image/png;base64,{LOGO_S}" alt=""><span>BetSweep</span></span><span>Picks. Data. Edge. Sweep.</span><button class="snap" type="button" data-target="summary">Copy card as image</button><button class="snap story" type="button" data-target="summary">Story 9:16</button></footer>
 </section>
 {calib_block}
-{best_html}{clv_html}{calls_block}{conf_graded}{disagree_block}'''
+{best_html}{clv_html}{gl_html}{calls_block}{conf_graded}{disagree_block}'''
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep Season Receipt</title>")
