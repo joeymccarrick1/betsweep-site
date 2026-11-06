@@ -347,3 +347,24 @@ try:
     json.dump({"events": EV, "updated": ts}, open("out/changes.json", "w"))
     print("changes:", len(add), "new,", len(EV), "kept")
 except Exception as e: print("changes skipped:", e)
+
+# ---- q.json (owner 11/6 "Questionable translator"): this week's official injury report (nflverse, updated as practices are reported) ->
+# for every Questionable / Doubtful QB / RB / WR / TE: last practice, chance he plays, share of usual snaps if he plays (qtrans numbers,
+# research/q_translator.py on 2024-25). risk.js adds it to the injury chip on every page.
+try:
+    import csv, io
+    QP = {"Full": 0.80, "Limited": 0.64, "DNP": 0.54, "none": 0.57}; QS = {"Full": 0.88, "Limited": 0.90, "DNP": 0.90, "none": 0.85}
+    txt = subprocess.check_output(["curl", "-fsSL", "--max-time", "30", "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.csv"]).decode()
+    rr = [r for r in csv.DictReader(io.StringIO(txt)) if r.get("game_type") == "REG" and r.get("position") in ("QB", "RB", "WR", "TE")]
+    wk = max((int(r["week"]) for r in rr if str(r.get("week", "")).isdigit()), default=0); Q = {}
+    for r in rr:
+        if str(r.get("week")) != str(wk): continue
+        ps = str(r.get("practice_status") or ""); ps = "DNP" if "Did Not" in ps else "Limited" if "Limited" in ps else "Full" if "Full" in ps else "none"
+        st = str(r.get("report_status") or "").strip()
+        if st not in ("Questionable", "Doubtful"):
+            if ps in ("DNP", "Limited"): Q[r["full_name"]] = {"tm": r.get("team"), "st": "", "ps": ps}   # practice news before the Friday status
+            continue
+        Q[r["full_name"]] = {"tm": r.get("team"), "st": st[0], "ps": ps, "play": 0.02 if st == "Doubtful" else QP[ps], "snap": None if st == "Doubtful" else QS[ps], "inj": r.get("report_primary_injury") or ""}
+    json.dump({"week": wk, "players": Q, "mirrored": now.isoformat()}, open("out/q.json", "w"), separators=(",", ":"))
+    print("q.json:", wk, len(Q), "players")
+except Exception as e: print("q.json skipped:", e)
