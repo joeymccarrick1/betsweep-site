@@ -46,7 +46,8 @@
     return out; }
   function mkt(t){ t = String(t).toLowerCase(); return /passing/.test(t) ? 'Passing Yards' : /receiving|reception|rec /.test(t) ? 'Receiving Yards' : /rushing/.test(t) ? 'Rushing Yards' : null; }
   var MOVES = {};
-  function loadMoves(){ try { fetch('/data/price-moves.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ MOVES = {}; if (j && Array.isArray(j.moves)) j.moves.forEach(function(m){ if (m.key) MOVES[m.key] = m; }); decorate(); }).catch(function(){}); } catch(e){} }
+  function loadMoves(){ try { fetch('/data/price-moves.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ MOVES = {}; if (j && Array.isArray(j.moves)) j.moves.forEach(function(m){ if (m.key) MOVES[m.key] = m; });
+      if (j && Array.isArray(j.news)) j.news.forEach(function(n){ if (n.key) MOVES[n.key] = {news: 1, out: n.out, detail: n.detail, now: n.now}; }); decorate(); }).catch(function(){}); } catch(e){} }
   loadMoves(); setInterval(loadMoves, 10 * 60e3);
   var busy = false;
   function decorate(){ if (!loaded || busy) return; busy = true;
@@ -57,7 +58,7 @@
         b.classList.toggle('bsrblock', !!(v && v.level === 'block')); if (v && v.level === 'block') b.title = q[0] + ': ' + v.why;
         // price moves (11/4): a chip on any leg button whose FanDuel price moved 3+ implied points since the build (data/price-moves.json)
         var mv = MOVES[b.getAttribute('data-k')]; var host = b.closest('tr, .pb, .lg, .gdp, .sp, li') || b.parentNode; if (!host) return; var cur = host.querySelector(':scope .bsrmv');
-        var html = mv ? '<span class="bsrmv ' + (mv.value ? 'up' : mv.dir === 'SHORTENED' ? 'up' : 'dn') + '" title="' + esc(mv.detail) + '">' + (mv.value ? '💰 better price now ' + (mv.now > 0 ? '+' : '') + Math.round(mv.now) : (mv.dir === 'SHORTENED' ? '📈 market moving our way ' : '📉 market drifted ') + (mv.pts > 0 ? '+' : '') + mv.pts) + '</span>' : '';
+        var html = mv && mv.news ? '<span class="bsrmv up" title="' + esc(mv.detail) + '">⚡ ' + esc(String(mv.out).split(' ').slice(-1)[0]) + ' out · price hasn\'t moved</span>' : mv ? '<span class="bsrmv ' + (mv.value ? 'up' : mv.dir === 'SHORTENED' ? 'up' : 'dn') + '" title="' + esc(mv.detail) + '">' + (mv.value ? '💰 better price now ' + (mv.now > 0 ? '+' : '') + Math.round(mv.now) : (mv.dir === 'SHORTENED' ? '📈 market moving our way ' : '📉 market drifted ') + (mv.pts > 0 ? '+' : '') + mv.pts) + '</span>' : '';
         if (cur && cur.outerHTML === html) return; if (cur) cur.remove(); if (mv) { var anchor = host.querySelector('.who b, .pbn, b') || b; anchor.insertAdjacentHTML('afterend', ' ' + html); } });
       pill(); stale();
     } catch(e){} busy = false; }
