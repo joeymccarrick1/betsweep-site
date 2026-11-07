@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Fri ">
+<meta name="description" content="Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Sat ">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -13,10 +13,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BetSweep">
 <link rel="canonical" href="https://betsweep.co/build/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="BetSweep">
-<meta property="og:title" content="BetSweep Parlay Builder"><meta property="og:description" content="Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Fri ">
+<meta property="og:title" content="BetSweep Parlay Builder"><meta property="og:description" content="Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Sat ">
 <meta property="og:url" content="https://betsweep.co/build/"><meta property="og:image" content="https://betsweep.co/og.png">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BetSweep Parlay Builder">
-<meta name="twitter:description" content="Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Fri "><meta name="twitter:image" content="https://betsweep.co/og.png">
+<meta name="twitter:description" content="Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model&#x27;s fair odds for the whole parlay next to FanDuel&#x27;s. Built Sat "><meta name="twitter:image" content="https://betsweep.co/og.png">
 <script>window.__BS_ACCOUNT={url:"https://fuwiqijgkgbzvnfnsans.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU",google:false};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
 <link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><meta charset="utf-8">
@@ -26,6 +26,7 @@
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
+.sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.up{color:var(--good)} .sdc.dn{color:var(--bad)}
 .omc{display:block;font-size:10.5px;white-space:nowrap} .omc.up{color:var(--good)} .omc.dn{color:var(--mute)}
 .scen:empty{display:none} .scen{margin:10px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .scen h4{margin:0 0 4px;font-family:var(--display);font-size:13px;letter-spacing:.06em;text-transform:uppercase} .scen h4 small{display:block;font-family:var(--body);font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--mute);font-weight:500;margin-top:2px}
@@ -374,7 +375,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 9</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Fri 11/6 9:11 AM CT.</p>
+    <p>Every FanDuel player prop on the Week 9 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Sat 11/7 7:30 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-BAL-JAX">BAL·JAX</a> <a href="#g-ATL-CIN">ATL·CIN</a> <a href="#g-CAR-DEN">CAR·DEN</a> <a href="#g-CLE-NO">CLE·NO</a> <a href="#g-DAL-IND">DAL·IND</a> <a href="#g-DET-MIA">DET·MIA</a> <a href="#g-KC-NYJ">KC·NYJ</a> <a href="#g-LA-WAS">LA·WAS</a> <a href="#g-NYG-PHI">NYG·PHI</a> <a href="#g-HOU-LAC">HOU·LAC</a> <a href="#g-LV-SF">LV·SF</a> <a href="#g-ARI-SEA">ARI·SEA</a> <a href="#g-GB-NE">GB·NE</a> <a href="#g-CHI-TB">CHI·TB</a> <a href="#g-BUF-MIN">BUF·MIN</a></nav>
   
@@ -448,7 +449,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Fri 11/6 9:11 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Sat 11/7 7:30 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -473,7 +474,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-0a8179eba399.js"></script>
+<script src="/build/data-30b91b1c9b85.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -747,7 +748,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     return '<li class="lg' + (openPl[l.pl + '|' + l.m] ? ' open' : '') + '" data-i="' + l.i + '" data-orig="' + esc(ok) + '"><span class="pz">' + l.pos + '</span>' +
       '<span class="who"><b><a class="pname" href="/player/' + plSlug(l.pl) + '/" title="' + esc(l.pl) + ': lines at every book, hit rates, game log">' + esc(l.pl) + '</a>' + flagMark(l) + (l.gd ? ' <span class="gdo">' + esc(l.gd) + '</span>' : '') + '</b><span>' + l.tm + ' vs ' + l.opp + ' · ' + esc(g.kick) + '</span>' + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow">' + mupill(l) + '</span>' : '') + tierChip(l) + '</span>' +
       '<span class="mk">' + (cyc.length > 1 ? '<span class="pn cyc" role="button" tabindex="0" data-orig="' + esc(ok) + '" title="Next prop for ' + esc(l.pl) + ' (' + (ci + 1) + ' of ' + cyc.length + ')"><i class="car">›</i><small>' + (ci + 1) + '/' + cyc.length + '</small></span>' : '') + '<span class="mkbtn" role="button" tabindex="0" title="Recent games and matchup">' + esc(l.ms) + l5(l) + '</span>' + (isTD(l) ? '' : isGL(l) ? '<small class="glsrc">' + (l.src === 'fd' ? 'FanDuel' : 'consensus') + '</small>' : (ladderOf(l).length > 1 && st.best ? ' ' + fader(l) : ' ' + lnTxt(l))) + ((l.dr && l.dr[0] != null) || (l.or && l.or[0] != null) ? '<span class="dprow m">' + mupill(l) + '</span>' : '') + '<small class="d">' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + '</small>' + bookStrip(l) + '<small class="bkl m">' + booksLine(l) + '</small><small class="mp">Model ' + pc(l.p) + ' · book ' + pc(l.bk) + (l.proj != null && l.m !== 'Anytime TD' ? ' · proj ' + l.proj : '') + ' · <b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + ' edge</b></small></span>' +
-      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + scChip(l) + omChip(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
+      '<span class="nums bk"><b>' + pc(l.p) + '</b><small>book ' + pc(l.bk) + '</small>' + trk(l) + scChip(l) + omChip(l) + sdChip(l) + '<span class="bar"><i style="width:' + Math.round(l.p*100) + '%"></i><em style="left:' + Math.round(l.bk*100) + '%"></em></span></span>' +
       '<span class="nums"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small class="edgel" title="What is edge?">edge</small></span>' +
       (started(l.g) && !sel[l.i] ? '<button type="button" class="lockd" disabled>Started</button>' : '<button type="button" class="' + (sel[l.i] ? 'in' : '') + '">' + (sel[l.i] ? 'In slip' : '+ Add') + '</button>') + whyBlock(l) + histBlock(l) + altsBlock(l) + '</li>';
   }
@@ -1010,6 +1011,8 @@ window.BSBooks = { attach: function(btn, panel, getText){
     if(f <= lo - 0.03) return '<small class="omc up" title="FanDuel ' + (l.o > 0 ? '+' : '') + l.o + ' vs DraftKings ' + (b.dk.o > 0 ? '+' : '') + b.dk.o + ' and Hard Rock ' + (b.hr.o > 0 ? '+' : '') + b.hr.o + ' on the same line">🏷 FanDuel best by ' + Math.round((lo - f) * 100) + ' pts</small>';
     if(f >= hi + 0.03) return '<small class="omc dn" title="Both DraftKings and Hard Rock pay more on this line">cheaper at ' + (ip(b.dk.o) < ip(b.hr.o) ? 'DraftKings' : 'Hard Rock') + '</small>';
     return ''; }
+  function sdChip(l){ var x = l.sd; if(!x || Math.abs(x[0]) < 0.15) return ''; var up = x[0] > 0, u = l.pos === 'QB' ? 'pass yds' : l.pos === 'RB' ? 'rush yds' : 'rec yds';
+    return '<small class="sdc' + (up ? ' up' : ' dn') + '" title="' + esc(l.pl) + ' averaged ' + Math.round(x[1]) + ' ' + u + ' against the 3 past opponents most like ' + esc(l.opp) + '\'s defense (' + esc(x[3]) + ') vs ' + Math.round(x[2]) + ' on the season; above his average in ' + (x[4] != null ? x[4] : '?') + ' of those 3 - the Game preview split. Context and tiebreaker, not a projection input.">vs similar D ' + (up ? '+' : '') + Math.round(x[0] * 100) + '%' + (x[4] === 3 ? ' · 3/3' : x[4] === 0 ? ' · 0/3' : '') + '</small>'; }
   function scChip(l){ var k = SCN[l.g]; if(k == null || !l.sc) return ''; var g = games[l.g], d = l.sc[k] - l.p;
     return '<small class="scc' + (d >= 0.02 ? ' up' : d <= -0.02 ? ' dn' : '') + '" title="This leg\'s chance if the game ends ' + esc(scLab(g, k)) + '">if ' + esc(scLab(g, k).toLowerCase()) + ': ' + pc(l.sc[k]) + '</small>'; }
   function scenBlock(ls){
@@ -1349,7 +1352,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function addBtn(l){ return started(l.g) && !sel[l.i] ? '<button type="button" class="add lockd" disabled>Started</button>' : '<button type="button" class="add' + (sel[l.i] ? ' in' : '') + '">' + (sel[l.i] ? 'In slip ✓' : '+ Add') + '</button>'; }
   function boxBody(l){   // the parts that change with the slider / switch
     return '<div class="pbm">' + l5(l) + mupill(l) + (l.proj != null && !isTD(l) ? '<small class="proj">proj ' + l.proj + '</small>' : '') + '</div>' +
-      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small>' + scChip(l) + omChip(l) + '</span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
+      '<div class="pbp"><span class="pbk">' + pricesHtml(l) + '</span><span class="pbn"><b>' + pc(l.p) + '</b><small>model' + trk(l) + '</small>' + scChip(l) + omChip(l) + sdChip(l) + '</span><span class="pbn"><b>' + pc(l.bk) + '</b><small>book</small></span><span class="pbn"><b class="e ' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e*100).toFixed(1) + '</b><small>edge</small></span>' + addBtn(l) + '</div>' + tierChip(l);
   }
   function statBox(pl, m, pos){
     var g = ladder(pl, m); if(!g.length) return ''; var l = boxLeg(pl, m); var s = BOX[pl + '|' + m] || {}; var u = UND[pl + '|' + m]; var under = s.side === 'u' && u;
