@@ -202,6 +202,167 @@
    "st": "Out",
    "ts": "2026-11-06T22:36:04Z",
    "legs": {}
+  },
+  "Jauan Jennings|2026-11-07T19:27": {
+   "pl": "Jauan Jennings",
+   "tm": "MIN",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-07T19:27:57Z",
+   "legs": {
+    "Ben Yurosek|Receptions|2": {
+     "pl": "Ben Yurosek",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": 280,
+     "p": 0.2228,
+     "first": null,
+     "moved": null,
+     "now": 280.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Ben Yurosek|Longest Reception|10": {
+     "pl": "Ben Yurosek",
+     "m": "Longest Reception",
+     "ln": 10.0,
+     "built": 210,
+     "p": 0.2576,
+     "first": null,
+     "moved": null,
+     "now": 210.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Jordan Addison|Receiving Yards|40": {
+     "pl": "Jordan Addison",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "built": -114,
+     "p": 0.5139,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Justin Jefferson|Receiving Yards|80": {
+     "pl": "Justin Jefferson",
+     "m": "Receiving Yards",
+     "ln": 80.0,
+     "built": -106,
+     "p": 0.4555,
+     "first": null,
+     "moved": null,
+     "now": -106.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Jordan Addison|Receptions|5": {
+     "pl": "Jordan Addison",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 178,
+     "p": 0.2961,
+     "first": null,
+     "moved": null,
+     "now": 178.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Jordan Addison|Longest Reception|15": {
+     "pl": "Jordan Addison",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -230,
+     "p": 0.6314,
+     "first": null,
+     "moved": null,
+     "now": -230.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Justin Jefferson|Longest Reception|20": {
+     "pl": "Justin Jefferson",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": -280,
+     "p": 0.6643,
+     "first": null,
+     "moved": null,
+     "now": -280.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Justin Jefferson|Receptions|8": {
+     "pl": "Justin Jefferson",
+     "m": "Receptions",
+     "ln": 8.0,
+     "built": 162,
+     "p": 0.3093,
+     "first": null,
+     "moved": null,
+     "now": 162.0,
+     "pulled": "2026-11-07 6:25"
+    }
+   }
+  },
+  "Demond Claiborne|2026-11-07T19:27": {
+   "pl": "Demond Claiborne",
+   "tm": "MIN",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-07T19:27:57Z",
+   "legs": {
+    "Aaron Jones|Rush + Rec Yards|43": {
+     "pl": "Aaron Jones",
+     "m": "Rush + Rec Yards",
+     "ln": 43.0,
+     "built": -118,
+     "p": 0.6233,
+     "first": null,
+     "moved": null,
+     "now": -118.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Aaron Jones|Receiving Yards|10": {
+     "pl": "Aaron Jones",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": 116,
+     "p": 0.479,
+     "first": null,
+     "moved": null,
+     "now": 116.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Aaron Jones|Receptions|3": {
+     "pl": "Aaron Jones",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 200,
+     "p": 0.345,
+     "first": null,
+     "moved": null,
+     "now": 200.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Aaron Jones|Rushing Yards|32": {
+     "pl": "Aaron Jones",
+     "m": "Rushing Yards",
+     "ln": 32.0,
+     "built": -114,
+     "p": 0.4267,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-07 6:25"
+    },
+    "Jordan Mason|Rushing Yards|50": {
+     "pl": "Jordan Mason",
+     "m": "Rushing Yards",
+     "ln": 50.0,
+     "built": -102,
+     "p": 0.3916,
+     "first": null,
+     "moved": null,
+     "now": -102.0,
+     "pulled": "2026-11-07 6:25"
+    }
+   }
   }
  }
 }
