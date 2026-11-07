@@ -115,3 +115,67 @@ No clean TB leg; clean CHI legs are all -104 or shorter (Williams pass yds, Odun
 
 ## MNF (BUF @ MIN) - NOT DRAFTED (+500 and Piss Missile Monday)
 No clean MIN leg. Clean BUF: James Cook ATD -120, Josh Allen ATD -125, Cook 2+ TD +550, Allen 2+ TD +500, Khalil Shakir 3+/4+ rec. Script check: shootout 19%, total 46.5 -> "BUF by 10+" (32%); can't reach 7 clean legs. check_mnf redrafts.
+
+---
+## check_weekend - Sat 11/7, 1:30 PM CT
+Data: builder Sat 11/7 12:40 PM CT; ESPN injuries / weather mirror 12:47 PM CT; risk notes empty; inactives not out yet.
+
+### Fall Back Double (Saturday Model's Best) - FLAG
+Both rungs are gone from FanDuel's board (Douglas 60+, Purdy 275+).
+- Plus-tier rebuild (recommended): Mitchell Evans 2+ catches +182 (37%; model-only 41% vs 35%) + Drew Sample 10+ rec yds +220 (35%; model-only 45% vs 31%) = +802, 12.8%
+  https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622975814&selectionId[0]=59721547&marketId[1]=42.622902674&selectionId[1]=76096843
+- Same-game swap (no model edge): Caleb Douglas 4+ rec +134 + Tre Tucker 4+ rec +140 = +462, 18.9%
+  https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622480675&selectionId[0]=102536124&marketId[1]=42.622429738&selectionId[1]=49580080
+
+### Plus-Money Paydirt (Sunday TDs) - FLAG
+Golden ATD +160 -> +185 (3.4 implied points against us). Bowers +120 -> +115 (came our way; now just under the +120 floor). Jameson Williams +155 -> +165 (OK).
+- Same-game swap: Christian Watson ATD +175 (30% vs 36%) -> +1467, 3.8%
+  https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622419464&selectionId[0]=42200636&marketId[1]=42.622011761&selectionId[1]=43162285&marketId[2]=42.622477088&selectionId[2]=36914887
+- Keeping Golden at +185 (34% vs 35%) is +1524, 4.2% - the higher-chance slip; the swap is the rule, the keep is the owner's call.
+
+### Sunday singles - FLAG -> singles-sun-v2 (square / story / caption on this branch)
+Purdy 275+, Douglas 60+ and Goff 300+ were pulled; Gibbs 5+ shortened +158 -> +120 (now 46% vs 46%, no edge).
+- Mitchell Evans 2+ catches +182 · 37% vs 35% · https://sportsbook.fanduel.com/addToBetslip?marketId=42.622975814&selectionId=59721547
+- Drew Sample 10+ rec yds +220 · 35% vs 31% · https://sportsbook.fanduel.com/addToBetslip?marketId=42.622902674&selectionId=76096843
+- Dohnte Meyers 3+ catches +230 · 32% vs 30% · https://sportsbook.fanduel.com/addToBetslip?marketId=42.622324514&selectionId=73434840
+(Gadsden 3+ +200 left off: 10.7 rec yds vs defenses like Houston's, half his average.)
+
+### Either/Or pairs + The Double Dip (LIVE) - WATCH
+Amon-Ra St. Brown is Questionable (ribs) - the DET-MIA pair. Everyone else named is active.
+
+### NEW - SGP of the week: Madrid Meltdown (LOTTERY) - ATL @ CIN, Sun 8:30 AM CT
++6253 multiplied, ~+5294 est as a FanDuel SGP (FanDuel's price will be lower) · 1.6% independent floor (correlation makes it higher)
+Script: shootout (28%, the week's highest; total 52.5) - both offenses go off.
+- Michael Penix Jr. 223+ pass yds, -114, 54% - 229 avg vs defenses like CIN's (3 of 3 over); CIN allows QBs 54% over their average (#1)
+- Michael Penix Jr. 2+ TD passes, +100, 47% - ATL scored 30.3 vs defenses like CIN's (21.4 season)
+- Joe Burrow 3+ TD passes, +140, 43% - CIN scored 36.3 vs defenses like ATL's
+- Tee Higgins 78+ rec yds, -114, 52% - 108 avg vs similar defenses; rung 12% under projection
+- Austin Hooper 10+ rec yds, +130, 47% - CIN allows TEs 2.3x their average (#2); model-only 58% vs 43%
+- Chase Brown 4+ catches, -158, 61% - 5.1 a game; ATL holds RB1s to 0.85x, but this is the catch line and the shootout means checkdowns
+No clean anytime TD in this game (every TD leg is flagged), so the scores come through the QB TD lines. Neutral site, no forecast.
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622015395&selectionId[0]=41155937&marketId[1]=42.622015397&selectionId[1]=41155937&marketId[2]=42.622015398&selectionId[2]=20452292&marketId[3]=42.622015400&selectionId[3]=22336746&marketId[4]=42.622902673&selectionId[4]=73882177&marketId[5]=42.622015406&selectionId[5]=41072627
+Preview: ATL-CIN - both offenses scored 30+ against defenses like these; CIN gives QBs the most yards over their average.
+
+### NEW - MNF: Piss Missile Monday (LOTTERY) - BUF @ MIN
++8576 multiplied, ~+7257 est SGP · 1.1% floor · 50% profit boost if offered
+Script: shootout 17% and total 44.5 -> built on the likeliest ending, close game (34%): the backs decide it.
+- James Cook anytime TD, -110, 51%
+- Josh Allen anytime TD, -120, 45%
+- James Cook 97+ rush+rec yds, -113, 54% - 10% under his 107 projection
+- Aaron Jones 43+ rush+rec yds, -118, 62% - model-only 71% vs 54%; BUF holds RB1s to 0.82x, line is 43 vs his 78 avg
+- Aaron Jones 8+ rec yds, -114, 54%
+- Jauan Jennings 8+ rec yds, -114, 58% - QUESTIONABLE (calf, DNP Fri): place after Monday's inactives; if he sits, drop him (6 legs, ~+4469)
+- Carson Wentz 2+ TD passes, +102, 47%
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622452759&selectionId[0]=42200635&marketId[1]=42.622452759&selectionId[1]=12399650&marketId[2]=42.622457185&selectionId[2]=41957632&marketId[3]=42.623072913&selectionId[3]=15353380&marketId[4]=42.623047986&selectionId[4]=15353380&marketId[5]=42.623072948&selectionId[5]=40913497&marketId[6]=42.623033968&selectionId[6]=11923899
+Preview: BUF-MIN - MIN allows RB1s 28% over their average but is #31 vs QB passing yards: a run-game night, Wentz starting for Murray.
+
+### NEW - MNF +500: Backfield Bash (owner's call - no leg is +120)
++565 multiplied, ~+465 est SGP · 17.3% floor
+- Aaron Jones 43+ rush+rec yds -118 (62%) · James Cook 97+ rush+rec yds -113 (54%) · James Cook anytime TD -110 (51%)
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.623072913&selectionId[0]=15353380&marketId[1]=42.622457185&selectionId[1]=41957632&marketId[2]=42.622452759&selectionId[2]=42200635
+
+### SNF (CHI vs TB) - still not drafted
+There's no clean TB leg. The only clean CHI legs are coin flips: Caleb Williams 244+ (-114, 53% vs 53%), Odunze 49+ (-114). Williams 2+ TD passes (-152) has the model at 38% vs FanDuel's 60%. check_sunday re-checks after inactives.
+
+Assumed: the 'w' flag rule is strict - matchup-rank flags on a leg (e.g. 'MIN ranks #31 vs QBs') disqualify that leg. For PMM, the -130..-200 limit stays at one leg (there are none).
+Skipped: every ATL-CIN / CHI-TB / BUF-MIN anytime TD except Cook/Allen (flagged) · Allen and the Bills WRs' yards (MIN pass-D flag) · Gadsden and D. Meyers out of the slips (similar-defense splits -52% / -39%) · Jefferson (2 of 6 over his line).

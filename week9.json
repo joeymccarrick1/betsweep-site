@@ -303,6 +303,275 @@
    "note": "Recipe wants p>=0.40 at +200 or shorter; under the 11/4 rule (+120 or longer) no clean TD leg reaches 40% - these are the three likeliest clean scorers at +120..+200.",
    "caption": "Plus-Money Paydirt +1359\nBrock Bowers anytime TD (+120)\nMatthew Golden anytime TD (+160)\nJameson Williams anytime TD (+155)\nWhy: three plus-money scorers in three games - 4/6, 4/8 and 3/7 TD games this season\nTail it: betsweep.co/b/w9-sunday_main\n21+ | gamble responsibly",
    "post": false
+  },
+  {
+   "slot": "saturday",
+   "name": "Madrid Meltdown",
+   "type": "lottery",
+   "game": "ATL-CIN",
+   "legs": [
+    {
+     "pl": "Michael Penix Jr.",
+     "m": "Passing Yards",
+     "ln": 223.0,
+     "o": -114,
+     "p": 0.541,
+     "bk": 0.533,
+     "game": "ATL-CIN",
+     "fd": {
+      "m": "42.622015395",
+      "s": "41155937"
+     },
+     "why": "Proj 233; 229 avg vs defenses like Cincinnati's (214 season), 3 of 3 over; CIN allows QB1s 54% over their own average (#1)"
+    },
+    {
+     "pl": "Michael Penix Jr.",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": 100,
+     "p": 0.4711,
+     "bk": 0.5,
+     "game": "ATL-CIN",
+     "fd": {
+      "m": "42.622015397",
+      "s": "41155937"
+     },
+     "why": "ATL scored 30.3 vs defenses like CIN's (21.4 season) - the shootout needs both QBs finishing drives"
+    },
+    {
+     "pl": "Joe Burrow",
+     "m": "Passing TDs",
+     "ln": 3.0,
+     "o": 140,
+     "p": 0.43,
+     "bk": 0.4167,
+     "game": "ATL-CIN",
+     "fd": {
+      "m": "42.622015398",
+      "s": "20452292"
+     },
+     "why": "CIN scored 36.3 vs defenses like ATL's (29.4 season); Burrow averages 2.86 TD passes"
+    },
+    {
+     "pl": "Tee Higgins",
+     "m": "Receiving Yards",
+     "ln": 78.0,
+     "o": -114,
+     "p": 0.5177,
+     "bk": 0.533,
+     "game": "ATL-CIN",
+     "fd": {
+      "m": "42.622015400",
+      "s": "22336746"
+     },
+     "why": "Rung 12% under his 87 projection; 108 avg vs defenses like ATL's (2 of 3 over); ATL allows WR1s 14% over their average"
+    },
+    {
+     "pl": "Austin Hooper",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "o": 130,
+     "p": 0.471,
+     "bk": 0.435,
+     "game": "ATL-CIN",
+     "fd": {
+      "m": "42.622902673",
+      "s": "73882177"
+     },
+     "why": "CIN allows TE1s 2.3x their average (#2 in the league); proj 17 vs the 10 line; model-only 58% vs FanDuel 43%"
+    },
+    {
+     "pl": "Chase Brown",
+     "m": "Receptions",
+     "ln": 4.0,
+     "o": -158,
+     "p": 0.6099,
+     "bk": 0.612,
+     "game": "ATL-CIN",
+     "fd": {
+      "m": "42.622015406",
+      "s": "41072627"
+     },
+     "why": "Rung 21% under his 4.8 projection; 5.1 catches a game. ATL holds RB1s to 0.85x - this is his catch line, not his rushing, and the shootout means checkdowns. The one short-priced leg"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622015395&selectionId[0]=41155937&marketId[1]=42.622015397&selectionId[1]=41155937&marketId[2]=42.622015398&selectionId[2]=20452292&marketId[3]=42.622015400&selectionId[3]=22336746&marketId[4]=42.622902673&selectionId[4]=73882177&marketId[5]=42.622015406&selectionId[5]=41072627",
+   "price": "+6253 multiplied; ~+5294 est as a FanDuel SGP - check FanDuel's price",
+   "price_est": "+5294",
+   "chance": 0.0163,
+   "note": "check_weekend 11/7: SGP of the week. Top Sunday game by shootout chance: ATL-CIN 28% (total 52.5). Script: shootout, both offenses go off. No clean ATL-CIN anytime TD exists (every TD leg carries a 'bad' flag), so the TDs come through the QBs' passing-TD lines. Neutral site (Madrid) - no weather forecast. Kicks 8:30 AM CT Sunday.",
+   "caption": "Madrid Meltdown +5294 (est SGP)\nPenix 223+ pass yds + 2+ TD passes\nBurrow 3+ TD passes\nTee Higgins 78+ rec yds\nAustin Hooper 10+ rec yds\nChase Brown 4+ catches\nWhy: our model's likeliest shootout of the week (28%) - both offenses scored 30+ against defenses like these\nLOTTERY - tiny stake\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
+   "slot": "mnf",
+   "name": "Backfield Bash",
+   "type": "+500 (owner's call - outside the +120 core rule)",
+   "game": "BUF-MIN",
+   "legs": [
+    {
+     "pl": "Aaron Jones",
+     "m": "Rush + Rec Yards",
+     "ln": 43.0,
+     "o": -118,
+     "p": 0.6233,
+     "bk": 0.5413,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623072913",
+      "s": "15353380"
+     },
+     "why": "Model-only 71% vs FanDuel 54% - the biggest edge in the game; line 43 vs 78 avg"
+    },
+    {
+     "pl": "James Cook",
+     "m": "Rush + Rec Yards",
+     "ln": 97.0,
+     "o": -113,
+     "p": 0.5416,
+     "bk": 0.5305,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.622457185",
+      "s": "41957632"
+     },
+     "why": "Rung 10% under his 107 projection; MIN allows RB1s 28% over their average"
+    },
+    {
+     "pl": "James Cook",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -110,
+     "p": 0.5114,
+     "bk": 0.524,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.622452759",
+      "s": "42200635"
+     },
+     "why": "TD in most games; fits the same run-heavy script"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.623072913&selectionId[0]=15353380&marketId[1]=42.622457185&selectionId[1]=41957632&marketId[2]=42.622452759&selectionId[2]=42200635",
+   "price": "+565 multiplied; ~+465 est as a FanDuel SGP",
+   "price_est": "+465",
+   "chance": 0.1726,
+   "note": "check_weekend 11/7: no BUF-MIN leg is +120 or longer AND clean except Jones 3+ rec (+200, no 5-pt edge), so a rules-clean +500 does not exist. This is the highest-chance 3-leg version at the +500 target; owner decides.",
+   "caption": "Backfield Bash +465 (est SGP)\nAaron Jones 43+ rush+rec yds\nJames Cook 97+ rush+rec yds\nJames Cook anytime TD\nWhy: model has Jones 43+ at 71% vs FanDuel's 54%\n21+ | gamble responsibly",
+   "post": false
+  },
+  {
+   "slot": "mnf",
+   "name": "Piss Missile Monday",
+   "type": "lottery",
+   "game": "BUF-MIN",
+   "legs": [
+    {
+     "pl": "James Cook",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -110,
+     "p": 0.5114,
+     "bk": 0.524,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.622452759",
+      "s": "42200635"
+     },
+     "why": "TD in most games (1.0/g avg); MIN allows RB1s 28% over their own average (#8)"
+    },
+    {
+     "pl": "Josh Allen",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -120,
+     "p": 0.4457,
+     "bk": 0.546,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.622452759",
+      "s": "12399650"
+     },
+     "why": "1.29 TDs a game; MIN is #31 vs QB passing yards, so his scores come on the ground"
+    },
+    {
+     "pl": "James Cook",
+     "m": "Rush + Rec Yards",
+     "ln": 97.0,
+     "o": -113,
+     "p": 0.5416,
+     "bk": 0.5305,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.622457185",
+      "s": "41957632"
+     },
+     "why": "Rung 10% under his 107 projection; 116.7 avg"
+    },
+    {
+     "pl": "Aaron Jones",
+     "m": "Rush + Rec Yards",
+     "ln": 43.0,
+     "o": -118,
+     "p": 0.6233,
+     "bk": 0.5413,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623072913",
+      "s": "15353380"
+     },
+     "why": "Line 43 vs his 78 avg and 68 projection (model-only 71% vs FanDuel 54%). BUF holds RB1s to 0.82x - the cushion survives that"
+    },
+    {
+     "pl": "Aaron Jones",
+     "m": "Receiving Yards",
+     "ln": 8.0,
+     "o": -114,
+     "p": 0.5435,
+     "bk": 0.533,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623047986",
+      "s": "15353380"
+     },
+     "why": "Proj 13.4; Wentz checks down - 2.1 catches a game"
+    },
+    {
+     "pl": "Jauan Jennings",
+     "m": "Receiving Yards",
+     "ln": 8.0,
+     "o": -114,
+     "p": 0.5803,
+     "bk": 0.533,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623072948",
+      "s": "40913497"
+     },
+     "why": "QUESTIONABLE (calf, DNP Friday) - place after Monday's inactives. Proj 23 with the WR room thin"
+    },
+    {
+     "pl": "Carson Wentz",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": 102,
+     "p": 0.4686,
+     "bk": 0.495,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623033968",
+      "s": "11923899"
+     },
+     "why": "Wentz's second start for Murray; proj 1.5 TD passes; the leg that needs MIN to keep it close"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622452759&selectionId[0]=42200635&marketId[1]=42.622452759&selectionId[1]=12399650&marketId[2]=42.622457185&selectionId[2]=41957632&marketId[3]=42.623072913&selectionId[3]=15353380&marketId[4]=42.623047986&selectionId[4]=15353380&marketId[5]=42.623072948&selectionId[5]=40913497&marketId[6]=42.623033968&selectionId[6]=11923899",
+   "price": "+8576 multiplied; ~+7257 est as a FanDuel SGP - check FanDuel's price",
+   "price_est": "+7257",
+   "chance": 0.0114,
+   "note": "check_weekend 11/7. Script check: shootout 17% (<20%) and total 44.5 (<48), so built around the model's likeliest ending 'Close, low scoring' (34%; BUF by 10+ 32%): a close game the backs decide. MIN's pass defense is #31 vs QBs, so no Allen / Bills WR yardage legs (all flagged). If Jennings is inactive, drop him (6 legs, ~+4469 multiplied). Suggest the 50% profit boost if FanDuel offers one.",
+   "caption": "PISS MISSILE MONDAY +7257 (est SGP)\nJames Cook TD + 97+ rush+rec yds\nJosh Allen TD\nAaron Jones 43+ rush+rec yds + 8+ rec yds\nJauan Jennings 8+ rec yds\nCarson Wentz 2+ TD passes\nWhy: close game, the backs decide it - model has Jones 43+ at 71%\nLOTTERY - tiny stake\n21+ | gamble responsibly",
+   "post": false
   }
  ],
  "either_or": {
@@ -346,22 +615,13 @@
  },
  "pending": [
   {
-   "slot": "saturday",
-   "name": "SGP of the week",
-   "status": "props not posted yet - top game ATL-CIN (shootout 28%, total 52.5) has no props; Saturday check fills it"
-  },
-  {
    "slot": "sunday_main",
    "name": "Sweep / Best legs",
    "status": "Sweep dropped: every clean leg at p>=0.62 is a floor (-136 or shorter), banned by the 11/4 market mix. Best legs = Sunday singles card."
   },
   {
    "slot": "snf",
-   "status": "not drafted - CHI-TB: no clean TB leg; clean CHI legs are all -104 or shorter (no +120 core legs, no clean TDs); check_weekend redrafts"
-  },
-  {
-   "slot": "mnf",
-   "status": "not drafted - BUF-MIN: no clean MIN leg; clean BUF legs only Cook ATD -120, Allen ATD -125, Cook/Allen 2+ TD, Shakir rec. +500 and Piss Missile Monday (needs 7-10 legs, script BUF by 10+: shootout 19%, total 46.5) can't be built clean; check_mnf redrafts"
+   "status": "check_weekend 11/7: still not drafted - no clean TB leg; clean CHI legs are only Caleb Williams 244+ (-114, 53% vs 53%), Odunze 49+ (-114, 52% vs 53%) and Williams 2+ TD passes (-152, model-only 38% vs 60%). No +120 core legs, no clean TDs: a +500 or +5000 can't be built clean. check_sunday re-checks after inactives."
   }
  ],
  "thursday_redraft": {
@@ -374,5 +634,42 @@
   ],
   "reason": "owner 11/5 9:43 AM: new TNF promos with fill-in starters, limitation risk, matchup and game script in view",
   "data": "site main build Thu 11/5 8:06 AM (build/data-9b3ff90aae0f.js), feeds injuries/inactives/weather/depth charts as of ~9:00 AM CT"
- }
+ },
+ "singles_v2": {
+  "slot": "sunday",
+  "file": "singles-sun-v2.json",
+  "note": "check_weekend 11/7: replaces singles-sun.json - FanDuel pulled Purdy 275+, Douglas 60+ and Goff 300+; Gibbs 5+ shortened +158 -> +120 (no edge left)."
+ },
+ "checks": [
+  {
+   "run": "check_weekend",
+   "at": "2026-11-07T19:30Z",
+   "data": "builder Sat 11/7 12:40 PM CT; ESPN mirror 18:47 UTC",
+   "results": [
+    {
+     "name": "Fall Back Double",
+     "status": "FLAG",
+     "reason": "Both rungs gone from FanDuel's board (Douglas 60+, Purdy 275+). Same-game swap: Douglas 4+ rec +134 / Tre Tucker 4+ rec +140 = +462 (18.9%) - no model edge; plus-tier rebuild: Mitchell Evans 2+ rec +182 / Drew Sample 10+ rec yds +220 = +802 (12.8%)",
+     "swap_link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622975814&selectionId[0]=59721547&marketId[1]=42.622902674&selectionId[1]=76096843",
+     "swap_link_same_game": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622480675&selectionId[0]=102536124&marketId[1]=42.622429738&selectionId[1]=49580080"
+    },
+    {
+     "name": "Plus-Money Paydirt",
+     "status": "FLAG",
+     "reason": "Golden ATD +160 -> +185 (3.4 implied pts against). Same-game swap Christian Watson ATD +175 (30% vs 36%) = +1467 (3.8%); keeping Golden = +1524 (4.2%). Bowers +120 -> +115 (came our way, now just under the +120 floor). J. Williams +155 -> +165 (1.5 pts, OK).",
+     "swap_link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622419464&selectionId[0]=42200636&marketId[1]=42.622011761&selectionId[1]=43162285&marketId[2]=42.622477088&selectionId[2]=36914887"
+    },
+    {
+     "name": "Sunday singles",
+     "status": "FLAG",
+     "reason": "3 of 4 rungs pulled; Gibbs now +120 with no edge. Swap card singles-sun-v2."
+    },
+    {
+     "name": "Either/Or pairs + The Double Dip (LIVE)",
+     "status": "WATCH",
+     "reason": "Amon-Ra St. Brown Questionable (ribs) - DET-MIA pair. All other named players active."
+    }
+   ]
+  }
+ ]
 }
