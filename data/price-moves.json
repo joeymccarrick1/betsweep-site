@@ -2,8 +2,8 @@
  "news": [],
  "week": 9,
  "built": "Sat 11/7 6:12 PM",
- "checked": "2026-11-08T14:19:57Z",
- "legs_checked": 1199,
+ "checked": "2026-11-08T15:14:40Z",
+ "legs_checked": 1097,
  "moves": [
   {
    "key": "Alvin Kamara|Anytime TD|1",
@@ -599,23 +599,6 @@
    "tier": "",
    "pulled": "2026-11-08 6:25",
    "detail": "Joe Milton rush yds 60+: FanDuel +880 at build -> +640 now (+3.3 implied pts toward the model)"
-  },
-  {
-   "key": "Olamide Zaccheaus|Receptions|3",
-   "pl": "Olamide Zaccheaus",
-   "m": "Receptions",
-   "ln": 3.0,
-   "gid": "ATL-CIN",
-   "ko": 1794148200000,
-   "built": 230,
-   "now": 270.0,
-   "pts": -3.3,
-   "p": 0.2556,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-08 6:25",
-   "detail": "Olamide Zaccheaus rec 3+: FanDuel +230 at build -> +270 now (-3.3 implied pts against us)"
   },
   {
    "key": "Greg Dulcich|Receptions|4",
