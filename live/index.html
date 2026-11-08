@@ -27,6 +27,9 @@
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
 
+.hub{padding:0;overflow:hidden} .hubt{display:flex;gap:8px;overflow-x:auto;padding:10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none} .hubt::-webkit-scrollbar{display:none}
+.hubb{flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:118px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer} .hubb b{font-size:15px;white-space:nowrap} .hubb small{font-size:11px;color:var(--mute);white-space:nowrap} .hubb.on{border-color:var(--red);box-shadow:inset 0 -3px 0 var(--red)} .hubb.on b{color:var(--red)} .hubb.new small{color:var(--red);font-weight:700}
+.hubp>section{margin:0;border:0;border-radius:0;border-top:1px solid var(--line);box-shadow:none} .hubp>section>.ghd2{display:none}
 .lv{max-width:1100px;margin:0 auto}
 .lvbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;margin-bottom:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:12.5px;color:var(--mute)}
 .lvbar b{color:var(--ink)} .lvbar .seg{margin-left:auto}
@@ -460,6 +463,9 @@ window.BSLive = (function(){
       '<button type="button" class="rfr slipdel" data-sid="' + esc(sl.id) + '">' + (sl.builder ? 'Clear' : 'Delete') + '</button></div></section>'; }
   try { (JSON.parse(localStorage.getItem('bs_live_open') || '[]') || []).forEach(function(k){ OPEN[k] = true; }); } catch(e){}
   try { var so0 = localStorage.getItem('bs_live_slipsopen'); if(so0 === '1') OPEN.__slips = true; else if(so0 === '0') OPEN.__slips = false; } catch(e){}
+  // owner 11/8: What changed / Your slips / My week / My season share one box with a sliding tab row - one panel open at a time, remembered
+  var HUB = ''; try { HUB = localStorage.getItem('bs_live_hub') || ''; } catch(e){}
+  var HUBK = ['__chg', '__slips', 'log', 'season'], HUBO = {__chg: '__chg', __slips: '__slips', log: '__log', season: '__season'}, HUBN = {__chg: 'What changed', __slips: 'Your slips', log: 'My week', season: 'My season'};
   var PREV = {}, FLASH = {};   // status per leg from the last render, to flash what just changed   // OPEN[gid] = true/false once the user has toggled; otherwise live games open, others closed
   // ---- ESPN game summary -> per-player box + first TD scorer ----
   function parseBox(js){
@@ -564,6 +570,8 @@ window.BSLive = (function(){
     // slips: the builder slip plus anything built or imported on this page, each tracked live as one parlay
     // owner 11/5: "put all of our slips into its own collapsed folder ... call it your slips" - one folder, closed until opened (remembered); a ?slip= link opens it
     var ALLS = allSlips();
+    if(FOCUS && !FOCUSED && HUB !== '__slips') HUB = '__slips';   // a ?slip= link opens the slips tab
+    HUBK.forEach(function(k){ OPEN[HUBO[k]] = HUB === HUBO[k]; });
     // ---- What changed (owner 11/5): feeds changes.json + price moves, since the last time this card was opened ----
     try {
       var since = CHG_SEEN || new Date(Date.now() - 864e5).toISOString();
@@ -627,6 +635,19 @@ window.BSLive = (function(){
           (so ? clvTxt + '<div class="logbar"><span>Every leg you pinned or slipped, once it settled, at 1 unit each at the price when it was tracked. Saved per week and synced to your account when signed in.</span></div>' +
             tbl('By week', (function(){ var o = {}; Object.keys(wks).sort(function(a, b){ return b - a; }).forEach(function(k){ o['Week ' + k] = wks[k]; }); return o; })(), Object.keys(wks).sort(function(a, b){ return b - a; }).map(function(k){ return 'Week ' + k; })) +
             tbl('By market', mks) + tbl('By price', bands, ['-200 or shorter', '-199 to -111', '-110 to +110', '+111 to +250', '+251 and longer']) : '') + '</section>']);
+      }
+    } catch(e){}
+    try {
+      var hp = parts.filter(function(p){ return HUBK.indexOf(p[0]) >= 0; });
+      if(hp.length){
+        var hsum = function(k, h){ var m;
+          if(k === '__chg'){ m = h.match(/class="chgn">(\d+)</); return m ? m[1] + ' new' : 'nothing new'; }
+          if(k === '__slips'){ m = h.match(/<span class="tog">([^<]+)</); var n = h.match(/<span class="t">Your slips<small>(\d+) slip/); return m ? m[1] : (n ? n[1] + ' slip' + (n[1] === '1' ? '' : 's') : ''); }
+          m = h.match(/<span class="mid"><b>([^<]+)<\/b>/); return m ? m[1] : ''; };
+        var act = hp.filter(function(p){ return HUBO[p[0]] === HUB; })[0];
+        var tabs = hp.map(function(p){ var on = HUBO[p[0]] === HUB; return '<button type="button" class="hubb' + (on ? ' on' : '') + (p[0] === '__chg' && /class="chgn"/.test(p[1]) ? ' new' : '') + '" data-hub="' + HUBO[p[0]] + '" aria-pressed="' + on + '"><b>' + HUBN[p[0]] + '</b><small>' + esc(hsum(p[0], p[1])) + '</small></button>'; }).join('');
+        parts = parts.filter(function(p){ return HUBK.indexOf(p[0]) < 0; });
+        parts.unshift(['__hub', '<section class="lg2 hub' + (act ? ' open' : '') + '"><div class="hubt" role="tablist">' + tabs + '</div>' + (act ? '<div class="hubp">' + act[1] + '</div>' : '') + '</section>']);
       }
     } catch(e){}
     var liveG = order.filter(function(gid){ var s = STATE[gid]; return s && s.st === 'in'; });
@@ -918,6 +939,7 @@ window.BSLive = (function(){
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
     var tfb = ev.target.closest('.tfb'); if(tfb){ var tg = tfb.dataset.g, tt = tfb.dataset.t; TF[tg] = TF[tg] === tt ? null : tt; render(); return; }
+    var hb = ev.target.closest('.hubb'); if(hb){ var nk = hb.dataset.hub; if(HUB === '__chg'){ CHG_SEEN = new Date().toISOString(); try { localStorage.setItem('bs_chg_seen', CHG_SEEN); } catch(e){} } HUB = HUB === nk ? '' : nk; try { localStorage.setItem('bs_live_hub', HUB); } catch(e){} render(true); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
     var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log !== true; render(); return; } if(gid === '__season'){ OPEN.__season = OPEN.__season !== true; render(); return; } if(gid === '__chg'){ OPEN.__chg = OPEN.__chg !== true; if(!OPEN.__chg){ CHG_SEEN = new Date().toISOString(); try { localStorage.setItem('bs_chg_seen', CHG_SEEN); } catch(e){} } render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
