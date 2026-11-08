@@ -505,10 +505,13 @@
      "ln": 2.0,
      "built": 310,
      "p": 0.2095,
-     "first": null,
+     "first": [
+      "2026-11-08 11:25",
+      310.0
+     ],
      "moved": null,
      "now": 310.0,
-     "pulled": "2026-11-08 10:25"
+     "pulled": "2026-11-08 11:25"
     },
     "Ben Yurosek|Longest Reception|10": {
      "pl": "Ben Yurosek",
@@ -516,10 +519,13 @@
      "ln": 10.0,
      "built": 210,
      "p": 0.2576,
-     "first": null,
+     "first": [
+      "2026-11-08 11:25",
+      210.0
+     ],
      "moved": null,
      "now": 210.0,
-     "pulled": "2026-11-08 10:25"
+     "pulled": "2026-11-08 11:25"
     },
     "Jordan Addison|Receiving Yards|40": {
      "pl": "Jordan Addison",
@@ -527,10 +533,13 @@
      "ln": 40.0,
      "built": -114,
      "p": 0.5139,
-     "first": null,
+     "first": [
+      "2026-11-08 11:25",
+      -114.0
+     ],
      "moved": null,
      "now": -114.0,
-     "pulled": "2026-11-08 10:25"
+     "pulled": "2026-11-08 11:25"
     },
     "Jordan Addison|Longest Reception|15": {
      "pl": "Jordan Addison",
@@ -538,10 +547,13 @@
      "ln": 15.0,
      "built": -230,
      "p": 0.6314,
-     "first": null,
+     "first": [
+      "2026-11-08 11:25",
+      -230.0
+     ],
      "moved": null,
      "now": -230.0,
-     "pulled": "2026-11-08 10:25"
+     "pulled": "2026-11-08 11:25"
     },
     "Jordan Addison|Receptions|4": {
      "pl": "Jordan Addison",
@@ -549,10 +561,13 @@
      "ln": 4.0,
      "built": -118,
      "p": 0.466,
-     "first": null,
+     "first": [
+      "2026-11-08 11:25",
+      -118.0
+     ],
      "moved": null,
      "now": -118.0,
-     "pulled": "2026-11-08 10:25"
+     "pulled": "2026-11-08 11:25"
     }
    }
   },
