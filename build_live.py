@@ -162,7 +162,7 @@ CSS = r"""
 .lg2 .ghd2 .tog .car{font-style:normal;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:3px 10px}
 .lg2 .ghd2 .tog .car::before{content:"Show "} .lg2.open .ghd2 .tog .car::before{content:"Hide "}
 .logcard .ghd2 .t{color:var(--red)} .logbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute)} .logcard td.st{font-size:14px;font-weight:700} .logcard tr.hit td.st{color:var(--good)} .logcard tr.dead td.st{color:var(--bad)}
-.lg2:not(.open) .ghd2{border-bottom:0} @media (hover:hover) and (pointer:fine){ .lg2 .ghd2:hover .tog .car{background:var(--red);color:#fff} } .lg2.open .ghd2 .tog .car{background:var(--red);color:#fff}
+.lg2:not(.open) .ghd2{border-bottom:0} .lg2:not(.open) .ghd2 .mdl{display:none} @media (hover:hover) and (pointer:fine){ .lg2 .ghd2:hover .tog .car{background:var(--red);color:#fff} } .lg2.open .ghd2 .tog .car{background:var(--red);color:#fff}
 .lg2 .ghd2:focus{outline:none} .lg2 .ghd2:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
 .lg2 .ghd2 .t{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:22px} .lg2 .ghd2 .t.r{justify-content:flex-end} .lg2 .ghd2 .t small{font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute)}
 .lg2 .ghd2 .mid{text-align:center;font-family:var(--display)} .lg2 .ghd2 .mid b{display:block;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1} .lg2 .ghd2 .mid b i{font-style:normal;color:var(--red);margin:0 8px}
