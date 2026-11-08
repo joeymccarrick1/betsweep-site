@@ -179,3 +179,11 @@ There's no clean TB leg. The only clean CHI legs are coin flips: Caleb Williams 
 
 Assumed: the 'w' flag rule is strict - matchup-rank flags on a leg (e.g. 'MIN ranks #31 vs QBs') disqualify that leg. For PMM, the -130..-200 limit stays at one leg (there are none).
 Skipped: every ATL-CIN / CHI-TB / BUF-MIN anytime TD except Cook/Allen (flagged) · Allen and the Bills WRs' yards (MIN pass-D flag) · Gadsden and D. Meyers out of the slips (similar-defense splits -52% / -39%) · Jefferson (2 of 6 over his line).
+
+
+## check_sunday - Sun 11/8 10:30 AM CT (1 PM inactives not yet posted)
+- Fall Back Double: FLAG - rebuild Mitchell Evans 2+ rec +182 / Noah Fant 2+ rec +240 = +859 (13.9%). Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622975814&selectionId[0]=59721547&marketId[1]=42.623630838&selectionId[1]=61721844
+- Plus-Money Paydirt: FLAG - Golden ATD +160 -> +185 (3.4 pts against); no better clean GB-NE leg, keep him. Slip +1554 (4.2%). Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622419464&selectionId[0]=42200636&marketId[1]=42.622011761&selectionId[1]=48301335&marketId[2]=42.622477088&selectionId[2]=36914887
+- Sunday singles: v3 card (Fant, Evans, Gadsden) - singles-sun-v3-square.png / .txt
+- Madrid Meltdown: expired (ATL-CIN under way). Either/Or, Double Dip, Sunday 6, Clean Sweep, Chalk Six: OK.
+- SNF: still no clean build. MNF heads-up: Jennings OUT - drop him from Piss Missile Monday.
