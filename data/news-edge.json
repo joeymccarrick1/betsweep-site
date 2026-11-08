@@ -363,6 +363,641 @@
      "pulled": "2026-11-07 6:25"
     }
    }
+  },
+  "George Pickens|2026-11-08T16:39": {
+   "pl": "George Pickens",
+   "tm": "DAL",
+   "pos": "WR",
+   "st": "Inactive",
+   "ts": "2026-11-08T16:39:10Z",
+   "legs": {
+    "CeeDee Lamb|Receptions|7": {
+     "pl": "CeeDee Lamb",
+     "m": "Receptions",
+     "ln": 7.0,
+     "built": -114,
+     "p": 0.5151,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "CeeDee Lamb|Receiving Yards|84": {
+     "pl": "CeeDee Lamb",
+     "m": "Receiving Yards",
+     "ln": 84.0,
+     "built": -113,
+     "p": 0.5062,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Ryan Flournoy|Receiving Yards|50": {
+     "pl": "Ryan Flournoy",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "built": -104,
+     "p": 0.4615,
+     "first": null,
+     "moved": null,
+     "now": -104.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Ryan Flournoy|Receptions|3": {
+     "pl": "Ryan Flournoy",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": -320,
+     "p": 0.7104,
+     "first": null,
+     "moved": null,
+     "now": -310.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "CeeDee Lamb|Longest Reception|20": {
+     "pl": "CeeDee Lamb",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": -350,
+     "p": 0.7224,
+     "first": null,
+     "moved": null,
+     "now": -340.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Ryan Flournoy|Longest Reception|15": {
+     "pl": "Ryan Flournoy",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -300,
+     "p": 0.6885,
+     "first": null,
+     "moved": null,
+     "now": -300.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "AJ Dillon|2026-11-08T16:48": {
+   "pl": "AJ Dillon",
+   "tm": "CAR",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-08T16:48:10Z",
+   "legs": {
+    "Chuba Hubbard|Receptions|4": {
+     "pl": "Chuba Hubbard",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 154,
+     "p": 0.3877,
+     "first": null,
+     "moved": null,
+     "now": 154.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Chuba Hubbard|Rush + Rec Yards|92": {
+     "pl": "Chuba Hubbard",
+     "m": "Rush + Rec Yards",
+     "ln": 92.0,
+     "built": -113,
+     "p": 0.5162,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Chuba Hubbard|Receiving Yards|18": {
+     "pl": "Chuba Hubbard",
+     "m": "Receiving Yards",
+     "ln": 18.0,
+     "built": -113,
+     "p": 0.5098,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Chuba Hubbard|Rushing Yards|70": {
+     "pl": "Chuba Hubbard",
+     "m": "Rushing Yards",
+     "ln": 70.0,
+     "built": -113,
+     "p": 0.4166,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "Justin Jefferson|2026-11-08T16:48": {
+   "pl": "Justin Jefferson",
+   "tm": "MIN",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-08T16:48:10Z",
+   "legs": {
+    "Ben Yurosek|Receptions|2": {
+     "pl": "Ben Yurosek",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": 310,
+     "p": 0.2095,
+     "first": null,
+     "moved": null,
+     "now": 310.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Ben Yurosek|Longest Reception|10": {
+     "pl": "Ben Yurosek",
+     "m": "Longest Reception",
+     "ln": 10.0,
+     "built": 210,
+     "p": 0.2576,
+     "first": null,
+     "moved": null,
+     "now": 210.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Jordan Addison|Receiving Yards|40": {
+     "pl": "Jordan Addison",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "built": -114,
+     "p": 0.5139,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Jordan Addison|Longest Reception|15": {
+     "pl": "Jordan Addison",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -230,
+     "p": 0.6314,
+     "first": null,
+     "moved": null,
+     "now": -230.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Jordan Addison|Receptions|4": {
+     "pl": "Jordan Addison",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -118,
+     "p": 0.466,
+     "first": null,
+     "moved": null,
+     "now": -118.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "Tim Patrick|2026-11-08T16:51": {
+   "pl": "Tim Patrick",
+   "tm": "NYJ",
+   "pos": "WR",
+   "st": "Inactive",
+   "ts": "2026-11-08T16:51:11Z",
+   "legs": {
+    "Adonai Mitchell|Receiving Yards|50": {
+     "pl": "Adonai Mitchell",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "built": -104,
+     "p": 0.5075,
+     "first": null,
+     "moved": null,
+     "now": -102.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Adonai Mitchell|Receptions|4": {
+     "pl": "Adonai Mitchell",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -118,
+     "p": 0.5234,
+     "first": null,
+     "moved": null,
+     "now": -118.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Adonai Mitchell|Longest Reception|15": {
+     "pl": "Adonai Mitchell",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -340,
+     "p": 0.7216,
+     "first": null,
+     "moved": null,
+     "now": -340.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Mason Taylor|Receiving Yards|26": {
+     "pl": "Mason Taylor",
+     "m": "Receiving Yards",
+     "ln": 26.0,
+     "built": -113,
+     "p": 0.5286,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Mason Taylor|Receptions|4": {
+     "pl": "Mason Taylor",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 122,
+     "p": 0.447,
+     "first": null,
+     "moved": null,
+     "now": 122.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Kenyon Sadiq|Receptions|3": {
+     "pl": "Kenyon Sadiq",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 154,
+     "p": 0.379,
+     "first": null,
+     "moved": null,
+     "now": 134.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Kenyon Sadiq|Receiving Yards|10": {
+     "pl": "Kenyon Sadiq",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": -250,
+     "p": 0.6787,
+     "first": null,
+     "moved": null,
+     "now": -290.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Mason Taylor|Longest Reception|10": {
+     "pl": "Mason Taylor",
+     "m": "Longest Reception",
+     "ln": 10.0,
+     "built": -260,
+     "p": 0.6668,
+     "first": null,
+     "moved": null,
+     "now": -260.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Kenyon Sadiq|Longest Reception|15": {
+     "pl": "Kenyon Sadiq",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": 165,
+     "p": 0.316,
+     "first": null,
+     "moved": null,
+     "now": 135.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "Will Mallory|2026-11-08T17:00": {
+   "pl": "Will Mallory",
+   "tm": "IND",
+   "pos": "TE",
+   "st": "Out",
+   "ts": "2026-11-08T17:00:10Z",
+   "legs": {
+    "Keenan Allen|Receiving Yards|42": {
+     "pl": "Keenan Allen",
+     "m": "Receiving Yards",
+     "ln": 42.0,
+     "built": -113,
+     "p": 0.5284,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Keenan Allen|Receptions|4": {
+     "pl": "Keenan Allen",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -275,
+     "p": 0.7274,
+     "first": null,
+     "moved": null,
+     "now": -270.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Keenan Allen|Longest Reception|15": {
+     "pl": "Keenan Allen",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -180,
+     "p": 0.5877,
+     "first": null,
+     "moved": null,
+     "now": -180.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Laquon Treadwell|Receiving Yards|10": {
+     "pl": "Laquon Treadwell",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": -182,
+     "p": 0.6395,
+     "first": null,
+     "moved": null,
+     "now": -230.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Laquon Treadwell|Receptions|3": {
+     "pl": "Laquon Treadwell",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 300,
+     "p": 0.2398,
+     "first": null,
+     "moved": null,
+     "now": 235.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Tyler Warren|Receptions|6": {
+     "pl": "Tyler Warren",
+     "m": "Receptions",
+     "ln": 6.0,
+     "built": 102,
+     "p": 0.4642,
+     "first": null,
+     "moved": null,
+     "now": 102.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Tyler Warren|Receiving Yards|43": {
+     "pl": "Tyler Warren",
+     "m": "Receiving Yards",
+     "ln": 43.0,
+     "built": -113,
+     "p": 0.497,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Josh Downs|Receiving Yards|45": {
+     "pl": "Josh Downs",
+     "m": "Receiving Yards",
+     "ln": 45.0,
+     "built": -113,
+     "p": 0.4827,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Josh Downs|Receptions|5": {
+     "pl": "Josh Downs",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 130,
+     "p": 0.3859,
+     "first": null,
+     "moved": null,
+     "now": 130.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Tyler Warren|Longest Reception|20": {
+     "pl": "Tyler Warren",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 220,
+     "p": 0.2602,
+     "first": null,
+     "moved": null,
+     "now": 230.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Josh Downs|Longest Reception|15": {
+     "pl": "Josh Downs",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -260,
+     "p": 0.6602,
+     "first": null,
+     "moved": null,
+     "now": -270.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Laquon Treadwell|Longest Reception|15": {
+     "pl": "Laquon Treadwell",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": 130,
+     "p": 0.368,
+     "first": null,
+     "moved": null,
+     "now": 100.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "AJ Dillon|2026-11-08T17:00": {
+   "pl": "AJ Dillon",
+   "tm": "CAR",
+   "pos": "RB",
+   "st": "Inactive",
+   "ts": "2026-11-08T17:00:10Z",
+   "legs": {
+    "Chuba Hubbard|Receptions|4": {
+     "pl": "Chuba Hubbard",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 154,
+     "p": 0.3877,
+     "first": null,
+     "moved": null,
+     "now": 154.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Chuba Hubbard|Rush + Rec Yards|92": {
+     "pl": "Chuba Hubbard",
+     "m": "Rush + Rec Yards",
+     "ln": 92.0,
+     "built": -113,
+     "p": 0.5162,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Chuba Hubbard|Receiving Yards|18": {
+     "pl": "Chuba Hubbard",
+     "m": "Receiving Yards",
+     "ln": 18.0,
+     "built": -113,
+     "p": 0.5098,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Chuba Hubbard|Rushing Yards|70": {
+     "pl": "Chuba Hubbard",
+     "m": "Rushing Yards",
+     "ln": 70.0,
+     "built": -113,
+     "p": 0.4166,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "Will Mallory|2026-11-08T17:09": {
+   "pl": "Will Mallory",
+   "tm": "IND",
+   "pos": "TE",
+   "st": "Inactive",
+   "ts": "2026-11-08T17:09:12Z",
+   "legs": {
+    "Keenan Allen|Receiving Yards|42": {
+     "pl": "Keenan Allen",
+     "m": "Receiving Yards",
+     "ln": 42.0,
+     "built": -113,
+     "p": 0.5284,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Keenan Allen|Receptions|4": {
+     "pl": "Keenan Allen",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -275,
+     "p": 0.7274,
+     "first": null,
+     "moved": null,
+     "now": -270.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Keenan Allen|Longest Reception|15": {
+     "pl": "Keenan Allen",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -180,
+     "p": 0.5877,
+     "first": null,
+     "moved": null,
+     "now": -180.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Laquon Treadwell|Receiving Yards|10": {
+     "pl": "Laquon Treadwell",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": -182,
+     "p": 0.6395,
+     "first": null,
+     "moved": null,
+     "now": -230.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Laquon Treadwell|Receptions|3": {
+     "pl": "Laquon Treadwell",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 300,
+     "p": 0.2398,
+     "first": null,
+     "moved": null,
+     "now": 235.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Tyler Warren|Receptions|6": {
+     "pl": "Tyler Warren",
+     "m": "Receptions",
+     "ln": 6.0,
+     "built": 102,
+     "p": 0.4642,
+     "first": null,
+     "moved": null,
+     "now": 102.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Tyler Warren|Receiving Yards|43": {
+     "pl": "Tyler Warren",
+     "m": "Receiving Yards",
+     "ln": 43.0,
+     "built": -113,
+     "p": 0.497,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Josh Downs|Receiving Yards|45": {
+     "pl": "Josh Downs",
+     "m": "Receiving Yards",
+     "ln": 45.0,
+     "built": -113,
+     "p": 0.4827,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Josh Downs|Receptions|5": {
+     "pl": "Josh Downs",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 130,
+     "p": 0.3859,
+     "first": null,
+     "moved": null,
+     "now": 130.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Tyler Warren|Longest Reception|20": {
+     "pl": "Tyler Warren",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 220,
+     "p": 0.2602,
+     "first": null,
+     "moved": null,
+     "now": 230.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Josh Downs|Longest Reception|15": {
+     "pl": "Josh Downs",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -260,
+     "p": 0.6602,
+     "first": null,
+     "moved": null,
+     "now": -270.0,
+     "pulled": "2026-11-08 10:25"
+    },
+    "Laquon Treadwell|Longest Reception|15": {
+     "pl": "Laquon Treadwell",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": 130,
+     "p": 0.368,
+     "first": null,
+     "moved": null,
+     "now": 100.0,
+     "pulled": "2026-11-08 10:25"
+    }
+   }
   }
  }
 }
