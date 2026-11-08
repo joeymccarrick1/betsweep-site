@@ -9,7 +9,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": 310,
    "now": 310.0,
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Ben Yurosek since and the price has not moved (+310 -> +310)"
   },
   {
@@ -20,9 +20,9 @@
    "st": "Out",
    "news": "2026-11-08T16:48:10Z",
    "built": 210,
-   "now": 210.0,
-   "pulled": "2026-11-08 11:25",
-   "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Ben Yurosek since and the price has not moved (+210 -> +210)"
+   "now": 220.0,
+   "pulled": "2026-11-08 13:25",
+   "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Ben Yurosek since and the price has not moved (+210 -> +220)"
   },
   {
    "key": "Jordan Addison|Receiving Yards|40",
@@ -33,7 +33,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": -114,
    "now": -114.0,
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Jordan Addison since and the price has not moved (-114 -> -114)"
   },
   {
@@ -45,7 +45,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": -230,
    "now": -230.0,
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Jordan Addison since and the price has not moved (-230 -> -230)"
   },
   {
@@ -57,14 +57,14 @@
    "news": "2026-11-08T16:48:10Z",
    "built": -118,
    "now": -118.0,
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Jordan Addison since and the price has not moved (-118 -> -118)"
   }
  ],
  "week": 9,
  "built": "Sun 11/8 10:06 AM",
- "checked": "2026-11-08T18:52:06Z",
- "legs_checked": 542,
+ "checked": "2026-11-08T19:47:47Z",
+ "legs_checked": 538,
  "moves": [
   {
    "key": "Eli Raridon|Anytime TD|1",
@@ -80,7 +80,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Eli Raridon anytime TD: FanDuel +220 at build -> +430 now (-12.4 implied pts against us)"
   },
   {
@@ -91,14 +91,48 @@
    "gid": "HOU-LAC",
    "ko": 1794171900000,
    "built": -125,
-   "now": -102.0,
-   "pts": -5.1,
+   "now": 104.0,
+   "pts": -6.5,
    "p": 0.5868,
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
-   "detail": "Kayshon Boutte rec yds 15+: FanDuel -125 at build -> -102 now (-5.1 implied pts against us)"
+   "pulled": "2026-11-08 13:25",
+   "detail": "Kayshon Boutte rec yds 15+: FanDuel -125 at build -> +104 now (-6.5 implied pts against us)"
+  },
+  {
+   "key": "Kayshon Boutte|Longest Reception|10",
+   "pl": "Kayshon Boutte",
+   "m": "Longest Reception",
+   "ln": 10.0,
+   "gid": "HOU-LAC",
+   "ko": 1794171900000,
+   "built": -170,
+   "now": -135.0,
+   "pts": -5.5,
+   "p": 0.5731,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-08 13:25",
+   "detail": "Kayshon Boutte long rec 10+: FanDuel -170 at build -> -135 now (-5.5 implied pts against us)"
+  },
+  {
+   "key": "Brandin Cooks|Receptions|3",
+   "pl": "Brandin Cooks",
+   "m": "Receptions",
+   "ln": 3.0,
+   "gid": "LV-SF",
+   "ko": 1794171900000,
+   "built": 210,
+   "now": 265.0,
+   "pts": -4.9,
+   "p": 0.3119,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-08 13:25",
+   "detail": "Brandin Cooks rec 3+: FanDuel +210 at build -> +265 now (-4.9 implied pts against us)"
   },
   {
    "key": "Hunter Henry|Anytime TD|1",
@@ -114,25 +148,42 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Hunter Henry anytime TD: FanDuel +220 at build -> +270 now (-4.2 implied pts against us)"
   },
   {
-   "key": "Kayshon Boutte|Longest Reception|10",
-   "pl": "Kayshon Boutte",
-   "m": "Longest Reception",
+   "key": "Kimani Vidal|Rushing Yards|10",
+   "pl": "Kimani Vidal",
+   "m": "Rushing Yards",
    "ln": 10.0,
    "gid": "HOU-LAC",
    "ko": 1794171900000,
-   "built": -170,
-   "now": -145.0,
-   "pts": -3.8,
-   "p": 0.5731,
+   "built": -330,
+   "now": -420.0,
+   "pts": 4.0,
+   "p": 0.6732,
    "value": false,
-   "dir": "DRIFTED",
+   "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
-   "detail": "Kayshon Boutte long rec 10+: FanDuel -170 at build -> -145 now (-3.8 implied pts against us)"
+   "pulled": "2026-11-08 13:25",
+   "detail": "Kimani Vidal rush yds 10+: FanDuel -330 at build -> -420 now (+4.0 implied pts toward the model)"
+  },
+  {
+   "key": "Kayshon Boutte|Receptions|3",
+   "pl": "Kayshon Boutte",
+   "m": "Receptions",
+   "ln": 3.0,
+   "gid": "HOU-LAC",
+   "ko": 1794171900000,
+   "built": 300,
+   "now": 370.0,
+   "pts": -3.7,
+   "p": 0.2782,
+   "value": true,
+   "dir": "DRIFTED",
+   "tier": "plus",
+   "pulled": "2026-11-08 13:25",
+   "detail": "Kayshon Boutte rec 3+: FanDuel +300 at build -> +370 now (-3.7 implied pts against us)"
   },
   {
    "key": "Kyle Williams|Receptions|2",
@@ -148,7 +199,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Kyle Williams rec 2+: FanDuel +124 at build -> +144 now (-3.7 implied pts against us)"
   },
   {
@@ -165,8 +216,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Ladd McConkey rec 4+: FanDuel -148 at build -> -172 now (+3.6 implied pts toward the model)"
+  },
+  {
+   "key": "Keaton Mitchell|Receptions|2",
+   "pl": "Keaton Mitchell",
+   "m": "Receptions",
+   "ln": 2.0,
+   "gid": "HOU-LAC",
+   "ko": 1794171900000,
+   "built": 106,
+   "now": -108.0,
+   "pts": 3.4,
+   "p": 0.4889,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-08 13:25",
+   "detail": "Keaton Mitchell rec 2+: FanDuel +106 at build -> -108 now (+3.4 implied pts toward the model)"
   },
   {
    "key": "Cade Otton|Longest Reception|20",
@@ -182,7 +250,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-08 11:25",
+   "pulled": "2026-11-08 13:25",
    "detail": "Cade Otton long rec 20+: FanDuel +190 at build -> +220 now (-3.2 implied pts against us)"
   }
  ]
