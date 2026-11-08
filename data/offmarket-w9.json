@@ -60,6 +60,18 @@
    "gap": 3.2,
    "p": 0.3509,
    "seen": "2026-11-07 6:25"
+  },
+  "Christian McCaffrey|Receiving Yards|40": {
+   "pl": "Christian McCaffrey",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "LV-SF",
+   "fd": -108.0,
+   "dk": -127.0,
+   "hr": -125.0,
+   "gap": 3.6,
+   "p": 0.517,
+   "seen": "2026-11-08 6:25"
   }
  }
 }
