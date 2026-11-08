@@ -1300,7 +1300,1027 @@
 "pulled": "2026-11-05 18:09",
 "ko": "2026-11-05 19:15",
 "cap": "2026-11-05 22:52"
+},
+"aaron jones|anytime td|1": {
+"pl": "Aaron Jones",
+"m": "Anytime TD",
+"ln": "1",
+"o": 270.0,
+"imp": 0.2703,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|longest reception|10": {
+"pl": "Aaron Jones",
+"m": "Longest Reception",
+"ln": "10",
+"o": 180.0,
+"imp": 0.3571,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|receiving yards|5": {
+"pl": "Aaron Jones",
+"m": "Receiving Yards",
+"ln": "5",
+"o": -192.0,
+"imp": 0.6575,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|receiving yards|8": {
+"pl": "Aaron Jones",
+"m": "Receiving Yards",
+"ln": "8",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|receptions|2": {
+"pl": "Aaron Jones",
+"m": "Receptions",
+"ln": "2",
+"o": -140.0,
+"imp": 0.5833,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|receptions|3": {
+"pl": "Aaron Jones",
+"m": "Receptions",
+"ln": "3",
+"o": 205.0,
+"imp": 0.3279,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|rushing yards|25": {
+"pl": "Aaron Jones",
+"m": "Rushing Yards",
+"ln": "25",
+"o": -210.0,
+"imp": 0.6774,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|rushing yards|30": {
+"pl": "Aaron Jones",
+"m": "Rushing Yards",
+"ln": "30",
+"o": -136.0,
+"imp": 0.5763,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"aaron jones|rushing yards|32": {
+"pl": "Aaron Jones",
+"m": "Rushing Yards",
+"ln": "32",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ben yurosek|longest reception|10": {
+"pl": "Ben Yurosek",
+"m": "Longest Reception",
+"ln": "10",
+"o": 210.0,
+"imp": 0.3226,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ben yurosek|receptions|1": {
+"pl": "Ben Yurosek",
+"m": "Receptions",
+"ln": "1",
+"o": -122.0,
+"imp": 0.5495,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ben yurosek|receptions|2": {
+"pl": "Ben Yurosek",
+"m": "Receptions",
+"ln": "2",
+"o": 310.0,
+"imp": 0.2439,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"carson wentz|passing yards|175": {
+"pl": "Carson Wentz",
+"m": "Passing Yards",
+"ln": "175",
+"o": -270.0,
+"imp": 0.7297,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"carson wentz|passing yards|200": {
+"pl": "Carson Wentz",
+"m": "Passing Yards",
+"ln": "200",
+"o": -146.0,
+"imp": 0.5935,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"carson wentz|passing yards|210": {
+"pl": "Carson Wentz",
+"m": "Passing Yards",
+"ln": "210",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"carson wentz|rushing yards|5": {
+"pl": "Carson Wentz",
+"m": "Rushing Yards",
+"ln": "5",
+"o": -200.0,
+"imp": 0.6667,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"carson wentz|rushing yards|8": {
+"pl": "Carson Wentz",
+"m": "Rushing Yards",
+"ln": "8",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|anytime td|1": {
+"pl": "Dalton Kincaid",
+"m": "Anytime TD",
+"ln": "1",
+"o": 300.0,
+"imp": 0.25,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|longest reception|15": {
+"pl": "Dalton Kincaid",
+"m": "Longest Reception",
+"ln": "15",
+"o": -210.0,
+"imp": 0.6774,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|longest reception|20": {
+"pl": "Dalton Kincaid",
+"m": "Longest Reception",
+"ln": "20",
+"o": 110.0,
+"imp": 0.4762,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|receiving yards|25": {
+"pl": "Dalton Kincaid",
+"m": "Receiving Yards",
+"ln": "25",
+"o": -260.0,
+"imp": 0.7222,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|receiving yards|30": {
+"pl": "Dalton Kincaid",
+"m": "Receiving Yards",
+"ln": "30",
+"o": -182.0,
+"imp": 0.6454,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|receiving yards|37": {
+"pl": "Dalton Kincaid",
+"m": "Receiving Yards",
+"ln": "37",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|receptions|3": {
+"pl": "Dalton Kincaid",
+"m": "Receptions",
+"ln": "3",
+"o": -230.0,
+"imp": 0.697,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dalton kincaid|receptions|4": {
+"pl": "Dalton Kincaid",
+"m": "Receptions",
+"ln": "4",
+"o": 112.0,
+"imp": 0.4717,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dawson knox|longest reception|10": {
+"pl": "Dawson Knox",
+"m": "Longest Reception",
+"ln": "10",
+"o": 145.0,
+"imp": 0.4082,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dawson knox|receiving yards|5": {
+"pl": "Dawson Knox",
+"m": "Receiving Yards",
+"ln": "5",
+"o": -178.0,
+"imp": 0.6403,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dawson knox|receiving yards|8": {
+"pl": "Dawson Knox",
+"m": "Receiving Yards",
+"ln": "8",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dawson knox|receiving yards|10": {
+"pl": "Dawson Knox",
+"m": "Receiving Yards",
+"ln": "10",
+"o": 116.0,
+"imp": 0.463,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dawson knox|receptions|1": {
+"pl": "Dawson Knox",
+"m": "Receptions",
+"ln": "1",
+"o": -280.0,
+"imp": 0.7368,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dawson knox|receptions|2": {
+"pl": "Dawson Knox",
+"m": "Receptions",
+"ln": "2",
+"o": 162.0,
+"imp": 0.3817,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|anytime td|1": {
+"pl": "DJ Moore",
+"m": "Anytime TD",
+"ln": "1",
+"o": 270.0,
+"imp": 0.2703,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|longest reception|15": {
+"pl": "DJ Moore",
+"m": "Longest Reception",
+"ln": "15",
+"o": -350.0,
+"imp": 0.7778,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|longest reception|20": {
+"pl": "DJ Moore",
+"m": "Longest Reception",
+"ln": "20",
+"o": -160.0,
+"imp": 0.6154,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|receiving yards|40": {
+"pl": "DJ Moore",
+"m": "Receiving Yards",
+"ln": "40",
+"o": -174.0,
+"imp": 0.635,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|receiving yards|48": {
+"pl": "DJ Moore",
+"m": "Receiving Yards",
+"ln": "48",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|receiving yards|50": {
+"pl": "DJ Moore",
+"m": "Receiving Yards",
+"ln": "50",
+"o": -102.0,
+"imp": 0.505,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|receptions|3": {
+"pl": "DJ Moore",
+"m": "Receptions",
+"ln": "3",
+"o": -320.0,
+"imp": 0.7619,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"dj moore|receptions|4": {
+"pl": "DJ Moore",
+"m": "Receptions",
+"ln": "4",
+"o": -130.0,
+"imp": 0.5652,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|anytime td|1": {
+"pl": "James Cook",
+"m": "Anytime TD",
+"ln": "1",
+"o": -110.0,
+"imp": 0.5238,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|longest reception|10": {
+"pl": "James Cook",
+"m": "Longest Reception",
+"ln": "10",
+"o": 155.0,
+"imp": 0.3922,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|receiving yards|5": {
+"pl": "James Cook",
+"m": "Receiving Yards",
+"ln": "5",
+"o": -215.0,
+"imp": 0.6825,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|receiving yards|9": {
+"pl": "James Cook",
+"m": "Receiving Yards",
+"ln": "9",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|receiving yards|10": {
+"pl": "James Cook",
+"m": "Receiving Yards",
+"ln": "10",
+"o": 102.0,
+"imp": 0.495,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|receptions|2": {
+"pl": "James Cook",
+"m": "Receptions",
+"ln": "2",
+"o": -138.0,
+"imp": 0.5798,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|receptions|3": {
+"pl": "James Cook",
+"m": "Receptions",
+"ln": "3",
+"o": 220.0,
+"imp": 0.3125,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|rushing yards|70": {
+"pl": "James Cook",
+"m": "Rushing Yards",
+"ln": "70",
+"o": -210.0,
+"imp": 0.6774,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|rushing yards|80": {
+"pl": "James Cook",
+"m": "Rushing Yards",
+"ln": "80",
+"o": -130.0,
+"imp": 0.5652,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"james cook|rushing yards|83": {
+"pl": "James Cook",
+"m": "Rushing Yards",
+"ln": "83",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|anytime td|1": {
+"pl": "Jordan Addison",
+"m": "Anytime TD",
+"ln": "1",
+"o": 250.0,
+"imp": 0.2857,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|longest reception|15": {
+"pl": "Jordan Addison",
+"m": "Longest Reception",
+"ln": "15",
+"o": -230.0,
+"imp": 0.697,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|longest reception|20": {
+"pl": "Jordan Addison",
+"m": "Longest Reception",
+"ln": "20",
+"o": -105.0,
+"imp": 0.5122,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|receiving yards|25": {
+"pl": "Jordan Addison",
+"m": "Receiving Yards",
+"ln": "25",
+"o": -300.0,
+"imp": 0.75,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|receiving yards|30": {
+"pl": "Jordan Addison",
+"m": "Receiving Yards",
+"ln": "30",
+"o": -215.0,
+"imp": 0.6825,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|receiving yards|40": {
+"pl": "Jordan Addison",
+"m": "Receiving Yards",
+"ln": "40",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|receptions|3": {
+"pl": "Jordan Addison",
+"m": "Receptions",
+"ln": "3",
+"o": -290.0,
+"imp": 0.7436,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan addison|receptions|4": {
+"pl": "Jordan Addison",
+"m": "Receptions",
+"ln": "4",
+"o": -118.0,
+"imp": 0.5413,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan mason|anytime td|1": {
+"pl": "Jordan Mason",
+"m": "Anytime TD",
+"ln": "1",
+"o": 210.0,
+"imp": 0.3226,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan mason|rushing yards|40": {
+"pl": "Jordan Mason",
+"m": "Rushing Yards",
+"ln": "40",
+"o": -188.0,
+"imp": 0.6528,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan mason|rushing yards|48": {
+"pl": "Jordan Mason",
+"m": "Rushing Yards",
+"ln": "48",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"jordan mason|rushing yards|50": {
+"pl": "Jordan Mason",
+"m": "Rushing Yards",
+"ln": "50",
+"o": 100.0,
+"imp": 0.5,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|anytime td|1": {
+"pl": "Josh Allen",
+"m": "Anytime TD",
+"ln": "1",
+"o": -120.0,
+"imp": 0.5455,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|passing yards|200": {
+"pl": "Josh Allen",
+"m": "Passing Yards",
+"ln": "200",
+"o": -310.0,
+"imp": 0.7561,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|passing yards|225": {
+"pl": "Josh Allen",
+"m": "Passing Yards",
+"ln": "225",
+"o": -162.0,
+"imp": 0.6183,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|passing yards|238": {
+"pl": "Josh Allen",
+"m": "Passing Yards",
+"ln": "238",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|rushing yards|25": {
+"pl": "Josh Allen",
+"m": "Rushing Yards",
+"ln": "25",
+"o": -194.0,
+"imp": 0.6599,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|rushing yards|30": {
+"pl": "Josh Allen",
+"m": "Rushing Yards",
+"ln": "30",
+"o": -125.0,
+"imp": 0.5556,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"josh allen|rushing yards|31": {
+"pl": "Josh Allen",
+"m": "Rushing Yards",
+"ln": "31",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|anytime td|1": {
+"pl": "Justin Jefferson",
+"m": "Anytime TD",
+"ln": "1",
+"o": 155.0,
+"imp": 0.3922,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|longest reception|20": {
+"pl": "Justin Jefferson",
+"m": "Longest Reception",
+"ln": "20",
+"o": -280.0,
+"imp": 0.7368,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|longest reception|30": {
+"pl": "Justin Jefferson",
+"m": "Longest Reception",
+"ln": "30",
+"o": 140.0,
+"imp": 0.4167,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|receiving yards|70": {
+"pl": "Justin Jefferson",
+"m": "Receiving Yards",
+"ln": "70",
+"o": -160.0,
+"imp": 0.6154,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|receiving yards|78": {
+"pl": "Justin Jefferson",
+"m": "Receiving Yards",
+"ln": "78",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|receiving yards|80": {
+"pl": "Justin Jefferson",
+"m": "Receiving Yards",
+"ln": "80",
+"o": -106.0,
+"imp": 0.5146,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|receptions|6": {
+"pl": "Justin Jefferson",
+"m": "Receptions",
+"ln": "6",
+"o": -210.0,
+"imp": 0.6774,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"justin jefferson|receptions|7": {
+"pl": "Justin Jefferson",
+"m": "Receptions",
+"ln": "7",
+"o": -108.0,
+"imp": 0.5192,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|anytime td|1": {
+"pl": "Keon Coleman",
+"m": "Anytime TD",
+"ln": "1",
+"o": 420.0,
+"imp": 0.1923,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|longest reception|15": {
+"pl": "Keon Coleman",
+"m": "Longest Reception",
+"ln": "15",
+"o": -165.0,
+"imp": 0.6226,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|longest reception|20": {
+"pl": "Keon Coleman",
+"m": "Longest Reception",
+"ln": "20",
+"o": 125.0,
+"imp": 0.4444,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|receiving yards|25": {
+"pl": "Keon Coleman",
+"m": "Receiving Yards",
+"ln": "25",
+"o": -154.0,
+"imp": 0.6063,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|receiving yards|29": {
+"pl": "Keon Coleman",
+"m": "Receiving Yards",
+"ln": "29",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|receiving yards|30": {
+"pl": "Keon Coleman",
+"m": "Receiving Yards",
+"ln": "30",
+"o": -106.0,
+"imp": 0.5146,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|receptions|2": {
+"pl": "Keon Coleman",
+"m": "Receptions",
+"ln": "2",
+"o": -290.0,
+"imp": 0.7436,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"keon coleman|receptions|3": {
+"pl": "Keon Coleman",
+"m": "Receptions",
+"ln": "3",
+"o": 104.0,
+"imp": 0.4902,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|anytime td|1": {
+"pl": "Khalil Shakir",
+"m": "Anytime TD",
+"ln": "1",
+"o": 320.0,
+"imp": 0.2381,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|longest reception|15": {
+"pl": "Khalil Shakir",
+"m": "Longest Reception",
+"ln": "15",
+"o": -190.0,
+"imp": 0.6552,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|longest reception|20": {
+"pl": "Khalil Shakir",
+"m": "Longest Reception",
+"ln": "20",
+"o": 125.0,
+"imp": 0.4444,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|receiving yards|30": {
+"pl": "Khalil Shakir",
+"m": "Receiving Yards",
+"ln": "30",
+"o": -210.0,
+"imp": 0.6774,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|receiving yards|39": {
+"pl": "Khalil Shakir",
+"m": "Receiving Yards",
+"ln": "39",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|receiving yards|40": {
+"pl": "Khalil Shakir",
+"m": "Receiving Yards",
+"ln": "40",
+"o": -108.0,
+"imp": 0.5192,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|receptions|4": {
+"pl": "Khalil Shakir",
+"m": "Receptions",
+"ln": "4",
+"o": -154.0,
+"imp": 0.6063,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"khalil shakir|receptions|5": {
+"pl": "Khalil Shakir",
+"m": "Receptions",
+"ln": "5",
+"o": 142.0,
+"imp": 0.4132,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ray davis|rushing yards|5": {
+"pl": "Ray Davis",
+"m": "Rushing Yards",
+"ln": "5",
+"o": -140.0,
+"imp": 0.5833,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ray davis|rushing yards|6": {
+"pl": "Ray Davis",
+"m": "Rushing Yards",
+"ln": "6",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"tai felton|anytime td|1": {
+"pl": "Tai Felton",
+"m": "Anytime TD",
+"ln": "1",
+"o": 500.0,
+"imp": 0.1667,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|longest reception|10": {
+"pl": "Ty Johnson",
+"m": "Longest Reception",
+"ln": "10",
+"o": -135.0,
+"imp": 0.5745,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|longest reception|15": {
+"pl": "Ty Johnson",
+"m": "Longest Reception",
+"ln": "15",
+"o": 195.0,
+"imp": 0.339,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|receiving yards|10": {
+"pl": "Ty Johnson",
+"m": "Receiving Yards",
+"ln": "10",
+"o": -230.0,
+"imp": 0.697,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|receiving yards|15": {
+"pl": "Ty Johnson",
+"m": "Receiving Yards",
+"ln": "15",
+"o": -130.0,
+"imp": 0.5652,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|receiving yards|16": {
+"pl": "Ty Johnson",
+"m": "Receiving Yards",
+"ln": "16",
+"o": -114.0,
+"imp": 0.5327,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|receptions|2": {
+"pl": "Ty Johnson",
+"m": "Receptions",
+"ln": "2",
+"o": -210.0,
+"imp": 0.6774,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
+},
+"ty johnson|receptions|3": {
+"pl": "Ty Johnson",
+"m": "Receptions",
+"ln": "3",
+"o": 144.0,
+"imp": 0.4098,
+"pulled": "2026-11-08 6:25",
+"ko": "2026-11-09 19:15",
+"cap": "2026-11-08 08:19"
 }
 },
-"updated": "2026-11-08 07:30"
+"updated": "2026-11-08 08:19"
 }
