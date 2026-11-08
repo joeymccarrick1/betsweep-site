@@ -670,6 +670,70 @@
      "reason": "Amon-Ra St. Brown Questionable (ribs) - DET-MIA pair. All other named players active."
     }
    ]
+  },
+  {
+   "run": "check_sunday",
+   "at": "2026-11-08T16:30Z",
+   "data": "builder Sun 11/8 10:06 AM CT; ESPN mirror 16:24 UTC (1 PM inactives not yet posted)",
+   "results": [
+    {
+     "name": "Fall Back Double",
+     "status": "FLAG",
+     "reason": "Douglas 60+ / Purdy 275+ still off the board; yesterday's rebuild leg Drew Sample is in ATL-CIN (started). Rebuild: Mitchell Evans 2+ rec +182 (37%) / Noah Fant 2+ rec +240 (38%, model-only 57% vs 29%) = +859, 13.9%",
+     "swap_link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622975814&selectionId[0]=59721547&marketId[1]=42.623630838&selectionId[1]=61721844"
+    },
+    {
+     "name": "Plus-Money Paydirt",
+     "status": "FLAG",
+     "reason": "Golden ATD +160 -> +185 (3.4 implied pts against). No better clean GB-NE leg at +120+: Watson ATD +175 is 30% vs 36%; Love 2+ TD passes +106 carries a 'Losing zone' flag. Keep Golden. Slip now +1554 (was +1359, +14%), 4.2%. Bowers +115 (came our way), J. Williams +155 -> +170 (2.2 pts, OK).",
+     "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622419464&selectionId[0]=42200636&marketId[1]=42.622011761&selectionId[1]=48301335&marketId[2]=42.622477088&selectionId[2]=36914887"
+    },
+    {
+     "name": "Sunday singles",
+     "status": "FLAG",
+     "reason": "Sample and Meyers games under way. Card v3: Fant 2+ +240, Evans 2+ +182, Gadsden 3+ +205."
+    },
+    {
+     "name": "Madrid Meltdown",
+     "status": "EXPIRED",
+     "reason": "ATL-CIN kicked off 14:30 UTC; never posted."
+    },
+    {
+     "name": "Either/Or pairs",
+     "status": "OK",
+     "reason": "All 8 players active; McCaffrey expected full workload; Gibbs/Gordon, Kittle, Kyren/Diggs, Hubbard/Coleman clear."
+    },
+    {
+     "name": "The Double Dip (LIVE)",
+     "status": "OK/WATCH",
+     "reason": "St. Brown Questionable (ribs) but slated to play (Pelissero). Kelce and Rice practiced fully. ATL-CIN leg in progress."
+    },
+    {
+     "name": "Sunday 6 (LIVE)",
+     "status": "OK",
+     "reason": "All six active; McCaffrey expected full workload."
+    },
+    {
+     "name": "The Clean Sweep / Chalk Six (LIVE)",
+     "status": "OK/WATCH",
+     "reason": "Nobody out. Geno Smith 175+ without Garrett Wilson (Out since Fri). Treadwell carries a Cold L3 flag (19 yds/g last 3)."
+    },
+    {
+     "name": "snf",
+     "status": "NOT DRAFTED",
+     "reason": "Still no clean TB leg (every TB prop flagged); CHI legs are coin flips with no edge. No clean +500/+5000."
+    },
+    {
+     "name": "mnf heads-up",
+     "status": "FLAG (check_mnf)",
+     "reason": "Jauan Jennings ruled OUT (calf) - drop him from Piss Missile Monday."
+    }
+   ]
   }
- ]
+ ],
+ "singles_v3": {
+  "slot": "sunday",
+  "file": "singles-sun-v3.json",
+  "note": "check_sunday 11/8: replaces singles-sun-v2.json - Drew Sample and Dohnte Meyers are in games already under way (ATL-CIN 8:30 AM CT); Fant 2+ and Gadsden 3+ added."
+ }
 }
