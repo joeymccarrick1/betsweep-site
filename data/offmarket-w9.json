@@ -72,6 +72,30 @@
    "gap": 3.6,
    "p": 0.517,
    "seen": "2026-11-08 6:25"
+  },
+  "Van Jefferson|Receiving Yards|10": {
+   "pl": "Van Jefferson",
+   "m": "Receiving Yards",
+   "ln": 10.0,
+   "g": "LA-WAS",
+   "fd": 102.0,
+   "dk": -120.0,
+   "hr": -115.0,
+   "gap": 4.0,
+   "p": 0.5433,
+   "seen": "2026-11-08 6:25"
+  },
+  "Ryan Flournoy|Receptions|3": {
+   "pl": "Ryan Flournoy",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "DAL-IND",
+   "fd": -320.0,
+   "dk": -417.0,
+   "hr": -450.0,
+   "gap": 4.5,
+   "p": 0.7104,
+   "seen": "2026-11-08 6:25"
   }
  }
 }
