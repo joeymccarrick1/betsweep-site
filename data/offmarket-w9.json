@@ -108,6 +108,30 @@
    "gap": 3.4,
    "p": 0.7204,
    "seen": "2026-11-08 11:25"
+  },
+  "Christian McCaffrey|Receptions|5": {
+   "pl": "Christian McCaffrey",
+   "m": "Receptions",
+   "ln": 5.0,
+   "g": "LV-SF",
+   "fd": -162.0,
+   "dk": -204.0,
+   "hr": -190.0,
+   "gap": 3.7,
+   "p": 0.5871,
+   "seen": "2026-11-08 14:25"
+  },
+  "Trey McBride|Anytime TD|1": {
+   "pl": "Trey McBride",
+   "m": "Anytime TD",
+   "ln": 1.0,
+   "g": "ARI-SEA",
+   "fd": 230.0,
+   "dk": 190.0,
+   "hr": 200.0,
+   "gap": 3.0,
+   "p": 0.3069,
+   "seen": "2026-11-08 14:25"
   }
  }
 }

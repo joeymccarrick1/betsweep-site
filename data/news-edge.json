@@ -511,7 +511,7 @@
      ],
      "moved": null,
      "now": 310.0,
-     "pulled": "2026-11-08 13:25"
+     "pulled": "2026-11-08 14:25"
     },
     "Ben Yurosek|Longest Reception|10": {
      "pl": "Ben Yurosek",
@@ -525,7 +525,7 @@
      ],
      "moved": null,
      "now": 220.0,
-     "pulled": "2026-11-08 13:25"
+     "pulled": "2026-11-08 14:25"
     },
     "Jordan Addison|Receiving Yards|40": {
      "pl": "Jordan Addison",
@@ -539,7 +539,7 @@
      ],
      "moved": null,
      "now": -114.0,
-     "pulled": "2026-11-08 13:25"
+     "pulled": "2026-11-08 14:25"
     },
     "Jordan Addison|Longest Reception|15": {
      "pl": "Jordan Addison",
@@ -553,7 +553,7 @@
      ],
      "moved": null,
      "now": -230.0,
-     "pulled": "2026-11-08 13:25"
+     "pulled": "2026-11-08 14:25"
     },
     "Jordan Addison|Receptions|4": {
      "pl": "Jordan Addison",
@@ -567,7 +567,7 @@
      ],
      "moved": null,
      "now": -118.0,
-     "pulled": "2026-11-08 13:25"
+     "pulled": "2026-11-08 14:25"
     }
    }
   },
@@ -1011,6 +1011,116 @@
      "moved": null,
      "now": 100.0,
      "pulled": "2026-11-08 10:25"
+    }
+   }
+  },
+  "Jaylen Waddle|2026-11-08T20:00": {
+   "pl": "Jaylen Waddle",
+   "tm": "DEN",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-08T20:00:10Z",
+   "legs": {}
+  },
+  "MarShawn Lloyd|2026-11-08T20:06": {
+   "pl": "MarShawn Lloyd",
+   "tm": "GB",
+   "pos": "RB",
+   "st": "Inactive",
+   "ts": "2026-11-08T20:06:11Z",
+   "legs": {
+    "Josh Jacobs|Receptions|4": {
+     "pl": "Josh Jacobs",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -102,
+     "p": 0.5173,
+     "first": [
+      "2026-11-08 14:25",
+      -102.0
+     ],
+     "moved": null,
+     "now": -102.0,
+     "pulled": "2026-11-08 14:25"
+    },
+    "Josh Jacobs|Receiving Yards|21": {
+     "pl": "Josh Jacobs",
+     "m": "Receiving Yards",
+     "ln": 21.0,
+     "built": -113,
+     "p": 0.5225,
+     "first": [
+      "2026-11-08 14:25",
+      -113.0
+     ],
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 14:25"
+    },
+    "Josh Jacobs|Rushing Yards|50": {
+     "pl": "Josh Jacobs",
+     "m": "Rushing Yards",
+     "ln": 50.0,
+     "built": -102,
+     "p": 0.4036,
+     "first": [
+      "2026-11-08 14:25",
+      -113.0
+     ],
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 14:25"
+    }
+   }
+  },
+  "MarShawn Lloyd|2026-11-08T20:09": {
+   "pl": "MarShawn Lloyd",
+   "tm": "GB",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-08T20:09:18Z",
+   "legs": {
+    "Josh Jacobs|Receptions|4": {
+     "pl": "Josh Jacobs",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -102,
+     "p": 0.5173,
+     "first": [
+      "2026-11-08 14:25",
+      -102.0
+     ],
+     "moved": null,
+     "now": -102.0,
+     "pulled": "2026-11-08 14:25"
+    },
+    "Josh Jacobs|Receiving Yards|21": {
+     "pl": "Josh Jacobs",
+     "m": "Receiving Yards",
+     "ln": 21.0,
+     "built": -113,
+     "p": 0.5225,
+     "first": [
+      "2026-11-08 14:25",
+      -113.0
+     ],
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 14:25"
+    },
+    "Josh Jacobs|Rushing Yards|50": {
+     "pl": "Josh Jacobs",
+     "m": "Rushing Yards",
+     "ln": 50.0,
+     "built": -102,
+     "p": 0.4036,
+     "first": [
+      "2026-11-08 14:25",
+      -113.0
+     ],
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-08 14:25"
     }
    }
   }
