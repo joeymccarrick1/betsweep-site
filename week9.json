@@ -411,31 +411,31 @@
    "legs": [
     {
      "pl": "Aaron Jones",
-     "m": "Rush + Rec Yards",
-     "ln": 43.0,
-     "o": -118,
-     "p": 0.6233,
-     "bk": 0.5413,
+     "m": "Receiving Yards",
+     "ln": 8.0,
+     "o": -114,
+     "p": 0.5435,
+     "bk": 0.533,
      "game": "BUF-MIN",
      "fd": {
-      "m": "42.623072913",
+      "m": "42.623047986",
       "s": "15353380"
      },
-     "why": "Model-only 71% vs FanDuel 54% - the biggest edge in the game; line 43 vs 78 avg"
+     "why": "Proj 13.4, avg 12.9; Wentz checks down. BUF holds RB1s to 0.82x - this is the catch line, not the rushing one"
     },
     {
      "pl": "James Cook",
      "m": "Rush + Rec Yards",
-     "ln": 97.0,
-     "o": -113,
-     "p": 0.5416,
-     "bk": 0.5305,
+     "ln": 96.0,
+     "o": -114,
+     "p": 0.5454,
+     "bk": 0.5327,
      "game": "BUF-MIN",
      "fd": {
       "m": "42.622457185",
       "s": "41957632"
      },
-     "why": "Rung 10% under his 107 projection; MIN allows RB1s 28% over their average"
+     "why": "Line moved 97 -> 96 (our way); 116.7 avg, 107 projection"
     },
     {
      "pl": "James Cook",
@@ -449,15 +449,15 @@
       "m": "42.622452759",
       "s": "42200635"
      },
-     "why": "TD in most games; fits the same run-heavy script"
+     "why": "Scored in 6 of 7 games; MIN allows RB1s 28% over their average (#8)"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.623072913&selectionId[0]=15353380&marketId[1]=42.622457185&selectionId[1]=41957632&marketId[2]=42.622452759&selectionId[2]=42200635",
-   "price": "+565 multiplied; ~+465 est as a FanDuel SGP",
-   "price_est": "+465",
-   "chance": 0.1726,
-   "note": "check_weekend 11/7: no BUF-MIN leg is +120 or longer AND clean except Jones 3+ rec (+200, no 5-pt edge), so a rules-clean +500 does not exist. This is the highest-chance 3-leg version at the +500 target; owner decides.",
-   "caption": "Backfield Bash +465 (est SGP)\nAaron Jones 43+ rush+rec yds\nJames Cook 97+ rush+rec yds\nJames Cook anytime TD\nWhy: model has Jones 43+ at 71% vs FanDuel's 54%\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.623047986&selectionId[0]=15353380&marketId[1]=42.622457185&selectionId[1]=41957632&marketId[2]=42.622452759&selectionId[2]=42200635",
+   "price": "+573 multiplied; ~+471 est as a FanDuel SGP",
+   "price_est": "+471",
+   "chance": 0.1516,
+   "note": "check_weekend 11/7: no BUF-MIN leg is +120 or longer AND clean except Jones 3+ rec (+200, no 5-pt edge), so a rules-clean +500 does not exist. This is the highest-chance 3-leg version at the +500 target; owner decides. | check_mnf 11/9 13:45Z: FLAG - Jones 43+ rush+rec now carries a 'Losing zone' bad flag; swapped for Jones 8+ rec yds (-114). Cook rush+rec line 97 -> 96 at -114 (same FanDuel selection).",
+   "caption": "Backfield Bash +471 (est SGP)\nAaron Jones 8+ rec yds\nJames Cook 96+ rush+rec yds\nJames Cook anytime TD\nWhy: Cook has scored in 6 of 7 and MIN gives RB1s 28% over their average\n21+ | gamble responsibly",
    "post": false
   },
   {
@@ -478,7 +478,7 @@
       "m": "42.622452759",
       "s": "42200635"
      },
-     "why": "TD in most games (1.0/g avg); MIN allows RB1s 28% over their own average (#8)"
+     "why": "Scored in 6 of 7 games; MIN allows RB1s 28% over their average (#8)"
     },
     {
      "pl": "Josh Allen",
@@ -492,35 +492,21 @@
       "m": "42.622452759",
       "s": "12399650"
      },
-     "why": "1.29 TDs a game; MIN is #31 vs QB passing yards, so his scores come on the ground"
+     "why": "Scored in 6 of 7; BUF QBs #1 in rushing TDs - MIN is #31 vs QB passing, so his scores come on the ground"
     },
     {
      "pl": "James Cook",
      "m": "Rush + Rec Yards",
-     "ln": 97.0,
-     "o": -113,
-     "p": 0.5416,
-     "bk": 0.5305,
+     "ln": 96.0,
+     "o": -114,
+     "p": 0.5454,
+     "bk": 0.5327,
      "game": "BUF-MIN",
      "fd": {
       "m": "42.622457185",
       "s": "41957632"
      },
-     "why": "Rung 10% under his 107 projection; 116.7 avg"
-    },
-    {
-     "pl": "Aaron Jones",
-     "m": "Rush + Rec Yards",
-     "ln": 43.0,
-     "o": -118,
-     "p": 0.6233,
-     "bk": 0.5413,
-     "game": "BUF-MIN",
-     "fd": {
-      "m": "42.623072913",
-      "s": "15353380"
-     },
-     "why": "Line 43 vs his 78 avg and 68 projection (model-only 71% vs FanDuel 54%). BUF holds RB1s to 0.82x - the cushion survives that"
+     "why": "Line moved 97 -> 96 (our way); 116.7 avg, 107 projection"
     },
     {
      "pl": "Aaron Jones",
@@ -534,21 +520,7 @@
       "m": "42.623047986",
       "s": "15353380"
      },
-     "why": "Proj 13.4; Wentz checks down - 2.1 catches a game"
-    },
-    {
-     "pl": "Jauan Jennings",
-     "m": "Receiving Yards",
-     "ln": 8.0,
-     "o": -114,
-     "p": 0.5803,
-     "bk": 0.533,
-     "game": "BUF-MIN",
-     "fd": {
-      "m": "42.623072948",
-      "s": "40913497"
-     },
-     "why": "QUESTIONABLE (calf, DNP Friday) - place after Monday's inactives. Proj 23 with the WR room thin"
+     "why": "Proj 13.4, avg 12.9; Wentz checks down. BUF holds RB1s to 0.82x - this is the catch line, not the rushing one"
     },
     {
      "pl": "Carson Wentz",
@@ -562,15 +534,43 @@
       "m": "42.623033968",
       "s": "11923899"
      },
-     "why": "Wentz's second start for Murray; proj 1.5 TD passes; the leg that needs MIN to keep it close"
+     "why": "Proj 1.5 TD passes; needs MIN to keep it close"
+    },
+    {
+     "pl": "Carson Wentz",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -146,
+     "p": 0.5789,
+     "bk": 0.594,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623033967",
+      "s": "40905761"
+     },
+     "why": "Line above his 186 projection (lines above projection hit 63% in the audit); BUF D allows QB1s 1.03x"
+    },
+    {
+     "pl": "Aaron Jones",
+     "m": "Receptions",
+     "ln": 2.0,
+     "o": -140,
+     "p": 0.5821,
+     "bk": 0.583,
+     "game": "BUF-MIN",
+     "fd": {
+      "m": "42.623047988",
+      "s": "15353380"
+     },
+     "why": "2.1 catches a game, proj 2.14; model 58% = FanDuel 58%"
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622452759&selectionId[0]=42200635&marketId[1]=42.622452759&selectionId[1]=12399650&marketId[2]=42.622457185&selectionId[2]=41957632&marketId[3]=42.623072913&selectionId[3]=15353380&marketId[4]=42.623047986&selectionId[4]=15353380&marketId[5]=42.623072948&selectionId[5]=40913497&marketId[6]=42.623033968&selectionId[6]=11923899",
-   "price": "+8576 multiplied; ~+7257 est as a FanDuel SGP - check FanDuel's price",
-   "price_est": "+7257",
-   "chance": 0.0114,
-   "note": "check_weekend 11/7. Script check: shootout 17% (<20%) and total 44.5 (<48), so built around the model's likeliest ending 'Close, low scoring' (34%; BUF by 10+ 32%): a close game the backs decide. MIN's pass defense is #31 vs QBs, so no Allen / Bills WR yardage legs (all flagged). If Jennings is inactive, drop him (6 legs, ~+4469 multiplied). Suggest the 50% profit boost if FanDuel offers one.",
-   "caption": "PISS MISSILE MONDAY +7257 (est SGP)\nJames Cook TD + 97+ rush+rec yds\nJosh Allen TD\nAaron Jones 43+ rush+rec yds + 8+ rec yds\nJauan Jennings 8+ rec yds\nCarson Wentz 2+ TD passes\nWhy: close game, the backs decide it - model has Jones 43+ at 71%\nLOTTERY - tiny stake\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622452759&selectionId[0]=42200635&marketId[1]=42.622452759&selectionId[1]=12399650&marketId[2]=42.622457185&selectionId[2]=41957632&marketId[3]=42.623047986&selectionId[3]=15353380&marketId[4]=42.623033968&selectionId[4]=11923899&marketId[5]=42.623033967&selectionId[5]=40905761&marketId[6]=42.623047988&selectionId[6]=15353380",
+   "price": "+7096 multiplied; ~+6004 est as a FanDuel SGP - check FanDuel's price",
+   "price_est": "+6004",
+   "chance": 0.0107,
+   "note": "check_weekend 11/7. Script check: shootout 17% (<20%) and total 44.5 (<48), so built around the model's likeliest ending 'Close, low scoring' (34%; BUF by 10+ 32%): a close game the backs decide. MIN's pass defense is #31 vs QBs, so no Allen / Bills WR yardage legs (all flagged). If Jennings is inactive, drop him (6 legs, ~+4469 multiplied). Suggest the 50% profit boost if FanDuel offers one. | check_mnf 11/9 13:45Z: FLAG - Jennings OUT (calf) and Jones 43+ rush+rec flagged 'Losing zone': both dropped; added Wentz 200+ pass yds (-146) and Jones 2+ rec (-140); Cook line 97 -> 96. 7 legs. Script unchanged (close 34%, shootout 17%, total 44.5).",
+   "caption": "PISS MISSILE MONDAY +6004 (est SGP)\nJames Cook TD + 96+ rush+rec yds\nJosh Allen TD\nAaron Jones 2+ catches + 8+ rec yds\nCarson Wentz 200+ pass yds + 2+ TD passes\nWhy: close game, the backs decide it - Cook has scored in 6 of 7\nLOTTERY - tiny stake\n21+ | gamble responsibly",
    "post": false
   }
  ],

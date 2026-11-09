@@ -187,3 +187,11 @@ Skipped: every ATL-CIN / CHI-TB / BUF-MIN anytime TD except Cook/Allen (flagged)
 - Sunday singles: v3 card (Fant, Evans, Gadsden) - singles-sun-v3-square.png / .txt
 - Madrid Meltdown: expired (ATL-CIN under way). Either/Or, Double Dip, Sunday 6, Clean Sweep, Chalk Six: OK.
 - SNF: still no clean build. MNF heads-up: Jennings OUT - drop him from Piss Missile Monday.
+
+
+## check_mnf - Mon 11/9 7:45 AM CT (BUF @ MIN 7:15 PM CT, dome)
+- Backfield Bash: FLAG - Jones 43+ rush+rec now has a 'Losing zone' bad flag. Swap: Aaron Jones 8+ rec yds -114 (54%) · James Cook 96+ rush+rec -114 (55%, line 97 -> 96) · Cook ATD -110 (51%). +573 mult / ~+471 est SGP, 15.2%.
+  Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.623047986&selectionId[0]=15353380&marketId[1]=42.622457185&selectionId[1]=41957632&marketId[2]=42.622452759&selectionId[2]=42200635
+- Piss Missile Monday: FLAG - Jennings OUT (calf); Jones 43+ rush+rec flagged. 7 legs: Cook ATD -110 · Allen ATD -120 · Cook 96+ rush+rec -114 · Jones 8+ rec yds -114 · Wentz 2+ TD passes +102 · Wentz 200+ pass yds -146 · Jones 2+ rec -140. +7096 mult / ~+6004 est SGP, 1.07% floor.
+  Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.622452759&selectionId[0]=42200635&marketId[1]=42.622452759&selectionId[1]=12399650&marketId[2]=42.622457185&selectionId[2]=41957632&marketId[3]=42.623047986&selectionId[3]=15353380&marketId[4]=42.623033968&selectionId[4]=11923899&marketId[5]=42.623033967&selectionId[5]=40905761&marketId[6]=42.623047988&selectionId[6]=15353380
+- No price drift of 3+ pts against on any surviving leg (Cook ATD, Allen ATD, Wentz 2+ TD, Jones 8+ rec unchanged).
