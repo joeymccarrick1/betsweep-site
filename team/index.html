@@ -27,6 +27,11 @@
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
 
+/* owner 11/9: import a roster from ESPN / Yahoo screenshots (read on-device with tesseract.js) */
+.mimp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.mimp .impb{display:inline-block;font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;background:var(--red,#d7332a);color:#fff;cursor:pointer}
+.mimp .hint{margin:0;flex:1 1 220px}
+
 .tm-wrap{max-width:1360px;margin:0 auto;display:grid;gap:14px}
 .sscta{display:flex;align-items:center;gap:4px 14px;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 20px;margin:0 0 12px;position:relative}.sscta::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 2px 2px 0;background:var(--red)}.sscta b{font-family:var(--brand);font-style:italic;font-weight:800;font-size:22px;letter-spacing:-.01em;flex-basis:100%}.sscta span{color:var(--mute);font-size:14px;line-height:1.45;flex:1 1 260px}.sscta i{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--red);white-space:nowrap}
 .tm-wrap .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -143,11 +148,6 @@
 #out[hidden]{display:none} #out{scroll-margin-top:175px}
 @media (max-width:760px){ .roster{columns:1} .tiles b{font-size:24px} }
 
-
-/* owner 11/9: import a roster from ESPN / Yahoo screenshots (read on-device with tesseract.js) */
-.mimp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
-.mimp .impb{display:inline-block;font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;background:var(--red,#d7332a);color:#fff;cursor:pointer}
-.mimp .hint{margin:0;flex:1 1 220px}
 </style>
 
 <link rel="stylesheet" href="/s/site-18b2932a93.css"></head>
@@ -159,7 +159,7 @@
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 9</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 322 players projected for Week 9. Built Mon 11/9 11:11 AM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 323 players projected for Week 9. Built Mon 11/9 1:53 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -239,7 +239,7 @@
   </section>
  </div>
 </div>
-<script src="/team/data-4ecc2ebef284.js"></script>
+<script src="/team/data-d9b4af2d0ac0.js"></script>
 <script>
 (function(){
   var D = window.__BS, P = D.players, WEEK = D.week;
