@@ -143,6 +143,11 @@
 #out[hidden]{display:none} #out{scroll-margin-top:175px}
 @media (max-width:760px){ .roster{columns:1} .tiles b{font-size:24px} }
 
+
+/* owner 11/9: import a roster from ESPN / Yahoo screenshots (read on-device with tesseract.js) */
+.mimp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.mimp .impb{display:inline-block;font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;background:var(--red,#d7332a);color:#fff;cursor:pointer}
+.mimp .hint{margin:0;flex:1 1 220px}
 </style>
 
 <link rel="stylesheet" href="/s/site-18b2932a93.css"></head>
@@ -187,7 +192,7 @@
    <div class="mstep"><span class="lab">2 · Lineup slots</span><div id="mslots">
     <label>QB <input type="number" min="0" max="4" value="1" data-s="QB"></label><label>RB <input type="number" min="0" max="4" value="2" data-s="RB"></label><label>WR <input type="number" min="0" max="4" value="2" data-s="WR"></label><label>TE <input type="number" min="0" max="4" value="1" data-s="TE"></label><label>FLEX <input type="number" min="0" max="4" value="1" data-s="FLEX"></label><label>SUPERFLEX <input type="number" min="0" max="2" value="0" data-s="SUPER_FLEX"></label><label>K <input type="number" min="0" max="2" value="1" data-s="K"></label><label>DEF <input type="number" min="0" max="2" value="1" data-s="DEF"></label>
    </div></div>
-   <div class="mstep"><span class="lab">3 · Your players</span><div class="srch"><input id="msearch" type="search" autocomplete="off" placeholder="type a name… e.g. Bijan, JSN, Ravens D"><div class="slist" id="mlist" hidden></div><span class="cnt" id="mcount"></span></div>
+   <div class="mstep"><span class="lab">3 · Your players</span><div class="mimp"><label class="impb">📷 Import from screenshots<input type="file" id="mimg" accept="image/*" multiple hidden></label><span class="hint" id="mimgs">Upload 1-2 screenshots of your ESPN, Yahoo or other team page; we read the names and add them, starters starred. Nothing is uploaded: it is read on your phone.</span></div><div class="srch"><input id="msearch" type="search" autocomplete="off" placeholder="type a name… e.g. Bijan, JSN, Ravens D"><div class="slist" id="mlist" hidden></div><span class="cnt" id="mcount"></span></div>
     <ul class="chips" id="mroster"></ul>
     <p class="hint">Add everyone, bench included. Tap the ☆ next to the players who are in your lineup right now and the model will show you what each swap is worth; leave them blank and it just builds the best lineup.</p></div>
    <div class="mstep"><span class="lab">4 · Opponent <small>(optional)</small></span><div class="srch"><input id="osearch" type="search" autocomplete="off" placeholder="your opponent's starters, for a win chance"><div class="slist" id="olist" hidden></div></div>
@@ -565,6 +570,60 @@
   $('#mopp').addEventListener('click', function(e){ var b = e.target.closest('button.rm'); if(!b) return; var i = +b.dataset.i; M.opp = M.opp.filter(function(x){ return x !== i; }); chips(); });
   searchBox('#msearch', '#mlist', function(i){ if(M.roster.indexOf(i) < 0) M.roster.push(i); chips(); });
   searchBox('#osearch', '#olist', function(i){ if(M.opp.indexOf(i) < 0) M.opp.push(i); chips(); });
+  // ---- owner 11/9: import a roster from ESPN / Yahoo screenshots. OCR runs in the browser (tesseract.js, loaded on first use);
+  // every line is matched against this week's player pool: full name, or "J. Allen" + team/position to break ties, D/ST by nickname or city.
+  // Lines that start with a lineup slot (QB, RB, WR, TE, FLEX, W/R/T, D/ST, DEF, K, OP) are starred as current starters; BE / BN / IR are bench.
+  var TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  function loadTess(){ if(window.Tesseract) return Promise.resolve(window.Tesseract);
+    return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = TESS; s.onload = function(){ res(window.Tesseract); }; s.onerror = rej; document.head.appendChild(s); }); }
+  var NICK = {ARI:'cardinals arizona',ATL:'falcons atlanta',BAL:'ravens baltimore',BUF:'bills buffalo',CAR:'panthers carolina',CHI:'bears chicago',CIN:'bengals cincinnati',CLE:'browns cleveland',DAL:'cowboys dallas',DEN:'broncos denver',DET:'lions detroit',GB:'packers green bay',HOU:'texans houston',IND:'colts indianapolis',JAX:'jaguars jacksonville',KC:'chiefs kansas city',LAC:'chargers',LA:'rams',LAR:'rams',LV:'raiders las vegas',MIA:'dolphins miami',MIN:'vikings minnesota',NE:'patriots new england',NO:'saints new orleans',NYG:'giants',NYJ:'jets',PHI:'eagles philadelphia',PIT:'steelers pittsburgh',SEA:'seahawks seattle',SF:'49ers niners san francisco',TB:'buccaneers bucs tampa bay',TEN:'titans tennessee',WAS:'commanders washington'};
+  var START = /^(qb|rb|wr|te|flex|w ?r ?t|wr ?te|rb ?wr|rb ?wr ?te|wr ?rb|op|sflex|superflex|super flex|q ?w ?r ?t|dst|d ?st|def|k|dl|db|lb|idp)$/, BENCH = /^(be|bn|bench|ir|ir\+|res|out)$/;
+  function tokens(s){ return String(s || '').replace(/[|\[\](){}“”"]/g, ' ').replace(/\//g, ' ').split(/\s+/).filter(Boolean); }
+  function matchLine(raw){
+    var n = norm(raw.replace(/[\/]/g, ' ')); if(n.length < 3) return null;
+    var words = n.split(' '), up = ' ' + raw.toUpperCase().replace(/[^A-Z ]/g, ' ').replace(/\s+/g, ' ') + ' ';
+    var best = null, bestScore = 0;
+    P.forEach(function(p, i){
+      if(p.p === 'DEF'){ var keys = (NICK[p.t] || '').split(' ').concat([norm(p.n)]).filter(function(k){ return k.length > 3; });
+        if(/\b(d ?st|def|defense)\b/.test(n) && keys.some(function(k){ return n.indexOf(k) >= 0; })){ if(3 > bestScore){ best = i; bestScore = 3; } } return; }
+      var nm = norm(p.n).split(' '); if(nm.length < 2) return; var first = nm[0], last = nm.slice(1).join(' ');
+      var li = n.indexOf(last); if(li < 0) return;
+      if(li > 0 && /[a-z0-9]/.test(n[li - 1])) return;   // whole word
+      var after = n[li + last.length]; if(after && /[a-z0-9]/.test(after)) return;
+      var pre = n.slice(0, li).trim().split(' '), w = pre[pre.length - 1] || '';
+      var sc = 0;
+      if(n.indexOf(first + ' ' + last) >= 0) sc = 4;
+      else if(w === first[0] || (w.length <= 2 && w[0] === first[0])) sc = 2;   // "J. Allen" (dot already stripped)
+      else return;
+      if(up.indexOf(' ' + String(p.t).toUpperCase() + ' ') >= 0 || (p.t === 'LAR' && up.indexOf(' LAR ') >= 0)) sc += 1;
+      if(up.indexOf(' ' + p.p + ' ') >= 0) sc += 0.5;
+      sc += (p.act ? 0.3 : 0) + Math.min(0.2, (p.fp || 0) / 100);
+      if(sc > bestScore){ best = i; bestScore = sc; }
+    });
+    if(best == null) return null;
+    var first2 = norm(raw).split(' ')[0] || '', slot = START.test(first2) ? 's' : (BENCH.test(first2) ? 'b' : '');
+    return {i: best, slot: slot};
+  }
+  function parseText(txt, out){
+    var mode = '';
+    txt.split(/\n/).forEach(function(line){ var l = line.trim(); if(!l) return; var nl = norm(l);
+      if(/^(bench|bn|be)$/.test(nl) || /^bench\b/.test(nl)) { mode = 'b'; return; }
+      if(/^(starters|lineup|starting lineup|active roster)$/.test(nl)) { mode = 's'; return; }
+      var m = matchLine(l); if(!m) return; var slot = m.slot || mode;
+      if(!(m.i in out)) out[m.i] = slot; else if(slot === 's') out[m.i] = 's'; });
+  }
+  $('#mimg').addEventListener('change', function(){
+    var files = Array.prototype.slice.call(this.files || [], 0, 4); this.value = ''; if(!files.length) return;
+    var st = $('#mimgs'); st.textContent = 'Reading ' + files.length + ' screenshot' + (files.length > 1 ? 's' : '') + '… (first time loads the reader, ~10 s)';
+    loadTess().then(function(T){ var found = {}, k = 0;
+      return files.reduce(function(pr, f){ return pr.then(function(){ return T.recognize(f, 'eng', {logger: function(m){ if(m.status === 'recognizing text') st.textContent = 'Reading screenshot ' + (k + 1) + ' of ' + files.length + '… ' + Math.round((m.progress || 0) * 100) + '%'; }}).then(function(r){ k++; parseText(r.data.text || '', found); }); }); }, Promise.resolve()).then(function(){ return found; });
+    }).then(function(found){
+      var ids = Object.keys(found).map(Number), added = 0, starred = 0;
+      ids.forEach(function(i){ if(M.roster.indexOf(i) < 0){ M.roster.push(i); added++; } if(found[i] === 's'){ M.starters[i] = 1; starred++; } });
+      chips();
+      st.textContent = ids.length ? ('Found ' + ids.length + ' players (' + added + ' new' + (starred ? ', ' + starred + ' starred as starters' : '') + '). Check the list below - add anyone we missed with the search, tap ✕ on any mistakes.') : 'Could not find any players in that screenshot. Try a clearer, uncropped shot of the roster page, or add them with the search.';
+    }).catch(function(){ st.textContent = 'Could not load the screenshot reader - check your connection, or add players with the search.'; });
+  });
   document.querySelectorAll('#mscore .seg').forEach(function(seg){ seg.addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; seg.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); chips(); }); });
   function segVal(id){ var b = $('#' + id + ' button.on'); return b ? Number(b.dataset.v) : 0; }
   function readScoring(){ return {rec: segVal('sc_rec'), pass_td: segVal('sc_ptd'), bonus_rec_te: segVal('sc_te'), pass_yd: 0.04, rush_yd: 0.1, rec_yd: 0.1, rush_td: 6, rec_td: 6, pass_int: segVal('sc_int')}; }
