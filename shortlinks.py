@@ -209,7 +209,7 @@ def promo_page(pr):
     res = (pr.get("result") or "").upper()
     st = '<span class="st">Cashed</span>' if res in ("W", "WIN", "HIT", "CASHED") else ('<span class="st">Missed</span>' if res in ("L", "LOSS", "MISS", "MISSED") else '<span class="st live">Pregame</span>')
     tweet = f'{pr["title"]} · {n}-leg parlay · FanDuel {odds_str(pr["fd"]) if pr.get("fd") else ""}\n{url}'
-    share = "https://twitter.com/intent/tweet?text=" + quote(tweet)
+    stext = f'{pr["title"]} · {n}-leg parlay · FanDuel {odds_str(pr["fd"]) if pr.get("fd") else ""}'   # owner 11/9: Share opens the phone's share sheet (Messages etc.)
     cap = f'<p class="cap">{E(pr["caption"])}</p>' if pr.get("caption") else ""
     fdbtn = f'<a class="fd" href="{E(pr["link"])}" target="_blank" rel="noopener">Bet it on FanDuel{(" · " + E(odds_str(pr["fd"]))) if pr.get("fd") else ""}</a>' if pr.get("link") else ""
     fdbtn += book_buttons(pr.get("books") or {})
@@ -218,12 +218,29 @@ def promo_page(pr):
 <h1>{E(pr["title"])}</h1><div class="meta">{n} legs · one tap on FanDuel · snapshot at post time, prices move</div>
 <ul class="legs">{leg_rows(pr["legs"])}</ul>
 <div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(pr["fd"])) if pr.get("fd") else '<span style="font-size:16px;font-weight:600">price on FanDuel</span>'}</div><div class="md">{_model_line(pr.get("p"), pr.get("fair"))}</div></div>
-<div class="go">{fdbtn}<div class="row"><button type="button" class="sv" data-slip="{E(json.dumps({"w": int(pr["week"]), "n": pr["title"], "k": keys, "o": pr.get("fd"), "fd": pr.get("link")}))}"{"" if keys and len(keys) == n else " hidden"}>Save slip</button><a href="{E(build)}">Load into the builder</a><a href="{E(share)}" target="_blank" rel="noopener">Share on X</a></div></div>
+<div class="go">{fdbtn}<div class="row"><button type="button" class="sv" data-slip="{E(json.dumps({"w": int(pr["week"]), "n": pr["title"], "k": keys, "o": pr.get("fd"), "fd": pr.get("link")}))}"{"" if keys and len(keys) == n else " hidden"}>Save slip</button><a href="{E(build)}">Load into the builder</a><button type="button" class="shb" data-st="{E(stext)}" data-su="{E(url)}">Share</button></div></div>
 <p class="svnote" id="svnote" hidden></p>
 {cap}
 <div class="lk">Short link <code>{E(url.replace("https://", ""))}</code><button type="button" data-copy="{E(url)}">Copy</button></div>
 <p class="fn">Graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> Tuesday like everything else. 21+ · information, not advice · 1-800-GAMBLER.</p>
-</div>{LAND_JS}{SAVE_JS}'''
+</div>{LAND_JS}{SAVE_JS}{SHARE_JS}'''
+
+SHARE_JS = r"""<style>.bl .shm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:2px 0 4px}.bl .shm[hidden]{display:none}.bl .go .shm a,.bl .go .shm button{font-size:14px;padding:11px 8px}</style><script>(function(){   // owner 11/9: share a short slip anywhere (Messages, WhatsApp, X, Facebook, email, copy), not just X
+  if(window.__bsShare) return; window.__bsShare = 1;
+  function enc(s){ return encodeURIComponent(s); }
+  document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.shb'); if(!b) return; ev.preventDefault();
+    var t = b.getAttribute('data-st') || '', u = b.getAttribute('data-su') || location.href, all = t + '\n' + u;
+    if(navigator.share){ navigator.share({title: t, text: t, url: u}).catch(function(){}); return; }
+    var row = b.parentNode, m = row.nextElementSibling && row.nextElementSibling.classList.contains('shm') ? row.nextElementSibling : null;
+    if(m){ m.hidden = !m.hidden; return; }
+    m = document.createElement('div'); m.className = 'shm';
+    m.innerHTML = '<a href="sms:?&body=' + enc(all) + '">Messages</a><a href="https://wa.me/?text=' + enc(all) + '" target="_blank" rel="noopener">WhatsApp</a><a href="https://twitter.com/intent/tweet?text=' + enc(all) + '" target="_blank" rel="noopener">X</a>'
+      + '<a href="https://www.facebook.com/sharer/sharer.php?u=' + enc(u) + '" target="_blank" rel="noopener">Facebook</a><a href="mailto:?subject=' + enc(t) + '&body=' + enc(all) + '">Email</a><button type="button" class="shc">Copy link</button>';
+    row.parentNode.insertBefore(m, row.nextSibling);
+    m.querySelector('.shc').addEventListener('click', function(){ var c = this; function done(){ c.textContent = 'Copied'; setTimeout(function(){ c.textContent = 'Copy link'; }, 1400); }
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done, function(){ prompt('Copy this link', u); }); else prompt('Copy this link', u); });
+  });
+})();</script>"""
 
 INDEX_JS = r"""<script>(function(){
   var root = document.querySelector('.bl'); if(!root) return;
@@ -261,14 +278,14 @@ INDEX_JS = r"""<script>(function(){
     // FanDuel re-issues prop ids during the week: rebuild the link from this week's ids (books.json) when every leg is there
     if(map && legs.length && legs.every(function(l){ return l.k && map[l.k] && map[l.k].fd; })) r.link = 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(map[l.k].fd[0]) + '&selectionId[' + i + ']=' + encodeURIComponent(map[l.k].fd[1]); }).join('&');
     else if(!r.link && legs.length && legs.every(function(l){ return l.fd && l.fd.m && l.fd.s; })) r.link = 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&');
-    var share = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent((r.title ? r.title + ' · ' : '') + legs.length + '-leg parlay' + (odds != null ? ' · FanDuel ' + am(odds) : '') + '\n' + url);
+    var stext = (r.title ? r.title + ' · ' : '') + legs.length + '-leg parlay' + (odds != null ? ' · FanDuel ' + am(odds) : '');   // owner 11/9: share anywhere
     var fd = r.link ? '<a class="fd" href="' + esc(r.link) + '" target="_blank" rel="noopener">Bet it on FanDuel' + (odds != null ? ' · ' + am(odds) : '') + '</a>' : '';
     box.innerHTML = '<div class="hd"><span class="tag">' + (post ? 'Social' : 'Betslip') + '</span><span class="wk">Week ' + esc(W) + '</span>' + (last && Date.now() > last ? '<span class="st">Started</span>' : '<span class="st live">Pregame</span>') + '</div>'
       + '<h1>' + esc(r.title || (legs.length + '-leg parlay')) + '</h1><div class="meta">' + legs.length + ' legs · priced by the BetSweep model · snapshot when the link was made, prices move</div>'
       + '<ul class="legs">' + legs.map(function(l){ var sub = [lnTxt(l), l.opp && !/\//.test(l.tm || '') ? 'vs ' + l.opp : ''].filter(Boolean).join(' · ');
           return '<li><b>' + esc(l.pl) + '</b><span class="o">' + am(l.o) + '</span><small>' + esc(sub) + '</small>' + (l.p != null ? '<span class="mp">model ' + Math.round(l.p * 100) + '%</span>' : '') + '</li>'; }).join('') + '</ul>'
       + '<div class="pf"><div class="big"><small>FanDuel</small>' + (odds != null ? am(odds) : '<span style="font-size:16px;font-weight:600">price on FanDuel</span>') + '</div><div class="md">' + (p == null ? 'Model price not available for every leg' : p < 0.03 ? '<b>Longshot</b> · model ' + (p < 0.01 ? 'under 1' : Math.round(p * 100)) + '% to hit' : '<b>Model ' + (p * 100).toFixed(1) + '%</b> to hit (legs multiplied)') + '</div></div>'
-      + '<div class="go">' + fd + (last && Date.now() > last ? '' : bookBtns(legs, map)) + '<div class="row">' + (keys.length === legs.length ? '<button type="button" class="sv" data-slip="' + esc(JSON.stringify({w: +W, n: r.title || (legs.length + '-leg parlay'), k: keys, o: odds, fd: r.link || null})) + '">Save slip</button>' : '') + '<a href="' + esc(build) + '">Load into the builder</a><a href="' + share + '" target="_blank" rel="noopener">Share on X</a></div></div>'
+      + '<div class="go">' + fd + (last && Date.now() > last ? '' : bookBtns(legs, map)) + '<div class="row">' + (keys.length === legs.length ? '<button type="button" class="sv" data-slip="' + esc(JSON.stringify({w: +W, n: r.title || (legs.length + '-leg parlay'), k: keys, o: odds, fd: r.link || null})) + '">Save slip</button>' : '') + '<a href="' + esc(build) + '">Load into the builder</a><button type="button" class="shb" data-st="' + esc(stext) + '" data-su="' + esc(url) + '">Share</button></div></div>'
       + '<p class="svnote" id="svnote" hidden></p><div class="lk">Short link <code>' + esc(url.replace('https://', '')) + '</code><button type="button" data-copy="' + esc(url) + '">Copy</button></div>'
       + '<p class="fn">Made with the <a href="/build/" style="color:var(--ink)">Parlay Builder</a>. 21+ · information, not advice · 1-800-GAMBLER.</p>';
     root.dataset.code = code; root.dataset.lastKo = last || ''; if(window.bsPaintSave) window.bsPaintSave();
@@ -301,7 +318,7 @@ def index_page(promos, week):
     static = f'<div class="hd"><span class="tag">Bet links</span><span class="wk">Week {week}</span></div><h1>This week\'s bets</h1><div class="meta">Every bet BetSweep posts has a short link - the legs, the model\'s number and one tap to FanDuel.</div>' \
              + (f'<div class="list">{items}</div>' if items else '<div class="none">Nothing posted for this week yet.</div>') \
              + '<p class="fn">Make your own from the <a href="/build/" style="color:var(--ink)">Parlay Builder</a>: build a slip, tap <b>Short link</b>, paste it anywhere.</p>'
-    return f'<div class="bl" data-code="" data-week="{week}"><div id="blStatic">{static}</div><div id="blDyn" hidden></div></div>{INDEX_JS}{SAVE_JS}'
+    return f'<div class="bl" data-code="" data-week="{week}"><div id="blStatic">{static}</div><div id="blDyn" hidden></div></div>{INDEX_JS}{SAVE_JS}{SHARE_JS}'
 
 # ---- Parlay Builder: "Short link" in the slip panel ----
 BTN_HTML = '<button type="button" class="pri" id="shortl" title="A short betsweep.co link for this slip - paste it on X or an Instagram story">Short link</button>'
