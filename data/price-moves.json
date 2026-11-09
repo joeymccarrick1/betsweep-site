@@ -9,7 +9,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": 310,
    "now": 310.0,
-   "pulled": "2026-11-08 14:25",
+   "pulled": "2026-11-08 18:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Ben Yurosek since and the price has not moved (+310 -> +310)"
   },
   {
@@ -21,7 +21,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": 210,
    "now": 220.0,
-   "pulled": "2026-11-08 14:25",
+   "pulled": "2026-11-08 18:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Ben Yurosek since and the price has not moved (+210 -> +220)"
   },
   {
@@ -33,7 +33,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": -114,
    "now": -114.0,
-   "pulled": "2026-11-08 14:25",
+   "pulled": "2026-11-08 18:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Jordan Addison since and the price has not moved (-114 -> -114)"
   },
   {
@@ -45,7 +45,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": -230,
    "now": -230.0,
-   "pulled": "2026-11-08 14:25",
+   "pulled": "2026-11-08 18:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Jordan Addison since and the price has not moved (-230 -> -230)"
   },
   {
@@ -57,7 +57,7 @@
    "news": "2026-11-08T16:48:10Z",
    "built": -118,
    "now": -118.0,
-   "pulled": "2026-11-08 14:25",
+   "pulled": "2026-11-08 18:25",
    "detail": "Justin Jefferson ruled out after the build - FanDuel has re-pulled Jordan Addison since and the price has not moved (-118 -> -118)"
   },
   {
@@ -135,25 +135,7 @@
  ],
  "week": 9,
  "built": "Sun 11/8 10:06 AM",
- "checked": "2026-11-09T00:13:03Z",
- "legs_checked": 180,
- "moves": [
-  {
-   "key": "Cade Otton|Longest Reception|20",
-   "pl": "Cade Otton",
-   "m": "Longest Reception",
-   "ln": 20.0,
-   "gid": "CHI-TB",
-   "ko": 1794187200000,
-   "built": 190,
-   "now": 220.0,
-   "pts": -3.2,
-   "p": 0.2811,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-08 14:25",
-   "detail": "Cade Otton long rec 20+: FanDuel +190 at build -> +220 now (-3.2 implied pts against us)"
-  }
- ]
+ "checked": "2026-11-09T01:49:44Z",
+ "legs_checked": 100,
+ "moves": []
 }

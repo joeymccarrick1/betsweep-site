@@ -511,7 +511,7 @@
      ],
      "moved": null,
      "now": 310.0,
-     "pulled": "2026-11-08 14:25"
+     "pulled": "2026-11-08 18:25"
     },
     "Ben Yurosek|Longest Reception|10": {
      "pl": "Ben Yurosek",
@@ -525,7 +525,7 @@
      ],
      "moved": null,
      "now": 220.0,
-     "pulled": "2026-11-08 14:25"
+     "pulled": "2026-11-08 18:25"
     },
     "Jordan Addison|Receiving Yards|40": {
      "pl": "Jordan Addison",
@@ -539,7 +539,7 @@
      ],
      "moved": null,
      "now": -114.0,
-     "pulled": "2026-11-08 14:25"
+     "pulled": "2026-11-08 18:25"
     },
     "Jordan Addison|Longest Reception|15": {
      "pl": "Jordan Addison",
@@ -553,7 +553,7 @@
      ],
      "moved": null,
      "now": -230.0,
-     "pulled": "2026-11-08 14:25"
+     "pulled": "2026-11-08 18:25"
     },
     "Jordan Addison|Receptions|4": {
      "pl": "Jordan Addison",
@@ -567,7 +567,7 @@
      ],
      "moved": null,
      "now": -118.0,
-     "pulled": "2026-11-08 14:25"
+     "pulled": "2026-11-08 18:25"
     }
    }
   },
@@ -1130,6 +1130,14 @@
    "pos": "WR",
    "st": "Out",
    "ts": "2026-11-08T21:09:10Z",
+   "legs": {}
+  },
+  "Rhamondre Stevenson|2026-11-09T00:27": {
+   "pl": "Rhamondre Stevenson",
+   "tm": "NE",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-09T00:27:11Z",
    "legs": {}
   }
  }
