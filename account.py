@@ -64,7 +64,7 @@ ACCOUNT_JS = r"""
   var sb = window.supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
   window.bsAccount = {client: sb, user: null};
   // ---- which browser-storage keys follow the account (everything a person builds; not caches) ----
-  var SYNC = /^bs_(bankroll|clv_w\d+|log_w\d+|slips?_w\d+|slipk_w\d+|slipmeta_w\d+|trade_\d+|manual|teams|team_cur|sleeper_user|sleeper_league|team_mode|tip|tracked.*|dfs_saved|dfs_lu_.*|dfs_site|dfs_fmt|dfs_sal_.*|handle)$/;
+  var SYNC = /^bs_(bankroll(?:_plan)?|clv_w\d+|log_w\d+|slips?_w\d+|slipk_w\d+|slipmeta_w\d+|trade_\d+|manual|teams|team_cur|sleeper_user|sleeper_league|team_mode|tip|tracked.*|dfs_saved|dfs_lu_.*|dfs_site|dfs_fmt|dfs_sal_.*|handle)$/;
   var META_KEY = 'bs_sync_meta', meta = {}; try{ meta = JSON.parse(localStorage.getItem(META_KEY)||'{}')||{}; }catch(e){}
   function saveMeta(){ try{ localStorage.setItem(META_KEY, JSON.stringify(meta)); }catch(e){} }
   var user = null, pending = {}, timer = null, ready = false;
@@ -139,6 +139,17 @@ ME_CSS = """
 .me .none{color:var(--mute,#6b655c);font-size:13.5px}
 .me .res{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:#e4ddcc;color:#5d574d}
 .me .res.hit{background:#2b6b3a;color:#fff}.me .res.miss{background:#b3261e;color:#fff}
+/* owner 11/8: bankroll tracker - private (this browser + the signed-in account only) */
+.me .bkh{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.me .bkh div{background:var(--chalk,#f4efe3);border:1px solid var(--line,#d8d1c2);border-radius:10px;padding:8px 10px}
+.me .bkh small{display:block;font-size:11.5px;color:var(--mute,#6b655c)} .me .bkh b{font-family:'Barlow Condensed',sans-serif;font-size:22px}
+.me .bkh b.up{color:#2b6b3a} .me .bkh b.dn{color:#b3261e}
+.me .bkstop{background:#b3261e;color:#fff;border-radius:8px;padding:8px 10px;font-size:13.5px;margin:8px 0}
+.me .bkg{margin:8px 0;padding-left:18px;font-size:13.5px} .me .bkg li{margin:2px 0}
+.me table.bkt{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0} .me table.bkt th,.me table.bkt td{text-align:right;padding:4px 6px;border-bottom:1px solid var(--line,#d8d1c2)} .me table.bkt th:first-child,.me table.bkt td:first-child{text-align:left}
+.me .bkf{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:8px 0} .me .bkf label{font-size:12px;color:var(--mute,#6b655c);display:flex;flex-direction:column;gap:3px}
+.me .bkf input{font:inherit;font-size:15px;padding:6px 8px;border:1px solid var(--line,#cfc7b6);border-radius:8px;width:96px;background:#fff;color:#1b1a17} .me .bkf input.wide{width:150px}
+.me .bkf button{font:inherit;font-size:13px;font-weight:700;padding:8px 12px;border:0;border-radius:8px;background:#d7332a;color:#fff;cursor:pointer} .me .bkf button.g{background:#e4ddcc;color:#1b1a17}
 .me i.g{display:inline-block;width:16px;height:16px;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-style:normal;margin-right:3px;background:#e4ddcc;color:#5d574d}
 .me i.g.hit{background:#2b6b3a;color:#fff}.me i.g.miss{background:#b3261e;color:#fff}
 .me .legs em{font-style:normal;color:#9a9388}
@@ -194,15 +205,15 @@ ME_JS = r"""
     var sl = [], ks = keys(/^bs_slips_w\d+$/); ks.forEach(function(k){ var w = k.replace('bs_slips_w',''); try{ (JSON.parse(g(k))||[]).forEach(function(s){ sl.push({w: +w, s: s}); }); }catch(e){} });
     sl.sort(function(a,b){ return b.w - a.w; });
     var el = document.getElementById('slips');
-    if (!sl.length){ el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
+    if (!sl.length){ bankRender([]); el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
     else { el.innerHTML = '<li class="none">Grading…</li>';
-      Promise.all(sl.map(function(x){ return getBox(x.w); }).concat(sl.map(function(x){ return getClose(x.w); }))).then(function(all){ var ds = all.slice(0, sl.length), cs = all.slice(sl.length); var W = 0, L = 0, U = 0, P = 0, html = '', lastW = null, topW = sl.length ? sl[0].w : 0, CB = 0, CN = 0, CP = 0;
+      Promise.all(sl.map(function(x){ return getBox(x.w); }).concat(sl.map(function(x){ return getClose(x.w); }))).then(function(all){ var ds = all.slice(0, sl.length), cs = all.slice(sl.length); var W = 0, L = 0, U = 0, P = 0, BK = [], html = '', lastW = null, topW = sl.length ? sl[0].w : 0, CB = 0, CN = 0, CP = 0;
         sl.forEach(function(x, i){ var s = x.s, d = ds[i], c = cs[i], gs = (s.keys||[]).map(function(k){ return {k:k, g: gradeKey(k, d), clv: clvOf(s, k, c)}; });
           var withClv = gs.filter(function(g){ return g.clv; }), beat = withClv.filter(function(g){ return g.clv.pts > 0; }).length, avg = withClv.length ? withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0) / withClv.length : null;
           CB += beat; CN += withClv.length; CP += withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0);
           var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
           var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
-          if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++;
+          if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++; BK.push({w: x.w, u: u, res: res, st: stake, name: s.name || 'Slip'});
           var misses = gs.filter(function(g){ return g.g.r === 'MISS'; }), oneAway = (res === 'MISS' && misses.length === 1) ? misses[0] : null;
           var extra = '';
           if (withClv.length) extra += '<small class="clv">Closing line: beat it on ' + beat + ' of ' + withClv.length + ' leg' + (withClv.length===1?'':'s') + (avg != null ? ' (' + (avg>=0?'+':'') + avg.toFixed(1) + ' pts avg)' : '') + '</small>';
@@ -212,7 +223,7 @@ ME_JS = r"""
           if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'">Load into betslip</button>';   // owner 11/1
           if (x.w !== lastW){ lastW = x.w; var wn = sl.filter(function(y){ return y.w === x.w; }).length; html += '<li class="wkh'+(x.w === topW ? ' on' : '')+'" data-w="'+x.w+'"><button type="button" class="wkt">Week '+x.w+' <small>'+wn+' slip'+(wn===1?'':'s')+'</small><i>▾</i></button></li>'; }
           html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small>'+extra+'<button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : '')+cv; }).join(' &nbsp; ')+'</span></li>'; });
-        el.innerHTML = html; document.getElementById('record').textContent = ((W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : '')) + (CN ? ' · beat the close on '+CB+' of '+CN+' legs ('+(CP/CN>=0?'+':'')+(CP/CN).toFixed(1)+' pts avg)' : ''); }); }
+        el.innerHTML = html; bankRender(BK); document.getElementById('record').textContent = ((W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : '')) + (CN ? ' · beat the close on '+CB+' of '+CN+' legs ('+(CP/CN>=0?'+':'')+(CP/CN).toFixed(1)+' pts avg)' : ''); }); }
     // exposure (owner 10/26, after 'I have so much riding on Ken Walker'): the latest week's saved slips + the working builder slip,
     // grouped by player (an either-TD leg counts for both names; game lines by their text). Stake and to-win at the slip's own stake/odds.
     (function(){ var ex = document.getElementById('expo'); if (!ex) return;
@@ -252,6 +263,46 @@ ME_JS = r"""
     lus.sort(function(a,b){ return (b.week||0)-(a.week||0); }).forEach(function(x){ mt.push('<li><b>'+esc(x.name)+'</b><small>DFS · '+(x.site==='fd'?'FanDuel':x.site==='dk'?'DraftKings':esc(x.site||''))+(x.sg?' showdown':'')+' · Week '+x.week+' · '+(x.lu||[]).length+' players · <a href="/dfs/">open</a></small></li>'); });
     document.getElementById('fantasy').innerHTML = mt.join('') || '<li class="none">No saved teams or DFS lineups yet. Build one on the Fantasy or DFS page and tap Save.</li>';
   }
+  // ---- owner 11/8 bankroll tracker: start bankroll, unit = pct% of the bankroll at the start of each week (resets Tuesday), saved slips
+  // grade in at their stake in units x that week's unit, plus manual entries for bets placed elsewhere. Stop line: down 10u in a week.
+  var BANKROWS = [];
+  function curWeek(){ var t0 = Date.UTC(2026, 8, 8, 12); var w = Math.floor((Date.now() - t0) / 864e5 / 7) + 1; return Math.max(1, Math.min(18, w)); }
+  function bkPlan(){ try{ return JSON.parse(g('bs_bankroll_plan') || 'null'); }catch(e){ return null; } }
+  function bkSave(p){ try{ localStorage.setItem('bs_bankroll_plan', JSON.stringify(p)); }catch(e){} }
+  function money(v){ var n = Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : (Math.round(v * 100) / 100).toFixed(2).replace(/\.00$/, ''); return (v < 0 ? '-$' : '$') + String(n).replace('-', ''); }
+  function bankRender(rows){
+    if (rows) BANKROWS = rows; var el = document.getElementById('bank'), hd = document.getElementById('bkhead'); if (!el) return;
+    var p = bkPlan(), cw = curWeek();
+    if (!p){ var dw = cw + ([0, 1].indexOf(new Date().getDay()) >= 0 ? 1 : 0);
+      hd.textContent = ''; el.innerHTML = '<div class="bkf"><label>Starting bankroll $<input id="bks" type="number" inputmode="decimal" min="1" step="50" value="1000"></label><label>Unit (% of bankroll)<input id="bkp" type="number" inputmode="decimal" min="0.5" max="5" step="0.5" value="2"></label><label>Count from week<input id="bkw" type="number" min="1" max="18" value="' + Math.min(18, dw) + '"></label><button type="button" id="bkgo">Start tracking</button></div><p class="m">2% a unit is a steady pace; 1% is safer. Bigger units do not reach big goals faster - they reach zero faster.</p>'; return; }
+    var weeks = {}, last = cw; BANKROWS.forEach(function(r){ if (r.w >= p.since){ (weeks[r.w] = weeks[r.w] || []).push(r); if (r.w > last) last = r.w; } }); (p.adj || []).forEach(function(a){ if (a.w > last) last = a.w; });
+    var br = +p.start, tab = '', thisW = null;
+    for (var w = p.since; w <= last; w++){
+      var unit = Math.round(br * p.pct) / 100, rs = weeks[w] || [], gu = 0, pend = 0, n = 0;
+      rs.forEach(function(r){ if (r.res === 'PENDING'){ pend += r.st; } else if (r.u != null){ gu += r.u; n++; } });
+      var adj = (p.adj || []).filter(function(a){ return a.w === w; }), ad = adj.reduce(function(s, a){ return s + (+a.amt || 0); }, 0);
+      var pl = gu * unit + ad, start = br; br = Math.max(0, br + pl);
+      if (w === cw || (w === last && thisW == null && w >= cw)) thisW = {w: w, unit: unit, gu: gu, pend: pend, start: start, pl: pl, adj: adj};
+      tab += '<tr><td>Week ' + w + '</td><td>' + money(start) + '</td><td>' + money(unit) + '</td><td>' + n + (pend ? ' +' + pend + 'u open' : '') + '</td><td style="color:' + (pl > 0 ? '#2b6b3a' : pl < 0 ? '#b3261e' : 'inherit') + '">' + (pl >= 0 ? '+' : '') + money(pl) + '</td><td>' + money(br) + '</td></tr>';
+    }
+    if (!thisW) thisW = {w: Math.max(cw, p.since), unit: Math.round(br * p.pct) / 100, gu: 0, pend: 0, start: br, pl: 0, adj: []};
+    var tot = br - p.start, u = thisW.unit;
+    hd.textContent = money(br) + ' · ' + (tot >= 0 ? '+' : '') + money(tot);
+    try{ localStorage.setItem('bs_bankroll', String(Math.round(br * 100) / 100)); }catch(e){}
+    var html = '<div class="bkh"><div><small>Bankroll now</small><b class="' + (tot > 0 ? 'up' : tot < 0 ? 'dn' : '') + '">' + money(br) + '</b></div><div><small>Week ' + thisW.w + ' unit</small><b>' + money(u) + '</b></div><div><small>Week ' + thisW.w + ' so far</small><b class="' + (thisW.pl > 0 ? 'up' : thisW.pl < 0 ? 'dn' : '') + '">' + (thisW.pl >= 0 ? '+' : '') + money(thisW.pl) + '</b></div></div>'; var wu = u ? thisW.pl / u : 0;
+    if (wu <= -10) html += '<div class="bkstop">Down ' + Math.abs(Math.round(wu * 10) / 10) + 'u this week - that is the stop line. No more bets until Tuesday, and never size up to win it back.</div>';
+    html += '<ul class="bkg"><li><b>Short favorite slips (about +300):</b> 1u = ' + money(u) + '</li><li><b>With a TD booster (+500 to +1000):</b> 0.5u = ' + money(u / 2) + '</li><li><b>Long shots (+2000 and up):</b> 0.25u = ' + money(u / 4) + ', one or two a week</li><li><b>Stop for the week</b> at -10u (' + money(-10 * u) + ')</li></ul>';
+    html += '<table class="bkt"><thead><tr><th>Week</th><th>Start</th><th>Unit</th><th>Graded</th><th>P/L</th><th>End</th></tr></thead><tbody>' + tab + '</tbody></table>';
+    html += '<div class="bkf"><label>Week<input id="bkaw" type="number" min="1" max="18" value="' + thisW.w + '"></label><label>Won / lost $<input id="bkaa" type="number" inputmode="decimal" step="1" placeholder="-20 or 65"></label><label>Note<input id="bkan" class="wide" type="text" maxlength="60" placeholder="bet placed elsewhere"></label><button type="button" id="bkadd">Add</button></div>';
+    var ad2 = (p.adj || []).map(function(a, i){ return {a: a, i: i}; }).filter(function(x){ return x.a.w >= p.since; });
+    if (ad2.length) html += '<ul class="bkg">' + ad2.map(function(x){ return '<li>Week ' + x.a.w + ': ' + (x.a.amt >= 0 ? '+' : '') + money(x.a.amt) + (x.a.note ? ' - ' + esc(x.a.note) : '') + ' <button type="button" class="lgt bkdel" data-i="' + x.i + '">remove</button></li>'; }).join('') + '</ul>';
+    html += '<p class="m">Started ' + money(p.start) + ' in Week ' + p.since + ' at ' + p.pct + '% a unit. <button type="button" class="lgt" id="bkreset">Change start</button></p>';
+    el.innerHTML = html; }
+  document.addEventListener('click', function(ev){ var t = ev.target; if (!t || !t.id && !t.classList) return;
+    if (t.id === 'bkgo'){ var s = +document.getElementById('bks').value, pc = +document.getElementById('bkp').value, w = +document.getElementById('bkw').value; if (!(s > 0) || !(pc > 0) || !(w >= 1)) return; var old = bkPlan(); if (!old){ try{ old = JSON.parse(g('bs_bankroll_plan_prev') || 'null'); }catch(e){} } bkSave({start: s, pct: Math.min(5, pc), since: Math.min(18, Math.round(w)), adj: old && old.adj || []}); bankRender(); }
+    else if (t.id === 'bkadd'){ var p = bkPlan(); if (!p) return; var a = +document.getElementById('bkaa').value, w2 = +document.getElementById('bkaw').value; if (!a || !(w2 >= 1)) return; (p.adj = p.adj || []).push({w: Math.round(w2), amt: a, note: (document.getElementById('bkan').value || '').slice(0, 60)}); bkSave(p); bankRender(); }
+    else if (t.classList && t.classList.contains('bkdel')){ var p2 = bkPlan(); if (!p2) return; p2.adj.splice(+t.getAttribute('data-i'), 1); bkSave(p2); bankRender(); }
+    else if (t.id === 'bkreset'){ var p3 = bkPlan(); if (!p3) return; var el = document.getElementById('bank'); try{ localStorage.removeItem('bs_bankroll_plan'); }catch(e){} bankRender(); var a1 = document.getElementById('bks'), a2 = document.getElementById('bkp'), a3 = document.getElementById('bkw'); if (a1){ a1.value = p3.start; a2.value = p3.pct; a3.value = p3.since; } try{ localStorage.setItem('bs_bankroll_plan_prev', JSON.stringify(p3)); }catch(e){} } });
   render(); document.addEventListener('bs-account', render);
   // owner 11/1: "make a bunch of things collapsible" - every card folds on its title (remembered per browser), slips group by week (this week open),
   // and each slip's legs fold behind a Legs button
@@ -286,6 +337,7 @@ def me_page():
 <div class="me">
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
+ <div class="card" id="cbank"><h2>Bankroll <span id="bkhead" style="font-size:16px"></span></h2><p class="m">Private to you: kept in this browser and, when you sign in, in your own account - no one else can see it. Saved slips grade into it automatically (Save slip, Tail, or the FanDuel screenshot import); add anything you bet elsewhere below. Your unit resets every Tuesday to a set share of the bankroll, so it grows when you win and shrinks when you lose.</p><div id="bank"></div></div>
  <div class="card" id="crec" data-def="shut"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><ul id="slips"></ul></div>
  {__import__("slipimport").CARD_HTML}
  <div class="card" id="cexpo" data-def="shut"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>

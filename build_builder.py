@@ -1559,10 +1559,10 @@ BUILDER_JS = r"""
   // owner 11/5 "bet sizing": quarter Kelly on the model's fair chance vs FanDuel's price, in units (1u = 1% of bankroll), capped at 3u for a
   // single, 2u for two legs, 1u for three or more (the model's % is an estimate; full Kelly on an estimate overbets). Bankroll is optional.
   function stakeRow(p, decO, n){
-    var bkr = 0; try { bkr = +localStorage.getItem('bs_bankroll') || 0; } catch(e){}
+    var bkr = 0, upc = 1; try { bkr = +localStorage.getItem('bs_bankroll') || 0; upc = +((JSON.parse(localStorage.getItem('bs_bankroll_plan') || 'null') || {}).pct) || 1; } catch(e){}   // owner 11/8: unit size from the /me/ bankroll tracker
     var f = (p * decO - 1) / (decO - 1), cap = n >= 3 ? 1 : n === 2 ? 2 : 3, u = Math.max(0, Math.min(cap, f / 4 * 100));
-    var txt = f <= 0 ? 'No bet by the model (negative EV) - fun money only' : (u < 0.1 ? 'Tiny edge - 0.1u at most' : (Math.round(u * 10) / 10) + 'u' + (u >= cap ? ' (capped)' : '') + (bkr ? ' = $' + (bkr * u / 100).toFixed(2) : ''));
-    return '<div class="wide stake"><small>Suggested stake · quarter Kelly · 1u = 1% of bankroll</small><b style="color:' + (f > 0 ? 'var(--good)' : 'var(--mute)') + '">' + txt + '</b>' +
+    var txt = f <= 0 ? 'No bet by the model (negative EV) - fun money only' : (u < 0.1 ? 'Tiny edge - 0.1u at most' : (Math.round(u * 10) / 10) + 'u' + (u >= cap ? ' (capped)' : '') + (bkr ? ' = $' + (bkr * u * upc / 100).toFixed(2) : ''));
+    return '<div class="wide stake"><small>Suggested stake · quarter Kelly · 1u = ' + upc + '% of bankroll</small><b style="color:' + (f > 0 ? 'var(--good)' : 'var(--mute)') + '">' + txt + '</b>' +
       '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" style="width:90px"></span></div>'; }
   document.addEventListener('change', function(ev){ if(ev.target && ev.target.id === 'bkroll'){ try { localStorage.setItem('bs_bankroll', String(Math.max(0, +ev.target.value || 0))); } catch(e){} renderSlip(); } });
   // ---- owner 11/6 scenario explorer ("pick a game ending -> legs and slip reprice"): l.sc = the leg's chance under each of its game's four
