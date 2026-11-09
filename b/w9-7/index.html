@@ -164,7 +164,8 @@ Tail it: betsweep.co/b/w9-7
     var row = b.parentNode, m = row.nextElementSibling && row.nextElementSibling.classList.contains('shm') ? row.nextElementSibling : null;
     if(m){ m.hidden = !m.hidden; return; }
     m = document.createElement('div'); m.className = 'shm';
-    m.innerHTML = '<a href="sms:?&body=' + enc(all) + '">Messages</a><a href="https://wa.me/?text=' + enc(all) + '" target="_blank" rel="noopener">WhatsApp</a><a href="https://twitter.com/intent/tweet?text=' + enc(all) + '" target="_blank" rel="noopener">X</a>'
+    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iOS wants sms:&body=, Android sms:?body=
+    m.innerHTML = '<a href="sms:' + (ios ? '&' : '?') + 'body=' + enc(all) + '">Messages</a><a href="https://wa.me/?text=' + enc(all) + '" target="_blank" rel="noopener">WhatsApp</a><a href="https://twitter.com/intent/tweet?text=' + enc(all) + '" target="_blank" rel="noopener">X</a>'
       + '<a href="https://www.facebook.com/sharer/sharer.php?u=' + enc(u) + '" target="_blank" rel="noopener">Facebook</a><a href="mailto:?subject=' + enc(t) + '&body=' + enc(all) + '">Email</a><button type="button" class="shc">Copy link</button>';
     row.parentNode.insertBefore(m, row.nextSibling);
     m.querySelector('.shc').addEventListener('click', function(){ var c = this; function done(){ c.textContent = 'Copied'; setTimeout(function(){ c.textContent = 'Copy link'; }, 1400); }
