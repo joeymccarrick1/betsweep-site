@@ -667,7 +667,7 @@ window.BSLive = (function(){
         var OTHER = gl.filter(function(l){ return keep.indexOf(l) < 0; });
         gl = keep;
       } else var OTHER = [];
-      var TFv = TF[gid];   // owner 11/5: team buttons - show one team's legs at a time (totals stay, they belong to both)
+      var TFv = null;   // owner 11/8: team buttons removed from game cards (box score keeps its own); every list shows both teams
       if(TFv){ var byT = function(l){ return l.tm === TFv || (l.gl && l.m === 'Total'); }; gl = gl.filter(byT); OTHER = OTHER.filter(byT); }
       var rows = gl.map(function(l){ var r = live(l, g, s); return {l: l, r: r}; });
       var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = STARS[legKey(a.l)] ? 1 : 0, sb_ = STARS[legKey(b.l)] ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
@@ -696,7 +696,7 @@ window.BSLive = (function(){
         if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
       }
       var tbtn = function(t, nm, c){ return '<button type="button" class="tfb' + (TFv === t ? ' on' : '') + '" data-g="' + gid + '" data-t="' + t + '">' + badge(t, c) + '<span>' + esc(nm || t) + '</span></button>'; };
-      var teamBar = rows.length || OTHER.length || TFv ? '<div class="tfbar">' + tbtn(g.b, g.nb, g.cb) + tbtn(g.a, g.na, g.ca) + '</div>' : '';
+      var teamBar = '';
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
       if(s.st === 'in' && SUMM[gid]) sit = gamecast(gid);
       var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? details(g, s) + sit + drill + teamBar + body : '') + '</section>';
