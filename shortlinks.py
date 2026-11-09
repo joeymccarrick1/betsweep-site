@@ -225,7 +225,7 @@ def promo_page(pr):
 <p class="fn">Graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> Tuesday like everything else. 21+ · information, not advice · 1-800-GAMBLER.</p>
 </div>{LAND_JS}{SAVE_JS}{SHARE_JS}'''
 
-SHARE_JS = r"""<style>.bl .shm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:2px 0 4px}.bl .shm[hidden]{display:none}.bl .go .shm a,.bl .go .shm button{font-size:14px;padding:11px 8px}</style><script>(function(){   // owner 11/9: share a short slip anywhere (Messages, WhatsApp, X, Facebook, email, copy), not just X
+SHARE_JS = r"""<style>.bl .shm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:2px 0 4px}.bl .shm[hidden]{display:none}.bl .go .shm a,.bl .go .shm button{font-size:14px;padding:11px 8px}.bl .shm .shn{grid-column:1/-1;margin:2px 0 0;font-size:12.5px;line-height:1.4;color:var(--mute);text-align:center}</style><script>(function(){   // owner 11/9: share a short slip anywhere (Messages, WhatsApp, X, Facebook, email, copy), not just X
   if(window.__bsShare) return; window.__bsShare = 1;
   function enc(s){ return encodeURIComponent(s); }
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.shb'); if(!b) return; ev.preventDefault();
@@ -236,10 +236,11 @@ SHARE_JS = r"""<style>.bl .shm{display:grid;grid-template-columns:1fr 1fr 1fr;ga
     m = document.createElement('div'); m.className = 'shm';
     var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iOS wants sms:&body=, Android sms:?body=
     m.innerHTML = '<a href="sms:' + (ios ? '&' : '?') + 'body=' + enc(all) + '">Messages</a><a href="https://wa.me/?text=' + enc(all) + '" target="_blank" rel="noopener">WhatsApp</a><a href="https://twitter.com/intent/tweet?text=' + enc(all) + '" target="_blank" rel="noopener">X</a>'
-      + '<a href="https://www.facebook.com/sharer/sharer.php?u=' + enc(u) + '" target="_blank" rel="noopener">Facebook</a><a href="mailto:?subject=' + enc(t) + '&body=' + enc(all) + '">Email</a><button type="button" class="shc">Copy link</button>';
+      + '<a href="https://www.facebook.com/sharer/sharer.php?u=' + enc(u) + '" target="_blank" rel="noopener">Facebook</a><a href="mailto:?subject=' + enc(t) + '&body=' + enc(all) + '">Email</a><button type="button" class="shc">Copy link</button>'
+      + (/Twitter|Instagram|FBAN|FBAV|TikTok|Snapchat|LinkedInApp|\bLine\//i.test(navigator.userAgent) ? '<p class="shn">You\'re in an app\'s built-in browser, which can\'t open Messages. Tap Copy link and paste it into a text, or tap ⋯ / the compass and choose Open in Safari to share from there.</p>' : '');   // owner 11/9: X's in-app browser blocks sms: links
     row.parentNode.insertBefore(m, row.nextSibling);
     m.querySelector('.shc').addEventListener('click', function(){ var c = this; function done(){ c.textContent = 'Copied'; setTimeout(function(){ c.textContent = 'Copy link'; }, 1400); }
-      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done, function(){ prompt('Copy this link', u); }); else prompt('Copy this link', u); });
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(all).then(done, function(){ prompt('Copy this link', all); }); else prompt('Copy this link', all); });   // copies the slip name + link, ready to paste into a text
   });
 })();</script>"""
 
