@@ -181,7 +181,7 @@ Every recipe below is subject to the Market mix rule above (11/4): where a recip
   - Getting it on the site: an approved draft goes up with the next site rebuild (Thu 7:40 AM / 3:40 PM, Sat 7:40 AM, Sun 7:40 / 9:52 AM /
     12:40 PM CT). There is no Monday rebuild: Monday's Sweep has to be approved before Sunday's last rebuild, or the owner posts it in chat.
 - **thursday** (TNF): (a) single best bet: the one leg with the highest `e` among legs at -150..+150 with `p >= 0.5`; (b) +500 (target
-  +400..+650, 3-4 legs, highest chance); (c) +5000 lottery (+3500..+7000, a story-driven same-game build - TDs + overs that need the same
+  +400..+650, 3-4 legs, highest chance); (c) +5000 lottery, titled **Thursday Night Thievery** (owner 11/10; the Thursday twin of Piss Missile Monday) (+3500..+7000, a story-driven same-game build - TDs + overs that need the same
   game script; 4-6 legs, label LOTTERY).
 - **friday** (fantasy, no bets): 3 flex calls from players in this week's Sunday games - pairs at the same position within 2 points of
   projection where one is clearly better on matchup rank, volume trend or flags; write each as "Start A over B: reason", using the logic of

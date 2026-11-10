@@ -34,7 +34,11 @@ def _lg(p): p = min(max(p, 1e-4), 1 - 1e-4); return _m.log(p / (1 - p))
 # log loss): FanDuel alone beat the 50/50 blend pooled. Passing yards: weight 0 won every held-out week (0.1 kept so the model still moves it a
 # little); receptions ~0.3; receiving yards 0.2-0.3; anytime TD 0.6-0.7 (the model adds real value there). Markets not listed keep W_MODEL.
 # Rushing yards and longest reception keep their RECAL rows below (model weight ~0.1 already). Re-run blend_weight.py every Tuesday.
-W_MARKET = {"Passing Yards": 0.1, "Receptions": 0.3, "Receiving Yards": 0.25, "Anytime TD": 0.65}
+# owner 11/10 ("whatever is going to make us hit more often"): blend_weight.py re-run with Week 9 in (4 graded weeks). Receptions 0.3 -> 0.5
+# (pooled best 0.5; 0.5 matched or beat the picked weight in all four held-out weeks). Anytime TD 0.65 -> 0.5 (pooled best 0.2-0.3, but 0.5
+# beat the picked weight in every held-out week and the pooled gap is 0.001 - so half-way, not 0.2). Both gaps are small: this sizes the
+# edge numbers more honestly, it does not by itself make legs hit. Passing and receiving yards unchanged.
+W_MARKET = {"Passing Yards": 0.1, "Receptions": 0.5, "Receiving Yards": 0.25, "Anytime TD": 0.5}
 
 def shown(p, book, market=None, w=W_MODEL):
     """The shown % for a leg: per-market recalibration where research/recal.py found one (unders use the over side), else shrink()."""
