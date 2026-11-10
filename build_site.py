@@ -126,7 +126,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
 NAV_GROUPS = [("/", "Home", None),
-              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/firsttd/", "First TD", "Who scores first"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
@@ -507,6 +507,9 @@ def place_plain(src_html, dest_dir, path):
 # owner 11/10: /badbeats/ - 'Missed by one' (badbeats.py, Tuesday after grading)
 if os.path.exists(os.path.join(OUT, "badbeats.html")):
     made.append(place_plain(os.path.join(OUT, "badbeats.html"), os.path.join(SITE, "badbeats"), "/badbeats/"))
+# owner 11/10: /sweep/ - "Sweep my slip" (build_slipcheck.py): a screenshot of any FanDuel slip -> the builder's verdict on it
+if os.path.exists(os.path.join(OUT, "slipcheck.html")):
+    made.append(place_plain(os.path.join(OUT, "slipcheck.html"), os.path.join(SITE, "sweep"), "/sweep/"))
 # owner 11/10: /survivor/ - the Survivor planner (build_survivor.py): elimination pools, the best pick now and the team to save for each week left
 if os.path.exists(os.path.join(OUT, "survivor.html")):
     made.append(place_plain(os.path.join(OUT, "survivor.html"), os.path.join(SITE, "survivor"), "/survivor/"))
@@ -741,6 +744,7 @@ def landing(weeks):
         ("/usage/", "Usage Trends", "Rising and falling roles", "Whose snaps, targets and carries are growing or shrinking over the last three games, with the injury context that explains a fill-in bump or a dip from playing hurt.", None),
         ("/firsttd/", "First TD", f"{nftd} players" if nftd else f"Week {week}", "Who scores first in every game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price with the edge.", None),
         ("/teasers/", "Teaser Finder", "6, 6.5 and 7 points", "Every spread and total teased 6, 6.5 and 7 points, scored by the model: which teased legs clear your book's two-leg price, and the classic pairs that cross both 3 and 7.", None),
+        ("/sweep/", "Sweep My Slip", "Before you place it", "Screenshot any FanDuel slip, yours or one somebody posted, and get a plain verdict: its chance against its price, the weakest leg, and a safer swap one tap applies. The picture is read on your phone and never leaves it.", None),   # owner 11/10
         ("/survivor/", "Survivor Planner", "Elimination pools", "One team a week, never the same team twice: mark who you have used and get the best pick this week and the best team for every week left, so you do not burn one you will need later. Works for any pool you are in.", None),   # owner 11/10
         ("/beat/", "Beat the Model", "Your five vs its five", "Pick five FanDuel player props for the week and go head to head with the model's five. Hits count, not odds; Tuesday grades everyone and the leaderboard keeps the season score.", None),
         ("/receipts/", "Receipts", (f"Week {latest} graded" if latest else "Coming Tuesday"), "What we said before kickoff and what happened. Every projection frozen before the games, graded after, biggest beats and busts included. Nothing is edited after the fact.", (f"/receipts/week{latest}/img/summary.png" if latest else None)),

@@ -1021,6 +1021,18 @@ BUILDER_CSS = r""".sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.u
 .tgt[hidden]{display:none}
 .take b{color:var(--good)}
 .flags{padding:8px 14px;font-size:12px;color:var(--warn);border-bottom:1px solid var(--line)}
+.sweepv{margin:10px 14px;padding:12px 14px;border:2px solid var(--red);border-radius:12px;background:var(--chalk)}
+.sweepv[hidden]{display:none}
+.sweepv .vh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sweepv .vh small{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+.sweepv .vh b{font-family:var(--brand);font-style:italic;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.01em}
+.sweepv .vh b.ok{color:var(--good)} .sweepv .vh b.mid{color:var(--warn)} .sweepv .vh b.bad{color:var(--bad)}
+.sweepv p{margin:7px 0 0;font-size:13.5px;line-height:1.45}
+.sweepv p small{color:var(--mute)}
+.sweepv .sw{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sweepv .sw button{font:inherit;font-size:12.5px;font-weight:600;min-height:36px;padding:0 11px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;text-align:left}
+.sweepv .sw button.go{border-color:var(--red)}
+.sweepv .fine{color:var(--mute);font-size:11.5px;margin-top:8px}
 .flags:empty{display:none}
 .acts{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
 .acts button{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
@@ -1579,6 +1591,74 @@ BUILDER_JS = r"""
   function riskTag(l){ if(isGL(l)) return ''; var s = riskScore(l); if(s < 2) return ''; var hi = s >= 4;
     return ' <span class="rsk' + (hi ? ' hi' : '') + '" title="Risk score ' + s + ': model flags plus live injury / weather / BetSweep notes">' + (hi ? 'High risk' : 'Some risk') + '</span>'; }
   document.addEventListener('bs-risk', function(){ try{ renderSlip(); }catch(e){} });
+  // ---- owner 11/10 "Sweep my slip": a plain verdict on whatever is in the slip - its chance against its price, how many legs are low
+  // risk, the weakest leg, and a safer swap that one tap applies. Nothing new is computed: the chance is joint(), the risk is riskScore(),
+  // the conflicts are the slip notes. Opens by itself when the page is reached from /sweep/ (a screenshot read by import.js, ?sweep=1)
+  // and from the "Sweep this slip" button. SWX = what the screenshot page passed along: the price printed on the slip and the legs
+  // it could not match (those are named, never guessed at).
+  var sweepOn = /[?&]sweep=1/.test(location.search), SWX = null;
+  try { SWX = JSON.parse(sessionStorage.getItem('bs_sweep') || 'null'); } catch(e){ SWX = null; }
+  function swKeys(ls){ return ls.map(legKey).sort().join('~'); }
+  function swWhy(l){ var b = (l.fl || []).filter(function(f){ return f[0] === 'bad'; }).map(function(f){ return f[1]; }), w = (l.fl || []).filter(function(f){ return f[0] === 'watch'; }).map(function(f){ return f[1]; });
+    var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v && v.level !== 'good') b.unshift(v.label); return b.concat(w).slice(0, 3); }
+  function swName(l){ return l.pl + ' ' + (isGL(l) ? '' : l.m === 'First TD' ? 'first TD' : isTD(l) ? (l.m === 'Anytime TD' ? 'anytime TD' : l.m) : lnTxt(l) + ' ' + l.ms.toLowerCase()); }
+  function swPrice(ls){ return bookLegs(ls).reduce(function(a, l){ return a * dec(l.o); }, 1); }
+  function sweepBlock(ls, fair, bookDec, flags){
+    var box = $('#sweepv'), btn = $('#sweepbtn'); if(!box) return;
+    if(btn) btn.textContent = sweepOn ? 'Hide the verdict' : 'Sweep this slip';
+    if(!sweepOn || !ls.length){ box.hidden = true; box.innerHTML = ''; return; }
+    var mine = SWX && SWX.k === swKeys(ls) ? SWX : null;                       // still the slip the screenshot gave us?
+    var posted = mine && mine.odds ? dec(mine.odds) : null, priceDec = posted || bookDec, need = 1 / priceDec;
+    var rs = ls.map(function(l){ return {l: l, s: isGL(l) ? 0 : riskScore(l)}; });
+    var hi = rs.filter(function(x){ return x.s >= 4; }), some = rs.filter(function(x){ return x.s >= 2 && x.s < 4; }), low = rs.length - hi.length - some.length;
+    var dead = flags.some(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; });
+    var fight = flags.filter(function(f){ return f.indexOf('works against') >= 0 || f.indexOf('opposite directions') >= 0 || f.indexOf('offense to show up') >= 0 || f.indexOf('same bet') >= 0; });
+    var gone = ls.filter(function(l){ return started(l.g); });
+    // the weakest leg: the riskiest, then the one the model likes least against its price
+    var weak = rs.slice().sort(function(a, b){ return (b.s - a.s) || (a.l.e - b.l.e) || (a.l.p - b.l.p); })[0];
+    if(weak && weak.s < 2 && !(weak.l.e <= -0.03)) weak = null;
+    var swap = null, drop = null;
+    if(weak && ls.length > 1){
+      var g = ladderOf(weak.l), i = g ? g.indexOf(weak.l) : -1;
+      if(g && i > 0 && !weak.l.u && !isTD(weak.l)){
+        var c = g.slice(0, i).reverse().filter(function(x){ return x.o != null && !started(x.g); });        // safer rungs, nearest first
+        var pickR = c.filter(function(x){ return riskScore(x) < 2 && x.p > weak.l.p; })[0] || c.filter(function(x){ return riskScore(x) < weak.s && x.p > weak.l.p; })[0];
+        if(pickR){ var nl = ls.map(function(x){ return x === weak.l ? pickR : x; }); swap = {to: pickR, k: weak.l.pl + '|' + weak.l.m, i: g.indexOf(pickR), fair: joint(nl), dec: swPrice(nl), s: riskScore(pickR)}; } }
+      var dl = ls.filter(function(x){ return x !== weak.l; }); drop = {fair: joint(dl), dec: swPrice(dl)};
+    }
+    var level = dead ? 'dead' : (hi.length && !(swap && swap.s < 2 && hi.length === 1 && !some.length)) || (hi.length + some.length >= 2) || fair < need * 0.75 ? 'bad' : (weak || fight.length) ? 'mid' : 'ok';
+    var head = {dead: "Can't win as built", bad: 'Risky slip', mid: 'One weak spot', ok: 'Clean slip'}[level];
+    var sg = {}; ls.forEach(function(l){ sg[l.g] = (sg[l.g] || 0) + 1; }); var same = Object.keys(sg).some(function(k){ return sg[k] > 1; });
+    var h = '<div class="vh"><small>Sweep says</small><b class="' + (level === 'ok' ? 'ok' : level === 'mid' ? 'mid' : 'bad') + '">' + head + '</b></div>';
+    h += '<p>Chance to cash: <b>' + pc(fair) + '</b>. At ' + decToAm(priceDec) + (posted ? ' (the price on your slip)' : '') + ' it has to hit <b>' + pc(need) + '</b> of the time to break even.'
+       + (!posted && same ? ' <small>That price is the legs multiplied; FanDuel’s same-game price is usually lower, so check it.</small>' : '') + '</p>';
+    h += '<p>' + low + ' of ' + rs.length + ' leg' + (rs.length === 1 ? ' is' : 's are') + ' low risk' + (hi.length ? ', ' + hi.length + ' high risk' : '') + (some.length ? ', ' + some.length + ' some risk' : '') + '.'
+       + (gone.length ? ' ' + gone.length + ' leg' + (gone.length === 1 ? ' is' : 's are') + ' in a game that already kicked off.' : '') + '</p>';
+    if(dead) h += '<p>' + esc(flags.filter(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; })[0]) + '</p>';
+    if(weak){ var why = swWhy(weak.l);
+      var under = weak.l.e <= -0.03 ? 'the model is ' + Math.round(-weak.l.e * 100) + ' points under its price' : '';   // a low-risk leg is only "weak" on price: say that first
+      var bits = (weak.s < 2 && under ? [under] : []).concat(why).concat(weak.s >= 2 && under ? [under] : []).slice(0, 3);
+      h += '<p>Weakest leg: <b>' + esc(swName(weak.l)) + '</b> ' + am(weak.l.o) + (bits.length ? ' <small>(' + esc(bits.join(' · ')) + ')</small>' : '') + '</p><div class="sw">';
+      if(swap) h += '<button type="button" class="go" data-swk="' + esc(swap.k) + '" data-swi="' + swap.i + '">Swap to ' + esc(lnTxt(swap.to)) + ' (' + am(swap.to.o) + ')<br><small>' + decToAm(bookDec) + ' → ' + decToAm(swap.dec) + ' · chance ' + pc(fair) + ' → ' + pc(swap.fair) + '</small></button>';
+      if(drop) h += '<button type="button" data-swdrop="' + weak.l.i + '">Drop it<br><small>' + decToAm(bookDec) + ' → ' + decToAm(drop.dec) + ' · chance ' + pc(fair) + ' → ' + pc(drop.fair) + '</small></button>';
+      h += '</div>'; }
+    else if(fight.length) h += '<p>' + esc(fight[0]) + '</p>';
+    if(mine && mine.off && mine.off.length) h += '<p><small>Not on our board, so not in these numbers: ' + esc(mine.off.slice(0, 4).join('; ')) + (mine.off.length > 4 ? ' and ' + (mine.off.length - 4) + ' more' : '') + '.</small></p>';
+    h += '<div class="sw"><button type="button" data-swshare="1">Share the verdict</button><a href="/sweep/" style="align-self:center;font-size:12.5px;color:var(--mute)">Sweep another slip</a></div>';
+    h += '<p class="fine">The model’s chance for the whole slip, with same-game legs correlated. Information, not betting advice.</p>';
+    box.innerHTML = h; box.hidden = false;
+    box.dataset.txt = 'BetSweep on my ' + ls.length + '-leg ' + decToAm(priceDec) + ': ' + head + '. ' + pc(fair) + ' to cash, needs ' + pc(need) + '.' + (weak ? ' Weakest leg: ' + swName(weak.l) + '.' : '');
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('#sweepbtn, #sweepv button'); if(!b) return;
+    if(b.id === 'sweepbtn'){ sweepOn = !sweepOn; renderSlip(); if(sweepOn){ var v = $('#sweepv'); if(v && v.scrollIntoView) v.scrollIntoView({block: 'nearest'}); } return; }
+    if(b.dataset.swk){ var g = GROUPS[b.dataset.swk], i = +b.dataset.swi; if(!g || !g[i]) return; g.forEach(function(x){ delete sel[x.i]; }); sel[g[i].i] = true; pick[b.dataset.swk] = i; renderList(); renderSlip(); return; }
+    if(b.dataset.swdrop){ delete sel[+b.dataset.swdrop]; renderList(); renderSlip(); return; }
+    if(b.dataset.swshare){ var t = ($('#sweepv') || {dataset: {}}).dataset.txt || 'Sweep my slip on BetSweep', u = 'https://betsweep.co/sweep/';
+      if(navigator.share){ navigator.share({text: t, url: u}).catch(function(){}); }
+      else if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t + ' ' + u).then(function(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Share the verdict'; }, 1500); }, function(){ window.prompt('Copy this', t + ' ' + u); }); }
+      else window.prompt('Copy this', t + ' ' + u); }
+  });
   // owner 11/5 "bet sizing": quarter Kelly on the model's fair chance vs FanDuel's price, in units (1u = 1% of bankroll), capped at 3u for a
   // single, 2u for two legs, 1u for three or more (the model's % is an estimate; full Kelly on an estimate overbets). Bankroll is optional.
   function stakeRow(p, decO, n){
@@ -1630,7 +1710,7 @@ BUILDER_JS = r"""
     var ls = slipLegs(); var ul = $('#slipLegs');
     if(scb){ try { scb.innerHTML = ls.length ? scenBlock(ls) : ''; } catch(e){ scb.innerHTML = ''; } }
     $$('.slipbar .n').forEach(function(n){ n.textContent = ls.length; });
-    if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
+    if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; try { sweepBlock([], 0, 1, []); } catch(e){} $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
     ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
     var bls = bookLegs(ls), implied = ls.length - bls.length;
     var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1), bookP = 1/bookDec;
@@ -1676,6 +1756,7 @@ BUILDER_JS = r"""
     if(ls.some(function(l){ return l.m === 'First TD'; }) && !flags.some(function(f){ return f.indexOf('never both') >= 0; })) flags.push('First TD is a high-variance market: the model treats it as independent of the other legs except the rules above');
     if(flags.some(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; })){ $('#take').innerHTML = '<b>This slip cannot win as built</b> - see the warning below.'; }
     $('#flags').innerHTML = flags.map(function(f){ return '⚠ ' + esc(f); }).join('<br>');
+    try { sweepBlock(ls, fair, bookDec, flags); } catch(e){ var _sv = $('#sweepv'); if(_sv) _sv.hidden = true; }
     $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + decToAm(bookDec) + ' · fair ' + toAm(fair);
     fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); syncTarget(ls, bookDec);
     save(); if (typeof renderSaved === 'function') renderSaved();
@@ -2173,6 +2254,7 @@ body = f'''<div class="bld">
    </div>
    </details>
    <ul id="slipLegs"></ul>
+   <div class="sweepv" id="sweepv" hidden></div>
    <div class="tgt" id="tgt" hidden>
     <div class="row"><span>Target FanDuel price</span><b id="tgtVal">—</b></div>
     <input type="range" id="tgtRange" min="0" max="1000" step="1" aria-label="target FanDuel price">
@@ -2183,7 +2265,7 @@ body = f'''<div class="bld">
    <div class="take" id="take" style="display:none"></div>
    <div class="flags" id="flags"></div>
    <div class="acts books3"><a class="fd" id="sendfd" href="#" target="_blank" rel="noopener" aria-disabled="true">FanDuel</a><a class="fd dk" id="senddk" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">DraftKings</a><a class="fd hr" id="sendhr" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Hard Rock</a></div>
-   <div class="acts"><button type="button" class="pri" id="savesl">Save slip</button><button type="button" class="pri" id="copy">Copy slip</button><button type="button" id="clear">Clear</button></div>
+   <div class="acts"><button type="button" class="pri" id="savesl">Save slip</button><button type="button" class="pri" id="copy">Copy slip</button><button type="button" id="sweepbtn" title="A plain verdict on this slip: its chance against its price, the weakest leg and a safer swap">Sweep this slip</button><button type="button" id="clear">Clear</button></div>
    <div class="acts share"><button type="button" class="social" id="postsl" title="Post this slip to BetSweep Social for others to tail and upvote"><img src="data:image/png;base64,{LOGO_S}" alt=""><span><b>Post to BetSweep Social</b><small>let people tail it · upvotes put it on top</small></span></button>{SHORTL.BTN_HTML}</div>
    <p class="note" id="fdnote" style="padding-top:0"></p>
    <p class="note" id="bknote" style="padding-top:0"></p>
