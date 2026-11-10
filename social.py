@@ -278,7 +278,9 @@ PAGE_JS = r"""<script>(function(){
   function closeKeys(l){ var ln = +l.ln, out = [], m = String(l.m || '').toLowerCase(), pl = String(l.pl || '').toLowerCase();
     [String(l.ln), String(Math.round(ln)), ln % 1 ? ln.toFixed(1) : String(ln)].forEach(function(x){ var k = pl + '|' + m + '|' + x; if(out.indexOf(k) < 0) out.push(k); }); return out; }
   function sharpLoad(cb){
-    if(SHARP){ cb && cb(); return; } if(SHARP_BUSY){ setTimeout(function(){ sharpLoad(cb); }, 400); return; } SHARP_BUSY = true;
+    if(SHARP){ cb && cb(); return; } if(SHARP_BUSY){ setTimeout(function(){ sharpLoad(cb); }, 400); return; }
+    if(!A || !A.client){ client(function(a){ A = a; sharpLoad(cb); }); return; }   // audit 11/10: the tab could be tapped before the account client loaded (threw on A.client)
+    SHARP_BUSY = true;
     A.client.from('feed_posts').select('handle,week,legs,created_at').eq('status', 'open').order('created_at', {ascending: false}).limit(1000).then(function(r){
       var posts = (r && r.data) || [], weeks = {}; posts.forEach(function(p){ if(p.week) weeks[p.week] = 1; });
       return Promise.all(Object.keys(weeks).map(function(w){ return fetch('/data/closing-w' + w + '.json', {cache: 'no-cache'}).then(function(x){ return x.ok ? x.json() : null; }).catch(function(){ return null; })

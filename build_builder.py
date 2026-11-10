@@ -2042,7 +2042,7 @@ BUILDER_JS = r"""
     var box = $('#savedList'); var pr = priceKeys(ks); var dflt = 'Slip ' + (all.length + 1) + (pr ? ' · ' + decToAm(pr.bookDec) : '');
     var nb = document.createElement('div'); nb.className = 'namebox'; nb.innerHTML = '<input type="text" value="' + esc(dflt) + '" aria-label="slip name" maxlength="60"><button type="button" class="pri">Save</button><button type="button" class="cx">Cancel</button>'; box.parentNode.insertBefore(nb, box);
     var inp = nb.querySelector('input'); inp.focus(); inp.select();
-    function done(){ var name = inp.value.trim() || dflt; var px = {}; ks.forEach(function(k){ var l = byKey[k]; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });
+    function done(){ var name = inp.value.trim() || dflt; var px = {}; ks.forEach(function(k){ var l = KEYIDX[k] != null ? legs[KEYIDX[k]] : null; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });   // audit 11/10: was byKey (not defined on this page), so Save threw and nothing was saved
       all.push({id: 'b' + Date.now().toString(36), name: name, keys: ks, odds: pr ? +decToAm(pr.bookDec).replace('+','') : null, stake: 1, fd: pr ? pr.fd : null, fair: pr ? Math.round(pr.fair*10000)/10000 : null, px: px, saved: Date.now()}); writeSlips(all); nb.remove(); renderSaved(); $('#fdnote').textContent = 'Saved. It is on My BetSweep too, graded after the games.'; }
     nb.querySelector('.pri').addEventListener('click', done); inp.addEventListener('keydown', function(e){ if(e.key==='Enter') done(); if(e.key==='Escape') nb.remove(); }); nb.querySelector('.cx').addEventListener('click', function(){ nb.remove(); }); });
   $('#savedList').addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return;
