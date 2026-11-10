@@ -22,6 +22,8 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
    (e.g. Bucky Irving vs CHI, "playing like a top 3-5 back"), do not drop it silently - list it under "Your call" with both sides.
 3. SHORT FAVORITE SLIPS ARE THE CORE: about 4 legs at roughly -300 to -200, landing near +300 (the Week 9 shape that won three times).
    Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
+   (Owner 11/10, after the site audit pointed out that /how/ said the opposite: "I want the -300/200 slips." The /how/ page now
+   describes this format. Keep the one-line audit fact in the draft, as the paragraph above these rules says; do not argue the format or swap it for plus-money legs.)
 4. OVERS BY DEFAULT, UNDERS WHEN THE CARD SAYS SO: no unders normally, BUT when the game card's "Sweep says" verdict calls for unders
    (e.g. "Unders crowd, assemble", close-and-low script), build that game's slip with unders (owner 11/9: "insist on unders").
 5. BACKUP QBs: a backup / spot-start QB for an offense that was already struggling gets no passing overs, and his receivers get no
