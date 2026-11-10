@@ -146,6 +146,15 @@ json.dump({"week": WEEK, "built": D["built"], "games": [{"gid": g["gid"], "a": g
 print(f"live page: {len(slim)} tracked legs across {len(games)} games")
 
 CSS = r"""
+/* owner 11/10 sweat rooms */
+.swb{font:inherit;font-size:12px;line-height:1;margin-left:6px;padding:3px 6px;border-radius:999px;border:1px solid var(--line,#d8d1c2);background:transparent;cursor:pointer;vertical-align:middle}
+#swov{position:fixed;inset:0;background:rgba(10,14,24,.55);z-index:9000;display:none;align-items:flex-end;justify-content:center}
+#swov .swin{background:var(--paper,#fbf8f1);color:var(--ink,#1b1a17);width:min(560px,100%);border-radius:16px 16px 0 0;padding:16px 18px 22px;max-height:70vh;overflow:auto;box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+#swov .swh{display:flex;align-items:baseline;gap:8px} #swov .swh small{color:var(--mute,#6b655c)} #swov .swx{margin-left:auto;font:inherit;font-size:18px;background:none;border:0;cursor:pointer}
+#swov .swn{margin:10px 0;font-size:14px} #swov .swon,#swov .swsign{font:inherit;font-weight:700;font-size:14px;padding:10px 16px;border-radius:10px;border:1.5px solid #d7332a;background:transparent;color:#d7332a;cursor:pointer} #swov .swon.on{background:#d7332a;color:#fff}
+#swov .swe{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 10px} #swov .swr{font-size:24px;padding:6px 10px;border-radius:12px;border:1px solid var(--line,#d8d1c2);background:#fff;cursor:pointer;position:relative} #swov .swr:disabled{opacity:.45}
+#swov .swr small{font-size:11px;font-weight:700;margin-left:3px;vertical-align:super} #swov .swf{font-size:22px;line-height:1.5;word-break:break-all;min-height:30px} #swov .swf small{font-size:13px;color:var(--mute,#6b655c)}
+
 .hub{padding:0;overflow:hidden} .hubt{display:flex;gap:8px;overflow-x:auto;padding:10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none} .hubt::-webkit-scrollbar{display:none}
 .hubb{flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:118px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer} .hubb b{font-size:15px;white-space:nowrap} .hubb small{font-size:11px;color:var(--mute);white-space:nowrap} .hubb.on{border-color:var(--red);box-shadow:inset 0 -3px 0 var(--red)} .hubb.on b{color:var(--red)} .hubb.new small{color:var(--red);font-weight:700}
 .hubp>section{margin:0;border:0;border-radius:0;border-top:1px solid var(--line);box-shadow:none} .hubp>section>.ghd2{display:none}
@@ -581,6 +590,42 @@ JS = r"""
     });
     requestAnimationFrame(function(){ wrap.style.minHeight = ''; });
   }
+
+  // ---- owner 11/10: sweat rooms - per leg: how many BetSweep users are riding it ("I'm on it") + live reactions. Supabase tables
+  // sweat_tails / sweat_reacts (sql/betsweep-sweat.sql, owner-run), realtime inserts; signed-out visitors can watch, signing in lets them join.
+  var SWC = {}, SWR = {}, SWOPEN = null, SWCH = null, SWMINE = {};
+  function swCl(){ var A = window.bsAccount; return A && A.client ? A.client : null; }
+  function swWeek(){ return +(D && D.week) || 0; }
+  function swLoad(){ var cl = swCl(), w = swWeek(); if(!cl || !w) return;
+    Promise.all([cl.from('sweat_tails').select('leg,user_id').eq('week', w), cl.from('sweat_reacts').select('leg,emoji,at').eq('week', w).order('at', {ascending: false}).limit(500)]).then(function(rs){
+      if(rs[0].error || rs[1].error) return; var me = window.bsAccount.user ? window.bsAccount.user.id : null; SWC = {}; SWMINE = {}; SWR = {};
+      (rs[0].data || []).forEach(function(t){ var c = SWC[t.leg] = SWC[t.leg] || {t: 0, r: 0}; c.t++; if(t.user_id === me) SWMINE[t.leg] = 1; });
+      (rs[1].data || []).forEach(function(r){ var c = SWC[r.leg] = SWC[r.leg] || {t: 0, r: 0}; c.r++; (SWR[r.leg] = SWR[r.leg] || []).push(r); });
+      document.querySelectorAll('.swb').forEach(function(b){ b.innerHTML = swLabel(b.getAttribute('data-k')); }); if(SWOPEN) swPaint(); }).catch(function(){}); }
+  function swLabel(k){ var c = SWC[k]; return c && (c.t || c.r) ? '🔥' + (c.t ? ' ' + c.t : '') : '💬'; }
+  function swChip(k){ return '<button type="button" class="swb" data-k="' + esc(k) + '" title="Sweat room: who\'s riding this leg">' + swLabel(k) + '</button>'; }
+  function swPaint(){ var ov = document.getElementById('swov'); if(!ov || !SWOPEN) return; var k = SWOPEN, c = SWC[k] || {t: 0, r: 0}, mine = !!SWMINE[k], cl = swCl(), signed = !!(window.bsAccount && window.bsAccount.user);
+    var rec = (SWR[k] || []).slice(0, 40).map(function(r){ var t = new Date(r.at); return '<span title="' + t.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) + '">' + r.emoji + '</span>'; }).join('');
+    var counts = {}; (SWR[k] || []).forEach(function(r){ counts[r.emoji] = (counts[r.emoji] || 0) + 1; });
+    ov.querySelector('.swin').innerHTML = '<div class="swh"><b>' + esc(k.split('|')[0]) + '</b><small>' + esc(k.split('|').slice(1).join(' ')) + '+</small><button type="button" class="swx" aria-label="Close">✕</button></div>'
+      + '<p class="swn"><b>' + c.t + '</b> ' + (c.t === 1 ? 'person is' : 'people are') + ' riding this leg on BetSweep' + (mine ? ' - including you' : '') + '.</p>'
+      + (signed ? '<button type="button" class="swon' + (mine ? ' on' : '') + '">' + (mine ? '✓ I\'m on it' : 'I\'m on it') + '</button>' : '<p class="swn"><button type="button" class="swsign">Sign in</button> to join the sweat.</p>')
+      + '<div class="swe">' + ['🔥', '😬', '💀', '🙏', '💰', '😤'].map(function(e){ return '<button type="button" class="swr" data-e="' + e + '"' + (signed ? '' : ' disabled') + '>' + e + (counts[e] ? '<small>' + counts[e] + '</small>' : '') + '</button>'; }).join('') + '</div>'
+      + '<div class="swf">' + (rec || '<small>No reactions yet. Be the first.</small>') + '</div>'; }
+  function swOpen(k){ SWOPEN = k; var ov = document.getElementById('swov'); if(!ov){ ov = document.createElement('div'); ov.id = 'swov'; ov.innerHTML = '<div class="swin"></div>'; document.body.appendChild(ov);
+      ov.addEventListener('click', function(ev){ var t = ev.target; if(t === ov || t.closest('.swx')){ ov.style.display = 'none'; SWOPEN = null; return; }
+        var cl = swCl(), w = swWeek(), kk = SWOPEN; if(!cl || !kk) return;
+        if(t.closest('.swsign')){ var s = document.querySelector('#bsacct .in'); if(s) s.click(); return; }
+        if(t.closest('.swon')){ var me = window.bsAccount.user && window.bsAccount.user.id; if(!me) return;
+          (SWMINE[kk] ? cl.from('sweat_tails').delete().eq('week', w).eq('leg', kk).eq('user_id', me) : cl.from('sweat_tails').insert({week: w, leg: kk})).then(function(){ swLoad(); }); return; }
+        var rb = t.closest('.swr'); if(rb && !rb.disabled){ rb.disabled = true; setTimeout(function(){ rb.disabled = false; }, 10000);
+          cl.from('sweat_reacts').insert({week: w, leg: kk, emoji: rb.getAttribute('data-e')}).then(function(){ swLoad(); }); } }); }
+    ov.style.display = 'flex'; swPaint(); swLoad(); }
+  function swLive(){ var cl = swCl(), w = swWeek(); if(!cl || !w || SWCH || !cl.channel) return;
+    try { SWCH = cl.channel('sweat-' + w).on('postgres_changes', {event: '*', schema: 'public', table: 'sweat_reacts', filter: 'week=eq.' + w}, function(){ swLoad(); })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'sweat_tails', filter: 'week=eq.' + w}, function(){ swLoad(); }).subscribe(); } catch(e){} }
+  document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.swb'); if(!b) return; ev.preventDefault(); ev.stopPropagation(); swOpen(b.getAttribute('data-k')); }, true);
+  setTimeout(function(){ swLoad(); swLive(); }, 1500); setInterval(swLoad, 60000); document.addEventListener('bs-account', function(){ swLoad(); swLive(); });
   function render(force){
     var wrap = $('#lv'); var now = Date.now(); var html = ''; var parts = []; loadSlips();
     var ae = document.activeElement; if(!force && ae && ae.tagName === 'INPUT' && ae.dataset && ae.dataset.sid && wrap.contains(ae)){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1500); } return; }   // 11/6: never re-render under a cursor - a live update mid-typing wiped the field
@@ -695,7 +740,7 @@ JS = r"""
         '<span class="tog">' + (s.st === 'in' ? open.length + ' open · ' + hit.length + ' hit' : s.st === 'pre' ? open.length + ' on the watch list' : hit.length + ' hit · ' + dead.length + ' gone') + '<i class="car">' + (isOpen ? '▴' : '▾') + '</i></span></button>';
       var sit = s.st === 'in' ? '<div class="sit">' + (s.poss ? '<b>' + esc(s.poss) + ' ball</b>' + (s.dd ? ', ' + esc(s.dd) : '') + ' · ' : '') + Math.round(f*100) + '% of regulation left' + (s.last ? ' · last: ' + esc(s.last) : '') + (BOX && Object.keys(BOX).length ? '' : ' · box score loading…') + '</div>' : '';
       var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[k] ? ' starred' : '');
-        var chips = verdictChip(l, r) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : '') + (INSLIP[k] ? '<span class="chip slip">' + (INSLIP[k].length > 1 ? INSLIP[k].length + ' slips' : esc((slipById(INSLIP[k][0]) || {name: 'slip'}).name)) + '</span>' : '') + (l.bp ? '<span class="chip bp">Best parlay</span>' : '') + (r.rz ? '<span class="chip rz">Red zone</span>' : '') + (l.w ? '<span class="chip warn" title="' + esc(l.w) + '">⚠</span>' : '') + pace(l, r, s);
+        var chips = verdictChip(l, r) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : '') + (INSLIP[k] ? '<span class="chip slip">' + (INSLIP[k].length > 1 ? INSLIP[k].length + ' slips' : esc((slipById(INSLIP[k][0]) || {name: 'slip'}).name)) + '</span>' : '') + (l.bp ? '<span class="chip bp">Best parlay</span>' : '') + (r.rz ? '<span class="chip rz">Red zone</span>' : '') + (l.w ? '<span class="chip warn" title="' + esc(l.w) + '">⚠</span>' : '') + pace(l, r, s) + (l.gl ? '' : swChip(k));
         var prog = (!l.gl && r.status === 'open' && /\//.test(r.now)) ? '<div class="bar' + (r.p >= 0.5 ? ' ok' : '') + '"><i style="width:' + Math.min(100, Math.round(100*(+r.now.split(' / ')[0].replace(/[^\d.]/g,'') || 0)/l.ln)) + '%"></i></div>' : '';
         return '<tr class="' + cls + '" data-k="' + esc(k) + '"><td class="st"><button type="button" class="star" data-k="' + esc(k) + '" title="' + (STARS[k] ? 'Unpin' : 'Pin to the top') + '">' + (STARS[k] ? '★' : '☆') + '</button><button type="button" class="add' + (INSLIP[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="Add to a slip">+</button></td><td class="who"><b>' + esc(legText(l)) + chips + '</b><small>' + esc(l.tm) + ' · ' + (l.src === 'cons' ? 'mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + '</small></td>' +
           '<td class="now"><b>' + esc(r.now || (s.st === 'pre' ? '' : '—')) + '</b>' + prog + '</td>' +
