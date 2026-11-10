@@ -20,6 +20,7 @@ if _slips and os.path.isdir(_slips):
 exec(open(os.path.join(HERE, "brand.py")).read())   # LOGO, WORDMARK, BANNER
 E = html.escape
 import sweep as SW   # owner 11/10: the Daily Sweep - a promo row whose Title starts with "Daily Sweep" (sweep.py has the rules)
+import pairs as PAIRS
 
 def num(x):
     try: return float(str(x).replace("+", "").replace(",", "").replace("%", ""))
@@ -113,6 +114,17 @@ def price_leg(who, market, odds):
                 if A["tm"] == B["tm"]: pe -= 0.02 * min(pa, pb)
                 per.append(pe)
             fill(A); out["_bl"] = None; out["p"] = sum(p * q for p, q in zip(per, probs)); out["worst"] = min(per); out["src"] = dict(out["src"], m="Either TD")   # either-TD is not a DraftKings / Hard Rock market
+            # owner 11/8-11/9: an either-or leg is judged as a pair (pairs.py). The chance comes from the legs' own per-ending chances, which
+            # mix back to what the site shows for each player (the multiplier form above did not: two Lions pass-catchers came out ABOVE the
+            # plain product, and two players in different games were mixed over one game's endings). Its risk is the safer player's.
+            try:
+                _pe = PAIRS.either(A, B, GAMES)
+                if _pe:
+                    out["p"] = _pe["p"]
+                    if _pe.get("worst") is not None: out["worst"] = _pe["worst"]
+                    out["hedge"] = round(_pe["hedge"], 4)
+                out["risk"] = PAIRS.risk(A, B, bd); out["risks"] = [SW.risk_score(A, bd), SW.risk_score(B, bd)]
+            except Exception as _e: print("note: pair pricing fell back to the old form:", _e)
             out["tm"] = f"{A['tm']}/{B['tm']}" if A["tm"] != B["tm"] else A["tm"]; out["opp"] = ""
             out["bk"] = 1 - (1 - A["bk"]) * (1 - B["bk"])   # FanDuel-equivalent from the two singles
             ra, rb = td_rank(A), td_rank(B); out["rank"] = None; out["ranks"] = [ra, rb]
