@@ -126,11 +126,76 @@ def ctx_strip(a, b):
     return f'<details class="splays ctx"{" open" if any(n.get("k") in ("bad", "watch") for n in ns) else ""}><summary><span class="lt">Context <small>{head}</small></span></summary><ul class="cxl">{items}</ul></details>'
 try: VOICE = json.load(open(os.path.join(OUT, "voice.json")))
 except Exception: VOICE = {}
+SWEEPCARD_JS = r"""<style>.swcard{display:block;margin:6px 0 10px;font:inherit;font-size:13px;font-weight:700;padding:8px 12px;border-radius:999px;border:1.5px solid #d7332a;background:transparent;color:#d7332a;cursor:pointer;text-align:left;max-width:100%}
+.swcard:active{background:#d7332a;color:#fff}.swov{position:fixed;inset:0;background:rgba(10,14,24,.86);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.swov img{max-width:min(92vw,520px);max-height:70vh;border-radius:12px}.swov .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.swov button,.swov a{font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;border:0;background:#f4efe3;color:#0d1626;text-decoration:none;cursor:pointer}.swov .p{background:#d7332a;color:#fff}</style>
+<script>(function(){   // owner 11/10: Sweep says share cards - drawn in the browser, square (feed) or story size, shared as an image
+  if (window.__swc) return; window.__swc = 1;
+  function wrap(ctx, text, maxW){ var w = String(text).split(/\s+/), lines = [], cur = ''; w.forEach(function(x){ var t = cur ? cur + ' ' + x : x; if (ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = x; } else cur = t; }); if (cur) lines.push(cur); return lines; }
+  function draw(d, story){
+    var W = 1080, H = story ? 1920 : 1080, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
+    x.fillStyle = '#0d1626'; x.fillRect(0, 0, W, H);
+    x.strokeStyle = 'rgba(244,239,227,.06)'; x.lineWidth = 3; for (var i = -H; i < W; i += 90){ x.beginPath(); x.moveTo(i, H); x.lineTo(i + H, 0); x.stroke(); }   // chalk lines
+    var top = story ? 300 : 110, pad = 90;
+    x.fillStyle = '#d7332a'; x.fillRect(pad, top, 16, 120);
+    x.fillStyle = '#f4efe3'; x.font = 'italic 800 64px "Barlow Condensed", Impact, sans-serif'; x.fillText('SWEEP SAYS', pad + 40, top + 62);
+    x.fillStyle = 'rgba(244,239,227,.7)'; x.font = '700 40px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText((d.g || '') + '  \u00b7  WEEK ' + (d.w || ''), pad + 40, top + 112);
+    x.fillStyle = '#f4efe3'; var fs = story ? 66 : 58; x.font = '600 ' + fs + 'px Georgia, "Times New Roman", serif';
+    var ls = wrap(x, '“' + d.t + '”', W - pad * 2), y = top + 220; ls.slice(0, story ? 9 : 6).forEach(function(l){ x.fillText(l, pad, y); y += fs * 1.25; });
+    if (d.l){ y += story ? 80 : 30; var bh = 170; x.fillStyle = '#f4efe3'; x.fillRect(pad, y, W - pad * 2, bh); x.fillStyle = '#d7332a'; x.fillRect(pad, y, 14, bh);
+      x.fillStyle = '#6b655c'; x.font = '700 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('THE LEG THAT BACKS IT', pad + 44, y + 52);
+      x.fillStyle = '#0d1626'; var lf = 52, lt = d.l; x.font = '800 52px "Barlow Condensed", Arial Narrow, sans-serif'; while (x.measureText(lt + '   ' + d.o).width > W - pad * 2 - 80 && lf > 30){ lf -= 2; x.font = '800 ' + lf + 'px "Barlow Condensed", Arial Narrow, sans-serif'; }
+      x.fillText(lt, pad + 44, y + 122); x.fillStyle = '#d7332a'; x.textAlign = 'right'; x.fillText(d.o || '', W - pad - 30, y + 122); x.textAlign = 'left'; }
+    var fy = H - (story ? 230 : 110); x.fillStyle = '#d7332a'; x.font = 'italic 900 64px "Barlow Condensed", Impact, sans-serif'; x.fillText('BetSweep', pad, fy);
+    x.fillStyle = 'rgba(244,239,227,.75)'; x.font = '600 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('betsweep.co  \u00b7  21+  \u00b7  gamble responsibly', pad, fy + 48);
+    return c; }
+  function show(d){ var ov = document.createElement('div'); ov.className = 'swov'; document.body.appendChild(ov); var story = false;
+    function render(){ var c = draw(d, story); ov.innerHTML = '<img alt="Sweep says card"><div class="row"><button type="button" class="p" data-a="share">Share image</button><button type="button" data-a="size">' + (story ? 'Square (feed)' : 'Story size') + '</button>' + (d.u ? '<a href="' + d.u + '" target="_blank" rel="noopener">Bet the leg on FanDuel</a>' : '') + '<button type="button" data-a="close">Close</button></div>';
+      ov.querySelector('img').src = c.toDataURL('image/png'); ov._c = c; }
+    render();
+    ov.addEventListener('click', function(ev){ var a = ev.target.getAttribute && ev.target.getAttribute('data-a'); if (ev.target === ov || a === 'close'){ ov.remove(); return; }
+      if (a === 'size'){ story = !story; render(); return; }
+      if (a === 'share'){ ov._c.toBlob(function(b){ var fn = 'sweep-says-' + String(d.g).replace(/\W+/g, '-').toLowerCase() + (story ? '-story' : '') + '.png', file = new File([b], fn, {type: 'image/png'}), txt = 'Sweep says: ' + d.t + (d.l ? '\nThe leg: ' + d.l + ' ' + d.o : '') + '\nbetsweep.co';
+        if (navigator.canShare && navigator.canShare({files: [file]})) navigator.share({files: [file], text: txt}).catch(function(){});
+        else { var u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = fn; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); } }, 'image/png'); } }); }
+  document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.swcard'); if (!b) return; ev.preventDefault(); ev.stopPropagation();
+    show({g: b.getAttribute('data-g'), t: b.getAttribute('data-t'), l: b.getAttribute('data-l'), o: b.getAttribute('data-o'), u: b.getAttribute('data-u'), w: b.getAttribute('data-w')}); }, true);
+})();</script>
+"""
 def voice_line(gid):
     """'Sweep says' (owner 11/4: personality): one line per game written by the rebuild session into out/voice.json per RUNBOOK Step 3-voice.
     Missing file or game = nothing printed; the line is never generated by this script."""
     t = (VOICE.get("games") or {}).get(gid)
-    return f'<p class="sweepsays"><i>Sweep says</i>{E(t)}</p>' if t and int(VOICE.get("week") or 0) == int(WEEK) else ""
+    if not (t and int(VOICE.get("week") or 0) == int(WEEK)): return ""
+    return f'<p class="sweepsays"><i>Sweep says</i>{E(t)}</p>' + sweep_card(gid, t)
+_RISKW = {"bad": 3, "watch": 1, "good": -1}
+def _risk(l): return max(0, sum(_RISKW.get(f.get("k"), 0) for f in (l.get("flags") or [])))
+def sweep_card(gid, line):
+    """owner 11/10: shareable 'Sweep says' card - the game's line plus the single best LOW-RISK leg that backs it. The leg is the rebuild
+    session's pick (voice.json "picks": {gid: "Player|Market|Line"}, RUNBOOK 1v) when it is low risk; otherwise the game's highest-chance
+    low-risk leg priced -300..+150 (never when the line calls for unders - the card then shares the line alone). The image is drawn in the
+    browser (SWEEPCARD_JS), nothing is stored."""
+    a, b = (gid.split("-") + [""])[:2]
+    pick = (VOICE.get("picks") or {}).get(gid); leg = None
+    def ok(l): return l["team"] in (a, b) and l["status"] not in ("OUT", "BYE", "QUESTIONABLE") and l.get("odds") is not None and l.get("p") is not None and _risk(l) < 2
+    if pick:
+        pp = pick.split("|")
+        for l in LEGS:
+            if ok(l) and l["player"] == pp[0] and l["market"] == pp[1] and len(pp) > 2 and str(int(l["line"] or 1)) == str(int(float(pp[2]))): leg = l; break
+    if leg is None and "under" not in str(line).lower():
+        c = [l for l in LEGS if ok(l) and -300 <= l["odds"] <= 150 and l["market"] not in ("Longest Reception", "Rushing Yards")]
+        if c: leg = max(c, key=lambda l: l["p"])
+    lt = lu = lo = ""
+    if leg is not None:
+        mk = leg["market"]
+        if mk == "Anytime TD": lt = f'{leg["player"]} anytime TD'
+        elif mk.startswith("Under "): lt = f'{leg["player"]} under {leg["line"]:g} {mk[6:].lower()}'
+        elif mk in ("Moneyline", "Spread", "Total") or leg["player"].startswith(("Over ", "Under ")): lt = leg["player"]
+        else: lt = f'{leg["player"]} {int(leg["line"] or 1)}+ {mk.lower()}'
+        lo = odds_str(leg["odds"]); ids = fd_ids(leg)
+        if ids: lu = f"https://sportsbook.fanduel.com/addToBetslip?marketId={ids[0]}&selectionId={ids[1]}"
+    return (f'<button type="button" class="swcard" data-g="{E(a + " @ " + b)}" data-t="{E(line)}" data-l="{E(lt)}" data-o="{E(lo)}" data-u="{E(lu)}" data-w="{WEEK}">'
+            f'Share this take{(" + " + E(lt)) if lt else ""}</button>')
 PROBIT = {r[0]: r[3:11] for r in json.load(open(os.path.join(HERE, "probit.json")))}
 import calib as CALIB
 exec(open(os.path.join(HERE, "brand.py")).read())   # NAMES, TEAMCOL, badge(), PLAYS, SWOOSH, LOGO, LOGO_S, BANNER
@@ -1203,5 +1268,6 @@ json.dump(BEST_PARLAYS, open(os.path.join(OUT, "best_parlays.json"), "w"))   # f
 page = (open(os.path.join(HERE, "template.html")).read().replace("/*SLIPDATA*/null", json.dumps(SLIP_DATA, separators=(",", ":"))).replace("/*LIVEJS*/", LIVE.LIVE_JS).replace("/*BOOKSJS*/", BOOKS.BOOKS_JS).replace("/*BOOKSCSS*/", BOOKS.BOOKS_CSS).replace("<!--BOOKSHTML-->", BOOKS.panel_html("bslipBooksPanel")).replace("/*LIVECSS*/", LIVE.LIVE_CSS)
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/FQVqm3BhG4BfMPd63tRQRa" class="tool">Parlay Builder →</a> <a href="#summary">Slate</a> ' + " ".join(nav)).replace("{{CARDS}}", summary + "\n" + "\n".join(cards))
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ARCHIVE).replace("{{DESC}}", f"Model projections, matchup colors and the best FanDuel leg per player, from the Fantasy Projection Model 2026. Page built {stamp} CT from the live sheet: projections, per-game defense ranks (season and last 3 weeks), FanDuel lines and the kickoff-hour forecast."))
+page = (page.replace("</body>", SWEEPCARD_JS + "</body>", 1) if "</body>" in page else page + SWEEPCARD_JS)   # owner 11/10: Sweep says share cards
 out = os.path.join(OUT, "matchup-boards.html"); open(out, "w").write(page)
 print(f"wrote {out}: {len(cards)} games, {len(page)//1024} KB, week {WEEK}")
