@@ -170,6 +170,21 @@ def voice_line(gid):
     SWEEP_BTNS[gid] = sweep_card(gid, t)   # audit 11/10: the same button rides on the home page's game cards (out/sweepcards.json -> build_today.py)
     return f'<p class="sweepsays"><i>Sweep says</i>{E(t)}</p>' + SWEEP_BTNS[gid]
 SWEEP_BTNS = {}
+def sweep_lean(gid, a, b):
+    """owner 11/10 ("I'd roll with sweep says more often" - Sweep says called the under while the card's best parlay printed Over 45.5 +
+    MIN ML): what the game's Sweep says line tells a bettor to do, as the rebuild session wrote it down next to the line (voice.json
+    "leans": {gid: {"total": "under" | "over", "side": "<TEAM>"}}, RUNBOOK 1v). Only that field counts - the text of the line is never
+    parsed, and a game with no line this week has no lean. Returns {"total": "UNDER" | "OVER" | None, "side": a | b | None} or None."""
+    try:   # a malformed file must never stop the boards: anything unexpected reads as "no lean"
+        if not ((VOICE.get("games") or {}).get(gid) and int(VOICE.get("week") or 0) == int(WEEK)): return None
+        lv = VOICE.get("leans"); x = lv.get(gid) if isinstance(lv, dict) else None
+        if not isinstance(x, dict): return None
+        t = str(x.get("total") or "").strip().upper(); sd = str(x.get("side") or "").strip().upper()
+        out = {"total": t if t in ("UNDER", "OVER") else None, "side": sd if sd in (a, b) else None}
+        return out if out["total"] or out["side"] else None
+    except Exception: return None
+def lean_text(lean): return " and ".join(x for x in (("the " + lean["total"].lower()) if lean.get("total") else "", lean.get("side") or "") if x)
+LEAN_LOG = []   # one entry per game with a lean: what it was, the slip built under it and the slip the same run would have printed without it
 _RISKW = {"bad": 3, "watch": 1, "good": -1}
 def _risk(l): return max(0, sum(_RISKW.get(f.get("k"), 0) for f in (l.get("flags") or [])))
 def sweep_card(gid, line):
@@ -868,11 +883,14 @@ def _team_total(tm):
         if tot is None or sp is None: return None
         return tot / 2 + (sp / 2 if gi.get("home_team") == tm else -sp / 2)
     return None
-def best_parlay(a, b, players, s, wts=None):
+def best_parlay(a, b, players, s, wts=None, lean=None):
     """Legs come from the four script strips (top plays under each ending); each leg's chance is averaged over the model's
     script odds so the slip does not depend on one ending. Pick the combination (2-4 legs, distinct players, 2+ scripts
     represented) with the highest joint hit chance whose FanDuel price lands between -110 and +500 and is not worse than the
-    model's fair price; if nothing in range is +EV, take the best-EV build in range and say so. Returns (html, record)."""
+    model's fair price; if nothing in range is +EV, take the best-EV build in range and say so. Returns (html, record).
+    lean (sweep_lean): the slip may not fight the game's Sweep says line - no game line on the other side, no leg that is 10+ points
+    likelier in the ending the line fades than in the one it calls - and it carries the line's own game leg (the under, the side)
+    when a slip with it is within 5 cents of fair. The chances shown are never tilted by the lean; only which legs may be used is."""
     probs = [(x or 0) / 100 for x in (wts or s[5:9])]; tot = sum(probs) or 1; w = [x / tot for x in probs]
     roles = roles_for(players); rows = {}
     for l in LEGS:
@@ -941,26 +959,47 @@ def best_parlay(a, b, players, s, wts=None):
     # keep legs priced within a few points of fair (edge >= -3 pts); loosen to -6 when the book leaves a game thin
     # legs the player has cleared under half the time lately are a last resort (flagged on the chip when used)
     nplayers = lambda rs: len({r["l"]["player"] for r in rs})
-    cands = [r for r in rows.values() if r["scripts"] and not r["tb"] and r["prob"] - r["l"]["book"] >= -0.015]
-    if nplayers(cands) < 4: cands = [r for r in rows.values() if r["scripts"] and not r["tb"] and r["prob"] - r["l"]["book"] >= -0.03]
-    if nplayers(cands) < 4: cands = [r for r in rows.values() if r["scripts"] and r["prob"] - r["l"]["book"] >= -0.03]
-    # one line per player: keep his most likely strip leg
-    byp = {}
-    for r in cands:
-        pl = (r["l"]["player"], r["l"]["market"])
-        if pl not in byp or r["prob"] > byp[pl]["prob"]: byp[pl] = r
     # owner 11/6: the similar-defense split breaks ties between qualifying legs (+-3 pts of ranking at +-50%) - never the leg's probability
     def _sdb(r):
         x = _SDF.for_leg(_SDD, r["l"].get("player"), r["l"].get("team"), r["l"].get("market")) if _SDD else None
         return 0.06 * max(-0.5, min(0.5, x["pct"])) if x else 0.0
-    cands = sorted(byp.values(), key=lambda r: -(r["padj"] + (r["prob"] - r["l"]["book"]) + _sdb(r)))[:18]
-    if len(cands) < 2: return "", None
-    codes = {id(r): (leg_code(r["l"], players) or "") for r in cands}
     import itertools
-    def enumerate_combos(min_scripts):
+    # owner 11/10: Sweep says leads. A leg fights the lean when it is the game line on the other side, or when it is 10+ points likelier
+    # in the ending the line fades than in the one it calls (an over that needs a shootout under an unders call; the other team's
+    # front-runner leg under a side call). backs() = the line's own game leg: the under / over itself, the side's moneyline or spread.
+    def against(r):
+        if not lean: return False
+        l = r["l"]; g = l.get("gl"); ps = r["ps"]
+        if g: return bool(lean["total"] and g["side"] != lean["total"]) if l["market"] == "Total" else bool(lean["side"] and g["side"] != lean["side"])
+        if lean["total"] == "UNDER" and ps[2] - ps[1] >= 0.10: return True
+        if lean["total"] == "OVER" and ps[1] - ps[2] >= 0.10: return True
+        if lean["side"] == a and ps[3] - ps[0] >= 0.10: return True
+        if lean["side"] == b and ps[0] - ps[3] >= 0.10: return True
+        return False
+    def backs(r):
+        g = r["l"].get("gl")
+        return bool(lean and g and ((r["l"]["market"] == "Total" and g["side"] == lean["total"]) or (r["l"]["market"] != "Total" and g["side"] == lean["side"])))
+    def choose(pool_rows, need_back=False):
+        """the slip picked from these legs: (pj, ev, d, combo, C, plus, near) or None when no slip lands in the price window"""
+        cands = [r for r in pool_rows if r["scripts"] and not r["tb"] and r["prob"] - r["l"]["book"] >= -0.015]
+        if nplayers(cands) < 4: cands = [r for r in pool_rows if r["scripts"] and not r["tb"] and r["prob"] - r["l"]["book"] >= -0.03]
+        if nplayers(cands) < 4: cands = [r for r in pool_rows if r["scripts"] and r["prob"] - r["l"]["book"] >= -0.03]
+        # one line per player: keep his most likely strip leg
+        byp = {}
+        for r in cands:
+            pl = (r["l"]["player"], r["l"]["market"])
+            if pl not in byp or r["prob"] > byp[pl]["prob"]: byp[pl] = r
+        cands = sorted(byp.values(), key=lambda r: -(r["padj"] + (r["prob"] - r["l"]["book"]) + _sdb(r)))[:18]
+        if need_back and not any(backs(r) for r in cands):   # the line's own game leg did not make the top 18: bring the best one in
+            bk = sorted([r for r in byp.values() if backs(r)], key=lambda r: -(r["padj"] + (r["prob"] - r["l"]["book"])))
+            if not bk: return None
+            cands = cands[:17] + bk[:1]
+        if len(cands) < 2: return None
+        codes = {id(r): (leg_code(r["l"], players) or "") for r in cands}
         out = []
         for n in (2, 3, 4):
             for combo in itertools.combinations(cands, n):
+                if need_back and not any(backs(r) for r in combo): continue
                 if len({r["l"]["player"] for r in combo}) < n: continue
                 gk = [r["l"]["gl"]["k"] for r in combo if r["l"].get("gl")]
                 if len(gk) != len(set(gk)): continue   # one margin leg (ML or spread) and one total leg at most
@@ -975,21 +1014,39 @@ def best_parlay(a, b, players, s, wts=None):
                 for r in combo: pen *= r["padj"] / r["prob"] if r["prob"] else 1
                 ind = pen * sum(w[k] * math.prod(r["ps"][k] for r in combo) for k in range(4))
                 out.append((ind, d, combo))
-        return out
-    combos = enumerate_combos(1)
-    if not combos: return "", None
-    combos.sort(key=lambda x: -x[0]); short = combos[:14]
-    priced = []
-    for ind, d, combo in short:
-        n = len(combo); C = [[1.0]*n for _ in range(n)]
-        for i in range(n):
-            for j in range(i+1, n): C[i][j] = C[j][i] = corr_between(combo[i]["l"], codes[id(combo[i])], combo[j]["l"], codes[id(combo[j])])
-        pj = sum(w[k] * joint_prob([r["ps"][k] for r in combo], C, n=3000) for k in range(4) if w[k] > 0)
-        priced.append((pj, pj * d - 1, d, combo, C))
-    plus = [x for x in priced if x[1] >= 0]
-    near = [x for x in priced if x[1] >= -0.05]
-    pool = plus or near
-    pj, ev, d, combo, C = max(pool, key=lambda x: (x[0], x[1])) if pool else max(priced, key=lambda x: x[1])
+        if not out: return None
+        out.sort(key=lambda x: -x[0]); short = out[:14]
+        priced = []
+        for ind, d, combo in short:
+            n = len(combo); C = [[1.0]*n for _ in range(n)]
+            for i in range(n):
+                for j in range(i+1, n): C[i][j] = C[j][i] = corr_between(combo[i]["l"], codes[id(combo[i])], combo[j]["l"], codes[id(combo[j])])
+            pj = sum(w[k] * joint_prob([r["ps"][k] for r in combo], C, n=3000) for k in range(4) if w[k] > 0)
+            priced.append((pj, pj * d - 1, d, combo, C))
+        plus = [x for x in priced if x[1] >= 0]
+        near = [x for x in priced if x[1] >= -0.05]
+        pool = plus or near
+        if need_back and not pool: return None   # the line's own game leg rides only when the slip with it is within 5 cents of fair
+        return (max(pool, key=lambda x: (x[0], x[1])) if pool else max(priced, key=lambda x: x[1])) + (plus, near)
+    allrows = list(rows.values())
+    got = free = choose(allrows)   # what this run prints when no Sweep says lean is on record (unchanged from before 11/10)
+    sw_note = ""
+    if lean:
+        ok_rows = [r for r in allrows if not against(r)]
+        got = choose(ok_rows, need_back=True) or choose(ok_rows)
+        _legs = lambda x: [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"]) for r in x[3]] if x else None
+        _same = bool(got and free and {id(r) for r in got[3]} == {id(r) for r in free[3]})
+        LEAN_LOG.append({"gid": f"{a}-{b}", "lean": lean, "text": lean_text(lean), "built": _legs(got), "built_dec": got[2] if got else None, "built_pj": got[0] if got else None,
+                         "free": _legs(free), "free_dec": free[2] if free else None, "free_pj": free[0] if free else None, "changed": not _same,
+                         "backed": bool(got and any(backs(r) for r in got[3])), "dropped": len(allrows) - len(ok_rows)})
+        if got is None:
+            return (f'<div class="bestslip none"><span class="lt">Best parlay</span><span class="bpwarn">no build this run: Sweep says leans {E(lean_text(lean))} here, and nothing clean '
+                    f'in the -110 to +500 window agrees with it</span></div>'), None
+        _was = ("" if _same or not free else " Without the lean this run would have printed " + ", ".join(E(str(r["l"]["player"])) + ("" if r["l"].get("gl") else " " + E(str(r["l"]["market"]).lower())) for r in free[3]) + f" at {am_from_dec(free[2])}.")
+        sw_note = (f'<span class="bpsw" title="Sweep says leads on this card: the slip uses no game line on the other side and no leg that needs the opposite kind of game.{_was}">'
+                   f'{"Rebuilt to agree" if not _same and free else "Agrees"} with <b>Sweep says</b> ({E(lean_text(lean))})</span>')
+    if got is None: return "", None
+    pj, ev, d, combo, C, plus, near = got
     by_k = [joint_prob([r["ps"][k] for r in combo], C, n=12000) if w[k] > 0 else 0.0 for k in range(4)]
     pj = sum(w[k] * by_k[k] for k in range(4)); ev = pj * d - 1
     fit_k = max(range(4), key=lambda k: w[k] * by_k[k])   # the ending this slip is built for (largest share of its hit chance)
@@ -1009,9 +1066,10 @@ def best_parlay(a, b, players, s, wts=None):
                 f'<b>{r["prob"]*100:.0f}%</b>{ei(e)}{plus_btn(l)}</span>')
     legs_html = "".join(leg_html(r) for r in combo)
     note = "" if plus else ('<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this one is within 5 cents of fair</span>' if near else '<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this is the closest</span>')
+    note += sw_note
     html_ = (f'<div class="bestslip"><span class="lt">Best parlay <small>{len(combo)} legs</small></span><span class="bpodds" title="FanDuel price for the {len(combo)}-leg slip">{am_from_dec(d)}</span>{legs_html}'
              f'<span class="bpnum">model <b>{pj*100:.0f}%</b> to hit · fair {fair_odds(pj)} · EV <b class="{"up" if ev>=0 else "dn"}">{"+" if ev>=0 else ""}${ev:.2f}</b> per $1 · does best if <b title="if the game ends {E(lab[fit_k])}, this slip hits {by_k[fit_k]*100:.0f}% of the time">{E(lab[fit_k])}</b> <span title="the model&#39;s chance of that ending">({w[fit_k]*100:.0f}% likely)</span></span>{note}{fd_button([r["l"] for r in combo], "best parlay")}</div>')
-    rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "ev": ev, "dec": d, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"]}
+    rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "ev": ev, "dec": d, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"], "lean": (dict(lean, changed=LEAN_LOG[-1]["changed"], backed=LEAN_LOG[-1]["backed"]) if lean else None)}
     return html_, rec
 BEST_PARLAYS = []
 ROLE_RISK = ("Target competition", "Backfield competition", "Rising", "Limited", "Snaps down", "Role Down", "Carries down", "Targets down",
@@ -1110,7 +1168,8 @@ for a, b, pl_all in blocks:
     if w and w["risk"] in ("HIGH", "MED"): summary_rows["wx"].append((w["risk"], f"{a}/{b}", f"wind {w['wind']:.0f} mph" + (f", gusts {w['gust']:.0f}" if w["gust"] else "") + (f", {w['ptype']}" if w["ptype"] not in ("none", "") else "")))
     _ko = kick_ms(a, b); _lr = lean_reads(a, b)
     cf = CF.assess(a, b, s[2] or 0, s[3] or 0)
-    bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"])
+    _lean = sweep_lean(gid, a, b)
+    bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"], _lean)
     CONF_ROWS.append((gid, cf["grade"], cf["score"], [(k, t_) for _, k, t_ in cf["flags"]]))
     if _ko is None or _ko > datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000:
         _m = cf["mkt"] or {}
@@ -1120,6 +1179,7 @@ for a, b, pl_all in blocks:
                         + [round(_lr[t_]["lean"], 4) if t_ in _lr else "" for t_ in (a, b)])
     conf_html = conf_block(a, b, s, cf, either_way(a, b), _lr)
     if bp_rec: BEST_PARLAYS.append(bp_rec)
+    elif bp_html: pass   # 11/10: a lean with no agreeing slip explains itself
     else: bp_html = '<div class="bestslip none"><span class="lt">Best parlay</span><span class="bpwarn">no build this run: FanDuel has too few clean, healthy legs priced in this game to land a -110 to +500 slip</span></div>'
     plays_html, most = script_plays(a, b, pl, s)
     kk = max(range(4), key=lambda i: (s[5:9][i] or 0))
@@ -1273,6 +1333,8 @@ SLIP_DATA = {"week": WEEK, "legs": SLIP_LEGS, "corr": CORR, "glcorr": GLCORR, "g
 import live as LIVE
 import books as BOOKS
 json.dump(BEST_PARLAYS, open(os.path.join(OUT, "best_parlays.json"), "w"))   # for build_calls.py (model-calls archive)
+json.dump({"week": int(WEEK), "games": LEAN_LOG}, open(os.path.join(OUT, "sweep_leans.json"), "w"))   # owner 11/10: Sweep says leads; build_calls.py archives what the lean changed
+print(f"sweep leans: {len(LEAN_LOG)} games with a lean on record" + ("" if not LEAN_LOG else "; best parlay changed in " + str(sum(1 for x in LEAN_LOG if x["changed"])) + ", carries the line's own leg in " + str(sum(1 for x in LEAN_LOG if x["backed"])) + ", no agreeing slip in " + str(sum(1 for x in LEAN_LOG if not x["built"])) + ": " + "; ".join(x["gid"] + " " + x["text"] + (" (changed)" if x["changed"] else "") for x in LEAN_LOG)))
 page = (open(os.path.join(HERE, "template.html")).read().replace("/*SLIPDATA*/null", json.dumps(SLIP_DATA, separators=(",", ":"))).replace("/*LIVEJS*/", LIVE.LIVE_JS).replace("/*BOOKSJS*/", BOOKS.BOOKS_JS).replace("/*BOOKSCSS*/", BOOKS.BOOKS_CSS).replace("<!--BOOKSHTML-->", BOOKS.panel_html("bslipBooksPanel")).replace("/*LIVECSS*/", LIVE.LIVE_CSS)
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/FQVqm3BhG4BfMPd63tRQRa" class="tool">Parlay Builder →</a> <a href="#summary">Slate</a> ' + " ".join(nav)).replace("{{CARDS}}", summary + "\n" + "\n".join(cards))
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ARCHIVE).replace("{{DESC}}", f"Model projections, matchup colors and the best FanDuel leg per player, from the Fantasy Projection Model 2026. Page built {stamp} CT from the live sheet: projections, per-game defense ranks (season and last 3 weeks), FanDuel lines and the kickoff-hour forecast."))

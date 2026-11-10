@@ -29,6 +29,22 @@ if WEEK is None: raise SystemExit("week unknown (in/settings.json)")
 sched = GLM.load_sched(IN, WEEK); fd = GLM.load_fd(IN)
 try: BP = {b["gid"]: b for b in json.load(open(os.path.join(OUT, "best_parlays.json")))}
 except Exception: BP = {}
+# owner 11/10 ("I'd roll with sweep says more often"): build_boards.py keeps the best parlay from fighting the game's Sweep says lean and
+# writes what the lean changed to out/sweep_leans.json. The "Built for" cell carries it - the lean, and the slip the same run would have
+# printed without it - so the two can be graded side by side later. No new column: AD onward belongs to the grades.
+try:
+    _SL = json.load(open(os.path.join(OUT, "sweep_leans.json")))
+    LEANS = {x["gid"]: x for x in _SL.get("games", [])} if int(_SL.get("week") or 0) == int(WEEK) else {}
+except Exception: LEANS = {}
+def _am(d): return f"+{round((d - 1) * 100)}" if d >= 2 else f"-{round(100 / (d - 1))}"
+def built_for(gid, bp):
+    x = LEANS.get(gid); fit = bp["fit"] if bp else ""
+    if not x: return fit
+    out = [fit] if fit else ["no slip agrees with Sweep says"]
+    out.append("Sweep says: " + x["text"])
+    if x.get("changed") and x.get("free"):
+        out.append("without it: " + " ; ".join(f"{p}|{m}|{ln if m in ('Spread', 'Total') else int(ln or 1)}|{int(o)}" for (p, m, ln, o) in x["free"]) + " @ " + _am(x["free_dec"]))
+    return " | ".join(out)
 include_played = "--include-played" in sys.argv
 CT = ZoneInfo("America/Chicago"); now = datetime.datetime.now(CT); stamp = now.strftime("%Y-%m-%d %H:%M")
 HEADER = ["Week", "Frozen at (CT)", "Game", "A", "B", "Kickoff (CT)", "Model A pts", "Model B pts", "Model margin (A-B)", "Model total",
@@ -54,6 +70,7 @@ for r in S:
                  pa, pb, round((pa or 0) - (pb or 0), 2), round((pa or 0) + (pb or 0), 2), probs[0], probs[1], probs[2], probs[3], r[10],
                  spA["ln"] if spA else "", spA["o"] if spA else "", ov["ln"] if ov else "", ov["o"] if ov else "", mlA["o"] if mlA else "", mlB["o"] if mlB else "",
                  round(mlA["p"], 4) if mlA else "", round(spA["p"], 4) if spA else "", round(ov["p"], 4) if ov else "", src,
-                 bpl, (round((bp["dec"] - 1) * 100) if bp["dec"] >= 2 else -round(100 / (bp["dec"] - 1))) if bp else "", round(bp["pj"], 4) if bp else "", bp["fit"] if bp else ""])
+                 bpl, (round((bp["dec"] - 1) * 100) if bp["dec"] >= 2 else -round(100 / (bp["dec"] - 1))) if bp else "", round(bp["pj"], 4) if bp else "", built_for(f"{a}-{b}", bp)])
 json.dump({"header": HEADER, "values": rows}, open(os.path.join(OUT, "calls_rows.json"), "w"), indent=0)
+if LEANS: print(f"sweep leans on record for {len(LEANS)} games ({sum(1 for x in LEANS.values() if x.get('changed'))} changed the best parlay) - noted in the Built for column")
 print(f"wrote out/calls_rows.json: {len(rows)} games frozen for week {WEEK} at {stamp} CT" + (f"; skipped {len(skipped)}: " + "; ".join(skipped) if skipped else ""))
