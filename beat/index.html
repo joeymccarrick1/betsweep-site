@@ -128,6 +128,14 @@ table.lb{width:100%;border-collapse:collapse;font-size:14px} .lb th,.lb td{paddi
       rows.forEach(function(r, i){ h += '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td class="r">' + r.hits + '</td><td class="r">' + r.weeks + '</td></tr>'; });
       if (!rows.length) h += '<tr><td colspan="4"><span class="btnote">Nobody has been graded yet - the first week grades Tuesday.</span></td></tr>';
       h += '</tbody></table><p class="btnote">' + thisWk.length + ' set' + (thisWk.length === 1 ? '' : 's') + ' of five in for week ' + W + '.</p>';
+      // owner 11/10 pick'em: weekly winners (most hits that week; ties share it) next to the model's hits that week
+      var byW = {}; picks.forEach(function(p){ (byW[p.week] = byW[p.week] || []).push(p); });
+      var wks = Object.keys(byW).map(Number).sort(function(a, b){ return b - a; });
+      if (wks.length){ h += '<h2 style="margin-top:16px">Weekly winners <small>most hits of five · ties share the week</small></h2><table class="lb"><thead><tr><th>Week</th><th>Winner</th><th class="r">Hits</th><th class="r">Model</th><th class="r">Players</th></tr></thead><tbody>';
+        wks.forEach(function(w){ var ps = byW[w], top = Math.max.apply(null, ps.map(function(p){ return p.hits || 0; })), win = ps.filter(function(p){ return (p.hits || 0) === top; }).map(function(p){ return esc(p.name || 'Anonymous') + (p.user_id === me ? ' (you)' : ''); });
+          var mr = model.filter(function(m){ return m.week === w; })[0];
+          h += '<tr><td>' + w + '</td><td>' + win.join(', ') + '</td><td class="r">' + top + '/5</td><td class="r">' + (mr && mr.hits != null ? mr.hits + '/5' : '—') + '</td><td class="r">' + ps.length + '</td></tr>'; });
+        h += '</tbody></table>'; }
       $('btlb').innerHTML = h; }).catch(function(){ $('btlb').innerHTML = '<p class="btnote">Leaderboard unavailable right now.</p>'; }); }
   fetch('/b/beat.json').then(function(r){ return r.json(); }).then(function(j){ DATA = j; (j.pool || []).forEach(function(l){ POOL[l[0]] = l; }); MODEL = j.model || []; paintModel(); paintMine();
     try { var nm = localStorage.getItem('bs_beat_name'); if (nm) $('btname').value = nm; } catch(e){}
