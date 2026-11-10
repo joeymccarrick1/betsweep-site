@@ -307,7 +307,7 @@
     sug.addEventListener('mousedown', function(e){ var b = e.target.closest('button'); if(b){ e.preventDefault(); pick(+b.dataset.i); } });
     document.addEventListener('click', function(e){ if(!sug.contains(e.target) && e.target!==inp) sug.hidden=true; }); }
   wire('A'); wire('B');
-  document.addEventListener('click', function(e){ var x = e.target.closest('.x'); if(x){ var s = st[x.dataset.side]; var i = s.indexOf(x.dataset.n); if(i>=0) s.splice(i,1); render(); return; }
+  document.addEventListener('click', function(e){ var x = e.target.closest('.x[data-side]'); if(x){ var s = st[x.dataset.side]; var i = s.indexOf(x.dataset.n); if(i>=0) s.splice(i,1); render(); return; }
     var ab = e.target.closest('.addbtn[data-side]'); if(ab){ if(st.A.indexOf(ab.dataset.n)<0 && st.B.indexOf(ab.dataset.n)<0){ st[ab.dataset.side].push(ab.dataset.n); render(); window.scrollTo({top:0,behavior:'smooth'}); } return; }
     var rb = e.target.closest('.rkopts button'); if(rb){ if(rb.dataset.pos){ st.rkpos = rb.dataset.pos; } document.querySelectorAll('.rkopts button[data-pos]').forEach(function(b){ b.classList.toggle('on', b.dataset.pos===st.rkpos); }); rankings(); return; }
     var th = e.target.closest('th[data-k]'); if(th){ st.sortk = th.dataset.k; rankings(); } });
