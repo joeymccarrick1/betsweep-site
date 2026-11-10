@@ -46,19 +46,29 @@ def line(b):
 rows = "".join(f'<li><b>{E(line(b))}</b><span class="o">{E(odds(b["o"]))}</span><small>{E(b["tm"])} vs {E(b["opp"])} · finished with <b>{b["ac"]:g}</b> - {b["short"]:g} short · FanDuel had it at {round(b["bk"]*100)}%</small></li>' for b in top)
 prow = "".join(f'<li><b>{E(p["title"])}</b><span class="o">+{E(p["odds"])}</span><small>{E(p["note"])}</small></li>' for p in promos)
 share = "Missed by one, Week " + W + ":\n" + "\n".join(f"{line(b)} ({odds(b['o'])}) - finished with {b['ac']:g}" for b in top[:5]) + "\nbetsweep.co/badbeats/"
-html = f"""<!doctype html><html><head><meta charset="utf-8"><title>Missed by one - Week {W} bad beats - BetSweep</title>
+# audit 11/10: plain-source format (title, description, font link, <style>, then the body), the same as build_beat.py / build_teasers.py -
+# build_site.py's wrap() adds the site head, header and tabs and splits at the first </style>. The first version wrote a whole
+# <!doctype html> document, which wrap() would have nested inside the site shell (two <html>/<head>/<body>, no base CSS).
+try:
+    import account as ACCT; _link, _base = ACCT._base_css()
+except Exception: _link, _base = "", ""
+html = f"""<title>Missed by one · Week {W} bad beats · BetSweep</title>
 <meta name="description" content="The week's most painful FanDuel misses: favorites that came up one catch or a few yards short.">
-<style>.bb{{max-width:760px;margin:16px auto 40px;padding:0 16px}} .bb h1{{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;margin:0 0 6px}}
+{_link}
+<style>{_base}
+.bb{{max-width:760px;margin:16px auto 40px;padding:0 16px}} .bb h1{{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;margin:0 0 6px}}
+.bb h1 small{{display:block;font-family:var(--display);font-style:normal;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}}
 .bb p.m{{color:var(--mute);line-height:1.5;margin:0 0 14px}} .bb h2{{font-family:var(--display);font-weight:700;font-size:20px;margin:22px 0 8px}}
 .bbl{{list-style:none;margin:0;padding:0;display:grid;gap:8px}} .bbl li{{display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:10px;padding:10px 12px}}
 .bbl li small{{grid-column:1/-1;color:var(--mute);font-size:13px}} .bbl .o{{font-family:var(--display);font-weight:700}}
-.bbsh{{font:inherit;font-weight:700;font-size:14px;padding:10px 16px;border-radius:10px;border:0;background:var(--red);color:#fff;cursor:pointer;margin:6px 0 14px}}</style></head><body>
-<div class="bb"><h1>Missed by one</h1><p class="m">Week {W}'s most painful FanDuel misses: favorites priced 55% or better that came up one catch or a few yards short. {len(beats)} legs this week missed by that little.</p>
+.bbsh{{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:10px 16px;border-radius:10px;border:0;background:var(--red);color:#fff;cursor:pointer;margin:6px 0 14px}}
+</style>
+<main class="bb"><h1><small>Week {W}</small>Missed by one</h1><p class="m">Week {W}'s most painful FanDuel misses: favorites priced 55% or better that came up one catch or a few yards short. {len(beats)} legs this week missed by that little.</p>
 <button type="button" class="bbsh" data-t="{E(share)}">Share this list</button>
 <ul class="bbl">{rows or '<li>No bad beats graded yet.</li>'}</ul>
 {('<h2>Our promos that lost by one leg</h2><ul class="bbl">' + prow + '</ul>') if promos else ''}
-<p class="m" style="margin-top:18px">Graded from the final box scores against FanDuel's price when we froze the leg. A bad beat is not a bad bet - and sometimes it is.</p></div>
+<p class="m" style="margin-top:18px">Graded from the final box scores against FanDuel's price when we froze the leg. A bad beat is not a bad bet - and sometimes it is.</p></main>
 <script>document.addEventListener('click',function(e){{var b=e.target.closest&&e.target.closest('.bbsh');if(!b)return;var t=b.getAttribute('data-t');if(navigator.share)navigator.share({{text:t}}).catch(function(){{}});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){{b.textContent='Copied';}});}});</script>
-</body></html>"""
+"""
 open(os.path.join(OUT, "badbeats.html"), "w").write(html)
 print(f"wrote out/badbeats.html: week {W}, {len(beats)} near misses ({len(top)} shown), {len(promos)} promos lost by one leg")

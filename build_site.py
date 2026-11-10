@@ -731,6 +731,9 @@ def landing(weeks):
         ("/season/", "Season to date", "Running record", "Projection error by position week by week and the FanDuel leg record, all from pre-kickoff snapshots.", "/season/img/summary.png"),
         ("/guide/", "How to read BetSweep", "New here? Start here", "What every color, rank, percentage and chip on the site means: matchups, model % vs book %, edge, confidence grades, flags and the betslip.", None),
     ]
+    # audit 11/10: a tile picture is used only when the file is in this build - /boards/img/summary.png and the latest receipt's
+    # summary.png are no longer rendered, and the hard-coded paths showed as two broken images on the home page
+    tiles = [(href, name, tag, desc, img if (img and os.path.exists(os.path.join(SITE, img.lstrip("/")))) else None) for href, name, tag, desc, img in tiles]
     tile_html = "".join(
         f'<a class="tile" href="{href}">' + (f'<img src="{img}" alt="" loading="lazy">' if img else '<div class="ph"><img class="bsph" src="/app/icon-192.png" alt="BetSweep"></div>') +
         f'<div class="tb"><small>{html.escape(tag)}</small><h2>{html.escape(name)}</h2><p>{html.escape(desc)}</p><b>Open →</b></div></a>'

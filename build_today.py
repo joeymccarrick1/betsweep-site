@@ -85,7 +85,7 @@ def sections(IN_, OUT_):
         ns.sort(key=lambda n: (sev.get(n["k"], 9), -(n.get("sev") or 0)))
         return ns[:limit]
     def tag_short(n):
-        return {"News: out": "OUT", "News: concussion protocol": "Protocol", "News: limited / questionable": "Q", "News: doubtful": "Doubtful", "News: role up": "Role up", "News: role down": "Role down",
+        return {"News: out": "OUT", "News: concussion protocol": "Protocol", "News: limited / questionable": "Q", "News: doubtful": "Doubtful", "News: left last game": "Left game", "News: week-to-week": "Week-to-week", "News: role up": "Role up", "News: role down": "Role down",
                 "News: back / practising": "Back", "News: trade / signing": "Trade"}.get(n.get("tag"), n.get("tag", ""))
     def script_line(g):
         fav = g["a"] if g["pa"] > g["pb"] else g["b"]; marg = abs(g["pa"] - g["pb"])
@@ -142,7 +142,19 @@ def sections(IN_, OUT_):
         t = re.sub(r"^" + re.escape(n["player"]) + r"\s*:[^.]*\.\s*", "", n["txt"]); return t
     news_items = "".join(f'<li class="{E(n["k"])}" data-team="{E(n.get("team", ""))}" data-player="{E(n["player"])}"><span class="nt">{E(tag_short(n))}</span><div><b>{E(n["player"])} <small>{E(n.get("team", ""))} {E(n.get("pos", ""))}</small></b><p>{E(clean_txt(n))}</p></div></li>' for n in news[:30])
     # ---- record strip -----------------------------------------------------------------------------------------------------------------
-    try: R = HOME.record(D); rec_html = HOME.record_block(R, W)
+    # audit 11/10: record_block's second argument is the latest week WITH A RECEIPT, not the current week - passing W linked "Week 10 receipt"
+    # (/receipts/week10/, a 404) all week until Tuesday's grading. Same rule as build_site.py: receipts built this run + the archive tab.
+    def _latest_receipt():
+        ws = []
+        for f in os.listdir(OUT_):
+            m = re.match(r"results-week(\d+)\.html$", f)
+            if m: ws.append(int(m.group(1)))
+        for r in vals("archive.json")[1:]:
+            try:
+                if len(r) >= 3 and str(r[0]).strip() and ("claude.ai/artifact/" in str(r[2]) or "/receipts/week" in str(r[2])): ws.append(int(float(r[0])))
+            except Exception: pass
+        return max(ws) if ws else None
+    try: R = HOME.record(D); rec_html = HOME.record_block(R, _latest_receipt())
     except Exception as e: rec_html = ""; print("today: record failed", e)
     # ---- slip key -> gid map for "your legs today" (compact: per game, the leg keys) ------------------------------------------------------
     keys_by_g = {}
