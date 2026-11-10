@@ -12,6 +12,30 @@ Owner-facing playbook (calendar, rules, templates, video ideas): the Claude Doc 
 - Nobody is watching: no questions; make the call and say what you assumed in one line.
 - The final message is read on a phone: short headed sections, each promo as a copy-ready block.
 
+## Owner rules (11/7-11/9) - these override anything below where they conflict
+The owner set these in chat after Week 9 and wants every promo, draft and check to follow them. Where a later section disagrees
+(e.g. "Market mix" says no floor legs), follow the owner rule and add one line noting the audit fact, so he sees both.
+1. LOW-RISK LEGS ONLY. Compute each leg's builder risk score exactly like the builder: sum over the leg's `fh` flags plus `D.pf[pl]`
+   flags of bad = 3, watch = 1, good = -1, floored at 0. Score 4+ = "High risk", 2-3 = "Some risk". Leave out every High / Some risk
+   leg (owner 11/7: "We need low risk").
+2. FORM VS MATCHUP: if a leg fails rule 1 mainly on matchup (a tough-defense flag) but the player's recent form or role is strong
+   (e.g. Bucky Irving vs CHI, "playing like a top 3-5 back"), do not drop it silently - list it under "Your call" with both sides.
+3. SHORT FAVORITE SLIPS ARE THE CORE: about 4 legs at roughly -300 to -200, landing near +300 (the Week 9 shape that won three times).
+   Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
+4. OVERS BY DEFAULT, UNDERS WHEN THE CARD SAYS SO: no unders normally, BUT when the game card's "Sweep says" verdict calls for unders
+   (e.g. "Unders crowd, assemble", close-and-low script), build that game's slip with unders (owner 11/9: "insist on unders").
+5. BACKUP QBs: a backup / spot-start QB for an offense that was already struggling gets no passing overs, and his receivers get no
+   yardage or catch overs (owner 11/9 after Carson Wentz's MNF start). Play the other team, the run game or unders instead.
+6. EITHER-OR TDs: judge a pair as a pair (team TD outlook + the pair's share of targets / carries), not by each player's own TD history.
+   If you like a team's top two targets for yards, one of them scoring is a natural add (e.g. Odunze or Burden).
+7. UPSET SLIP: when the public is likely heavy on a favorite, also draft one underdog / shootout slip, ranking legs by the model's
+   per-ending chances (`sc`: [a by 10+, close-low, shootout, b by 10+]) instead of the overall %.
+8. PREDICTABLE PLAYERS FIRST: prefer players whose projections have landed close and whose props have hit at or above their price.
+9. LINK CHECK: screen unders on the FULL market name (`m`, e.g. "Under Receptions"), never the short label, and read every leg back
+   from the link by marketId + selectionId before writing it down (11/8: a Golden UNDER slipped into an "overs" slip).
+10. SAME-NAME PLAYERS: match injuries / inactives on name + team, never name alone (11/9: a Browns "Justin Jefferson" inactive marked
+   the Vikings' Jefferson OUT).
+
 ## Data (all public, read-only)
 1. Clone the site: `git clone -q --depth 1 https://github.com/joeymccarrick1/betsweep-site.git site` (if the repo is already attached,
    use it and `git pull`). Then `git -C site fetch -q origin feeds:feeds` for the ESPN mirror.
