@@ -204,6 +204,25 @@ class Engine:
         self._cache = {}
 
     # ---------- helpers ----------
+        # owner 11/9 reliability ("lean on more predictable players"): each player's graded FanDuel legs from earlier weeks
+        # (in/legsnaps.json, Latest Snapshot, HIT/MISS, no Longest Reception): hits minus fair implied (book / 1.045), shrunk with
+        # K = 12 phantom legs. Leave-one-week-out Weeks 6-9 (3,256 legs): 'reliable' (+5 pts or better) hit 0.4 pts under fair,
+        # 'volatile' (-5 or worse) 4.2 under, neutral 1.8 under. Modest but consistent pooled; Week 9 alone did not show it - re-check Tuesdays.
+        self.REL = {}
+        try:
+            import json as _j
+            _v = _j.load(open(os.path.join(IN, "legsnaps.json")))["values"]; _H = {c: i for i, c in enumerate(_v[0])}; _S = {}
+            for _r in _v[1:]:
+                _r = _r + [""] * (len(_v[0]) - len(_r))
+                if str(_r[_H["Latest Snapshot"]]).upper() != "TRUE" or _r[_H["Result"]] not in ("HIT", "MISS") or _r[_H["Market"]] == "Longest Reception": continue
+                try: _wk = int(float(_r[0])); _bk = float(_r[_H["Book implied %"]])
+                except Exception: continue
+                if _wk >= int(WEEK): continue
+                _bk = _bk / 100 if _bk > 1 else _bk; _x = _S.setdefault(_nn(_r[_H["Player"]]), [0, 0, 0.0])
+                _x[0] += 1; _x[1] += _r[_H["Result"]] == "HIT"; _x[2] += _bk / 1.045
+            for _p, (_n, _h, _b) in _S.items():
+                if _n >= 8: self.REL[_p] = (_n, _h, _b, (_h - _b) / (_n + 12))
+        except Exception as _e: print("note: reliability unavailable:", _e)
     def games(self, name): return self.GL.get(name, [])
     def qb_role(self, name, team):
         """'starter' | 'fill-in' | 'backup' for a team's QB who is OUT this week, judged from the game log - never from the order he
@@ -290,6 +309,11 @@ class Engine:
             elif _nt["status"] == "LIMITED": add("bad", "Limited role (BetSweep)", f"BetSweep note: expect a limited role{_d}.")
             elif _nt["status"] == "STARTING": add("good", "Starting (BetSweep)", f"BetSweep note: confirmed starter{_d}.")
             elif _nt["status"] == "ROLE_UP": add("good", "Role up (BetSweep)", f"BetSweep note: bigger role this week{_d}.")
+        _rl = self.REL.get(_nn(name))
+        if _rl:
+            _n, _h, _b, _d = _rl
+            if _d >= 0.05: add("good", "Reliable", f"Predictable for us: his graded FanDuel lines hit {_h} of {_n} ({100*_h/_n:.0f}%) vs {100*_b/_n:.0f}% priced. Reliable players have held up against their prices better than the rest (Weeks 6-9).")
+            elif _d <= -0.05: add("watch", "Volatile", f"Hard to read: his graded FanDuel lines hit {_h} of {_n} ({100*_h/_n:.0f}%) vs {100*_b/_n:.0f}% priced. Volatile players have hit about 4 points under their prices (Weeks 6-9).")
         # context desk notes (news, depth chart, role rising, consensus, trending) - one flag each, in the order the files were read
         for _c in self.CTX.get(_nn(name), []):
             if _c.get("k") in ("good", "bad", "watch", "info"): add(_c["k"], _c.get("tag") or "Context", _c["txt"])
