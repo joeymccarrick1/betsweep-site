@@ -127,7 +127,7 @@ ME_CSS = """
 .me .card{background:var(--card,#fff);border:1px solid var(--line,#d8d1c2);border-radius:14px;padding:16px 18px;margin:14px 0}
 .me h1{font-family:'Barlow Condensed',sans-serif;font-size:30px;margin:18px 0 4px;letter-spacing:.02em}
 .me h2{font-family:'Barlow Condensed',sans-serif;font-size:20px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline}
-.me h2 a{font-size:13px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500}
+.me h2 a{font-size:13px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;display:inline-block;padding:8px 0 8px 10px}
 .me p.m{color:var(--mute,#6b655c);font-size:13.5px;line-height:1.55;margin:4px 0 10px}
 .me ul{list-style:none;margin:0;padding:0}
 .me li{padding:9px 0;border-top:1px solid var(--line,#d8d1c2);font-size:14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}

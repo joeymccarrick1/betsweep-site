@@ -103,9 +103,15 @@ def kick_text(g):
 
 # which players get a page: a prop this week, or a real role this season (2+ games and 4+ PPR / game or 25%+ snaps)
 pages = {}
+def _role(k):
+    p = S.players[k]; gs = p["games"]; u = S.usage(k, [g["w"] for g in gs]) if gs else None
+    return bool(u and u["n"] >= 2 and ((u["ppr"] or 0) >= 4 or (u["snap"] or 0) >= 0.25))
+# audit 11/10: one page per player. A traded player's earlier-team entry (plydata marks it "old") has no page of its own; if he earned a
+# page there, his current entry keeps it (two games for the new team are not needed again).
+_earned = {S.players[k].get("id") for k in S.players if S.players[k].get("old") and S.players[k].get("id") and _role(k)}
 for k, p in S.players.items():
-    gs = p["games"]; u = S.usage(k, [g["w"] for g in gs]) if gs else None
-    if p["legs"] or (u and u["n"] >= 2 and ((u["ppr"] or 0) >= 4 or (u["snap"] or 0) >= 0.25)):
+    if p.get("old"): continue
+    if p["legs"] or _role(k) or (p.get("id") and p["id"] in _earned):
         pages[k] = p
 by_team = {}
 for k, p in pages.items(): by_team.setdefault(p["team"], []).append(k)
@@ -392,16 +398,16 @@ def usage_block(k, p):
             f'<div class="bars" aria-label="snap share by week">{bars}</div></section>')
 
 def log_block(p):
-    gs = p["games"]
+    gs = sorted(p["games"] + p.get("prev_games", []), key=lambda g: g["w"])   # audit 11/10: a traded player's games for his earlier team are his games too
     if not gs: return '<section><h2>Game log</h2><p class="none">No games for him in the 2026 game log yet.</p></section>'
     qb = p["pos"] == "QB"
     if qb:
         hdr = "<th>Wk</th><th>Opp</th><th>Snap</th><th>Att</th><th>Pass yds</th><th>Pass TD</th><th>INT</th><th>Car</th><th>Rush yds</th><th>Rush TD</th><th>PPR</th>"
-        def row(g): return (f'<td>{g["w"]}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["att"]:.0f}</td><td>{g["pass"]:.0f}</td><td>{g["ptd"]:.0f}</td><td>{g["int"]:.0f}</td>'
+        def row(g): return (f'<td>{g["w"]}{(" <small>" + E(g["tm"]) + "</small>") if g.get("tm") else ""}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["att"]:.0f}</td><td>{g["pass"]:.0f}</td><td>{g["ptd"]:.0f}</td><td>{g["int"]:.0f}</td>'
                             f'<td>{g["car"]:.0f}</td><td>{g["rush"]:.0f}</td><td>{g["td"]:.0f}</td><td>{g["ppr"]:.1f}</td>')
     else:
         hdr = "<th>Wk</th><th>Opp</th><th>Snap</th><th>Tgt</th><th>Rec</th><th>Rec yds</th><th>Car</th><th>Rush yds</th><th>TD</th><th>Tgt share</th><th>PPR</th>"
-        def row(g): return (f'<td>{g["w"]}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["tgt"]:.0f}</td><td>{g["rec"]:.0f}</td><td>{g["recy"]:.0f}</td>'
+        def row(g): return (f'<td>{g["w"]}{(" <small>" + E(g["tm"]) + "</small>") if g.get("tm") else ""}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["tgt"]:.0f}</td><td>{g["rec"]:.0f}</td><td>{g["recy"]:.0f}</td>'
                             f'<td>{g["car"]:.0f}</td><td>{g["rush"]:.0f}</td><td>{g["td"]:.0f}</td><td>{100 * g["ts"]:.0f}%</td><td>{g["ppr"]:.1f}</td>')
     body = "".join(f"<tr>{row(g)}</tr>" for g in reversed(gs))
     return f'<section><h2>Game log <small>2026 regular season, newest first</small></h2><div class="tw"><table><thead><tr>{hdr}</tr></thead><tbody>{body}</tbody></table></div></section>'
@@ -443,6 +449,7 @@ for k, p in pages.items():
 open(os.path.join(OUT, "players", "player.css"), "w").write(__import__("account")._base_css()[1] + PCSS)   # site tokens + light/dark, once for every page
 open(os.path.join(OUT, "players", "player.js"), "w").write(PJS)
 json.dump(slugs, open(os.path.join(OUT, "players", "slugs.json"), "w"))
+json.dump({o: n for o, n in getattr(S, "moved", {}).items() if n in set(slugs.values())}, open(os.path.join(OUT, "players", "redirects.json"), "w"))   # audit 11/10: old team-suffixed addresses of traded players
 # 11/4 UX: the site-wide player search (build_site APP_JS) reads /b/players.json - name, slug, team, position, this week's opponent
 def _opp(p):
     g = S.game_of(p["team"]); return ((g["b"] if g["a"] == p["team"] else g["a"]) if g else "")

@@ -130,7 +130,7 @@ NAV_GROUPS = [("/", "Home", None),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
-              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record"), ("/api/", "API", "Every JSON the site serves")])]
+              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record"), ("/api/", "API", "Every JSON the site serves")])]
 NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
@@ -529,6 +529,15 @@ if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
         _slug = _f[:-5]; place_plain(os.path.join(_PD, _f), os.path.join(SITE, "player", _slug), f"/player/{_slug}/"); _np += 1
     made.append(place_plain(os.path.join(_PD, "index.html"), os.path.join(SITE, "player"), "/player/"))
     for _f in ("player.css", "player.js"): shutil.copy(os.path.join(_PD, _f), os.path.join(SITE, "player", _f))
+    # audit 11/10: a traded player had two team-suffixed pages (/player/marvin-harrison-ari/ and -hou/); plydata keeps one entry now, and the
+    # old addresses forward to it (out/players/redirects.json) so shared links and search results still land.
+    try:
+        for _old, _new in json.load(open(os.path.join(_PD, "redirects.json"))).items():
+            _dd = os.path.join(SITE, "player", _old)
+            if re.fullmatch(r"[a-z0-9\-]+", _old) and re.fullmatch(r"[a-z0-9\-]+", _new) and os.path.exists(os.path.join(SITE, "player", _new, "index.html")) and not os.path.exists(_dd):
+                os.makedirs(_dd)
+                open(os.path.join(_dd, "index.html"), "w").write(f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>BetSweep</title><link rel="canonical" href="{BASE}/player/{_new}/"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=/player/{_new}/"><script>location.replace("/player/{_new}/"+location.search+location.hash)</script></head><body><a href="/player/{_new}/">This player page moved</a></body></html>')
+    except Exception as _e: print("note: player redirects not written:", _e)
     # 11/4 UX audit: the site-wide player search (APP_JS) reads /b/players.json = build_players.py's out/players/index.json
     if os.path.exists(os.path.join(_PD, "index.json")):
         os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(_PD, "index.json"), os.path.join(SITE, "b", "players.json"))
@@ -603,7 +612,7 @@ try:
     shutil.copy(os.path.join(OUT, "live_legs.json"), os.path.join(SITE, "b", "live-legs.json")); print("wrote /b/live-legs.json (live page tracked legs + pregame chance)")
 except Exception as _e: print("live-legs.json skipped:", _e)
 _bll, _blb = ACCT._base_css()
-def _blpage(inner): return f"<title>BetSweep</title>\n{_bll}\n<style>{_blb}{SL.CSS}</style>\n{inner}"
+def _blpage(inner, title="BetSweep"): return f"<title>{html.escape(title)}</title>\n{_bll}\n<style>{_blb}{SL.CSS}</style>\n{inner}"   # audit 11/10: every short-link page's tab title was just "BetSweep" (wrap() takes <title> from the body)
 os.makedirs(os.path.join(SITE, "b"), exist_ok=True)
 SHORT_LINKS = []
 for _pr in _promos:
@@ -612,11 +621,11 @@ for _pr in _promos:
     _sq = os.path.join(OUT, "promo", f'{_pr["week"]}-{_pr["slot"]}-square.png'); _og = "/og.png"
     if os.path.exists(_sq): shutil.copy(_sq, os.path.join(_d, "card.png")); _og = f"/b/{_code}/card.png"
     _desc = f'{len(_pr["legs"])}-leg parlay · FanDuel {SL.odds_str(_pr["fd"]) if _pr.get("fd") else ""} · ' + " / ".join(l["who"] for l in _pr["legs"][:6]) + (" …" if len(_pr["legs"]) > 6 else "")
-    open(os.path.join(_d, "index.html"), "w").write(wrap(_blpage(SL.promo_page(_pr)), f'{_pr["title"]} · BetSweep', _desc, f"/b/{_code}/", _og))
+    open(os.path.join(_d, "index.html"), "w").write(wrap(_blpage(SL.promo_page(_pr), f'{_pr["title"]} · BetSweep'), f'{_pr["title"]} · BetSweep', _desc, f"/b/{_code}/", _og))
     SHORT_LINKS.append(SL.promo_url(_pr))
 try: _bweek = int(json.load(open(os.path.join(OUT, "builder_data.json")))["week"])
 except Exception: _bweek = ""
-open(os.path.join(SITE, "b", "index.html"), "w").write(wrap(_blpage(SL.index_page(_promos, _bweek)), "BetSweep bet links", "Short links for every bet BetSweep posts: the legs, the model's number and one tap to FanDuel.", "/b/", "/og.png"))
+open(os.path.join(SITE, "b", "index.html"), "w").write(wrap(_blpage(SL.index_page(_promos, _bweek), "BetSweep bet links"), "BetSweep bet links", "Short links for every bet BetSweep posts: the legs, the model's number and one tap to FanDuel.", "/b/", "/og.png"))
 try:   # owner 10/30: DraftKings / Hard Rock ids for this week's legs, so every short link gets DK + HR buttons (shortlinks.books_map)
     _bm = SL.books_map(json.load(open(os.path.join(OUT, "builder_data.json"))))
     json.dump(_bm, open(os.path.join(SITE, "b", "books.json"), "w"), separators=(",", ":")); print(f"short links: books.json {len(_bm['m'])} legs with DK/HR ids")
@@ -687,6 +696,9 @@ footer{max-width:1360px;margin:34px auto 0;padding:18px 16px 40px;border-top:1px
 footer .tag{font-family:var(--display);font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);font-size:13px;margin-bottom:6px}
 footer .tag i{color:var(--red);font-style:normal}
 @media (max-width:560px){ .tile img,.tile .ph{aspect-ratio:16/6} .tb p{font-size:13px} .pitch{margin-top:-18px} .pitch .card{padding:20px 16px 18px} .pitch .card .mark{width:58px;height:58px;top:14px;right:14px} .pitch h1{padding-right:66px} }
+/* audit 11/10: on a phone the 14 "Everything on BetSweep" tiles ran about 5,000px (a picture, a headline and four lines of copy each) -
+   a fifth of the home page. Two compact columns there: tag, name, Open. The pictures and the copy stay on wide screens. */
+@media (max-width:760px){ .tiles{grid-template-columns:1fr 1fr;gap:8px} .tile img,.tile .ph{display:none} .tile .tb{padding:11px 12px 10px;gap:3px} .tile .tb p{display:none} .tile .tb h2{font-size:18px;line-height:1.12} .tile .tb small{font-size:10.5px} .tile .tb b{font-size:11.5px;margin-top:2px} }
 """
 
 def posts_gallery():
@@ -729,6 +741,7 @@ def landing(weeks):
         ("/beat/", "Beat the Model", "Your five vs its five", "Pick five FanDuel player props for the week and go head to head with the model's five. Hits count, not odds; Tuesday grades everyone and the leaderboard keeps the season score.", None),
         ("/receipts/", "Receipts", (f"Week {latest} graded" if latest else "Coming Tuesday"), "What we said before kickoff and what happened. Every projection frozen before the games, graded after, biggest beats and busts included. Nothing is edited after the fact.", (f"/receipts/week{latest}/img/summary.png" if latest else None)),
         ("/season/", "Season to date", "Running record", "Projection error by position week by week and the FanDuel leg record, all from pre-kickoff snapshots.", "/season/img/summary.png"),
+        ("/badbeats/", "Missed by one", (f"Week {latest} bad beats" if latest else "Bad beats"), "The week's most painful FanDuel misses: favorites that came up one catch or a few yards short, and our own promos that lost by a single leg.", None),   # owner 11/10 (badbeats.py); audit 11/10: the page had no link anywhere
         ("/guide/", "How to read BetSweep", "New here? Start here", "What every color, rank, percentage and chip on the site means: matchups, model % vs book %, edge, confidence grades, flags and the betslip.", None),
     ]
     # audit 11/10: a tile picture is used only when the file is in this build - /boards/img/summary.png and the latest receipt's
@@ -876,6 +889,20 @@ _api_body = f'''<title>API · BetSweep</title>
 </main>
 '''
 os.makedirs(os.path.join(SITE, "api"), exist_ok=True); open(os.path.join(SITE, "api", "index.html"), "w").write(wrap(_api_body, "API · BetSweep", "Every public JSON BetSweep serves, free to read.", "/api/", "/og.png")); print("wrote /api/")
+# ---- audit 11/10: /how/ ("How BetSweep picks") was a hand-stitched page in the site repo carrying a frozen copy of an old shell (old header and
+# menu, the Builder tab lit, Google Fonts). Its text lives in how_body.html here now (a <style> block, then the body) and is wrapped like
+# every other plain page, so the header, menu and tabs follow the site. Edit the wording in how_body.html.
+_how_src_path = os.path.join(HERE, "how_body.html")
+if os.path.exists(_how_src_path):
+    try:
+        _how_src = open(_how_src_path).read(); _how_m = re.match(r"\s*<style>(.*?)</style>\s*", _how_src, re.S)
+        _how_link, _how_base = ACCT._base_css()
+        _how_desc = "How the BetSweep model prices FanDuel props, what the graded weeks showed, and why the picks are plus-money edges, touchdowns and short slips."
+        _how_page = wrap(f"<title>How BetSweep picks</title>\n{_how_link}\n<style>{_how_base}\n{_how_m.group(1) if _how_m else ''}</style>\n" + (_how_src[_how_m.end():] if _how_m else _how_src), "How BetSweep picks", _how_desc, "/how/", "/og.png")
+        os.makedirs(os.path.join(SITE, "how"), exist_ok=True)   # written only once wrap() has succeeded: a failure leaves the repo's copy alone
+        open(os.path.join(SITE, "how", "index.html"), "w").write(_how_page); shutil.copy(_how_src_path, os.path.join(SITE, "how", "body.html"))
+        made.append("How BetSweep picks")
+    except Exception as _e: print("WARN /how/ not rebuilt (the repo copy stays):", _e)
 # ---- owner 10/30: sitemap.xml + robots.txt so search engines find every page (the 375-odd player pages above all). Every index.html
 # this build wrote, except the account page, short-link pages and the 404; receipts the clone already holds are added from in/archive.json weeks.
 _today = _dt.date.today().isoformat(); _urls = []
@@ -883,6 +910,9 @@ for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
     if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/")): continue
+    try:
+        if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
+    except Exception: pass
     _urls.append(_path)
 for _w in weeks:
     if f"/receipts/week{_w}/" not in _urls: _urls.append(f"/receipts/week{_w}/")

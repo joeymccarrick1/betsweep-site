@@ -960,7 +960,7 @@ BUILDER_CSS = r""".sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.u
 .tip b{font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px;color:var(--red)}
 .tip .ex{display:inline-flex;align-items:center;gap:6px;color:var(--mute)}
 .tip .ex .l5{padding:2px 4px}
-.tip button{margin-left:auto;font:inherit;font-size:12px;font-weight:600;background:none;border:1px solid var(--line);border-radius:3px;color:var(--ink);padding:3px 9px;cursor:pointer}
+.tip button{margin-left:auto;font:inherit;font-size:12px;font-weight:600;background:none;border:1px solid var(--line);border-radius:3px;color:var(--ink);padding:3px 9px;cursor:pointer} @media (pointer:coarse){ .tip button{padding:8px 14px;font-size:13px} }
 .tip[hidden]{display:none}
 .helpbtn{font:inherit;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink);background:none;border:1px solid var(--line);border-radius:3px;padding:3px 9px;cursor:pointer}
 .helpbtn:hover{border-color:var(--red)}

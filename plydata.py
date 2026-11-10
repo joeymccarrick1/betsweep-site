@@ -116,10 +116,30 @@ class Season:
             self.players[k]["legs"] = ls; self.players[k]["name"] = ls[0]["pl"]; self.legname[k] = ls[0]["pl"]
         for k, p in self.players.items():
             p["status"] = self.inj.get((k.split("|")[0], p["team"]))
-        # slugs: name, or name-team when two players share a name
-        cnt = collections.Counter(slugify(p["name"]) for p in self.players.values())
+        # slugs: name, or name-team when two PLAYERS share a name.
+        # audit 11/10: a traded player has stat rows under two teams, so he has two entries here - and had two pages
+        # (/player/marvin-harrison-ari/ and -hou/, both in the directory and the search). The entries stay separate (snap / target shares
+        # and the "who benefits" splits are per team), but one player id is one player: the entry on his current team (this week's legs,
+        # else his latest game) is his page; the earlier ones are marked "old" (no page of their own), share its slug, and their games
+        # ride along as prev_games for his game log. self.moved = the old team-suffixed addresses -> his page (redirect stubs).
+        _ident = lambda k, p: p.get("id") or k
+        _who = collections.defaultdict(set)
+        for k, p in self.players.items(): _who[slugify(p["name"])].add(_ident(k, p))
         for k, p in self.players.items():
-            s = slugify(p["name"]); p["slug"] = s if cnt[s] == 1 else f"{s}-{p['team'].lower()}"
+            s = slugify(p["name"]); p["slug"] = s if len(_who[s]) == 1 else f"{s}-{p['team'].lower()}"
+        self.moved = {}
+        _by_id = collections.defaultdict(list)
+        for k, p in self.players.items():
+            if p.get("id"): _by_id[p["id"]].append(k)
+        for _pid, ks in _by_id.items():
+            if len(ks) < 2: continue
+            ks.sort(key=lambda k: (bool(self.players[k]["legs"]), max([g["w"] for g in self.players[k]["games"]] or [0])))
+            cur = self.players[ks[-1]]
+            cur["prev_games"] = sorted([dict(g, tm=self.players[k]["team"]) for k in ks[:-1] for g in self.players[k]["games"]], key=lambda g: g["w"])
+            for k in ks:
+                o = self.players[k]; was = f"{slugify(o['name'])}-{o['team'].lower()}"
+                if k != ks[-1]: o["old"] = True; o["slug"] = cur["slug"]
+                if was != cur["slug"]: self.moved[was] = cur["slug"]
         self.games = {g["gid"]: g for g in self.B.get("games", []) if g.get("gid")}
 
     def game_of(self, team):

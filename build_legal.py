@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """BetSweep legal pages -> out/legal-terms.html, out/legal-privacy.html, out/legal-responsible.html (build_site.py places them at
 /terms/, /privacy/, /responsible-gambling/). Plain-English Terms of Use, Privacy Policy and Responsible Gambling + Affiliate Disclosure
-for BetSweep LLC. Written for the site as it is today (static pages, optional Supabase accounts for sync, no analytics); update when that changes.
+for BetSweep LLC. Written for the site as it is today (static pages, optional Supabase accounts, no analytics); update when that changes -
+the privacy text was rewritten in the 11/10 audit to cover everything the account features store (see the note above PRIVACY).
 Owner-confirmed facts live in LEGAL below (entity, state, contact). v2026-10-19.
 """
 import os, datetime, html
@@ -66,27 +67,39 @@ TERMS = eff + f"""
 <p>These terms are governed by the laws of {("the State of " + L["state"]) if L["state"] else "the U.S. state in which " + L["entity"] + " is organized"}, without regard to conflict-of-law rules. Questions, corrections and takedown requests: <a href="mailto:{L["contact"]}">{L["contact"]}</a>.</p>
 """
 
-PRIVACY = eff + f"""
-<p>Short version: {L["site"]} works without an account, runs no ad trackers and no analytics scripts, and keeps your slips and settings in your browser. If you choose to sign in (optional), we store your email address and the things you build on the site so they follow you between devices - nothing else.</p>
+# audit 11/10: the policy still said "no accounts", "we hold no account data" and "pages load web fonts from Google Fonts ... cdnjs", and did not
+# mention alerts, the email brief, pick'em, Ask the model, short links, sweat rooms or the jsDelivr / ESPN requests. Rewritten to match what
+# the site stores today (tables: user_state, push_subs, email_prefs, fantasy_rosters, beat_picks, ask_log, short_links + link_hits, feed_*,
+# sweat_*). The owner should read it and have counsel look at it; when a feature starts storing something new, add it HERE first.
+PRIVACY_UPDATED = "November 10, 2026"
+PRIVACY = eff.replace("</p>", f" · Privacy Policy last updated {PRIVACY_UPDATED}</p>") + f"""
+<p>Short version: {L["site"]} works without an account, runs no ad trackers and no analytics scripts, and keeps your slips and settings in your browser. If you choose to sign in (optional), we store your email address and the things you build, post or switch on, so they follow you between devices and the features you asked for can work - nothing else.</p>
 <h2>What we collect</h2>
 <ul>
-<li><b>Unless you sign in or post, nothing you type on the site is sent to us.</b> Parlay slips, Fantasy rosters, DFS lineups and your settings are stored in your browser's local storage on your device and never leave it except when you choose to open a sportsbook link or share a post.</li>
-<li><b>Sleeper usernames.</b> If you enter a Sleeper username on the Fantasy page, your browser asks Sleeper's public API for that account's leagues and rosters directly. BetSweep's servers are not involved and we do not see or store it.</li>
-<li><b>Optional accounts.</b> If you sign in, we store your email address, the time you accepted these terms and confirmed you are 21 or older, and the items you build on the site (saved betslips, the builder slip, hand-built fantasy teams, trade scenarios, the Sleeper username and league you entered). They are kept with our authentication and database provider, Supabase (servers in the United States), tied to your account and readable only by you and by us for support. Signing out leaves a copy in your browser; to delete the account and everything stored with it, email <a href="mailto:{L["contact"]}">{L["contact"]}</a> from the signed-in address and it is removed within 30 days. We do not sell or share it and we send no marketing email unless you ask for it.</li>
+<li><b>Unless you sign in, post or make a short link, nothing you type on the site is sent to us.</b> Parlay slips, Fantasy rosters, DFS lineups, your bankroll plan and your settings are stored in your browser's local storage on your device and never leave it except when you choose to open a sportsbook link or share something.</li>
+<li><b>Sleeper usernames.</b> If you enter a Sleeper username on the Fantasy page, your browser asks Sleeper's public API for that account's leagues and rosters directly. Unless you are signed in, BetSweep's servers are not involved and we do not see or store it.</li>
+<li><b>Roster screenshots.</b> If you import a roster from a screenshot, the picture is read in your browser and is not uploaded to us. The reader is open-source software that your browser loads from the jsDelivr network when you use it.</li>
+<li><b>Optional accounts.</b> If you sign in, we store your email address, the time you accepted these terms and confirmed you are 21 or older, and the items you build on the site (saved betslips, the builder slip, hand-built fantasy teams, DFS lineups, trade scenarios, your bankroll plan, the Sleeper username and league you entered, and your fantasy roster so alerts can cover your players). They are kept with our authentication and database provider, Supabase (servers in the United States), tied to your account and readable only by you and by us for support. Signing out leaves a copy in your browser; to delete the account and everything stored with it, email <a href="mailto:{L["contact"]}">{L["contact"]}</a> from the signed-in address and it is removed within 30 days. We do not sell or share it.</li>
+<li><b>Alerts.</b> If you turn on notifications, we store the push address and keys your browser gives us (your browser maker's push service - Apple, Google or Mozilla - delivers the message), a short description of the browser, and your alert settings. Turning alerts off removes them.</li>
+<li><b>The game-day email.</b> If you switch on the email brief on My BetSweep, we store that choice with your email address and send the brief through Resend, our email provider. You can switch it off there at any time. We send no other marketing email.</li>
+<li><b>Beat the model.</b> Your five picks each week, the display name you chose and how the picks graded are stored with your account. The leaderboard shows that name, your graded picks and your record - never your email.</li>
+<li><b>Ask the model.</b> A question you type there (signed-in users) is sent to our server and on to Anthropic, the AI provider that writes the answer, together with the model's numbers for the players you named - not your name, your email or your slips. We keep your questions and the answers with your account to enforce the daily limit and to improve the feature.</li>
+<li><b>Short links.</b> When you make a short link for a slip, its legs and price are stored under the link's code, and anyone who has the link can see them; if you are signed in, the link is recorded as yours. We count how many times each link is opened, not who opened it.</li>
 <li><b>Social posts.</b> If you post a slip to the Social page, the handle, title, legs and price you entered, the time, and the upvotes and reports on it are stored with Supabase and shown publicly (your email is not). Upvotes and reports record which account made them so each account counts once. Deleting a post removes it; deleting your account removes your posts, votes and reports.</li>
+<li><b>Sweat rooms.</b> On the Live page, tapping "I'm on it" or a reaction stores that leg, the reaction and the time with your account. Other people see the totals and the reactions - never who.</li>
 <li><b>Email.</b> If you write to <a href="mailto:{L["contact"]}">{L["contact"]}</a> we keep the message so we can answer it and fix what you reported.</li>
 <li><b>Server logs.</b> The site is hosted on GitHub Pages, which, like any web host, may log IP addresses and request details for security and operations under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub's privacy statement</a>. We do not receive or use those logs.</li>
 </ul>
 <h2>Cookies and tracking</h2>
-<p>We set no cookies and run no advertising or analytics trackers. Pages load web fonts from Google Fonts and a small image-rendering library from cdnjs (Cloudflare); those providers see the ordinary request data a browser sends when it fetches a file. When you tap a sportsbook button you leave our site; the sportsbook's own privacy policy applies from there, and if the link is an affiliate link the sportsbook or its network may record that you arrived from BetSweep (see <a href="/responsible-gambling/">disclosures</a>).</p>
+<p>We set no advertising or analytics cookies and run no trackers. If you sign in, your browser keeps a sign-in token in its own storage so you stay signed in. Fonts and page scripts are served from {L["site"]} itself, with two exceptions: the sign-in library (and the screenshot reader, when you use it) loads from the jsDelivr network, and live scores, box scores and team logos come straight from ESPN's public data. Those providers see the ordinary request data a browser sends when it fetches a file. When you tap a sportsbook button you leave our site; the sportsbook's own privacy policy applies from there, and if the link is an affiliate link the sportsbook or its network may record that you arrived from BetSweep (see <a href="/responsible-gambling/">disclosures</a>).</p>
 <h2>The installable app</h2>
 <p>Adding BetSweep to your home screen installs a service worker that caches pages on your device for offline use. It stores nothing about you and can be removed by deleting the app or clearing site data.</p>
 <h2>Children</h2>
 <p>The site is for adults of legal betting age. We do not knowingly collect information from anyone under 18, and the site is not directed at them.</p>
 <h2>Your choices</h2>
-<p>Clear your browser's site data to remove everything BetSweep stored on your device. Email us to have any message you sent deleted. Because we hold no account data, there is nothing else to export or erase.</p>
+<p>Clear your browser's site data to remove everything BetSweep stored on your device. If you have an account, you can delete your posts and switch off alerts and the email brief on the site, and you can email us from the signed-in address to get a copy of what is stored with the account or to have the account and everything stored with it deleted within 30 days. Email us to have any message you sent deleted.</p>
 <h2>Changes and contact</h2>
-<p>If we ever add accounts, payments, analytics or email lists, this page will say so before it happens. Questions: <a href="mailto:{L["contact"]}">{L["contact"]}</a>. {L["entity"]}{(", " + L["state"]) if L["state"] else ""}.</p>
+<p>When what we collect changes - a new feature that stores something, payments, analytics or an email list - this page is updated first and the date at the top changes. Questions: <a href="mailto:{L["contact"]}">{L["contact"]}</a>. {L["entity"]}{(", " + L["state"]) if L["state"] else ""}.</p>
 """
 
 RESP = eff + f"""
@@ -112,6 +125,6 @@ RESP = eff + f"""
 """
 
 page("Terms of Use", "The plain-English terms for using betsweep.co: information only, not betting advice; you are responsible for your own bets and for the law where you live.", TERMS, "terms")
-page("Privacy Policy", "What betsweep.co collects (almost nothing): no accounts, no trackers, slips and settings stay in your browser; the only data we hold is what you email us.", PRIVACY, "privacy")
+page("Privacy Policy", "What betsweep.co collects: nothing unless you sign in, post or make a link; no ad or analytics trackers; slips and settings stay in your browser. An optional account stores what you build and switch on.", PRIVACY, "privacy")
 page("Responsible Gambling", "Help lines, how to use BetSweep responsibly, the affiliate disclosure, and who BetSweep is and is not affiliated with.", RESP, "responsible")
 print("wrote out/legal-terms.html, out/legal-privacy.html, out/legal-responsible.html")

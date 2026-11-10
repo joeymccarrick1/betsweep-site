@@ -81,7 +81,7 @@ CSS = """
 .uw .tag.ok{color:var(--mute)}
 .uw .st{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px;background:var(--red);color:#fff;vertical-align:1px}
 .uw .st.q{background:var(--warn);color:#0f141c}
-.uw .leg{font-size:12px;white-space:normal} .uw .leg a.fd{display:inline-block;font-weight:700;text-decoration:none;background:#1493ff;color:#fff;border-radius:4px;padding:1px 6px;margin:0 3px}
+.uw .leg{font-size:12px;white-space:normal} .uw .leg a.fd{display:inline-block;font-weight:700;text-decoration:none;background:#1493ff;color:#fff;border-radius:4px;padding:1px 6px;margin:0 3px} @media (pointer:coarse){ .uw .leg a.fd{padding:6px 9px;margin:3px} }
 .uw .none{padding:12px 14px;color:var(--mute);font-size:13px;margin:0;line-height:1.5}
 .uw .vac{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;font-size:13px;color:var(--mute);border-bottom:1px solid var(--line)} .uw .vac b{color:var(--ink)}
 .uw tr[hidden]{display:none}
@@ -94,6 +94,7 @@ def head(title, desc):
 # ---------------- usage trends ----------------
 rows = []
 for k, p in S.players.items():
+    if p.get("old"): continue   # audit 11/10: a traded player's entry for the team he left (plydata) - he was listed as a "falling" role there
     if p["pos"] not in ("RB", "WR", "TE") or not p["games"]: continue
     if p.get("status") and p["status"][0] in ("Out", "Doubtful"): continue   # not playing this week - he is on Who benefits instead
     tw = [w for w in S.team_weeks.get(p["team"], []) if w < W]
@@ -150,6 +151,7 @@ REL = {"QB": ("QB", "RB", "WR", "TE"), "RB": ("RB", "WR", "TE"), "WR": ("WR", "T
 blocks = []; n_out = 0; n_missed = 0
 outs = []; longout = []
 for k, p in S.players.items():
+    if p.get("old"): continue
     st = p.get("status")
     if not st or st[0] not in ("Out", "Doubtful"): continue
     tw = [w for w in S.team_weeks.get(p["team"], []) if w < W]
@@ -171,7 +173,7 @@ for k, p, u, tw, g in outs:
     first = min(played) if played else W
     without = [w for w in tw if w not in played and w > first]   # weeks before his first game this season were not "missed" (signed / promoted later)
     withw = [w for w in tw if w in played and w not in lim]
-    mates = [kk for kk, q in S.players.items() if q["team"] == p["team"] and kk != k and q["pos"] in REL[p["pos"]] and q["games"]]
+    mates = [kk for kk, q in S.players.items() if q["team"] == p["team"] and kk != k and q["pos"] in REL[p["pos"]] and q["games"] and not q.get("old")]   # not a player who has since been traded away
     st = p["status"]
     opp = (g["b"] if g["a"] == p["team"] else g["a"]) if g else ""; vs = "vs" if (g and g.get("b") == p["team"]) else "@"
     head_h = (f'<h2>{plink(p["name"])} <span class="st{" q" if st[0] == "Doubtful" else ""}">{E(st[0])}</span> <small>{p["pos"]} · {E(p["team"])}'
