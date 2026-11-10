@@ -169,6 +169,7 @@ class Engine:
                     if r.get("full_name"): self.VET[_nn(r["full_name"])] = bool((yx is not None and yx >= 8) or (age is not None and age >= 30))
         except Exception: pass
         self.TOTAL = {}; played = {}   # played[week] = set of teams with a game that week (byes = the teams missing)
+        _pts = {}   # team -> points scored in each game before this week (owner 11/9, backup_qb: is the offense already struggling?)
         p = os.path.join(IN, "games.csv")
         if os.path.exists(p):
             with open(p, newline="") as f:
@@ -176,6 +177,10 @@ class Engine:
                     if g["season"] != "2026" or g["game_type"] != "REG": continue
                     try: wk = int(g["week"])
                     except Exception: continue
+                    if wk < self.WEEK:
+                        for _t, _c in ((g["away_team"], "away_score"), (g["home_team"], "home_score")):
+                            _v = _num(g.get(_c))
+                            if _v is not None: _pts.setdefault(_t, []).append(_v)
                     played.setdefault(wk, set()).update([g["away_team"], g["home_team"]])
                     if wk == self.WEEK:
                         self.TOTAL[frozenset([g["away_team"], g["home_team"]])] = _num(g["total_line"])
@@ -193,6 +198,9 @@ class Engine:
         self.BYE = {wk: allteams - ts for wk, ts in played.items() if len(ts) < len(allteams)}   # {week: {teams on bye}}
         ALIAS = {"LAR": "LA", "WSH": "WAS", "JAC": "JAX"}
         self.BYE = {wk: {ALIAS.get(t, t) for t in ts} for wk, ts in self.BYE.items()}
+        _ppg = sorted(((sum(v) / len(v), ALIAS.get(t, t)) for t, v in _pts.items() if v), reverse=True)
+        self.PPG = {t: (round(a, 1), i + 1) for i, (a, t) in enumerate(_ppg)}   # team -> (points per game before this week, rank: 1 = most)
+        self._bqb = {}
         # FanDuel main line per player + market (the rung priced nearest -112)
         self.MAIN = {}
         for r in vals("legboard.json")[1:]:
@@ -241,6 +249,37 @@ class Engine:
         if name != last: return ("still-out", last) if name == leader else "backup"   # season starter missing another game: same stand-in as last week
         if leader != name and leader not in self.OUT and att_last.get(leader, -1) <= 0: return "fill-in"
         return "starter"
+    def backup_qb(self, team):
+        """owner 11/9 (Carson Wentz for the Vikings on Monday night: "we shouldn't have had so much trust on a backup QB that's starting for
+        an offense that was already not performing well"). Returns {"qb", "for", "starts", "ppg", "rank"} when BOTH hold, else None:
+          - this week's quarterback is a stand-in: the projection tab's quarterback for the team (most projected passing yards, not OUT;
+            failing that, whoever started the last game) is not the one who has started most of the team's games, and he has started
+            three or fewer of them - after that the game log knows him and the projections already are his;
+          - the offense was already struggling: bottom 12 of 32 in points per game before this week.
+        Read from the game log, the projection tab and the schedule's scores - never from a depth chart or the order of the injury tab."""
+        if team in self._bqb: return self._bqb[team]
+        out = None
+        try:
+            wk = {}   # week -> (attempts, name) of the quarterback who threw the most for this team that week
+            for n, gs in self.GL.items():
+                for g in gs:
+                    if g["team"] == team and g["pos"] == "QB" and (g["Pass Att"] or 0) > 0 and (g["w"] not in wk or (g["Pass Att"] or 0) > wk[g["w"]][0]): wk[g["w"]] = (g["Pass Att"] or 0, n)
+            starts = {}
+            for w, (a, n) in wk.items(): starts.setdefault(n, []).append(w)
+            if starts and team in self.PPG:
+                leader = max(starts, key=lambda n: (len(starts[n]), max(starts[n])))
+                proj = [(v.get("Pass Yds") or 0, n) for n, v in self.PROJ.items() if v.get("team") == team and v.get("pos") == "QB" and n not in self.OUT and (v.get("Pass Yds") or 0) > 0]
+                last = wk[max(wk)][1]
+                now = max(proj)[1] if proj else (last if last not in self.OUT else None)
+                ppg, rank = self.PPG[team]
+                if now and now != leader and len(starts.get(now, [])) <= 3 and rank >= 21:
+                    out = {"qb": now, "for": leader, "starts": len(starts.get(now, [])), "ppg": ppg, "rank": rank}
+                elif now is None and rank >= 21 and any(team in k for k in self.TOTAL):
+                    # nobody is projected and last week's starter is out (Arizona, Week 10: Brissett traded, Minshew doubtful): whoever starts is a stand-in
+                    out = {"qb": None, "for": last, "starts": 0, "ppg": ppg, "rank": rank}
+        except Exception: out = None
+        self._bqb[team] = out
+        return out
     def avg(self, gs, c):
         v = [g[c] for g in gs if g.get(c) is not None]
         return (sum(v) / len(v)) if v else None
@@ -676,6 +715,16 @@ class Engine:
             if k / n <= 0.4: fl.insert(0, {"k": "bad", "tag": f"{k}/{n} this season", "txt": f"Has {what} in only {k} of {n} games this season.", "hit": (k, n)})
             elif k / n >= 0.8: fl.append({"k": "good", "tag": f"{k}/{n} this season", "txt": f"Has {what} in {k} of {n} games this season.", "hit": (k, n)})
             else: fl.append({"k": "info", "tag": f"{k}/{n} this season", "txt": f"Has {what} in {k} of {n} games this season.", "hit": (k, n)})
+        # --- owner 11/9: a stand-in quarterback on an offense that was already struggling - the overs on that passing game are not to be
+        # trusted (his own passing legs, every teammate's catches and receiving yards, a receiver's or tight end's touchdown). A 'bad' flag:
+        # it keeps the leg out of Top Plays, Floor legs, best parlays, promo picks and the Daily Sweep, and the builder calls it high risk.
+        # Unders never pass through here (they are named "Under <market>"), which is the point: the rule is about overs.
+        if _tm and m in ("Passing Yards", "Passing TDs", "Completions", "Receiving Yards", "Receptions", "Longest Reception", "Anytime TD", "First TD"):
+            bq = self.backup_qb(_tm)
+            if bq and (pos != "QB" or l["player"] == bq["qb"]) and (m not in ("Anytime TD", "First TD") or pos in ("WR", "TE")) and (pos == "QB" or m not in ("Passing Yards", "Passing TDs", "Completions")):
+                _st = "his first start for them" if bq["starts"] == 0 else f"{bq['starts']} start{'s' if bq['starts'] != 1 else ''} for them this season"
+                _who = (f"{bq['qb']} is the projected quarterback in place of {bq['for']} ({_st})" if bq["qb"] else f"The quarterback is unsettled ({bq['for']} started last week and is out; no one is projected yet)")
+                fl.insert(0, {"k": "bad", "tag": "Backup QB", "txt": f"{_who}, and {_tm} is #{bq['rank']} of 32 in points per game ({bq['ppg']:g}). House rule: no trust in a stand-in quarterback on an offense that was already struggling - skip the overs on this passing game."})
         return fl
 
 def warn_text(fl): return "; ".join(f["txt"] for f in fl if f["k"] == "bad")

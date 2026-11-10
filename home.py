@@ -64,7 +64,7 @@ def load(IN, OUT):
 # a fill-in fading. Context flags (tough matchup, low total, main-line hit rate) stay on the boards as notes and do not remove a pick -
 # they describe the line, which the price already carries. Trail script removes rushing legs only.
 ROLE_RISK = ("Target competition", "Backfield competition", "Rising", "Limited", "Snaps down", "Role Down", "Carries down", "Targets down",
-             "Cold L3", "Fill-in", "Usage falling", "Boom/bust")
+             "Cold L3", "Fill-in", "Usage falling", "Boom/bust", "Backup QB")
 def _flagged(D, pl, l=None, m=None):
     if any(h[0] == "bad" for h in ((l or {}).get("fh") or [])): return True
     m = m or (l or {}).get("m") or ""

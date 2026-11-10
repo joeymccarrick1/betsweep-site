@@ -1073,7 +1073,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
     return html_, rec
 BEST_PARLAYS = []
 ROLE_RISK = ("Target competition", "Backfield competition", "Rising", "Limited", "Snaps down", "Role Down", "Carries down", "Targets down",
-             "Cold L3", "Fill-in", "Usage falling", "Boom/bust")   # keep in step with home.py
+             "Cold L3", "Fill-in", "Usage falling", "Boom/bust", "Backup QB")   # keep in step with home.py
 
 # ---------------- confidence + market script (owner 10/26 - see confidence.py) ----------------
 import confidence as CONF
