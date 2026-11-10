@@ -112,6 +112,25 @@ def parse_ts(s):
     except Exception: pass
     return None
 
+# ESPN team-report lines ("Name: Out (Hamstring)" + the reporter's comment). ESPN's "Out" early in the week is often last game's label:
+# "Cam Skattebo: Out (Hamstring) - spotted on the field for Tuesday's practice", "A.J. Brown: Out (Knee) - trending toward traveling".
+# When the reporter's own line is hopeful ABOUT THIS WEEK it is a questionable, not an out (the 11/10 morning run made that call by hand
+# for Brown and Montgomery). A hopeful line that points past this week ("hopeful to return after the bye", "could return in Week 12")
+# stays OUT, and so does anything ESPN lists as injured reserve / suspended / PUP / NFI.
+HOPE = r"spotted on the field|back at practice|returned to practice|practic(ed|es|ing) (in full|fully|on a limited|in a limited)|limited (participant|in practice)|hopeful|trending toward|could return|expected to (practice|return|play)|day[- ]to[- ]day|resum(e|es|ed|ing) practic"
+def later_return(txt, week):
+    if re.search(r"after the bye|next week|in (two|three|four|five|six|several|a few|a couple( of)?|multiple|\d+) (weeks|games)|later this (season|month|year)|this season|down the stretch|late in the season", txt): return True
+    try: wk = int(week)
+    except Exception: return False
+    return any(int(m) > wk for m in re.findall(r"week (\d{1,2})", txt))
+def espn_bucket(status, text, sb, week):
+    st_ = (status or "").strip().lower(); txt = (text or "").lower()
+    if st_.startswith(("injured reserve", "suspend", "physically unable", "non-football", "reserve")): return "OUT"
+    if st_.startswith(("out", "doubtful")):
+        return "QUEST" if (re.search(HOPE, txt) and bucket(txt) != "OUT" and not later_return(txt, week)) else "OUT"
+    if st_.startswith("questionable") and sb not in ("OUT", "PROTOCOL", "QUEST"): return "QUEST"
+    return sb
+
 def main(week):
     week = int(week); now = dt.datetime.now(dt.timezone.utc)
     news = fetch("news.json").get("items", [])
@@ -141,8 +160,12 @@ def main(week):
     by_last = {}
     for k, (name, team, pos) in P.items(): by_last.setdefault(k.split(" ")[-1], []).append(k)
     AV = {}   # this week's availability rows: nn -> status
+    OWN = {}  # owner 11/10 ("Jacobs, Puka, Stevenson are all questionable"): rows the owner set himself - the reason (J) starts with OWNER.
+              # His call wins over the wires: the desk proposes nothing against it and the player's news flag carries his status.
     for r in vals("avail.json")[1:]:
-        if len(r) > 4 and str(r[0]) == str(week): AV[nn(r[1])] = (r[4] or "").strip().upper() or (r[6] or "").strip().upper()
+        if len(r) > 4 and str(r[0]) == str(week):
+            AV[nn(r[1])] = (r[4] or "").strip().upper() or (r[6] or "").strip().upper()
+            if len(r) > 9 and str(r[9]).strip().upper().startswith("OWNER") and (r[4] or "").strip(): OWN[nn(r[1])] = (r[4] or "").strip().upper()
     NICK = {"josh": "joshua", "drew": "andrew", "mike": "michael", "matt": "matthew", "cam": "cameron", "zach": "zachary", "nick": "nicholas", "jake": "jacob", "will": "william",
             "chris": "christopher", "ben": "benjamin", "alex": "alexander", "dan": "daniel", "sam": "samuel", "tim": "timothy", "tony": "anthony", "kenny": "kenneth", "jon": "jonathan"}
     def canon(k):
@@ -188,7 +211,7 @@ def main(week):
     INGAME = (r"rest of (the |sunday'?s |monday'?s |thursday'?s |saturday'?s |today'?s |tonight'?s )?([\w.'’\-]+ ){0,3}(game|contest|matchup|win|loss|night)|rest of (sunday|monday|thursday|saturday|today|tonight)"
               r"|for the remainder|(questionable|doubtful|probable) to return|(won'?t|will not|not expected to|unlikely to|did not|didn'?t) return|exit(s|ed)? (sunday|monday|thursday|saturday|the game|early|with|in the)"
               r"|left (the|sunday|monday|thursday|saturday)\S* (night'?s? )?(game|contest|matchup)|in the (first|second|third|fourth) quarter|(first|second) half|at halftime|being evaluated|carted off|helped off|locker room")
-    stale = 0
+    stale = 0; held = {}
     notes = {}; rows = []; mentions = {}; seen_links = set()
     for it in sorted(news, key=lambda x: str(x.get("ts")), reverse=True):
         if it.get("link") in seen_links: continue
@@ -213,9 +236,7 @@ def main(week):
             sb = bucket(sent) if mine else (b if len(players) == 1 else None)
             if not sb: continue
             if it.get("src") == "espn-inj":   # the title is "Name: <ESPN status> (type)" - the status wins over wording in the comment ("hopeful he will return" on an IR player read as "back / practising")
-                st_ = (it.get("title") or "").split(":", 1)[-1].strip().lower()
-                if st_.startswith(("injured reserve", "out", "suspend", "physically unable", "non-football", "reserve", "doubtful")): sb = "OUT"
-                elif st_.startswith("questionable") and sb not in ("OUT", "PROTOCOL", "QUEST"): sb = "QUEST"
+                sb = espn_bucket((it.get("title") or "").split(":", 1)[-1], it.get("text") or "", sb, week)
             low = sent.lower(); lk = LASTK.get(team); before = bool(ts and lk and ts < lk)
             if sb == "ROLE_UP" and re.search(r"\b(despite|over|ahead of|instead of|in place of|replac\w+|benching|bench(es|ed)?|from)\s+([\w.'’\-]+\s+){0,3}" + re.escape(last_of(name).lower()), low):
                 sb = "ROLE_DOWN"   # "returning to Watson as QB1 despite Sanders' strong fill-in start": the job went to the other man
@@ -243,11 +264,15 @@ def main(week):
             # QUESTIONABLE proposal, not an OUT (audit 11/10: Kyler Murray was proposed OUT for Week 10 off the Week 9 headline)
             w2w = sb == "OUT" and before and bool(re.search(r"week[- ]to[- ]week|day[- ]to[- ]day", tidy(low + " " + head_l))) and not re.search(r"injured reserve|\bir\b|season[- ]ending|out for the (season|year)|indefinitely|surgery|suspend|waived|released", tidy(low + " " + head_l))
             if w2w: kind, tag = "watch", "News: week-to-week"
+            own = OWN.get(k)   # the headline still shows; the chip is the owner's status
+            if own == "QUESTIONABLE" and sb in ("OUT", "PROTOCOL", "EXIT"): held[name] = (own, tag, head[:90]); kind, tag = "watch", "News: limited / questionable"
+            elif own in ("CLEARED", "ACTIVE", "PLAYING") and kind in ("bad", "watch"): kind, tag = "info", "News: back / practising"
             notes[k] = {"player": name, "team": team, "pos": pos, "k": kind, "tag": tag, "sev": sev, "bucket": sb, "ts": ts.isoformat() if ts else None,
                         "txt": f"{head}. {body} ({src}, {when}).".replace("..", ".").replace(" .", "."), "url": it.get("link"), "src": src}
             # proposed availability rows (official status wins; the rebuild appends only when the tab has no row for him)
             cur = AV.get(k)
-            if w2w and not cur:
+            if own: pass   # the owner set this player's status this week
+            elif w2w and not cur:
                 rows.append([str(week), name, team, pos, "QUESTIONABLE", "", "", "", "", f"NEWS DESK: {head} - {body}", f"{src} {when}: {it.get('link')}", now.strftime("%Y-%m-%d"), ""])
             elif sb == "OUT" and kind == "bad" and cur not in ("OUT", "IR"):
                 rows.append([str(week), name, team, pos, "OUT", "", "", "", "", f"NEWS DESK: {head} - {body}", f"{src} {when}: {it.get('link')}", now.strftime("%Y-%m-%d"), ""])
@@ -267,6 +292,7 @@ def main(week):
     json.dump({"week": week, "built": now.isoformat(), "top": trending}, open(os.path.join(OUT, f"trending_w{week}.json"), "w"))
     from collections import Counter
     c = Counter(n["bucket"] for n in notes.values())
+    for _n, (_st, _tg, _hd) in held.items(): print(f"news desk: owner status held - {_n} stays {_st} (the wires read as '{_tg}': {_hd}). An official game-status report replaces it; the desk does not.")
     if stale: print(f"news desk: {stale} weekly statuses dropped (published before the team's last kickoff - about a game already played)")
     print(f"news desk week {week}: {len(news)} items, {len(notes)} player notes ({', '.join(f'{k} {v}' for k, v in sorted(c.items()))}), {len(rows)} proposed availability rows, trending top {len(trending)}")
     for n in sorted(notes.values(), key=lambda n: -n["sev"]):
@@ -299,7 +325,24 @@ def selftest():
     for name, text, want in cases:
         mine = my_clauses(text, last_of(name)); got = bucket(" ".join(mine)) if mine else None
         if got != want: bad += 1; print(f"FAIL {name}: got {got}, want {want} | {text[:90]}")
-    print(f"news desk selftest: {len(cases) - bad}/{len(cases)} ok"); return bad
+    espn = [   # (ESPN status, reporter's line, week, expected) - espn_bucket()
+     ("Out (Hamstring)", "Skattebo was spotted on the field for Tuesday's practice.", 10, "QUEST"),
+     ("Out (Knee)", "Brown (knee) is trending toward traveling with the team.", 10, "QUEST"),
+     ("Doubtful (Ankle)", "Montgomery was a limited participant in Wednesday's practice.", 10, "QUEST"),
+     ("Out (Finger)", "Jacobs is not expected to play Sunday against the Vikings.", 10, "OUT"),
+     ("Out (Knee)", "Nacua is hopeful to return after the bye.", 10, "OUT"),
+     ("Out (Knee)", "Nacua is hopeful to return in Week 12.", 10, "OUT"),
+     ("Out (Knee)", "The team is hopeful he can play in Week 10.", 10, "QUEST"),
+     ("Doubtful (Knee)", "Stevenson is expected to miss multiple weeks, though the team is hopeful he avoids injured reserve.", 10, "OUT"),
+     ("Injured Reserve (Knee)", "He is hopeful to return to practice this week.", 10, "OUT"),
+     ("Out (Calf)", "Smith did not practice Wednesday.", 10, "OUT"),
+     ("Questionable (Concussion)", "Burden has a concussion, head coach Ben Johnson revealed.", 10, "QUEST"),
+    ]
+    for st, text, wk, want in espn:
+        got = espn_bucket(st, text, bucket(text.lower()), wk)
+        if got != want: bad += 1; print(f"FAIL espn {st}: got {got}, want {want} | {text[:90]}")
+    n = len(cases) + len(espn)
+    print(f"news desk selftest: {n - bad}/{n} ok"); return bad
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--selftest": sys.exit(1 if selftest() else 0)
     main(sys.argv[1] if len(sys.argv) > 1 else 9)
