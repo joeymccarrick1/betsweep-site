@@ -19,6 +19,7 @@ if _slips and os.path.isdir(_slips):
         if f.lower().endswith((".png", ".jpg", ".jpeg")): shutil.copy2(os.path.join(_slips, f), os.path.join(IN, "promo_slips", f))
 exec(open(os.path.join(HERE, "brand.py")).read())   # LOGO, WORDMARK, BANNER
 E = html.escape
+import sweep as SW   # owner 11/10: the Daily Sweep - a promo row whose Title starts with "Daily Sweep" (sweep.py has the rules)
 
 def num(x):
     try: return float(str(x).replace("+", "").replace(",", "").replace("%", ""))
@@ -85,6 +86,8 @@ def price_leg(who, market, odds):
     mk = market.strip(); w = who.strip(); out = {"p": None, "bk": None, "gid": "", "tm": "", "opp": "", "kick": "", "ko": None, "disp": f"{w} · {mk}", "rank": None, "key": slip_key(w, mk)}
     def fill(l):
         out["src"] = {k: l.get(k) for k in ("pl", "m", "g", "tm", "c", "gl")}
+        try: out["risk"] = SW.risk_score(l, bd)   # 0-1 low, 2-3 "Some risk", 4+ "High risk" - what the builder's slip shows before the live list
+        except Exception: out["risk"] = None
         g = GAMES.get(l["g"], {}); hist = next((h[1] for h in (l.get("fh") or []) if "/" in str(h[1])), "")
         out.update(gid=l["g"], tm=l["tm"], opp=l["opp"], pos=l.get("pos", ""), kick=g.get("kick", ""), ko=g.get("ko"), bk=l["bk"], hist=hist, fdid=(l.get("fd") or {}).get("m") and (l["fd"]["m"], l["fd"]["s"]),
                    _bl={"pl": l["pl"], "m": l["m"], "ln": l["ln"], "bks": l.get("bks"), "ba": l.get("ba"), "gl": l.get("gl")})   # DraftKings / Hard Rock ids for booklinks.py
@@ -257,6 +260,19 @@ def parse_rows():
                     "same_game": same, "first_ko": min(kos) if kos else None, "last_ko": max(kos) if kos else None, "books": books,
                     "img": {"feed": f"/promo/{int(num(wk))}-{int(num(slot) or 0)}-feed.png", "square": f"/promo/{int(num(wk))}-{int(num(slot) or 0)}-square.png", "story": f"/promo/{int(num(wk))}-{int(num(slot) or 0)}-story.png"}})
     out.sort(key=lambda x: x["slot"])
+    # owner 11/10: the Daily Sweep. sweep.py marks at most one row per game day (Title starts with "Daily Sweep"); the home page leads
+    # with it and keeps its own record. Printed for the run log, with the house-rule checks the owner set for these slips (low-risk
+    # legs only, about four legs, near +300) as WARNINGS - the card still goes up; the owner decides.
+    for w_ in SW.one_per_day(out): print("DAILY SWEEP WARNING -", w_)
+    for p_ in out:
+        if not p_.get("sweep"): continue
+        risky = [f'{l["who"]} {l["market"]} ({SW.risk_tag(l["risk"])})' for l in p_["legs"] if l.get("risk") is not None and l["risk"] >= 2]
+        notes = ([f"{len(p_['legs'])} legs (house shape is about four)"] if not 3 <= len(p_["legs"]) <= 5 else []) \
+              + ([f"price {odds_str(p_['fd'])} (house shape is near +300)"] if p_.get("fd") and not 200 <= p_["fd"] <= 450 else []) \
+              + (["no FanDuel price in column E - a win could not be counted in units"] if not p_.get("fd") else []) \
+              + (["risky legs: " + "; ".join(risky)] if risky else [])
+        print(f'daily sweep: {SW.day_label(p_["first_ko"])} - slot {p_["slot"]} "{p_["title"]}" {odds_str(p_["fd"]) if p_.get("fd") else "no price"}, {len(p_["legs"])} legs' + (f' | status {p_["status"]}' if p_["status"] != "LIVE" else ""))
+        for n_ in notes: print(f'DAILY SWEEP WARNING - slot {p_["slot"]}: {n_}')
     return out
 
 # ---------- cards ----------

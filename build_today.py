@@ -214,12 +214,16 @@ def sections(IN_, OUT_):
                         f'<p class="none" style="margin-top:8px;font-size:12.5px">Values for the whole offer: <a href="/trade/" style="color:var(--ink)">Trade calculator</a>. Market ranks come from FantasyCalc when the sheet has them.</p></section>')
     except FileNotFoundError: pass
     except Exception as _e: print("note: trade desk skipped:", _e)
+    # ---- the Daily Sweep (owner 11/10): the house slip of the game day, first thing on the page (home.py sweep_block; sweep.py has the rules) ----
+    try: sweep_html, _sw_on = HOME.sweep_block(IN_, OUT_, games)
+    except Exception as _e: print("note: Daily Sweep block skipped:", _e); sweep_html = ""
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     body = f'''<title>Today · BetSweep</title>
 <meta name="description" content="Today on BetSweep: what kicks off, the model's plus-money looks for today's games, the news that moved the numbers, your slips and your Sleeper team.">
 <style>{TODAY_CSS}</style>
 <section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdlive" href="/live/">Live</a></div></section>
+{sweep_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p></section>
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>

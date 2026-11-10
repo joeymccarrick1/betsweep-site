@@ -31,6 +31,8 @@ D = json.load(open(os.path.join(OUT, "builder_data.json"))); W = D["week"]
 fdgl = GL.load_fd(IN); sched = GL.load_sched(IN, W)
 now = dt.datetime.now(dt.timezone.utc).timestamp() * 1000
 games = D.get("games", [])
+def _at(g):   # audit 11/10: "WAS @ NYG" from the schedule (build_builder puts home / away on each game); a-b is not away-home
+    return f'{g["away"]} @ {g["home"]}' if g.get("home") and g.get("away") and not g.get("nt") else f'{g.get("a", "")} vs {g.get("b", "")}'
 live = [g for g in games if not g.get("ko") or g["ko"] > now]
 if not live and os.environ.get("TEASERS_ALL"): live = games   # smoke builds on stale data: TEASERS_ALL=1 keeps kicked-off games
 legs = []
@@ -61,14 +63,14 @@ for g in live:
                 mu = m_centre * sgn        # this side's expected margin
                 p = PHI((mu + teased) / SDM)
                 legs.append({"gid": g["gid"], "kind": "spread", "side": side, "nick": GL.NICK.get(side, side), "line": line, "teased": teased, "pts": pts, "p": round(p, 4),
-                             "p0": round(PHI((mu + line) / SDM), 4), "key": crosses(line, teased), "ko": g.get("ko"), "kick": g.get("kick", ""), "a": a, "b": b, "ml": None})
+                             "p0": round(PHI((mu + line) / SDM), 4), "key": crosses(line, teased), "ko": g.get("ko"), "kick": g.get("kick", ""), "a": a, "b": b, "at": _at(g), "ml": None})
         if tl is not None:
             for side, sgn in (("OVER", 1), ("UNDER", -1)):
                 teased = tl - pts if side == "OVER" else tl + pts
                 p = PHI((t_centre - teased) / SDT) if side == "OVER" else PHI((teased - t_centre) / SDT)
                 p0 = PHI((t_centre - tl) / SDT) if side == "OVER" else PHI((tl - t_centre) / SDT)
                 legs.append({"gid": g["gid"], "kind": "total", "side": side, "nick": side.title(), "line": tl, "teased": teased, "pts": pts, "p": round(p, 4), "p0": round(p0, 4),
-                             "key": False, "ko": g.get("ko"), "kick": g.get("kick", ""), "a": a, "b": b, "ml": None})
+                             "key": False, "ko": g.get("ko"), "kick": g.get("kick", ""), "a": a, "b": b, "at": _at(g), "ml": None})
 # best pairs per points: top legs by chance, different games; joint = product; EV at the default price
 pairs = {}
 for pts in POINTS:
@@ -95,7 +97,7 @@ def leg_txt(l):
     if l["kind"] == "spread": return f"{l['nick']} {l['teased']:+g} <small>(from {l['line']:+g})</small>"
     return f"{l['nick']} {l['teased']:g} <small>(from {l['line']:g})</small>"
 def leg_row(l):
-    return (f'<tr class="{"keyx" if l["key"] else ""}"><td><b>{leg_txt(l)}</b><small class="g">{E(l["a"])} @ {E(l["b"])} · {E(l["kick"])}</small></td>'
+    return (f'<tr class="{"keyx" if l["key"] else ""}"><td><b>{leg_txt(l)}</b><small class="g">{E(l.get("at") or (l["a"] + " vs " + l["b"]))} · {E(l["kick"])}</small></td>'
             f'<td class="r"><b>{l["p"]*100:.0f}%</b><small>was {l["p0"]*100:.0f}%</small></td><td class="r">{"3 &amp; 7" if l["key"] else ""}</td></tr>')
 sections = []
 for pts in POINTS:

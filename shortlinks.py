@@ -214,8 +214,8 @@ def promo_page(pr):
     fdbtn = f'<a class="fd" href="{E(pr["link"])}" target="_blank" rel="noopener">Bet it on FanDuel{(" · " + E(odds_str(pr["fd"]))) if pr.get("fd") else ""}</a>' if pr.get("link") else ""
     fdbtn += book_buttons(pr.get("books") or {})
     return f'''<div class="bl" data-code="{E(code)}" data-week="{pr["week"]}" data-last-ko="{pr.get("last_ko") or ""}">
-<div class="hd"><span class="tag">Promoted</span><span class="wk">Week {pr["week"]}</span>{st}</div>
-<h1>{E(pr["title"])}</h1><div class="meta">{n} legs · one tap on FanDuel · snapshot at post time, prices move</div>
+<div class="hd"><span class="tag">{"The Daily Sweep" if pr.get("sweep") else "Promoted"}</span><span class="wk">Week {pr["week"]}</span>{st}</div>
+<h1>{E((pr.get("name") or pr["title"]) if pr.get("sweep") else pr["title"])}</h1><div class="meta">{n} legs · one tap on FanDuel · snapshot at post time, prices move</div>
 <ul class="legs">{leg_rows(pr["legs"])}</ul>
 <div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(pr["fd"])) if pr.get("fd") else '<span style="font-size:16px;font-weight:600">price on FanDuel</span>'}</div><div class="md">{_model_line(pr.get("p"), pr.get("fair"))}</div></div>
 <div class="go">{fdbtn}<div class="row"><button type="button" class="sv" data-slip="{E(json.dumps({"w": int(pr["week"]), "n": pr["title"], "k": keys, "o": pr.get("fd"), "fd": pr.get("link")}))}"{"" if keys and len(keys) == n else " hidden"}>Save slip</button><a href="{E(build)}">Load into the builder</a><button type="button" class="shb" data-st="{E(stext)}" data-su="{E(url)}">Share</button></div></div>

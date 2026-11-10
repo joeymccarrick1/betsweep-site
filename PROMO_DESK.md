@@ -24,6 +24,11 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
    Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
    (Owner 11/10, after the site audit pointed out that /how/ said the opposite: "I want the -300/200 slips." The /how/ page now
    describes this format. Keep the one-line audit fact in the draft, as the paragraph above these rules says; do not argue the format or swap it for plus-money legs.)
+3a. THE DAILY SWEEP (owner 11/10: "I'd love for us to start 1-3"): ONE house slip per game day is the flagship - the short favorite
+   slip of rule 3, posted on the site before the day's first kickoff with its own public record (home page hero; gen/sweep.py).
+   Why: the receipts showed 0-37 on the slips we posted in Weeks 6-9 (34 of them +477 or longer) while the short slips that won in
+   Week 9 were built in chat and never went on the record. Everything else we post is "side action" on the site, and a slip at +2000
+   or longer is tagged "Long shot". Recipe: the **sweep** slot below.
 4. OVERS BY DEFAULT, UNDERS WHEN THE CARD SAYS SO: no unders normally, BUT when the game card's "Sweep says" verdict calls for unders
    (e.g. "Unders crowd, assemble", close-and-low script), build that game's slip with unders (owner 11/9: "insist on unders").
 5. BACKUP QBs: a backup / spot-start QB for an offense that was already struggling gets no passing overs, and his receivers get no
@@ -117,8 +122,9 @@ A leg is usable only if ALL hold:
 
 ## Weekly flow (owner 11/1: "move schedule to start Wednesday night ... get legs and everything Wednesday so I can start making graphics. If
 ## Thursday's injuries or anything comes up we can flag it before I post anything")
-- **weekly** (Wednesday night): draft EVERY promo for the coming week in one run - thursday, saturday (Model's Best + SGP of the week),
-  sunday_main, snf, mnf (+500 and Piss Missile Monday) - using the slot recipes below. Leg filter applies, except the "kicks off 30+ minutes after
+- **weekly** (Wednesday night): draft EVERY promo for the coming week in one run - a **sweep** (the Daily Sweep, rule 3a) for every game
+  day of the week FIRST, then thursday, saturday (Model's Best + SGP of the week), sunday_main, snf, mnf (+500 and Piss Missile Monday) -
+  using the slot recipes below. Leg filter applies, except the "kicks off 30+ minutes after
   this run" check is simply "not started". If a game's props are not in the data yet, say "props not posted yet" for that slot (the Saturday
   check fills it). Save the drafts: write `week<W>.md` (the full owner-facing drafts) and `week<W>.json` (per promo: slot, name, legs with
   pl / m / ln / o / p / fd ids, the FanDuel link, price, plus `type` ("+500" / "lottery" / ...), `game` ("CHI-SEA" for SGPs), a ready
@@ -146,6 +152,28 @@ A leg is usable only if ALL hold:
 
 ## Slots
 Every recipe below is subject to the Market mix rule above (11/4): where a recipe says floor legs, rungs 10-25% under projection, or -250-or-better prices, use `tier: "plus"` legs and +120-or-longer TD legs instead, and keep core slips to 2-3 legs. The recipes still decide WHICH games and WHAT kind of slip.
+- **sweep** (THE DAILY SWEEP, rule 3a; `"type": "sweep"`, `"slot": "sweep_thu"` / `"sweep_sun"` / `"sweep_mon"` / `"sweep_sat"` ...): exactly ONE
+  per game day (the CT date of the kickoffs: Thursday, Sunday, Monday, plus Saturday / Friday / holiday games when the week has them). It is
+  NOT subject to the Market mix rule or the "2-3 legs" line above - the owner rules decide it:
+  - Shape: 4 legs (3 or 5 only when the price cannot be reached otherwise), each priced about -300 to -200 (a leg at -350 or -180 is fine
+    when the slip still lands in range), FanDuel price +250 to +400. On a one-game day it is a same-game slip: use FanDuel's own SGP price,
+    never the legs multiplied; if it cannot be read, write "price on FanDuel" and give the multiplied figure labelled as an estimate - the
+    owner types the real price in `odds` when he approves. On a multi-game day take the day's four best legs, at most two from one game.
+  - Every leg: builder risk score 0-1 (rule 1 - no "Some risk", no "High risk"), passes the Leg filter, an over unless that game's
+    Sweep says calls for unders (rule 4), no backup-QB dependency (rule 5), agrees with the game's most likely endings and its Sweep says
+    (rule 12), predictable players first (rule 8). No two legs that need the same team to win big, and no more than two legs on one team.
+    Skip a low-confidence game (rule 13) rather than force it - on a one-game day with a low-confidence game, shrink to 3 legs and say so.
+  - Run judgment checks 11-16 and put the "argue against it" line in the draft.
+  - Name: "Daily Sweep: <short name>". The name after the colon is the owner's to change; the words "Daily Sweep" must stay at the start of
+    the title - the site, the record and the receipt find the slip by them (promo_approve.py adds them to a `type: "sweep"` draft that lacks them).
+  - Caption: two or three plain sentences, one reason per leg. No "lock", no "free money".
+  - The record is the record: once a Sweep is on 'PROMO - Promoted Bets' it is never edited, re-priced, renamed or replaced, and none is
+    ever added after its first kickoff. Before it is posted, a check run that flags a leg swaps it in the draft; after it is posted, the
+    check run reports the flag to the owner and leaves the row alone. Never draft a second Sweep for a day that already has one (in the
+    drafts with `post: true`, or on the tab). If a game day has no clean four legs, draft none and say why - a day without a Sweep is
+    better than a forced one.
+  - Getting it on the site: an approved draft goes up with the next site rebuild (Thu 7:40 AM / 3:40 PM, Sat 7:40 AM, Sun 7:40 / 9:52 AM /
+    12:40 PM CT). There is no Monday rebuild: Monday's Sweep has to be approved before Sunday's last rebuild, or the owner posts it in chat.
 - **thursday** (TNF): (a) single best bet: the one leg with the highest `e` among legs at -150..+150 with `p >= 0.5`; (b) +500 (target
   +400..+650, 3-4 legs, highest chance); (c) +5000 lottery (+3500..+7000, a story-driven same-game build - TDs + overs that need the same
   game script; 4-6 legs, label LOTTERY).

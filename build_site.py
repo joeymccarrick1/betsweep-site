@@ -579,7 +579,7 @@ except Exception: _promos = []
 # an injury, a weather turn or an owner note before kickoff)
 try:
     os.makedirs(os.path.join(SITE, "b"), exist_ok=True)
-    json.dump([{"week": _p.get("week"), "slot": _p.get("slot"), "title": _p.get("title"), "status": _p.get("status", "LIVE"),
+    json.dump([{"week": _p.get("week"), "slot": _p.get("slot"), "title": _p.get("title"), "status": _p.get("status", "LIVE"), "sweep": bool(_p.get("sweep")),   # sweep: the day's Daily Sweep (owner 11/10)
                 "legs": [{"key": _l.get("key"), "who": _l.get("who"), "market": _l.get("market"), "gid": _l.get("gid"), "ko": _l.get("ko"), "disp": _l.get("disp")} for _l in (_p.get("legs") or [])]}
                for _p in _promos], open(os.path.join(SITE, "b", "promos.json"), "w"))
 except Exception as _e: print("note: /b/promos.json not written:", _e)

@@ -196,7 +196,10 @@ def sweep_card(gid, line):
         else: lt = f'{leg["player"]} {int(leg["line"] or 1)}+ {mk.lower()}'
         lo = odds_str(leg["odds"]); ids = fd_ids(leg)
         if ids: lu = f"https://sportsbook.fanduel.com/addToBetslip?marketId={ids[0]}&selectionId={ids[1]}"
-    return (f'<button type="button" class="swcard" data-g="{E(a + " @ " + b)}" data-t="{E(line)}" data-l="{E(lt)}" data-o="{E(lo)}" data-u="{E(lu)}" data-w="{WEEK}">'
+    try: _gi = game_for(a, b)   # audit 11/10: "WAS @ NYG" from the schedule; a-b is the scripts tab's order, not away-home
+    except Exception: _gi = None
+    _glab = (f'{_gi["away_team"]} @ {_gi["home_team"]}' if _gi and str(_gi.get("location") or "").strip().lower() != "neutral" else f"{a} vs {b}")
+    return (f'<button type="button" class="swcard" data-g="{E(_glab)}" data-t="{E(line)}" data-l="{E(lt)}" data-o="{E(lo)}" data-u="{E(lu)}" data-w="{WEEK}">'
             f'Share this take{(" + " + E(lt)) if lt else ""}</button>')
 PROBIT = {r[0]: r[3:11] for r in json.load(open(os.path.join(HERE, "probit.json")))}
 import calib as CALIB

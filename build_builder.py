@@ -118,10 +118,15 @@ try:
                 fin = ""
                 if g.get("home_score") not in ("", None, "NA") and g.get("away_score") not in ("", None, "NA"):
                     hs, as_ = int(float(g["home_score"])), int(float(g["away_score"])); fin = f"{g['home_team']} {hs} – {g['away_team']} {as_}" if hs >= as_ else f"{g['away_team']} {as_} – {g['home_team']} {hs}"
-                kick[frozenset([g["away_team"], g["home_team"]])] = (g["gameday"] + "T" + g["gametime"], f"{dt.strftime('%a')} {h12}:{mm} {ap}", ko, fin)
+                kick[frozenset([g["away_team"], g["home_team"]])] = (g["gameday"] + "T" + g["gametime"], f"{dt.strftime('%a')} {h12}:{mm} {ap}", ko, fin, g["home_team"], g["away_team"], str(g.get("location") or "").strip().lower() == "neutral")
 except Exception: pass
 for g in GAMES:
     k = kick.get(frozenset([g["a"], g["b"]])); g["kick"] = k[1] if k else ""; g["sort"] = k[0] if k else "9"; g["ko"] = k[2] if k else None; g["fin"] = k[3] if k else ""
+    # audit 11/10: who is at home. a / b follow the scripts tab (alphabetical in practice), NOT away / home - the home page slate, the best
+    # parlay, the teaser finder and the share cards printed "NYG @ WAS" for a game played at the Giants (11 of 14 games reversed in Week 10).
+    # Every "@" label now reads home / away from here (nflverse schedule); nt = neutral site (print "vs").
+    if k: g["home"], g["away"] = k[4], k[5]
+    if k and k[6]: g["nt"] = 1
 GAMES.sort(key=lambda g: g["sort"])
 
 # defense ranks (season + last 3) and the per-player game log, for the matchup pill and the "last games" panel

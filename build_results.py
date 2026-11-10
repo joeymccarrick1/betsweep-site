@@ -231,6 +231,14 @@ try:
     if PR:
         ph = sum(1 for x in PR if x["hit"]); pu = sum(x["u"] for x in PR)
         promo_tiles = tile(f"{ph}–{len(PR)-ph}", "promoted bets we posted", f"{pu:+.1f}u at 1u each, at the posted FanDuel odds · {sum(x['n'] for x in PR)} legs across {len(PR)} slips", "pos" if pu > 0 else "neg")
+        # owner 11/10: the Daily Sweep (the one house slip per game day; sweep.py) leads the block with the week's record and the season's
+        try:
+            import sweep as SW
+            sw = [x for x in PR if SW.is_sweep(x["title"])]
+            if sw:
+                sh = sum(1 for x in sw if x["hit"]); su = sum(x["u"] for x in sw); RS = SW.record(vals("promos.json"))
+                promo_tiles = tile(f"{sh}–{len(sw)-sh}", "the Daily Sweep this week", f"{SW.fmt_u(su)} at 1u each · one house slip per game day · season {SW.record_text(RS, short=True)}", "pos" if su > 0 else "neg") + promo_tiles
+        except Exception as _e: print("warn: Daily Sweep tile skipped:", _e)
         # owner 11/3 audit: core slips (under +2000) and lottery slips (+2000 and up, the Piss Missiles) are different products - show both records
         core = [x for x in PR if x["fd"] is None or x["fd"] < 2000]; lotto = [x for x in PR if x["fd"] is not None and x["fd"] >= 2000]
         for grp, lab in ((core, "core slips (under +2000)"), (lotto, "lottery slips (+2000 and up)")):

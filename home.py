@@ -31,10 +31,23 @@ def kick_short(k):   # "Sun 10/18 8:30 AM" -> "Sun 8:30 AM"
     p = (k or "").split()
     return " ".join([p[0]] + p[2:]) if len(p) >= 3 and "/" in p[1] else (k or "")
 
+# audit 11/10: a game id is the two teams in the scripts tab's order (alphabetical in practice), not away-home, so "A @ B" built from it
+# was wrong for most games (NYG @ WAS for a game at the Giants). build_builder.py now puts home / away (nflverse schedule) on every game;
+# at() is the one label: "WAS @ NYG" when the schedule says so, "DET vs NE" at a neutral site or when it does not.
+AT = {}
+def at(g, bold=False):
+    a, b = g.get("a", ""), g.get("b", "")
+    w = (lambda t: f"<b>{E(t)}</b>") if bold else E
+    if g.get("home") and g.get("away") and not g.get("nt"): return f'{w(g["away"])} @ {w(g["home"])}'
+    return f'{w(a)} vs {w(b)}'
+def at_gid(gid):
+    return AT.get(gid) or E(str(gid or "").replace("-", " vs "))
+
 def load(IN, OUT):
     D = {}
     try: D["bd"] = json.load(open(os.path.join(OUT, "builder_data.json")))
     except Exception: D["bd"] = {"games": [], "legs": [], "week": 0}
+    AT.clear(); AT.update({g["gid"]: at(g) for g in D["bd"].get("games") or []})
     try: D["best"] = json.load(open(os.path.join(IN, "bestlegs.json")))["values"]
     except Exception: D["best"] = []
     try: D["bp"] = json.load(open(os.path.join(OUT, "best_parlays.json")))
@@ -107,6 +120,7 @@ def top_plays(D, n=8):
     return out
 
 import booklinks as BL   # DraftKings / Hard Rock links (exact rung or the book's nearest line), owner 10/22
+import sweep as SW      # owner 11/10: the Daily Sweep (a promo row whose Title starts with "Daily Sweep")
 def leg_line(m, ln):
     if m in ("Anytime TD", "First TD", "2+ TD", "3+ TD"): return m
     if str(m).startswith("Under "): return f"under {float(ln):g} {m[6:].lower()}"   # FanDuel main-line unders (owner 10/27)
@@ -129,7 +143,7 @@ def build_href(gid, legs):
 def play_card(x, cls=""):
     hist = next((h for h in x.get("fh", []) if h[0] in ("good", "info", "bad") and "/" in str(h[1])), None)   # the this-season hit pill only
     hist_html = f'<span class="hist {hist[0]}">{E(hist[1])}</span>' if hist else ""
-    sub = " · ".join(s for s in [E(x.get("pos", "")), (E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else E(x.get("gid", "").replace("-", " @ ")), E(x.get("kick", ""))] if s)
+    sub = " · ".join(s for s in [E(x.get("pos", "")), (E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", "")), E(x.get("kick", ""))] if s)
     bb = BL.best(x); btn = (f'<a class="fdb{" best" if bb == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True)
     if btn: btn = f'<span class="bks">{btn}</span>'   # 11/4 UX: the book buttons wrap as one group (FD · DK · HR), not one per line
     more = f'<a class="more" href="{E(build_href(x.get("gid"), [(x["pl"], x["m"], x["ln"])]))}" title="Open the parlay builder with this leg in your slip">+ Builder</a>' 
@@ -285,7 +299,7 @@ def gl_plays(D, n=3):
 def gl_card(x):
     e = x["e"]
     return (f'<article class="play gl" data-gid="{E(x["gid"])}" data-ko="{x.get("ko") or ""}">'
-            f'<div class="who"><b>{E(x["pl"])}</b><small>{E(x["gid"].replace("-", " @ "))} · {E(x.get("kick",""))}</small></div>'
+            f'<div class="who"><b>{E(x["pl"])}</b><small>{at_gid(x["gid"])} · {E(x.get("kick",""))}</small></div>'
             f'<div class="what">{E(x.get("disp") or x["m"])}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
             f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{x["bk"]*100:.0f}%</span><span class="edge {"pos" if e>0 else "neg"}"><i>Edge</i>{e*100:+.0f}</span></div>'
             f'<div class="foot"><a class="more" href="/boards/#g-{E(x["gid"])}">Board →</a><span class="bks">' + (f'<a class="fdb{" best" if BL.best(x) == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True) + '</span></div></article>')
@@ -317,8 +331,8 @@ def parlay_block(ps):
     if not ps: return ""
     top = ps[0]
     legs = "".join(f'<li><b>{E(l["pl"])}</b><span>{E(leg_line(l["m"], l["ln"]))} <small>{E(odds_str(l["o"]))}</small></span><em>{l["p"]*100:.0f}%</em></li>' for l in top["legs"])
-    others = "".join(f'<a class="pmini" href="/boards/#g-{E(p["gid"])}" data-gid="{E(p["gid"])}" data-ko="{p.get("ko") or ""}"><b>{E(p["a"])} @ {E(p["b"])}</b><span>{len(p["legs"])} legs · {E(dec_to_us(p["dec"]))}</span><em>model {p["pj"]*100:.0f}% · EV {p["ev"]*100:+.0f}%</em></a>' for p in ps[1:5])
-    return (f'<div class="parlay" data-gid="{E(top["gid"])}" data-ko="{top.get("ko") or ""}"><div class="phd"><small>Best same-game parlay</small><h3>{E(top["a"])} @ {E(top["b"])} <span>{E(top.get("kick",""))}</span></h3>'
+    others = "".join(f'<a class="pmini" href="/boards/#g-{E(p["gid"])}" data-gid="{E(p["gid"])}" data-ko="{p.get("ko") or ""}"><b>{at_gid(p["gid"])}</b><span>{len(p["legs"])} legs · {E(dec_to_us(p["dec"]))}</span><em>model {p["pj"]*100:.0f}% · EV {p["ev"]*100:+.0f}%</em></a>' for p in ps[1:5])
+    return (f'<div class="parlay" data-gid="{E(top["gid"])}" data-ko="{top.get("ko") or ""}"><div class="phd"><small>Best same-game parlay</small><h3>{at_gid(top["gid"])} <span>{E(top.get("kick",""))}</span></h3>'
             f'<p>Built for the game\'s most likely script ({E(top["fit"])}); the model gives the full slip <b>{top["pj"]*100:.0f}%</b> against a FanDuel-equivalent price of <b>{E(dec_to_us(top["dec"]))}</b> (EV {top["ev"]*100:+.0f}%).</p></div>'
             f'<ul class="plegs">{legs}</ul><div class="pfoot">' + (f'<a class="fdb" href="{E(top["fd"])}" target="_blank" rel="noopener">Add all to FanDuel</a>' if top.get("fd") else "") + BL.buttons(top.get("bl") or [], single=False) + f'<a class="more" href="/boards/#g-{E(top["gid"])}">Open the board →</a><a class="more" href="{E(build_href(top["gid"], [(l["pl"], l["m"], l["ln"]) for l in top["legs"]]))}">Edit in the builder →</a></div></div>'
             + (f'<div class="pothers">{others}</div>' if others else ""))
@@ -330,7 +344,7 @@ def slate(D):
     for g in gs:
         fav = g["a"] if g["pa"] > g["pb"] else g["b"]; marg = abs(g["pa"] - g["pb"])
         items.append(f'<a class="game" href="/boards/#g-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-fin="{E(g.get("fin",""))}">'
-                     f'<span class="gk">{E(g.get("kick",""))}</span><span class="gm"><b>{E(g["a"])}</b> @ <b>{E(g["b"])}</b></span>'
+                     f'<span class="gk">{E(g.get("kick",""))}</span><span class="gm">{at(g, bold=True)}</span>'
                      f'<span class="gp">{E(fav)} by {marg:.1f} · O/U {g["tot"]:.1f}</span><span class="gs">{E(g.get("most",""))}</span><span class="gl"></span></a>')
     return '<div class="slate">' + "".join(items) + "</div>"
 
@@ -376,14 +390,19 @@ def record_block(R, latest_week):
 # (its game is final short of the line; an under already passed; a first TD scored by someone else). A card with a dead leg says
 # "Busted: <leg>" and leaves the page once that leg's game is final; all legs hit = "Cashed". A player with no box-score line at the
 # final stays open (likely inactive - FanDuel voids the leg). Grading of record is still Tuesday's, from the game log.
-PROMO_LIVE_JS = r"""<script>(function(){
+PROMO_LIVE_JS = r"""<script>(function(){ function start(){
+  // owner 11/10 (Daily Sweep): this script is included by the Sweep hero at the top of the page AND by the promoted-bets section further
+  // down, so it starts once, after the whole page is parsed. Cards with data-keep (the Sweep) are never hidden: a missed Sweep stays
+  // up as a miss, and it is still graded from the box score for six days after its last kickoff (one fetch, then it stops).
+  if(window.__bsPromoLive) return; window.__bsPromoLive = 1;
   var cards = [].slice.call(document.querySelectorAll('.promo[data-last-ko]')); if(!cards.length || !window.fetch) return;
   var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
   function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
   var legs = []; cards.forEach(function(card){ card.querySelectorAll('li[data-g]').forEach(function(li){ if(!li.dataset.g) return; legs.push({card: card, li: li, g: li.dataset.g, who: li.dataset.who, mk: li.dataset.mk, glx: li.dataset.glx ? JSON.parse(li.dataset.glx) : null}); }); });
   if(!legs.length) return;
-  var kos = cards.map(function(c){ return [+c.dataset.firstKo || 0, +c.dataset.lastKo || 0]; });
-  function active(){ var t = Date.now(); return kos.some(function(k){ return k[0] && t >= k[0] - 9e5 && t <= (k[1] || k[0]) + 6 * 36e5; }); }
+  var kos = cards.map(function(c){ return [+c.dataset.firstKo || 0, +c.dataset.lastKo || 0, c.dataset.keep ? 1 : 0]; });
+  var settled = false;
+  function active(){ var t = Date.now(); return kos.some(function(k){ return k[0] && t >= k[0] - 9e5 && t <= (k[1] || k[0]) + (k[2] ? 6 * 864e5 : 6 * 36e5); }); }
   function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
   var G = {}, BOX = {}, FIRST = {};
   function parseBox(js, gid){
@@ -422,15 +441,19 @@ PROMO_LIVE_JS = r"""<script>(function(){
         if(s === 'hit') hits++; if(s === 'dead' && !dead){ dead = L; deadFinal = (G[L.g] || {}).st === 'post'; } });
       var st = card.querySelector('[data-role=pst]');
       if(dead){ card.classList.add('busted'); if(st){ st.textContent = 'Busted: ' + dead.who + (dead.mk && !/td$/i.test(dead.mk) ? ' ' + dead.mk.replace(/\s+(\d)/, ' $1') : (/td$/i.test(dead.mk) ? ' TD' : '')); st.className = 'st loss'; }
-        if(deadFinal) card.hidden = true; }
+        if(deadFinal && !card.dataset.keep) card.hidden = true; }
       else if(ls.length && hits === ls.length){ if(st){ st.textContent = 'Cashed'; st.className = 'st win'; } }
-      if(!card.hidden) anyShown = true;
+      card.dataset.live = dead ? (deadFinal ? 'L' : 'busted') : (ls.length && hits === ls.length ? 'W' : 'open');
+      if(!card.hidden && !card.dataset.keep) anyShown = true;
     });
     var sec = document.getElementById('promo'); if(sec && !anyShown) sec.hidden = true;
+    var gs = {}; legs.forEach(function(L){ gs[L.g] = 1; }); gs = Object.keys(gs);
+    if(gs.length && gs.every(function(g){ return G[g] && G[g].st === 'post'; })) settled = true;   // every game final: nothing left to fetch
+    try { document.dispatchEvent(new CustomEvent('bs-promo-live')); } catch(e){}
   }
   var busy = false;
   function poll(){
-    if(busy || !active()) return; busy = true;
+    if(busy || settled || !active()) return; busy = true;
     var t0 = Math.min.apply(null, kos.map(function(k){ return k[0]; }).filter(Boolean)), t1 = Math.max.apply(null, kos.map(function(k){ return k[1] || k[0]; }));
     fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + ymd(t0 - 864e5) + '-' + ymd(t1 + 864e5), {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){
       if(!js){ busy = false; return; }
@@ -443,10 +466,86 @@ PROMO_LIVE_JS = r"""<script>(function(){
     }).then(function(){ busy = false; paint(); }).catch(function(){ busy = false; });
   }
   poll(); setInterval(poll, 60000);
-})();</script>"""
+} if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start(); })();</script>"""
 
 
-def promos_block(OUT):
+# owner 11/10: the Copy-link and Tail handlers as a constant - the Daily Sweep hero and the promoted-bets section both include them; each
+# starts once, after the page is parsed.
+PROMO_TAIL_JS = r"""<script>(function(){ function go(){ if(window.__bsPromoCpy) return; window.__bsPromoCpy = 1; document.querySelectorAll('.promo .slink .cpy').forEach(function(b){ b.addEventListener('click', function(){ var t = b.dataset.copy; function done(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1400); } if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function(){ prompt('Copy this link', t); }); else prompt('Copy this link', t); }); }); } if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();</script>
+<script>(function(){ function go(){ if(window.__bsPromoTail) return; window.__bsPromoTail = 1; document.querySelectorAll('.promo .tail').forEach(function(b){ var key = 'bs_slips_w' + b.dataset.w, id = b.dataset.id; function has(){ try{ return (JSON.parse(localStorage.getItem(key)||'[]')||[]).some(function(s){ return s && s.id === id; }); }catch(e){ return false; } }
+  function paint(){ var on = has(); b.textContent = on ? 'Tailed ✓' : 'Tail'; b.classList.toggle('on', on); }
+  b.addEventListener('click', function(){ var slips = []; try{ slips = JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(e){} if (has()){ slips = slips.filter(function(s){ return !s || s.id !== id; }); } else { slips.push({id: id, name: b.dataset.name, keys: JSON.parse(b.dataset.keys), odds: b.dataset.odds ? +b.dataset.odds : null, stake: 1, promo: true}); }
+    try{ localStorage.setItem(key, JSON.stringify(slips)); }catch(e){} paint(); var t = document.createElement('div'); t.textContent = has() ? 'Saved to My BetSweep - graded after the games' : 'Removed from your slips'; t.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120'; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2500); });
+  paint(); }); } if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();</script>"""
+
+def promo_card(p, kicker="Promoted", hero=False):
+    """one promoted-bet card (the home page's Promoted bets / Side action grid, and the Daily Sweep hero with hero=True)"""
+    many = len(p["legs"]) >= 7
+    legs = ""
+    for l in p["legs"]:
+        who = l["who"]; ml = l["disp"][len(who):].strip(" ·") if l["disp"].startswith(who) else l["disp"]
+        rk = l.get("rank"); mk = f'{l["opp"]} #{rk[0]} vs {"QB rush" if l.get("pos") == "QB" else l.get("pos", "")} TDs' if rk else ""
+        sub = " · ".join(x for x in [ml, l.get("kick", ""), mk] if x)
+        mp = f'<span class="mp">model {l["p"]*100:.0f}%</span>' if l.get("p") is not None else ""
+        _gx = f' data-glx="{E(json.dumps(l["glx"]))}"' if l.get("glx") else ""
+        legs += f'<li data-g="{E(l.get("gid") or "")}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
+    res = (p.get("result") or "").upper()
+    st = '<span class="st win">Cashed</span>' if res in ("W", "WIN", "HIT") else ('<span class="st loss">Missed</span>' if res in ("L", "LOSS", "MISS") else '<span class="st" data-role="pst">Pregame</span>')
+    # audit 10/26: a +11825 lotto showing "Model 0.1% to hit · fair +181169" read like the site arguing against its own post -
+    # longshots (model under 3%) are labelled as such and the fair price is dropped
+    if p.get("p") and p["p"] < 0.03: model = f'<b>Longshot</b> · model {"under 1" if p["p"] < 0.01 else format(p["p"]*100, ".0f")}% to hit - a small-stake swing, not a value bet'
+    else: model = f'<b>Model {p["p"]*100:.1f}%</b> to hit · fair {E(p["fair"])}' if p.get("p") else "Model price not available for every leg"
+    # X caption written for @Playbook's parser (Action Network's bot: tag it and it replies with a tail link for every sportsbook):
+    # one plain leg per line, "Player Market N+ odds", no bullets or model numbers, the book named, @Playbook on its own line.
+    def _pb_leg(l):
+        who = l["who"]; mk = (l.get("market") or "").strip()
+        if mk.lower().startswith("either"): return f"{who} either to score a TD"
+        if mk.lower().startswith("anytime"): return f"{who} anytime TD"
+        if mk.lower().startswith("first"): return f"{who} first TD"
+        return f"{who} {mk}"
+    tweet = (f'{p["title"]} · {len(p["legs"])}-leg parlay · FanDuel {odds_str(p["fd"]) if p.get("fd") else ""}\n\n'
+             + "\n".join(f'{_pb_leg(l)} {odds_str(l["o"]) if l.get("o") is not None else ""}'.rstrip() for l in p["legs"])
+             + f"\n\n@Playbook\nbetsweep.co/b/w{p['week']}-{p['slot']}")
+    share = "https://twitter.com/intent/tweet?text=" + __import__("urllib.parse").parse.quote(tweet)
+    def _bkey(l):
+        mk = (l.get("market") or "").strip(); import re as _re
+        if mk.lower().startswith(("either", "first")) or " or " in l["who"]: return None
+        if mk.lower().startswith("anytime"): return (l["who"], "Anytime TD", 1)
+        mm = _re.match(r"(Passing Yards|Rushing Yards|Receiving Yards|Receptions|Longest Reception|Rush \+ Rec Yards)\s+(\d+(?:\.\d+)?)\+?$", mk, _re.I)
+        return (l["who"], mm.group(1).title().replace("Td", "TD"), float(mm.group(2))) if mm else None
+    bkeys = [_bkey(l) for l in p["legs"]]
+    edit = f'<a href="{E(build_href((p["legs"][0] or {}).get("gid"), [k for k in bkeys if k]))}">Edit in the builder</a>' if bkeys and all(bkeys) else ""
+    tail = f'<button type="button" class="tail" data-w="{p["week"]}" data-id="promo-{p["week"]}-{p["slot"]}" data-name="{E(p["title"])}" data-keys="{E(json.dumps([l.get("key") for l in p["legs"] if l.get("key")]))}" data-odds="{int(p["fd"]) if p.get("fd") else ""}">Tail</button>' if all(l.get("key") for l in p["legs"]) else ""
+    bk = "".join(f'<a class="{b}" href="{E(v["url"])}" target="_blank" rel="noopener" title="{E((BL.NAMES[b] + " uses its nearest line: " + "; ".join(v["subs"]) + ". Prices and model % shown are FanDuel's.") if v["subs"] else "Opens " + BL.NAMES[b] + " with these legs on the betslip")}">Bet it on {BL.NAMES[b]}{"≈" if v["subs"] else ""}</a>' for b, v in (p.get("books") or {}).items())
+    btns = (f'<a class="fd" href="{E(p["link"])}" target="_blank" rel="noopener">Bet it on FanDuel</a>' if p.get("link") else "") + bk + tail + edit + f'<a href="{E(share)}" target="_blank" rel="noopener">Share on X</a><a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>Post 4:5</a><a href="{E(p["img"]["square"])}" download>Square</a><a href="{E(p["img"]["story"])}" download>Story</a>'
+    _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
+    cap = (f'<p class="cap">{E(p["caption"])}</p>' if p.get("caption") else "") + f'<p class="slink">Short link <code>{E(_su.replace("https://", ""))}</code><button type="button" class="cpy" data-copy="{E(_su)}">Copy</button> <a href="/b/w{p["week"]}-{p["slot"]}/">open →</a></p>'
+    subs = [f'{BL.NAMES[b]}: ' + "; ".join(v["subs"]) for b, v in (p.get("books") or {}).items() if v["subs"]]
+    if subs: cap += f'<p class="bknote">Nearest line at the other books - {E(" · ".join(subs))}. Prices and model % shown are FanDuel\'s.</p>'
+    if hero:
+        # owner 11/10, the Daily Sweep hero: same card, the day's kicker, the slip's own name (or its games), a record line, and the
+        # owner's poster downloads tucked into one small row. data-keep: the live script never hides it - a missed Sweep stays up as a miss.
+        gids = []
+        for l in p["legs"]:
+            if l.get("gid") and l["gid"] not in gids: gids.append(l["gid"])
+        import html as _h
+        gl_ = " · ".join(_h.unescape(at_gid(g)) for g in gids[:2]) + (f" +{len(gids) - 2}" if len(gids) > 2 else "")
+        title = p.get("name") or (_h.unescape(at_gid(gids[0])) if len(gids) == 1 else f"{len(gids)} games, one slip" if gids else "Today's slip")
+        kres = SW.res_kind(p.get("result"))
+        st = '<span class="st win">Cashed</span>' if kres == "W" else ('<span class="st loss">Missed</span>' if kres == "L" else '<span class="st" data-role="pst">Pregame</span>')
+        _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
+        import re as _re2
+        cap = _re2.sub(r'<p class="slink">.*?</p>', "", cap, count=1, flags=_re2.S)   # the Share button carries the short link; one row less on a phone
+        btns = ((f'<a class="fd" href="{E(p["link"])}" target="_blank" rel="noopener">Bet it on FanDuel</a>' if p.get("link") else "") + bk + tail + edit
+                + f'<button type="button" class="swshare" data-url="{E(_su)}" data-title="{E("The Daily Sweep: " + title)}">Share</button>')
+        gfx = f'<p class="swgfx">Graphics: <a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>4:5</a> · <a href="{E(p["img"]["square"])}" download>Square</a> · <a href="{E(p["img"]["story"])}" download>Story</a> · <a href="{E(share)}" target="_blank" rel="noopener">Post on X</a></p>'
+        return (f'<article class="promo sweep" data-keep="1" data-day="{E(p.get("day") or "")}" data-res="{kres or ""}" data-odds="{int(p["fd"]) if p.get("fd") else ""}" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>{E(kicker)}</small>{st}</div><h3>{E(title)}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs{(" · " + E(gl_)) if gl_ and gl_ != title else ""}</div>'
+                f'<ul class="pl{" many" if many else ""}">{legs}</ul><div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div>{gfx}</article>')
+    return (f'<article class="promo" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>{E(kicker)}</small>{st}</div><h3>{E(p["title"])}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs</div>'
+            f'<ul class="pl{" many" if many else ""}">{legs}</ul><div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div></article>')
+
+
+def promos_block(OUT, sweep_exists=False):
     # owner 10/23: archive a promo once its games are done - off the home page when every leg's game has kicked off 4.5+ hours ago
     # (or it already has a graded result); the page script also hides it in the browser between rebuilds (data-last-ko). Grading and
     # the receipts still read it from the sheet; only the home page card goes away.
@@ -458,62 +557,115 @@ def promos_block(OUT):
         if (p.get("checks") or {}).get("block"): return False   # promo check failed (build_promo prints why): never post a broken card
         lk = p.get("last_ko")
         return not (lk and _now > float(lk) + 4.5 * 3600e3)
-    try: ps = [p for p in json.load(open(os.path.join(OUT, "promos.json"))) if _live(p)]
-    except Exception: ps = []
+    try: allp = json.load(open(os.path.join(OUT, "promos.json")))
+    except Exception: allp = []
+    # owner 11/10: the Daily Sweep leads the page in its own block (sweep_block); this grid keeps everything else. From the week the
+    # first Sweep is posted the grid is called "Side action" and a slip at +2000 or longer is tagged "Long shot" - the slips we post
+    # for fun next to the one we stand behind every game day. Before that nothing here changes.
+    ps = [p for p in allp if _live(p) and not p.get("sweep")]
     if not ps: return ""
+    side = bool(sweep_exists) or any(p.get("sweep") for p in allp)
+    cards = [promo_card(p, ("Long shot" if (p.get("fd") or 0) >= 2000 else "Side action") if side else "Promoted") for p in ps]
+    tail_js = PROMO_TAIL_JS
+    head = ('<h2 class="t">Side action <small class="tsub">long shots and extras · small stakes</small></h2>' if side else '<h2 class="t">Promoted bets</h2>')
+    return f'<section class="sec" id="promo">{head}<div class="promos">{"".join(cards)}</div>{tail_js}{PROMO_LIVE_JS}<p class="none" style="margin-top:8px;font-size:12.5px">{"The other slips we post on X and Instagram: long shots and extras, graded Tuesday like everything else and counted apart from the Daily Sweep." if side else "The slips we post on X and Instagram, graded Tuesday like everything else."} Share on X pre-fills the legs in plain text with @Playbook tagged, so the Playbook bot replies with a tail link for whichever sportsbook the reader uses. Sportsbook links may earn BetSweep a commission; it never changes a pick or a grade. One tap loads the whole slip on FanDuel.</p></section>'
+
+# ---------- the Daily Sweep (owner 11/10) ----------
+# One house slip per game day, at the top of the page. sweep.py has the convention (a promo row whose Title starts with "Daily Sweep")
+# and the record; build_promo.py marks at most one per game day. What the visitor sees is decided in the browser from the clock, so the
+# page stays right between rebuilds: the day's slip from the moment it is posted until that day's games are over, otherwise a line
+# saying when the next one posts and how the last one did. A missed Sweep stays up as a miss.
+SWEEP_CSS = """
+.swhero .swtop{display:flex;align-items:baseline;justify-content:space-between;gap:6px 12px;flex-wrap:wrap}
+.swhero .swtop .t{margin-bottom:0}
+.swhero .swrec{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
+.swhero .swrec b{color:var(--ink)}
+.swhero .swcards{display:grid;gap:14px;max-width:580px;margin-top:10px}
+.swhero .promo.sweep{border:2px solid var(--red)}
+.swhero .promo.sweep.busted{border-color:var(--line)}
+.swhero .swgfx{margin:0 16px 12px;font-size:12px;color:var(--mute)} .swhero .swgfx a{color:var(--ink)}
+.swhero .swtease{max-width:580px;margin-top:10px;padding:14px 16px;border:1.5px dashed color-mix(in srgb,var(--red) 55%,var(--line));border-radius:14px;background:var(--card)}
+.swhero .swtease p{margin:0 0 6px;line-height:1.45;font-size:14.5px} .swhero .swtease p:last-child{margin-bottom:0}
+.swhero .swtease .swnext b{font-family:var(--display);font-weight:800;letter-spacing:.02em;font-size:16px}
+.swhero .swtease .swlast{color:var(--mute);font-size:13px} .swhero .swtease .swlast b.w{color:var(--good)} .swhero .swtease .swlast b.l{color:#e07070}
+.swhero .swfoot{margin-top:8px;font-size:12.5px;max-width:580px} .swhero .swfoot a{color:var(--ink)}
+.promo .pa .swshare{cursor:pointer;background:none;text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 11px}
+.promo .pa .swshare:hover{border-color:var(--red)}
+"""
+SWEEP_JS = r"""<script>(function(){ function go(){
+  var sec = document.getElementById('sweep'); if(!sec || sec.dataset.on) return; sec.dataset.on = '1';
+  var days = []; try { days = JSON.parse(sec.dataset.days || '[]'); } catch(e){}
+  var cards = [].slice.call(sec.querySelectorAll('.promo.sweep')), tease = document.getElementById('swtease');
+  function card(d, live){ for(var i = 0; i < cards.length; i++){ if(cards[i].dataset.day === d && (!live || !cards[i].dataset.arch)) return cards[i]; } return null; }
+  function res(c){ return c.dataset.res || (c.dataset.live === 'W' ? 'W' : c.dataset.live === 'L' ? 'L' : ''); }
+  function am(o){ o = +o; return o ? (o > 0 ? '+' + o : String(o)) : ''; }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function paint(){
+    var t = Date.now(), show = null, next = null, last = null, i, d, c;
+    for(i = 0; i < days.length; i++){ d = days[i];
+      if(t >= d.end){ c = card(d.d); if(c) last = {d: d, c: c}; continue; }     // that day is over
+      c = card(d.d, true); if(c){ show = c; break; }                             // today's (or the next day's) Sweep is posted
+      if(t < d.ko){ next = d; break; } }                                         // not posted yet, still before kickoff
+    cards.forEach(function(x){ x.hidden = x !== show; });
+    if(!tease) return;
+    tease.hidden = !!show; if(show) return;
+    var nx = tease.querySelector('.swnext'), ls = tease.querySelector('.swlast');
+    if(nx) nx.innerHTML = next ? 'Next: <b>' + esc(next.lab) + '</b> · ' + esc(next.g) + '.'
+                               : 'This week’s games are done. The next one posts before next week’s first kickoff.';
+    if(ls){ if(last){ var r = res(last.c), nm = (last.c.querySelector('h3') || {}).textContent || '';
+        ls.hidden = false; ls.innerHTML = 'Last: ' + esc(last.d.lab) + (nm ? ' · ' + esc(nm) : '') + ' ' + esc(am(last.c.dataset.odds)) + ' · ' + (r === 'W' ? '<b class="w">Cashed</b>' : r === 'L' ? '<b class="l">Missed</b>' : 'graded Tuesday');
+      } else ls.hidden = true; }
+  }
+  paint(); setInterval(paint, 60000); document.addEventListener('bs-promo-live', paint);
+  sec.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.swshare'); if(!b) return;
+    var url = b.dataset.url, title = b.dataset.title || 'The Daily Sweep';
+    function copied(){ var o = b.textContent; b.textContent = 'Link copied'; setTimeout(function(){ b.textContent = o; }, 1500); }
+    if(navigator.share){ navigator.share({title: title, text: title + ' on BetSweep', url: url}).catch(function(){}); }
+    else if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(copied, function(){ window.prompt('Copy this link', url); }); }
+    else window.prompt('Copy this link', url); });
+} if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();</script>"""
+
+def sweep_days(games):
+    """the week's game days from builder_data games: [{d: 'YYYY-MM-DD', lab: 'Thu 11/12', ko: first kickoff ms, end: last kickoff + 5 h, g: 'NYG vs WAS, 7:15 PM CT'}]"""
+    import datetime as _dt
+    by = {}
+    for g in games or []:
+        ko = g.get("ko")
+        if not ko: continue
+        by.setdefault(SW.day_of(ko), []).append(g)
+    out = []
+    for d in sorted(by):
+        gs = sorted(by[d], key=lambda g: g["ko"]); first = gs[0]["ko"]
+        tm = _dt.datetime.fromtimestamp(first / 1000, SW.CT).strftime("%-I:%M %p")
+        lab = (f'{html.unescape(at(gs[0]))}, {tm} CT' if len(gs) == 1 else f'{len(gs)} games, first kickoff {tm} CT')
+        out.append({"d": d, "lab": SW.day_label(first), "ko": first, "end": max(g["ko"] for g in gs) + 5 * 3600e3, "g": lab})
+    return out
+
+def sweep_block(IN, OUT, games):
+    """the hero. Returns ("", False) only when the week has no games at all; otherwise a block that shows the day's Sweep or the teaser."""
+    days = sweep_days(games)
+    if not days: return "", False
+    try: allp = json.load(open(os.path.join(OUT, "promos.json")))
+    except Exception: allp = []
+    try: R = SW.record(json.load(open(os.path.join(IN, "promos.json")))["values"])
+    except Exception: R = SW.record(None)
+    sw = [p for p in allp if p.get("sweep") and p.get("status", "LIVE") in ("LIVE", "HIDDEN") and not (p.get("checks") or {}).get("block")]
+    lab = {d["d"]: d["lab"] for d in days}
     cards = []
-    for p in ps:
-        many = len(p["legs"]) >= 7
-        legs = ""
-        for l in p["legs"]:
-            who = l["who"]; ml = l["disp"][len(who):].strip(" ·") if l["disp"].startswith(who) else l["disp"]
-            rk = l.get("rank"); mk = f'{l["opp"]} #{rk[0]} vs {"QB rush" if l.get("pos") == "QB" else l.get("pos", "")} TDs' if rk else ""
-            sub = " · ".join(x for x in [ml, l.get("kick", ""), mk] if x)
-            mp = f'<span class="mp">model {l["p"]*100:.0f}%</span>' if l.get("p") is not None else ""
-            _gx = f' data-glx="{E(json.dumps(l["glx"]))}"' if l.get("glx") else ""
-            legs += f'<li data-g="{E(l.get("gid") or "")}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
-        res = (p.get("result") or "").upper()
-        st = '<span class="st win">Cashed</span>' if res in ("W", "WIN", "HIT") else ('<span class="st loss">Missed</span>' if res in ("L", "LOSS", "MISS") else '<span class="st" data-role="pst">Pregame</span>')
-        # audit 10/26: a +11825 lotto showing "Model 0.1% to hit · fair +181169" read like the site arguing against its own post -
-        # longshots (model under 3%) are labelled as such and the fair price is dropped
-        if p.get("p") and p["p"] < 0.03: model = f'<b>Longshot</b> · model {"under 1" if p["p"] < 0.01 else format(p["p"]*100, ".0f")}% to hit - a small-stake swing, not a value bet'
-        else: model = f'<b>Model {p["p"]*100:.1f}%</b> to hit · fair {E(p["fair"])}' if p.get("p") else "Model price not available for every leg"
-        # X caption written for @Playbook's parser (Action Network's bot: tag it and it replies with a tail link for every sportsbook):
-        # one plain leg per line, "Player Market N+ odds", no bullets or model numbers, the book named, @Playbook on its own line.
-        def _pb_leg(l):
-            who = l["who"]; mk = (l.get("market") or "").strip()
-            if mk.lower().startswith("either"): return f"{who} either to score a TD"
-            if mk.lower().startswith("anytime"): return f"{who} anytime TD"
-            if mk.lower().startswith("first"): return f"{who} first TD"
-            return f"{who} {mk}"
-        tweet = (f'{p["title"]} · {len(p["legs"])}-leg parlay · FanDuel {odds_str(p["fd"]) if p.get("fd") else ""}\n\n'
-                 + "\n".join(f'{_pb_leg(l)} {odds_str(l["o"]) if l.get("o") is not None else ""}'.rstrip() for l in p["legs"])
-                 + f"\n\n@Playbook\nbetsweep.co/b/w{p['week']}-{p['slot']}")
-        share = "https://twitter.com/intent/tweet?text=" + __import__("urllib.parse").parse.quote(tweet)
-        def _bkey(l):
-            mk = (l.get("market") or "").strip(); import re as _re
-            if mk.lower().startswith(("either", "first")) or " or " in l["who"]: return None
-            if mk.lower().startswith("anytime"): return (l["who"], "Anytime TD", 1)
-            mm = _re.match(r"(Passing Yards|Rushing Yards|Receiving Yards|Receptions|Longest Reception|Rush \+ Rec Yards)\s+(\d+(?:\.\d+)?)\+?$", mk, _re.I)
-            return (l["who"], mm.group(1).title().replace("Td", "TD"), float(mm.group(2))) if mm else None
-        bkeys = [_bkey(l) for l in p["legs"]]
-        edit = f'<a href="{E(build_href((p["legs"][0] or {}).get("gid"), [k for k in bkeys if k]))}">Edit in the builder</a>' if bkeys and all(bkeys) else ""
-        tail = f'<button type="button" class="tail" data-w="{p["week"]}" data-id="promo-{p["week"]}-{p["slot"]}" data-name="{E(p["title"])}" data-keys="{E(json.dumps([l.get("key") for l in p["legs"] if l.get("key")]))}" data-odds="{int(p["fd"]) if p.get("fd") else ""}">Tail</button>' if all(l.get("key") for l in p["legs"]) else ""
-        bk = "".join(f'<a class="{b}" href="{E(v["url"])}" target="_blank" rel="noopener" title="{E((BL.NAMES[b] + " uses its nearest line: " + "; ".join(v["subs"]) + ". Prices and model % shown are FanDuel's.") if v["subs"] else "Opens " + BL.NAMES[b] + " with these legs on the betslip")}">Bet it on {BL.NAMES[b]}{"≈" if v["subs"] else ""}</a>' for b, v in (p.get("books") or {}).items())
-        btns = (f'<a class="fd" href="{E(p["link"])}" target="_blank" rel="noopener">Bet it on FanDuel</a>' if p.get("link") else "") + bk + tail + edit + f'<a href="{E(share)}" target="_blank" rel="noopener">Share on X</a><a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>Post 4:5</a><a href="{E(p["img"]["square"])}" download>Square</a><a href="{E(p["img"]["story"])}" download>Story</a>'
-        _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
-        cap = (f'<p class="cap">{E(p["caption"])}</p>' if p.get("caption") else "") + f'<p class="slink">Short link <code>{E(_su.replace("https://", ""))}</code><button type="button" class="cpy" data-copy="{E(_su)}">Copy</button> <a href="/b/w{p["week"]}-{p["slot"]}/">open →</a></p>'
-        subs = [f'{BL.NAMES[b]}: ' + "; ".join(v["subs"]) for b, v in (p.get("books") or {}).items() if v["subs"]]
-        if subs: cap += f'<p class="bknote">Nearest line at the other books - {E(" · ".join(subs))}. Prices and model % shown are FanDuel\'s.</p>'
-        cards.append(f'<article class="promo" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>Promoted</small>{st}</div><h3>{E(p["title"])}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs</div>'
-                     f'<ul class="pl{" many" if many else ""}">{legs}</ul><div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div></article>')
-    tail_js = """<script>(function(){ document.querySelectorAll('.promo .slink .cpy').forEach(function(b){ b.addEventListener('click', function(){ var t = b.dataset.copy; function done(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1400); } if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function(){ prompt('Copy this link', t); }); else prompt('Copy this link', t); }); }); })();</script>
-<script>(function(){ document.querySelectorAll('.promo .tail').forEach(function(b){ var key = 'bs_slips_w' + b.dataset.w, id = b.dataset.id; function has(){ try{ return (JSON.parse(localStorage.getItem(key)||'[]')||[]).some(function(s){ return s && s.id === id; }); }catch(e){ return false; } }
-  function paint(){ var on = has(); b.textContent = on ? 'Tailed ✓' : 'Tail'; b.classList.toggle('on', on); }
-  b.addEventListener('click', function(){ var slips = []; try{ slips = JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(e){} if (has()){ slips = slips.filter(function(s){ return !s || s.id !== id; }); } else { slips.push({id: id, name: b.dataset.name, keys: JSON.parse(b.dataset.keys), odds: b.dataset.odds ? +b.dataset.odds : null, stake: 1, promo: true}); }
-    try{ localStorage.setItem(key, JSON.stringify(slips)); }catch(e){} paint(); var t = document.createElement('div'); t.textContent = has() ? 'Saved to My BetSweep - graded after the games' : 'Removed from your slips'; t.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120'; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2500); });
-  paint(); }); })();</script>"""
-    return f'<section class="sec" id="promo"><h2 class="t">Promoted bets</h2><div class="promos">{"".join(cards)}</div>{tail_js}{PROMO_LIVE_JS}<p class="none" style="margin-top:8px;font-size:12.5px">The slips we post on X and Instagram, graded Tuesday like everything else. Share on X pre-fills the legs in plain text with @Playbook tagged, so the Playbook bot replies with a tail link for whichever sportsbook the reader uses. Sportsbook links may earn BetSweep a commission; it never changes a pick or a grade. One tap loads the whole slip on FanDuel.</p></section>'
+    for p in sorted(sw, key=lambda p: p.get("first_ko") or 0):
+        c = promo_card(p, f'The Daily Sweep · {lab.get(p.get("day"), "")}'.rstrip(" ·"), hero=True)
+        if p.get("status") == "HIDDEN": c = c.replace('<article class="promo sweep"', '<article class="promo sweep" data-arch="1"', 1)   # archived by the owner: never the current card, still the "last" line
+        cards.append(c.replace('<article class="promo sweep"', '<article class="promo sweep" hidden', 1))   # the script un-hides the right one; without JavaScript the teaser shows
+    rec = (f'Record <b>{R["w"]}–{R["l"]}</b> · {SW.fmt_u(R["u"])}' if R["n"] else "Record starts Tuesday" if R["pending"] else "Record starts with the first one")
+    first = "One house slip every game day: about four favorites, priced near +300. It posts here before kickoff and is graded in public, win or miss."
+    html_ = (f'<section class="sec swhero" id="sweep" data-days="{E(json.dumps(days, separators=(",", ":")))}"><style>{SWEEP_CSS}</style>'
+             f'<div class="swtop"><h2 class="t">The Daily Sweep <small class="tsub">one house slip every game day</small></h2><span class="swrec">{rec}</span></div>'
+             f'<div class="swcards">{"".join(cards)}</div>'
+             f'<div class="swtease" id="swtease"><p>{E(first)}</p><p class="swnext"></p><p class="swlast" hidden></p></div>'
+             f'<p class="none swfoot">Graded Tuesday at the posted FanDuel price, one unit each. {E(SW.record_text(R))}. <a href="/how/">How we pick</a> · <a href="/receipts/">Receipts</a></p>'
+             f'{PROMO_TAIL_JS}{PROMO_LIVE_JS}{SWEEP_JS}</section>')
+    return html_, bool(sw) or R["total"] > 0
+
 
 # ---------- assemble ----------
 HOME_CSS = r"""
@@ -646,7 +798,9 @@ def sections(IN, OUT, latest_week=None):
     week = D["bd"].get("week") or ""
     tp = top_plays(D); td = td_plays(D); gl = gl_plays(D); ps = parlays(D); R = record(D); fl = floor_plays(D); fs = floor_slip(D, floor_plays(D, n=16)); nm = nextman_plays(D)
     out = []
-    pb = promos_block(OUT)
+    try: _swtot = SW.record(json.load(open(os.path.join(IN, "promos.json")))["values"])["total"]   # any Daily Sweep row on the tab, any week
+    except Exception: _swtot = 0
+    pb = promos_block(OUT, _swtot > 0)
     if pb: out.append(pb)
     mbe, mbt, mbs = model_best(D)
     if mbe or mbt or mbs:

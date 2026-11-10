@@ -422,6 +422,13 @@ try:
     if PRW:
         n_ = sum(d[0] for d in PRW.values()); h_ = sum(d[1] for d in PRW.values()); u_ = sum(d[2] for d in PRW.values())
         promo_line = f'<span class="k">Promoted bets</span><span>{h_}–{n_-h_} · {u_:+.1f}u at posted odds · ' + ", ".join(f"Wk {w} {d[1]}–{d[0]-d[1]}" for w, d in sorted(PRW.items())) + '</span>'
+    # owner 11/10: the Daily Sweep (one house slip per game day; sweep.py) on its own line - it is also counted inside "Promoted bets"
+    try:
+        import sweep as SW
+        RS = SW.record(vals("promos.json"))
+        if RS["n"]:
+            promo_line = (f'<span class="k">The Daily Sweep</span><span>{SW.record_text(RS)} · ' + ", ".join(f"Wk {w} {d[0]}–{d[1]}" for w, d in sorted(RS["weeks"].items())) + '</span>') + promo_line
+    except Exception as _e: print("warn: Daily Sweep season line skipped:", _e)
 except Exception: pass
 head_mae = allrow["All skill"][0]
 summary = f'''<section class="card summary" id="summary">

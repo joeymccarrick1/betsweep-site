@@ -34,6 +34,8 @@ for f in files:
     for p in d.get("promos") or []:
         if not p.get("post"): continue
         title = str(p.get("name", "")).strip()
+        # owner 11/10: a draft of type "sweep" is the day's Daily Sweep - the tab knows it by its Title ("Daily Sweep: <name>", sweep.py)
+        if str(p.get("type", "")).strip().lower() in ("sweep", "daily sweep") and not re.match(r"\s*(the\s+)?daily\s+sweep\b", title, re.I): title = ("Daily Sweep: " + title) if title else "Daily Sweep"
         if not title or (str(w), title.lower()) in have: continue
         legs = "\n".join(leg_txt(l, p.get("game", "")) for l in p.get("legs") or [])
         odds = p.get("odds") or re.sub(r"[^0-9+-]", "", str(p.get("price_est", "")).split(" ")[0]) or ""
