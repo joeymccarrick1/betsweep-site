@@ -36,6 +36,20 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
 10. SAME-NAME PLAYERS: match injuries / inactives on name + team, never name alone (11/9: a Browns "Justin Jefferson" inactive marked
    the Vikings' Jefferson OUT).
 
+### Judgment checks (owner 11/10: "do all 6") - run on every slip before it goes in the draft
+11. ARGUE AGAINST IT: write the strongest case that the slip loses - the one thing that kills it and whether every leg depends on one
+   player or one script (Monday 11/9: every slip needed Carson Wentz to play well). If that case has no answer, change the slip.
+12. CONSISTENCY: the slip, the card's Sweep says and the model's endings (`sc`, game `probs`) must tell the same story. If they
+   disagree, say so in the draft and follow Sweep says (owner 11/10: "I'd roll with sweep says more often").
+13. RESPECT LOW CONFIDENCE: model total within 1 point of the line, no ending above ~35%, a backup QB, or a key player questionable =
+   a low-confidence game. Shrink the slip (fewer legs) or skip the game; never force the usual +300 out of it.
+14. GRADE OUR OWN PICKS: every slip drafted here or built in chat is logged to the sheet tab 'ASSIST - Slip Log' (by the session that
+   can write the sheet; draft runs list them in their output) and graded on Tuesday - so we see whether our calls on top of the model
+   (form-vs-matchup "your call" legs, script picks) help or hurt.
+15. NEWS FIRST: before building, read feeds:news.json, injuries.json and inactives.json for BOTH teams (name + team match) - QB changes,
+   coach's decisions and role news move faster than the model.
+16. Rules 1-10 every time - no exceptions without saying so in the draft.
+
 ## Data (all public, read-only)
 1. Clone the site: `git clone -q --depth 1 https://github.com/joeymccarrick1/betsweep-site.git site` (if the repo is already attached,
    use it and `git pull`). Then `git -C site fetch -q origin feeds:feeds` for the ESPN mirror.
