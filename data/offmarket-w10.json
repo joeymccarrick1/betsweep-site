@@ -1,0 +1,17 @@
+{
+ "week": 10,
+ "legs": {
+  "Rachaad White|Receiving Yards|25": {
+   "pl": "Rachaad White",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "NYG-WAS",
+   "fd": 270.0,
+   "dk": 227.0,
+   "hr": 200.0,
+   "gap": 3.6,
+   "p": 0.274,
+   "seen": "2026-11-10 6:24"
+  }
+ }
+}
