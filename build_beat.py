@@ -13,6 +13,86 @@ gid, m, ln, o, p, ko], ...]} (served at /b/beat.json).
 import json, os, math, datetime as dt
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out")
+# ---- friend leagues (owner 11/10: "I'd love for us to start 1-3") ----------------------------------------------------------------------
+# A league is a name and an invite code. Everything goes through the functions of sql/betsweep-leagues.sql (beat_league_create / join /
+# leave / rename / delete / mine / board): the page never reads a table, and the board carries display names and hits only. Until the
+# owner has run that SQL the functions do not exist - the card then hides itself, nothing else on the page changes.
+LEAGUE_CSS = """
+.lgchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px} .lgchips button{font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;min-height:40px;padding:0 13px;border-radius:8px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.lgchips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)} .lgchips button.new{border-style:dashed;color:var(--mute)}
+.lgrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 0} .lgrow input{flex:1;min-width:160px;font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.lgrow button,.lgrow a.b{font:inherit;font-size:13.5px;font-weight:600;min-height:44px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.lgrow button.pri{background:var(--red);border-color:var(--red);color:#fff;font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.lginv{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:var(--chalk);font-size:13.5px;line-height:1.45;word-break:break-all} .lginv code{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--ink)}
+.lb tr.me td{font-weight:700} .lb tr.model td{color:var(--mute)}
+"""
+LEAGUE_JS = r"""<script>
+(function(){
+  var main = document.querySelector('main.bt'), W = +(main && main.dataset.week) || 0, card = document.getElementById('btlg'), body = document.getElementById('btlgbody'); if(!card || !body) return;
+  var LIST = null, CUR = null, MSG = '', MISSING = false, BUSY = false, WANT = null;
+  try { WANT = (new URLSearchParams(location.search).get('league') || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12) || null; } catch(e){}
+  try { CUR = localStorage.getItem('bs_beat_league') || null; } catch(e){}
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function acct(){ return window.bsAccount && window.bsAccount.user && window.bsAccount.client ? window.bsAccount : null; }
+  function gone(err){ var m = String((err && (err.message || err.code)) || ''); return /PGRST202|Could not find the function|does not exist|404/i.test(m + ' ' + ((err && err.code) || '')); }
+  function link(code){ return 'https://betsweep.co/beat/?league=' + code; }
+  function rpc(fn, args){ var A = acct(); return A.client.rpc(fn, args || {}).then(function(r){ if(r.error) throw r.error; return r.data; }); }
+  function setCur(c){ CUR = c; try { if(c) localStorage.setItem('bs_beat_league', c); else localStorage.removeItem('bs_beat_league'); } catch(e){} }
+  function clearWant(){ WANT = null; try { var u = new URL(location.href); u.searchParams.delete('league'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); } catch(e){} }
+  function paint(board){
+    if(MISSING){ card.hidden = true; return; } card.hidden = false;
+    var A = acct(), h = '';
+    if(!A){ body.innerHTML = '<p class="btnote">' + (WANT ? 'You were invited to a league. Sign in (menu, top right) and you are in.' : 'Sign in (menu, top right) to start a league with friends or join one from an invite link.') + '</p>'; return; }
+    if(LIST === null){ body.innerHTML = '<p class="btnote">Loading…</p>'; return; }
+    var cur = LIST.filter(function(l){ return l.code === CUR; })[0] || LIST[0] || null;
+    h += '<div class="lgchips">' + LIST.map(function(l){ return '<button type="button" data-lg="' + esc(l.code) + '" class="' + (cur && l.code === cur.code ? 'on' : '') + '">' + esc(l.name) + '</button>'; }).join('') + '</div>';
+    if(cur){
+      h += '<div id="lgboard">' + (board ? boardHtml(board, cur) : '<p class="btnote">Loading the board…</p>') + '</div>';
+      h += '<p class="lginv">Invite link: <code>' + esc(link(cur.code).replace('https://', '')) + '</code></p>';
+      h += '<div class="lgrow"><button type="button" class="pri" data-act="share">Invite friends</button><button type="button" data-act="copy">Copy link</button>' + (cur.owner ? '<button type="button" data-act="rename">Rename</button><button type="button" data-act="close">Close league</button>' : '') + '<button type="button" data-act="leave">Leave</button></div>';
+    } else h += '<p class="btnote">No league yet. Start one and send the link to your friends: everyone picks five a week, Tuesday grades it, and the board keeps score against each other and the model.</p>';
+    h += '<div class="lgrow"><input type="text" id="lgname" maxlength="40" placeholder="' + (LIST.length ? 'Start another league' : 'League name (Sunday Crew)') + '"><button type="button" class="' + (cur ? '' : 'pri') + '" data-act="create">Start a league</button></div>';
+    if(MSG) h += '<p class="btnote ' + (MSG.charAt(0) === '!' ? 'err' : 'ok') + '">' + esc(MSG.replace(/^!/, '')) + '</p>';
+    body.innerHTML = h;
+  }
+  function boardHtml(rows, cur){
+    if(!rows.length) return '<p class="btnote">Nobody here yet.</p>';
+    var graded = rows.some(function(r){ return r.week_hits != null; }), n = 0;
+    var h = '<table class="lb"><thead><tr><th>#</th><th>Name</th><th class="r">Hits</th><th class="r">Weeks</th><th class="r">Week ' + W + '</th></tr></thead><tbody>';
+    rows.forEach(function(r){ if(!r.model) n++;
+      h += '<tr class="' + (r.me ? 'me' : '') + (r.model ? ' model' : '') + '"><td>' + (r.model ? '—' : n) + '</td><td>' + esc(r.name) + (r.me ? ' (you)' : '') + '</td><td class="r">' + r.hits + '</td><td class="r">' + r.weeks + '</td><td class="r">' + (r.week_hits != null ? r.week_hits + '/5' : r.picked ? 'in' : 'not yet') + '</td></tr>'; });
+    var mem = rows.filter(function(r){ return !r.model; }).length;
+    return h + '</tbody></table><p class="btnote">' + mem + ' in ' + esc(cur.name) + '. Hits count from the week the league started, so everyone starts level. Graded Tuesdays.</p>';
+  }
+  function loadBoard(){ var cur = LIST && (LIST.filter(function(l){ return l.code === CUR; })[0] || LIST[0]); if(!cur) return; setCur(cur.code);
+    rpc('beat_league_board', {p_code: cur.code, p_week: W}).then(function(rows){ if(CUR === cur.code) paint(rows || []); }).catch(function(){ var b = document.getElementById('lgboard'); if(b) b.innerHTML = '<p class="btnote">The board is unavailable right now.</p>'; }); }
+  function load(){
+    var A = acct(); if(!A){ LIST = null; paint(); return; }
+    var first = WANT ? rpc('beat_league_join', {p_code: WANT}).then(function(r){ var x = (r && r[0]) || null; if(x){ setCur(x.code); MSG = 'You are in ' + x.name + '.'; } clearWant(); }).catch(function(e){ if(gone(e)){ MISSING = true; } else { MSG = '!' + (e.message || 'Could not join that league.'); clearWant(); } }) : Promise.resolve();
+    first.then(function(){ if(MISSING){ paint(); return; }
+      return rpc('beat_league_mine').then(function(rows){ LIST = rows || []; paint(); loadBoard(); }); })
+    .catch(function(e){ if(gone(e)){ MISSING = true; paint(); } else { LIST = LIST || []; MSG = '!Leagues are unavailable right now.'; paint(); } });
+  }
+  function act(fn, args, okMsg, after){ if(BUSY) return; BUSY = true;
+    rpc(fn, args).then(function(r){ BUSY = false; MSG = typeof okMsg === 'function' ? okMsg(r) : okMsg; if(after) after(r); load(); }).catch(function(e){ BUSY = false; MSG = '!' + (e.message || 'That did not work.'); paint(); loadBoard(); }); }
+  card.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('button'); if(!b) return; var A = acct(); if(!A) return;
+    var cur = LIST && (LIST.filter(function(l){ return l.code === CUR; })[0] || LIST[0]);
+    if(b.dataset.lg){ setCur(b.dataset.lg); MSG = ''; paint(); loadBoard(); return; }
+    var a = b.dataset.act; if(!a) return;
+    if(a === 'create'){ var nm = (document.getElementById('lgname').value || '').trim(); if(!nm){ MSG = '!Give the league a name first.'; paint(); return; }
+      act('beat_league_create', {p_name: nm}, function(r){ var x = (r && r[0]) || {}; return 'Started ' + (x.name || nm) + '. Send the invite link to your friends.'; }, function(r){ var x = (r && r[0]) || {}; if(x.code) setCur(x.code); }); return; }
+    if(!cur) return;
+    var txt = 'Join my BetSweep league "' + cur.name + '": five picks a week against the model.';
+    if(a === 'share'){ if(navigator.share){ navigator.share({title: 'BetSweep league', text: txt, url: link(cur.code)}).catch(function(){}); } else a = 'copy'; }
+    if(a === 'copy'){ var t = txt + ' ' + link(cur.code); if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function(){ MSG = 'Invite copied.'; paint(); loadBoard(); }, function(){ window.prompt('Copy this invite', t); }); else window.prompt('Copy this invite', t); return; }
+    if(a === 'rename'){ var n2 = window.prompt('League name', cur.name); if(n2 && n2.trim()) act('beat_league_rename', {p_code: cur.code, p_name: n2.trim()}, 'Renamed.'); return; }
+    if(a === 'close'){ if(window.confirm('Close "' + cur.name + '" for everyone in it? This cannot be undone.')) act('beat_league_delete', {p_code: cur.code}, 'League closed.', function(){ setCur(null); }); return; }
+    if(a === 'leave'){ if(window.confirm('Leave "' + cur.name + '"?' + (cur.owner ? ' The longest-standing member becomes its owner.' : ''))) act('beat_league_leave', {p_code: cur.code}, 'You left ' + cur.name + '.', function(){ setCur(null); }); return; }
+  });
+  var tries = 0; (function wait(){ if(window.bsAccount && window.bsAccount.client){ load(); document.addEventListener('bs-account', load); window.addEventListener('bs-account', load); } else if(tries++ < 40) setTimeout(wait, 250); else paint(); })();
+})();
+</script>"""
 E = lambda s: str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 D = json.load(open(os.path.join(OUT, "builder_data.json"))); W = D["week"]
 KO = {g["gid"]: g.get("ko") for g in D.get("games", [])}
@@ -55,6 +135,7 @@ body = f'''<title>Beat the model · Week {W} · BetSweep</title>
 .btsub button{{font:inherit;font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;min-height:44px;padding:0 18px;border-radius:8px;border:0;background:var(--red);color:#fff;cursor:pointer}} .btsub button[disabled]{{opacity:.5;cursor:default}}
 .btnote{{font-size:13px;color:var(--mute);margin-top:8px;line-height:1.45}} .btnote.ok{{color:var(--good)}} .btnote.err{{color:var(--bad)}}
 table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}} .lb th.r,.lb td.r{{text-align:right;font-variant-numeric:tabular-nums}} .lb thead th{{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}} .lb tr.model td{{color:var(--redtxt,var(--red));font-weight:600}} .lb tr.me td{{background:color-mix(in srgb,var(--good) 9%,transparent)}}
+{LEAGUE_CSS}
 .btchip{{display:inline-block;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chalk);color:var(--mute)}}
 </style>
 <main class="bt" data-week="{W}">
@@ -68,6 +149,7 @@ table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{pa
   <p class="btnote" id="btnote">Sign in (menu, top right) to submit. Picks are one set per week; you can change them until a chosen leg's game kicks off.</p>
  </section>
 </div>
+<section class="btcard" style="margin-top:14px" id="btlg"><h2>Your leagues <small>friends only · invite with a link</small></h2><div id="btlgbody"><p class="btnote">Loading…</p></div></section>
 <section class="btcard" style="margin-top:14px"><h2>Leaderboard <small>graded Tuesdays · hits of five · season total</small></h2><div id="btlb"><p class="btnote">Loading…</p></div></section>
 </main>
 <script>
@@ -128,6 +210,7 @@ table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{pa
     var tries = 0; (function wait(){{ if (window.bsAccount && window.bsAccount.client){{ loadMine(); loadLB(); window.addEventListener('bs-account', function(){{ loadMine(); loadLB(); }}); document.addEventListener('bs-account', function(){{ loadMine(); loadLB(); }}); }} else if (tries++ < 40) setTimeout(wait, 250); else loadLB(); }})(); }});
 }})();
 </script>
+{LEAGUE_JS}
 '''
 open(os.path.join(OUT, "beat.html"), "w").write(body)
 print(f"wrote out/beat.html + beat.json: pool {len(pool)} legs in the -150..+150 band, model's five: " + "; ".join(model))

@@ -62,5 +62,5 @@ async def main():
         b = await p.chromium.launch(); out = []; sem = asyncio.Semaphore(5)
         await asyncio.gather(*[one(b, pth, out, sem) for pth in pages]); await b.close()
     json.dump(out, open('/tmp/site_clicks.json', 'w'))
-    for r in out: print(r['path'], 'clicked', r['clicked'], 'typed', r['typed'], '| errors', r['errors'][:3], '| flags', r['flags'][:2])
+    for r in out: print(r['path'], 'clicked', r['clicked'], 'typed', r['typed'], '| errors', r['errors'][:3], '| flags', r.get('flags', ['PAGE DID NOT LOAD'])[:2])
 asyncio.run(main())
