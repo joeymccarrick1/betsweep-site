@@ -146,8 +146,9 @@ def build(out_dir=OUT):
     ML = {}
     for l in LEGS:
         if l["m"] == "Moneyline" and not l.get("alt"): ML.setdefault(l["g"], {})[l["tm"]] = l
-    BYK = {}
-    for l in LEGS: BYK.setdefault((l["g"], l["pl"], l["m"]), l)
+    BYK = {}   # a best-parlay leg is (player, market, line): the line is part of the key, a player has a rung for every line
+    def _k(g, pl, m, ln): return (g, pl, m, round(float(ln or 0), 1))
+    for l in LEGS: BYK.setdefault(_k(l["g"], l["pl"], l["m"], l.get("ln")), l)
     days, rows_json = {}, []
     for g in sorted(GAMES, key=lambda g: g.get("sort", "")):
         a, b = g["a"], g["b"]; ml = ML.get(g["gid"], {}); pa = (ml.get(a) or {}).get("p"); pb = (ml.get(b) or {}).get("p")
@@ -159,7 +160,7 @@ def build(out_dir=OUT):
         pick = f'<b>{E(win)}</b> {"by a hair" if close else "to win"}' + (f' <i>{wp * 100:.0f}%</i>' if wp is not None else "") + (f'<span class="sc">{score}</span>' if score else "")
         bp = BP.get(g["gid"]); bp_html = ""; bp_link = ""
         if bp:
-            legs = [BYK.get((g["gid"], x[0], x[1])) for x in bp["legs"]]; bp_link = fd_link(legs)
+            legs = [BYK.get(_k(g["gid"], x[0], x[1], x[2])) for x in bp["legs"]]; bp_link = fd_link(legs)
             bp_html = ('<div class="bp"><small>Best parlay</small><span>' + " + ".join(E(leg_txt(l) if l else str(x[0])) for l, x in zip(legs, bp["legs"])) + '</span>'
                        + (f'<a class="bsbtn" href="{E(bp_link)}" target="_blank" rel="noopener">Bet {amd(bp["dec"])}</a>' if bp_link else f'<em>{amd(bp["dec"])}</em>') + '</div>')
         say = SAY.get(g["gid"]); day = (g.get("kick") or "").split(" ")[0]

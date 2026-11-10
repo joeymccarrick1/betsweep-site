@@ -65,7 +65,7 @@ async def run():
             check(o["open"] and o["bp"] and o["more"] == "/boards/#" + g0["gid"], f"tap a game: best parlay and a way to its full board ({o['bp'][:50]})")
             if o["href"]:
                 legs = [BYID.get(i) for i in ids_of(o["href"])]
-                check(all(legs) and [(l["pl"], l["m"]) for l in legs] == [(x[0], x[1]) for x in g0["bp"]] and all(l["g"] == g0["gid"] for l in legs), "the best parlay's Bet link read back: the same legs, from that game")
+                check(all(legs) and [(l["pl"], l["m"], round(float(l["ln"] or 0), 1)) for l in legs] == [(x[0], x[1], round(float(x[2] or 0), 1)) for x in g0["bp"]] and all(l["g"] == g0["gid"] for l in legs), "the best parlay's Bet link read back: the same legs at the same lines, from that game")
         await ctx.close()
         # kickoffs
         ctx, pg, errs = await ctx_page(now=(kos[0] + 60000) / 1000); await pg.goto(BASE + "/simple/", wait_until="load"); await pg.wait_for_timeout(500); v = await pg.evaluate(S)
