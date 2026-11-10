@@ -11,7 +11,7 @@ here touches Supabase, ESPN or FanDuel. Written in the 11/10 site audit; see RUN
 """
 import asyncio, json, os, re, sys, glob
 from playwright.async_api import async_playwright
-ROOT = os.environ.get('SITE', '/home/claude/betsweep-site'); PORT = 8801; BASE = f'http://127.0.0.1:{PORT}'
+ROOT = os.environ.get('SITE', '/home/claude/betsweep-site'); PORT = 8801; BASE = os.environ.get('BASE', f'http://127.0.0.1:{PORT}')
 pages = []
 for f in sorted(glob.glob(ROOT + '/**/index.html', recursive=True)):
     rel = os.path.relpath(os.path.dirname(f), ROOT); pages.append('/' if rel == '.' else '/' + rel + '/')

@@ -11,7 +11,7 @@ here touches Supabase, ESPN or FanDuel. Written in the 11/10 site audit; see RUN
 """
 import asyncio, json, os, re, sys
 from playwright.async_api import async_playwright
-BASE = 'http://127.0.0.1:8801'
+BASE = os.environ.get('BASE', 'http://127.0.0.1:8801')
 pages = sys.argv[1:] or ['/build/', '/boards/', '/live/', '/team/', '/dfs/', '/trade/', '/firsttd/', '/teasers/', '/beat/', '/', '/me/', '/player/aaron-jones/', '/player/', '/usage/', '/benefits/', '/season/', '/receipts/week9/', '/social/', '/team/compare/', '/lab/merged/', '/teams/buf/', '/dossier/ARI-LA/', '/b/']
 COLLECT = """(seen) => { const sig = e => e.tagName + '|' + (typeof e.className === 'string' ? e.className : '') + '|' + (e.id||'') + '|' + (e.innerText||'').trim().slice(0, 20) + '|' + (e.getAttribute('data-k')||e.getAttribute('data-g')||e.getAttribute('data-id')||'').slice(0,20);
   const els = Array.from(document.querySelectorAll('button, summary, [role=button], input[type=checkbox], input[type=radio], select, [data-k].add, .chip[data-f]')).filter(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !e.disabled; });

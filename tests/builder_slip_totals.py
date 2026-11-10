@@ -14,7 +14,7 @@ Prints PASS / FAIL lines and "RESULT ALL PASS" or "RESULT FAILURES" (exit code 1
 """
 import asyncio, json, os, sys, collections
 from playwright.async_api import async_playwright
-BASE = 'http://127.0.0.1:8801'
+BASE = os.environ.get('BASE', 'http://127.0.0.1:8801')
 D = json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'out', 'builder_data.json')))
 W = D['week']; KS, KG = f'bs_slipk_w{W}', f'bs_slipg_w{W}'
 key = lambda l: f"{l['pl']}|{l['m']}|{int(l['ln'] + 0.5)}"

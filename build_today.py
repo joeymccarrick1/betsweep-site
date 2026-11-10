@@ -63,6 +63,13 @@ def sections(IN_, OUT_):
     try: VOICE = json.load(open(os.path.join(OUT_, "voice.json")))
     except Exception: VOICE = {}
     vg = VOICE.get("games") or {}; vl = VOICE.get("legs") or {}
+    # audit 11/10: the "Share this take" button the boards carry under each Sweep says line (owner 11/10) on the home cards too.
+    # build_boards.py writes the buttons and the share-card script to out/sweepcards.json; missing or another week = no button.
+    try:
+        SWC = json.load(open(os.path.join(OUT_, "sweepcards.json")))
+        if int(SWC.get("week") or 0) != int(W): SWC = {}
+    except Exception: SWC = {}
+    swb = SWC.get("btn") or {}
     try: NEWS = json.load(open(os.path.join(IN_, "ctx_news.json")))
     except Exception: NEWS = {"players": []}
     built = dt.datetime.now(CT)
@@ -127,7 +134,7 @@ def sections(IN_, OUT_):
         cards.append(f'''<article class="tdgame" id="td-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-date="{E(ct_date(g.get("ko")) or "")}" data-fin="{E(g.get("fin", ""))}">
  <header><div class="tdm"><span class="tm">{E(away)}</span><span class="at">@</span><span class="tm">{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="gl"></span></div></header>
  <p class="tdl">{market_line(g)}{" · " if market_line(g) else ""}{script_line(g)}</p>
- {f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>' if say else ""}
+ {(f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>' + swb.get(g["gid"], "")) if say else ""}
  {f'<div class="tdchips">{chip_html}</div>' if chip_html else ""}
  {f'<ul class="tdnews">{news_html}</ul>' if news_html else ""}
  {f'<button type="button" class="tdtog" aria-expanded="false">Looks &amp; parlay <i>▾</i></button><div class="tdmore"><div class="plays tdplays">{legs_html}</div>{bp_html}</div>' if (legs_html or bp_html) else ""}
@@ -231,6 +238,7 @@ def sections(IN_, OUT_):
 {HOME.home_js(games)}
 {HOME.HOME_SLIP_JS}
 '''
+    if swb and any(vg.get(g["gid"]) and swb.get(g["gid"]) for g in games): body += SWC.get("js", "") + "\n"   # the share-card style + script, once (same one the boards carry)
     open(os.path.join(OUT_, "today.html"), "w").write(body)
     print(f"wrote out/today.html + today.json: {len(games)} games over {len(days)} days, {sum(len(v) for v in legs_by_g.values())} plus/TD legs, {len(news)} news notes, voice lines {len(vg)}")
     return body
@@ -263,7 +271,7 @@ TODAY_CSS = r"""
 .tgl{list-style:none;margin:0;padding:0;display:grid;gap:8px} .tg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;border-left-width:4px} .tg.buy{border-left-color:var(--good)} .tg.sell{border-left-color:var(--red)}
 .tgh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap} .tgh a{color:var(--ink);text-decoration:none} .tgh a:hover{text-decoration:underline} .tgm{color:var(--mute);font-size:12.5px} .tgr{margin-left:auto;font-family:var(--display);font-weight:700;font-size:13px} .tgr small{font-weight:500;color:var(--mute)}
 .tgn{display:flex;gap:14px;margin:6px 0 4px;font-size:12.5px;color:var(--mute)} .tgn b{color:var(--ink);font-family:var(--display);font-size:15px;font-weight:700;margin-right:3px} .tg p{margin:0;font-size:13.5px;line-height:1.45}
-.tdnewsl{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))} .tdnewsl li[hidden]{display:none} .tdmore{display:block;width:100%;margin:10px 0 0;min-height:44px;font:inherit;font-weight:700;font-size:14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer} .tdnewsl li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .tdnewsl li .nt{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-top:3px;min-width:52px} .tdnewsl li.bad .nt{color:var(--bad)} .tdnewsl li.watch .nt{color:#b7791f} .tdnewsl li.good .nt{color:var(--good)} .tdnewsl li b{font-family:var(--display);font-weight:700;font-size:16px} .tdnewsl li b small{color:var(--mute);font-size:12px;font-weight:600;margin-left:4px} .tdnewsl li p{margin:2px 0 0;color:var(--mute);font-size:13px;line-height:1.45} .tdnewsl li.mine{border-color:var(--red)}
+.tdnewsl{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))} .tdnewsl li[hidden]{display:none} .tdnewsmore{display:block;width:100%;margin:10px 0 0;min-height:44px;font:inherit;font-weight:700;font-size:14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer} .tdnewsl li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .tdnewsl li .nt{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-top:3px;min-width:52px} .tdnewsl li.bad .nt{color:var(--bad)} .tdnewsl li.watch .nt{color:#b7791f} .tdnewsl li.good .nt{color:var(--good)} .tdnewsl li b{font-family:var(--display);font-weight:700;font-size:16px} .tdnewsl li b small{color:var(--mute);font-size:12px;font-weight:600;margin-left:4px} .tdnewsl li p{margin:2px 0 0;color:var(--mute);font-size:13px;line-height:1.45} .tdnewsl li.mine{border-color:var(--red)}
 .tdweek{display:grid;gap:8px} .tdwd{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .tdwd b{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)} .tdwd .g{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13.5px} .tdwd .g a{text-decoration:none;color:var(--ink);font-weight:600} .tdwd .g a small{color:var(--mute);font-weight:500;margin-left:4px} .tdwd .g a.post{opacity:.6}
 .tdempty{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;font-size:15px;line-height:1.5} .tdempty b{font-family:var(--display);font-size:22px;display:block;margin-bottom:4px}
 .askbox{display:flex;gap:8px} .askbox input{flex:1;min-width:0;font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)} .askbox input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
@@ -332,7 +340,7 @@ TODAY_JS = r"""<script>
   if(nl){ var items = [].slice.call(nl.children); items.sort(function(x, y){ var a = tms[x.getAttribute('data-team')] ? 0 : 1, b = tms[y.getAttribute('data-team')] ? 0 : 1; return a - b; }); items.forEach(function(li){ nl.appendChild(li); }); }
   // audit 11/10: the list ran ~5,800px on a phone (30 notes, a quarter of the page). The first eight show (today's teams first); the rest open on tap.
   if(nl){ var NCAP = 8, lis = [].slice.call(nl.children); if(lis.length > NCAP + 2){ lis.forEach(function(li, i){ if(i >= NCAP) li.hidden = true; });
-    var mb = document.createElement('button'); mb.type = 'button'; mb.className = 'tdmore'; mb.textContent = 'Show all ' + lis.length + ' news notes';
+    var mb = document.createElement('button'); mb.type = 'button'; mb.className = 'tdnewsmore'; mb.textContent = 'Show all ' + lis.length + ' news notes';
     mb.addEventListener('click', function(){ lis.forEach(function(li){ li.hidden = false; }); mb.remove(); }); nl.parentNode.insertBefore(mb, nl.nextSibling); } }
   // ---- you today: slip legs in these games + your Sleeper roster vs the news ----
   var you = document.getElementById('tdyou'), box = document.getElementById('tdyoubox'); var rows = [];
