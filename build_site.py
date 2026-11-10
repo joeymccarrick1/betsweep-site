@@ -125,7 +125,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
-NAV_GROUPS = [("/", "Home", None),
+NAV_GROUPS = [("/", "Home", None), ("/simple/", "Simple view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
               (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/firsttd/", "First TD", "Who scores first"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
@@ -515,6 +515,13 @@ if os.path.exists(os.path.join(OUT, "pairs.html")):
     made.append(place_plain(os.path.join(OUT, "pairs.html"), os.path.join(SITE, "pairs"), "/pairs/"))
     try: os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "pairs.json"), os.path.join(SITE, "b", "pairs.json"))
     except Exception as _e: print("note: /b/pairs.json not written:", _e)
+# owner 11/10: /simple/ - the Simple view for casual visitors (build_simple.py). Built HERE, last, so it shows this run's final promos, Sweep says
+# lines and best parlays whatever order the earlier steps ran in. Full stays the default; the home page's "Simple view" pill switches.
+try:
+    import build_simple as _SIMPLE
+    print(_SIMPLE.build(OUT))
+    made.append(place_plain(os.path.join(OUT, "simple.html"), os.path.join(SITE, "simple"), "/simple/"))
+except BaseException as _e: print("note: Simple view not built this run:", _e)
 # owner 11/10: /survivor/ - the Survivor planner (build_survivor.py): elimination pools, the best pick now and the team to save for each week left
 if os.path.exists(os.path.join(OUT, "survivor.html")):
     made.append(place_plain(os.path.join(OUT, "survivor.html"), os.path.join(SITE, "survivor"), "/survivor/"))

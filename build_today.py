@@ -222,7 +222,9 @@ def sections(IN_, OUT_):
     body = f'''<title>Today · BetSweep</title>
 <meta name="description" content="Today on BetSweep: what kicks off, the model's plus-money looks for today's games, the news that moved the numbers, your slips and your Sleeper team.">
 <style>{TODAY_CSS}</style>
-<section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdlive" href="/live/">Live</a></div></section>
+<script data-early>/* owner 11/10, Simple view: a visitor who chose Simple opens there. Only the bare home address (or the installed app's) moves - a link with a hash or any other query stays on this page. */
+try{{ if(localStorage.getItem('bs_view') === 'simple' && location.pathname === '/' && !location.hash && (!location.search || location.search === '?source=app')) location.replace('/simple/'); }}catch(e){{}}</script>
+<section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdshare" id="tdsimple" href="/simple/" title="The short version: picks first, reading optional" onclick="try{{localStorage.setItem('bs_view','simple')}}catch(e){{}}">Simple view</a><a class="tdlive" href="/live/">Live</a></div></section>
 {sweep_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p></section>
