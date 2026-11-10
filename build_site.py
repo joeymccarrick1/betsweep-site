@@ -504,6 +504,9 @@ def place_plain(src_html, dest_dir, path):
     m = re.search(r'<meta name="description" content="([^"]*)">\n?', src); d = html.unescape(m.group(1)) if m else "BetSweep"
     if m: src = src.replace(m.group(0), "", 1)
     os.makedirs(dest_dir, exist_ok=True); open(os.path.join(dest_dir, "index.html"), "w").write(wrap(src, t, d, path, "/og.png")); return t
+# owner 11/10: /badbeats/ - 'Missed by one' (badbeats.py, Tuesday after grading)
+if os.path.exists(os.path.join(OUT, "badbeats.html")):
+    made.append(place_plain(os.path.join(OUT, "badbeats.html"), os.path.join(SITE, "badbeats"), "/badbeats/"))
 # 11/5 (out-of-the-box batch): /teasers/ - the teaser finder (build_teasers.py); /b/teasers.json for the app and the API page
 if os.path.exists(os.path.join(OUT, "teasers.html")):
     made.append(place_plain(os.path.join(OUT, "teasers.html"), os.path.join(SITE, "teasers"), "/teasers/"))
