@@ -1645,12 +1645,13 @@ BUILDER_JS = r"""
     var hiR = ls.filter(function(l){ return !isGL(l) && riskScore(l) >= 4; }); if(hiR.length) flags.push(hiR.length + ' high-risk leg' + (hiR.length>1?'s':'') + ' (' + hiR.map(function(l){ return l.pl; }).join(', ') + ')');
     var warned = ls.filter(function(l){ return l.w; }); if(warned.length) flags.push(warned.length + ' leg' + (warned.length>1?'s':'') + ' carr' + (warned.length>1?'y':'ies') + ' a model warning');
     // owner 11/6 (parlay size): graded Weeks 6-8, legs at -130 or shorter returned about -9% each, and -8% to -23% even with a model edge -
-    // a favorite adds price cost to a parlay, not safety
+    // a favorite adds price cost to a parlay, not safety. (owner 11/10: "I want the -300/200 slips" - the note keeps the graded fact and ends with
+    // the house bar from /how/ instead of telling people off the format the site posts)
     // owner 11/6 (Ravens TNF): 2+ legs that need the same likely blowout loser to show up are one bet on that offense
     var bxt = {}; ls.forEach(function(l){ var g = games[l.g]; if(!g || !l.sc || !g.probs || (isGL(l) && l.m === 'Total')) return; var sw = g.probs.reduce(function(x, y){ return x + (+y || 0); }, 0) || 1;
       var kt = l.tm === g.a ? 3 : l.tm === g.b ? 0 : -1; if(kt < 0) return; if((+g.probs[kt] || 0) / sw >= 0.35 && l.sc[kt] <= l.p - 0.10){ var key = l.tm + '|' + l.g; (bxt[key] = bxt[key] || {tm: l.tm, opp: kt === 3 ? g.b : g.a, pr: (+g.probs[kt] || 0) / sw, n: 0}).n++; } });
     Object.keys(bxt).forEach(function(k){ var x = bxt[k]; if(x.n >= 2) flags.push(x.n + ' legs need ' + x.tm + '\'s offense to show up, and ' + x.opp + ' wins by 10+ ' + Math.round(x.pr * 100) + '% of the time - in that game they all lose together (see "What does this slip need?")'); });
-    var fav = ls.filter(function(l){ return !isGL(l) && l.o != null && l.o <= -130; }); if(fav.length >= 2) flags.push(fav.length + ' legs at -130 or shorter: graded Weeks 6-8, favorites returned about -9% per leg (-8% to -23% even with a model edge) - each one costs price without making the slip safer');
+    var fav = ls.filter(function(l){ return !isGL(l) && l.o != null && l.o <= -130; }); if(fav.length >= 2) flags.push(fav.length + ' legs at -130 or shorter: graded Weeks 6-8, favorites returned about -9% per leg (-8% to -23% even with a model edge). Keep the ones where matchup, projection and game script all agree');
     var neg = ls.filter(function(l){ return l.e < 0; }); if(neg.length) flags.push(neg.length + ' leg' + (neg.length>1?'s':'') + ' priced worse than the model');
     var mixG = {}; ls.forEach(function(l){ mixG[l.g] = mixG[l.g] || {gl:0, pr:0}; mixG[l.g][isGL(l) ? 'gl' : 'pr']++; });
     if(Object.keys(mixG).some(function(g){ return mixG[g].gl && mixG[g].pr; })) flags.push('game lines and player legs from the same game are priced together: the model uses how each stat moves with the margin and the total (e.g. QB passing yards rise with the total, RB rushing yards with a lead)');
