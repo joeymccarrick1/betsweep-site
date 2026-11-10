@@ -1,4 +1,58 @@
 {
  "week": 10,
- "events": {}
+ "events": {
+  "Cam Skattebo|2026-11-10T18:55": {
+   "pl": "Cam Skattebo",
+   "tm": "NYG",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-10T18:55:06Z",
+   "legs": {
+    "Devin Singletary|Receptions|2": {
+     "pl": "Devin Singletary",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": 114,
+     "p": 0.4898,
+     "first": null,
+     "moved": null,
+     "now": 114.0,
+     "pulled": "2026-11-10 6:24"
+    },
+    "Devin Singletary|Receiving Yards|10": {
+     "pl": "Devin Singletary",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": 102,
+     "p": 0.4827,
+     "first": null,
+     "moved": null,
+     "now": 102.0,
+     "pulled": "2026-11-10 6:24"
+    },
+    "Devin Singletary|Rushing Yards|15": {
+     "pl": "Devin Singletary",
+     "m": "Rushing Yards",
+     "ln": 15.0,
+     "built": -350,
+     "p": 0.6678,
+     "first": null,
+     "moved": null,
+     "now": -350.0,
+     "pulled": "2026-11-10 6:24"
+    },
+    "Devin Singletary|Rush + Rec Yards|39": {
+     "pl": "Devin Singletary",
+     "m": "Rush + Rec Yards",
+     "ln": 39.0,
+     "built": -113,
+     "p": 0.4604,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-10 6:24"
+    }
+   }
+  }
+ }
 }
