@@ -68,7 +68,7 @@ html = f"""<title>Missed by one · Week {W} bad beats · BetSweep</title>
 <ul class="bbl">{rows or '<li>No bad beats graded yet.</li>'}</ul>
 {('<h2>Our promos that lost by one leg</h2><ul class="bbl">' + prow + '</ul>') if promos else ''}
 <p class="m" style="margin-top:18px">Graded from the final box scores against FanDuel's price when we froze the leg. A bad beat is not a bad bet - and sometimes it is.</p></main>
-<script>document.addEventListener('click',function(e){{var b=e.target.closest&&e.target.closest('.bbsh');if(!b)return;var t=b.getAttribute('data-t');if(navigator.share)navigator.share({{text:t}}).catch(function(){{}});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){{b.textContent='Copied';}});}});</script>
+<script>document.addEventListener('click',function(e){{var b=e.target.closest&&e.target.closest('.bbsh');if(!b)return;var t=b.getAttribute('data-t');if(navigator.share)navigator.share({{text:t}}).catch(function(){{}});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){{b.textContent='Copied';}}).catch(function(){{window.prompt('Copy this list',t);}});else window.prompt('Copy this list',t);}});</script>
 """
 open(os.path.join(OUT, "badbeats.html"), "w").write(html)
 print(f"wrote out/badbeats.html: week {W}, {len(beats)} near misses ({len(top)} shown), {len(promos)} promos lost by one leg")
