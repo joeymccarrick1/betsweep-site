@@ -53,6 +53,12 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
 14. GRADE OUR OWN PICKS: every slip drafted here or built in chat is logged to the sheet tab 'ASSIST - Slip Log' (by the session that
    can write the sheet; draft runs list them in their output) and graded on Tuesday - so we see whether our calls on top of the model
    (form-vs-matchup "your call" legs, script picks) help or hurt.
+   Since 11/10 the Tuesday rebuild grades the tab itself (grade_assist.py, RUNBOOK Step 5 0c), so write the Legs cell so it can be read:
+   one leg per " | ", FULL player names, the number and the stat every time - "Justin Herbert 175+ pass yds | Trey McBride 6+ rec |
+   James Cook 70+ rush yds | Bills ML". Also read: "40+ rec yds", "2+ pass TDs", "90+ rush + rec yds", "Player ATD", "A or B TD",
+   "Player U237.5 pass yds", "BUF -7.5", "Over 44.5 (BUF-MIN)". Columns: Date | Week | Game(s) | Slip | Legs | Price | Type | Built by |
+   Result | Notes - leave Result EMPTY (the grader only fills empty ones) and put the price as a bare number (305, -120). One row per
+   slip: "Same 4 legs + Bears ML" or "Herbert 175+" cannot be graded and stays open for a hand grade.
 15. NEWS FIRST: before building, read feeds:news.json, injuries.json and inactives.json for BOTH teams (name + team match) - QB changes,
    coach's decisions and role news move faster than the model.
 16. Rules 1-10 every time - no exceptions without saying so in the draft.

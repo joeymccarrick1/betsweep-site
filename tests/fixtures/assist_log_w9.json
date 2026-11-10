@@ -1,0 +1,102 @@
+{
+"range": "'ASSIST - Slip Log'!A1:J9",
+"pulled": "2026-11-10",
+"values": [
+[
+"Date",
+"Week",
+"Game(s)",
+"Slip",
+"Legs",
+"Price",
+"Type",
+"Built by",
+"Result",
+"Notes"
+],
+[
+"2026-11-08",
+"9",
+"HOU-LAC, ARI-SEA, GB-NE",
+"3 PM favorite legs",
+"Justin Herbert 175+ pass yds | Trey McBride 6+ rec | Drake Maye 200+ pass yds | Jordan Watkins 20+ rec yds",
+"305",
+"core (~+300)",
+"assistant (chat)",
+"WON",
+"Owner confirmed 5:55 PM."
+],
+[
+"2026-11-08",
+"9",
+"3 PM window",
+"11-leg +5000",
+"Herbert 175+ | McConkey 40+ | Gadsden 2+ rec | Purdy 200+ | Mayer 3+ rec | McCaffrey ATD | Bowers 6+ rec | Kittle 5+ rec | Watkins 25+ | McBride 6+ rec | Golden (sent as UNDER 5.5 rec - error)",
+"6157",
+"longshot",
+"assistant (chat)",
+"LOST",
+"Link carried Golden UNDER (filter bug). Intended slip (Golden 6+) would also have lost: Kittle 5+ rec missed. 9 of 11 legs hit."
+],
+[
+"2026-11-08",
+"9",
+"CHI-TB",
+"SNF ~+300",
+"Rome Odunze 3+ rec | Caleb Williams 225+ pass yds | Colston Loveland 40+ rec yds | Luther Burden III 50+ rec yds",
+"359",
+"core (~+300)",
+"assistant (chat)",
+"WON",
+"Owner confirmed 10:44 PM."
+],
+[
+"2026-11-08",
+"9",
+"CHI-TB",
+"SNF +500",
+"Same 4 legs + Bears ML",
+"529",
+"core",
+"assistant (chat)",
+"WON",
+"Owner confirmed 10:44 PM."
+],
+[
+"2026-11-09",
+"9",
+"BUF-MIN",
+"MNF +339 (Buffalo Wings shape)",
+"Carson Wentz 175+ pass yds | Aaron Jones 2+ rec | James Cook 70+ rush yds | Bills ML",
+"339",
+"core (~+300)",
+"assistant (chat)",
+"LOST (Wentz)",
+"Final BUF 23-6: Wentz 81 pass yds (✗ 175+), Aaron Jones 1 rec (✗ 2+), Cook 107 rush (✓ 70+), Bills ML (✓). 2/4."
+],
+[
+"2026-11-09",
+"9",
+"BUF-MIN",
+"MNF +573 / +1000 / +5000 / Piss Missile Monday / upset slips",
+"All built on Wentz pass yds overs and/or MIN ML",
+"various",
+"booster / longshot / upset",
+"assistant (chat)",
+"LOST",
+"All built on Wentz pass yds overs and/or MIN ML; Wentz 81 yds, 0 TD; MIN lost 23-6. Every slip needed Wentz to play well (judgment check 11 now in PROMO_DESK)."
+],
+[
+"2026-11-09",
+"9",
+"BUF-MIN",
+"Unders slip (not played - hindsight)",
+"Under 49.5 | Josh Allen U237.5 pass yds | Carson Wentz U7.5 rush yds",
+"420",
+"unders (Sweep says)",
+"assistant (chat, after the fact)",
+"would have WON (not bet)",
+"Final: total 29 (✓ U49.5), Allen 234 pass yds (✓ U237.5), Wentz 0 rush yds (✓ U7.5) - 3/3, ~+420. Sweep says had called unders."
+]
+]
+}
