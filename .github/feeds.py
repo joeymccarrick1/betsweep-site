@@ -192,6 +192,18 @@ def _ts(x):
         try: return dt.datetime.strptime(str(x.get("ts"))[:25].strip(), "%a, %d %b %Y %H:%M:%S").replace(tzinfo=dt.timezone.utc)
         except Exception: return now
 NEWS = [x for x in NEWS if (now - _ts(x)).days < 7]
+# audit 11/10: Yahoo's feed sends text with HTML entities still in it ("Sunday&#39;s", &quot;, &hellip;). Every reader escapes on output,
+# so pages showed the entity itself. Stored titles and text are plain text from here on (old items included; twice for double-encoded ones).
+import html as _html
+def _plain(t):
+    t = t or ""
+    for _ in range(2):
+        if "&" not in t: break
+        t = _html.unescape(t)
+    return t
+for _x in NEWS:
+    for _k in ("title", "text"):
+        if isinstance(_x.get(_k), str): _x[_k] = _plain(_x[_k])
 json.dump({"items": NEWS, "mirrored": now.isoformat()}, open("out/news.json", "w")); print("news items:", len(NEWS))
 
 # ---- projections.json (owner 11/4: "when could the numbers be wrong" - consensus disagreement detector): Sleeper's public weekly projections and
@@ -338,7 +350,7 @@ try:
             w0, w1 = f(o[9]), f(r[9])
             if w0 is not None and w1 is not None and abs(w1 - w0) >= 5: msgs.append(f"wind {w0:.0f} -> {w1:.0f} mph")
             if msgs: add.append({"ts": ts, "k": "weather", "g": f"{r[2]}-{r[3]}", "t": f"{r[2]}-{r[3]} ({re.sub(r' [(].*$', '', r[4])}): " + ", ".join(msgs)})
-    ON = {(x.get("title") or "") for x in ((_prev("news.json") or {}).get("items") or [])}
+    ON = {_plain(x.get("title") or "") for x in ((_prev("news.json") or {}).get("items") or [])}   # audit 11/10: compare as plain text (older items may still carry entities)
     if ON:
         for x in NEWS:
             if (x.get("title") or "") not in ON and x.get("players"): add.append({"ts": x.get("ts") or ts, "k": "news", "pl": (x.get("players") or [""])[0], "t": x.get("title") or "", "u": x.get("link") or ""})
