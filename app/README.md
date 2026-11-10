@@ -25,7 +25,8 @@ In Xcode: set your Team under Signing & Capabilities, bump the version, Product 
 - Apple guideline 4.2 (minimum functionality) is the usual objection to a pure web wrapper. Before submitting, give the shell at
   least one native capability the website cannot have: push notifications for the Live page (leg hit / red-zone alerts) is the
   obvious one and is on the roadmap. Google Play is more lenient; a Trusted Web Activity (TWA) of the PWA is also an option there.
-- Privacy: the site stores slips and pins in the device's local storage only; no accounts, no analytics beyond GitHub Pages logs.
+- Privacy: slips and pins live in the device's local storage; signing in (optional) stores what the user builds and switches on with
+  the account (Supabase) - see https://betsweep.co/privacy/ for the full list. No analytics beyond GitHub Pages logs.
 
 ## How it works
 `capacitor.config.json` points `server.url` at the live site, so every rebuild of betsweep.co updates the app with no store release.

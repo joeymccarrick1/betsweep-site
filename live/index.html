@@ -574,14 +574,16 @@ window.BSLive = (function(){
   }
 
   // ---- owner 11/10: sweat rooms - per leg: how many BetSweep users are riding it ("I'm on it") + live reactions. Supabase tables
-  // sweat_tails / sweat_reacts (sql/betsweep-sweat.sql, owner-run), realtime inserts; signed-out visitors can watch, signing in lets them join.
+  // sweat_tails / sweat_reacts (sql/betsweep-sweat.sql, owner-run), polled; signed-out visitors can watch, signing in lets them join.
   var SWC = {}, SWR = {}, SWOPEN = null, SWCH = null, SWMINE = {};
   function swCl(){ var A = window.bsAccount; return A && A.client ? A.client : null; }
   function swWeek(){ return +(D && D.week) || 0; }
   function swLoad(){ var cl = swCl(), w = swWeek(); if(!cl || !w) return;
-    Promise.all([cl.from('sweat_tails').select('leg,user_id').eq('week', w), cl.from('sweat_reacts').select('leg,emoji,at').eq('week', w).order('at', {ascending: false}).limit(500)]).then(function(rs){
-      if(rs[0].error || rs[1].error) return; var me = window.bsAccount.user ? window.bsAccount.user.id : null; SWC = {}; SWMINE = {}; SWR = {};
-      (rs[0].data || []).forEach(function(t){ var c = SWC[t.leg] = SWC[t.leg] || {t: 0, r: 0}; c.t++; if(t.user_id === me) SWMINE[t.leg] = 1; });
+    // audit 11/10 (privacy): counts and reactions come through two functions that never return who (sweat_counts, sweat_feed); the tables
+    // themselves are readable only by a row's owner. The first draft read every row, user id included.
+    Promise.all([cl.rpc('sweat_counts', {p_week: w}), cl.rpc('sweat_feed', {p_week: w})]).then(function(rs){
+      if(rs[0].error || rs[1].error) return; SWC = {}; SWMINE = {}; SWR = {};
+      (rs[0].data || []).forEach(function(t){ var c = SWC[t.leg] = SWC[t.leg] || {t: 0, r: 0}; c.t = +t.n || 0; if(t.mine) SWMINE[t.leg] = 1; });
       (rs[1].data || []).forEach(function(r){ var c = SWC[r.leg] = SWC[r.leg] || {t: 0, r: 0}; c.r++; (SWR[r.leg] = SWR[r.leg] || []).push(r); });
       document.querySelectorAll('.swb').forEach(function(b){ b.innerHTML = swLabel(b.getAttribute('data-k')); }); if(SWOPEN) swPaint(); }).catch(function(){}); }
   function swLabel(k){ var c = SWC[k]; return c && (c.t || c.r) ? '🔥' + (c.t ? ' ' + c.t : '') : '💬'; }
@@ -603,9 +605,7 @@ window.BSLive = (function(){
         var rb = t.closest('.swr'); if(rb && !rb.disabled){ rb.disabled = true; setTimeout(function(){ rb.disabled = false; }, 10000);
           cl.from('sweat_reacts').insert({week: w, leg: kk, emoji: rb.getAttribute('data-e')}).then(function(){ swLoad(); }); } }); }
     ov.style.display = 'flex'; swPaint(); swLoad(); }
-  function swLive(){ var cl = swCl(), w = swWeek(); if(!cl || !w || SWCH || !cl.channel) return;
-    try { SWCH = cl.channel('sweat-' + w).on('postgres_changes', {event: '*', schema: 'public', table: 'sweat_reacts', filter: 'week=eq.' + w}, function(){ swLoad(); })
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'sweat_tails', filter: 'week=eq.' + w}, function(){ swLoad(); }).subscribe(); } catch(e){} }
+  function swLive(){ if(SWCH) return; SWCH = setInterval(function(){ if(SWOPEN && !document.hidden) swLoad(); }, 15000); }   // an open room refreshes every 15 s (no realtime feed: it would broadcast whole rows)
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.swb'); if(!b) return; ev.preventDefault(); ev.stopPropagation(); swOpen(b.getAttribute('data-k')); }, true);
   setTimeout(function(){ swLoad(); swLive(); }, 1500); setInterval(swLoad, 60000); document.addEventListener('bs-account', function(){ swLoad(); swLive(); });
   function render(force){

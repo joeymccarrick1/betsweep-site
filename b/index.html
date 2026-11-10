@@ -19,7 +19,7 @@
 <meta name="twitter:description" content="Short links for every bet BetSweep posts: the legs, the model&#x27;s number and one tap to FanDuel."><meta name="twitter:image" content="https://betsweep.co/og.png">
 <script>window.__BS_ACCOUNT={url:"https://fuwiqijgkgbzvnfnsans.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU",google:false};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
-<link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><title>BetSweep</title>
+<link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><title>BetSweep bet links</title>
 <style>
 /* Layout: BetSweep chalkboard. Dark navy ground with chalk play-diagram texture, cream type, one red swoosh per card.
    One board per game, two team columns, score + script odds + weather strip up top. Dark-first; cream "paper" variant for light. */
@@ -127,6 +127,7 @@ a{color:var(--ink)}
     if(map && legs.length && legs.every(function(l){ return l.k && map[l.k] && map[l.k].fd; })) r.link = 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(map[l.k].fd[0]) + '&selectionId[' + i + ']=' + encodeURIComponent(map[l.k].fd[1]); }).join('&');
     else if(!r.link && legs.length && legs.every(function(l){ return l.fd && l.fd.m && l.fd.s; })) r.link = 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&');
     var stext = (r.title ? r.title + ' · ' : '') + legs.length + '-leg parlay' + (odds != null ? ' · FanDuel ' + am(odds) : '');   // owner 11/9: share anywhere
+    try { document.title = (r.title || (legs.length + '-leg parlay')) + ' · BetSweep'; } catch(e){}   // audit 11/10: the tab said only "BetSweep"
     var fd = r.link ? '<a class="fd" href="' + esc(r.link) + '" target="_blank" rel="noopener">Bet it on FanDuel' + (odds != null ? ' · ' + am(odds) : '') + '</a>' : '';
     box.innerHTML = '<div class="hd"><span class="tag">' + (post ? 'Social' : 'Betslip') + '</span><span class="wk">Week ' + esc(W) + '</span>' + (last && Date.now() > last ? '<span class="st">Started</span>' : '<span class="st live">Pregame</span>') + '</div>'
       + '<h1>' + esc(r.title || (legs.length + '-leg parlay')) + '</h1><div class="meta">' + legs.length + ' legs · priced by the BetSweep model · snapshot when the link was made, prices move</div>'

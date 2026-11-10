@@ -1,5 +1,6 @@
 <style>
-.how{max-width:860px;margin:0 auto;padding-bottom:40px;font-size:15.5px;line-height:1.55}
+.how{max-width:860px;margin:0 auto;padding:0 12px 40px;font-size:15.5px;line-height:1.55}
+.how h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:clamp(30px,5vw,42px);line-height:1.05;letter-spacing:-.01em;margin:18px 0 12px}
 .how h2{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:26px 0 8px}
 .how p{margin:0 0 12px} .how .lead{font-size:18px;line-height:1.5}
 .how .num{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0 16px} .how .num div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px} .how .num b{display:block;font-family:var(--display);font-size:26px;font-weight:700;line-height:1.1} .how .num b.g{color:var(--good)} .how .num b.b{color:var(--bad)} .how .num small{display:block;color:var(--mute);font-size:11.5px;margin-top:3px}
@@ -9,10 +10,11 @@
 .how .fine{font-size:12.5px;color:var(--mute)}
 </style>
 <div class="how">
+<h1>How BetSweep picks</h1>
 <p class="lead">BetSweep is a projection model that prices every FanDuel prop, then shows you only the handful of legs where the model has actually beaten the price. Everything on the site is graded every Tuesday against the box scores, in public, at the odds we showed. This page is what the grades say and how the picks follow from them.</p>
 
 <h2>Where the numbers come from</h2>
-<p>Every player gets a projection for the week: yards, catches, touchdowns, fantasy points. It starts from his own season and recent games, then adjusts for the literal matchup — how his offense ranks in that stat against how the opponent's defense ranks at allowing it — the game's expected script (FanDuel's spread and total, which beat our own formula at predicting endings), injuries and who fills in, weather at kickoff, and red-zone and snap usage. The model's chance for a line (say, 60+ receiving yards) is then blended half-and-half with what FanDuel's price implies, because on three weeks of graded legs the raw model ran overconfident when it disagreed with the market.</p>
+<p>Every player gets a projection for the week: yards, catches, touchdowns, fantasy points. It starts from his own season and recent games, then adjusts for the literal matchup — how his offense ranks in that stat against how the opponent's defense ranks at allowing it — the game's expected script (FanDuel's spread and total, which beat our own formula at predicting endings), injuries and who fills in, weather at kickoff, and red-zone and snap usage. The model's chance for a line (say, 60+ receiving yards) is then blended with what FanDuel's price implies, because on the graded legs the raw model ran overconfident when it disagreed with the market. How much weight the model gets depends on the market: the most on touchdowns (about two thirds), where it has added the most; about a quarter to a third on receptions and receiving yards; and very little on passing and rushing yards, where FanDuel's number alone graded better. The weights are re-tested every Tuesday on the newly graded legs.</p>
 
 <h2>What three graded weeks taught us</h2>
 <div class="num">
@@ -39,5 +41,4 @@
 <li>We don't move the model's numbers after a bad week to fit the result. Changes are tested on past weeks first and logged.</li>
 <li>We don't hide a losing week. The receipt goes up either way.</li>
 </ul>
-<p class="fine">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER.</p>
 </div>
