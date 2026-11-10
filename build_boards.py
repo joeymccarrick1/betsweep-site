@@ -1225,8 +1225,11 @@ try:
 except Exception as e: print("warn: first TD slip legs skipped:", e)
 for l in GL_LEGS:   # game-line legs on a best parlay (same key, price and FanDuel IDs as the parlay builder's game-line buttons)
     k = leg_key(l)
-    if k not in SLIP_USED or k in _seenk: continue
-    _seenk.add(k)
+    # audit 11/10: once per GAME, not once per key - a total's key has no game in it ("Over 40.5|Total|41" was three Week 10 games' main
+    # total), so only the first game got a slip leg and the Add button on the other two cards put the first game's total in the slip.
+    # The page slip (template.html) picks the leg for the card that was tapped.
+    if k not in SLIP_USED or (k, l["g"]) in _seenk: continue
+    _seenk.add((k, l["g"]))
     SLIP_LEGS.append({"k": k, "pl": l["player"], "m": l["market"], "ms": {"Moneyline": "ML"}.get(l["market"], l["market"]), "ln": l["line"], "o": int(l["odds"]), "p": round(l["p"], 4), "bk": round(l["book"], 4),
                       "e": round(l["p"] - l["book"], 4), "tm": l["team"], "opp": l["opp"], "g": l["g"], "c": "", "gl": l["gl"], "src": l["src"],
                       "fd": {"m": l["fdid"][0], "s": l["fdid"][1]} if l["fdid"] else None, "w": l["warn"], "fl": fl_triples(l)})

@@ -1158,9 +1158,26 @@ BUILDER_JS = r"""
       else if(subs.length) out.push('Send to ' + BN[b] + ' uses its nearest line where it doesn\'t post ours: ' + subs.map(function(l){ var x = bookPick(l, b); return subName(l, x) + ' (' + am(x.o) + ') for ' + (l.gl ? l.pl : lnTxt(l)); }).join(', ') + '. The prices and model % on this slip are FanDuel\'s.'); });
     el.innerHTML = out.map(esc).join('<br>'); }
   var KEYIDX = {}; legs.forEach(function(l){ if(!(legKey(l) in KEYIDX)) KEYIDX[legKey(l)] = l.i; });
+  // audit 11/10: a game total's key is not unique - "Over 40.5|Total|41" was the main total of three Week 10 games and an alternate total of
+  // most of the others. The key alone resolved to the FIRST leg with that number, so a reload, coming back to the tab or loading a saved
+  // slip silently swapped the leg to another game at another price (IND-MIA over 40.5 at -115 came back as NYG-WAS over 40.5 at -142), and
+  // two games' totals with one number collapsed into one leg. The slip now also remembers which game each such key belongs to
+  // (bs_slipg_w<W>: {key: [gid, ...]}, in slip order). Keys only one game uses are untouched and the key format does not change.
+  var KEYG = {}; legs.forEach(function(l){ var k = legKey(l), m = KEYG[k] = KEYG[k] || {}; if(!(l.g in m)) m[l.g] = l.i; });
+  var GKEY = 'bs_slipg_w' + D.week;
+  function readG(){ try { var g = JSON.parse(localStorage.getItem(GKEY) || '{}'); return g && typeof g === 'object' && !Array.isArray(g) ? g : {}; } catch(e){ return {}; } }
+  function resolveKeys(ks, gmap){   // keys -> leg indexes (null = not on this page), each key going to the game on record for it; with none on record, the first game as before
+    var used = {}, seen = {};
+    return ks.map(function(k){ var m = KEYG[k]; if(!m) return null;
+      var want = (gmap && gmap[k]) || [], n = seen[k] = (seen[k] || 0) + 1, g = want[n - 1], i = null;
+      if(g != null && m[g] != null && !used[m[g]]) i = m[g];
+      else { var gs = Object.keys(m); for(var x = 0; x < gs.length; x++){ if(!used[m[gs[x]]]){ i = m[gs[x]]; break; } } }
+      if(i != null) used[i] = 1; return i; });
+  }
+  function gmapOf(idxs){ var g = {}; idxs.forEach(function(i){ var l = legs[+i]; if(!l) return; var k = legKey(l); if(KEYG[k] && Object.keys(KEYG[k]).length > 1) (g[k] = g[k] || []).push(l.g); }); return g; }
   try {
     var ks = JSON.parse(localStorage.getItem(KEYS) || 'null');
-    if(Array.isArray(ks)){ ks.forEach(function(k){ if(k in KEYIDX) sel[KEYIDX[k]] = true; else extraKeys.push(k); }); }
+    if(Array.isArray(ks)){ var ix0 = resolveKeys(ks, readG()); ks.forEach(function(k, n){ if(ix0[n] != null) sel[ix0[n]] = true; else extraKeys.push(k); }); }
     else { (JSON.parse(localStorage.getItem('bs_slip_w' + D.week) || '[]')).forEach(function(i){ if(legs[i]) sel[i] = true; }); }
   } catch(e){}
   // ?add=player|market|line (one or more): legs handed over from the home page / boards land in the slip, then the query is cleared so a reload does not re-add
@@ -1540,8 +1557,9 @@ BUILDER_JS = r"""
   // ---- slip ----
   function slipLegs(){ return Object.keys(sel).map(function(i){ return legs[+i]; }).sort(function(a,b){ return (games[a.g].sort+a.g).localeCompare(games[b.g].sort+b.g); }); }
   window.bsSlipLegs = slipLegs; window.bsGameKo = function(gid){ var g = games[gid]; return g && g.ko ? +g.ko : null; };   // for "Post to Social" (social.py)
-  function save(){ try { var ks = Object.keys(sel).map(function(i){ return legKey(legs[+i]); }); localStorage.setItem(KEYS, JSON.stringify(ks.concat(extraKeys))); localStorage.setItem('bs_slip_w' + D.week, JSON.stringify(Object.keys(sel).map(Number))); } catch(e){} }
-  function reloadSel(){ try { var ks = JSON.parse(localStorage.getItem(KEYS) || '[]'); var before = JSON.stringify(Object.keys(sel).map(function(i){ return legKey(legs[+i]); }).concat(extraKeys).sort()); sel = {}; extraKeys = []; (Array.isArray(ks) ? ks : []).forEach(function(k){ if(k in KEYIDX) sel[KEYIDX[k]] = true; else extraKeys.push(k); }); if(JSON.stringify(ks.slice().sort()) !== before){ renderList(); renderSlip(); } } catch(err){} }
+  function save(){ try { var ks = Object.keys(sel).map(function(i){ return legKey(legs[+i]); }); localStorage.setItem(KEYS, JSON.stringify(ks.concat(extraKeys))); localStorage.setItem('bs_slip_w' + D.week, JSON.stringify(Object.keys(sel).map(Number)));
+      var gm = gmapOf(Object.keys(sel)); if(Object.keys(gm).length) localStorage.setItem(GKEY, JSON.stringify(gm)); else localStorage.removeItem(GKEY); } catch(e){} }
+  function reloadSel(){ try { var ks = JSON.parse(localStorage.getItem(KEYS) || '[]'); var before = JSON.stringify(Object.keys(sel).map(function(i){ return legKey(legs[+i]); }).concat(extraKeys).sort()); var was = JSON.stringify(Object.keys(sel).sort()); sel = {}; extraKeys = []; ks = Array.isArray(ks) ? ks : []; var ixr = resolveKeys(ks, readG()); ks.forEach(function(k, n){ if(ixr[n] != null) sel[ixr[n]] = true; else extraKeys.push(k); }); if(JSON.stringify(ks.slice().sort()) !== before || JSON.stringify(Object.keys(sel).sort()) !== was){ renderList(); renderSlip(); } } catch(err){} }
   window.addEventListener('storage', function(e){ if(e.key === KEYS) reloadSel(); });
   // owner 10/28: same slip on every page - re-read storage when the page comes back into view (back/forward cache keeps the old
   // in-memory slip) and after the account sync pulls a newer copy
@@ -2020,8 +2038,8 @@ BUILDER_JS = r"""
   var SLKEY = 'bs_slips_w' + D.week;
   function savedSlips(){ try{ var a = JSON.parse(localStorage.getItem(SLKEY)||'[]'); return Array.isArray(a) ? a.filter(function(s){ return s && s.id && Array.isArray(s.keys); }) : []; }catch(e){ return []; } }
   function writeSlips(a){ try{ localStorage.setItem(SLKEY, JSON.stringify(a)); }catch(e){} }
-  function legsForKeys(ks){ return ks.map(function(k){ return KEYIDX[k] != null ? legs[KEYIDX[k]] : null; }); }
-  function priceKeys(ks){ var ls = legsForKeys(ks).filter(Boolean); if (!ls.length) return null; var bls = bookLegs(ls); var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1); return {ls: ls, n: ks.length, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
+  function legsForKeys(ks, g){ return resolveKeys(ks, g).map(function(i){ return i != null ? legs[i] : null; }); }
+  function priceKeys(ks, g){ var ls = legsForKeys(ks, g).filter(Boolean); if (!ls.length) return null; var bls = bookLegs(ls); var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1); return {ls: ls, n: ks.length, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
   function curKeys(){ return Object.keys(sel).map(function(i){ return legKey(legs[+i]); }).concat(extraKeys); }
   function sameSet(a, b){ if (a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
   // saved slips: legs fold into a drop-down under each row (owner 10/23: one long line was unreadable on a phone)
@@ -2031,23 +2049,24 @@ BUILDER_JS = r"""
       return '<li><b>' + esc(who) + '</b><span>' + esc(what) + '</span></li>'; }
   function renderSaved(){ var box = $('#savedList'); if(!box) return; var all = savedSlips(), cur = curKeys();
     if(!all.length){ box.innerHTML = '<p class="none">Nothing saved yet. Build a slip, tap <b>Save slip</b>, build another - every saved slip lines up here with its FanDuel price, model chance and edge, and sends to FanDuel from this table whenever you are ready. Saved slips also show on <a href="/me/">My BetSweep</a>, graded after the games' + (window.bsAccount && window.bsAccount.user ? '' : ' (sign in and they follow you to every device)') + '.</p>'; return; }
-    var rows = all.map(function(s){ var pr = priceKeys(s.keys); return {s: s, pr: pr}; }).sort(function(a,b){ var ea = a.pr ? a.pr.fair - 1/a.pr.bookDec : -9, eb = b.pr ? b.pr.fair - 1/b.pr.bookDec : -9; return eb - ea; });
+    var rows = all.map(function(s){ var pr = priceKeys(s.keys, s.g); return {s: s, pr: pr}; }).sort(function(a,b){ var ea = a.pr ? a.pr.fair - 1/a.pr.bookDec : -9, eb = b.pr ? b.pr.fair - 1/b.pr.bookDec : -9; return eb - ea; });
     box.innerHTML = '<table><thead><tr><th>Slip</th><th class="r">FanDuel</th><th class="r">Model</th><th class="r">Edge</th><th class="r">$10 pays</th><th></th></tr></thead><tbody>' + rows.map(function(r){ var s = r.s, pr = r.pr, isCur = sameSet(s.keys, cur);
       var e = pr ? pr.fair - 1/pr.bookDec : null;
       return '<tr class="' + (isCur ? 'cur' : '') + '"><td class="nm"><b>' + esc(s.name || 'Slip') + (s.promo ? ' <small style="display:inline">· promoted</small>' : '') + '</b><button type="button" class="lgt' + (SLOPEN[s.id] ? ' on' : '') + '" data-tog="' + esc(s.id) + '" aria-expanded="' + (SLOPEN[s.id] ? 'true' : 'false') + '">' + s.keys.length + ' legs <i>▾</i></button>' + (pr && pr.missing ? '<small>' + pr.missing + ' no longer priced' + '</small>' : '') + '</td>'
         + '<td class="r">' + (pr ? decToAm(pr.bookDec) : (s.odds ? am(s.odds) : '—')) + '</td><td class="r">' + (pr ? pc(pr.fair) : '—') + '</td><td class="r e ' + (e!=null && e>=0 ? 'up' : 'dn') + '">' + (e!=null ? (e>=0?'+':'') + (e*100).toFixed(1) : '—') + '</td><td class="r">' + (pr ? '$' + (10*pr.bookDec).toFixed(2) : '—') + '</td>'
         + '<td class="ops">' + (pr && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (s.fd ? '<a class="fd" href="' + esc(s.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (pr && pr.ls.length === s.keys.length && dkUrl(pr.ls) ? '<a class="fd dk" href="' + esc(dkUrl(pr.ls)) + '" target="_blank" rel="noopener">DK</a>' : '') + (pr && pr.ls.length === s.keys.length && hrUrl(pr.ls) ? '<a class="fd hr" href="' + esc(hrUrl(pr.ls)) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(s.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(s.id) + '">×</button></td></tr>' + '<tr class="lgrow"' + (SLOPEN[s.id] ? '' : ' hidden') + '><td colspan="6"><ul class="sllegs">' + s.keys.map(slLeg).join('') + '</ul></td></tr>'; }).join('') + '</tbody></table>'; }
   $('#savesl').addEventListener('click', function(){ var ks = curKeys(); if(!ks.length){ $('#fdnote').textContent = 'Add a leg or two first.'; return; }
-    var all = savedSlips(), dup = all.filter(function(s){ return sameSet(s.keys, ks); })[0]; if (dup){ $('#fdnote').textContent = 'Already saved as "' + (dup.name||'Slip') + '".'; renderSaved(); return; }
-    var box = $('#savedList'); var pr = priceKeys(ks); var dflt = 'Slip ' + (all.length + 1) + (pr ? ' · ' + decToAm(pr.bookDec) : '');
+    var cg = gmapOf(Object.keys(sel));   // which game each shared total key means in this slip
+    var all = savedSlips(), dup = all.filter(function(s){ return sameSet(s.keys, ks) && JSON.stringify(s.g || {}) === JSON.stringify(cg); })[0]; if (dup){ $('#fdnote').textContent = 'Already saved as "' + (dup.name||'Slip') + '".'; renderSaved(); return; }
+    var box = $('#savedList'); var pr = priceKeys(ks, cg); var dflt = 'Slip ' + (all.length + 1) + (pr ? ' · ' + decToAm(pr.bookDec) : '');
     var nb = document.createElement('div'); nb.className = 'namebox'; nb.innerHTML = '<input type="text" value="' + esc(dflt) + '" aria-label="slip name" maxlength="60"><button type="button" class="pri">Save</button><button type="button" class="cx">Cancel</button>'; box.parentNode.insertBefore(nb, box);
     var inp = nb.querySelector('input'); inp.focus(); inp.select();
-    function done(){ var name = inp.value.trim() || dflt; var px = {}; ks.forEach(function(k){ var l = KEYIDX[k] != null ? legs[KEYIDX[k]] : null; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });   // audit 11/10: was byKey (not defined on this page), so Save threw and nothing was saved
-      all.push({id: 'b' + Date.now().toString(36), name: name, keys: ks, odds: pr ? +decToAm(pr.bookDec).replace('+','') : null, stake: 1, fd: pr ? pr.fd : null, fair: pr ? Math.round(pr.fair*10000)/10000 : null, px: px, saved: Date.now()}); writeSlips(all); nb.remove(); renderSaved(); $('#fdnote').textContent = 'Saved. It is on My BetSweep too, graded after the games.'; }
+    function done(){ var name = inp.value.trim() || dflt; var px = {}; var cl = legsForKeys(ks, cg); ks.forEach(function(k, n){ var l = cl[n]; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });   // audit 11/10: was byKey (not defined on this page), so Save threw and nothing was saved
+      all.push({id: 'b' + Date.now().toString(36), name: name, keys: ks, odds: pr ? +decToAm(pr.bookDec).replace('+','') : null, stake: 1, fd: pr ? pr.fd : null, fair: pr ? Math.round(pr.fair*10000)/10000 : null, px: px, g: cg, saved: Date.now()}); writeSlips(all); nb.remove(); renderSaved(); $('#fdnote').textContent = 'Saved. It is on My BetSweep too, graded after the games.'; }
     nb.querySelector('.pri').addEventListener('click', done); inp.addEventListener('keydown', function(e){ if(e.key==='Enter') done(); if(e.key==='Escape') nb.remove(); }); nb.querySelector('.cx').addEventListener('click', function(){ nb.remove(); }); });
   $('#savedList').addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return;
     if (b.dataset.tog){ var id = b.dataset.tog, row = b.closest('tr').nextElementSibling; SLOPEN[id] = !SLOPEN[id]; if(row && row.classList.contains('lgrow')) row.hidden = !SLOPEN[id]; b.classList.toggle('on', !!SLOPEN[id]); b.setAttribute('aria-expanded', SLOPEN[id] ? 'true' : 'false'); return; }
-    if (b.dataset.load){ var s = savedSlips().filter(function(x){ return x.id === b.dataset.load; })[0]; if(!s) return; sel = {}; extraKeys = []; s.keys.forEach(function(k){ if (k in KEYIDX) sel[KEYIDX[k]] = true; else extraKeys.push(k); }); renderList(); renderSlip(); window.scrollTo({top: $('#slipLegs').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth'}); }
+    if (b.dataset.load){ var s = savedSlips().filter(function(x){ return x.id === b.dataset.load; })[0]; if(!s) return; sel = {}; extraKeys = []; var ixs = resolveKeys(s.keys, s.g); s.keys.forEach(function(k, n){ if (ixs[n] != null) sel[ixs[n]] = true; else extraKeys.push(k); }); save(); renderList(); renderSlip(); window.scrollTo({top: $('#slipLegs').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth'}); }
     if (b.dataset.del){ writeSlips(savedSlips().filter(function(x){ return x.id !== b.dataset.del; })); renderSaved(); } });
   document.addEventListener('bs-account', renderSaved);
   function slipText(){
