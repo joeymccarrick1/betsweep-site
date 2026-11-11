@@ -54,7 +54,18 @@ async def run():
             return {D: window.__SV, call: (document.querySelector('.sv .call b.pick')||{}).textContent, road: rows, opts: [...opt.querySelectorAll('tbody tr')].map(tr=>tr.dataset.pick), heads: [...document.querySelectorAll('.sv h2')].map(h=>h.textContent),
                     sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, used: document.getElementById('svused').textContent} }"""
         ctx, pg, errs = await open_page()
-        v = await pg.evaluate(road_js); D = v["D"]; now = await pg.evaluate("Date.now()")
+        v = await pg.evaluate(road_js); RAW = v["D"]; now = await pg.evaluate("Date.now()")
+        # owner 11/10 evening: the page plans on the average of the model's win chance and FanDuel's by default ("Both"). Every check
+        # below runs on that number; the two single-source settings are checked at the end.
+        def basis_of(raw, b):
+            d = json.loads(json.dumps(raw))
+            for gs in d["weeks"].values():
+                for g in gs:
+                    g["pl"] = g["p"]; pm = g["p"] if g.get("pm") is None else g["pm"]
+                    g["p"] = g["pl"] if b == "line" else pm if b == "model" else (g["pl"] + pm) / 2
+            return d
+        D = basis_of(RAW, "both")
+        check(sum(1 for g in RAW["weeks"][str(RAW["week"])] if g.get("pm") is not None and g.get("ms") == "proj") >= 10, "this week's games carry the model's own projection")
         check(not errs, f"page loads without script errors {errs[:2]}")
         check(v["sw"] <= v["cw"], f"fits a phone ({v['sw']} vs {v['cw']})")
         frm = v["road"][0]["w"]; to = v["road"][-1]["w"]
@@ -96,6 +107,22 @@ async def run():
         check(g0["h"] not in v7["opts"] and g0["a"] not in v7["opts"] and v7["road"][0]["w"] == D["week"], f"after {g0['a']}-{g0['h']} kicks off neither is offered this week")
         ctx, pg, errs = await open_page(ms=lastko + 3600e3); v8 = await pg.evaluate(road_js); await ctx.close()
         check(v8["road"][0]["w"] == D["week"] + 1, f"once every game of the week has kicked off the plan starts at Week {D['week'] + 1}")
+        # whose win chances: Model and FanDuel lines each plan on their own number, the choice is remembered, and the option rows show both
+        ctx, pg, errs = await open_page()
+        for b, lab in (("model", "Model"), ("line", "FanDuel lines"), ("both", "Both")):
+            await pg.click(f'#svbasis button[data-basis="{b}"]'); await pg.wait_for_timeout(250); vb = await pg.evaluate(road_js); Db = basis_of(RAW, b)
+            def lp_b(road):
+                s_ = 0.0
+                for r in road:
+                    g = [g for g in Db["weeks"][str(r["w"])] if r["t"] in (g["h"], g["a"])][0]; s_ += math.log(g["p"] if g["h"] == r["t"] else 1 - g["p"])
+                return s_
+            wantb = exact(Db, set(), vb["road"][0]["w"], vb["road"][-1]["w"], now)
+            check(abs(lp_b(vb["road"]) - wantb) < 1e-6, f"'{lab}': the road shown is the best possible on that number ({math.exp(lp_b(vb['road'])) * 100:.2f}% vs exact {math.exp(wantb) * 100:.2f}%)")
+            on = await pg.evaluate("[...document.querySelectorAll('#svbasis button.on')].map(x => x.dataset.basis)"); check(on == [b], f"'{lab}' is the lit setting ({on})")
+            split = await pg.evaluate("[...document.querySelectorAll('.sv tr.opt td.n small')].map(x => x.textContent).filter(t => /model/.test(t)).length")
+            check((split == 0) if b == "line" else (split >= 5), f"'{lab}': option rows {'do not ' if b == 'line' else ''}show the model and the line side by side ({split})")
+        await pg.click('#svbasis button[data-basis="model"]'); await pg.reload(); await pg.wait_for_timeout(400)
+        check(await pg.evaluate("[...document.querySelectorAll('#svbasis button.on')].map(x => x.dataset.basis)") == ["model"], "the setting is remembered on this device"); await ctx.close()
         # desktop width
         ctx, pg, errs = await open_page(w=1280); v9 = await pg.evaluate(road_js); await ctx.close()
         check(v9["sw"] <= v9["cw"] and not errs, "desktop: no sideways scroll, no errors")

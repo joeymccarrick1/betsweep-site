@@ -6,7 +6,13 @@ not burning a team you will need later. The page takes the teams you have alread
   - this week's options ranked by the chance of getting through the whole run if you take that team now
   - the best team for every week left (an exact assignment: weeks x teams, maximising the product of the win chances)
 
-Win chances (nothing here is a pick, and nothing is invented):
+Whose win chances (owner 11/10 evening: "I want it to be the models projections as well not just going off of fanduels lines"): the
+page carries two per game - the model's (pm) and the lines' (p) - and plans on their average by default; "Model" and "FanDuel lines"
+plan on one alone, the choice is kept on the device. The model's number this week is its formula team scores (builder_data fa / fb)
+turned into a win chance; later weeks, which it has not projected, are the line-based margin moved by half of the formula's running
+disagreement with FanDuel's implied team totals (data/survivor-model.json on the site, one gap per team and week). See the block above WEEKS.
+
+The lines' win chances (nothing here is a pick, and nothing is invented):
   - the current week: FanDuel's moneylines with the vig removed (in/gamelines.json, the same pull the builder uses); a game without one
     falls back to the closing spread in the schedule, then to the ratings below
   - later weeks: team ratings fitted to this season's FanDuel-era closing spreads (nflverse schedule, in/games.csv) - ridge least
@@ -96,7 +102,44 @@ def ko_ms(r):
 def kick(ms):
     return datetime.datetime.fromtimestamp(ms / 1000, ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p") if ms else ""
 
-WEEKS = {}; nfd = nsp = nest = 0
+# ---- the model's own numbers (owner 11/10 evening: "I want it to be the models projections as well not just going off of fanduels lines") ----
+# THIS WEEK: the model's formula team scores - the injury-aware projection behind "our number vs the line" (builder_data games fa / fb,
+# built from the sheet's player projections, not from FanDuel's line) - turned into a win chance the way a spread is.
+# LATER WEEKS: the model has not projected those games. The lines-based margin for each game is moved by HALF of where the formula has
+# disagreed with FanDuel's implied team totals (formula points minus implied points per team; recent weeks counted more, same decay as
+# the ratings). Those per-team gaps are kept across builds in data/survivor-model.json on the site, one entry per week and team, written
+# only while the team's game has not kicked off. Half, because on 509 games since 2023 where the formula and the closing spread were 1.5+
+# points apart the formula's side covered 252 times (research/gl_disagree.py): the model's view is worth hearing, not worth the whole vote.
+MODEL_SHRINK = 0.5
+try: _BD = json.load(open(os.path.join(OUT, "builder_data.json")))
+except Exception: _BD = {}
+_BG = {frozenset([g["a"], g["b"]]): g for g in _BD.get("games") or []}
+_now_ms = datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000
+_clone = os.environ.get("BS_SITE") or "/home/claude/betsweep-site"; GAPS = {}
+for _p in (os.path.join(_clone, "data", "survivor-model.json"), os.path.join(OUT, "data", "survivor-model.json")):
+    try:
+        GAPS = json.load(open(_p)).get("weeks") or {}
+        if GAPS: break
+    except Exception: pass
+FORM = {}      # this week: frozenset(teams) -> {team: formula points}
+for _k, _g in _BG.items():
+    if _g.get("fa") is None or _g.get("fb") is None or _g.get("pa") is None or _g.get("pb") is None: continue
+    FORM[_k] = {_g["a"]: float(_g["fa"]), _g["b"]: float(_g["fb"])}
+    if _g.get("ko") and _g["ko"] > _now_ms and WEEK:
+        GAPS.setdefault(str(WEEK), {}).update({_g["a"]: round(float(_g["fa"]) - float(_g["pa"]), 2), _g["b"]: round(float(_g["fb"]) - float(_g["pb"]), 2)})
+GBAR = {}
+for _t in TEAMS:
+    _num = _den = 0.0
+    for _w, _d in GAPS.items():
+        try: _wk = int(_w)
+        except Exception: continue
+        if _wk > WEEK or _t not in _d: continue
+        _wt = DECAY ** (WEEK - _wk); _num += _wt * float(_d[_t]); _den += _wt
+    if _den: GBAR[_t] = _num / _den
+os.makedirs(os.path.join(OUT, "data"), exist_ok=True)
+json.dump({"weeks": GAPS, "note": "formula points minus FanDuel-implied points per team, per week, before kickoff (build_survivor.py)"}, open(os.path.join(OUT, "data", "survivor-model.json"), "w"), separators=(",", ":"))
+
+WEEKS = {}; nfd = nsp = nest = 0; nproj = nmest = 0
 for r in sorted(rows, key=lambda r: (int(r["week"]), r["gameday"], r["gametime"])):
     w = int(r["week"])
     if w < WEEK: continue
@@ -108,11 +151,17 @@ for r in sorted(rows, key=lambda r: (int(r["week"]), r["gameday"], r["gametime"]
     else: nest += 1
     fin = (r.get("result") or "") not in ("", "NA")
     ms = ko_ms(r)
-    WEEKS.setdefault(w, []).append({"h": h, "a": a, "nt": 1 if neutral else 0, "ko": ms, "k": kick(ms), "p": round(ph, 4), "s": src, "sp": round(sp, 1), "fin": 1 if fin else 0})
+    f = FORM.get(frozenset([h, a])) if w == WEEK else None
+    if f: pm = phi((f[h] - f[a]) / SD); msrc = "proj"; nproj += 1
+    elif h in GBAR or a in GBAR: pm = phi((sp + MODEL_SHRINK * (GBAR.get(h, 0.0) - GBAR.get(a, 0.0))) / SD); msrc = "est"; nmest += 1
+    else: pm = None; msrc = ""
+    WEEKS.setdefault(w, []).append({"h": h, "a": a, "nt": 1 if neutral else 0, "ko": ms, "k": kick(ms), "p": round(ph, 4), "s": src, "sp": round(sp, 1), "fin": 1 if fin else 0,
+                                    "pm": round(pm, 4) if pm is not None else None, "ms": msrc})
 DATA = {"week": WEEK, "last": LAST, "built": datetime.datetime.now(ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p"), "sd": SD,
         "teams": {t: {"n": NAMES.get(t, t), "c": list(TEAMCOL.get(t, ("#444", "#999")))} for t in TEAMS},
         "weeks": {str(w): g for w, g in sorted(WEEKS.items())},
-        "rate": {t: round(v, 2) for t, v in sorted(RATE.items(), key=lambda kv: -kv[1])}, "hfa": round(HFA, 2)}
+        "rate": {t: round(v, 2) for t, v in sorted(RATE.items(), key=lambda kv: -kv[1])}, "hfa": round(HFA, 2),
+        "model": {"shrink": MODEL_SHRINK, "gaps": {t: round(v, 2) for t, v in sorted(GBAR.items())}, "weeks": sorted(GAPS, key=lambda x: int(x) if str(x).isdigit() else 0)}}
 json.dump(DATA, open(os.path.join(OUT, "survivor.json"), "w"), separators=(",", ":"))
 
 CSS = """
@@ -165,12 +214,17 @@ JS = r"""
   if(!(S.cur >= 0 && S.cur < S.pools.length)) S.cur = 0;
   function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
   function P(){ return S.pools[S.cur]; }
+  // owner 11/10: whose win chances - both (the average of the model's and FanDuel's, the default), the model's alone, or the lines alone.
+  // A game the model has no number for uses the line under every setting.
+  var BK = 'bs_surv_basis', basis = 'both'; try { var b0 = localStorage.getItem(BK); if(b0 === 'model' || b0 === 'line' || b0 === 'both') basis = b0; } catch(e){}
+  function eff(g){ var pl = g.p, pm = (g.pm == null ? g.p : g.pm); return basis === 'line' ? pl : basis === 'model' ? pm : (pl + pm) / 2; }
   // ---- the week to plan from: the first week that still has a game to kick off ----
   function openGames(w){ var t = Date.now(); return (D.weeks[w] || []).filter(function(g){ return !g.fin && (!g.ko || g.ko > t); }); }
   function firstWeek(){ for(var w = D.week; w <= D.last; w++){ if(openGames(w).length) return w; } return null; }
   // ---- win chance table: week -> team -> {p, opp, home, src, k} (only games that have not kicked off) ----
   function table(from, to){ var M = {}; for(var w = from; w <= to; w++){ var m = M[w] = {}; (w === from ? openGames(w) : (D.weeks[w] || [])).forEach(function(g){
-      m[g.h] = {p: g.p, opp: g.a, at: g.nt ? 'vs' : 'vs', home: !g.nt, s: g.s, k: g.k, sp: g.sp}; m[g.a] = {p: 1 - g.p, opp: g.h, at: g.nt ? 'vs' : '@', home: false, s: g.s, k: g.k, sp: -g.sp}; }); } return M; }
+      var e = eff(g), hm = g.pm == null ? null : g.pm;
+      m[g.h] = {p: e, pl: g.p, pm: hm, ms: g.ms, opp: g.a, at: g.nt ? 'vs' : 'vs', home: !g.nt, s: g.s, k: g.k, sp: g.sp}; m[g.a] = {p: 1 - e, pl: 1 - g.p, pm: hm == null ? null : 1 - hm, ms: g.ms, opp: g.h, at: g.nt ? 'vs' : '@', home: false, s: g.s, k: g.k, sp: -g.sp}; }); } return M; }
   // ---- exact assignment (Hungarian, rows = weeks, columns = teams): the set of picks with the highest product of win chances ----
   function assign(cost){ var n = cost.length, m = cost[0].length, INF = 1e18, u = [], v = [], p = [], way = [], i, j;
     for(i = 0; i <= n; i++) u.push(0); for(j = 0; j <= m; j++){ v.push(0); p.push(0); way.push(0); }
@@ -208,15 +262,21 @@ JS = r"""
     if(sel && !cands.some(function(c){ return c.t === sel; })) sel = null;
     var cur = sel ? cands.filter(function(c){ return c.t === sel; })[0] : top;
     function vs(t, x){ return (x.at === '@' ? '@ ' : 'vs ') + x.opp; }
-    function src(x){ return x.s === 'fd' ? '' : ' <span class="est" title="' + (x.s === 'line' ? 'from the closing spread' : 'estimated from this season’s closing lines') + '">est.</span>'; }
+    function src(x){ var hard = basis === 'line' ? x.s === 'fd' : basis === 'model' ? (x.pm == null ? x.s === 'fd' : x.ms === 'proj') : (x.s === 'fd' && (x.pm == null || x.ms === 'proj'));
+      return hard ? '' : ' <span class="est" title="' + (basis !== 'line' && x.pm != null && x.ms !== 'proj' ? 'the model has not projected this game yet: the line-based number, moved by half of where the model has disagreed with the lines' : x.s === 'line' ? 'from the closing spread' : 'estimated from this season’s closing lines') + '">est.</span>'; }
+    function split(x){ return (basis === 'line' || x.pm == null) ? '' : '<small>model ' + pct(x.pm) + ' · ' + (x.s === 'fd' ? 'FanDuel ' : 'lines ') + pct(x.pl) + '</small>'; }
+    function why(x){ if(basis === 'line' || x.pm == null) return x.s === 'fd' ? ' at FanDuel’s line' : ' (estimate)';
+      if(basis === 'model') return x.ms === 'proj' ? ' by the model’s projection (FanDuel’s line says ' + pct(x.pl) + ')' : ' (model estimate)';
+      return ': the model says ' + pct(x.pm) + ', ' + (x.s === 'fd' ? 'FanDuel’s line ' : 'the lines ') + pct(x.pl); }
+    document.querySelectorAll('#svbasis button').forEach(function(bb){ var on = bb.dataset.basis === basis; bb.classList.toggle('on', on); bb.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     var planned = {}; Object.keys(top.picks).forEach(function(w){ planned[top.picks[w]] = +w; }); planned[top.t] = from;
     var one = weeks.length === 1, h = '';
     h += '<div class="call"><small>Week ' + from + ' · ' + esc(p.name) + '</small><b class="pick">' + esc(T[top.t].n) + ' <span style="font-size:.6em;font-style:normal;opacity:.7">' + top.t + ' ' + esc(vs(top.t, top.x)) + '</span></b>'
-       + '<p>' + pct(top.x.p) + ' to win this week' + (top.x.s === 'fd' ? ' at FanDuel’s line' : ' (estimate)') + (one ? '.' : '. Taking them now leaves the best road through Week ' + to + ': <b>' + pct(Math.exp(top.lp)) + '</b> to survive every week' + (top.ok ? '' : ' - but some later week has no team left') + '.') + '</p>'
+       + '<p>' + pct(top.x.p) + ' to win this week' + why(top.x) + (one ? '.' : '. Taking them now leaves the best road through Week ' + to + ': <b>' + pct(Math.exp(top.lp)) + '</b> to survive every week' + (top.ok ? '' : ' - but some later week has no team left') + '.') + '</p>'
        + ((safest.t !== top.t && !one) ? '<p>The safest pick this week is ' + esc(T[safest.t].n) + ' (' + pct(safest.x.p) + '), but ' + (planned[safest.t] && planned[safest.t] !== from ? 'the plan wants them in Week ' + planned[safest.t] + ': ' : '') + 'taking them now drops the whole run from ' + pct(Math.exp(top.lp)) + ' to ' + pct(Math.exp(safest.lp)) + '.</p>' : '')
        + '</div>';
     h += '<h2>Week ' + from + ' options</h2><div class="tw"><table><thead><tr><th>Team</th><th>Win this week</th>' + (one ? '' : '<th>Survive to Wk ' + to + '</th><th class="hidem">Plan wants them</th>') + '</tr></thead><tbody>';
-    cands.slice(0, 14).forEach(function(c, i){ h += '<tr class="opt' + (c.t === cur.t ? ' sel' : '') + '" data-pick="' + c.t + '"><td><b class="t">' + c.t + '</b> ' + esc(vs(c.t, c.x)) + (i === 0 ? '<span class="tag best">Best</span>' : '') + (c.t === safest.t && i !== 0 ? '<span class="tag">Safest</span>' : '') + '<small>' + esc(c.x.k) + '</small></td><td class="n">' + pct(c.x.p) + src(c.x) + '</td>'
+    cands.slice(0, 14).forEach(function(c, i){ h += '<tr class="opt' + (c.t === cur.t ? ' sel' : '') + '" data-pick="' + c.t + '"><td><b class="t">' + c.t + '</b> ' + esc(vs(c.t, c.x)) + (i === 0 ? '<span class="tag best">Best</span>' : '') + (c.t === safest.t && i !== 0 ? '<span class="tag">Safest</span>' : '') + '<small>' + esc(c.x.k) + '</small></td><td class="n">' + pct(c.x.p) + src(c.x) + split(c.x) + '</td>'
         + (one ? '' : '<td class="n">' + (c.ok ? pct(Math.exp(c.lp)) : 'no team left later') + '</td><td class="n hidem">' + (planned[c.t] ? (planned[c.t] === from ? 'now' : 'Week ' + planned[c.t]) : '—') + '</td>') + '</tr>'; });
     h += '</tbody></table></div><p class="hint">Tap a team to see the road if you take it this week.' + (cands.length > 14 ? ' Showing the best 14 of ' + cands.length + '.' : '') + '</p>';
     if(!one){ var run = Math.log(cur.x.p), cum = cur.x.p;
@@ -235,6 +295,7 @@ JS = r"""
     else if(b.id === 'svrename'){ var n2 = window.prompt('Pool name', P().name); if(n2){ P().name = n2.slice(0, 30); save(); render(); } }
     else if(b.id === 'svclear'){ if(window.confirm('Clear the used teams for "' + P().name + '"?')){ P().used = []; sel = null; save(); render(); } }
     else if(b.id === 'svdel'){ if(S.pools.length > 1 && window.confirm('Remove "' + P().name + '" from this page?')){ S.pools.splice(S.cur, 1); S.cur = 0; sel = null; save(); render(); } }
+    else if(b.dataset.basis){ basis = b.dataset.basis; try { localStorage.setItem(BK, basis); } catch(_){} sel = null; render(); }
     else if(b.dataset.pick){ sel = b.dataset.pick; render(); }
   });
   $('#svto').addEventListener('change', function(){ P().to = +this.value; sel = null; save(); render(); });
@@ -259,6 +320,7 @@ page = f"""<title>Survivor planner · BetSweep</title>
 <p class="lead">For elimination pools where you pick one team to win each week and can never use a team twice. Mark the teams you have already used. You get the best pick this week and the best team for every week left, so you do not burn one you will need later.</p>
 <div class="pools" id="svpools"></div>
 <div class="row"><span>Plan through</span><select id="svto" aria-label="Last week of the pool"></select><button type="button" id="svrename">Rename</button><button type="button" id="svclear">Clear used teams</button><button type="button" id="svdel">Remove pool</button></div>
+<div class="row"><span>Win chances from</span><div class="seg" id="svbasis" role="group" aria-label="Whose win chances"><button type="button" data-basis="both">Both</button><button type="button" data-basis="model">Model</button><button type="button" data-basis="line">FanDuel lines</button></div></div>
 <h2>Teams you have used</h2>
 <div class="teams" id="svteams"></div>
 <p class="hint" id="svused"></p>
@@ -266,10 +328,10 @@ page = f"""<title>Survivor planner · BetSweep</title>
 <details style="margin-top:22px"><summary style="cursor:pointer;color:var(--mute);font-size:13.5px">Team ratings behind the later weeks</summary>
 <div class="tw"><table style="max-width:420px"><thead><tr><th>#</th><th>Team</th><th>Points vs average</th></tr></thead><tbody>{rate_rows}</tbody></table></div>
 <p class="hint">Home field is worth {HFA:+.1f} points in these lines.{f" Over the last four weeks the ratings land within {rmse:.1f} points of the actual closing spread on average." if rmse is not None else ""}</p></details>
-<p class="fn">Week {WEEK} win chances are FanDuel's moneylines with the vig removed. Later weeks are estimates ("est."): team ratings fitted to this season's closing spreads, recent weeks counted more, turned into a win chance. They move every rebuild as new lines close, and an injury that has not reached a closing line yet is not in them. "Survive" is the chance of winning every pick on the road shown; it does not know what the rest of your pool picks. Your pools are saved on this device (and to your account when you are signed in). Built {E(DATA["built"])} CT. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
+<p class="fn">Two sets of win chances, and by default the planner uses their average ("Both"). The model's: this week, its own projected score for each team (built from the player projections and the injury report, not from FanDuel's line) turned into a win chance. FanDuel's: this week's moneylines with the vig removed. Where they disagree the option shows both numbers. The model has not projected later weeks, so there its number is the line-based estimate moved by half of where the model has disagreed with the lines so far. Later weeks are estimates ("est."): team ratings fitted to this season's closing spreads, recent weeks counted more, turned into a win chance. They move every rebuild as new lines close, and an injury that has not reached a closing line yet is not in them. "Survive" is the chance of winning every pick on the road shown; it does not know what the rest of your pool picks. Your pools are saved on this device (and to your account when you are signed in). Built {E(DATA["built"])} CT. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
 </div>
 <script>window.__SV = {json.dumps(DATA, separators=(",", ":"))};</script>
 <script>{JS}</script>
 """
 open(os.path.join(OUT, "survivor.html"), "w").write(page)
-print(f"wrote out/survivor.html: week {WEEK}-{LAST}, {sum(len(g) for g in WEEKS.values())} games ({nfd} FanDuel moneylines, {nsp} closing spreads, {nest} estimated), {len(obs)} lines behind the ratings, home field {HFA:+.2f}" + (f", ratings vs last four weeks' lines rmse {rmse:.2f}" if rmse is not None else ""))
+print(f"wrote out/survivor.html: week {WEEK}-{LAST}, {sum(len(g) for g in WEEKS.values())} games ({nfd} FanDuel moneylines, {nsp} closing spreads, {nest} estimated; model: {nproj} projected this week, {nmest} later games nudged by {len(GBAR)} team gaps from weeks {', '.join(sorted(GAPS, key=lambda x: int(x) if str(x).isdigit() else 0)) or 'none'}), {len(obs)} lines behind the ratings, home field {HFA:+.2f}" + (f", ratings vs last four weeks' lines rmse {rmse:.2f}" if rmse is not None else ""))
