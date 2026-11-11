@@ -215,7 +215,10 @@ def sweep_pick(gid, line, pick, legs):
     l = cand[0]
     if l["status"] in ("OUT", "BYE", "QUESTIONABLE"): return None, f"pick '{pick}': the player is {l['status']}"
     if l.get("odds") is None or l.get("p") is None: return None, f"pick '{pick}' has no FanDuel price"
-    if _risk(l) >= 2:
+    # owner 11/10 ("Skattebo's the unquestioned guy in that room ... if he's back he'll be full go"): the owner can clear a player's flags for
+    # the share card by name (voice.json "owner_ok": ["Cam Skattebo"], RUNBOOK 1v). It never clears OUT / questionable above.
+    _ok = VOICE.get("owner_ok") if isinstance(VOICE.get("owner_ok"), list) else []
+    if _risk(l) >= 2 and pp[0] not in _ok:
         tags = [f.get("tag", "") for f in (l.get("flags") or []) if f.get("k") in ("bad", "watch")]
         return None, f"pick '{pick}' is not low risk (score {_risk(l)}: {', '.join(tags[:4])})"
     # the play the line names must be the pick: "play Skattebo catching passes" cannot ride with a McCarthy leg
