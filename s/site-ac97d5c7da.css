@@ -78,7 +78,7 @@
 .sitenav .ddb i{font-style:normal;font-size:10px;transition:transform .15s}
 .sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
 @media (hover:hover){ .sitenav .dd:hover .ddb{color:#141a24} .sitenav .dd:hover .ddm{display:flex} .sitenav .dd:hover .ddb i{transform:rotate(180deg)} }
-.sitenav .dd:last-child .ddm{left:auto;right:0}
+/* 11/11: the last group is no longer the right-most thing in the row (the ask box follows it), so its list opens under it like the others */
 .sitenav .ddm{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:230px;flex-direction:column;background:#efe9da;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 8px 8px;box-shadow:0 14px 30px rgba(0,0,0,.28);padding:6px 0}
 .sitenav .dd.open .ddm{display:flex}
 .sitenav .dd.open .ddb i{transform:rotate(180deg)}
@@ -86,9 +86,6 @@
 .sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
 .sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
 .sitenav .ddh{display:none}
-.sitenav .thm{display:flex;align-items:center;gap:6px;padding:8px 10px;border-left:1px solid #d9d1bf;margin-left:6px} .sitenav .thm span{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4a5260;margin-right:2px}
-.sitenav .thm button{font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:#4a5260;background:none;border:1.5px solid #d9d1bf;border-radius:999px;padding:4px 10px;cursor:pointer;min-height:30px} .sitenav .thm button.on{color:#efe9da;background:#141a24;border-color:#141a24}
-@media (max-width:1240px){ .sitenav .thm{border-left:0;margin:0;padding:12px 18px;border-bottom:1px solid #d9d1bf} .sitenav .thm span{font-size:14px;margin-right:auto} .sitenav .thm button{min-height:36px;padding:6px 14px;font-size:14px} }
 @media (max-width:1240px){
   .sitenav .dd{display:block;border-bottom:1px solid #d9d1bf}
   .sitenav .ddb{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:13px 18px;font-size:17px;border:0;margin:0;color:#4a5260}
@@ -134,6 +131,62 @@
 /* the open menu scrolls inside the screen (it used to run under the bottom tabs with no way to reach the last items) */
 @media (max-width:1240px){ .sitenav .tabs{max-height:calc(100vh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));overflow-y:auto;overscroll-behavior:contain}
   .sitenav .tabs .mout{color:#b8261d} }
+/* 11/11: on a wide screen the header already has the Out button, so the menu's own "Sign out" line (added for phones 11/5) is not a
+   ninth tab; and no tab wraps to two lines when the row is tight */
+@media (min-width:1241px){ .sitenav .tabs .mout{display:none} .sitenav .tabs > a,.sitenav .ddb{white-space:nowrap} }
+
+/* ===== Ask BetSweep in the menu (11/11, ask.py) ===== */
+.sitenav .tabs{min-width:0}
+.sitenav .navask{order:9;position:relative;flex:0 1 auto;min-width:0;margin-left:8px;font-family:'IBM Plex Sans',system-ui,sans-serif;letter-spacing:0;text-transform:none}
+.sitenav .navask label{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sitenav .navask .navaskh{display:none;position:absolute;right:0;top:calc(100% + 10px);z-index:89;margin:0;width:max-content;max-width:min(360px,calc(100vw - 32px));padding:9px 12px;background:#141a24;color:#efe9da;border-radius:8px;font-size:13px;line-height:1.4;box-shadow:0 10px 24px rgba(0,0,0,.3)} .sitenav .navask .navaskh b{font-weight:600;color:#fff}
+.sitenav .navask form:focus-within .navaskh{display:block} .sitenav .navask.has .navaskh,.sitenav .navask.has form:focus-within .navaskh{display:none}
+.sitenav .navask form{margin:0} .sitenav .navaskr{display:flex;gap:6px;align-items:center}
+.sitenav .navask input{font:inherit;font-size:14.5px;font-weight:500;flex:0 1 210px;width:210px;min-width:104px;min-height:36px;padding:6px 10px;border:1.5px solid #141a24;border-radius:8px;background:#fff;color:#141a24;-webkit-appearance:none;appearance:none}
+.sitenav .navask input::placeholder{color:#6b7280;opacity:1}
+.sitenav .navask input:focus{outline:none;border-color:#d7332a;box-shadow:0 0 0 3px rgba(215,51,42,.22)}
+.sitenav .navask form button{flex:none;font:inherit;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:14.5px;letter-spacing:.06em;text-transform:uppercase;min-height:36px;padding:0 14px;border:0;border-radius:8px;background:#d7332a;color:#fff;cursor:pointer}
+.sitenav .navask form button:hover{background:#b8261d}
+.sitenav .navaskout{position:absolute;right:0;top:calc(100% + 10px);z-index:90;width:min(500px,calc(100vw - 32px));max-height:min(76vh,680px);overflow:auto;overscroll-behavior:contain;background:#efe9da;color:#141a24;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 12px 12px;box-shadow:0 18px 40px rgba(0,0,0,.35);padding:12px 14px 14px;font-size:14px;line-height:1.45}
+.sitenav .navaskout[hidden]{display:none}
+.sitenav .navask .nahd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 6px} .sitenav .navask .nahd small{color:#5b6473;font-size:12px}
+.sitenav .navask .nax{font:inherit;font-size:24px;line-height:1;background:none;border:0;color:#5b6473;margin:0 -6px 0 0;padding:4px 8px;min-width:36px;min-height:36px;cursor:pointer} .sitenav .navask .nax:hover{color:#141a24}
+.sitenav .navask .nac{padding:10px 12px;border-radius:10px;background:#e4ddcb;margin-top:8px} .sitenav .navask .nahd + .nac{margin-top:0} .sitenav .navask .nac p{margin:6px 0 0}
+.sitenav .navask .nah{display:flex;justify-content:space-between;gap:4px 10px;align-items:baseline;flex-wrap:wrap}
+.sitenav .navask .nah b,.sitenav .navask .nac > b{font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:.01em;line-height:1.15} .sitenav .navask .nah small{color:#5b6473;font-size:12.5px}
+.sitenav .navask .nag{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:6px;margin:10px 0 2px}
+.sitenav .navask .nag span{display:flex;flex-direction:column} .sitenav .navask .nag small{font-size:10.5px;color:#5b6473;text-transform:uppercase;letter-spacing:.06em}
+.sitenav .navask .nag b{font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums} .sitenav .navask .nag b.up{color:#1f7a4d} .sitenav .navask .nag b.dn{color:#b3372b}
+.sitenav .navask .naf{list-style:none;margin:8px 0 0;padding:0;font-size:12.5px;color:#5b6473} .sitenav .navask .naf li{margin:4px 0} .sitenav .navask .naf li b{color:#141a24} .sitenav .navask .naf li.bad b{color:#b3372b} .sitenav .navask .naf li.good b{color:#1f7a4d}
+.sitenav .navask .wr{color:#b3372b;font-size:12.5px} .sitenav .navask .nt{color:#5b6473;font-size:12.5px}
+.sitenav .navask .nab{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sitenav .navask .nab a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 13px;margin:0;border:1.5px solid #c9c1ad;border-radius:8px;background:none;color:#141a24;text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:14.5px;letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.sitenav .navask .nab a:hover{border-color:#141a24} .sitenav .navask .nab a.go{background:#141a24;border-color:#141a24;color:#efe9da} .sitenav .navask .nab a.go.in{background:#1f7a4d;border-color:#1f7a4d;color:#fff} .sitenav .navask .nab a[hidden]{display:none}
+.sitenav .navask .nal{margin:6px 0 0;padding:0;list-style:none} .sitenav .navask .nal li{padding:8px 0;border-top:1px solid #d3cbb8;display:flex;justify-content:space-between;gap:10px;align-items:baseline} .sitenav .navask .nal li:first-child{border-top:0}
+.sitenav .navask .nal a{display:inline;padding:0;margin:0;border:0;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14.5px;font-weight:600;letter-spacing:0;text-transform:none;text-align:left;color:#141a24;text-decoration:underline;text-decoration-color:#b9b09a;text-underline-offset:3px}
+.sitenav .navask .nal small{color:#5b6473;font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sitenav .navask a.inl{display:inline;padding:0;margin:0;border:0;font:inherit;letter-spacing:0;text-transform:none;color:#141a24;text-decoration:underline}
+.sitenav .navask .nam{margin-top:10px;font-size:13px;color:#5b6473}
+.sitenav .navask .namgo,.sitenav .navask .namin{font:inherit;font-weight:600;color:#141a24;background:none;border:0;border-bottom:2px solid #d7332a;padding:0 0 1px;cursor:pointer}
+.sitenav .navask .namout{margin:8px 0 0;padding:10px 12px;border-left:3px solid #d7332a;background:#f7f3e8;border-radius:0 8px 8px 0;color:#141a24;white-space:pre-wrap;font-size:14.5px;line-height:1.5} .sitenav .navask .namout[hidden]{display:none}
+@media (max-width:1240px){
+  .sitenav .navask{order:-2;margin:0;padding:12px 14px 13px;border-bottom:1px solid #d9d1bf;background:#e9e2d0}
+  .sitenav .navask label{position:static;width:auto;height:auto;margin:0 0 8px;overflow:visible;clip:auto;white-space:normal;display:block;font-family:'Barlow Condensed','IBM Plex Sans',sans-serif;font-weight:700;font-size:17px;letter-spacing:.05em;text-transform:uppercase;color:#141a24}
+  .sitenav .navask .navaskh,.sitenav .navask form:focus-within .navaskh{display:block;position:static;width:auto;max-width:none;margin:8px 0 0;padding:0;background:none;box-shadow:none;border-radius:0;font-size:13px;line-height:1.4;color:#5b6473} .sitenav .navask .navaskh b{color:#141a24}
+  .sitenav .navask input{flex:1 1 auto;width:auto;min-height:46px;font-size:16px;padding:8px 12px} .sitenav .navask form button{min-height:46px;padding:0 20px;font-size:16px}
+  .sitenav .navaskout{position:static;width:auto;max-height:none;overflow:visible;margin:10px 0 0;padding:0;border:0;border-radius:0;box-shadow:none;background:none}
+  .sitenav .navask .nahd{margin:0 0 4px}
+  .sitenav .navask.has .navaskh,.sitenav .navask.has form:focus-within .navaskh{display:none}
+  .sitenav .navask .nac{background:#efe9da;border:1px solid #d9d1bf}
+  .sitenav .navask .nab a{flex:1 1 auto;min-height:44px}
+}
+/* Theme lives on My BetSweep since 11/11 (owner: "put theme in My Betsweep rather than the menu"): one row under the page title, where it
+   is found without scrolling; the buttons take the page's colours */
+.methmrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:12px 0 4px}
+.methmrow > span{font-family:var(--ctl,'Barlow Condensed',sans-serif);font-weight:700;font-size:13.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute,#6b655c)}
+.methm{display:flex;gap:6px;flex-wrap:wrap}
+.methm button{font:inherit;font-family:var(--ctl,'Barlow Condensed',sans-serif);font-weight:700;font-size:14.5px;letter-spacing:.05em;text-transform:uppercase;min-height:40px;padding:0 18px;border:1.5px solid var(--line,#d3cbb8);border-radius:999px;background:transparent;color:var(--ink,#141a24);cursor:pointer}
+.methm button.on{background:var(--ink,#141a24);border-color:var(--ink,#141a24);color:var(--bg,#efe9da)}
 
 
 /* ===== BetSweep brand layer (11/5) - one control system and one heading system for every page; loads after the page's own CSS ===== */
@@ -156,6 +209,31 @@ body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs butto
 /* page titles and section titles on the pages that carry their own CSS (usage, who-benefits, social, how-to guide, receipts) */
 .uw h1,.soc h1,.sp h1,.gd h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;letter-spacing:-.01em;line-height:1}
 .uw h2,.gd h2{letter-spacing:.01em;text-transform:none;font-size:19px} .gd h2{font-size:22px;margin:0 0 10px;padding-bottom:12px;position:relative} .gd h2::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* ===== 11/10 evening (owner 9:33-9:41 PM): pages that lead into each other, and the phone pass ===== */
+/* a section title with one "see all" pill on its right (home page: Model's Best, Best parlay, News, Track record) */
+.sech{display:flex;align-items:flex-start;justify-content:space-between;gap:10px} .sech .t{min-width:0}
+.seeall{flex:none;margin-top:3px;font-family:var(--ctl);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:999px;padding:5px 12px;white-space:nowrap;background:var(--card)} .seeall:hover{border-color:var(--red)}
+/* "Where to next": up to three doors at the foot of every page (build_site.py NEXT) */
+.nx{max-width:1360px;margin:30px auto 0;padding:0 16px} .nx h2{margin:0 0 8px;font-family:var(--ctl);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.nxl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.nxl a{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 36px 11px 14px;position:relative}
+.nxl a::after{content:"";position:absolute;right:15px;top:50%;width:8px;height:8px;border-right:2px solid var(--red);border-top:2px solid var(--red);transform:translateY(-50%) rotate(45deg)}
+.nxl a:hover{border-color:var(--red)} .nxl b{font-family:var(--ctl);font-weight:700;font-size:17px;letter-spacing:.01em;line-height:1.15} .nxl small{color:var(--mute);font-size:12.5px;line-height:1.3}
+/* the same doors as a directory grid (home page "Where to next", /all/) */
+.nxl.doors{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+/* the long introduction under a page title folds to three lines on a phone (app script adds .bsclamp and the More button) */
+.bsmore{display:none}
+@media (max-width:760px){
+  .bsclamp{display:-webkit-box !important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .bsmore{display:inline-block;font:inherit;font-family:var(--ctl);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:none;border:0;border-bottom:2px solid var(--red);padding:0 0 1px;margin:2px 0 12px;cursor:pointer}
+  /* phones run a 5px page gutter so cards use the width (BIGGER_CSS). Text that sits straight on the page background - titles,
+     introductions, breadcrumbs - was 5px from the glass too. It gets a real margin; the cards keep theirs. */
+  .top .mast{padding-left:9px;padding-right:9px}
+  .sc > :is(h1,h2,h3,p,.bsmore),.pr > :is(h1,h2,h3,p,.bsmore),.tzw > :is(h1,h2,h3,p,.bsmore),.pd > :is(h1,h2,h3,p,.bsmore),.uw > :is(h1,h2,h3,p,.bsmore),.soc > :is(h1,h2,h3,p,.bsmore),.sp > :is(h1,h2,h3,p,.bsmore),.gd > :is(h1,h2,h3,p,.bsmore),.pp > p.crumb,article.legal > *,p.tag{margin-left:9px !important;margin-right:9px !important}
+  .sv{padding-left:9px;padding-right:9px}
+  .nx{padding:0;margin-top:24px} .nx h2{margin-left:9px}
+  .nxl.doors{grid-template-columns:1fr 1fr} .nxl.doors a{padding:10px 26px 10px 12px} .nxl.doors a::after{right:11px} .nxl.doors b{font-size:16px}
+}
 /* focus is visible everywhere, in the brand red */
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
