@@ -43,6 +43,12 @@ if os.path.isdir(SITE): shutil.rmtree(SITE)
 os.makedirs(SITE)
 exec(open(os.path.join(HERE, "brand.py")).read())   # LOGO (b64 png)
 open(os.path.join(SITE, "favicon.png"), "wb").write(base64.b64decode(LOGO))
+try:   # 11/10 (deep dive): the tab icon was the full 96 KB logo on every first visit; 96 px covers every place it is drawn (logo.png stays full size)
+    from PIL import Image as _FavIm
+    import io as _favio
+    _fav = _FavIm.open(_favio.BytesIO(base64.b64decode(LOGO))).convert("RGBA").resize((96, 96), _FavIm.LANCZOS)
+    _fav.save(os.path.join(SITE, "favicon.png"), optimize=True)
+except Exception as _e: print("note: favicon kept at full size:", _e)
 open(os.path.join(SITE, "wordmark.png"), "wb").write(base64.b64decode(WORDMARK))
 open(os.path.join(SITE, "wordmark-ink.png"), "wb").write(base64.b64decode(WORDMARK_INK))
 open(os.path.join(SITE, "CNAME"), "w").write(DOMAIN + "\n")
@@ -126,7 +132,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
 NAV_GROUPS = [("/", "Home", None), ("/short/", "Short view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
-              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/firsttd/", "First TD", "Who scores first"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/firsttd/", "First TD", "Who scores first"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/shop/", "Line shop", "Same leg, better price"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
               ("/social/", "Social", None),
@@ -284,6 +290,9 @@ def _write_shared():
     if os.path.exists(h2c): shutil.copy(h2c, os.path.join(SITE, "s", "html2canvas.min.js"))
     site_css = FONT_CSS + _inner(NAV_CSS, "style") + "\n" + _inner(BRAND_CSS, "style")
     app_js = _inner(APP_JS, "script")
+    try:   # owner 11/10: anonymous page counts ride in the shared script, only when account.PAGE_COUNTS is on (see account.py)
+        import account as _ACCT_HIT; app_js += _ACCT_HIT.hit_js()
+    except Exception: pass
     for name, txt, ext in (("site", site_css, "css"), ("app", app_js, "js")) + ((("tpl", _TPL_CSS, "css"),) if _TPL_CSS else ()):
         fn = f"{name}-{_h(txt)}.{ext}"; open(os.path.join(SITE, "s", fn), "w", encoding="utf-8").write(txt); SHARED[name] = "/s/" + fn
     return SHARED
@@ -511,6 +520,14 @@ if os.path.exists(os.path.join(OUT, "badbeats.html")):
 if os.path.exists(os.path.join(OUT, "slipcheck.html")):
     made.append(place_plain(os.path.join(OUT, "slipcheck.html"), os.path.join(SITE, "sweep"), "/sweep/"))
 # owner 11/8-11/10: /pairs/ - the either-or touchdown pair maker (build_pairs.py, pairs.py): "A or B to score" judged as a pair; /b/pairs.json for the API page
+# owner 11/10 (deep dive): /shop/ - Line shop (build_shop.py): every leg another book pays more for; /b/shop.json
+if os.path.exists(os.path.join(OUT, "shop.html")) and os.path.exists(os.path.join(OUT, "shop.json")):
+    made.append(place_plain(os.path.join(OUT, "shop.html"), os.path.join(SITE, "shop"), "/shop/"))
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "shop.json"), os.path.join(SITE, "b", "shop.json"))
+# owner 11/10 (deep dive): /boost/ - the Boost finder (build_boost.py); /b/boost.json is its board
+if os.path.exists(os.path.join(OUT, "boost.html")) and os.path.exists(os.path.join(OUT, "boost.json")):
+    made.append(place_plain(os.path.join(OUT, "boost.html"), os.path.join(SITE, "boost"), "/boost/"))
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "boost.json"), os.path.join(SITE, "b", "boost.json"))
 if os.path.exists(os.path.join(OUT, "pairs.html")):
     made.append(place_plain(os.path.join(OUT, "pairs.html"), os.path.join(SITE, "pairs"), "/pairs/"))
     try: os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "pairs.json"), os.path.join(SITE, "b", "pairs.json"))
@@ -652,6 +669,8 @@ try:   # owner 10/30: DraftKings / Hard Rock ids for this week's legs, so every 
     json.dump(_bm, open(os.path.join(SITE, "b", "books.json"), "w"), separators=(",", ":")); print(f"short links: books.json {len(_bm['m'])} legs with DK/HR ids")
 except Exception as _e: print("note: /b/books.json not written:", _e)
 if SHORT_LINKS: print("short links: " + ", ".join(SHORT_LINKS))
+try: shutil.copy(os.path.join(OUT, "stale.json"), os.path.join(SITE, "b", "stale.json"))   # 11/10: lines to check (stale_lines.py)
+except Exception: pass
 try:   # 11/10 (reprice.py): the session's Sweep says lines travel with the site, so a rebuild with no session re-uses them
     _v = json.load(open(os.path.join(OUT, "voice.json")))
     if _v.get("games"):
@@ -764,6 +783,8 @@ def landing(weeks):
         ("/usage/", "Usage Trends", "Rising and falling roles", "Whose snaps, targets and carries are growing or shrinking over the last three games, with the injury context that explains a fill-in bump or a dip from playing hurt.", None),
         ("/firsttd/", "First TD", f"{nftd} players" if nftd else f"Week {week}", "Who scores first in every game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price with the edge.", None),
         ("/pairs/", "Either-or TDs", "Two names, one leg", "FanDuel sells \"A or B to score\" as one leg. Pick the two players and see the chance one of them scores, the fair price, and whether the pair is worth more or less than its two singles. Type FanDuel's price and it says what you are paying.", None),   # owner 11/8-11/10
+        ("/shop/", "Line Shop", "Same leg, better price", "Every leg on the board where DraftKings or Hard Rock pays more than FanDuel, biggest gap first, with a button straight to the better price.", None),
+        ("/boost/", "Boost Finder", "Make a boost count", "Got a profit boost? Enter its rules and the model finds the slip that was closest to fair before the boost, so the boost does the most work. A checker for same-game boosts too.", None),
         ("/teasers/", "Teaser Finder", "6, 6.5 and 7 points", "Every spread and total teased 6, 6.5 and 7 points, scored by the model: which teased legs clear your book's two-leg price, and the classic pairs that cross both 3 and 7.", None),
         ("/sweep/", "Sweep My Slip", "Before you place it", "Screenshot any FanDuel slip, yours or one somebody posted, and get a plain verdict: its chance against its price, the weakest leg, and a safer swap one tap applies. The picture is read on your phone and never leaves it.", None),   # owner 11/10
         ("/survivor/", "Survivor Planner", "Elimination pools", "One team a week, never the same team twice: mark who you have used and get the best pick this week and the best team for every week left, so you do not burn one you will need later. Works for any pool you are in.", None),   # owner 11/10
@@ -884,6 +905,10 @@ _API = [
     ("/b/players.json", "Player index for search: name, slug (the /player/<slug>/ page), team, position, opponent, whether he has props this week.", "every rebuild"),
     ("/b/today.json", "The morning briefs per game day: {week, briefs:{YYYY-MM-DD:{title, body, url, games}}, days}. Weather risks lead the body.", "every rebuild"),
     ("/b/pairs.json", "Either-or touchdown pairs: every player with an anytime-TD price (model chance, FanDuel price, chance under each game ending, risk score) and the best pairs with the chance that at least one scores. FanDuel's own either-or prices are not included.", "every rebuild"),
+    ("/b/shop.json", "Line shop: every leg where DraftKings or Hard Rock pays more than FanDuel at the same line (both prices, the gap in points of break-even chance, the link), plus how many legs have a second price.", "every rebuild"),
+    ("/b/stale.json", "Lines to check: players the news desk has ruled out since the last FanDuel props pull, with their position-room teammates' legs as the site is still showing them (price, model chance, FanDuel link) and the time of that pull.", "every rebuild"),
+    ("/data/under-day.json", "Under of the day: one under per game day since 11/10 (player, line, FanDuel price, the chance shown), frozen at kickoff and graded HIT / MISS / VOID from the game log.", "every rebuild"),
+    ("/b/boost.json", "The boost finder's board: per game, the legs with FanDuel ids whose chance times price is highest (chance, price, risk score, ids) and each game's best parlay with the model's chance that it lands.", "every rebuild"),
     ("/b/teasers.json", "The teaser finder: every spread and total teased 6, 6.5 and 7 points with the model's chance before and after the move, which cross 3 and 7, and the best pairs.", "every rebuild"),
     ("/b/beat.json", "Beat the model: the week's pool (every player prop priced -150 to +150, as [key, player, team, opp, game, market, line, odds, model chance, kickoff]) and the model's five keys.", "every rebuild"),
     ("/b/dossier.json", "Game previews: per game, the model script, weather / injury / news flags, situational spots (tested on 2006-2025), each offense's results against the most similar defenses and each defense's leaks by role.", "every rebuild"),

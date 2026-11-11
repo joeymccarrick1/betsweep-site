@@ -18,6 +18,7 @@ Writes out/simple.html and out/simple.json (what the page shows, for the checks)
 import json, os, html, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out"); sys.path.insert(0, HERE)
 import sweep as SW
+import booklinks as BL
 E = html.escape
 DAYN = {"Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday", "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday"}
 def am(o): return f"+{int(o)}" if o > 0 else str(int(o))
@@ -33,17 +34,25 @@ def leg_txt(l):
     if l.get("gl"): return l["pl"]
     if l["m"] == "Anytime TD": return f"{l['pl']} to score"
     return f"{l['pl']} {int(round(l['ln']))}+ {l['m'].lower()}"
-def easy_picks(BD):
-    """three favorites (-350..-140) the model has at or within two points of FanDuel's price, no risk flag (house rule: low-risk legs
-    only), overs only, one per player, two per game at most, every one with its FanDuel ids"""
+def fav_pool(BD):
+    """every favorite the three-favorites card may use, best chance first: -350..-140, shown at or within two points of FanDuel's
+    break-even, no risk flag (house rule: low-risk legs only), overs only, with its FanDuel ids"""
     cand = [l for l in BD["legs"] if not l.get("gl") and not l.get("u") and not str(l["m"]).startswith("Under") and l["m"] not in ("First TD", "Longest Reception", "Rushing Yards")
             and l.get("o") is not None and l.get("p") is not None and -350 <= l["o"] <= -140 and l["p"] >= (l.get("bk") or 1) - 0.02
             and SW.risk_score(l, BD) < 2 and (l.get("fd") or {}).get("m") and (l.get("fd") or {}).get("s")]
-    cand.sort(key=lambda l: (-l["p"], l["pl"])); out, seen, per = [], set(), {}
+    cand.sort(key=lambda l: (-l["p"], l["pl"])); return cand
+
+def pick_favs(cand, n=3, per_game=2):
+    out, seen, per = [], set(), {}
     for l in cand:
-        if l["pl"] in seen or per.get(l["g"], 0) >= 2: continue
+        if l["pl"] in seen or per.get(l["g"], 0) >= per_game: continue
         out.append(l); seen.add(l["pl"]); per[l["g"]] = per.get(l["g"], 0) + 1
-        if len(out) == 3: break
+        if len(out) == n: break
+    return out
+
+def easy_picks(BD):
+    """three favorites, one per player, two per game at most - or none when the board cannot fill three"""
+    out = pick_favs(fav_pool(BD))
     return out if len(out) == 3 else []
 
 CSS = """
@@ -66,6 +75,8 @@ CSS = """
 .sv .legs li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:15.5px;line-height:1.3}
 .sv .legs li:first-child{border-top:0} .sv .legs b{font-weight:600} .sv .legs span{color:var(--mute);white-space:nowrap;font-size:14px}
 .sv .legs li.gone b{text-decoration:line-through;color:var(--mute)}
+.sv .all3{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 12px;padding:9px 0 0;border-top:1px solid var(--line);font-size:15.5px} .sv .all3 b{font-weight:700} .sv .all3 span{color:var(--mute);font-size:14px}
+.sv a.bsbtn.alt{margin-top:8px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .sv a.bsbtn{text-decoration:none;gap:8px;align-items:center;flex:none;line-height:1.1}
 .sv a.bsbtn.wide{display:flex;width:100%;min-height:48px;font-size:16px;padding:13px 16px;box-sizing:border-box}
 .sv a.bsbtn small{font-family:var(--body);font-weight:600;font-size:13px;letter-spacing:0;text-transform:none;opacity:.92}
@@ -103,7 +114,7 @@ JS = r"""
   function risk(){ var ez = $('sveasy'); if(!ez || !window.BSRisk) return; var bad = false;
     ez.querySelectorAll('li[data-pl]').forEach(function(li){ var v = null; try{ v = window.BSRisk.verdict(li.getAttribute('data-pl'), li.getAttribute('data-m')); }catch(e){}
       var out = !!(v && v.level === 'block'); li.classList.toggle('gone', out); if(out) bad = true; });
-    var go = ez.querySelector('.bsbtn'), fn = $('sveasyfn'); if(go) go.hidden = bad; if(fn && bad) fn.textContent = 'One of these players has been ruled out since this was built. Fresh picks come with the next update.'; }
+    var fn = $('sveasyfn'); ez.querySelectorAll('.bsbtn').forEach(function(go){ go.hidden = bad; }); if(fn && bad) fn.textContent = 'One of these players has been ruled out since this was built. Fresh picks come with the next update.'; }
   document.addEventListener('bs-risk', risk); risk();
   // Short / Full: the choice is kept on this device (bs_view = 'short'; 'simple' is the same choice, stored before the rename)
   var full = $('svfull'); if(full) full.addEventListener('click', function(){ setPref('full'); location.href = '/'; });
@@ -127,10 +138,26 @@ def build(out_dir=OUT):
         d = 1.0
         for l in easy: d *= dec(l["o"])
         easy_link = fd_link(easy)
+        # owner 11/10 (deep dive): "easy" oversold it - graded over Weeks 6-9 this rule's legs hit about 6 in 10 like any other favorites.
+        # The card says what they are (three favorites) and how often all three land together (the shown chances multiplied; two legs
+        # from one game move together a little, so it reads "about").
+        pall = 1.0
+        for l in easy: pall *= l["p"]
+        # ... and where the same three legs pay more. Exact lines only (a book's nearest line is a different bet); FanDuel stays first.
+        other = ""
+        for b, nm in (("dk", "DraftKings"), ("hr", "Hard Rock")):
+            xs = [((l.get("bks") or {}).get(b) or {}) for l in easy]
+            if not all(x.get("o") is not None and x.get("s") for x in xs): continue
+            db = 1.0
+            for x in xs: db *= dec(float(x["o"]))
+            if db > d * 1.01 and (not other or db > other[0]):
+                other = (db, f'<a class="bsbtn wide alt" data-book="{b}" href="{E(BL.url([x["s"] for x in xs], b))}" target="_blank" rel="noopener">{nm} pays more <small>about {amd(db)}</small></a>')
         rows = "".join(f'<li data-pl="{E(l["pl"])}" data-m="{E(l["m"])}"><b>{E(leg_txt(l))}</b><span>{l["p"] * 100:.0f}% · {am(l["o"])}</span></li>' for l in easy)
-        easy_html = (f'<section class="card" id="sveasy" data-ko="{min(ko_of.get(l["g"], 0) for l in easy)}"><h2 class="brush">3 easy picks</h2><ul class="legs">{rows}</ul>'
+        easy_html = (f'<section class="card" id="sveasy" data-ko="{min(ko_of.get(l["g"], 0) for l in easy)}"><h2 class="brush">3 favorites</h2><ul class="legs">{rows}</ul>'
+                     + f'<p class="all3"><b>All three hit</b><span>about {pall * 100:.0f}%</span></p>'
                      + (f'<a class="bsbtn wide" href="{E(easy_link)}" target="_blank" rel="noopener">Bet all 3 on FanDuel <small>about {amd(d)}</small></a>' if easy_link else "")
-                     + '<p class="fine" id="sveasyfn">Three favorites the model has at or near the FanDuel price, none with a risk flag. Check the lines on FanDuel before you place it.</p></section>')
+                     + (other[1] if other else "")
+                     + '<p class="fine" id="sveasyfn">Three favorites the model has at or near the FanDuel price, none with a risk flag. Favorites still miss: check the lines before you place it.</p></section>')
     # ---- the house slip of the day, when one is posted and not yet settled ----
     sw = next((p for p in PROMOS if p.get("sweep") and str(p.get("status", "LIVE")).upper() == "LIVE" and not p.get("result")), None)
     sweep_html = ""
@@ -142,6 +169,13 @@ def build(out_dir=OUT):
         except Exception: pass
         sweep_html = (f'<section class="card hero" id="svslip" data-ko="{min(kos) if kos else 0}"><h2 class="brush">Today\'s slip <small>The Daily Sweep</small></h2><p class="nm">{E(str(sw.get("name") or sw.get("title") or ""))}</p><ul class="legs">{rows}</ul>'
                       + (f'<a class="bsbtn wide" href="{E(sw["link"])}" target="_blank" rel="noopener">Bet it on FanDuel{" <small>" + E(price) + "</small>" if price else ""}</a>' if sw.get("link") else "") + '</section>')
+    # ---- Under of the day (owner 11/10): the pick build_today.py logged for the next game day ----
+    under_html = ""
+    try:
+        import under_day as UD
+        under_html = UD.card(out_dir, "short")
+        if under_html: under_html = f"<style>{UD.CSS_SHORT}</style>" + under_html
+    except Exception: pass
     # ---- every game on one row ----
     ML = {}
     for l in LEGS:
@@ -180,7 +214,7 @@ def build(out_dir=OUT):
 <div class="sv">
 <div class="svhead"><h1>The short version</h1><span class="sub">Week {E(str(WEEK))}. Picks first, reading optional.</span></div>
 <div class="svbar"><div class="seg" role="group" aria-label="View"><button type="button" class="on" aria-pressed="true">Short</button><button type="button" id="svfull" aria-pressed="false">Full</button></div><p class="keep" id="svkeep"></p></div>
-{sweep_html}{easy_html}
+{sweep_html}{easy_html}{under_html}
 <h2 id="svgames" class="brush out">Who wins <small>tap a game for its best parlay</small></h2>
 {games_html}
 <p class="none" id="svnone" hidden>Every game this week has kicked off. Next week's picks land Tuesday. <a href="/live/" style="color:var(--ink)">Follow the games live</a></p>
@@ -189,9 +223,9 @@ def build(out_dir=OUT):
 <script>{JS}</script>
 """
     open(os.path.join(out_dir, "simple.html"), "w").write(page)
-    json.dump({"week": WEEK, "easy": [{"pl": l["pl"], "m": l["m"], "ln": l["ln"], "o": l["o"], "p": l["p"], "g": l["g"], "fd": [l["fd"]["m"], l["fd"]["s"]]} for l in easy], "easy_link": easy_link,
+    json.dump({"week": WEEK, "easy": [{"pl": l["pl"], "m": l["m"], "ln": l["ln"], "o": l["o"], "p": l["p"], "g": l["g"], "fd": [l["fd"]["m"], l["fd"]["s"]]} for l in easy], "easy_link": easy_link, "easy_all": round(pall, 4) if easy else None,
                "slip": (sw.get("title") if sw else None), "games": rows_json}, open(os.path.join(out_dir, "simple.json"), "w"))
-    return f"wrote out/simple.html (Short view, /short/): week {WEEK}, {len(GAMES)} games, {len(easy)} easy picks, house slip {'yes' if sw else 'none posted'}, Sweep says lines {sum(1 for r in rows_json if r['say'])}"
+    return f"wrote out/simple.html (Short view, /short/): week {WEEK}, {len(GAMES)} games, {len(easy)} favorites, house slip {'yes' if sw else 'none posted'}, Sweep says lines {sum(1 for r in rows_json if r['say'])}"
 
 if __name__ == "__main__":
     print(build())

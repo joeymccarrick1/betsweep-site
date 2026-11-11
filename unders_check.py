@@ -22,8 +22,17 @@ for r in gl[1:]:
     if len(r) <= GH["Rec Yds"] or str(r[GH["Week"]]).strip() != str(W): continue
     act[norm(r[GH["Player"]])] = {m: num(r[GH[c]]) for m, c in COL.items()}
 last = {}
+def _stale_pull(pulled, frozen, days=3):
+    # 11/10: 15 rows stamped Week 10 carry Week 9's lines (the unders tab had not been pulled since 11/5 when they were frozen)
+    import datetime as _d
+    def d(x):
+        try: return _d.datetime.strptime(str(x).strip()[:10], "%Y-%m-%d")
+        except Exception: return None
+    a, b = d(pulled), d(frozen)
+    return bool(a and b and (b - a).days > days)
 for r in us[1:]:
     r = r + [""] * (len(us[0]) - len(r))
+    if "Pulled (CT)" in UH and "Frozen at (CT)" in UH and _stale_pull(r[UH["Pulled (CT)"]], r[UH["Frozen at (CT)"]]): continue
     if str(r[UH["Week"]]).strip() != str(W) or str(r[UH["Frozen at (CT)"]])[:16] >= str(r[UH["Kickoff (CT)"]])[:16]: continue
     last[r[UH["Key"]] or (r[UH["Player"]], r[UH["Market"]], r[UH["Line"]])] = r
 def pay(o): return (o / 100) if o > 0 else (100 / -o)

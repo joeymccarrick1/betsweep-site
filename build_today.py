@@ -63,6 +63,18 @@ def sections(IN_, OUT_):
     try: VOICE = json.load(open(os.path.join(OUT_, "voice.json")))
     except Exception: VOICE = {}
     vg = VOICE.get("games") or {}; vl = VOICE.get("legs") or {}
+    # owner 11/10 (deep dive): Under of the day - one under per game day from the model's 55%+ unders, with its own record (under_day.py)
+    under_html = ""
+    try:
+        import under_day as UD
+        print(UD.build(IN_, OUT_)); under_html = UD.card(OUT_, "home")
+    except Exception as e: print("under of the day: skipped -", e)
+    # owner 11/10 (deep dive): "lines to check" - teammates of a player ruled out after the last FanDuel props pull (stale_lines.py)
+    stale_html = ""
+    try:
+        import stale_lines as STL
+        print(STL.build(IN_, OUT_)); stale_html = STL.card(OUT_)
+    except Exception as e: print("lines to check: skipped -", e)
     # audit 11/10: the "Share this take" button the boards carry under each Sweep says line (owner 11/10) on the home cards too.
     # build_boards.py writes the buttons and the share-card script to out/sweepcards.json; missing or another week = no button.
     try:
@@ -163,6 +175,20 @@ def sections(IN_, OUT_):
         return max(ws) if ws else None
     try: R = HOME.record(D); rec_html = HOME.record_block(R, _latest_receipt())
     except Exception as e: rec_html = ""; print("today: record failed", e)
+    # owner 11/10 (deep dive): the record leads with the slips the site posts as its own - the Daily Sweep, then the Under of the day -
+    # ahead of the every-leg totals
+    try:
+        import sweep as _SWM
+        _lead = []
+        try: _R = _SWM.record(json.load(open(os.path.join(IN_, "promos.json")))["values"])
+        except Exception: _R = _SWM.record(None)
+        _lead.append(f'<div><b>{_R["w"]}–{_R["l"]}</b><span>The Daily Sweep · {_SWM.fmt_u(_R["u"])} at the posted price · one house slip every game day</span></div>' if _R["n"]
+                     else '<div><b>0–0</b><span>The Daily Sweep · one house slip every game day, graded in public from the first one</span></div>')
+        try: _ur = json.load(open(os.path.join(OUT_, "under_day.json"))).get("record") or {}
+        except Exception: _ur = {}
+        if _ur.get("w") or _ur.get("l"): _lead.append(f'<div><b>{_ur["w"]}–{_ur["l"]}</b><span>Under of the day · {_ur["units"]:+.1f}u at the posted price</span></div>')
+        if rec_html.startswith('<div class="rec">'): rec_html = '<div class="rec">' + "".join(_lead) + rec_html[len('<div class="rec">'):]
+    except Exception as e: print("today: record lead skipped", e)
     # ---- slip key -> gid map for "your legs today" (compact: per game, the leg keys) ------------------------------------------------------
     keys_by_g = {}
     for l in bd["legs"]:
@@ -174,6 +200,13 @@ def sections(IN_, OUT_):
         d = ct_date(g.get("ko"))
         if d: days.setdefault(d, []).append(g)
     briefs = {}
+    try: _SWP = [p_ for p_ in json.load(open(os.path.join(OUT_, "promos.json"))) if p_.get("sweep") and p_.get("status", "LIVE") == "LIVE"]
+    except Exception: _SWP = []
+    try:
+        import build_simple as _SIMPLE; _FAVS = _SIMPLE.fav_pool(bd)
+    except Exception: _SIMPLE, _FAVS = None, []
+    try: _UDP = json.load(open(os.path.join(OUT_, "under_day.json"))).get("picks") or []
+    except Exception: _UDP = []
     for d, gs in sorted(days.items()):
         looks = []
         for g in gs:
@@ -192,8 +225,21 @@ def sections(IN_, OUT_):
                 bits = [x for x in [f"wind {wx['wind']:.0f}" if wx.get("wind") else "", (wx.get("ptype") or "").replace("none", "") if (wx.get("pch") or 0) >= 40 else ""] if x]
                 wxl.append(f"{g['a']}-{g['b']} {wx['risk'].lower()}" + (f" ({', '.join(bits)})" if bits else ""))
         if wxl: body.append("Weather: " + "; ".join(wxl[:3]))
+        # owner 11/10 (deep dive): after the weather the brief leads with what the site stands behind - the Daily Sweep when one is
+        # posted for the day, else the day's favorites, then the Under of the day. The plus-money looks (21-72 in Week 9) stay on the
+        # page and no longer lead the push.
+        _gids = {g["gid"] for g in gs}
+        _swp = next((p_ for p_ in _SWP if p_.get("first_ko") and ct_date(p_["first_ko"]) == d), None)
+        if _swp:
+            try: _pr = f" ({odds(float(_swp['fd']))})"
+            except Exception: _pr = ""
+            body.append(f"{_swp.get('title') or 'Daily Sweep'}{_pr}")
+        else:
+            _fv = _SIMPLE.pick_favs([l for l in _FAVS if l["g"] in _gids]) if _SIMPLE else []
+            if _fv: body.append("Favorites: " + " · ".join(f"{l['pl']} {HOME.leg_line(l['m'], l['ln'])} ({odds(l['o'])})" for l in _fv))
+        _ud = next((e_ for e_ in _UDP if e_.get("date") == d), None)
+        if _ud: body.append(f"Under of the day: {_ud['pl']} under {_ud['ln']:g} {UD.STAT[_ud['m']][1]} ({odds(_ud['o'])})")
         if hot: body.append("; ".join(f"{n['player']} {tag_short(n).lower()}" for n in hot))
-        if looks: body.append("Looks: " + " · ".join(f"{l['pl']} {HOME.leg_line(l['m'], l['ln'])} ({odds(l['o'])}, {l['p']*100:.0f}%)" for l in looks))
         briefs[d] = {"title": title[:90], "body": ("; ".join(body) or "Today's games, looks and news in one place.")[:300], "url": "/today/?source=push", "games": [g["gid"] for g in gs]}
     today_json = {"week": W, "built": built.isoformat(), "briefs": briefs, "days": {d: [g["gid"] for g in gs] for d, gs in days.items()}}
     json.dump(today_json, open(os.path.join(OUT_, "today.json"), "w"))
@@ -226,6 +272,8 @@ def sections(IN_, OUT_):
 try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 'simple') && location.pathname === '/' && !location.hash && (!location.search || location.search === '?source=app')) location.replace('/short/'); }}catch(e){{}}</script>
 <section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdshare" id="tdsimple" href="/short/" title="The short version: picks first, reading optional" onclick="try{{localStorage.setItem('bs_view','short')}}catch(e){{}}">Short view</a><a class="tdlive" href="/live/">Live</a></div></section>
 {sweep_html}
+{under_html}
+{stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p></section>
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>

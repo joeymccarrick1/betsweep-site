@@ -5,7 +5,8 @@ never been graded.  The graded frozen legs ('V2 - FanDuel Leg Snapshots' -> in/l
 site's flags, so this joins each week's graded legs (player + market + line) to the builder data the site published before that
 Sunday's kickoff, which holds every leg's flags, price and shown chance as visitors saw them.
 
-  python3 research/risk_grade.py WEEK=PATH [WEEK=PATH ...]        PATH = a build/data-<hash>.js, or an older build/index.html (data inline)
+  python3 research/risk_grade.py WEEK=PATH[@ISO] [...]            PATH = a build/data-<hash>.js, or an older build/index.html (data inline)
+  python3 research/fetch_snapshots.py WEEK [WEEK ...]             fetches each game day's last pre-kickoff board and prints those arguments
 
 Where the files come from (site repo, main):  gh api -H "Accept: application/vnd.github.raw" \
       "repos/<owner>/betsweep-site/contents/build/<file>?ref=<commit>"
@@ -77,16 +78,28 @@ def tag_of(f):
 
 def main(argv):
     res = load_results(); J = []            # (week, leg, hit, risk, flags)
+    # WEEK=PATH or WEEK=PATH@ISO. With @ISO (when that board was published, UTC) a leg is taken from the LATEST board published
+    # before its own game kicked off - so a Thursday board grades Thursday's legs and the Sunday-morning board the rest.
+    import datetime as _dt
+    snaps = []
     for a in argv:
-        wk, path = a.split("=", 1); bd = load_bd(path); R = res.get(wk, {}); n = 0
+        wk, rest = a.split("=", 1); path, iso = (rest.rsplit("@", 1) + [None])[:2] if "@" in rest else (rest, None)
+        t = _dt.datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp() * 1000 if iso else None
+        snaps.append((wk, t or 0, path, t))
+    picked = {}
+    for wk, _, path, t in sorted(snaps, key=lambda x: (int(x[0]), x[1])):
+        bd = load_bd(path); R = res.get(wk, {}); n = 0; KO = {g["gid"]: g.get("ko") or 0 for g in bd.get("games") or []}
         for l in bd["legs"]:
             if l.get("o") is None or l.get("ln") is None: continue
-            h = R.get((str(l.get("pl", "")).strip().lower(), l.get("m"), round(float(l["ln"]), 1)))
+            if t is not None and KO.get(l.get("g"), 0) and KO[l["g"]] <= t: continue      # that game had kicked off: not a pre-kickoff read
+            key = (str(l.get("pl", "")).strip().lower(), l.get("m"), round(float(l["ln"]), 1))
+            h = R.get(key)
             if h is None: continue
             fl = [f for f in list(l.get("fh") or []) + list((bd.get("pf") or {}).get(l.get("pl")) or [])
                   if isinstance(f, (list, tuple)) and len(f) >= 2 and f[0] in ("bad", "watch", "good")]
-            J.append((wk, l, h, sweep.risk_score(l, bd), fl)); n += 1
+            picked[(wk,) + key] = (wk, l, h, sweep.risk_score(l, bd), fl); n += 1
         print(f"week {wk}: built {bd.get('built')!r}, {len(bd['legs'])} builder legs, {len(R)} graded snapshot legs, {n} joined")
+    J = list(picked.values())
     weeks = sorted({w for w, *_ in J}, key=int)
 
     def block(title, keep):

@@ -93,8 +93,19 @@ def load(IN):
         lad.setdefault(name, {}).setdefault(mk, []).append((k, o, str(r[5] or ""), str(r[6] or "")))
     und = {}   # (normname, market, X+ of the main line) -> (over odds, under odds)
     try:
+        # 11/10: the unders tab can still hold LAST week's two-way prices (pulled on its own schedule); a row whose kickoff day has
+        # passed is not this week's main line, so it must not de-vig this week's ladder
+        import datetime as _dtm, re as _rex
+        from zoneinfo import ZoneInfo as _ZI
+        _tod = _dtm.datetime.now(_ZI("America/Chicago")).date()
+        def _past(r):
+            m = _rex.search(r"(\d{1,2})/(\d{1,2})", str(r[7]) if len(r) > 7 else "")
+            if not m: return False
+            try: d = _dtm.date(_tod.year, int(m.group(1)), int(m.group(2)))
+            except Exception: return False
+            return d < _tod and (_tod - d).days < 200
         for r in _vals(IN, "unders.json")[1:]:
-            if len(r) < 6 or not r[1]: continue
+            if len(r) < 6 or not r[1] or _past(r): continue
             try: und[(normname(r[1]), r[2], int(float(r[3]) + 0.5))] = (float(r[5]), float(r[4]))
             except Exception: pass
     except Exception: pass

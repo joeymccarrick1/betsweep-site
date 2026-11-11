@@ -272,7 +272,7 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .sc2 .scn{min-width:0} .sc2 .scn input{font:inherit;font-family:var(--display);font-weight:800;font-size:20px;line-height:1.1;border:0;border-bottom:1px dashed transparent;background:none;color:var(--ink);width:100%;padding:0}
 .sc2 .scn input:focus{outline:none;border-bottom-color:var(--line)} .sc2 .scn small{display:block;color:var(--mute);font-size:12px;margin-top:3px}
 .sc2 .scp{text-align:right} .sc2 .scp b{display:block;font-family:var(--display);font-weight:800;font-size:30px;line-height:1} .sc2 .scp small{display:block;color:var(--mute);font-size:11px;margin-top:2px;white-space:nowrap}
-.sc2 .scp.cashed b{color:var(--good)} .sc2 .scp.dead b{color:var(--bad);font-size:22px}
+.sc2 .winrow{padding:0 12px 10px} .sc2 .winrow .winshare{border-color:var(--good);color:var(--good);font-weight:700} .sc2 .scp.cashed b{color:var(--good)} .sc2 .scp.dead b{color:var(--bad);font-size:22px}
 .sc2 .scm{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line)} .sc2 .scm span{flex:1;padding:8px 14px;border-right:1px solid var(--line);min-width:0} .sc2 .scm span:last-child{border-right:0}
 .sc2 .scm small{display:block;color:var(--mute);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--display);font-weight:700} .sc2 .scm b{font-family:var(--display);font-weight:800;font-size:17px}
 .sc2.folded .scm{border-bottom:0}
@@ -393,6 +393,43 @@ JS = r"""
   function saveBMeta(){ try { localStorage.setItem('bs_slipmeta_w' + D.week, JSON.stringify(BMETA)); } catch(e){} }
   function allSlips(){ var out = []; var bk = Object.keys(SLIP); if(bk.length) out.push({id: 'builder', name: BMETA.name || 'Builder slip', keys: bk, odds: BMETA.odds, stake: BMETA.stake, co: BMETA.co, cot: BMETA.cot, ho: BMETA.ho, builder: true}); return out.concat(SLIPS); }
   function slipById(id){ return id === 'builder' ? allSlips()[0] : SLIPS.filter(function(s){ return s.id === id; })[0]; }
+  // owner 11/10 (deep dive, "win cards to share when a slip hits"): a cashed slip gets "Share the win" - a 1080x1350 picture drawn on a
+  // canvas (no library): CASHED, the ticket price, the legs with their ticks, the stake and return when the visitor typed them, and
+  // the wordmark. Shared through the phone's share sheet when it takes files, saved as a PNG otherwise.
+  function winCard(sl, btn){
+    var ls = slipLegs(sl); if(!ls.length) return; btn.disabled = true;
+    var legsDec = ls.reduce(function(a, l){ return a * dec(l.o); }, 1), price = sl.odds || amer(legsDec);
+    var W = 1080, H = 1350, pad = 84, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
+    var cs = getComputedStyle(document.documentElement), brand = "'Barlow','Barlow Condensed',sans-serif", disp = "'Barlow Condensed','IBM Plex Sans',sans-serif", body = "'IBM Plex Sans',system-ui,sans-serif";
+    function fit(txt, font, size, max, min){ do { x.font = font.replace('SZ', size); if(x.measureText(txt).width <= max) break; size -= 2; } while(size > min); return size; }
+    function draw(logo){
+      x.fillStyle = '#0e1820'; x.fillRect(0, 0, W, H);
+      x.save(); x.translate(W / 2, 318); x.rotate(-0.045); x.fillStyle = '#d7332a'; x.beginPath(); x.moveTo(-470, -118); x.lineTo(486, -132); x.lineTo(468, 112); x.lineTo(-488, 124); x.closePath(); x.fill(); x.restore();
+      x.fillStyle = '#efe9da'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.font = "italic 800 216px " + brand; x.save(); x.translate(W / 2, 322); x.rotate(-0.045); x.fillText('CASHED', 0, 0); x.restore();
+      x.textBaseline = 'alphabetic'; x.font = "800 150px " + disp; x.fillText(am(price), W / 2, 590);
+      var nm = String(sl.name || '').trim(); if(nm && !/^(slip|my slip|builder slip)\b/i.test(nm)){ var ns = fit(nm, "italic 800 SZpx " + brand, 54, W - 2 * pad, 34); x.font = "italic 800 " + ns + "px " + brand; x.fillStyle = '#97a5b3'; x.fillText(nm, W / 2, 664); }
+      var n = Math.min(ls.length, 9), top = 742, room = 1120 - top, step = Math.min(104, room / n), fs = Math.max(30, Math.min(58, step * 0.56)); x.textAlign = 'left';
+      ls.slice(0, n).forEach(function(l, i){ var y = top + i * step + step * 0.62, t = legText(l);
+        x.fillStyle = '#5fcf93'; x.font = "800 " + fs + "px " + disp; x.fillText('✓', pad, y);
+        var sz = fit(t, "600 SZpx " + body, fs, W - 2 * pad - 70, 24); x.font = "600 " + sz + "px " + body; x.fillStyle = '#efe9da'; x.fillText(t, pad + 62, y); });
+      if(ls.length > n){ x.fillStyle = '#97a5b3'; x.font = "500 30px " + body; x.fillText('+ ' + (ls.length - n) + ' more', pad + 62, top + n * step + 30); }
+      x.strokeStyle = '#2a3b4b'; x.lineWidth = 2; x.beginPath(); x.moveTo(pad, 1168); x.lineTo(W - pad, 1168); x.stroke();
+      if(logo && logo.naturalWidth){ var lw = 400, lh = lw * logo.naturalHeight / logo.naturalWidth; x.drawImage(logo, pad, 1262 - lh / 2, lw, lh); }
+      else { x.fillStyle = '#d7332a'; x.font = "italic 800 64px " + brand; x.textAlign = 'left'; x.fillText('BetSweep', pad, 1282); }
+      x.textAlign = 'right'; x.fillStyle = '#97a5b3'; x.font = "600 30px " + body;
+      var st = +sl.stake > 0 ? '$' + (+sl.stake).toFixed(2) + ' → $' + ((+sl.stake) * dec(price)).toFixed(2) : 'Week ' + D.week;
+      x.fillText(st, W - pad, 1250); x.fillText('betsweep.co', W - pad, 1294);
+      c.toBlob(function(blob){ btn.disabled = false; if(!blob) return;
+        var f = new File([blob], 'betsweep-cashed-w' + D.week + '.png', {type: 'image/png'});
+        try { if(navigator.canShare && navigator.canShare({files: [f]})){ navigator.share({files: [f], title: 'Cashed on BetSweep', text: 'Cashed ' + am(price) + ' - betsweep.co'}).catch(function(){}); return; } } catch(e){}
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, 'image/png'); }
+    var go = function(img){ try { if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ draw(img); }); return; } } catch(e){} draw(img); };
+    var im = new Image(); im.onload = function(){ go(im); }; im.onerror = function(){ go(null); }; im.src = '/wordmark.png';
+    window.__bsWinCard = c;
+  }
+  window.__bsWin = function(keys, name, odds, stake){ winCard({id: 'demo', name: name, keys: keys, odds: odds, stake: stake}, document.createElement('button')); return window.__bsWinCard; };   // tests/deepdive_pages.py
+  window.__bsWinKeys = function(n){ return Object.keys(LEGIDX).slice(0, n || 4); };
   function toggleIn(id, k){
     if(id === 'builder'){ if(SLIP[k]) delete SLIP[k]; else SLIP[k] = true; saveBuilderSlip(); }
     else { var s = slipById(id); if(!s) return; var i = s.keys.indexOf(k); if(i >= 0) s.keys.splice(i, 1); else s.keys.push(k); saveSlips(); }
@@ -484,6 +521,7 @@ JS = r"""
       '<div class="scn"><input type="text" class="slipname" data-sid="' + esc(sl.id) + '" value="' + esc(sl.name) + '" aria-label="Slip name"><small>' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + ' · ' + facts.join(' · ') + (sl.builder ? ' · shared with the builder' : '') + '</small></div>' +
       '<div class="scp ' + stCls + '"><b>' + done + '</b><small>' + (stCls ? '' : 'to cash from here') + '</small></div></div>' +
       (money.length ? '<div class="scm">' + money.join('') + '</div>' : '') +
+      (stCls === 'cashed' ? '<div class="winrow"><button type="button" class="rfr winshare" data-sid="' + esc(sl.id) + '">Share the win</button></div>' : '') +
       (so ? '<table class="lvt">' + rows + '</table>' + cashBlock(sl, sr, pj, pay, alive, no) : '') +
       '<div class="slipbar"' + (so ? '' : ' hidden') + '>' + (fdUrl ? '<a class="rfr fd" href="' + fdUrl + '" target="_blank" rel="noopener">Open in FanDuel' + (fdOk.length < ls.length ? ' (' + fdOk.length + '/' + ls.length + ')' : '') + '</a>' : '') +
       '<label>ticket <input type="text" inputmode="numeric" class="slipodds" data-sid="' + esc(sl.id) + '" placeholder="+593" value="' + (sl.odds ? am(sl.odds) : '') + '"></label><label>stake $<input type="text" inputmode="decimal" class="slipstake" data-sid="' + esc(sl.id) + '" placeholder="10" value="' + (sl.stake || '') + '"></label>' +
@@ -998,6 +1036,7 @@ JS = r"""
       return; }
     var ad = ev.target.closest('.add'); if(ad){ openAddMenu(ad, ad.dataset.k); return; }
     var rm = ev.target.closest('.rm'); if(rm){ toggleIn(rm.dataset.sid, rm.dataset.k); return; }
+    var wsb = ev.target.closest('.winshare'); if(wsb){ var wsl = slipById(wsb.dataset.sid); if(wsl) winCard(wsl, wsb); return; }
     var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; saveBuilderSlip(); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }

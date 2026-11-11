@@ -117,7 +117,7 @@ def parse_ts(s):
 # When the reporter's own line is hopeful ABOUT THIS WEEK it is a questionable, not an out (the 11/10 morning run made that call by hand
 # for Brown and Montgomery). A hopeful line that points past this week ("hopeful to return after the bye", "could return in Week 12")
 # stays OUT, and so does anything ESPN lists as injured reserve / suspended / PUP / NFI.
-HOPE = r"spotted on the field|back at practice|returned to practice|practic(ed|es|ing) (in full|fully|on a limited|in a limited)|limited (participant|in practice)|hopeful|trending toward|could return|expected to (practice|return|play)|day[- ]to[- ]day|resum(e|es|ed|ing) practic"
+HOPE = r"full participant|full practice|participated fully|no (injury )?(game )?designation|off the (final )?injury report|spotted on the field|back at practice|returned to practice|practic(ed|es|ing) (in full|fully|on a limited|in a limited)|limited (participant|in practice)|hopeful|trending toward|could return|expected to (practice|return|play)|day[- ]to[- ]day|resum(e|es|ed|ing) practic"
 def later_return(txt, week):
     if re.search(r"after the bye|next week|in (two|three|four|five|six|several|a few|a couple( of)?|multiple|\d+) (weeks|games)|later this (season|month|year)|this season|down the stretch|late in the season", txt): return True
     try: wk = int(week)
@@ -330,6 +330,7 @@ def selftest():
      ("Out (Knee)", "Brown (knee) is trending toward traveling with the team.", 10, "QUEST"),
      ("Doubtful (Ankle)", "Montgomery was a limited participant in Wednesday's practice.", 10, "QUEST"),
      ("Out (Finger)", "Jacobs is not expected to play Sunday against the Vikings.", 10, "OUT"),
+     ("Out (Hamstring)", "Skattebo (hamstring) was listed as a full participant in Tuesday's practice, Dan Salomone of the Giants' official site reports.", 10, "QUEST"),   # 11/10 evening: ESPN's Out was last game's label; the brief read "Cam Skattebo out"
      ("Out (Knee)", "Nacua is hopeful to return after the bye.", 10, "OUT"),
      ("Out (Knee)", "Nacua is hopeful to return in Week 12.", 10, "OUT"),
      ("Out (Knee)", "The team is hopeful he can play in Week 10.", 10, "QUEST"),

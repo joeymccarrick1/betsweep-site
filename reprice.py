@@ -14,7 +14,7 @@ grading.  Everything else - weather, the context desk's flags, boards, builder, 
   --publish all       copy the whole build into the clone (what RUNBOOK Step 6c does by hand)
   --publish changed   the hourly mode: the same copy, but only when a FanDuel price or the list of legs differs from what
                       the clone is serving; otherwise it leaves the clone alone and exits 0 with "nothing moved"
-  --max-age N         refuse a mirror older than N minutes (default 80; 0 = any age)
+  --max-age N         refuse a mirror older than N minutes (default 180: the mirror job itself is sometimes an hour late; 0 = any age)
   --allow-week-change build even when the mirror's week is not the week the clone is serving (a session rolls the week, not this)
   --keep-in           do not copy the mirror into in/ (use in/ as it is)
   --skip-desk         skip weather / owner notes / the context desk (flags come from whatever in/ctx_*.json already holds)
@@ -57,6 +57,7 @@ BUILD = [
     ("sweep my slip", "build_slipcheck.py", "soft"),
     ("pairs", "build_pairs.py", "soft"),
     ("boost finder", "build_boost.py", "soft"),
+    ("line shop", "build_shop.py", "soft"),
     ("beat the model", "build_beat.py", "soft"),
     ("missed by one", "badbeats.py {Wprev}", "soft"),
     ("fantasy", "build_team.py", "soft"),
@@ -211,7 +212,7 @@ def copy_into_clone(clone):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--mirror"); ap.add_argument("--clone", required=True); ap.add_argument("--publish", choices=("none", "all", "changed"), default="none")
-    ap.add_argument("--max-age", type=int, default=80); ap.add_argument("--allow-week-change", action="store_true")
+    ap.add_argument("--max-age", type=int, default=180); ap.add_argument("--allow-week-change", action="store_true")
     ap.add_argument("--keep-in", action="store_true"); ap.add_argument("--skip-desk", action="store_true")
     a = ap.parse_args(); clone = os.path.abspath(a.clone); S = {"started": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "publish": a.publish}
     def finish(code, why):

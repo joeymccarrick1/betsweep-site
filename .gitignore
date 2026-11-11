@@ -4,3 +4,5 @@ app/android/
 __pycache__/
 out/
 in/
+research/snapshots/
+site/

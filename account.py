@@ -17,6 +17,19 @@ GOOGLE = True (needs a Google OAuth client added under Authentication > Provider
 SUPABASE_URL = "https://fuwiqijgkgbzvnfnsans.supabase.co"
 SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU"
 GOOGLE = False
+# owner 11/10 (deep dive): anonymous page counts - one "+1" per page view, the path only (sql/betsweep-pagehits.sql: table page_hits,
+# function hit). OFF until the owner has run that SQL: switching it on adds the request to every page AND changes the privacy page in
+# the same build (build_legal.py reads this flag), because that page promises to change first. Set PAGE_COUNTS_SINCE to the date.
+PAGE_COUNTS = False
+PAGE_COUNTS_SINCE = ""
+HIT_JS = r"""
+/* page counts (owner 11/10): one anonymous +1 per page view - the page's path and nothing else. No cookie, no id. Skipped when the browser sends Do Not Track or Global Privacy Control. */
+(function(){ try{ var n = navigator; if(n.globalPrivacyControl || n.doNotTrack === '1' || window.doNotTrack === '1') return; if(/bot|crawl|spider|headless|lighthouse/i.test(n.userAgent || '')) return;
+  var p = location.pathname.toLowerCase().replace(/index\.html$/, ''); if(!/^\/[a-z0-9\/_-]*$/.test(p) || p.length > 80) return;
+  fetch('__SB__/rest/v1/rpc/hit', {method: 'POST', keepalive: true, headers: {'Content-Type': 'application/json', apikey: '__KEY__', Authorization: 'Bearer __KEY__'}, body: JSON.stringify({p: p})}).catch(function(){}); }catch(e){} })();
+"""
+def hit_js():
+    return HIT_JS.replace("__SB__", SUPABASE_URL).replace("__KEY__", SUPABASE_ANON) if PAGE_COUNTS else ""
 SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
 # Slip alerts (owner 10/30): web push when a player on a saved slip is ruled out. Public VAPID key (the private half is a Supabase
 # Edge Function secret, never in this bundle). Server side: gen/push/slip-alerts.ts + gen/push/push.sql (RUNBOOK "Slip alerts").

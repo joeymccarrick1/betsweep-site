@@ -72,8 +72,14 @@ TERMS = eff + f"""
 # the site stores today (tables: user_state, push_subs, email_prefs, fantasy_rosters, beat_picks, beat_leagues + beat_league_members, ask_log, short_links + link_hits, feed_*,
 # sweat_*). The owner should read it and have counsel look at it; when a feature starts storing something new, add it HERE first.
 PRIVACY_UPDATED = "November 10, 2026"
+# owner 11/10 (deep dive): anonymous page counts. When account.PAGE_COUNTS is on, the policy says so in three places (the short version,
+# what we collect, cookies and tracking) and carries the date it was switched on - the page promises to change before the site does.
+try:
+    import account as _ACCT_L; _PC = bool(_ACCT_L.PAGE_COUNTS); _PC_SINCE = _ACCT_L.PAGE_COUNTS_SINCE or PRIVACY_UPDATED
+except Exception: _PC, _PC_SINCE = False, PRIVACY_UPDATED
+if _PC: PRIVACY_UPDATED = _PC_SINCE
 PRIVACY = eff.replace("</p>", f" · Privacy Policy last updated {PRIVACY_UPDATED}</p>") + f"""
-<p>Short version: {L["site"]} works without an account, runs no ad trackers and no analytics scripts, and keeps your slips and settings in your browser. If you choose to sign in (optional), we store your email address and the things you build, post or switch on, so they follow you between devices and the features you asked for can work - nothing else.</p>
+<p>Short version: {L["site"]} works without an account, runs no ad trackers{" and counts page views without knowing who you are" if _PC else " and no analytics scripts"}, and keeps your slips and settings in your browser. If you choose to sign in (optional), we store your email address and the things you build, post or switch on, so they follow you between devices and the features you asked for can work - nothing else.</p>
 <h2>What we collect</h2>
 <ul>
 <li><b>Unless you sign in, post or make a short link, nothing you type on the site is sent to us.</b> Parlay slips, Fantasy rosters, DFS lineups, your survivor pools, your bankroll plan and your settings are stored in your browser's local storage on your device and never leave it except when you choose to open a sportsbook link or share something.</li>
@@ -87,11 +93,12 @@ PRIVACY = eff.replace("</p>", f" · Privacy Policy last updated {PRIVACY_UPDATED
 <li><b>Short links.</b> When you make a short link for a slip, its legs and price are stored under the link's code, and anyone who has the link can see them; if you are signed in, the link is recorded as yours. We count how many times each link is opened, not who opened it.</li>
 <li><b>Social posts.</b> If you post a slip to the Social page, the handle, title, legs and price you entered, the time, and the upvotes and reports on it are stored with Supabase and shown publicly (your email is not). Upvotes and reports record which account made them so each account counts once. Deleting a post removes it; deleting your account removes your posts, votes and reports.</li>
 <li><b>Sweat rooms.</b> On the Live page, tapping "I'm on it" or a reaction stores that leg, the reaction and the time with your account. Other people see the totals and the reactions - never who.</li>
+{"<li><b>Page counts.</b> One number per page per day: how many times it was opened. Nothing in it identifies a visitor or a device.</li>" if _PC else ""}
 <li><b>Email.</b> If you write to <a href="mailto:{L["contact"]}">{L["contact"]}</a> we keep the message so we can answer it and fix what you reported.</li>
 <li><b>Server logs.</b> The site is hosted on GitHub Pages, which, like any web host, may log IP addresses and request details for security and operations under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub's privacy statement</a>. We do not receive or use those logs.</li>
 </ul>
 <h2>Cookies and tracking</h2>
-<p>We set no advertising or analytics cookies and run no trackers. If you sign in, your browser keeps a sign-in token in its own storage so you stay signed in. Fonts and page scripts are served from {L["site"]} itself, with two exceptions: the sign-in library (and the screenshot reader, when you use it) loads from the jsDelivr network, and live scores, box scores and team logos come straight from ESPN's public data. Those providers see the ordinary request data a browser sends when it fetches a file. When you tap a sportsbook button you leave our site; the sportsbook's own privacy policy applies from there, and if the link is an affiliate link the sportsbook or its network may record that you arrived from BetSweep (see <a href="/responsible-gambling/">disclosures</a>).</p>
+<p>We set no advertising or analytics cookies and run no trackers.{" To learn which pages are used, each page view adds one to a counter for that page and day, held with Supabase (our database provider): the page's address and nothing else - no cookie, no visitor id, and we store no IP address or browser details with it. It is skipped when your browser sends Do Not Track or Global Privacy Control. Supabase, like any server, sees the ordinary request data a browser sends." if _PC else ""} If you sign in, your browser keeps a sign-in token in its own storage so you stay signed in. Fonts and page scripts are served from {L["site"]} itself, with two exceptions: the sign-in library (and the screenshot reader, when you use it) loads from the jsDelivr network, and live scores, box scores and team logos come straight from ESPN's public data. Those providers see the ordinary request data a browser sends when it fetches a file. When you tap a sportsbook button you leave our site; the sportsbook's own privacy policy applies from there, and if the link is an affiliate link the sportsbook or its network may record that you arrived from BetSweep (see <a href="/responsible-gambling/">disclosures</a>).</p>
 <h2>The installable app</h2>
 <p>Adding BetSweep to your home screen installs a service worker that caches pages on your device for offline use. It stores nothing about you and can be removed by deleting the app or clearing site data.</p>
 <h2>Children</h2>
@@ -125,6 +132,6 @@ RESP = eff + f"""
 """
 
 page("Terms of Use", "The plain-English terms for using betsweep.co: information only, not betting advice; you are responsible for your own bets and for the law where you live.", TERMS, "terms")
-page("Privacy Policy", "What betsweep.co collects: nothing unless you sign in, post or make a link; no ad or analytics trackers; slips and settings stay in your browser. An optional account stores what you build and switch on.", PRIVACY, "privacy")
+page("Privacy Policy", "What betsweep.co collects: nothing unless you sign in, post or make a link; no ad trackers" + ("; anonymous page counts" if _PC else " or analytics trackers") + "; slips and settings stay in your browser. An optional account stores what you build and switch on.", PRIVACY, "privacy")
 page("Responsible Gambling", "Help lines, how to use BetSweep responsibly, the affiliate disclosure, and who BetSweep is and is not affiliated with.", RESP, "responsible")
 print("wrote out/legal-terms.html, out/legal-privacy.html, out/legal-responsible.html")

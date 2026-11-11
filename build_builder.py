@@ -543,12 +543,22 @@ try:
     for l in LEGS:
         if l.get("raw_p") is not None and l["m"] in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions") and not l.get("gl"):
             _rung[(normname(l["pl"]), l["m"], int(round(l["ln"])))] = l
+    # 11/10 (deep dive): the unders tab is pulled on its own schedule and on Tuesday 11/10 still held Week 9's rows (all 401 pulled
+    # 11/5, kickoffs 11/5-11/9). Rows were joined to this week's ladder by player + market + line alone, so 15 of last week's lines went
+    # on the Week 10 board with last week's prices and selection ids (Maye under 25.5 rushing at -114 was the Packers game's line), into
+    # Beat the model, a Sweep says line and the unders freeze. A row now counts only when its own kickoff day is this game's day.
+    _kday = {g["gid"]: datetime.datetime.fromtimestamp(g["ko"] / 1000, ZoneInfo("America/Chicago")) for g in GAMES if g.get("ko")}
+    def _under_now(r, gid):
+        m = re.search(r"(\d{1,2})/(\d{1,2})", str(r[7]) if len(r) > 7 else ""); k = _kday.get(gid)
+        return bool(m and k and (int(m.group(1)), int(m.group(2))) == (k.month, k.day))
+    NSTALE = 0
     for r in vals("unders.json")[1:]:
         if len(r) < 10: continue
         mk, pt, uo = r[2], num(r[3]), num(r[4])
         if mk not in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions") or pt is None or uo is None: continue
         base = _rung.get((normname(r[1]), mk, int(_mth.floor(pt)) + 1))
         if not base or normname(base["pl"]) in OUT_NOW or base.get("status") == "OUT": continue
+        if not _under_now(r, base["g"]): NSTALE += 1; continue
         bku = (100 / (uo + 100)) if uo > 0 else (-uo / (-uo + 100))
         ov = num(r[5]); bko = ((100 / (ov + 100)) if ov > 0 else (-ov / (-ov + 100))) if ov is not None else None
         raw_u = round(1 - base["raw_p"], 4)
@@ -559,7 +569,7 @@ try:
                      "proj": base.get("proj"), "avg": base.get("avg"), "n": base.get("n"), "c": base.get("c", ""), "gd": base.get("gd", ""),
                      "fd": _ufd(r), "dr": base.get("dr"), "sk": base.get("sk", "")})
         NUND += 1
-    print(f"unders: {NUND} FanDuel main-line unders priced from the model ladder")
+    print(f"unders: {NUND} FanDuel main-line unders priced from the model ladder" + (f"; {NSTALE} rows left out because the unders tab still holds another week's lines for those players (owner: refresh the unders pull)" if NSTALE else ""))
     # 11/4 (owner: "test the unders properly"): freeze EVERY main-line under + over price with the model's under chance, so Tuesday can grade
     # both sides of the main line at real prices (appended to 'V2 - Unders Snapshots' by the runbook; graded by unders_check.py)
     try:
@@ -571,6 +581,7 @@ try:
             if mk not in ("Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions") or pt is None or uo is None: continue
             base = _rung.get((normname(r[1]), mk, int(_mth.floor(pt)) + 1)); gid = base["g"] if base else None
             if not gid or not _ko2.get(gid) or _ko2[gid] <= _now2: continue
+            if not _under_now(r, gid): continue      # 11/10: never freeze another week's line as this week's
             _urows.append([WEEK, _st2, base["pl"], mk, pt, int(uo), int(ov) if ov is not None else "", gid, datetime.datetime.fromtimestamp(_ko2[gid] / 1000, ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M"), round(1 - base["raw_p"], 4), r[0], r[11] if len(r) > 11 else ""])
         json.dump({"header": ["Week", "Frozen at (CT)", "Player", "Market", "Line", "Under odds", "Over odds", "Game", "Kickoff (CT)", "Raw model under %", "Key", "Pulled (CT)"], "values": _urows}, open(os.path.join(OUT, "unders_rows.json"), "w"))
         print(f"wrote out/unders_rows.json: {len(_urows)} main-line unders not yet kicked off")

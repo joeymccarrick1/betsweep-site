@@ -20,6 +20,16 @@ def num(x):
 def dec(o): return 1 + o / 100 if o > 0 else 1 + 100 / -o
 
 
+def stale_pull(pulled, frozen, days=3):
+    """True when the FanDuel pull behind a frozen row is more than `days` older than the freeze - another week's line."""
+    import datetime
+    def d(x):
+        try: return datetime.datetime.strptime(str(x).strip()[:10], "%Y-%m-%d")
+        except Exception: return None
+    a, b = d(pulled), d(frozen)
+    return bool(a and b and (b - a).days > days)
+
+
 def rows_for(week):
     v = json.load(open(os.path.join(GP, "in", "legsnaps.json")))["values"]; H = {c: i for i, c in enumerate(v[0])}
     def g(r, c): return r[H[c]] if H[c] < len(r) else ""
@@ -32,6 +42,7 @@ def rows_for(week):
     last = {}
     for r in u[1:]:
         if str(gu(r, "Week")) != week or gu(r, "Frozen at (CT)") > gu(r, "Kickoff (CT)"): continue
+        if stale_pull(gu(r, "Pulled (CT)"), gu(r, "Frozen at (CT)")): continue      # 11/10: 15 Week 10 rows carry Week 9's lines (pulled 11/5)
         k = (str(gu(r, "Player")).strip().lower(), gu(r, "Market"))
         if k not in last or gu(r, "Frozen at (CT)") > gu(last[k], "Frozen at (CT)"): last[k] = r
     out = []
