@@ -14,6 +14,17 @@
  * and two menu items that write legs to 'BET - My Legs Log' with the model numbers frozen at that moment:
  *   "Log slip from Slip Builder"  - legs marked Y in column A of V2 - Slip Builder
  *   "Log legs from Alt Line Checker" - legs with Use = Y in V2 - Alt Line Checker
+ * (Version 2026-11-10: (a) REPAIR. The 11/5 file was built on an older copy and silently dropped four things the 10/27-10/29 files had:
+ *  the FanDuel UNDERS tab (not pulled after 11/5 6:09 PM), the 2+ / 3+ TD prices, the rule that an odds refresh keeps the DraftKings /
+ *  Hard Rock game-line rows, and the game-day menu item installing both jobs. All four are back, with the 11/5 markets on top.
+ *  (b) TODAY'S GAMES. Besides the fixed windows (6 AM daily; Sunday 10, 11 AM, 1, 2, 6 PM; Thursday and Monday 6 PM) the hourly trigger now
+ *  refreshes ONLY the games kicking off within 9 hours, every hour from 9 AM to 7 PM Central, when that is four games or fewer - Thursday
+ *  and Monday afternoons, Sunday's night game, Saturdays and holidays. One game costs about 21 credits instead of about 290 for the slate,
+ *  and every other game's rows stay in the tabs exactly as last pulled (each row keeps its own Updated / Pulled stamp).
+ *  (c) A CREDIT GUARD. Each refresh stores the credits left (Script property BS_CREDITS_LEFT). An extra pull is skipped when the credits
+ *  left, less what the fixed schedule needs until the quota resets (CORE_PER_DAY a day to RESET_DAY, plus 15%), would not cover it -
+ *  so the extras can never starve the 6 AM pull. Row 7 of the status block on the odds tab says what the last extra pull did.
+ *  Nothing to re-install: the two hourly triggers already call gameDayRefresh / gameDayRefreshLines. Paste, Save, done.)
  * (Version 2026-11-05: also pulls player_pass_tds, player_pass_interceptions, player_pass_completions (+ alternate) and player_rush_attempts
  *  for the site's new markets - links tab only, about 5 more credits per game per refresh.)
  * (Version 2026-10-19: (a) FanDuel RUSH + RECEIVING YARDS ladders (player_rush_reception_yds + alternate) are pulled and written to
@@ -21,6 +32,13 @@
  *  projections; they are kept OUT of the odds tab / Leg Board (the sheet has no formula for that market). (b) When the ladder has to be
  *  trimmed to fit the Leg Board, rungs now come off the DEEPEST ladders first (stars with 8-10 priced rungs) instead of simply the
  *  farthest prices, so a bench player's only two or three rungs - the Josh Cuevas 2+ receptions at +276 case - survive the trim.)
+ * (Version 2026-10-27: FanDuel UNDERS on the main lines (player_pass_yds / rush_yds / reception_yds / receptions - the markets that
+ *  already come back with Over and Under at no extra credits) are written to 'AUTO - FanDuel Unders': Key | Player | Market | Line |
+ *  Under odds | Over odds | Game | Kickoff | Market ID | Under selection ID | Link | Pulled. Before, every Under outcome was dropped.
+ *  betsweep.co prices them from the model's ladder; the Leg Board is unchanged.)
+ * (Version 2026-10-22: the odds refresh (writeBookOddsTab_) now KEEPS the gl| game-line rows in 'AUTO - Book Odds' and only replaces the
+ *  prop rows - before, every odds refresh wiped the game lines, so spread / total / ML legs had no DraftKings or Hard Rock link. Game
+ *  lines are written first in the tab.)
  * (Version 2026-10-21b: GAME LINES for the other books run as their OWN job - refreshBookGameLines() (menu 'Refresh game lines (DK/HR) now';
  *  scheduled by setupTrigger alongside the odds refresh, in a separate execution so neither hits the 6-minute limit). One /odds call for
  *  h2h + spreads + totals (3 credits) plus alternate spreads/totals per game (2 credits per game); DraftKings' and Hard Rock's rows go to
@@ -51,7 +69,7 @@ const MARKETS = {
   player_rush_reception_yds_alternate: 'Rush + Rec Yards',
   player_anytime_td: 'Anytime TD'
 };
-const LINKS_ONLY = {'Rush + Rec Yards': true, 'Passing TDs': true, 'Interceptions': true, 'Completions': true, 'Rush Attempts': true};   // links tab only (site prices them; the Leg Board cannot)   // markets written to the links tab for the site, never to the odds tab / Leg Board
+const LINKS_ONLY = {'Rush + Rec Yards': true, 'Passing TDs': true, 'Interceptions': true, 'Completions': true, 'Rush Attempts': true};   // markets written to the links tab for the site, never to the odds tab / Leg Board
 const DAYS_AHEAD = 7;   // only games kicking off in the next 7 days and not yet started
 const MIN_ODDS = -1000; // skip near-locks shorter than this (they add nothing to a parlay)
 const MAX_ODDS = 500;   // skip long shots longer than this
@@ -60,6 +78,7 @@ const BOARD_ROWS = 1600; // rows the 'V2 - Leg Board' tab scores
 // priced between ALT_MIN and ALT_MAX, anytime TDs between MIN_ODDS and MAX_ODDS.
 const ALT_MIN = -350, ALT_MAX = 350;
 const FIRST_TD_MARKET = 'player_1st_td';          // The Odds API key for first touchdown scorer
+const TD_OVER_MARKET = 'player_tds_over';         // v2026-10-28: Over 1.5 / 2.5 touchdowns = FanDuel's 2+ / 3+ TD scorer markets (links tab only; the site prices them)
 const FIRST_TD_SHEET = 'AUTO - First TD Odds';     // written on every refresh (not part of the Leg Board)
 const ODDS_MARKETS = {
   player_pass_yds: 'Passing Yards', player_rush_yds: 'Rushing Yards', player_reception_yds: 'Receiving Yards',
@@ -71,16 +90,24 @@ const ODDS_MARKETS = {
   player_pass_tds: 'Passing TDs', player_pass_interceptions: 'Interceptions', player_pass_completions: 'Completions', player_pass_completions_alternate: 'Completions',
   player_rush_attempts: 'Rush Attempts'
 };
+// ---------- v2026-11-10: today's-games pulls and the credit guard ----------
+const TODAY_HOURS = 9;          // a today's-games pull covers the games kicking off within this many hours
+const TODAY_MAX_GAMES = 4;      // more than this (Sunday morning) costs about what a full refresh does - the fixed windows cover it
+const EXTRA_FROM = 9, EXTRA_TO = 19;   // extra pulls only between these Central hours
+const CREDITS_PER_GAME = 21;    // one game, every market posted: 18 prop markets + first TD + the 2+/3+ TD call, with a little room
+const CORE_PER_DAY = 580;       // credits a day the fixed windows and the two game-line jobs use (11/1-11/10: 5,194 in 9.3 days, plus the restored TD call)
+const RESET_DAY = 1;            // day of the month (UTC) the Odds API quota starts over
+const CREDITS_PROP = 'BS_CREDITS_LEFT';
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('FanDuel odds')
-    .addItem('Refresh now', 'refreshFanDuelOdds')
+    .addItem('Refresh now', 'refreshFanDuelOddsNow')
+    .addItem("Refresh today's games only (about 21 credits a game)", 'refreshTodaysGamesNow')
     .addItem('Refresh game lines (DK/HR) now', 'refreshBookGameLines')
-    .addItem('Turn on scheduled refresh (daily 6 AM + game windows)', 'setupTrigger')
+    .addItem("Turn on scheduled refresh (daily 6 AM + game windows + hourly on game days)", 'setupTrigger')
     .addItem('Turn off auto-refresh', 'removeTriggers')
     .addItem('Turn on game-day refresh (Sun/Thu/Mon pre-kickoff)', 'setupGameDayTrigger')
     .addItem('Refresh game weather now', 'refreshGameWeather')
-    .addItem('Refresh FanDuel links (runs the odds refresh)', 'refreshFanDuelLinks')
     .addSeparator()
     .addItem('Log slip from Slip Builder (legs marked Y)', 'logSlipFromBuilder')
     .addItem('Log legs from Alt Line Checker (Use = Y)', 'logLegsFromChecker')
@@ -160,7 +187,15 @@ function normName(s) {
     .replace(/\s+/g, ' ').toLowerCase().trim();
 }
 
-function refreshFanDuelOdds() {
+function refreshFanDuelOddsNow() { refreshFanDuelOdds(); }   // the menu item (a menu click passes nothing; this keeps it explicit)
+function refreshTodaysGamesNow() {
+  const r = refreshFanDuelOdds({todayHours: TODAY_HOURS, manual: true});
+  SpreadsheetApp.getActiveSpreadsheet().toast(r || "Today's games refreshed; every other game is as last pulled.");
+}
+// opts.todayHours (v2026-11-10): refresh only the games kicking off within that many hours and keep every other upcoming game's rows
+// as the tabs have them. opts.manual: no slate-size limit and no credit guard (someone asked for it). No opts = a full refresh.
+function refreshFanDuelOdds(opts) {
+  const todayHours = (opts && typeof opts.todayHours === 'number' && opts.todayHours > 0) ? opts.todayHours : 0;
   const props = PropertiesService.getScriptProperties();
   const pKey = props.getProperty('PARLAY_API_KEY'), oKey = props.getProperty('ODDS_API_KEY');
   if (!pKey && !oKey) throw new Error('Add PARLAY_API_KEY (or ODDS_API_KEY) under Project Settings > Script properties');
@@ -170,7 +205,7 @@ function refreshFanDuelOdds() {
   const now = new Date(), until = new Date(now.getTime() + DAYS_AHEAD * 864e5);
   const stamp = Utilities.formatDate(now, 'America/Chicago', 'yyyy-MM-dd HH:mm');
   const rows = [], seen = {}, notes = [];
-  let remaining = '', sample = '';
+  let remaining = '', sample = '', carry = null, nToday = 0, nAll = 0, nCarried = 0;
   const add = function (player, mk, xplus, price, game, kick, upd) {
     if (!player || !mk || !isFinite(xplus) || !isFinite(price)) return 0;
     if (LINKS_ONLY[mk]) return 0;   // Rush + Rec Yards: links tab only (the Leg Board cannot price it)
@@ -213,10 +248,12 @@ function refreshFanDuelOdds() {
   let provider = '';
   if (oKey) {
     // ---------- The Odds API: full FanDuel ladders + betslip IDs, one call per game ----------
-    const got = oddsApiLadders_(oKey, add, notes, now, until, stamp);
-    if (got.rows > 0) { provider = 'The Odds API'; remaining = got.remaining; sample = got.sample; }
+    const got = oddsApiLadders_(oKey, add, notes, now, until, stamp, todayHours, opts || {});
+    if (got.skip) { extraNote_(sh, stamp + ' CT: no pull - ' + got.skip); return got.skip; }   // nothing fetched, nothing written
+    if (got.rows > 0 || (todayHours && !got.error)) { provider = 'The Odds API'; remaining = got.remaining; sample = got.sample; carry = got.carry; nToday = got.games; nAll = got.total; }
     else notes.push('The Odds API returned no rows' + (got.error ? ' (' + got.error + ')' : '') + (pKey ? ' - falling back to Parlay API' : ''));
   }
+  if (todayHours && !provider) { extraNote_(sh, stamp + ' CT: no pull - ' + (oKey ? "the Odds API did not answer" : "today's-games pulls need ODDS_API_KEY")); return 'no pull'; }   // never a partial write from the fallback
   if (!provider && pKey) {
     provider = 'Parlay API';
     // ---------- Parlay API /props: all NFL FanDuel props in one call ----------
@@ -259,6 +296,13 @@ function refreshFanDuelOdds() {
     if (!ladders && perPlayer < 1.5) eventAlts(base, '?apiKey=' + pKey, hdr);
   }
 
+  // v2026-11-10: a today's-games refresh keeps every other upcoming game's rows exactly as the tab has them (their own stamp included)
+  if (todayHours && carry) {
+    const lastOld = sh.getLastRow();
+    if (lastOld > 1) sh.getRange(2, 1, lastOld - 1, 9).getValues().forEach(function (r) {
+      const k = String(r[0] || ''); if (!k || !carry[r[5]] || seen[k]) return; seen[k] = true; rows.push(r); nCarried++; });
+    notes.push("today's games only: " + nToday + ' of ' + nAll + ' games refreshed, ' + nCarried + ' rows carried from the last pull');
+  }
   // Keep the board under its row limit. Rungs come off the DEEPEST ladders first (a star with ten priced rungs loses his
   // farthest ones before a bench player loses his only two), then by distance from -130. Before 2026-10-19 the sort was by
   // distance alone, which cut thin-room players' cheap rungs (Josh Cuevas 2+ receptions +276, Week 6) while keeping the
@@ -292,35 +336,94 @@ function refreshFanDuelOdds() {
   const last = Math.max(sh.getLastRow(), 2);
   sh.getRange(2, 1, last - 1, 9).clearContent();
   if (rows.length) sh.getRange(2, 1, rows.length, 9).setValues(rows);
-  sh.getRange('K1:L8').setValues([
-    ['Status', 'Last refresh ' + stamp + ' CT'],
+  sh.getRange('K1:L6').setValues([
+    ['Status', 'Last refresh ' + stamp + ' CT' + (todayHours ? " · today's games only (" + nToday + ' of ' + nAll + '); the rest as last pulled' : '')],
     ['Provider', provider || 'none (no key worked)'],
     ['Odds rows', rows.length + (rows.length > BOARD_ROWS ? ' (Leg Board only scores the first ' + BOARD_ROWS + ')' : '')],
     ['API credits left', remaining],
     ['Notes', notes.join(' | ')],
-    ['Sample raw row', sample],
-    ['', ''], ['', '']
+    ['Sample raw row', sample]
   ]);
+  saveCredits_(remaining);
+  if (todayHours) { const sp = creditsSpare_(now); extraNote_(sh, stamp + " CT: today's games - " + nToday + ' of ' + nAll + ' refreshed' + (sp === null ? '' : ' · ' + sp + ' credits to spare beyond the fixed schedule')); }
+  return '';
+}
+
+// ---------- v2026-11-10 helpers ----------
+function saveCredits_(remaining) {
+  const n = Number(remaining); if (remaining === '' || remaining === null || !isFinite(n)) return;
+  try { PropertiesService.getScriptProperties().setProperty(CREDITS_PROP, String(Math.round(n))); } catch (e) {}
+}
+// credits left beyond what the fixed schedule needs until the quota resets; null = not known yet (the next refresh records it)
+function creditsSpare_(now) {
+  const raw = PropertiesService.getScriptProperties().getProperty(CREDITS_PROP), left = Number(raw);
+  if (raw === null || raw === '' || !isFinite(left)) return null;
+  const y = now.getUTCFullYear(), m = now.getUTCMonth(), d = now.getUTCDate();
+  const reset = d < RESET_DAY ? Date.UTC(y, m, RESET_DAY) : Date.UTC(y, m + 1, RESET_DAY);
+  const days = Math.max(0, (reset - now.getTime()) / 864e5);
+  return Math.floor(left - days * CORE_PER_DAY * 1.15);
+}
+function extraNote_(sh, text) {   // rows 7-8 of the status block: what the last extra pull did, and the rule
+  try { sh.getRange('K7:L8').setValues([['Extra pulls', text],
+    ['Extra pulls rule', "Hourly " + EXTRA_FROM + " AM-" + (EXTRA_TO - 12) + " PM CT outside the fixed windows: only games kicking off within " + TODAY_HOURS + " hours, only when that is " + TODAY_MAX_GAMES + " or fewer, and only while the credits left cover the fixed schedule to the " + RESET_DAY + ordinal_(RESET_DAY) + " (" + CORE_PER_DAY + " a day + 15%)."]]); } catch (e) {}
+}
+function ordinal_(n) { return n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'; }
+// rows already in a tab for the games a today's-games refresh is not touching: (sheet, first data row, columns, game column, key of a row)
+function carried_(sh, ncols, gameIdx, carry, have, keyOf) {
+  const out = []; if (!sh || !carry) return out; const last = sh.getLastRow(); if (last < 2) return out;
+  sh.getRange(2, 1, last - 1, ncols).getValues().forEach(function (r) {
+    if (!r[0] || !carry[r[gameIdx]]) return; const k = keyOf(r); if (have[k]) return; have[k] = true; out.push(r); });
+  return out;
 }
 
 
 // ---------- The Odds API pass: odds rows for the Leg Board + betslip IDs for 'AUTO - FanDuel Links' ----------
-function oddsApiLadders_(key, add, notes, now, until, stamp) {
+function oddsApiLadders_(key, add, notes, now, until, stamp, todayHours, opts) {
   const base = 'https://api.the-odds-api.com/v4', auth = '?apiKey=' + key, opt = {muteHttpExceptions: true};
-  const out = {rows: 0, remaining: '', sample: '', error: ''};
-  const evRes = UrlFetchApp.fetch(base + '/sports/' + SPORT + '/events' + auth, opt);
+  const out = {rows: 0, remaining: '', sample: '', error: '', skip: '', carry: null, games: 0, total: 0};
+  opts = opts || {};
+  const evRes = UrlFetchApp.fetch(base + '/sports/' + SPORT + '/events' + auth, opt);   // the events list is free
   if (evRes.getResponseCode() !== 200) { out.error = 'events ' + evRes.getResponseCode(); return out; }
-  const events = JSON.parse(evRes.getContentText()).filter(function (e) { const d = new Date(e.commence_time); return d > now && d < until; });
+  const allEvents = JSON.parse(evRes.getContentText()).filter(function (e) { const d = new Date(e.commence_time); return d > now && d < until; });
+  const nameOf = function (e) { return e.away_team + ' @ ' + e.home_team; };
+  let events = allEvents; out.total = allEvents.length;
+  if (todayHours) {   // v2026-11-10: only the games about to kick off; everything else is carried over by the tab writers
+    const lim = new Date(now.getTime() + todayHours * 36e5);
+    events = allEvents.filter(function (e) { return new Date(e.commence_time) <= lim; });
+    if (!events.length) { out.skip = 'no game kicks off in the next ' + todayHours + ' hours'; return out; }
+    if (!opts.manual && events.length > TODAY_MAX_GAMES) { out.skip = events.length + ' games kick off in the next ' + todayHours + ' hours; the fixed windows cover a slate that size'; return out; }
+    if (!opts.manual) { const spare = creditsSpare_(now), cost = events.length * CREDITS_PER_GAME;
+      if (spare !== null && spare < cost) { out.skip = 'held back: ' + spare + ' credits to spare beyond the fixed schedule, this pull needs about ' + cost; return out; } }
+    out.carry = {}; allEvents.forEach(function (e) { if (events.indexOf(e) < 0) out.carry[nameOf(e)] = true; });
+  }
+  out.games = events.length;
   const qs = function (url, name) { const m = String(url || '').match(new RegExp('[?&]' + name + '=([^&#]+)')); return m ? decodeURIComponent(m[1]) : ''; };
   const fmtKick = function (t) { try { return t ? Utilities.formatDate(new Date(t), 'America/Chicago', 'EEE MM/dd HH:mm') : ''; } catch (e) { return ''; } };
-  const links = [], seenL = {}, firstTd = [], otherBooks = [], seenB = {}; let failed = 0, ladder = 0, withId = 0;
+  const links = [], seenL = {}, firstTd = [], otherBooks = [], seenB = {}, unders = [], overMain = {}; let failed = 0, ladder = 0, withId = 0, tdPlus = 0, tdPlusFail = 0;
   events.forEach(function (e) {
     const r = UrlFetchApp.fetch(base + '/sports/' + SPORT + '/events/' + e.id + '/odds' + auth +
       '&bookmakers=' + BOOKMAKERS + '&markets=' + Object.keys(ODDS_MARKETS).concat([FIRST_TD_MARKET]).join(',') + '&oddsFormat=american&includeLinks=true&includeSids=true', opt);
     const h = r.getHeaders(); out.remaining = h['x-requests-remaining'] || h['X-Requests-Remaining'] || out.remaining;
-    if (r.getResponseCode() !== 200) { failed++; return; }
+    if (r.getResponseCode() !== 200) { failed++; if (out.carry) out.carry[nameOf(e)] = true; return; }   // a failed game keeps the rows it had
     const d = JSON.parse(r.getContentText());
     const game = (d.away_team || e.away_team) + ' @ ' + (d.home_team || e.home_team), kick = fmtKick(d.commence_time || e.commence_time);
+    // v2026-10-28: 2+ / 3+ TD scorer prices - a separate, guarded request so an unsupported market key can never break the main pull
+    try {
+      const r2 = UrlFetchApp.fetch(base + '/sports/' + SPORT + '/events/' + e.id + '/odds' + auth + '&bookmakers=fanduel&markets=' + TD_OVER_MARKET + '&oddsFormat=american&includeLinks=true&includeSids=true', opt);
+      const h2 = r2.getHeaders(); out.remaining = h2['x-requests-remaining'] || h2['X-Requests-Remaining'] || out.remaining;   // v2026-11-10: this call spends a credit too
+      if (r2.getResponseCode() === 200) {
+        const d2 = JSON.parse(r2.getContentText());
+        (d2.bookmakers || []).forEach(function (b2) { if (b2.key !== 'fanduel') return; (b2.markets || []).forEach(function (m2) { if (m2.key !== TD_OVER_MARKET) return;
+          (m2.outcomes || []).forEach(function (o2) {
+            if (o2.name !== 'Over') return; const pt2 = Number(o2.point), pr2 = Number(o2.price), pl2 = o2.description || '';
+            const mk2 = pt2 === 1.5 ? '2+ TD' : pt2 === 2.5 ? '3+ TD' : ''; if (!mk2 || !pl2 || !isFinite(pr2)) return;   // 0.5 = anytime, already covered
+            const k2 = normName(pl2) + '|' + mk2 + '|1'; if (seenL[k2]) return; seenL[k2] = true;
+            const lk2 = o2.link || '', mId2 = qs(lk2, 'marketId') || m2.sid || '', sId2 = qs(lk2, 'selectionId') || o2.sid || '';
+            if (lk2 || (mId2 && sId2)) withId++; tdPlus++;
+            links.push([k2, pl2, mk2, 1, lk2, mId2, sId2, pr2, game, stamp]);
+          }); }); });
+      } else { tdPlusFail++; }
+    } catch (e2) { tdPlusFail++; }
     (d.bookmakers || []).forEach(function (b) {
       // other books (DraftKings, Hard Rock): same rungs, their price + deep link + ids -> 'AUTO - Book Odds'. Same API credits: the call is
       // charged per market, not per bookmaker. FanDuel stays the reference for the Leg Board, the links tab and the grading.
@@ -353,8 +456,17 @@ function oddsApiLadders_(key, add, notes, now, until, stamp) {
         return;
       }
       const mk = ODDS_MARKETS[m.key]; if (!mk) return;
+      const isMain = UNDER_MARKETS[m.key] === true;
       (m.outcomes || []).forEach(function (o) {
         const isTd = mk === 'Anytime TD';
+        if (isMain && (o.name === 'Under' || o.name === 'Over')) {   // v2026-10-27: main-line pairs (the Under used to be dropped)
+          const pl = o.description || o.name, pt = Number(o.point), pr = Number(o.price), lk = o.link || '';
+          if (pl && isFinite(pt) && isFinite(pr)) {
+            const uk = normName(pl) + '|' + mk + '|' + pt;
+            if (o.name === 'Over') overMain[uk] = pr;
+            else unders.push([uk, pl, mk, pt, pr, '', game, kick, qs(lk, 'marketId') || m.sid || '', qs(lk, 'selectionId') || o.sid || '', lk, stamp]);
+          }
+        }
         if (isTd ? o.name === 'No' : o.name !== 'Over') return;
         const player = o.description || o.name, xplus = isTd ? 1 : Math.round(Number(o.point) + 0.5), price = Number(o.price);
         if (!out.sample) out.sample = JSON.stringify(o).slice(0, 400);
@@ -374,14 +486,33 @@ function oddsApiLadders_(key, add, notes, now, until, stamp) {
     }); });
   });
   out.rows = ladder;
+  notes.push('2+/3+ TD prices: ' + tdPlus + (tdPlusFail ? ' (' + tdPlusFail + ' games failed - market not available?)' : ''));
   notes.push('The Odds API: ' + events.length + ' games' + (failed ? ' (' + failed + ' failed)' : '') + ', ' + ladder + ' rungs in window [' + ALT_MIN + ', ' + ALT_MAX + '] (TDs to ' + MAX_ODDS + ')');
   // Betslip IDs -> 'AUTO - FanDuel Links'. Written from THIS file on every refresh (it used to live in FanDuelLinks.gs and was
   // skipped silently when that file was missing); the notes cell always says what happened.
-  try { notes.push('links tab: ' + writeFanDuelLinksTab_(links, events.length, failed, out.remaining, withId, stamp) + ' rows'); }
+  const cy = out.carry, gamesTxt = cy ? events.length + ' of ' + allEvents.length + " (today's games only)" : events.length;
+  try { notes.push('links tab: ' + writeFanDuelLinksTab_(links, gamesTxt, failed, out.remaining, withId, stamp, cy) + ' rows'); }
   catch (e) { notes.push('links tab FAILED: ' + e); }
-  try { writeFirstTdTab_(firstTd, events.length, failed, stamp); notes.push('first TD prices: ' + firstTd.length); } catch (e) { notes.push('first TD tab: ' + e); }
-  try { notes.push('book odds: ' + writeBookOddsTab_(otherBooks, events.length, failed, stamp) + ' rows'); } catch (e) { notes.push('book odds tab FAILED: ' + e); }
+  try { notes.push('first TD prices: ' + writeFirstTdTab_(firstTd, gamesTxt, failed, stamp, cy)); } catch (e) { notes.push('first TD tab: ' + e); }
+  try { notes.push('book odds: ' + writeBookOddsTab_(otherBooks, gamesTxt, failed, stamp, cy) + ' rows'); } catch (e) { notes.push('book odds tab FAILED: ' + e); }
+  try { unders.forEach(function (u) { if (u[0] in overMain) u[5] = overMain[u[0]]; }); notes.push('unders: ' + writeUndersTab_(unders, stamp, cy) + ' rows'); } catch (e) { notes.push('unders tab FAILED: ' + e); }
   return out;
+}
+
+// ---------- v2026-10-27: FanDuel main-line unders -> 'AUTO - FanDuel Unders' (betsweep.co prices them; the Leg Board does not read this tab) ----------
+const UNDER_MARKETS = {player_pass_yds: true, player_rush_yds: true, player_reception_yds: true, player_receptions: true};
+const UNDERS_SHEET = 'AUTO - FanDuel Unders';
+function writeUndersTab_(rows, stamp, carry) {
+  const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(UNDERS_SHEET);
+  if (!sh) sh = ss.insertSheet(UNDERS_SHEET);
+  const hdr = ['Key', 'Player', 'Market', 'Line', 'Under odds', 'Over odds', 'Game', 'Kickoff (CT)', 'Market ID', 'Under selection ID', 'Link', 'Pulled (CT)'];
+  if (carry) { const have = {}; rows.forEach(function (r) { have[r[0]] = true; }); rows = rows.concat(carried_(sh, hdr.length, 6, carry, have, function (r) { return String(r[0]); })); }
+  sh.clearContents();
+  const all = [hdr].concat(rows);
+  if (sh.getMaxRows() < all.length + 5) sh.insertRowsAfter(sh.getMaxRows(), all.length + 5 - sh.getMaxRows());
+  if (sh.getMaxColumns() < hdr.length) sh.insertColumnsAfter(sh.getMaxColumns(), hdr.length - sh.getMaxColumns());
+  sh.getRange(1, 1, all.length, hdr.length).setValues(all);
+  return rows.length;
 }
 
 // ---------- other sportsbooks (v2026-10-20): DraftKings + Hard Rock prices, deep links and ids for the same rungs -> 'AUTO - Book Odds' ----------
@@ -392,7 +523,7 @@ const BOOKMAKERS = 'fanduel,draftkings,hardrockbet';
 // game lines for the other books (DraftKings, Hard Rock): refreshBookGameLines() - main lines in one call, alternates per game.
 const GL_MARKETS = {h2h: 'Moneyline', spreads: 'Spread', totals: 'Total', alternate_spreads: 'Spread', alternate_totals: 'Total'};
 const BOOK_ODDS_SHEET = 'AUTO - Book Odds';
-function writeBookOddsTab_(rows, games, failed, stamp) {
+function writeBookOddsTab_(rows, games, failed, stamp, carry) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(BOOK_ODDS_SHEET);
   if (!sh) {
@@ -400,15 +531,23 @@ function writeBookOddsTab_(rows, games, failed, stamp) {
     sh.getRange(1, 1, 1, 12).setValues([['Book', 'Key', 'Player', 'Market', 'Alt line (X+)', 'Odds', 'Link', 'Market SID', 'Outcome SID', 'Event ID', 'Game', 'Updated']]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }
-  rows.sort(function (a, b) { return (a[0] + a[10] + a[2] + a[3]).localeCompare(b[0] + b[10] + b[2] + b[3]) || a[4] - b[4]; });
-  if (sh.getMaxRows() < rows.length + 1) sh.insertRowsAfter(sh.getMaxRows(), rows.length + 1 - sh.getMaxRows());
-  const last = Math.max(sh.getLastRow(), 2);
-  sh.getRange(2, 1, last - 1, 12).clearContent();
-  if (rows.length) {
-    sh.getRange(2, 8, rows.length, 3).setNumberFormat('@');   // ids as text
-    sh.getRange(2, 1, rows.length, 12).setValues(rows);
+  if (carry) {   // v2026-11-10: the other games' prop rows stay (game lines are kept below as always)
+    const have = {}; rows.forEach(function (r) { have[r[0] + '|' + r[1]] = true; });
+    rows = rows.concat(carried_(sh, 12, 10, carry, have, function (r) { return r[0] + '|' + r[1]; }).filter(function (r) { return String(r[1]).indexOf('gl|') !== 0; }));
   }
+  rows.sort(function (a, b) { return (a[0] + a[10] + a[2] + a[3]).localeCompare(b[0] + b[10] + b[2] + b[3]) || a[4] - b[4]; });
   const perBook = {}; rows.forEach(function (r) { perBook[r[0]] = (perBook[r[0]] || 0) + 1; });
+  // v2026-10-22: keep the gl| game-line rows refreshBookGameLines() wrote - this refresh only replaces the PROP rows. (Before, every odds
+  // refresh wiped the game lines, so no spread / total / ML leg could go to DraftKings or Hard Rock between game-line runs.)
+  const last = Math.max(sh.getLastRow(), 2);
+  const gl = sh.getRange(2, 1, last - 1, 12).getValues().filter(function (r) { return r[0] && String(r[1]).indexOf('gl|') === 0; });
+  const all = gl.concat(rows);   // game lines first, so a reader with a short range still sees them
+  if (sh.getMaxRows() < all.length + 1) sh.insertRowsAfter(sh.getMaxRows(), all.length + 1 - sh.getMaxRows());
+  sh.getRange(2, 1, last - 1, 12).clearContent();
+  if (all.length) {
+    sh.getRange(2, 8, all.length, 3).setNumberFormat('@');   // ids as text
+    sh.getRange(2, 1, all.length, 12).setValues(all);
+  }
   sh.getRange('N1:O4').setValues([
     ['Status', 'Last refresh ' + stamp + ' CT'],
     ['Games', games + (failed ? ' (' + failed + ' failed)' : '')],
@@ -462,6 +601,7 @@ function refreshBookGameLines() {
   if (all.length) { sh.getRange(2, 8, all.length, 3).setNumberFormat('@'); sh.getRange(2, 1, all.length, 12).setValues(all); }
   sh.getRange('N5:O6').setValues([['Game lines', rows.length + ' DK/HR rows (ML/spread/total + alternates) · ' + events.length + ' games' + (failed ? ' (' + failed + ' alt pulls failed)' : '') + ' · ' + stamp + ' CT · credits left ' + remaining],
                                   ['Game lines note', 'Written by refreshBookGameLines() in FanDuelOdds.gs (own job, so the odds refresh stays under the 6-minute limit). Key gl|Game|Market|Side|Point; betsweep.co sends spread/total/ML legs to DraftKings and Hard Rock from these.']]);
+  saveCredits_(remaining);
   Logger.log('game lines: ' + rows.length + ' rows, ' + events.length + ' games, credits left ' + remaining);
   return rows.length;
 }
@@ -470,13 +610,18 @@ function refreshBookGameLines() {
 // (Key | Player | Market | Alt line (X+) | FanDuel link | Market ID | Selection ID | FanDuel odds | Game | Updated; status in L1:M5).
 // No price window: this is what gives betsweep.co its one-tap "Send to FanDuel" links and the anytime TD prices beyond the Leg Board.
 const LINKS_SHEET = 'AUTO - FanDuel Links';
-function writeFanDuelLinksTab_(rows, games, failed, remaining, withId, stamp) {
+function writeFanDuelLinksTab_(rows, games, failed, remaining, withId, stamp, carry) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(LINKS_SHEET);
   if (!sh) {
     sh = ss.insertSheet(LINKS_SHEET);
     sh.getRange(1, 1, 1, 10).setValues([['Key', 'Player', 'Market', 'Alt line (X+)', 'FanDuel link', 'Market ID', 'Selection ID', 'FanDuel odds', 'Game', 'Updated']]).setFontWeight('bold');
     sh.setFrozenRows(1);
+  }
+  if (carry) {   // v2026-11-10: the other games' rungs stay, with the stamp of the pull that priced them
+    const have = {}; rows.forEach(function (r) { have[r[0]] = true; });
+    const old = carried_(sh, 10, 8, carry, have, function (r) { return String(r[0]); });
+    old.forEach(function (r) { if (r[4] || (r[5] && r[6])) withId++; }); rows = rows.concat(old);
   }
   rows.sort(function (a, b) { return (a[8] + a[1] + a[2]).localeCompare(b[8] + b[1] + b[2]) || a[3] - b[3]; });
   if (sh.getMaxRows() < rows.length + 1) sh.insertRowsAfter(sh.getMaxRows(), rows.length + 1 - sh.getMaxRows());
@@ -497,7 +642,7 @@ function writeFanDuelLinksTab_(rows, games, failed, remaining, withId, stamp) {
 }
 
 // First touchdown scorer prices -> 'AUTO - First TD Odds' (Key | Player | FanDuel odds | link | Market ID | Selection ID | Game | Kickoff | Book updated | Pulled at).
-function writeFirstTdTab_(rows, games, failed, stamp) {
+function writeFirstTdTab_(rows, games, failed, stamp, carry) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(FIRST_TD_SHEET);
   if (!sh) {
@@ -505,6 +650,7 @@ function writeFirstTdTab_(rows, games, failed, stamp) {
     sh.getRange(1, 1, 1, 10).setValues([['Key (name|First TD|1)', 'Player', 'FanDuel odds', 'FanDuel link', 'Market ID', 'Selection ID', 'Game', 'Kickoff (CT)', 'Book updated', 'Pulled at (CT)']]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }
+  if (carry) { const have = {}; rows.forEach(function (r) { have[r[0]] = true; }); rows = rows.concat(carried_(sh, 10, 6, carry, have, function (r) { return String(r[0]); })); }
   rows.sort(function (a, b) { return (a[6] + a[1]).localeCompare(b[6] + b[1]) || a[2] - b[2]; });
   const last = Math.max(sh.getLastRow(), 2);
   sh.getRange(2, 1, last - 1, 10).clearContent();
@@ -515,6 +661,7 @@ function writeFirstTdTab_(rows, games, failed, stamp) {
     ['Rows', rows.length],
     ['Note', 'FanDuel first touchdown scorer market from The Odds API (player_1st_td). Feeds V2 - First TD Board and betsweep.co/firsttd/. Not scored by the Leg Board.']
   ]);
+  return rows.length;
 }
 
 // Map provider market keys to the sheet's market names (skips 1st-half / quarter markets).
@@ -533,12 +680,13 @@ function mapMarket_(key) {
 }
 
 function setupTrigger() {
-  // One hourly trigger; gameDayRefresh() decides when to spend credits: 6 AM CT daily, Sunday 10/11 AM, 1/2 PM, 6 PM,
-  // and 6 PM on Thursday and Monday. About 13 refreshes a week (~2,000 Odds API credits).
+  // One hourly trigger per job; gameDayRefresh() decides when to spend credits. FULL refreshes: 6 AM CT daily, Sunday 10/11 AM, 1/2 PM,
+  // 6 PM, and 6 PM on Thursday and Monday - 14 a week, about 2,500 credits. v2026-11-10 adds TODAY'S-GAMES pulls in the other hours
+  // from 9 AM to 7 PM when four or fewer games kick off within 9 hours (about 21 credits a game; about 450 a week), credit guard on.
   removeTriggers();
   ScriptApp.newTrigger('gameDayRefresh').timeBased().everyHours(1).create();
   ScriptApp.newTrigger('gameDayRefreshLines').timeBased().everyHours(1).create();   // game lines in their own execution
-  SpreadsheetApp.getActiveSpreadsheet().toast('Scheduled refresh on: daily 6 AM CT + Sun 10/11 AM, 1/2 PM, 6 PM + Thu/Mon 6 PM');
+  SpreadsheetApp.getActiveSpreadsheet().toast("Scheduled refresh on: daily 6 AM CT + Sun 10/11 AM, 1/2 PM, 6 PM + Thu/Mon 6 PM, and hourly pulls of that day's games on small-slate days");
 }
 
 function removeTriggers() {
@@ -553,32 +701,37 @@ function removeTriggers() {
 // and 7:20 PM slates), plus 6 PM CT on Thursday and Monday for the night games. About 8 calls a week.
 // The scheduled inactives check compares who still has FanDuel props against the frozen leg snapshots.
 function setupGameDayTrigger() {
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'gameDayRefresh') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('gameDayRefresh').timeBased().everyHours(1).create();
-  SpreadsheetApp.getActiveSpreadsheet().toast('Scheduled refresh on: daily 6 AM CT + Sun 10/11 AM, 1/2 PM, 6 PM + Thu/Mon 6 PM');
+  // v2026-10-29: same as setupTrigger - installs BOTH jobs. (Until 10/29 this older item installed only the props job, so the
+  // DK/HR game lines written on 10/22 were never refreshed and no spread/total/ML leg had a DraftKings or Hard Rock price in Week 8.)
+  setupTrigger();
 }
 
+// the fixed windows (Central): day 1 = Mon ... 7 = Sun
+function coreWindow_(day, hour) {
+  return hour === 6 || (day === 7 && [10, 11, 13, 14, 18].indexOf(hour) >= 0) || ((day === 4 || day === 1) && hour === 18);
+}
 function gameDayRefresh() {
   var now = new Date();
   var day = Number(Utilities.formatDate(now, 'America/Chicago', 'u')); // 1 = Mon ... 7 = Sun
   var hour = Number(Utilities.formatDate(now, 'America/Chicago', 'H'));
-  var go = hour === 6 ||
-           (day === 7 && [10, 11, 13, 14, 18].indexOf(hour) >= 0) ||
-           ((day === 4 || day === 1) && hour === 18);
+  var go = coreWindow_(day, hour);
   if (go) refreshFanDuelOdds();
+  // v2026-11-10: every other hour from 9 AM to 7 PM, the games kicking off within 9 hours - when that is a small slate and the
+  // credits allow (refreshFanDuelOdds decides and writes why in row 7 of the odds tab's status block). The events list it reads
+  // first is free, so an hour with nothing to do costs nothing.
+  else if (hour >= EXTRA_FROM && hour <= EXTRA_TO) {
+    try { refreshFanDuelOdds({todayHours: TODAY_HOURS}); } catch (e) { Logger.log("today's games: " + e); }
+  }
   // Game weather (GameWeather.gs): once a day at 6 AM CT plus the pre-kickoff windows. Free, no credits.
   if ((hour === 6 || go) && typeof refreshGameWeather === 'function') {
     try { refreshGameWeather(); } catch (e) { Logger.log('weather: ' + e); }
   }
 }
 
-function gameDayRefreshLines() {   // same windows as gameDayRefresh, run as a separate execution
+function gameDayRefreshLines() {   // the fixed windows only, run as a separate execution
   var now = new Date();
   var day = Number(Utilities.formatDate(now, 'America/Chicago', 'u')), hour = Number(Utilities.formatDate(now, 'America/Chicago', 'H'));
-  var go = hour === 6 || (day === 7 && [10, 11, 13, 14, 18].indexOf(hour) >= 0) || ((day === 4 || day === 1) && hour === 18);
-  if (go) refreshBookGameLines();
+  if (coreWindow_(day, hour)) refreshBookGameLines();
 }
 
 // ================= SGP pricing =================
