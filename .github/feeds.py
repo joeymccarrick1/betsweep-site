@@ -27,6 +27,52 @@ if inj:
                          for t in (inj.get("injuries") or [])]}
     json.dump(keep, open("out/injuries.json", "w"))
     print("injuries:", sum(len(t["injuries"]) for t in keep["injuries"]))
+# ---- notout.json (owner 11/10: "Cam Skattebo says ruled out on betsweep but that's not true ... he was out last week but will be back").
+# ESPN keeps LAST game's Out / Doubtful tag on a player until the new week's report replaces it, and the site's live risk layer was
+# calling those players "Ruled out". A player is listed here - and risk.js stops calling him ruled out - when
+#   (a) ESPN's own note on that line says he is practising or expected to play this week (and does not point past this week or at
+#       injured reserve): src "espn", shown as Questionable; or
+#   (b) the owner has cleared him in data/risk-clear.json on main: src "owner", shown as Good to go.
+#       {"players": {"Name": {"note": "...", "by": "owner 11/10 9:19 PM CT", "at": "<ISO time of the call>", "until": "YYYY-MM-DD"}}}
+#       An entry is ignored after its "until" day (Central time), and it only ever beats an OLDER ESPN line: once ESPN posts a line for
+#       him dated after "at" that is still Out / Doubtful and does not itself say he is practising, the newer report wins.
+# Game-day inactives never pass through here (risk.js and the alerts function keep them as Out whatever this file says).
+import re as _re
+_HOPE = _re.compile(r"full participant|full practice|participated fully|practic(ed|es|ing) (in full|fully)|no (injury )?(game )?designation|(doesn'?t|does not|won'?t|will not) (carry|have) an? (injury |game )?designation|off the (final )?injury report|expected to (play|suit up|start)|will play|good to go|cleared to (play|return)|back at practice|returned to practice|limited (participant|in practice)|practic(ed|es|ing) (on|in) a limited", _re.I)
+_LATER = _re.compile(r"after the bye|next week|in (two|three|four|five|six|several|a few|a couple( of)?|multiple|\d+) (weeks|games)|later this (season|month|year)|this season|down the stretch|week \d", _re.I)
+# the note itself says he is not playing (so a "limited participant ... has been ruled out" line stays Out)
+_FIRM = _re.compile(r"ruled out|listed as (out|doubtful)|\b(is|are|remains?|still|been|as) (out|doubtful)\b|\b(out|doubtful) (for|this) (sunday|monday|thursday|saturday|friday|week|the|tonight)|downgraded|will miss|(won'?t|will not|not expected to|isn'?t expected to|unlikely to|not going to|isn'?t going to|doesn'?t expect to|not likely to) (play|suit up|return|practice|be available|dress)|\binactive|sidelined|placed on|injured reserve|\bIR\b|season[- ]ending|out for the (season|year)|indefinitely|surgery|suspen|waived|released|did not practice|didn'?t practice|\bdnp\b|miss(ed|es|ing) practice|not practicing|sat out|held out", _re.I)
+def _when(v):
+    try:
+        d = dt.datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        return d if d.tzinfo else d.replace(tzinfo=dt.timezone.utc)
+    except Exception: return None
+def notout(injuries, now, clear_path="data/risk-clear.json"):
+    out, line = {}, {}
+    for t in injuries or []:
+        for x in t.get("injuries") or []:
+            st = str(x.get("status") or (x.get("type") or {}).get("description") or "").strip().lower(); cm = str(x.get("shortComment") or "")
+            nm = (x.get("athlete") or {}).get("displayName")
+            if not nm or st not in ("out", "doubtful"): continue
+            when = _when(x.get("date")); hope = bool(_HOPE.search(cm)) and not _LATER.search(cm) and not _FIRM.search(cm)
+            line[nm] = (when, hope)
+            if not hope or when is None or (now - when).total_seconds() > 6 * 86400: continue
+            out[nm] = {"src": "espn", "why": cm.split(". ")[0][:200].rstrip("."), "date": x.get("date")}
+    try:
+        oc = json.load(open(clear_path)); today = now.astimezone(dt.timezone(dt.timedelta(hours=-6))).strftime("%Y-%m-%d")
+        for nm, v in (oc.get("players") or {}).items():
+            if str(v.get("until") or "9999") < today: continue
+            at = _when(v.get("at")); ln = line.get(nm)
+            if ln and at and ln[0] and ln[0] > at and not ln[1]:
+                print("notout: owner call on", nm, "is older than ESPN's line of", ln[0].isoformat(), "- the newer report stands"); continue
+            out[nm] = {"src": "owner", "why": str(v.get("note") or "expected to play")[:200], "date": v.get("at") or v.get("by")}
+    except FileNotFoundError: pass
+    except Exception as e: print("notout (owner list) skipped:", e)
+    return out
+try:
+    _no = notout((keep.get("injuries") if inj else None), now)
+    json.dump({"players": _no, "mirrored": now.isoformat()}, open("out/notout.json", "w"), separators=(",", ":")); print("notout.json:", len(_no), "players", sorted(_no))
+except Exception as e: print("notout.json skipped:", e)
 dr = (now - dt.timedelta(days=2)).strftime("%Y%m%d") + "-" + (now + dt.timedelta(days=6)).strftime("%Y%m%d")
 sb = get(f"{S}/scoreboard")   # the current NFL week (a dates= range answered 400 from the runner)
 ina = {}
