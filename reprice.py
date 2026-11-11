@@ -80,8 +80,10 @@ BUILD = [
 # What the clone keeps no matter what the build holds (RUNBOOK 6c): the owner's uploads, the workflows, the concept lab.
 PROTECTED = {".git", ".github", ".gitignore", "posts", "promo-slips", "lab", "CNAME"}
 # Folders that are added to, never emptied first: old short links keep working, the workflows' own files in data/ stay, older receipts
-# stay, the app-store wrapper project in app/ stays.
-MERGE = {"b", "data", "receipts", "app", "season"}
+# stay, the app-store wrapper project in app/ stays. s/ (the shared, content-hashed stylesheets and script) is added to as well and
+# then pruned of files no page links any more: on 11/10 a rebuild that did not rebuild /season/ or the Week 9 receipt emptied s/, the
+# template stylesheet had a new name, and those two pages lost their layout for five hours.
+MERGE = {"b", "data", "receipts", "app", "season", "s"}
 
 
 def log(*a): print(*a, flush=True)
@@ -202,6 +204,19 @@ def copy_into_clone(clone):
         else: shutil.copy2(src, dst)
         done.append(name)
     if "promo" not in done and os.path.isdir(os.path.join(clone, "promo")): shutil.rmtree(os.path.join(clone, "promo"))   # last week's posters
+    # prune s/: a hashed stylesheet or script stays only while some page in the clone still links it
+    sdir = os.path.join(clone, "s")
+    if os.path.isdir(sdir):
+        hashed = {f for f in os.listdir(sdir) if re.fullmatch(r"(site|app|tpl)-[0-9a-f]{6,}\.(css|js)", f)}; used = set()
+        for d, dirs, fs in os.walk(clone):
+            dirs[:] = [x for x in dirs if x not in (".git", "node_modules")]
+            for f in fs:
+                if f.endswith(".html"):
+                    try: used.update(re.findall(r"/s/((?:site|app|tpl)-[0-9a-f]{6,}\.(?:css|js))", open(os.path.join(d, f), encoding="utf-8", errors="ignore").read()))
+                    except Exception: pass
+        gone = sorted(hashed - used)
+        for f in gone: os.remove(os.path.join(sdir, f))
+        log(f"s/: {len(hashed) - len(gone)} hashed files in use" + (f", pruned {', '.join(gone)}" if gone else ""))
     mk = os.path.join(clone, "lab", "merged", "make.py")
     if os.path.exists(mk):
         r = subprocess.run([sys.executable, "lab/merged/make.py"], cwd=clone, capture_output=True, text=True)
