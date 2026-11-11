@@ -652,6 +652,11 @@ try:   # owner 10/30: DraftKings / Hard Rock ids for this week's legs, so every 
     json.dump(_bm, open(os.path.join(SITE, "b", "books.json"), "w"), separators=(",", ":")); print(f"short links: books.json {len(_bm['m'])} legs with DK/HR ids")
 except Exception as _e: print("note: /b/books.json not written:", _e)
 if SHORT_LINKS: print("short links: " + ", ".join(SHORT_LINKS))
+try:   # 11/10 (reprice.py): the session's Sweep says lines travel with the site, so a rebuild with no session re-uses them
+    _v = json.load(open(os.path.join(OUT, "voice.json")))
+    if _v.get("games"):
+        json.dump(_v, open(os.path.join(SITE, "b", "voice.json"), "w"), ensure_ascii=False, separators=(",", ":")); print(f"voice: /b/voice.json {len(_v['games'])} game lines (week {_v.get('week')})")
+except Exception: pass
 weeks = []
 for f in sorted(glob.glob(os.path.join(OUT, "results-week*.html"))):
     w = int(re.search(r"week(\d+)", f).group(1)); weeks.append(w)
@@ -942,6 +947,11 @@ for _d, _, _fs in os.walk(SITE):
 for _w in weeks:
     if f"/receipts/week{_w}/" not in _urls: _urls.append(f"/receipts/week{_w}/")
 if "/how/" not in _urls: _urls.append("/how/")   # 11/4: static page in the repo (how/index.html), not built here
+# 11/10 (reprice.py): /season/ is only built by the Tuesday session. A build that did not make it this run keeps it in the sitemap
+# as long as the clone (the folder that holds posts/) is serving it.
+_clone = os.path.dirname(os.path.abspath(POSTS_DIR)) if POSTS_DIR else None
+for _keep in ("/season/",):
+    if _keep not in _urls and _clone and os.path.exists(os.path.join(_clone, _keep.strip("/"), "index.html")): _urls.append(_keep)
 _pri = lambda u: "1.0" if u == "/" else ("0.9" if u in ("/boards/", "/build/", "/player/") else ("0.6" if u.startswith("/player/") else "0.7"))
 _freq = lambda u: "monthly" if u.startswith(("/receipts/week", "/terms/", "/privacy/", "/responsible-gambling/", "/guide/", "/how/")) else "daily"
 open(os.path.join(SITE, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
