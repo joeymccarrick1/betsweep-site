@@ -31,10 +31,32 @@ def am(o): o = int(round(float(o))); return f"+{o}" if o > 0 else f"−{-o}"
 def day_of(ko_ms): return datetime.datetime.fromtimestamp(ko_ms / 1000, CT).strftime("%Y-%m-%d")
 
 
-def candidates(bd):
+def soft_draws(in_dir, week):
+    """receivers the week's WR-CB chart gives a soft corner (Clay +8% targets a route and +0.15 points a route or better - the boards'
+    green arrow), or that the sheet's CB Matchup Flag calls FAVORABLE. Owner 11/11 4:57 PM, on Chase under 7.5 receptions against his soft draw: "I'd skip it if coverage disagrees"."""
+    out = set()
+    try:
+        d = json.load(open(os.path.join(in_dir, "wrcb.json"))); v = d["values"] if isinstance(d, dict) else d; H = {c: i for i, c in enumerate(v[0])}
+        def num(x):
+            x = str(x).strip()
+            try: return float(x.rstrip("%")) / 100 if x.endswith("%") else float(x)
+            except Exception: return None
+        for r in v[1:]:
+            r = r + [""] * (len(v[0]) - len(r))
+            if str(r[H["Week"]]).strip() != str(week): continue
+            a, b = num(r[H["Clay Matchup T/R delta"]]), num(r[H["Clay Matchup F/R delta"]])
+            if a is not None and abs(a) > 1: a /= 100
+            flag = str(r[H["CB Matchup Flag"]]).strip().upper() if "CB Matchup Flag" in H else ""      # the sheet's own read - the one that graded with signal
+            if (a is not None and b is not None and a >= 0.08 and b >= 0.15) or flag == "FAVORABLE": out.add(str(r[H["WR"]]).strip().lower())
+    except Exception as e: print("note: WR-CB chart not read for Under of the day:", e)
+    return out
+
+
+def candidates(bd, soft=()):
     out = []
     for l in bd.get("legs") or []:
         if l.get("m") not in STAT or l.get("o") is None or l.get("p") is None: continue
+        if l.get("m") in ("Under Receptions", "Under Receiving Yards") and str(l.get("pl", "")).strip().lower() in soft: continue   # coverage disagrees with the under
         fd = l.get("fd") or {}
         if not (fd.get("m") and fd.get("s")): continue
         if any(isinstance(f, (list, tuple)) and len(f) > 1 and str(f[1]).startswith(("Q ", "Q·", "Questionable", "Doubtful", "OUT")) for f in l.get("fh") or []): continue
@@ -52,10 +74,10 @@ def candidates(bd):
     return [l for _, _, l in out]
 
 
-def choose(bd, now_ms):
+def choose(bd, now_ms, soft=()):
     """{date: entry} - the best under for every game day that still has the pick's game ahead of it."""
     G = {g["gid"]: g for g in bd.get("games") or []}; picks = {}
-    for l in candidates(bd):
+    for l in candidates(bd, soft):
         g = G.get(l["g"]) or {}; ko = g.get("ko") or 0
         if not ko or ko <= now_ms: continue
         d = day_of(ko)
@@ -91,7 +113,7 @@ def build(in_dir="in", out_dir="out", clone=None, now_ms=None):
             log = json.load(open(p)); log = log if isinstance(log, list) else []
             if log: break
         except Exception: pass
-    picks = choose(bd, now_ms); keep = [e for e in log if (e.get("ko") or 0) <= now_ms]      # kicked off = frozen
+    soft = soft_draws(in_dir, bd.get("week")); picks = choose(bd, now_ms, soft); keep = [e for e in log if (e.get("ko") or 0) <= now_ms]      # kicked off = frozen
     frozen_days = {e["date"] for e in keep}
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for d, e in sorted(picks.items()):

@@ -1,0 +1,36 @@
+LIVE 'FROM HERE' GRADE - Week 9  (24822 snapshot x leg observations, 13 games, 755 snapshots)
+built 2026-11-10 10:02; pregame legs pinned 2026-11-08T14:58:18.414243+00:00
+
+CALIBRATION (mean from-here chance vs actual hit rate; Brier lower is better, pregame chance as the baseline)
+  chance 0-20%                     n=11537  from-here   8.3%  hit   8.4%  Brier 0.076 (pregame 0.121)
+  chance 20-40%                    n= 5630  from-here  29.8%  hit  23.9%  Brier 0.182 (pregame 0.208)
+  chance 40-60%                    n= 5410  from-here  50.1%  hit  43.9%  Brier 0.245 (pregame 0.252)
+  chance 60-80%                    n= 1926  from-here  66.7%  hit  66.0%  Brier 0.222 (pregame 0.248)
+  chance 80-100%                   n=  319  from-here  86.8%  hit  90.3%  Brier 0.088 (pregame 0.252)
+
+  quarter 1                        n= 5505  from-here  38.4%  hit  35.2%  Brier 0.194 (pregame 0.198)
+  quarter 2                        n= 9077  from-here  32.0%  hit  29.7%  Brier 0.168 (pregame 0.189)
+  quarter 3                        n= 4829  from-here  26.0%  hit  22.6%  Brier 0.134 (pregame 0.175)
+  quarter 4                        n= 5315  from-here  11.8%  hit   9.8%  Brier 0.082 (pregame 0.155)
+
+  Anytime TD                       n= 9643  from-here  13.0%  hit  11.3%  Brier 0.090 (pregame 0.112)
+  Receiving Yards                  n= 5351  from-here  39.7%  hit  35.5%  Brier 0.202 (pregame 0.247)
+  Receptions                       n= 5826  from-here  32.0%  hit  27.4%  Brier 0.152 (pregame 0.195)
+  Rushing Yards                    n= 2813  from-here  40.6%  hit  41.5%  Brier 0.209 (pregame 0.234)
+  Passing Yards                    n= 1189  from-here  44.4%  hit  41.9%  Brier 0.216 (pregame 0.250)
+
+LIVE CALLS - open legs in Q2-Q4 where from-here beats the PREGAME book implied chance by >= 5 pts (upper bound: FanDuel's live price moves too)
+  all markets                      n= 2203  from-here  63.5%  hit  59.4%  Brier 0.210 (pregame 0.249)
+  anytime TD                       n=   17  from-here  12.1%  hit   0.0%  Brier 0.015 (pregame 0.028)
+  anytime TD, plus-money pregame   n=   17  from-here  12.1%  hit   0.0%  Brier 0.015 (pregame 0.028)
+  yards / receptions               n= 2186  from-here  63.9%  hit  59.9%  Brier 0.212 (pregame 0.250)
+  (first call per leg per quarter) n=  307  from-here  62.5%  hit  56.7%  Brier 0.225 (pregame 0.243)
+
+  anytime TD calls, first per leg per quarter:
+    Q2 Dare Ogunbowale        pregame   19% (FD +1200, implied    8%)  from here   15%  -> miss
+    Q2 George Holani          pregame   18% (FD +1100, implied    8%)  from here   14%  -> miss
+    Q2 Jaydon Blue            pregame   16% (FD +2000, implied    5%)  from here   12%  -> miss
+    Q2 Isaiah Davis           pregame   12% (FD +2500, implied    4%)  from here    9%  -> miss
+
+READ: a product needs the from-here hit rate to clear the book's LIVE price, which this log does not have. If the Q3-Q4 anytime TD
+calls land near their from-here chance for 3+ weeks, the next step is logging FanDuel's live TD prices in the same feeds run and re-grading.

@@ -1,0 +1,17 @@
+CONTEXT DESK GRADE - Week 9
+
+CONSENSUS DISAGREEMENTS (who was closer to the actual):
+  model below consensus: n=19  model closer 11  consensus closer 8  (58% us)
+  model above consensus: n=12  model closer 4  consensus closer 8  (33% us)
+    pass_yd  model   0  consensus   1
+    rec      model   2  consensus   0
+    rec_td   model   3  consensus   5
+    rec_yd   model   5  consensus   3
+    rush_td  model   4  consensus   6
+    rush_yd  model   1  consensus   1
+  READ: 'below' calls losing week after week = stale inputs on our side (role / health / QB) -> the news desk should have caught them.
+
+TRENDING (top-20 most-mentioned players Wed-Sun) - graded FanDuel legs, hit rate vs implied:
+  trend  n= 111  hit  43.2%  implied  56.9%  -> -13.7 pts
+  rest   n=1479  hit  48.9%  implied  53.8%  -> -4.9 pts
+  READ: trending legs under implied by 3+ pts for two graded weeks -> 'Trending' becomes a watch flag and an under-side nudge.
