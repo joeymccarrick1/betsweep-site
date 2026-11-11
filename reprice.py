@@ -12,8 +12,9 @@ grading.  Everything else - weather, the context desk's flags, boards, builder, 
 
   --publish none      build ./site and check it, touch nothing in the clone (default)
   --publish all       copy the whole build into the clone (what RUNBOOK Step 6c does by hand)
-  --publish changed   the hourly mode: the same copy, but only when a FanDuel price or the list of legs differs from what
-                      the clone is serving; otherwise it leaves the clone alone and exits 0 with "nothing moved"
+  --publish changed   the scheduled mode: the same copy, but only when at least --min-moves (default 3) player props or MAIN game
+                      lines carry a new FanDuel price, appeared or left since the build the clone is serving (alternate spread /
+                      total rungs do not count: one tick of a main line re-prices hundreds of them); otherwise the clone is left alone
   --max-age N         refuse a mirror older than N minutes (default 180: the mirror job itself is sometimes an hour late; 0 = any age)
   --allow-week-change build even when the mirror's week is not the week the clone is serving (a session rolls the week, not this)
   --keep-in           do not copy the mirror into in/ (use in/ as it is)
@@ -109,7 +110,7 @@ def live_data(clone):
 def leg_prices(bd):
     out = {}
     for l in (bd or {}).get("legs") or []:
-        out[f'{l.get("g")}|{l.get("pl")}|{l.get("m")}|{l.get("ln")}'] = l.get("o")
+        out[f'{l.get("g")}|{l.get("pl")}|{l.get("m")}|{l.get("ln")}'] = (l.get("o"), bool(l.get("gl") and l.get("alt")))
     return out
 
 
@@ -228,7 +229,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--mirror"); ap.add_argument("--clone", required=True); ap.add_argument("--publish", choices=("none", "all", "changed"), default="none")
     ap.add_argument("--max-age", type=int, default=180); ap.add_argument("--allow-week-change", action="store_true")
-    ap.add_argument("--keep-in", action="store_true"); ap.add_argument("--skip-desk", action="store_true")
+    ap.add_argument("--keep-in", action="store_true"); ap.add_argument("--skip-desk", action="store_true"); ap.add_argument("--min-moves", type=int, default=3)
     a = ap.parse_args(); clone = os.path.abspath(a.clone); S = {"started": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "publish": a.publish}
     def finish(code, why):
         S["exit"] = code; S["result"] = why; log("REPRICE " + json.dumps(S, separators=(",", ":"))); sys.exit(code)
@@ -274,12 +275,15 @@ def main():
     try: new = json.load(open(os.path.join(OUT, "builder_data.json")))
     except Exception: new = {}
     pn, pl = leg_prices(new), leg_prices(live)
-    moved = sum(1 for k, v in pn.items() if k in pl and v != pl[k]); added = len(set(pn) - set(pl)); gone = len(set(pl) - set(pn))
-    S["legs"] = len(pn); S["prices_moved"] = moved; S["legs_added"] = added; S["legs_gone"] = gone
-    log(f"against the live site: {moved} legs with a new price, {added} new legs, {gone} legs gone ({len(pn)} legs now)")
+    moved = sum(1 for k, v in pn.items() if k in pl and v[0] != pl[k][0]); added = len(set(pn) - set(pl)); gone = len(set(pl) - set(pn))
+    # what matters to a visitor: a player prop or a MAIN game line (moneyline, the posted spread and total). One tick of a main line
+    # re-prices its whole alternate ladder - hundreds of legs "move" - and alternates come and go all day; they do not count here.
+    main = sum(1 for k, v in pn.items() if not v[1] and (k not in pl or v[0] != pl[k][0])) + sum(1 for k, v in pl.items() if not v[1] and k not in pn)
+    S["legs"] = len(pn); S["prices_moved"] = moved; S["legs_added"] = added; S["legs_gone"] = gone; S["main_moves"] = main
+    log(f"against the live site: {moved} legs with a new price, {added} new legs, {gone} legs gone ({len(pn)} legs now); {main} of those are player props or main game lines")
     if a.publish == "none": finish(0, "built and checked; nothing copied (--publish none)")
     if failed["flag"]: finish(6, "a flag step failed (" + ", ".join(failed["flag"]) + "); not copied, the live flags stay")
-    if a.publish == "changed" and not (moved or added or gone): finish(0, "nothing moved; the clone is left alone")
+    if a.publish == "changed" and main < a.min_moves: finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); the clone is left alone")
     S["copied"] = len(copy_into_clone(clone)); finish(0, "built, checked and copied into the clone")
 
 
