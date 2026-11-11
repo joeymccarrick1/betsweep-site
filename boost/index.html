@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Got a profit boost? Enter its rules and BetSweep finds the slip closest to fair before the boost, so the boost does the most work. NFL Week 10.">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#d7332a">
+<script>try{var _t=localStorage.getItem("bs_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BetSweep">
+<link rel="canonical" href="https://betsweep.co/boost/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BetSweep">
+<meta property="og:title" content="Boost finder · BetSweep"><meta property="og:description" content="Got a profit boost? Enter its rules and BetSweep finds the slip closest to fair before the boost, so the boost does the most work. NFL Week 10.">
+<meta property="og:url" content="https://betsweep.co/boost/"><meta property="og:image" content="https://betsweep.co/og.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Boost finder · BetSweep">
+<meta name="twitter:description" content="Got a profit boost? Enter its rules and BetSweep finds the slip closest to fair before the boost, so the boost does the most work. NFL Week 10."><meta name="twitter:image" content="https://betsweep.co/og.png">
+<script>window.__BS_ACCOUNT={url:"https://fuwiqijgkgbzvnfnsans.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU",google:false};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
+<link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><title>Boost finder · BetSweep</title>
+<style>
+/* Layout: BetSweep chalkboard. Dark navy ground with chalk play-diagram texture, cream type, one red swoosh per card.
+   One board per game, two team columns, score + script odds + weather strip up top. Dark-first; cream "paper" variant for light. */
+:root{
+  --bg:#0e1820; --card:#152230; --chalk:#1c2b3a; --ink:#efe9da; --mute:#97a5b3; --line:#2a3b4b;
+  --red:#d7332a; --redtxt:#f0594e; --red-ink:#ffffff; --cream:#efe9da;
+  --bar:#efe9da; --barbg:#253646;
+  --good:#5fcf93; --bad:#ef8a7e; --warn:#f2b35a;
+  --s1:#efe9da; --s2:#6f7a8c; --s3:#d7332a; --s4:#8a3a44;
+  --s1-ink:#0f141c; --s2-ink:#ffffff; --s3-ink:#ffffff; --s4-ink:#ffffff;
+  --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%28239%2C233%2C218%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E");
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --brand:"Barlow","Arial Black",Impact,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#efe9da; --card:#f7f3e8; --chalk:#e4ddcb; --ink:#141a24; --mute:#5d6676; --line:#d3cbb8;
+  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2; --redtxt:#b8261d;
+  --good:#1f7a4d; --bad:#b3372b; --warn:#a86400;
+  --s1:#141a24; --s2:#7a8699; --s3:#d7332a; --s4:#6b2d3f; --s1-ink:#efe9da; --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%2820%2C26%2C36%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E"); color-scheme:light }}
+:root[data-theme="light"]{
+  --bg:#efe9da; --card:#f7f3e8; --chalk:#e4ddcb; --ink:#141a24; --mute:#5d6676; --line:#d3cbb8;
+  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2; --redtxt:#b8261d;
+  --good:#1f7a4d; --bad:#b3372b; --warn:#a86400;
+  --s1:#141a24; --s2:#7a8699; --s3:#d7332a; --s4:#6b2d3f; --s1-ink:#efe9da; --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%2820%2C26%2C36%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E"); color-scheme:light }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.35;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+
+a{color:var(--ink)}
+
+
+.bz{max-width:720px;margin:14px auto 40px;padding:0 12px}
+.bz .bzhead{margin:0 4px 14px} .bz h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1}
+.bz .sub{display:block;margin-top:6px;color:var(--mute);font-size:14px;line-height:1.45}
+.bz .card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:14px 14px 12px;margin-bottom:12px}
+.bz .card.best{border:2px solid var(--red)}
+.bz h2{font-family:var(--display);font-weight:700;letter-spacing:.01em;font-size:22px;line-height:1.1;color:var(--ink);margin:0 0 10px;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.bz h2 small{font-family:var(--body);font-weight:500;font-size:13.5px;letter-spacing:0;color:var(--mute)}
+.bz .bzform{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.bz label{display:flex;flex-direction:column;gap:5px;font-family:var(--display);font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.bz label.chk{flex-direction:row;align-items:center;gap:8px;font-family:var(--body);font-weight:500;font-size:14px;letter-spacing:0;text-transform:none;color:var(--ink);grid-column:1 / -1}
+.bz select,.bz input[type=number],.bz input[type=text]{font:inherit;font-family:var(--body);font-weight:600;font-size:16px;letter-spacing:0;text-transform:none;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 10px;min-height:44px;width:100%;box-sizing:border-box}
+.bz input[type=checkbox]{width:20px;height:20px;accent-color:var(--red)}
+.bz .fine{margin:10px 0 0;color:var(--mute);font-size:12.5px;line-height:1.45}
+.bz .legs{list-style:none;margin:0 0 10px;padding:0}
+.bz .legs li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:15.5px;line-height:1.3}
+.bz .legs li:first-child{border-top:0} .bz .legs b{font-weight:600} .bz .legs span{color:var(--mute);white-space:nowrap;font-size:14px}
+.bz .nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.bz .nums div{background:var(--chalk);border-radius:10px;padding:9px 11px} .bz .nums small{display:block;font-family:var(--display);font-weight:800;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.bz .nums b{font-family:var(--display);font-weight:800;font-size:21px;line-height:1.2} .bz .nums b s{font-weight:600;font-size:14px;color:var(--mute);margin-right:6px}
+.bz .verd{margin:0 0 12px;font-size:14.5px;line-height:1.45} .bz .verd b{font-weight:700} .bz .up{color:var(--good)} .bz .dn{color:var(--redtxt,var(--red))}
+.bz a.bsbtn{text-decoration:none;display:flex;width:100%;min-height:48px;font-size:16px;padding:13px 16px;box-sizing:border-box;justify-content:center;align-items:center;gap:8px}
+.bz .none{color:var(--mute);font-size:15px;line-height:1.5;margin:8px 4px 16px}
+.bz .rule{margin:0 4px 12px;font-size:14.5px;line-height:1.45;color:var(--ink)} .bz .rule b{font-weight:700}
+.bz .bzlegs{margin:10px 0 0;font-size:14.5px;line-height:1.4;color:var(--ink)}
+.bz .bzverdict{margin-top:12px}
+.bz .foot{margin:18px 4px 0;color:var(--mute);font-size:12px;line-height:1.5}
+@media (max-width:380px){.bz h1{font-size:34px}}
+</style>
+<link rel="stylesheet" href="/s/site-18b2932a93.css"></head>
+<body>
+<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><a href="/" class="">Home</a><a href="/short/" class="">Short view</a><div class="dd on"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/dossier/" class="">Game previews<small>The read before the bet</small></a><a href="/build/?ask=" class="">Ask BetSweep<small>Any player, stat or line</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/sweep/" class="">Sweep my slip<small>A verdict from a screenshot</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/pairs/" class="">Either-or TDs<small>Two names, one leg</small></a><a href="/teasers/" class="">Teaser finder<small>6, 6.5 and 7 points, priced</small></a><a href="/boost/" class="on">Boost finder<small>The best slip for a boost</small></a><a href="/shop/" class="">Line shop<small>Same leg, better price</small></a><a href="/beat/" class="">Beat the model<small>Your five vs its five</small></a><a href="/survivor/" class="">Survivor planner<small>Your pick, and who to save</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/teams/" class="">Teams<small>Stats, results, box scores</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><a href="/social/" class="">Social</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/badbeats/" class="">Missed by one<small>The week's bad beats</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a><a href="/api/" class="">API<small>Every JSON the site serves</small></a></div></div><div class="thm" role="group" aria-label="Theme"><span>Theme</span><button type="button" data-thm="auto">Auto</button><button type="button" data-thm="dark">Dark</button><button type="button" data-thm="light">Light</button></div></div></div></nav>
+<script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
+<script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>
+<div class="bz">
+<div class="bzhead"><h1>Boost finder</h1><span class="sub">Week 10. A boost is the one time the book gives some of its fee back. Spend it on the slip that was closest to fair to begin with.</span></div>
+<section class="card"><h2 class="brush">Your boost</h2>
+<div class="bzform">
+<label>Boost<select id="bzb"><option value="10">10%</option><option value="20">20%</option><option value="25" selected>25%</option><option value="30">30%</option><option value="33">33%</option><option value="40">40%</option><option value="50">50%</option><option value="100">100%</option></select></label>
+<label>Legs<select id="bzn"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></label>
+<label>Each leg at least<select id="bzleg"><option value="">any price</option><option value="-500">-500</option><option value="-300">-300</option><option value="-250">-250</option><option value="-200">-200</option><option value="-150">-150</option><option value="100">+100</option></select></label>
+<label>Slip total at least<select id="bztot"><option value="">any price</option><option value="100">+100</option><option value="200">+200</option><option value="300">+300</option><option value="400">+400</option><option value="500">+500</option><option value="1000">+1000</option></select></label>
+<label class="chk"><input type="checkbox" id="bzsafe" checked> Low-risk legs only</label>
+<label class="chk"><input type="checkbox" id="bzgl" checked> Include moneylines, spreads and totals</label>
+</div>
+<p class="fine">One leg per game, so the price is simply the legs multiplied. Chances here take off the fee our graded legs have paid (about 7 per 100), so they run a little under the board's and no slip shows a profit before the boost. For a same-game boost use the checker further down.</p></section>
+<div id="bzout"></div>
+<section class="card"><h2 class="brush">Same-game boost? Check it</h2>
+<p class="fine" style="margin:0 0 10px">FanDuel prices a same-game parlay its own way. Type the price the app shows you and the page does the rest.</p>
+<div class="bzform">
+<label>Game's best parlay<select id="bzg"></select></label>
+<label>Chance it lands<input id="bzp" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="%"></label>
+<label>FanDuel's price<input id="bzq" type="text" inputmode="text" placeholder="+450" autocomplete="off"></label>
+<label>Boost<select id="bzb2"><option value="0">none</option><option value="10">10%</option><option value="20">20%</option><option value="25" selected>25%</option><option value="30">30%</option><option value="33">33%</option><option value="40">40%</option><option value="50">50%</option><option value="100">100%</option></select></label>
+</div>
+<p class="bzlegs" id="bzglegs"></p>
+<div class="bzverdict" id="bzv2" hidden></div></section>
+<p class="foot">The chances are the model's, not guarantees. A boost has rules of its own (max stake, which markets, when it expires): read them in the app. 21+ | Gamble responsibly.</p>
+</div>
+<script>
+(function(){
+  var $ = function(i){ return document.getElementById(i); }, D = null;
+  // What a leg is really worth. Graded over Weeks 6-9 our over legs lost 7 to 11 per 100 staked whatever the model said about them,
+  // so a leg's chance here is its FanDuel break-even less that fee (FEE), or the board's own number when that is lower - never more.
+  var FEE = 0.93, FLOOR = 0.10;
+  function dec(o){ return o > 0 ? 1 + o / 100 : 1 + 100 / -o; }
+  function am(d){ if(!(d > 1)) return ''; return d >= 2 ? '+' + Math.round((d - 1) * 100) : '−' + Math.round(100 / (d - 1)); }
+  function amo(o){ return o > 0 ? '+' + o : '−' + (-o); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function money(x){ return (x < 0 ? '−$' : '$') + Math.abs(x).toFixed(2); }
+  function boosted(d, b){ return 1 + (d - 1) * (1 + b); }
+  // every combination of n games, one leg from each: keep the best value after the boost and the most likely that still clears the rules
+  function find(o){
+    var now = Date.now(), by = {};
+    D.legs.forEach(function(l){ var g = D.games[l.g]; if(!g || (g.ko && g.ko <= now)) return; if(o.safe && l.r >= 2) return; if(!o.gl && l.gl) return;
+      var d = dec(l.o); if(o.minLeg != null && d < dec(o.minLeg) - 1e-9) return; var pe = Math.min(l.p, FEE / d); (by[l.g] = by[l.g] || []).push({l: l, d: d, pe: pe, v: pe * d}); });
+    var gs = Object.keys(by), per = o.n >= 5 ? 3 : o.n === 4 ? 6 : 99;      // three legs or fewer: every leg of the pool is tried, so the answer is exact
+    gs.forEach(function(g){ var a = by[g].slice().sort(function(x, y){ return (y.v - x.v) || (y.pe - x.pe); }).slice(0, per), b = by[g].slice().sort(function(x, y){ return y.pe - x.pe; }).slice(0, 2);
+      b.forEach(function(x){ if(a.indexOf(x) < 0) a.push(x); }); by[g] = a; });
+    if(gs.length < o.n) return {games: gs.length};
+    var minD = o.minTot != null ? dec(o.minTot) : 0, best = null, safe = null, tried = 0, pick = [];
+    // Two answers. "Most likely to land": the highest all-hit chance inside the rules. "More boost for the risk": the best value
+    // after the boost among slips that still land at least one time in ten - a boost is worth more on a longer price, and without
+    // that floor the arithmetic always picks a lottery ticket.
+    function rec(i, left, P, Dd){
+      if(left === 0){ tried++; if(Dd < minD - 1e-9) return; var ev = P * boosted(Dd, o.b) - 1;
+        if(P >= FLOOR && (!best || ev > best.ev + 1e-12)) best = {ev: ev, P: P, D: Dd, legs: pick.slice()};
+        if(!safe || P > safe.P + 1e-12) safe = {ev: ev, P: P, D: Dd, legs: pick.slice()}; return; }
+      if(gs.length - i < left) return;
+      rec(i + 1, left, P, Dd);
+      var a = by[gs[i]]; for(var k = 0; k < a.length; k++){ pick.push(a[k].l); rec(i + 1, left - 1, P * a[k].pe, Dd * a[k].d); pick.pop(); }
+    }
+    rec(0, o.n, 1, 1);
+    return {best: best, safe: safe, tried: tried, games: gs.length};
+  }
+  function fd(legs){ return 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fm) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fs); }).join('&'); }
+  function verdict(ev0, ev1){
+    var a = 'Per $10 staked, over time: <b class="' + (ev0 >= 0 ? 'up' : 'dn') + '">' + money(ev0 * 10) + '</b> without the boost, <b class="' + (ev1 >= 0 ? 'up' : 'dn') + '">' + money(ev1 * 10) + '</b> with it (the boost is worth ' + money((ev1 - ev0) * 10) + '). ';
+    return a + (ev1 >= 0.005 ? '<b class="up">The boost puts this one in front.</b>' : ev1 >= -0.03 ? '<b>About even with the boost.</b> As good as a boost gets on this board.' : '<b class="dn">Still behind, even boosted.</b> A bigger boost or a shorter slip would be needed.'); }
+  function card(title, sub, r, b, cls){
+    var bd = boosted(r.D, b);
+    return '<section class="card ' + cls + '"><h2 class="brush">' + title + ' <small>' + sub + '</small></h2><ul class="legs">' +
+      r.legs.map(function(l){ return '<li><b>' + esc(l.t) + '</b><span>' + Math.round(Math.min(l.p, FEE / dec(l.o)) * 100) + '% · ' + amo(l.o) + '</span></li>'; }).join('') + '</ul>' +
+      '<div class="nums"><div><small>Pays</small><b><s>' + am(r.D) + '</s>' + am(bd) + '</b></div><div><small>All hit</small><b>about ' + Math.round(r.P * 100) + '%</b></div></div>' +
+      '<p class="verd">' + verdict(r.P * r.D - 1, r.ev) + '</p>' +
+      '<a class="bsbtn" href="' + esc(fd(r.legs)) + '" target="_blank" rel="noopener">Open on FanDuel <small>' + am(r.D) + ' before the boost</small></a></section>';
+  }
+  function same(a, b){ return a && b && a.legs.length === b.legs.length && a.legs.every(function(l, i){ return l === b.legs[i]; }); }
+  function run(){
+    if(!D) return; var out = $('bzout');
+    var o = {b: (+$('bzb').value) / 100, n: +$('bzn').value, minLeg: $('bzleg').value === '' ? null : +$('bzleg').value, minTot: $('bztot').value === '' ? null : +$('bztot').value, safe: $('bzsafe').checked, gl: $('bzgl').checked};
+    var r = find(o);
+    if(!r.safe){ out.innerHTML = '<p class="none">' + (r.games < o.n ? 'Only ' + r.games + ' game' + (r.games === 1 ? ' has' : 's have') + ' a leg that fits, so a ' + o.n + '-leg slip from different games is not there yet. More props post as the week goes on. Try fewer legs' + (o.safe ? ' or untick low-risk only' : '') + '.' : 'No ' + o.n + '-leg slip on this board clears those prices. Loosen one of the rules.') + '</p>'; return; }
+    var h = '<p class="rule">A boost is paid on your winnings, not your stake, so it does more on a longer price. Each leg costs about 7 cents on the dollar in fee, on our graded legs. The cards below show what this boost is worth on each slip.</p>';
+    h += card('Most likely to land', 'inside these rules', r.safe, o.b, 'best');
+    if(r.best && !same(r.best, r.safe) && r.best.ev > r.safe.ev + 0.005) h += card('More boost for the risk', 'longer price, still lands 1 in 10 or better', r.best, o.b, '');
+    out.innerHTML = h;
+  }
+  function sgp(){
+    var g = $('bzg').value, s = null; (D.sgp || []).forEach(function(x){ if(x.g === g) s = x; });
+    if(s && !$('bzp').dataset.typed) $('bzp').value = Math.round(s.pj * 100);
+    $('bzglegs').textContent = s ? s.legs.join(' + ') + ' (legs multiplied: ' + am(s.dec) + ')' : '';
+    var q = $('bzq').value.replace(/−/g, '-').replace(/[^0-9+\-]/g, ''), o = parseInt(q, 10), p = (+$('bzp').value) / 100, b = (+$('bzb2').value) / 100, v = $('bzv2');
+    if(!q || isNaN(o) || Math.abs(o) < 100 || !(p > 0 && p < 1)){ v.hidden = true; return; }
+    var d = dec(o), bd = boosted(d, b);
+    v.hidden = false; v.innerHTML = '<div class="nums"><div><small>Pays</small><b><s>' + am(d) + '</s>' + am(bd) + '</b></div><div><small>Needs to land</small><b>' + Math.round(100 / bd) + '% <s style="margin-left:6px">model ' + Math.round(p * 100) + '%</s></b></div></div><p class="verd">' + verdict(p * d - 1, p * bd - 1) + '</p>';
+  }
+  fetch('/b/boost.json', {cache: 'no-store'}).then(function(r){ return r.json(); }).then(function(d){ D = d;
+    var now = Date.now(), sel = $('bzg'); sel.innerHTML = '<option value="">my own slip</option>' + (D.sgp || []).filter(function(s){ var g = D.games[s.g]; return g && !(g.ko && g.ko <= now); }).map(function(s){ return '<option value="' + esc(s.g) + '">' + esc(D.games[s.g].at) + '</option>'; }).join('');
+    run(); sgp(); }).catch(function(){ $('bzout').innerHTML = '<p class="none">The board did not load. Pull to refresh.</p>'; });
+  ['bzb', 'bzn', 'bzleg', 'bztot', 'bzsafe', 'bzgl'].forEach(function(i){ $(i).addEventListener('change', run); });
+  $('bzp').addEventListener('input', function(){ this.dataset.typed = this.value ? '1' : ''; sgp(); });
+  $('bzg').addEventListener('change', function(){ $('bzp').dataset.typed = ''; sgp(); });
+  ['bzq', 'bzb2'].forEach(function(i){ $(i).addEventListener('input', sgp); $(i).addEventListener('change', sgp); });
+})();
+</script>
+<p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Builder</span></a><a href="/team/" class=""><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Fantasy</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a></nav>
+<script src="/s/app-923e0d6283.js" defer></script>
+</body>
+</html>
