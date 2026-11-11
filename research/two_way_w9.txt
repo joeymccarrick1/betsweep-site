@@ -1,0 +1,9 @@
+week 9: 356 main lines graded of 381 frozen (one per player + market)
+ALL                  n= 356  under hit  53.1 (break-even 53.8) per100   -0.9   |   over hit  46.9 (break-even 52.9) per100  -10.6
+Receptions           n= 131  under hit  55.0 (break-even 54.6) per100   +1.8   |   over hit  45.0 (break-even 52.4) per100  -12.1
+Receiving Yards      n= 127  under hit  52.0 (break-even 53.2) per100   -2.5   |   over hit  48.0 (break-even 53.3) per100   -9.9
+Rushing Yards        n=  70  under hit  50.0 (break-even 53.4) per100   -6.2   |   over hit  50.0 (break-even 53.1) per100   -5.7
+Passing Yards        n=  28  under hit  57.1 (break-even 53.3) per100   +7.3   |   over hit  42.9 (break-even 53.3) per100  -19.5
+model under >= 55%   n= 179  under hit  55.9 (break-even 55.0) per100   +2.7   |   over hit  44.1 (break-even 51.6) per100  -13.0
+model under 45-55%   n= 112  under hit  52.7 (break-even 53.3) per100   -0.8   |   over hit  47.3 (break-even 53.4) per100  -10.8
+model under < 45%    n=  65  under hit  46.2 (break-even 51.1) per100  -10.7   |   over hit  53.8 (break-even 55.5) per100   -3.9

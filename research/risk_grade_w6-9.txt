@@ -1,0 +1,131 @@
+week 6: built 'Sun 10/18 7:54 AM', 3318 builder legs, 1646 graded snapshot legs, 1488 joined
+week 7: built 'Sat 10/24 12:59 PM', 3213 builder legs, 1652 graded snapshot legs, 1181 joined
+week 8: built 'Sun 11/1 11:11 AM', 3942 builder legs, 1631 graded snapshot legs, 1355 joined
+week 9: built 'Sun 11/8 10:06 AM', 3626 builder legs, 1590 graded snapshot legs, 1452 joined
+
+ALL LEGS by risk tier
+  low (0-1)   n= 1968 hit  51.6 price  57.9 site 54.3  per100  -10.9
+      wk 6    n=  475 hit  52.6 price  59.1 site 55.0  per100  -12.8
+      wk 7    n=  418 hit  50.7 price  57.8 site 54.3  per100  -11.8
+      wk 8    n=  538 hit  48.5 price  57.4 site 54.3  per100  -14.5
+      wk 9    n=  537 hit  54.4 price  57.6 site 53.7  per100   -5.0
+  some (2-3)  n= 1034 hit  50.2 price  54.0 site 50.2  per100   -6.0
+      wk 6    n=  301 hit  56.8 price  57.8 site 52.4  per100   -2.6
+      wk 7    n=  261 hit  47.1 price  51.6 site 48.9  per100   -7.2
+      wk 8    n=  265 hit  47.5 price  52.7 site 49.8  per100   -1.8
+      wk 9    n=  207 hit  47.8 price  53.1 site 48.9  per100  -14.7
+  high (4+)   n= 2474 hit  49.8 price  51.9 site 47.3  per100   -3.6
+      wk 6    n=  712 hit  51.5 price  54.8 site 48.7  per100   -4.9
+      wk 7    n=  502 hit  45.2 price  48.2 site 44.8  per100   -3.1
+      wk 8    n=  552 hit  54.7 price  50.8 site 46.6  per100    4.7
+      wk 9    n=  708 hit  47.6 price  52.3 site 48.3  per100   -9.0
+
+FAVORITES (-350..-140) by risk tier
+  low (0-1)   n=  980 hit  60.9 price  68.0 site 63.2  per100  -10.4
+      wk 6    n=  238 hit  65.5 price  69.0 site 62.8  per100   -5.0
+      wk 7    n=  219 hit  59.4 price  68.1 site 63.4  per100  -12.6
+      wk 8    n=  267 hit  54.3 price  67.6 site 63.4  per100  -20.0
+      wk 9    n=  256 hit  64.8 price  67.4 site 63.1  per100   -3.6
+  some (2-3)  n=  400 hit  62.3 price  68.5 site 62.9  per100   -9.2
+      wk 6    n=  133 hit  71.4 price  68.6 site 60.9  per100    4.3
+      wk 7    n=   94 hit  58.5 price  68.5 site 64.2  per100  -14.4
+      wk 8    n=   98 hit  46.9 price  67.5 site 63.2  per100  -31.0
+      wk 9    n=   75 hit  70.7 price  69.3 site 64.3  per100    1.9
+  high (4+)   n=  806 hit  64.6 price  67.4 site 61.0  per100   -4.1
+      wk 6    n=  239 hit  62.3 price  67.8 site 58.8  per100   -8.0
+      wk 7    n=  148 hit  61.5 price  67.2 site 62.1  per100   -8.0
+      wk 8    n=  176 hit  73.9 price  67.2 site 60.9  per100    9.3
+      wk 9    n=  243 hit  62.1 price  67.3 site 62.4  per100   -7.7
+
+SHORT VIEW easy-pick rule (favorite, risk 0-1, shown chance within 2 pts of the price or better):
+  pooled      n=  299 hit  59.5 price  67.0 site 68.2  per100  -11.4
+      wk 6     n=   75 hit  68.0 price  68.3 site 71.9  per100   -1.0
+      wk 7     n=   46 hit  58.7 price  66.5 site 67.0  per100  -11.4
+      wk 8     n=   86 hit  47.7 price  66.4 site 67.2  per100  -28.6
+      wk 9     n=   92 hit  64.1 price  66.9 site 66.7  per100   -4.0
+
+LEGS THE SITE SHOWED AT OR ABOVE THE PRICE (shown chance >= break-even), any price:
+  below by 3+  n= 2983 hit  53.2 price  57.3 site 48.9  per100   -6.8
+  below 0-3    n= 1268 hit  47.7 price  52.0 site 50.4  per100   -8.7
+  above 0-2    n=  525 hit  46.1 price  49.5 site 50.5  per100   -3.7
+  above 2+     n=  700 hit  47.6 price  50.2 site 56.5  per100   -4.5
+  by market, shown at or above the price:
+    Passing Yards      n=   70 hit  38.6 price  55.9 site 58.8  per100  -29.3  weeks in profit 1/4
+    Receiving Yards    n=  441 hit  56.5 price  55.9 site 60.2  per100    1.2  weeks in profit 3/4
+    Receptions         n=  252 hit  48.8 price  48.4 site 51.8  per100    3.3  weeks in profit 2/4
+    Rushing Yards      n=  191 hit  45.0 price  53.9 site 60.3  per100  -14.6  weeks in profit 0/4
+    Longest Reception  n=  127 hit  37.8 price  50.1 site 53.3  per100  -27.1  weeks in profit 0/4
+    Anytime TD         n=  144 hit  29.2 price  26.0 site 28.3  per100   12.7  weeks in profit 2/4
+
+FAVORITES, low risk, by market:
+    Passing Yards      n=   94 hit  56.4 price  68.7 site 64.3  per100  -18.1
+    Receiving Yards    n=  317 hit  62.8 price  67.6 site 64.0  per100   -7.2
+    Receptions         n=  218 hit  61.0 price  68.3 site 63.0  per100  -10.4
+    Rushing Yards      n=  148 hit  56.1 price  68.3 site 62.4  per100  -18.1
+    Longest Reception  n=  178 hit  65.2 price  68.0 site 62.4  per100   -4.1
+    Anytime TD         n=   25 hit  52.0 price  66.3 site 58.7  per100  -21.6
+
+FLAG REPORT CARD (60+ legs).  gap = hit % minus the price's break-even %; weeks = weeks the flag pointed the way its colour says
+  bad   FD rush yds N/M                n=  573 hit  46.1 price  54.7 gap   -8.6 per100  -15.0  weeks 3/4
+  bad   Boom/bust                      n=  790 hit  47.3 price  53.6 gap   -6.3 per100  -10.5  weeks 3/4
+  bad   Targets down                   n=  169 hit  48.5 price  54.1 gap   -5.6 per100   -8.6  weeks 2/4
+  bad   Cold L3                        n=  625 hit  50.7 price  54.4 gap   -3.7 per100   -7.2  weeks 2/4
+  bad   O/U (total)                    n=  756 hit  51.5 price  54.7 gap   -3.2 per100   -4.6  weeks 3/4
+  bad   Snaps down                     n=  197 hit  52.3 price  54.9 gap   -2.6 per100   -1.9  weeks 2/3
+  bad   Tough matchup                  n= 1006 hit  51.2 price  53.5 gap   -2.3 per100   -4.4  weeks 2/4
+  bad   Limited                        n=  158 hit  50.6 price  52.5 gap   -1.9 per100   -3.0  weeks 1/4
+  bad   Carries down                   n=   88 hit  53.4 price  54.3 gap   -0.9 per100    1.9  weeks 1/3
+  bad   N/M this season                n= 1933 hit  44.7 price  45.5 gap   -0.8 per100   -1.6  weeks 0/4
+  bad   FD rec yds N/M                 n= 1070 hit  53.6 price  54.2 gap   -0.6 per100   -1.3  weeks 0/4
+  bad   Wind                           n=  147 hit  55.8 price  55.8 gap   +0.0 per100   -0.3  weeks 0/1
+  bad   Role Down                      n=  174 hit  56.3 price  53.5 gap   +2.8 per100    8.4  weeks 1/4
+  bad   FD pass yds N/M                n=  131 hit  61.8 price  56.0 gap   +5.8 per100   15.1  weeks 1/3
+  bad   Trail script                   n=   86 hit  66.3 price  54.8 gap  +11.5 per100   21.5  weeks 0/3
+  good  Soft vs QB runs                n=   84 hit  42.9 price  57.7 gap  -14.8 per100  -26.2  weeks 0/4
+  good  FD rush yds N/M                n=  138 hit  40.6 price  53.5 gap  -12.9 per100  -22.6  weeks 1/3
+  good  FD pass yds N/M                n=  116 hit  48.3 price  56.8 gap   -8.5 per100  -17.8  weeks 2/4
+  good  O/U (total)                    n= 1474 hit  48.2 price  55.2 gap   -7.0 per100  -12.4  weeks 1/4
+  good  Targets up                     n=  268 hit  48.5 price  55.2 gap   -6.7 per100  -11.4  weeks 2/4
+  good  Shootout                       n=  117 hit  50.4 price  57.1 gap   -6.7 per100  -13.0  weeks 0/1
+  good  Room thinned                   n=  235 hit  46.0 price  52.2 gap   -6.2 per100   -9.4  weeks 1/3
+  good  Role Up                        n=  745 hit  48.2 price  54.0 gap   -5.8 per100   -9.8  weeks 1/4
+  good  Soft matchup                   n= 1026 hit  47.8 price  53.5 gap   -5.7 per100  -10.4  weeks 1/4
+  good  Steady floor                   n=  791 hit  50.9 price  56.3 gap   -5.4 per100   -7.7  weeks 1/4
+  good  Coverage edge                  n=  243 hit  51.0 price  55.7 gap   -4.7 per100   -7.5  weeks 1/3
+  good  FD rec yds N/M                 n=  557 hit  50.8 price  54.8 gap   -4.0 per100   -6.6  weeks 1/4
+  good  Carries up                     n=  173 hit  49.7 price  53.0 gap   -3.3 per100  -10.0  weeks 1/2
+  good  Soft vs RB targets             n=  266 hit  51.1 price  54.1 gap   -3.0 per100   -5.7  weeks 3/4
+  good  Fill-in volume                 n= 1065 hit  51.0 price  54.0 gap   -3.0 per100   -6.8  weeks 2/4
+  good  N/M this season                n=  745 hit  62.8 price  65.6 gap   -2.8 per100   -3.5  weeks 3/4
+  good  Hot L3                         n= 1009 hit  51.9 price  53.9 gap   -2.0 per100   -4.6  weeks 3/4
+  good  Trail script                   n=  256 hit  53.9 price  55.1 gap   -1.2 per100   -1.3  weeks 2/3
+  good  Snaps up                       n=  501 hit  54.5 price  53.8 gap   +0.7 per100   -2.6  weeks 3/4
+  good  Proven zone                    n=   75 hit  48.0 price  44.6 gap   +3.4 per100    1.3  weeks 1/1
+  good  Lead script                    n=  108 hit  70.4 price  55.5 gap  +14.9 per100   30.5  weeks 3/3
+  watch Coverage                       n=  144 hit  39.6 price  53.0 gap  -13.4 per100  -23.3  weeks 3/3
+  watch Tough coverage                 n=  131 hit  39.7 price  50.3 gap  -10.6 per100  -23.0  weeks 2/3
+  watch Model disagrees with consensus n=  162 hit  45.7 price  56.3 gap  -10.6 per100  -19.0  weeks 1/1
+  watch News                           n=   86 hit  46.5 price  55.4 gap   -8.9 per100  -19.2  weeks 1/1
+  watch 2 game sample                  n=  142 hit  45.1 price  52.9 gap   -7.8 per100  -15.8  weeks 2/4
+  watch Target competition             n=  101 hit  46.5 price  54.0 gap   -7.5 per100   -9.1  weeks 1/3
+  watch QB out                         n=  394 hit  50.5 price  56.1 gap   -5.6 per100   -9.4  weeks 2/2
+  watch Fill-in fading                 n=  240 hit  46.7 price  52.1 gap   -5.4 per100  -10.1  weeks 2/3
+  watch Back from absence              n=  386 hit  50.5 price  54.8 gap   -4.3 per100   -6.7  weeks 3/4
+  watch First game back                n=  252 hit  50.0 price  53.2 gap   -3.2 per100   -4.1  weeks 2/3
+  watch Questionable                   n=  346 hit  52.6 price  55.3 gap   -2.7 per100   -5.8  weeks 1/4
+  watch (teammate) returns             n=  756 hit  52.9 price  55.4 gap   -2.5 per100   -3.2  weeks 2/4
+  watch 1 game sample                  n=   74 hit  60.8 price  54.4 gap   +6.4 per100   14.6  weeks 0/2
+  watch Rain                           n=  127 hit  64.6 price  56.8 gap   +7.8 per100   12.8  weeks 0/1
+  (every joined leg: n= 5476 hit  50.5 price  54.4 site 50.4  per100   -6.7  gap -3.9)
+
+HELD-OUT TEST (each week scored with flag weights learned from the other weeks).  gap = hit % minus break-even %
+  wk 6  all legs   learned score: worst third   -2.7  best third   -4.3   |   today's score: high risk   -3.2 (n=712)  low risk   -6.5 (n=475)
+  wk 6  favorites  learned score: worst third   -4.1  best third   -2.9   |   today's score: high risk   -5.5 (n=239)  low risk   -3.4 (n=238)
+  wk 7  all legs   learned score: worst third   +0.1  best third  -10.8   |   today's score: high risk   -2.9 (n=502)  low risk   -7.1 (n=418)
+  wk 7  favorites  learned score: worst third   -1.2  best third  -14.5   |   today's score: high risk   -5.7 (n=148)  low risk   -8.7 (n=219)
+  wk 8  all legs   learned score: worst third   +0.4  best third   -5.0   |   today's score: high risk   +3.9 (n=552)  low risk   -8.9 (n=538)
+  wk 8  favorites  learned score: worst third   -1.5  best third  -10.2   |   today's score: high risk   +6.7 (n=176)  low risk  -13.3 (n=267)
+  wk 9  all legs   learned score: worst third   -0.8  best third   -5.7   |   today's score: high risk   -4.7 (n=708)  low risk   -3.2 (n=537)
+  wk 9  favorites  learned score: worst third   +2.1  best third   -5.4   |   today's score: high risk   -5.2 (n=243)  low risk   -2.6 (n=256)
+  POOLED all legs   learned score: worst third   -0.8 (hit 55.5, n=1824)  best third   -6.2 (hit 45.7)   |   today's score: high risk   -2.0 (hit 49.8)  low risk   -6.4 (hit 51.6)
+  POOLED favorites  learned score: worst third   -1.2 (hit 66.6, n=727)  best third   -7.8 (hit 60.1)   |   today's score: high risk   -2.8 (hit 64.6)  low risk   -7.1 (hit 60.9)
