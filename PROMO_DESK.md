@@ -34,6 +34,8 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
 5. BACKUP QBs: a backup / spot-start QB for an offense that was already struggling gets no passing overs, and his receivers get no
    yardage or catch overs (owner 11/9 after Carson Wentz's MNF start). Play the other team, the run game or unders instead.
 6. EITHER-OR TDs: judge a pair as a pair (team TD outlook + the pair's share of targets / carries), not by each player's own TD history.
+   BOTH PLAYERS MUST BE IN THE SAME GAME (owner 11/10 9:19 PM: "you can only bet on 2TDs from the same game") - FanDuel's either-or
+   market does not pair players across games; /pairs/ only offers same-game pairs and build_promo.py prints EITHER-OR WARNING for any other.
    If you like a team's top two targets for yards, one of them scoring is a natural add (e.g. Odunze or Burden).
 7. UPSET SLIP: when the public is likely heavy on a favorite, also draft one underdog / shootout slip, ranking legs by the model's
    per-ending chances (`sc`: [a by 10+, close-low, shootout, b by 10+]) instead of the overall %.
@@ -161,11 +163,9 @@ Every recipe below is subject to the Market mix rule above (11/4): where a recip
 - **sweep** (THE DAILY SWEEP, rule 3a; `"type": "sweep"`, `"slot": "sweep_thu"` / `"sweep_sun"` / `"sweep_mon"` / `"sweep_sat"` ...): exactly ONE
   per game day (the CT date of the kickoffs: Thursday, Sunday, Monday, plus Saturday / Friday / holiday games when the week has them). It is
   NOT subject to the Market mix rule or the "2-3 legs" line above - the owner rules decide it:
-  - Shape (changed 11/10 evening, owner "Get to all of this" on the deep-dive list: "a public record led by the Daily Sweep and 2-3 leg
-    slips"): 3 legs by default, each priced about -300 to -200 (a leg at -350 or -180 is fine), FanDuel price about +130 to +250. Why:
-    graded over Weeks 6-9, legs in that band hit 65%, so three land together about 27% of the time and four about 18% - the record the
-    public sees should be the one that wins more often. Go to 4 legs (+250 to +400, the owner's Week 9 shape) only when all four are legs
-    the site shows AT OR ABOVE FanDuel's break-even; drop to 2 on a thin one-game board. Say in the draft which shape it is and why. On a one-game day it is a same-game slip: use FanDuel's own SGP price,
+  - Shape: 4 legs (3 or 5 only when the price cannot be reached otherwise), each priced about -300 to -200 (a leg at -350 or -180 is fine
+    when the slip still lands in range), FanDuel price +250 to +400. (Owner 11/10 9:25 PM: "Keep it at 4." A three-leg default was
+    written here for two hours that evening after the deep dive and withdrawn on his word - do not shorten it again without him.) On a one-game day it is a same-game slip: use FanDuel's own SGP price,
     never the legs multiplied; if it cannot be read, write "price on FanDuel" and give the multiplied figure labelled as an estimate - the
     owner types the real price in `odds` when he approves. On a multi-game day take the day's four best legs, at most two from one game.
   - Every leg: builder risk score 0-1 (rule 1 - no "Some risk", no "High risk"), passes the Leg filter, an over unless that game's

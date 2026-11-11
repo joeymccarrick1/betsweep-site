@@ -72,9 +72,20 @@ RISK_JS = r"""(function(){
   // owner 11/6 Questionable translator: feeds q.json (this week's official report) adds the last practice and the chance he plays
   var QT = {}; function loadQ(){ try { fetch('https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/q.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ var o = {}; Object.keys((j && j.players) || {}).forEach(function(k){ o[nrm(k)] = j.players[k]; }); QT = o; decorate(); }).catch(function(){}); } catch(e){} }
   setTimeout(loadQ, 900); setInterval(loadQ, 6e5);
+  // owner 11/10 ("Cam Skattebo says ruled out on betsweep but that's not true ... he was out last week but will be back"): ESPN's injury
+  // page keeps LAST game's "Out" tag on a player until the new week's report replaces it, and the feed that fills risk_feed takes that
+  // tag at face value. feeds notout.json (.github/feeds.py, every 10 minutes) lists the players whose "Out" / "Doubtful" is contradicted:
+  // by ESPN's own note on the same line ("listed as a full participant in Tuesday's practice") or by the owner's call
+  // (data/risk-clear.json). For those the chip is "Questionable" (ESPN's note) or "Good to go" (owner), never "Ruled out",
+  // and their legs are not refused. An owner note of Out on the player page still blocks.
+  var NO = {}; function loadNO(){ try { fetch('https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/notout.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ var o = {}; Object.keys((j && j.players) || {}).forEach(function(k){ o[nrm(k)] = j.players[k]; }); NO = o; decorate(); document.dispatchEvent(new CustomEvent('bs-risk')); }).catch(function(){}); } catch(e){} }
+  loadNO(); setInterval(loadNO, 6e5);
   var PW = {Full: 'full practice', Limited: 'limited in practice', DNP: 'did not practice', none: 'no practice listed'};
   function qtx(n){ var q = QT[nrm(n)]; return q && q.play != null ? q : null; }
-  function injV(r){ var s = r.status;
+  function injV(r){ var s = r.status, no = NO[nrm(r.player || '')];
+    // a game-day inactive (detail "Inactive", written about 90 minutes before kickoff) is never overridden
+    if (no && (s === 'OUT' || s === 'DOUBTFUL') && !/^inactive$/i.test(String(r.detail || '').trim())) return no.src === 'owner' ? {level: 'good', label: 'Good to go', why: 'BetSweep: ' + (no.why || 'expected to play') + ' (ESPN\'s injury page still shows an older tag)', short: 'OK'}
+      : {level: 'warn', label: 'Questionable', why: 'ESPN still lists him ' + (s === 'OUT' ? 'Out' : 'Doubtful') + ', but its own note says: ' + (no.why || 'practising'), short: 'Q'};
     if (s === 'OUT') return {level: 'block', label: 'Ruled out', why: 'Out' + (r.detail ? ' (' + r.detail + ')' : '') + ' on the injury report', short: 'Out'};
     var q = qtx(r.player || '');
     if (s === 'DOUBTFUL') return {level: 'warn', label: 'Doubtful', why: 'Doubtful' + (r.detail ? ' (' + r.detail + ')' : '') + ' - none of 61 doubtful starters played in 2024-25', short: 'Doubtful'};

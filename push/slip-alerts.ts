@@ -166,16 +166,36 @@ async function gameDayOuts(D: any, now: number, ST: Map<string, any>): Promise<n
   return n;
 }
 export const QST = new Map<string, string>();   // owner 11/1: questionable players too, for the live risk list (not pushed)
-async function espnStatuses(): Promise<Map<string, { st: "OUT" | "DOUBTFUL"; why: string }>> {
-  const out = new Map(); QST.clear();
+// ---- last game's tag (owner 11/10: "Cam Skattebo says ruled out on betsweep but that's not true ... he was out last week but will be back").
+// ESPN keeps LAST game's Out / Doubtful on a player until the new week's report replaces it. When that same line's note says he is
+// practising or expected to play this week - and does not itself say he is out - the tag is stale: he goes on the questionable list
+// (risk list only: no "is OUT" push, no block on the site). The same three patterns live in .github/feeds.py (feeds notout.json), which
+// also carries the owner's calls (data/risk-clear.json on main): an owner-cleared player is dropped from the injury statuses altogether.
+// Game-day inactives (gameDayOuts, about 90 minutes before kickoff) are added AFTER this and are never cleared.
+export const HOPE = /full participant|full practice|participated fully|practic(ed|es|ing) (in full|fully)|no (injury )?(game )?designation|(doesn'?t|does not|won'?t|will not) (carry|have) an? (injury |game )?designation|off the (final )?injury report|expected to (play|suit up|start)|will play|good to go|cleared to (play|return)|back at practice|returned to practice|limited (participant|in practice)|practic(ed|es|ing) (on|in) a limited/i;
+export const LATER = /after the bye|next week|in (two|three|four|five|six|several|a few|a couple( of)?|multiple|\d+) (weeks|games)|later this (season|month|year)|this season|down the stretch|week \d/i;
+export const FIRM = /ruled out|listed as (out|doubtful)|\b(is|are|remains?|still|been|as) (out|doubtful)\b|\b(out|doubtful) (for|this) (sunday|monday|thursday|saturday|friday|week|the|tonight)|downgraded|will miss|(won'?t|will not|not expected to|isn'?t expected to|unlikely to|not going to|isn'?t going to|doesn'?t expect to|not likely to) (play|suit up|return|practice|be available|dress)|\binactive|sidelined|placed on|injured reserve|\bIR\b|season[- ]ending|out for the (season|year)|indefinitely|surgery|suspen|waived|released|did not practice|didn'?t practice|\bdnp\b|miss(ed|es|ing) practice|not practicing|sat out|held out/i;
+export function staleTag(status: string, note: string, date: string | undefined, now: number): boolean {
+  const s = String(status || "").trim().toLowerCase(); if (s !== "out" && s !== "doubtful") return false;
+  const t = Date.parse(String(date || "")); if (!isFinite(t) || now - t > 6 * 86400e3) return false;
+  const n = String(note || ""); return HOPE.test(n) && !LATER.test(n) && !FIRM.test(n);
+}
+export const CLEARED = new Set<string>();   // the owner's calls this run (feeds notout.json, src "owner")
+async function espnStatuses(now = Date.now()): Promise<Map<string, { st: "OUT" | "DOUBTFUL"; why: string }>> {
+  const out = new Map(); QST.clear(); CLEARED.clear();
   const j = await getJson([ESPN, "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/injuries", "https://cdn.espn.com/core/nfl/injuries?xhr=1", `${FEEDS}/injuries.json`],
     (j) => j.injuries ? j : (j.content && j.content.injuries ? { injuries: j.content.injuries } : null));
   if (!j) { console.warn("no injury feed reachable this run"); return out; }
   for (const t of (j.injuries || [])) for (const x of (t.injuries || [])) {
-    const nm = x?.athlete?.displayName; const st = statusOf(x?.status || x?.type?.description);
-    if (nm && st) out.set(norm(nm), { st, why: String(x?.details?.type || x?.type?.description || x?.shortComment || "").slice(0, 60) });
-    else if (nm && /questionable/i.test(String(x?.status || x?.type?.description || ""))) QST.set(norm(nm), String(x?.details?.type || "").slice(0, 60));
+    const nm = x?.athlete?.displayName; const raw = x?.status || x?.type?.description; const st = statusOf(raw);
+    if (nm && st && staleTag(raw, x?.shortComment, x?.date, now)) QST.set(norm(nm), String(x?.details?.type || "").slice(0, 60));   // last game's tag
+    else if (nm && st) out.set(norm(nm), { st, why: String(x?.details?.type || x?.type?.description || x?.shortComment || "").slice(0, 60) });
+    else if (nm && /questionable/i.test(String(raw || ""))) QST.set(norm(nm), String(x?.details?.type || "").slice(0, 60));
   }
+  try {   // the owner's calls: feeds.py has already dropped any entry that is past its day or older than a newer ESPN Out line
+    const no = await getJson([`${FEEDS}/notout.json`], (j) => j.players ? j : null);
+    for (const [nm, v] of Object.entries(no?.players || {})) if ((v as any)?.src === "owner") { const k = norm(nm); out.delete(k); QST.delete(k); CLEARED.add(k); }
+  } catch (e) { console.warn("notout", String(e).slice(0, 80)); }
   return out;
 }
 const PROPS = new Set(["Receiving Yards", "Receptions", "Rushing Yards", "Passing Yards", "Rush + Rec Yards", "Anytime TD"]);

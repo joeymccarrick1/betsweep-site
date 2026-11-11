@@ -37,14 +37,18 @@ TD.sort(key=lambda x: (GAMES[x["g"]].get("sort", ""), x["g"], -x["p"]))
 GJ = {gid: {"a": g.get("a"), "b": g.get("b"), "probs": g.get("probs"), "lab": at(g), "kick": g.get("kick", ""), "ko": g.get("ko")} for gid, g in GAMES.items() if any(t["g"] == gid for t in TD)}
 # the server's own list of the best pairs (the page rebuilds it in the browser so games that have kicked off drop out)
 byn = {l["pl"]: l for l in BD.get("legs", []) if l.get("m") == "Anytime TD"}
-top = sorted(TD, key=lambda x: -x["p"])[:16]; best = []
-for i in range(len(top)):
-    for j in range(i + 1, len(top)):
-        A, B = byn[top[i]["n"]], byn[top[j]["n"]]; e = PR.either(A, B, GAMES)
-        if e: best.append({"a": top[i]["n"], "b": top[j]["n"], "p": round(e["p"], 4), "fair": PR.fair_american(e["p"]), "hedge": round(e["hedge"], 4), "risk": min(top[i]["r"], top[j]["r"]), "same_game": e["same_game"]})
+# owner 11/10 9:19 PM: "you can only bet on 2TDs from the same game so let's make it so you can't put a TD from 2 different games" -
+# FanDuel's either-or market pairs two players of ONE game, so the page only offers, and this list only holds, same-game pairs.
+best = []
+for _gid in GJ:
+    top = sorted([t for t in TD if t["g"] == _gid], key=lambda x: -x["p"])[:8]
+    for i in range(len(top)):
+        for j in range(i + 1, len(top)):
+            A, B = byn[top[i]["n"]], byn[top[j]["n"]]; e = PR.either(A, B, GAMES)
+            if e: best.append({"a": top[i]["n"], "b": top[j]["n"], "g": _gid, "p": round(e["p"], 4), "fair": PR.fair_american(e["p"]), "hedge": round(e["hedge"], 4), "risk": min(top[i]["r"], top[j]["r"]), "same_game": e["same_game"]})
 best.sort(key=lambda x: (x["risk"] >= 2, -x["p"]))
 json.dump({"week": WEEK, "built": BD.get("built"), "players": TD, "games": GJ, "best": best[:20],
-           "note": "p = chance that at least one of the two scores (pairs.py); risk = the safer player's risk score (0-1 low, 2-3 some, 4+ high). FanDuel's either-or prices are not included."},
+           "note": "p = chance that at least one of the two scores (pairs.py); risk = the safer player's risk score (0-1 low, 2-3 some, 4+ high). Same-game pairs only: FanDuel sells an either-or touchdown inside one game. FanDuel's either-or prices are not included."},
           open(os.path.join(OUT, "pairs.json"), "w"))
 
 CSS = """
@@ -102,18 +106,23 @@ JS = r"""
   function out(t){ var v = verdict(t); return !!(v && v.level === 'block'); }
   function risk(t){ var v = verdict(t); return t.r + (v && v.level === 'warn' ? 3 : 0); }
   var P = D.players.filter(live), byN = {}; P.forEach(function(t){ byN[t.n] = t; });
-  function opts(sel, keep){
-    var h = '<option value="">Pick a player</option>', gids = []; P.forEach(function(t){ if(gids.indexOf(t.g) < 0) gids.push(t.g); });
+  // owner 11/10: FanDuel sells an either-or touchdown inside ONE game, so the second picker only holds the first player's game
+  // (only = that game's id, skip = the first player's name); with no first player it holds nothing to pick.
+  function opts(sel, keep, only, skip){
+    if(only === false){ sel.innerHTML = '<option value="">Pick the first player</option>'; sel.disabled = true; return; } sel.disabled = false;
+    var h = '<option value="">' + (only ? 'Pick a second player' : 'Pick a player') + '</option>', gids = []; P.forEach(function(t){ if(gids.indexOf(t.g) < 0 && (!only || t.g === only)) gids.push(t.g); });
     gids.forEach(function(gid){ var g = G[gid]; h += '<optgroup label="' + esc(g.lab + (g.kick ? ' · ' + g.kick : '')) + '">';
-      P.filter(function(t){ return t.g === gid; }).forEach(function(t){ h += '<option value="' + esc(t.n) + '"' + (t.n === keep ? ' selected' : '') + '>' + esc(t.n + ' (' + t.tm + ') ' + pc(t.p) + (out(t) ? ' - ruled out' : '')) + '</option>'; });
+      P.filter(function(t){ return t.g === gid && t.n !== skip; }).forEach(function(t){ h += '<option value="' + esc(t.n) + '"' + (t.n === keep ? ' selected' : '') + '>' + esc(t.n + ' (' + t.tm + ') ' + pc(t.p) + (out(t) ? ' - ruled out' : '')) + '</option>'; });
       h += '</optgroup>'; });
     sel.innerHTML = h; }
   function rkTag(s){ return s >= 4 ? '<span class="rk hi">High risk</span>' : s >= 2 ? '<span class="rk mid">Some risk</span>' : '<span class="rk">Low risk</span>'; }
   function endLab(g, k){ return [g.a + ' by 10+', 'a close, low game', 'a shootout', g.b + ' by 10+'][k]; }
   function show(){
     var A = byN[$('pra').value], B = byN[$('prb').value], box = $('prout');
-    if(!A || !B){ box.innerHTML = '<p class="none">Pick two players and the pair is priced here.</p>'; return; }
+    if(!A){ box.innerHTML = '<p class="none">Pick two players from the same game and the pair is priced here.</p>'; return; }
+    if(!B){ box.innerHTML = '<p class="none">Now pick a second player from ' + esc(G[A.g].lab) + '. FanDuel only sells an either-or touchdown inside one game.</p>'; return; }
     if(A.n === B.n){ box.innerHTML = '<p class="none">Pick two different players.</p>'; return; }
+    if(A.g !== B.g){ box.innerHTML = '<p class="none">Those two play in different games. FanDuel only sells an either-or touchdown inside one game: pick a second player from ' + esc(G[A.g].lab) + '.</p>'; return; }
     var oa = out(A), ob = out(B);
     if(oa || ob){ var s = oa && ob ? null : (oa ? B : A);
       box.innerHTML = '<p class="none"><b>' + esc((oa ? A : B).n) + ' is ruled out' + (oa && ob ? ', and so is ' + esc(B.n) : '') + '.</b> ' + (s ? 'That leaves a single on ' + esc(s.n) + ' (' + pc(s.p) + '). Check how FanDuel settles the pair before you bet it.' : 'Pick another pair.') + '</p>'; return; }
@@ -136,8 +145,9 @@ JS = r"""
       v.innerHTML = 'At ' + esc(am(parseFloat(raw))) + ' the pair has to score ' + pc(need) + ' of the time. The model has ' + pc(e.p) + ': ' + (gap >= 1 ? '<b class="up">' + gap.toFixed(1) + ' points on your side.</b>' : gap <= -1 ? '<b class="dn">you are paying ' + Math.abs(gap).toFixed(1) + ' points too much.</b>' : '<b>about a fair price.</b>') + (rs >= 2 ? ' Both names carry flags, so treat it as a risky leg either way.' : ''); }
     inp.addEventListener('input', judge); judge(); }
   function best(){
-    var top = P.filter(function(t){ return !out(t); }).slice().sort(function(a, b){ return b.p - a.p; }).slice(0, 16), rows = [];
-    for(var i = 0; i < top.length; i++) for(var j = i + 1; j < top.length; j++){ var e = either(top[i], top[j]); rows.push({a: top[i], b: top[j], e: e, r: Math.min(risk(top[i]), risk(top[j]))}); }
+    var rows = [], gids = []; P.forEach(function(t){ if(gids.indexOf(t.g) < 0) gids.push(t.g); });
+    gids.forEach(function(gid){ var top = P.filter(function(t){ return t.g === gid && !out(t); }).slice().sort(function(a, b){ return b.p - a.p; }).slice(0, 8);
+      for(var i = 0; i < top.length; i++) for(var j = i + 1; j < top.length; j++){ var e = either(top[i], top[j]); rows.push({a: top[i], b: top[j], e: e, r: Math.min(risk(top[i]), risk(top[j]))}); } });
     rows.sort(function(x, y){ return ((x.r >= 2) - (y.r >= 2)) || (y.e.p - x.e.p); });
     var seen = {}, pick = []; rows.forEach(function(r){ if(pick.length >= 8) return; var ca = seen[r.a.n] || 0, cb = seen[r.b.n] || 0; if(ca >= 2 || cb >= 2) return; seen[r.a.n] = ca + 1; seen[r.b.n] = cb + 1; pick.push(r); });
     var el = $('prbest'); if(!pick.length){ el.innerHTML = ''; $('prbesth').hidden = true; return; } $('prbesth').hidden = false;
@@ -146,10 +156,14 @@ JS = r"""
   function init(){
     if(!P.length){ $('prcard').innerHTML = '<p class="none">' + (D.players.length ? 'Every game with a touchdown price has kicked off. Next week\'s prices land midweek.' : 'FanDuel has not posted touchdown prices for this week yet. They usually land by Thursday.') + '</p>'; $('prbesth').hidden = true; return; }
     var q = new URLSearchParams(location.search), a = q.get('a'), b = q.get('b');
-    opts($('pra'), byN[a] ? a : ''); opts($('prb'), byN[b] ? b : ''); show(); best(); }
-  $('pra').addEventListener('change', show); $('prb').addEventListener('change', show);
-  $('prbest').addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('button[data-a]'); if(!b) return; $('pra').value = b.getAttribute('data-a'); $('prb').value = b.getAttribute('data-b'); show(); $('prcard').scrollIntoView({behavior: 'smooth', block: 'start'}); });
-  document.addEventListener('bs-risk', function(){ try{ var a = $('pra').value, b = $('prb').value; opts($('pra'), a); opts($('prb'), b); show(); best(); }catch(e){} });
+    opts($('pra'), byN[a] ? a : ''); second(byN[b] ? b : ''); best(); }
+  // the second picker follows the first: same game only; a second player from another game is dropped
+  function second(keep){ var A = byN[$('pra').value], B = byN[keep];
+    if(!A) opts($('prb'), '', false); else opts($('prb'), (B && B.g === A.g && B.n !== A.n) ? B.n : '', A.g, A.n);
+    show(); }
+  $('pra').addEventListener('change', function(){ second($('prb').value); }); $('prb').addEventListener('change', show);
+  $('prbest').addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('button[data-a]'); if(!b) return; $('pra').value = b.getAttribute('data-a'); second(b.getAttribute('data-b')); $('prcard').scrollIntoView({behavior: 'smooth', block: 'start'}); });
+  document.addEventListener('bs-risk', function(){ try{ var a = $('pra').value, b = $('prb').value; opts($('pra'), a); second(b); best(); }catch(e){} });
   init();
 })();
 """
@@ -164,14 +178,14 @@ page = f"""<title>Either-or TDs · BetSweep</title>
 {CSS}</style>
 <div class="pr">
 <h1>Either-or TDs</h1>
-<p class="lead">Two names, one leg: it cashes when either one scores. Pick the pair and see what it is really worth before you pay FanDuel's price.</p>
+<p class="lead">Two names from the same game, one leg: it cashes when either one scores. Pick the pair and see what it is really worth before you pay FanDuel's price.</p>
 <div class="card" id="prcard">
  <div class="pick"><select id="pra" aria-label="First player"></select><i>OR</i><select id="prb" aria-label="Second player"></select></div>
  <div id="prout" aria-live="polite"></div>
 </div>
 <h2 id="prbesth">Best pairs on the board</h2>
 <ul class="best" id="prbest"></ul>
-<p class="fn">Week {E(str(WEEK))}. A pair in the same game is priced with the game's four endings, so a back who needs a lead and a receiver who needs a chase are worth more together than apart. The pair's risk is the safer player's: one of them scoring is the bet. FanDuel's either-or prices are not in our feed, so type the one you see. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
+<p class="fn">Week {E(str(WEEK))}. FanDuel sells an either-or touchdown inside one game, so both players come from the same game. The pair is priced with the game's four endings, so a back who needs a lead and a receiver who needs a chase are worth more together than apart. The pair's risk is the safer player's: one of them scoring is the bet. FanDuel's either-or prices are not in our feed, so type the one you see. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
 </div>
 <script>{JS.replace("__DATA__", data)}</script>
 """

@@ -51,7 +51,9 @@ async def run():
                  best: [...document.querySelectorAll('#prbest button')].map(b => [b.dataset.a, b.dataset.b, b.querySelector('em').textContent]), a: document.getElementById('pra').value, b: document.getElementById('prb').value,
                  nopt: document.querySelectorAll('#pra option').length, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth}; }"""
         v = await pg.evaluate(S)
-        check("Pick two players" in v["txt"] and v["nopt"] == len(TD) + 1, f"opens empty with every priced player in the picker ({v['nopt'] - 1})")
+        check("Pick two players from the same game" in v["txt"] and v["nopt"] == len(TD) + 1, f"opens empty with every priced player in the first picker ({v['nopt'] - 1})")
+        check(await pg.evaluate("document.getElementById('prb').disabled && document.querySelectorAll('#prb option').length === 1"), "the second picker waits for the first player")
+        check(all(TD[r[0]]["g"] == TD[r[1]]["g"] for r in v["best"]), "owner 11/10: every best pair is two players from the same game")
         check(1 <= len(v["best"]) <= 8 and max(sum(1 for r in v["best"] if n in r[:2]) for n in {x for r in v["best"] for x in r[:2]}) <= 2, f"best pairs: {len(v['best'])} rows, nobody more than twice")
         a, b = v["best"][0][0], v["best"][0][1]; e = PR.either(TD[a], TD[b], GAMES)
         await pg.click("#prbest button"); await pg.wait_for_timeout(300); v = await pg.evaluate(S)
@@ -65,8 +67,13 @@ async def run():
         check("paying" in v1["v"] and "too much" in v1["v"], f"a price far past fair: paying too much ({v1['v'][:90]})")
         check("on your side" in v2["v"], "a plus price on a likely pair: points on your side")
         check(v3["v"] == "" and "Type the price" in v4["v"], "letters are ignored; a number that is not a price asks for one")
-        await pg.select_option("#prb", a); await pg.wait_for_timeout(200); v = await pg.evaluate(S)
-        check("two different players" in v["txt"], "the same player twice is refused")
+        # owner 11/10: FanDuel sells an either-or touchdown inside one game - the second picker only holds the first player's game
+        bo = await pg.evaluate("[...document.querySelectorAll('#prb option')].map(o => o.value).filter(Boolean)")
+        check(bo and all(TD[x]["g"] == TD[a]["g"] for x in bo) and a not in bo and set(bo) == {n for n in TD if TD[n]["g"] == TD[a]["g"] and n != a}, f"the second picker holds only {TD[a]['g']}'s other players ({len(bo)})")
+        other = next((n for n in TD if TD[n]["g"] != TD[a]["g"]), None)
+        if other:
+            await pg.select_option("#pra", other); await pg.wait_for_timeout(200); v = await pg.evaluate(S)
+            check(v["a"] == other and v["b"] == "" and "Now pick a second player" in v["txt"] and "inside one game" in v["txt"], f"changing the first player to another game clears the second ({v['txt'][:80]})")
         check(v["sw"] <= v["cw"] and not errs, f"fits a phone, no errors ({v['sw']}/{v['cw']}) {errs[:2]}"); await ctx.close()
         # 3) a link can carry the pair; a same-game pair explains itself
         sg = next(((x, y) for x, y in pairs_ if TD[x]["g"] == TD[y]["g"]), None); cg = next(((x, y) for x, y in pairs_ if TD[x]["g"] != TD[y]["g"]), None)
@@ -77,7 +84,7 @@ async def run():
         if cg:
             from urllib.parse import quote
             ctx, pg, errs = await open_page(f"/pairs/?a={quote(cg[0])}&b={quote(cg[1])}", now=early); v = await pg.evaluate(S)
-            check("Different games" in v["txt"] and "Worst ending" not in v["txt"], "two games: says they do not affect each other"); await ctx.close()
+            check(v["a"] == cg[0] and v["b"] == "" and "Now pick a second player" in v["txt"] and "Worst ending" not in v["txt"], "an old link with players from two games keeps the first and asks for a same-game second"); await ctx.close()
         # 4) kickoffs
         kos = sorted({GAMES[l["g"]]["ko"] for l in TD.values()})
         if len(kos) > 1:

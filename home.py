@@ -657,7 +657,7 @@ def sweep_block(IN, OUT, games):
         if p.get("status") == "HIDDEN": c = c.replace('<article class="promo sweep"', '<article class="promo sweep" data-arch="1"', 1)   # archived by the owner: never the current card, still the "last" line
         cards.append(c.replace('<article class="promo sweep"', '<article class="promo sweep" hidden', 1))   # the script un-hides the right one; without JavaScript the teaser shows
     rec = (f'Record <b>{R["w"]}–{R["l"]}</b> · {SW.fmt_u(R["u"])}' if R["n"] else "Record starts Tuesday" if R["pending"] else "Record starts with the first one")
-    first = "One house slip every game day: three favorites, sometimes four. It posts here before kickoff and is graded in public, win or miss."
+    first = "One house slip every game day: about four favorites, priced near +300. It posts here before kickoff and is graded in public, win or miss."
     html_ = (f'<section class="sec swhero" id="sweep" data-days="{E(json.dumps(days, separators=(",", ":")))}"><style>{SWEEP_CSS}</style>'
              f'<div class="swtop"><h2 class="t">The Daily Sweep <small class="tsub">one house slip every game day</small></h2><span class="swrec">{rec}</span></div>'
              f'<div class="swcards">{"".join(cards)}</div>'

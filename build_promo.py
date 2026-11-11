@@ -107,6 +107,8 @@ def price_leg(who, market, odds):
         names = re.split(r"\s+or\s+|\s*/\s*", w)
         if len(names) == 2 and names[0] in TD and names[1] in TD:
             A, B = TD[names[0]], TD[names[1]]; g = GAMES.get(A["g"], {})
+            if A.get("g") != B.get("g"):   # owner 11/10 9:19 PM: FanDuel sells an either-or touchdown inside ONE game
+                print(f'EITHER-OR WARNING - "{names[0]} or {names[1]}" pairs two games ({A.get("g")}, {B.get("g")}): FanDuel only offers an either-or TD for two players in the same game - the owner should re-pair it')
             probs = [x / 100 for x in g.get("probs", [25, 25, 25, 25])]; per = []
             for k in range(4):
                 idx = lambda l: k if l["tm"] == g.get("a") else {0: 3, 3: 0}.get(k, k)
@@ -274,13 +276,13 @@ def parse_rows():
     out.sort(key=lambda x: x["slot"])
     # owner 11/10: the Daily Sweep. sweep.py marks at most one row per game day (Title starts with "Daily Sweep"); the home page leads
     # with it and keeps its own record. Printed for the run log, with the house-rule checks the owner set for these slips (low-risk
-    # legs only, three legs by default since 11/10, two or four allowed) as WARNINGS - the card still goes up; the owner decides.
+    # legs only, about four legs, near +300 - owner 11/10 9:25 PM: "Keep it at 4") as WARNINGS - the card still goes up; the owner decides.
     for w_ in SW.one_per_day(out): print("DAILY SWEEP WARNING -", w_)
     for p_ in out:
         if not p_.get("sweep"): continue
         risky = [f'{l["who"]} {l["market"]} ({SW.risk_tag(l["risk"])})' for l in p_["legs"] if l.get("risk") is not None and l["risk"] >= 2]
-        notes = ([f"{len(p_['legs'])} legs (house shape is three, sometimes two or four)"] if not 2 <= len(p_["legs"]) <= 4 else []) \
-              + ([f"price {odds_str(p_['fd'])} (house shape is about +130 to +400)"] if p_.get("fd") and not 100 <= p_["fd"] <= 450 else []) \
+        notes = ([f"{len(p_['legs'])} legs (house shape is about four)"] if not 3 <= len(p_["legs"]) <= 5 else []) \
+              + ([f"price {odds_str(p_['fd'])} (house shape is near +300)"] if p_.get("fd") and not 200 <= p_["fd"] <= 450 else []) \
               + (["no FanDuel price in column E - a win could not be counted in units"] if not p_.get("fd") else []) \
               + (["risky legs: " + "; ".join(risky)] if risky else [])
         print(f'daily sweep: {SW.day_label(p_["first_ko"])} - slot {p_["slot"]} "{p_["title"]}" {odds_str(p_["fd"]) if p_.get("fd") else "no price"}, {len(p_["legs"])} legs' + (f' | status {p_["status"]}' if p_["status"] != "LIVE" else ""))
