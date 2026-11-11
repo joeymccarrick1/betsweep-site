@@ -827,7 +827,23 @@ try:
 except Exception as _e: print("warn: scenario explorer skipped:", _e)
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
-BUILDER_CSS = r""".sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.up{color:var(--good)} .sdc.dn{color:var(--bad)}
+# owner 11/11 8:28 AM: "Having this same best legs where you can scroll and add to parlay on the parlay builder page would be cool" - the
+# Beat the model list (sugmatch.py: near -110, model 50%+, the matchup pair) as a sideways strip above the builder's grid.
+try:
+    import sugmatch as _SM
+    DATA["sug"] = _SM.pick(LEGS, IN, WEEK); print(f"best legs near -110: {len(DATA['sug'])}")
+except Exception as _e: DATA["sug"] = []; print("note: best-legs strip unavailable:", _e)
+BUILDER_CSS = r"""
+.bq{margin:10px 0 14px} .bqh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 2px} .bqh b{font-family:var(--display);font-weight:700;font-size:18px} .bqh small{color:var(--mute);font-size:12.5px}
+.bqf{display:flex;gap:6px;overflow-x:auto;margin:8px 0;scrollbar-width:none} .bqf::-webkit-scrollbar{display:none} .bqf button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:38px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer} .bqf button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)} .bqf i{flex:none;width:1px;background:var(--line);margin:6px 3px}
+.bql{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
+.bqc{flex:0 0 min(78vw,290px);scroll-snap-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;gap:3px} .bqc.on{border-color:var(--good)}
+.bqc .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start} .bqc .t b{font-weight:600;font-size:15px;line-height:1.2} .bqc .t b i{font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--mute);margin-left:5px} .bqc .t strong{font-family:var(--display);font-weight:700;font-size:22px;line-height:1}
+.bqc small{color:var(--mute);font-size:12.5px;line-height:1.35} .bqc .mu{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;margin-top:4px} .bqc .mu em{font-style:normal;font-size:11.5px;color:var(--mute)}
+.bqc .mup{font-size:11.5px;border:0} .bqc .mup i{padding:3px 6px}
+.bqc button{margin-top:auto;font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;min-height:42px;border-radius:8px;border:1.5px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer} .bqc.on button{background:none;border-color:var(--good);color:var(--good)}
+.bqe{color:var(--mute);font-size:13.5px;padding:10px 2px}
+.sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.up{color:var(--good)} .sdc.dn{color:var(--bad)}
 .omc{display:block;font-size:10.5px;white-space:nowrap} .omc.up{color:var(--good)} .omc.dn{color:var(--mute)}
 .scen:empty{display:none} .scen{margin:10px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .scen h4{margin:0 0 4px;font-family:var(--display);font-size:13px;letter-spacing:.06em;text-transform:uppercase} .scen h4 small{display:block;font-family:var(--body);font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--mute);font-weight:500;margin-top:2px}
@@ -1841,6 +1857,23 @@ BUILDER_JS = r"""
   window.bsSlipToggle = function(k){ var i = KEYIDX[k]; if(i == null) return null; var was = !!sel[i]; toggle(i); return was === !!sel[i] ? null : !!sel[i]; };   // true = now in, false = out, null = refused
   window.bsSlipHas = function(k){ var i = KEYIDX[k]; return i != null && !!sel[i]; };
   window.bsSlipCount = function(){ return Object.keys(sel).length; };
+  // ---- best legs near -110 (owner 11/11 8:28 AM): the Beat the model list as a strip above the grid. D.sug = [slip key, pos, [[stat, off, def], ...]]
+  (function(){ var S = D.sug || [], grid = document.querySelector('.grid'); if(!S.length || !grid) return;
+    var side = 'over', pos = '', box = document.createElement('section'); box.className = 'bq'; box.id = 'bq';
+    box.innerHTML = '<div class="bqh"><b>Best legs near -110</b><small>the model\'s most likely first · swipe</small></div><div class="bqf" role="group" aria-label="Filter the best legs"><button type="button" data-side="over" class="on">Overs</button><button type="button" data-side="under">Unders</button><i></i><button type="button" data-pos="" class="on">All</button><button type="button" data-pos="QB">QB</button><button type="button" data-pos="RB">RB</button><button type="button" data-pos="WR">WR</button><button type="button" data-pos="TE">TE</button></div><div class="bql" id="bql"></div>';
+    grid.parentNode.insertBefore(box, grid); var ul = box.querySelector('#bql');
+    function out(l){ try { var v = window.BSRisk && BSRisk.verdict ? BSRisk.verdict(l.pl, l.m) : null; return !!(v && v.level === 'block'); } catch(e){ return false; } }
+    function paint(){ var x = ul.scrollLeft;
+      ul.innerHTML = S.map(function(s){ var i = KEYIDX[s[0]], l = i == null ? null : legs[i]; if(!l || started(l.g) || out(l) || (!!l.u) !== (side === 'under') || (pos && s[1] !== pos)) return '';
+        var g = games[l.g] || {}, on = !!sel[i];
+        var mu = s[2].map(function(m){ return '<span class="mup" title="' + esc(l.tm) + ' ' + s[1] + 's rank #' + m[1] + ' in ' + esc(m[0]) + ' produced; ' + esc(l.opp) + ' ranks #' + m[2] + ' allowed to ' + s[1] + 's"><i style="background:' + rankColor(l.u ? 33 - m[1] : m[1]) + '">' + esc(l.tm) + ' ' + s[1] + 's #' + m[1] + '</i><b>vs</b><i style="background:' + rankColor(l.u ? 33 - m[2] : m[2]) + '">' + esc(l.opp) + ' def #' + m[2] + '</i></span><em>' + esc(m[0]) + '</em>'; }).join('');
+        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small><div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }).join('') ||
+        '<p class="bqe">No ' + (side === 'under' ? 'under' : 'over') + (pos ? ' for a ' + pos : '') + ' near -110 clears 50% right now.</p>';
+      ul.scrollLeft = x; }
+    ul.addEventListener('click', function(e){ var b = e.target.closest('button[data-i]'); if(b) toggle(+b.getAttribute('data-i')); });
+    box.querySelector('.bqf').addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; if(b.hasAttribute('data-side')) side = b.getAttribute('data-side'); else pos = b.getAttribute('data-pos');
+      [].forEach.call(box.querySelectorAll('.bqf button'), function(x){ var on = x.hasAttribute('data-side') ? x.getAttribute('data-side') === side : x.getAttribute('data-pos') === pos; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); ul.scrollLeft = 0; paint(); });
+    document.addEventListener('bs-slip', paint); paint(); })();
   function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; if(window.BSRisk && window.BSRisk.blockAdd(legs[i].pl, legs[i].m)) return; sel[i] = true; } syncSel(i); renderSlip(); }
   // ---- owner 11/1 ("Start with 1-4"): how the quick builds and the parlay generator choose legs. Graded Weeks 6-7 (3,298 legs):
   //  - heavy favorites (-250 and shorter) are left out unless the model's own % clears the book's by 3+ pts ("price too short" legs lost

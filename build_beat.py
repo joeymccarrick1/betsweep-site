@@ -121,57 +121,12 @@ for x in sorted(pool, key=lambda x: -x[10]):
 # (the sheet's defense tab, 1 = allows the most) - the same two numbers as the builder's pill. An under uses its stat's ranks (the builder
 # shows none on unders); Rush + Rec carries two pairs, rushing and receiving; Longest Reception uses receiving yards; a TD leg uses the
 # position's TD column. The page hides a row once its game kicks off or the risk layer rules the player out.
-SUG_LO, SUG_HI = -125, 100
-IN = os.path.join(HERE, "in")
-def _vals(f):
-    d = json.load(open(os.path.join(IN, f))); return d["values"] if isinstance(d, dict) else d
-DRK, DCOL = {}, {}
-try:
-    _rr = _vals("ranks.json"); DCOL = {c: i for i, c in enumerate(_rr[0][1:])}
-    for r in _rr[1:]:
-        if r and str(r[0]).startswith("LAST 3"): break
-        if not r or r[0] in ("Defense", ""): continue
-        try: DRK[r[0]] = [int(float(x)) if str(x).strip() != "" else None for x in r[1:16]]
-        except Exception: pass
-except Exception as _e: print("note: defense ranks unavailable:", _e)
-try:
-    import offranks as _ORK; _OR = _ORK.load(IN, W)
-except Exception as _e: _ORK = None; _OR = None; print("note: offense ranks unavailable:", _e)
-def stat_cols(pos, m):
-    """[(label, rank column), ...] for a market at a position; [] when the rank tables have no column for it"""
-    m = m[6:] if m.startswith("Under ") else m
-    if m == "Passing Yards" and pos == "QB": return [("pass yds", "QB Pass Yds")]
-    if m == "Passing TDs" and pos == "QB": return [("pass TDs", "QB Pass TD")]
-    if m == "Rushing Yards" and pos in ("QB", "RB"): return [("rush yds", f"{pos} Rush Yds")]
-    if m in ("Receiving Yards", "Longest Reception") and pos in ("RB", "WR", "TE"): return [("rec yds", f"{pos} Rec Yds")]
-    if m == "Receptions" and pos in ("RB", "WR", "TE"): return [("catches", f"{pos} Receptions")]
-    if m == "Rush + Rec Yards" and pos == "RB": return [("rush yds", "RB Rush Yds"), ("rec yds", "RB Rec Yds")]
-    if m in ("Anytime TD", "First TD", "2+ TD"): return [("rush TDs", f"{pos} Rush TD")] if pos in ("QB", "RB") else ([("rec TDs", f"{pos} Rec TD")] if pos in ("WR", "TE") else [])
-    return []
-def matchup(pos, tm, opp, m):
-    out = []
-    for lab, c in stat_cols(pos, m):
-        o = _ORK.rank(_OR, tm, c) if _OR else None
-        d = (DRK.get(opp) or [None] * 15)[DCOL[c]] if c in DCOL else None
-        if o is not None and d is not None: out.append([lab, o, d])
-    return out
-POS = {(l["pl"], l["m"], l.get("ln", 1)): l.get("pos") for l in D["legs"]}
+# The rules and the rank lookup live in sugmatch.py, shared with the Parlay Builder's strip.
+import sugmatch as _SM
+SUG_LO, SUG_HI = _SM.LO, _SM.HI
 KICK = {g["gid"]: g.get("kick", "") for g in D.get("games", [])}
-_imp = lambda o: (-o / (-o + 100.0)) if o < 0 else 100.0 / (o + 100.0)
-_best = {}
-for x in pool:
-    if not (SUG_LO <= x[7] <= SUG_HI) or x[8] < 0.5: continue
-    fam = (x[1], x[5])   # player + market (the side is in the market name): one rung each
-    d = abs(_imp(x[7]) - _imp(-110))
-    if fam not in _best or (d, -x[8]) < _best[fam][0]: _best[fam] = ((d, -x[8]), x)
-sug = []
-for _, x in _best.values():
-    pos = POS.get((x[1], x[5], x[6])) or ""
-    mu = matchup(pos, x[2], x[3], x[5])
-    if pos not in ("QB", "RB", "WR", "TE") or not mu: continue     # every suggested row shows the matchup the owner asked for
-    sug.append([x[0], pos, KICK.get(x[4], ""), mu])
-_p = {x[0]: x[8] for x in pool}
-sug.sort(key=lambda s_: -_p[s_[0]])
+_pk = {x[0]: x for x in pool}
+sug = [[k, pos, KICK.get(_pk[k][4], ""), mu] for k, pos, mu in _SM.pick(D["legs"], os.path.join(HERE, "in"), W) if k in _pk]
 built = dt.datetime.now(dt.timezone.utc)
 json.dump({"week": W, "built": built.isoformat(), "model": model, "pool": [x[:10] for x in pool], "sug": sug, "band": [SUG_LO, SUG_HI]}, open(os.path.join(OUT, "beat.json"), "w"), separators=(",", ":"))
 try:
