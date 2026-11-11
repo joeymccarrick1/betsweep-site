@@ -74,6 +74,7 @@ a{color:var(--ink)}
 .sugl .n{text-align:right;white-space:nowrap} .sugl .n b{display:block;font-family:var(--display);font-weight:700;font-size:22px;line-height:1} .sugl .n small{display:block;font-family:var(--display);font-weight:700;font-size:13px;color:var(--mute);margin-top:3px}
 .sugl .mu{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;margin-top:5px} .sugl .mu em{font-style:normal;font-size:12px;color:var(--mute)} .sugl .mu .ad{margin-left:auto;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)} .sugl li.on .ad{color:var(--good)}
 .sugl .mup{display:inline-flex;align-items:stretch;border-radius:5px;overflow:hidden;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.03em;white-space:nowrap} .sugl .mup i{font-style:normal;color:#fff;padding:3px 7px} .sugl .mup u{text-decoration:none;font-weight:600;font-size:10.5px;padding:3px 5px;background:var(--card);color:var(--mute)}
+.btslip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px} .btslip button{font:inherit;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;min-height:46px;padding:0 18px;border-radius:10px;border:1.5px solid var(--ink);background:none;color:var(--ink);cursor:pointer;flex:1 1 auto} .btslip button:disabled{opacity:.45;cursor:not-allowed} .btslip a{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase;color:var(--red)} .btslip a[hidden]{display:none}
 .btnote{font-size:13px;color:var(--mute);margin-top:8px;line-height:1.45} .btnote.ok{color:var(--good)} .btnote.err{color:var(--bad)}
 table.lb{width:100%;border-collapse:collapse;font-size:14px} .lb th,.lb td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left} .lb th.r,.lb td.r{text-align:right;font-variant-numeric:tabular-nums} .lb thead th{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)} .lb tr.model td{color:var(--redtxt,var(--red));font-weight:600} .lb tr.me td{background:color-mix(in srgb,var(--good) 9%,transparent)}
 
@@ -105,6 +106,7 @@ table.lb{width:100%;border-collapse:collapse;font-size:14px} .lb th,.lb td{paddi
    <p class="btnote">The colored pair is the matchup in that leg's stat: his team's rank at his position (#1 produces the most) against the defense's rank against that position (#1 allows the most). Green helps the leg, red hurts it.</p></div>
   <div class="pick"><input type="search" id="btq" placeholder="Search a player or market (Allen 250, Anytime TD, Receptions)" autocomplete="off"><ul class="pool" id="btpool"></ul></div>
   <div class="btsub"><input type="text" id="btname" maxlength="20" placeholder="Name on the leaderboard"><button type="button" id="btgo" disabled>Lock in five</button></div>
+  <div class="btslip"><button type="button" id="btslip" disabled>Add my five to betslip</button><a href="/build/" id="btslipgo" hidden>Open betslip</a></div>
   <p class="btnote" id="btnote">Sign in (menu, top right) to submit. Picks are one set per week; you can change them until a chosen leg's game kicks off.</p>
  </section>
 </div>
@@ -143,7 +145,18 @@ table.lb{width:100%;border-collapse:collapse;font-size:14px} .lb th,.lb td{paddi
   $('btsugl').addEventListener('keydown', function(e){ if (e.key !== 'Enter' && e.key !== ' ') return; var li = e.target.closest('li[data-k]'); if (!li) return; e.preventDefault(); var k = li.getAttribute('data-k'); tapSug(li); var n = $('btsugl').querySelector('li[data-k="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); if (n) n.focus(); });
   $('btsugf').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; if (b.hasAttribute('data-side')) SIDE = b.getAttribute('data-side'); else SPOS = b.getAttribute('data-pos');
     [].forEach.call($('btsugf').querySelectorAll('button'), function(x){ var on = x.hasAttribute('data-side') ? x.getAttribute('data-side') === SIDE : x.getAttribute('data-pos') === SPOS; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); paintSug(); $('btsugl').scrollTop = 0; });
-  function paintMine(){ var h = MINE.map(function(k){ return legLi(k, {rm: !LOCKED}); }); while (h.length < 5) h.push('<li class="empty">Pick ' + (h.length + 1) + ' of 5</li>'); $('btmine').innerHTML = h.join(''); $('btyn').textContent = MINE.length + ' of 5' + (LOCKED ? ' · locked' : ''); $('btgo').disabled = LOCKED || MINE.length !== 5; paintPool(); paintSug(); }
+  // owner 11/11 12:10 PM: "Make it so you can add your 5 legs from beat the model into your betslip" - the shared slip key the builder,
+  // boards and home page read (bs_slipk_w<week>); legs of games under way and ruled-out players are left out, as the builder would.
+  function slipGet(){ try { var a = JSON.parse(localStorage.getItem('bs_slipk_w' + W) || '[]'); return Array.isArray(a) ? a : []; } catch(e){ return []; } }
+  function slipOk(k){ var l = POOL[k]; return !!l && !started(l) && !ruled(l); }
+  function paintSlipBtn(){ var b = $('btslip'); if (!b) return; var can = MINE.filter(slipOk), have = slipGet(), left = can.filter(function(k){ return have.indexOf(k) < 0; });
+    b.disabled = !left.length; b.textContent = !MINE.length ? 'Add my five to betslip' : !can.length ? 'These games have kicked off' : !left.length ? 'In your betslip ✓' : 'Add my ' + (can.length === 5 ? 'five' : can.length + (can.length === 1 ? ' leg' : ' legs')) + ' to betslip';
+    var go = $('btslipgo'); go.hidden = !have.length; go.textContent = 'Open betslip (' + have.length + ')'; }
+  $('btslip').addEventListener('click', function(){ var have = slipGet(), n = 0; MINE.filter(slipOk).forEach(function(k){ if (have.indexOf(k) < 0){ have.push(k); n++; } }); if (!n) return;
+    var v = JSON.stringify(have); try { localStorage.setItem('bs_slipk_w' + W, v); } catch(e){ $('btslip').textContent = 'This browser would not save the slip'; return; }
+    try { window.dispatchEvent(new StorageEvent('storage', {key: 'bs_slipk_w' + W, newValue: v})); } catch(e){}
+    paintSlipBtn(); });
+  function paintMine(){ var h = MINE.map(function(k){ return legLi(k, {rm: !LOCKED}); }); while (h.length < 5) h.push('<li class="empty">Pick ' + (h.length + 1) + ' of 5</li>'); $('btmine').innerHTML = h.join(''); $('btyn').textContent = MINE.length + ' of 5' + (LOCKED ? ' · locked' : ''); $('btgo').disabled = LOCKED || MINE.length !== 5; paintPool(); paintSug(); paintSlipBtn(); }
   function paintPool(){ var q = ($('btq').value || '').trim().toLowerCase(); var ul = $('btpool'); if (!q || LOCKED){ ul.innerHTML = ''; return; }
     var ws = q.split(/\s+/); var hits = Object.keys(POOL).filter(function(k){ var l = POOL[k]; var s = (l[1] + ' ' + l[5] + ' ' + l[6] + ' ' + l[2] + ' ' + l[3]).toLowerCase(); return ws.every(function(w){ return s.indexOf(w) >= 0; }); }).slice(0, 40);
     var minePl = {}; MINE.forEach(function(k){ minePl[POOL[k] ? POOL[k][1] : k.split('|')[0]] = 1; });
