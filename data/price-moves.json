@@ -1,26 +1,8 @@
 {
  "news": [],
  "week": 10,
- "built": "Wed 11/11 1:14 AM",
- "checked": "2026-11-11T14:57:37Z",
- "legs_checked": 719,
- "moves": [
-  {
-   "key": "Fernando Mendoza|Rushing Yards|20",
-   "pl": "Fernando Mendoza",
-   "m": "Rushing Yards",
-   "ln": 20.0,
-   "gid": "LV-SEA",
-   "ko": 1794776700000,
-   "built": 225,
-   "now": 194.0,
-   "pts": 3.2,
-   "p": 0.2268,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-11 6:34",
-   "detail": "Fernando Mendoza rush yds 20+: FanDuel +225 at build -> +194 now (+3.2 implied pts toward the model)"
-  }
- ]
+ "built": "Wed 11/11 9:03 AM",
+ "checked": "2026-11-11T15:55:39Z",
+ "legs_checked": 730,
+ "moves": []
 }
