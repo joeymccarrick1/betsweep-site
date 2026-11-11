@@ -35,8 +35,11 @@ with sync_playwright() as pw:
     ok(H < 7500, "home: under 7,500px on a phone (it was 15,690)", f"{H}px, sections {ids}")
     ok(not any(x in ids for x in ("slate", "tdtrade", "tdweek", "plays", "nextman", "radar")), "home: the slate, the trade desk, the week list, top plays, next man up and the radar are gone")
     ok(pg.evaluate("document.querySelectorAll('#hsbar').length") == 1, "home: one betslip bar (there were two)")
-    first = pg.evaluate("(function(){ var s = [].slice.call(document.querySelectorAll('section')).filter(function(x){ return x.offsetParent !== null; }); return s.slice(0, 3).map(function(x){ return x.id || x.className; }); })()")
-    ok(first[:1] == ["tdhead"] and "tdday" in first[:3], "home: the head, then today's game within the first three blocks", str(first))
+    first = pg.evaluate("(function(){ var s = [].slice.call(document.querySelectorAll('section')).filter(function(x){ return x.offsetParent !== null; }); return s.slice(0, 5).map(function(x){ return x.id || x.className; }); })()")
+    # 11/11: the FanDuel unders pull is back (the owner installed FanDuelOdds.gs v2026-11-10), so "Under of the day" (#bsunder) has a card
+    # again. Only the day's two single-card callouts - the Daily Sweep and the Under of the day - may sit between the head and the games.
+    before = first[1:first.index("tdday")] if "tdday" in first else None
+    ok(first[:1] == ["tdhead"] and before is not None and all(x in ("sweep", "bsunder") for x in before), "home: the head, then today's game - only the Daily Sweep and the Under of the day may come between", str(first))
     st = pg.evaluate("(function(){ var c = document.querySelector('.tdgame.show'); if(!c) return null; return {stats: [].slice.call(c.querySelectorAll('.tdstats span')).map(function(x){ return x.textContent; }), cd: (c.querySelector('.tdcd') || {}).textContent, pri: (c.querySelector('.tdlinks a.pri') || {}).getAttribute('href')}; })()")
     ok(st and len(st["stats"]) >= 2 and st["pri"] and st["pri"].startswith("/boards/#g-"), "today's game: a number strip and one main button to its board", str(st))
     ok(st and re.match(r"^in \d+[dhm]", st["cd"] or ""), "today's game: a kickoff countdown", str(st and st["cd"]))

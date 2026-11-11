@@ -7,7 +7,7 @@ home.py and build_site.py made, and returns one page body. Since 11/10 evening t
 
   Today's head, the Daily Sweep, today's game cards            (build_today.py)
   posted promos, Model's Best as three cards, the lead parlay   (home.py BLOCKS: promos / best_teaser / parlay_lead)
-  You today, three news notes, Ask the model, Track record     (build_today.py)
+  You today, three news notes, Track record                    (build_today.py; Ask the model moved into the site menu 11/11, ask.py)
   Where to next (eight doors), latest posts, the footer         (build_site.py)
 
 What left the page has its own address: the whole Model's Best list, top plays, next man up, the radar and every game's parlay are

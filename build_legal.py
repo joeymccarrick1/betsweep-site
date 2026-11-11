@@ -70,8 +70,9 @@ TERMS = eff + f"""
 # audit 11/10: the policy still said "no accounts", "we hold no account data" and "pages load web fonts from Google Fonts ... cdnjs", and did not
 # mention alerts, the email brief, pick'em, Ask the model, short links, sweat rooms or the jsDelivr / ESPN requests. Rewritten to match what
 # the site stores today (tables: user_state, push_subs, email_prefs, fantasy_rosters, beat_picks, beat_leagues + beat_league_members, ask_log, short_links + link_hits, feed_*,
-# sweat_*). The owner should read it and have counsel look at it; when a feature starts storing something new, add it HERE first.
-PRIVACY_UPDATED = "November 10, 2026"
+# sweat_*). 11/11: the ask box moved into the site menu (ask.py); the board answer is local, only the written answer is sent.
+# The owner should read it and have counsel look at it; when a feature starts storing something new, add it HERE first.
+PRIVACY_UPDATED = "November 11, 2026"
 # owner 11/10 (deep dive): anonymous page counts. When account.PAGE_COUNTS is on, the policy says so in three places (the short version,
 # what we collect, cookies and tracking) and carries the date it was switched on - the page promises to change before the site does.
 try:
@@ -89,7 +90,7 @@ PRIVACY = eff.replace("</p>", f" · Privacy Policy last updated {PRIVACY_UPDATED
 <li><b>Alerts.</b> If you turn on notifications, we store the push address and keys your browser gives us (your browser maker's push service - Apple, Google or Mozilla - delivers the message), a short description of the browser, and your alert settings. Turning alerts off removes them.</li>
 <li><b>The game-day email.</b> If you switch on the email brief on My BetSweep, we store that choice with your email address and send the brief through Resend, our email provider. You can switch it off there at any time. We send no other marketing email.</li>
 <li><b>Beat the model.</b> Your five picks each week, the display name you chose and how the picks graded are stored with your account. The leaderboard shows that name, your graded picks and your record - never your email. If you start or join a friend league there, we also store the league's name, its invite code and who is in it; the people in a league see each other's display name and record, nothing else, and anyone with the invite link can join until the person who started it closes it.</li>
-<li><b>Ask the model.</b> A question you type there (signed-in users) is sent to our server and on to Anthropic, the AI provider that writes the answer, together with the model's numbers for the players you named - not your name, your email or your slips. We keep your questions and the answers with your account to enforce the daily limit and to improve the feature.</li>
+<li><b>Ask BetSweep.</b> The box in the menu answers from the week's board inside your browser; a question you type there does not leave your device. If you then tap "Ask the model for a written answer" (signed-in users), that question is sent to our server and on to Anthropic, the AI provider that writes the answer, together with the model's numbers for the players you named - not your name, your email or your slips. We keep those questions and the answers with your account to enforce the daily limit and to improve the feature.</li>
 <li><b>Short links.</b> When you make a short link for a slip, its legs and price are stored under the link's code, and anyone who has the link can see them; if you are signed in, the link is recorded as yours. We count how many times each link is opened, not who opened it.</li>
 <li><b>Social posts.</b> If you post a slip to the Social page, the handle, title, legs and price you entered, the time, and the upvotes and reports on it are stored with Supabase and shown publicly (your email is not). Upvotes and reports record which account made them so each account counts once. Deleting a post removes it; deleting your account removes your posts, votes and reports.</li>
 <li><b>Sweat rooms.</b> On the Live page, tapping "I'm on it" or a reaction stores that leg, the reaction and the time with your account. Other people see the totals and the reactions - never who.</li>

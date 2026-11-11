@@ -10,8 +10,10 @@ Cross-links to the claude.ai artifacts are rewritten to site paths; each page ge
 with social-preview tags (the artifact viewer adds that wrapper itself; a plain host does not).
 usage: python3 build_site.py [domain=betsweep.co]
 """
-import os, re, json, glob, shutil, base64, html, datetime as _dt
+import os, re, json, glob, shutil, base64, html, time as _time, datetime as _dt
+_BUILD_T0 = _time.time()   # rechrome.py (end of this file) leaves every page written after this moment alone
 import account as ACCT
+import ask as ASK   # owner 11/11: Ask BetSweep lives in the menu of every page (form, styles and script in ask.py)
 BIGGER_CSS = """
 /* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
 @media (max-width:760px){
@@ -136,9 +138,13 @@ NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay 
 # playing along, looking a player up, running a fantasy team, checking the record. No group is longer than eight, the most-used page
 # of each is first, and every page that left the home page that night (Model's Best, the slate, the news desk, the trade desk) has a
 # line here. NAV_GROUPS is also what /all/ ("Every page") is written from - one list, so the two cannot drift.
-NAV_GROUPS = [("/", "Today", None), ("/short/", "Short view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
+# owner 11/11 12:15 AM: "Can ask betsweep just be on the Menu? I'd want this on the menu of every page ... Also put theme in My Betsweep
+# rather than the menu. Put short view access just on the home page not in the menu." So the menu is Ask BetSweep (a box, ask.py), Today
+# and the six groups. The Theme switch is a card on /me/ (account.me_page). The Short view is reached from the home page's own button
+# (build_today.py #tdsimple) and from nowhere else: no line here, no door in NEXT, no entry on /all/.
+NAV_GROUPS = [("/", "Today", None),
               (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/slate/", "This week's games", "Lines and scripts at a glance"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
-              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
+              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
               (None, "Play", [("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high"), ("/dfs/", "DFS", "Lineup builder")]),
@@ -153,7 +159,7 @@ NEXT = {
  "/slate/": [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "What moved the numbers")],
  "/dossier/": [("/boards/", "Matchup Boards", "Every player's lines for the game"), ("/build/", "Parlay Builder", "Build the slip"), ("/news/", "News desk", "What moved the numbers")],
  "/news/": [("/benefits/", "Who benefits", "Where the work goes when a starter sits"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/boards/", "Matchup Boards", "See it in the lines")],
- "/best/": [("/build/?best=1", "Open them in the builder", "Every Model's Best leg, ready to add"), ("/short/", "Short view", "Three favorites, one tap"), ("/season/", "How it has graded", "Every week, in public")],
+ "/best/": [("/build/?best=1", "Open them in the builder", "Every Model's Best leg, ready to add"), ("/boards/", "Matchup Boards", "The full read on each game"), ("/season/", "How it has graded", "Every week, in public")],
  "/short/": [("/best/", "Model's Best", "More picks, with the numbers"), ("/boards/", "Matchup Boards", "The full read on each game"), ("/live/", "Live", "Track it once it kicks off")],
  "/build/": [("/sweep/", "Sweep my slip", "A verdict before you place it"), ("/shop/", "Line shop", "The same leg at a better price"), ("/live/", "Live", "Track it once it kicks off")],
  "/sweep/": [("/build/", "Parlay Builder", "Fix it or build another"), ("/shop/", "Line shop", "The same leg at a better price"), ("/live/", "Live", "Track it once it kicks off")],
@@ -179,8 +185,8 @@ NEXT = {
  "/receipts/": [("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/how/", "How BetSweep picks", "The method and the record")],
  "/season/": [("/receipts/", "Receipts", "Week by week"), ("/how/", "How BetSweep picks", "The method and the record"), ("/boards/", "This week's boards", "What the model says now")],
  "/badbeats/": [("/receipts/", "Receipts", "Every week, graded"), ("/sweep/", "Sweep my slip", "Find the weak leg first"), ("/boards/", "This week's boards", "What the model says now")],
- "/how/": [("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/season/", "Season", "The running record"), ("/short/", "Short view", "Start with the picks")],
- "/guide/": [("/short/", "Short view", "Start with the picks"), ("/boards/", "Matchup Boards", "One board per game"), ("/how/", "How BetSweep picks", "The method and the record")],
+ "/how/": [("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/season/", "Season", "The running record"), ("/best/", "Model's Best", "Start with the picks")],
+ "/guide/": [("/best/", "Model's Best", "Start with the picks"), ("/boards/", "Matchup Boards", "One board per game"), ("/how/", "How BetSweep picks", "The method and the record")],
  "/api/": [("/how/", "How BetSweep picks", "The method and the record"), ("/all/", "Every page", "The whole site on one screen")],
 }
 def next_strip(path):
@@ -226,7 +232,7 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav .ddb i{font-style:normal;font-size:10px;transition:transform .15s}
 .sitenav .dd.open .ddb{color:#141a24} .sitenav .dd.on .ddb{color:#141a24;border-bottom-color:#d7332a}
 @media (hover:hover){ .sitenav .dd:hover .ddb{color:#141a24} .sitenav .dd:hover .ddm{display:flex} .sitenav .dd:hover .ddb i{transform:rotate(180deg)} }
-.sitenav .dd:last-child .ddm{left:auto;right:0}
+/* 11/11: the last group is no longer the right-most thing in the row (the ask box follows it), so its list opens under it like the others */
 .sitenav .ddm{display:none;position:absolute;top:100%;left:0;z-index:80;min-width:230px;flex-direction:column;background:#efe9da;border:1px solid #d9d1bf;border-top:3px solid #d7332a;border-radius:0 0 8px 8px;box-shadow:0 14px 30px rgba(0,0,0,.28);padding:6px 0}
 .sitenav .dd.open .ddm{display:flex}
 .sitenav .dd.open .ddb i{transform:rotate(180deg)}
@@ -234,9 +240,6 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav .ddm a small{display:block;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12px;color:#5d6676;letter-spacing:0;margin-top:1px}
 .sitenav .ddm a:hover,.sitenav .ddm a.on{background:#e4ddcb} .sitenav .ddm a.on{box-shadow:inset 3px 0 0 #d7332a}
 .sitenav .ddh{display:none}
-.sitenav .thm{display:flex;align-items:center;gap:6px;padding:8px 10px;border-left:1px solid #d9d1bf;margin-left:6px} .sitenav .thm span{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4a5260;margin-right:2px}
-.sitenav .thm button{font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:#4a5260;background:none;border:1.5px solid #d9d1bf;border-radius:999px;padding:4px 10px;cursor:pointer;min-height:30px} .sitenav .thm button.on{color:#efe9da;background:#141a24;border-color:#141a24}
-@media (max-width:1240px){ .sitenav .thm{border-left:0;margin:0;padding:12px 18px;border-bottom:1px solid #d9d1bf} .sitenav .thm span{font-size:14px;margin-right:auto} .sitenav .thm button{min-height:36px;padding:6px 14px;font-size:14px} }
 @media (max-width:1240px){
   .sitenav .dd{display:block;border-bottom:1px solid #d9d1bf}
   .sitenav .ddb{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:13px 18px;font-size:17px;border:0;margin:0;color:#4a5260}
@@ -282,7 +285,10 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 /* the open menu scrolls inside the screen (it used to run under the bottom tabs with no way to reach the last items) */
 @media (max-width:1240px){ .sitenav .tabs{max-height:calc(100vh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - var(--bs-tabs,0px));overflow-y:auto;overscroll-behavior:contain}
   .sitenav .tabs .mout{color:#b8261d} }
-</style>
+/* 11/11: on a wide screen the header already has the Out button, so the menu's own "Sign out" line (added for phones 11/5) is not a
+   ninth tab; and no tab wraps to two lines when the row is tight */
+@media (min-width:1241px){ .sitenav .tabs .mout{display:none} .sitenav .tabs > a,.sitenav .ddb{white-space:nowrap} }
+""" + ASK.CSS + """</style>
 """
 
 BRAND_CSS = """<style>
@@ -452,20 +458,38 @@ APP_JS = r"""<script>
 (function(){
   // 11/4 UX audit: Theme switch (Auto / Dark / Light). Auto follows the phone; the choice is kept in localStorage and applied before
   // paint by the one-line script in <head>. Home stays dark (hero landing); every app page honours data-theme.
-  var g = document.querySelector('.sitenav .thm'); if(!g) return;
+  // 11/11 (owner: "put theme in My Betsweep rather than the menu"): the buttons are a card on /me/ (account.me_page); this binds any .thm group.
+  var gs = [].slice.call(document.querySelectorAll('.thm')); if(!gs.length) return;
   function cur(){ try { var t = localStorage.getItem('bs_theme'); return (t === 'dark' || t === 'light') ? t : 'auto'; } catch(e){ return 'auto'; } }
-  function paint(){ var c = cur(); g.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-thm') === c); b.setAttribute('aria-pressed', b.getAttribute('data-thm') === c ? 'true' : 'false'); }); }
-  g.addEventListener('click', function(e){
+  function paint(){ var c = cur(); gs.forEach(function(g){ g.querySelectorAll('button[data-thm]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-thm') === c); b.setAttribute('aria-pressed', b.getAttribute('data-thm') === c ? 'true' : 'false'); }); }); }
+  gs.forEach(function(g){ g.addEventListener('click', function(e){
     var b = e.target.closest('button[data-thm]'); if(!b) return;
     var t = b.getAttribute('data-thm');
     try { if(t === 'auto') localStorage.removeItem('bs_theme'); else localStorage.setItem('bs_theme', t); } catch(err){}
     if(t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
     paint();
-  });
+  }); });
+  window.addEventListener('storage', function(e){ if(e.key === 'bs_theme') paint(); });
   paint();
 })();
-</script>"""
+""" + ASK.JS + """</script>"""
 INSTALL_BAR = '<div class="installbar" id="installbar"><b>App</b><span class="msg"></span><button type="button" class="go" hidden>Install</button><button type="button" class="x" aria-label="dismiss">×</button></div>'
+def _ask_example():
+    """A question this week's board can answer, for the hint under the menu's ask box (ask.py): from the latest-kicking game that has
+    props (so the example stays answerable as the week's earlier games start), the receiving or rushing rung the model likes best
+    among the ones priced like a real bet (a 30-75% chance); and the home team of the week's last game. Full name: a last name two
+    players share would open the "Which one?" list instead of the leg."""
+    try:
+        bd = json.load(open(os.path.join(OUT, "builder_data.json"))); g = {x["gid"]: x for x in bd.get("games") or []}
+        team = max(g.values(), key=lambda x: x.get("ko") or 0) if g else None; tn = (team.get("nb") if team and team.get("home") == team.get("b") else team.get("na")) if team else None
+        legs = [l for l in bd.get("legs") or [] if not l.get("gl") and l.get("m") in ("Receiving Yards", "Rushing Yards") and l.get("g") in g and l.get("ln") and l.get("p") is not None]
+        if not legs: return None, tn
+        gid = max(legs, key=lambda l: g[l["g"]].get("ko") or 0)["g"]; pool = [l for l in legs if l["g"] == gid]
+        l = max([x for x in pool if 0.30 <= x["p"] <= 0.75] or pool, key=lambda x: (x.get("e") or 0, x["p"]))
+        return f'{l["pl"]} {round(float(l["ln"]))}+ {str(l.get("ms") or l["m"]).lower()}', tn
+    except Exception as _e:
+        print("note: ask example not picked:", _e); return None, None
+ASK_FORM = ASK.form(*_ask_example())
 def sitenav(path):
     def on(p): return path == p or (p != "/" and path.startswith(p))
     tabs = ""
@@ -477,7 +501,7 @@ def sitenav(path):
     return (f'<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a>'
             f'<button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>'
             f'<button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById(\'sitenav\');n.classList.toggle(\'open\');this.setAttribute(\'aria-expanded\',n.classList.contains(\'open\'))">Menu <span aria-hidden="true">☰</span></button>'
-            f'<div class="acct" id="bsacct"></div><div class="tabs">{tabs}<div class="thm" role="group" aria-label="Theme"><span>Theme</span><button type="button" data-thm="auto">Auto</button><button type="button" data-thm="dark">Dark</button><button type="button" data-thm="light">Light</button></div></div></div></nav>\n'
+            f'<div class="acct" id="bsacct"></div><div class="tabs">{ASK_FORM}{tabs}</div></div></nav>\n'
             '<script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>\n'
             '<script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>\n')
 
@@ -569,6 +593,15 @@ if os.path.exists(os.path.join(OUT, "season-receipt.html")):
     made.append(place(os.path.join(OUT, "season-receipt.html"), os.path.join(OUT, "img-season"), os.path.join(SITE, "season"), "/season/"))
 if os.path.exists(os.path.join(OUT, "builder.html")):
     made.append(place(os.path.join(OUT, "builder.html"), os.path.join(OUT, "img-build"), os.path.join(SITE, "build"), "/build/"))
+    # owner 11/11: Ask BetSweep in the menu of every page (ask.py) answers from the week's board. The board is the builder's own data file,
+    # so nothing is published twice: /b/ask.json only says where it is. A build that cannot find the file writes no pointer and fails loudly.
+    _bd = [f for f in sorted(glob.glob(os.path.join(SITE, "build", "data-*.js"))) if open(f, encoding="utf-8").read(14) == "window.__BS = "]
+    if len(_bd) != 1: raise SystemExit(f"/b/ask.json: expected one builder data file in site/build/, found {len(_bd)}")
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True)
+    try: _bw = int(json.load(open(os.path.join(OUT, "builder_data.json")))["week"])
+    except Exception: _bw = None
+    json.dump({"week": _bw, "src": "/build/" + os.path.basename(_bd[0])}, open(os.path.join(SITE, "b", "ask.json"), "w"))
+    print("wrote /b/ask.json ->", "/build/" + os.path.basename(_bd[0]))
 for _slug, _dir in (("terms", "terms"), ("privacy", "privacy"), ("responsible", "responsible-gambling")):
     if os.path.exists(os.path.join(OUT, f"legal-{_slug}.html")):
         made.append(place(os.path.join(OUT, f"legal-{_slug}.html"), os.path.join(OUT, "img-none"), os.path.join(SITE, _dir), f"/{_dir}/"))
@@ -1049,7 +1082,7 @@ if os.path.exists(os.path.join(OUT, "today.html")):
                                        _TP["targets"].replace('<h2 class="t">Trade desk <small class="tsub">buy low, sell high · snaps and schedule, not the box score</small></h2>', "", 1),
                                        "Fantasy football buy-low and sell-high targets from BetSweep's model: role, snaps and schedule against market rank."))
         _groups = "".join(f'<section class="sec"><h2 class="t">{html.escape(t)}</h2><div class="nxl doors">' + "".join(f'<a href="{kp}"><b>{html.escape(kt)}</b><small>{html.escape(kd)}</small></a>' for kp, kt, kd in kids) + '</div></section>'
-                          for _p, t, kids in ([(None, "Start here", [("/", "Today", "Today's games, the Daily Sweep, the news"), ("/short/", "Short view", "Picks first, reading optional"), ("/me/", "My BetSweep", "Your slips, record and bankroll")])] + [g for g in NAV_GROUPS if g[2]]))
+                          for _p, t, kids in ([(None, "Start here", [("/", "Today", "Today's games, the Daily Sweep, the news"), ("/me/", "My BetSweep", "Your slips, record, bankroll and theme")])] + [g for g in NAV_GROUPS if g[2]]))
         _wk_made.append(_week_page("/all/", "Every page", "Everything on BetSweep, grouped the way the menu is.", _groups, "Every page on BetSweep on one screen: games, betting tools, contests, players, fantasy and the graded record."))
         print("week pages:", ", ".join(_wk_made))
     except Exception as _e:
@@ -1059,6 +1092,7 @@ _API = [
     ("/b/plus.json", "This week's plus-money and touchdown-tier legs with the price at build time: {week, built, legs:[{pl, m, ln, o, p, tier, ...}]}.", "every rebuild"),
     ("/b/live-legs.json", "Every leg the live page tracks (the model's picks plus saved slips' legs) with the pregame chance; the live page re-prices them from the box score.", "every rebuild"),
     ("/b/players.json", "Player index for search: name, slug (the /player/<slug>/ page), team, position, opponent, whether he has props this week.", "every rebuild"),
+    ("/b/ask.json", "Where this week's whole board is: {week, src}. src is the Parlay Builder's data file (every priced leg with the model's chance, edge, flags and FanDuel ids); Ask BetSweep in the menu reads it.", "every rebuild"),
     ("/b/today.json", "The morning briefs per game day: {week, briefs:{YYYY-MM-DD:{title, body, url, games}}, days}. Weather risks lead the body.", "every rebuild"),
     ("/b/pairs.json", "Either-or touchdown pairs: every player with an anytime-TD price (model chance, FanDuel price, chance under each game ending, risk score) and the best pairs with the chance that at least one scores. FanDuel's own either-or prices are not included.", "every rebuild"),
     ("/b/shop.json", "Line shop: every leg where DraftKings or Hard Rock pays more than FanDuel at the same line (both prices, the gap in points of break-even chance, the link), plus how many legs have a second price.", "every rebuild"),
@@ -1140,5 +1174,14 @@ open(os.path.join(SITE, "sitemap.xml"), "w").write('<?xml version="1.0" encoding
     + "</urlset>\n")
 open(os.path.join(SITE, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /me/\nSitemap: {BASE}/sitemap.xml\n")
 print(f"sitemap: {len(set(_urls))} urls")
+# ---- owner 11/11 ("I'd want this on the menu of every page"): the pages this build did not make - older receipts, /season/ between
+# gradings, earlier weeks' short-link pages - keep whatever menu they were last built with (on 11/11: 26 live pages on three generations
+# of menu). rechrome.py gives each of them this build's menu, shared stylesheet and script and writes the copy here, so the copy step
+# (reprice.copy_into_clone) publishes them with everything else. Their own content is not touched.
+try:
+    import rechrome as _RC, reprice as _RP
+    _rc_done, _rc_skip = _RC.refresh(os.environ.get("BS_SITE") or _clone, SITE, sitenav, apptabs, next_strip, SHARED, _RP.MERGE, _RP.PROTECTED, _BUILD_T0)
+    print(f"rechrome: {len(_rc_done)} older pages given this build's menu" + ((": " + ", ".join(_rc_done[:40])) if _rc_done else "") + (f"; {len(_rc_skip)} left as they are: {', '.join(_rc_skip[:20])}" if _rc_skip else ""))
+except Exception as _e: print("WARN rechrome failed (older pages keep the menu they had):", _e)
 n = sum(len(fs) for _, _, fs in os.walk(SITE)); mb = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(SITE) for f in fs) / 1e6
 print(f"site: {n} files, {mb:.1f} MB -> {SITE}; pages: {made}; receipts: {weeks}")

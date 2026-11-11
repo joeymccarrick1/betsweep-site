@@ -840,12 +840,6 @@ BUILDER_CSS = r""".sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.u
 .zn.b{background:color-mix(in srgb,#d7a22a 22%,transparent);color:#f0c45a}
 .zn{display:inline-block;margin:2px 4px 0 0;padding:0 6px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap} .zn.g{background:color-mix(in srgb,#2fae6a 22%,transparent);color:#5fd18b} .zn.r{background:color-mix(in srgb,#d7332a 22%,transparent);color:#ff7b72}
 .trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
-.askbox{max-width:1100px;margin:10px auto 6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card,#16202b)} .askbox label b{font-family:var(--display);font-size:18px;letter-spacing:.02em} .askbox label small{color:var(--mute);margin-left:6px}
-.askrow{display:flex;gap:8px;margin-top:8px} .askrow input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--chalk,#0f141c);color:inherit;font:inherit;font-size:16px} .askrow button{padding:0 16px;border-radius:10px;border:0;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;letter-spacing:.05em}
-.askc{margin-top:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--chalk,#0f141c) 70%,transparent);font-size:14px} .askc p{margin:6px 0} .askh{display:flex;justify-content:space-between;gap:8px;align-items:baseline} .askh b{font-size:16px} .askh small{color:var(--mute)}
-.askg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0} .askg span{display:flex;flex-direction:column} .askg small{font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em} .askg b{font-family:var(--display);font-size:20px} .askg b.up{color:var(--good)} .askg b.dn{color:var(--bad)}
-.askf{list-style:none;margin:6px 0;padding:0;font-size:12.5px;color:var(--mute)} .askf li{margin:3px 0} .askf li b{color:var(--ink)} .askf li.bad b{color:var(--bad)} .askf li.good b{color:var(--good)} .askc .wr{color:var(--bad);font-size:12.5px} .askc .nt{color:var(--mute);font-size:12.5px}
-.askb .askadd{padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:700;margin-right:8px} .askl{margin:6px 0 0;padding-left:18px} .askl li{margin:4px 0} .askl small{color:var(--mute)}
 
 .bld{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start}
 .bld .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -1717,6 +1711,7 @@ BUILDER_JS = r"""
     var b = t.closest('#scen .scr'); if(b){ var gid = b.getAttribute('data-g'), k = +b.getAttribute('data-k'); if(SCN[gid] === k) delete SCN[gid]; else SCN[gid] = k; renderSlip(); renderList(); return; }
     if(t.closest('#scen .scclr')){ SCN = {}; renderSlip(); renderList(); } });
   function renderSlip(){
+    try { document.dispatchEvent(new CustomEvent('bs-slip')); } catch(e){}   // the menu's Ask BetSweep repaints its "In your slip" buttons (ask.py)
     var scb = $('#scen'); if(!scb){ var tk = $('#take'); if(tk){ scb = document.createElement('div'); scb.id = 'scen'; scb.className = 'scen'; tk.parentNode.insertBefore(scb, tk.nextSibling); } }
     var ls = slipLegs(); var ul = $('#slipLegs');
     if(scb){ try { scb.innerHTML = ls.length ? scenBlock(ls) : ''; } catch(e){ scb.innerHTML = ''; } }
@@ -1840,61 +1835,12 @@ BUILDER_JS = r"""
       if(el.classList.contains('glb')){ el.classList.toggle('in', on); return; }
       $$('button', el).forEach(function(b){ if(b.closest('[data-i]') !== el || b.disabled) return; var t = b.textContent.trim(); if(t === '+ Add' || t.indexOf('In slip') === 0){ b.classList.toggle('in', on); b.textContent = lab; } });
     }); }
-  // ---- Ask BetSweep (owner 11/5): a plain-language search over this week's board - "Chase 75+ rec yds", "Henry rush", "who benefits Darnold out"
-  var ASKM = [[/rush(ing)?\s*\+\s*rec|scrimmage|rush\s*and\s*rec/, 'Rush + Rec Yards'], [/long(est)?/, 'Longest Reception'], [/first\s*td|1st\s*td/, 'First TD'], [/\btds?\b|touchdown|score|anytime/, 'Anytime TD'],
-    [/rec(eiving)?\s*y(ar)?ds|rec\s*yd|receiving/, 'Receiving Yards'], [/rush(ing)?|carries/, 'Rushing Yards'], [/pass(ing)?/, 'Passing Yards'], [/\brec(eptions?)?\b|catch(es)?|\bcatches\b/, 'Receptions']];
-  function askNorm(s){ return String(s).toLowerCase().replace(/[^a-z0-9.+ ]/g, ' ').replace(/\s+/g, ' ').trim(); }
-  var ASKN = null;
-  function askNames(){ if(ASKN) return ASKN; var s = {}; legs.forEach(function(l){ if(!l.gl) s[l.pl] = 1; }); Object.keys(D.gl || {}).forEach(function(n){ s[n] = 1; }); Object.keys(D.pf || {}).forEach(function(n){ s[n] = 1; }); ASKN = Object.keys(s); return ASKN; }
-  function askPlayer(q, mk){ var names = askNames(), qt = q.split(' '), firsts = {};
-    names.forEach(function(n){ var f = askNorm(n).split(' ')[0]; firsts[f] = (firsts[f] || 0) + 1; });
-    var best = null, bs = 0;
-    names.forEach(function(n){ var toks = askNorm(n).split(' '), last = toks[toks.length - 1], s = 0;
-      toks.forEach(function(t, k){ if(t.length > 1 && qt.indexOf(t) >= 0) s += (t === last ? 3 : (k === 0 && firsts[t] === 1 ? 2.5 : 1)); });
-      if(!s) return;
-      var has = legs.filter(function(l){ return l.pl === n && !l.gl; });
-      s += (mk && has.some(function(l){ return l.m === mk || l.m === 'Under ' + mk; }) ? 2 : 0) + (has.length ? 0.5 : 0);
-      if(s > bs){ bs = s; best = n; } });
-    return bs >= 2.5 ? best : null; }
-  function askAnswer(raw){
-    var q = askNorm(raw), out = $('#askOut'); if(!q){ out.innerHTML = ''; return; }
-    var team = Object.keys(games).map(function(g){ return games[g]; }).filter(function(g){ return new RegExp('\\b(' + g.a.toLowerCase() + '|' + g.b.toLowerCase() + '|' + askNorm(g.na) + '|' + askNorm(g.nb) + ')\\b').test(q); });
-    var mk0 = null; ASKM.some(function(x){ if(x[0].test(q)){ mk0 = x[1]; return true; } return false; });
-    var pl = askPlayer(q, mk0);
-    var bq = /benefit|without|\bout\b|replace|fill.?in/.test(q);
-    if(bq && !pl){ var tk = q.split(' ').filter(function(t){ return t.length > 3 && !/^(who|benefits?|without|with|replace|fill|does|from)$/.test(t); })[0];
-      if(tk){ var mm = null; legs.some(function(l){ return (l.fh || []).concat((D.pf || {})[l.pl] || []).some(function(f){ var m = new RegExp("([A-Z][A-Za-z.'-]+ " + tk.charAt(0).toUpperCase() + tk.slice(1) + "(?: Jr\\.)?)").exec(String(f[2] || '')); if(m){ mm = m[1]; return true; } return false; }); }); pl = mm; } }
-    if(bq && pl){
-      var last = pl.split(' ').pop(), seenP = {};
-      var hit2 = legs.filter(function(l){ return !l.gl && l.pl !== pl && (l.fh || []).concat((D.pf || {})[l.pl] || []).some(function(f){ return String(f[2] || '').indexOf(pl) >= 0 || String(f[1] || '').indexOf(last) >= 0; }); })
-        .sort(function(a, b){ return b.e - a.e; }).filter(function(l){ if(seenP[l.pl + l.m]) return false; seenP[l.pl + l.m] = 1; return true; }).slice(0, 8);
-      out.innerHTML = '<div class="askc"><b>With ' + esc(pl) + ' out</b><p>Legs whose model notes account for his absence, best price first. More: <a href="/benefits/">Who benefits from injuries</a>.</p>' + askList(hit2) + '</div>'; return; }
-    if(pl){
-      var mk = null; ASKM.some(function(x){ if(x[0].test(q.replace(askNorm(pl), ''))){ mk = x[1]; return true; } return false; });
-      var num = (q.replace(askNorm(pl), '').match(/(\d+(\.\d+)?)/) || [])[1], under = /\bunder\b/.test(q);
-      var mine = legs.filter(function(l){ return l.pl === pl && !l.gl && (!mk || l.m === mk || l.m === 'Under ' + mk) && (under ? /^Under /.test(l.m) : !/^Under /.test(l.m)); });
-      if(!mine.length) mine = legs.filter(function(l){ return l.pl === pl && !l.gl; });
-      if(num != null && mk){ var n = +num; mine.sort(function(a, b){ return Math.abs((a.ln || 1) - n) - Math.abs((b.ln || 1) - n); }); var hit = mine[0];
-        if(hit) { out.innerHTML = askCard(hit, Math.abs((hit.ln || 1) - n) > 0.6 ? 'FanDuel has no ' + n + '+ line; closest is ' + Math.round(hit.ln || 1) + '+.' : ''); return; } }
-      mine.sort(function(a, b){ return Math.abs(a.p - 0.55) - Math.abs(b.p - 0.55); });   // the "main" rungs first
-      out.innerHTML = mine.length ? (mk ? askCard(mine[0], '') + (mine.length > 1 ? '<div class="askc"><b>Other ' + esc(mk.toLowerCase()) + ' lines</b>' + askList(mine.slice(1, 7)) + '</div>' : '') : '<div class="askc"><b>' + esc(pl) + ' on the board</b>' + askList(mine.slice().sort(function(a, b){ return b.e - a.e; }).slice(0, 8)) + '</div>')
-        : '<div class="askc">' + esc(pl) + ' has no FanDuel lines on the board right now (ruled out, or his game has started).</div>'; return; }
-    if(team.length){ var g = team[0]; out.innerHTML = '<div class="askc"><b>' + esc(g.a) + ' vs ' + esc(g.b) + '</b> · ' + esc(g.kick || '') + '<p><a href="/dossier/' + esc(g.gid) + '/">Game preview</a> · <a href="/boards/#' + esc(g.gid) + '">Matchup board</a> · <a href="/teams/' + g.a.toLowerCase() + '/">' + esc(g.a) + ' page</a> · <a href="/teams/' + g.b.toLowerCase() + '/">' + esc(g.b) + ' page</a></p>' +
-      askList(legs.filter(function(l){ return l.g === g.gid && !l.gl && l.e > 0; }).sort(function(a, b){ return b.e - a.e; }).slice(0, 6)) + '</div>'; return; }
-    out.innerHTML = '<div class="askc">Try a player and a stat: <i>Chase 75+ rec yds</i>, <i>Henry rush</i>, <i>Lock pass yds</i>, <i>who benefits Darnold out</i>, or a team: <i>Jaguars</i>.</div>'; }
-  function askFair(p){ var o = p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); return o > 0 ? '+' + o : '' + o; }
-  function askCard(l, note){ var i = l.i, fl = (l.fh || []).map(function(f){ return '<li class="' + esc(f[0]) + '"><b>' + esc(f[1]) + '</b> ' + esc(f[2] || '') + '</li>'; }).join('');
-    return '<div class="askc main"><div class="askh"><b>' + esc(l.pl) + ' ' + esc(isTD(l) ? l.ms : l.ms.toLowerCase() + ' ' + (/^Under /.test(l.m) ? l.ln : Math.round(l.ln || 1) + '+')) + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + '</small></div>' + (note ? '<p class="nt">' + esc(note) + '</p>' : '') +
-      '<div class="askg"><span><small>FanDuel</small><b>' + am(l.o) + '</b></span><span><small>Model</small><b>' + Math.round(l.p * 100) + '%</b></span><span><small>Edge</small><b class="' + (l.e >= 0 ? 'up' : 'dn') + '">' + (l.e >= 0 ? '+' : '') + (l.e * 100).toFixed(1) + '</b></span><span><small>Fair</small><b>' + askFair(l.p) + '</b></span>' + (l.proj != null ? '<span><small>Proj</small><b>' + (Math.round(l.proj * 10) / 10) + '</b></span>' : '') + '</div>' +
-      (l.w ? '<p class="wr">⚠ ' + esc(l.w) + '</p>' : '') + (fl ? '<ul class="askf">' + fl + '</ul>' : '') +
-      '<p class="askb"><button type="button" class="askadd" data-i="' + i + '">' + (sel[i] ? 'In your slip ✓' : '+ Add to slip') + '</button> <a href="/player/' + plSlug(l.pl) + '/">Player page</a></p></div>'; }
-  function askList(ls){ return ls.length ? '<ul class="askl">' + ls.map(function(l){ return '<li><a href="#" class="askpick" data-q="' + esc(l.pl + ' ' + (isTD(l) ? 'td' : l.ms + ' ' + Math.round(l.ln || 1))) + '">' + esc(l.pl) + ' ' + esc(isTD(l) ? l.ms : l.ms.toLowerCase() + ' ' + Math.round(l.ln || 1) + '+') + '</a> <small>' + am(l.o) + ' · ' + Math.round(l.p * 100) + '% · edge ' + (l.e >= 0 ? '+' : '') + (l.e * 100).toFixed(1) + '</small></li>'; }).join('') + '</ul>' : '<p>Nothing priced in the model\'s favour right now.</p>'; }
-  (function(){ var grid = document.querySelector('.grid'); if(!grid || $('#ask')) return; var box = document.createElement('section'); box.id = 'ask'; box.className = 'askbox';
-    box.innerHTML = '<label for="askq"><b>Ask BetSweep</b> <small>any player, stat, line or team</small></label><div class="askrow"><input id="askq" type="search" placeholder="e.g. Chase 75+ rec yds · Henry rush · who benefits Darnold out" autocomplete="off"><button type="button" id="askgo">Ask</button></div><div id="askOut"></div>';
-    grid.parentNode.insertBefore(box, grid);
-    var go = function(){ askAnswer($('#askq').value); }; $('#askgo').addEventListener('click', go); $('#askq').addEventListener('keydown', function(e){ if(e.key === 'Enter') go(); });
-    box.addEventListener('click', function(e){ var a = e.target.closest('.askadd'); if(a){ toggle(+a.dataset.i); go(); return; } var p = e.target.closest('.askpick'); if(p){ e.preventDefault(); $('#askq').value = p.dataset.q; go(); } });
-    var q0 = null; try { q0 = new URLSearchParams(location.search).get('ask'); } catch(e){} if(q0){ $('#askq').value = q0; go(); box.scrollIntoView(); } })();
+  // ---- Ask BetSweep (owner 11/5) lived here as a box above the grid. Owner 11/11 12:15 AM: "Can ask betsweep just be on the Menu? ... it doesn't
+  // have to be actually on any page itself" - it is in the site menu on every page now (ask.py). On this page it reads this board (window.__BS)
+  // and adds to this slip through the three hooks below, so a leg added from the menu lands in the slip without a reload.
+  window.bsSlipToggle = function(k){ var i = KEYIDX[k]; if(i == null) return null; var was = !!sel[i]; toggle(i); return was === !!sel[i] ? null : !!sel[i]; };   // true = now in, false = out, null = refused
+  window.bsSlipHas = function(k){ var i = KEYIDX[k]; return i != null && !!sel[i]; };
+  window.bsSlipCount = function(){ return Object.keys(sel).length; };
   function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; if(window.BSRisk && window.BSRisk.blockAdd(legs[i].pl, legs[i].m)) return; sel[i] = true; } syncSel(i); renderSlip(); }
   // ---- owner 11/1 ("Start with 1-4"): how the quick builds and the parlay generator choose legs. Graded Weeks 6-7 (3,298 legs):
   //  - heavy favorites (-250 and shorter) are left out unless the model's own % clears the book's by 3+ pts ("price too short" legs lost
