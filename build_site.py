@@ -131,12 +131,64 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
-NAV_GROUPS = [("/", "Home", None), ("/short/", "Short view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
-              (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/firsttd/", "First TD", "Who scores first"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/shop/", "Line shop", "Same leg, better price"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
+# owner 11/10 9:33 PM: "make the organization of the pages more optimized where they are in the menu." Until then Betting was one list of
+# thirteen pages in the order they were built. The groups now follow what a visitor is doing: reading the week's games, making a bet,
+# playing along, looking a player up, running a fantasy team, checking the record. No group is longer than eight, the most-used page
+# of each is first, and every page that left the home page that night (Model's Best, the slate, the news desk, the trade desk) has a
+# line here. NAV_GROUPS is also what /all/ ("Every page") is written from - one list, so the two cannot drift.
+NAV_GROUPS = [("/", "Today", None), ("/short/", "Short view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
+              (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/slate/", "This week's games", "Lines and scripts at a glance"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
+              (None, "Play", [("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
-              (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
-              ("/social/", "Social", None),
-              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/how/", "How BetSweep picks", "The method and the record"), ("/api/", "API", "Every JSON the site serves")])]
+              (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high"), ("/dfs/", "DFS", "Lineup builder")]),
+              (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/how/", "How BetSweep picks", "The method and the record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/all/", "Every page", "The whole site on one screen")])]
+
+# ---- where to next (owner 11/10 9:33 PM: "make sure all of the pages are more fluid and make more sense moving from one to the next").
+# Every page ended at the disclaimer; the only way on was the menu. Each page now closes with up to three doors to the pages a visitor
+# on THIS page most plausibly wants next (research -> build -> check -> track -> results). Longest matching prefix wins; a page with
+# no entry (the home page, the legal pages, /all/) gets no strip.
+NEXT = {
+ "/boards/": [("/build/", "Parlay Builder", "Turn these boards into a slip"), ("/dossier/", "Game previews", "The read before the bet"), ("/best/", "Model's Best", "The week's edges in one list")],
+ "/slate/": [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "What moved the numbers")],
+ "/dossier/": [("/boards/", "Matchup Boards", "Every player's lines for the game"), ("/build/", "Parlay Builder", "Build the slip"), ("/news/", "News desk", "What moved the numbers")],
+ "/news/": [("/benefits/", "Who benefits", "Where the work goes when a starter sits"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/boards/", "Matchup Boards", "See it in the lines")],
+ "/best/": [("/build/?best=1", "Open them in the builder", "Every Model's Best leg, ready to add"), ("/short/", "Short view", "Three favorites, one tap"), ("/season/", "How it has graded", "Every week, in public")],
+ "/short/": [("/best/", "Model's Best", "More picks, with the numbers"), ("/boards/", "Matchup Boards", "The full read on each game"), ("/live/", "Live", "Track it once it kicks off")],
+ "/build/": [("/sweep/", "Sweep my slip", "A verdict before you place it"), ("/shop/", "Line shop", "The same leg at a better price"), ("/live/", "Live", "Track it once it kicks off")],
+ "/sweep/": [("/build/", "Parlay Builder", "Fix it or build another"), ("/shop/", "Line shop", "The same leg at a better price"), ("/live/", "Live", "Track it once it kicks off")],
+ "/firsttd/": [("/pairs/", "Either-or TDs", "Two scorers, one leg"), ("/build/", "Parlay Builder", "Add a scorer to a slip"), ("/boards/", "Matchup Boards", "The full read on each game")],
+ "/pairs/": [("/firsttd/", "First TD", "Who scores first"), ("/build/", "Parlay Builder", "Add a scorer to a slip"), ("/boost/", "Boost finder", "Make a boost count")],
+ "/teasers/": [("/boost/", "Boost finder", "Make a boost count"), ("/shop/", "Line shop", "The same leg at a better price"), ("/build/", "Parlay Builder", "Spreads and totals are in there too")],
+ "/boost/": [("/shop/", "Line shop", "The same leg at a better price"), ("/sweep/", "Sweep my slip", "Check the slip before you place it"), ("/build/", "Parlay Builder", "Build it yourself")],
+ "/shop/": [("/boost/", "Boost finder", "Make a boost count"), ("/build/", "Parlay Builder", "Three books on every leg"), ("/best/", "Model's Best", "The week's edges in one list")],
+ "/live/": [("/me/", "My BetSweep", "Your slips, record and bankroll"), ("/receipts/", "Receipts", "How every week graded"), ("/badbeats/", "Missed by one", "The week's bad beats")],
+ "/me/": [("/live/", "Live", "Your legs against the box score"), ("/build/", "Parlay Builder", "Build the next one"), ("/beat/", "Beat the model", "Your five against its five")],
+ "/beat/": [("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week"), ("/best/", "Model's Best", "What the model would take")],
+ "/survivor/": [("/slate/", "This week's games", "Lines and scripts at a glance"), ("/beat/", "Beat the model", "Your five against its five"), ("/teasers/", "Teaser finder", "Spreads moved your way")],
+ "/social/": [("/build/", "Parlay Builder", "Build a slip to post"), ("/beat/", "Beat the model", "Your five against its five"), ("/live/", "Live", "Track what you tailed")],
+ "/player/": [("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out"), ("/teams/", "Teams", "Stats, results, box scores")],
+ "/teams/": [("/player/", "Players", "Lines, hit rates, game logs"), ("/slate/", "This week's games", "Lines and scripts at a glance"), ("/usage/", "Usage trends", "Rising and falling roles")],
+ "/usage/": [("/benefits/", "Who benefits", "When a starter is out"), ("/player/", "Players", "Lines, hit rates, game logs"), ("/targets/", "Trade desk", "Buy low, sell high")],
+ "/benefits/": [("/usage/", "Usage trends", "Rising and falling roles"), ("/news/", "News desk", "Who is out, limited or back"), ("/build/", "Parlay Builder", "Price the backup's legs")],
+ "/team/compare/": [("/team/", "My team", "Start / sit for the whole roster"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high")],
+ "/team/": [("/team/compare/", "Who should I start?", "Two players, one call"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")],
+ "/trade/": [("/targets/", "Trade desk", "Buy low, sell high"), ("/team/", "My team", "Start / sit for the whole roster"), ("/usage/", "Usage trends", "Rising and falling roles")],
+ "/targets/": [("/trade/", "Trade calculator", "Price the whole offer"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/team/", "My team", "Start / sit for the whole roster")],
+ "/dfs/": [("/team/", "My team", "Season-long start / sit"), ("/player/", "Players", "Lines, hit rates, game logs"), ("/slate/", "This week's games", "Totals and scripts")],
+ "/receipts/": [("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/how/", "How BetSweep picks", "The method and the record")],
+ "/season/": [("/receipts/", "Receipts", "Week by week"), ("/how/", "How BetSweep picks", "The method and the record"), ("/boards/", "This week's boards", "What the model says now")],
+ "/badbeats/": [("/receipts/", "Receipts", "Every week, graded"), ("/sweep/", "Sweep my slip", "Find the weak leg first"), ("/boards/", "This week's boards", "What the model says now")],
+ "/how/": [("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/season/", "Season", "The running record"), ("/short/", "Short view", "Start with the picks")],
+ "/guide/": [("/short/", "Short view", "Start with the picks"), ("/boards/", "Matchup Boards", "One board per game"), ("/how/", "How BetSweep picks", "The method and the record")],
+ "/api/": [("/how/", "How BetSweep picks", "The method and the record"), ("/all/", "Every page", "The whole site on one screen")],
+}
+def next_strip(path):
+    key = max((k for k in NEXT if path.startswith(k)), key=len, default=None)
+    if not key or path == "/": return ""
+    return ('<nav class="nx" aria-label="Where to next"><h2>Where to next</h2><div class="nxl">'
+            + "".join(f'<a href="{h}"><b>{html.escape(t)}</b><small>{html.escape(d)}</small></a>' for h, t, d in NEXT[key]) + '</div></nav>\n')
+
 NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .sitenav{position:sticky;top:0;z-index:60;margin-left:calc(-1 * var(--bs-inset,0px));margin-right:calc(-1 * var(--bs-inset,0px));margin-top:calc(-1 * var(--bs-top,0px));padding-top:env(safe-area-inset-top,0px);background:#efe9da;border-bottom:3px solid #d7332a;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.25)}
 .sitenav .in{max-width:1360px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:50px}
@@ -254,6 +306,31 @@ body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs butto
 /* page titles and section titles on the pages that carry their own CSS (usage, who-benefits, social, how-to guide, receipts) */
 .uw h1,.soc h1,.sp h1,.gd h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;letter-spacing:-.01em;line-height:1}
 .uw h2,.gd h2{letter-spacing:.01em;text-transform:none;font-size:19px} .gd h2{font-size:22px;margin:0 0 10px;padding-bottom:12px;position:relative} .gd h2::after{content:"";position:absolute;left:0;bottom:0;width:54px;height:8px;background:var(--brush) no-repeat left center/100% 100%}
+/* ===== 11/10 evening (owner 9:33-9:41 PM): pages that lead into each other, and the phone pass ===== */
+/* a section title with one "see all" pill on its right (home page: Model's Best, Best parlay, News, Track record) */
+.sech{display:flex;align-items:flex-start;justify-content:space-between;gap:10px} .sech .t{min-width:0}
+.seeall{flex:none;margin-top:3px;font-family:var(--ctl);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:999px;padding:5px 12px;white-space:nowrap;background:var(--card)} .seeall:hover{border-color:var(--red)}
+/* "Where to next": up to three doors at the foot of every page (build_site.py NEXT) */
+.nx{max-width:1360px;margin:30px auto 0;padding:0 16px} .nx h2{margin:0 0 8px;font-family:var(--ctl);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.nxl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.nxl a{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 36px 11px 14px;position:relative}
+.nxl a::after{content:"";position:absolute;right:15px;top:50%;width:8px;height:8px;border-right:2px solid var(--red);border-top:2px solid var(--red);transform:translateY(-50%) rotate(45deg)}
+.nxl a:hover{border-color:var(--red)} .nxl b{font-family:var(--ctl);font-weight:700;font-size:17px;letter-spacing:.01em;line-height:1.15} .nxl small{color:var(--mute);font-size:12.5px;line-height:1.3}
+/* the same doors as a directory grid (home page "Where to next", /all/) */
+.nxl.doors{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+/* the long introduction under a page title folds to three lines on a phone (app script adds .bsclamp and the More button) */
+.bsmore{display:none}
+@media (max-width:760px){
+  .bsclamp{display:-webkit-box !important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .bsmore{display:inline-block;font:inherit;font-family:var(--ctl);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:none;border:0;border-bottom:2px solid var(--red);padding:0 0 1px;margin:2px 0 12px;cursor:pointer}
+  /* phones run a 5px page gutter so cards use the width (BIGGER_CSS). Text that sits straight on the page background - titles,
+     introductions, breadcrumbs - was 5px from the glass too. It gets a real margin; the cards keep theirs. */
+  .top .mast{padding-left:9px;padding-right:9px}
+  .sc > :is(h1,h2,h3,p,.bsmore),.pr > :is(h1,h2,h3,p,.bsmore),.tzw > :is(h1,h2,h3,p,.bsmore),.pd > :is(h1,h2,h3,p,.bsmore),.uw > :is(h1,h2,h3,p,.bsmore),.soc > :is(h1,h2,h3,p,.bsmore),.sp > :is(h1,h2,h3,p,.bsmore),.gd > :is(h1,h2,h3,p,.bsmore),.pp > p.crumb,article.legal > *,p.tag{margin-left:9px !important;margin-right:9px !important}
+  .sv{padding-left:9px;padding-right:9px}
+  .nx{padding:0;margin-top:24px} .nx h2{margin-left:9px}
+  .nxl.doors{grid-template-columns:1fr 1fr} .nxl.doors a{padding:10px 26px 10px 12px} .nxl.doors a::after{right:11px} .nxl.doors b{font-size:16px}
+}
 /* focus is visible everywhere, in the brand red */
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
@@ -326,6 +403,16 @@ APP_JS = r"""<script>
       var chrome = (nav ? nav.getBoundingClientRect().height : 0) + (top && getComputedStyle(top).position === 'sticky' ? top.getBoundingClientRect().height : 0) + 8;
       var y = el.getBoundingClientRect().top + (window.scrollY || 0) - chrome; window.scrollTo(0, Math.max(0, y)); lastY = y; }, 60); }
   window.addEventListener('load', landOnHash); window.addEventListener('hashchange', landOnHash);
+  // 1b. 11/10 evening: on a phone the first screen of many pages was the title and eight lines of explanation. An introduction longer
+  //     than about three lines folds to three with a "More" button; nothing is removed, and wide screens are untouched.
+  function foldIntro(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    [].slice.call(document.querySelectorAll('h1 + p, h1 + .sub, h1 + .lead, h1 + .lede')).forEach(function(p){
+      if(p.closest('.sitenav, .top, article, .tdhead, .bssrch, dialog') || p.dataset.fold) return; p.dataset.fold = '1';
+      if((p.textContent || '').trim().length < 190) return;
+      p.classList.add('bsclamp'); var b = document.createElement('button'); b.type = 'button'; b.className = 'bsmore'; b.textContent = 'More'; b.setAttribute('aria-expanded', 'false');
+      b.addEventListener('click', function(){ var open = p.classList.toggle('bsclamp') === false; b.textContent = open ? 'Less' : 'More'; b.setAttribute('aria-expanded', open); });
+      p.parentNode.insertBefore(b, p.nextSibling); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldIntro); else foldIntro();
   // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
   var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
   // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
@@ -446,7 +533,7 @@ def wrap(body, title, desc, path, og_img):
            '<link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>') if FONT_CSS else ""
     shared_css = f'<link rel="stylesheet" href="{SHARED["site"]}">' if "site" in SHARED else NAV_CSS + BRAND_CSS
     shared_js = f'<script src="{SHARED["app"]}" defer></script>' if "app" in SHARED else APP_JS
-    return head + pre + headpart + shared_css + "</head>\n<body>\n" + sitenav(path) + (INSTALL_BAR if path == "/" else "") + rest + foot + apptabs(path) + (_H2C_STUB if ("html2canvas" in rest and _H2C_STUB not in rest) else "") + shared_js + "\n</body>\n</html>\n"
+    return head + pre + headpart + shared_css + "</head>\n<body>\n" + sitenav(path) + (INSTALL_BAR if path == "/" else "") + rest + next_strip(path) + foot + apptabs(path) + (_H2C_STUB if ("html2canvas" in rest and _H2C_STUB not in rest) else "") + shared_js + "\n</body>\n</html>\n"
 
 def title_desc(src):
     t = re.search(r"<title>(.*?)</title>", src).group(1)
@@ -746,6 +833,28 @@ footer .tag i{color:var(--red);font-style:normal}
 @media (max-width:760px){ .tiles{grid-template-columns:1fr 1fr;gap:8px} .tile img,.tile .ph{display:none} .tile .tb{padding:11px 12px 10px;gap:3px} .tile .tb p{display:none} .tile .tb h2{font-size:18px;line-height:1.12} .tile .tb small{font-size:10.5px} .tile .tb b{font-size:11.5px;margin-top:2px} }
 """
 
+# 11/10 evening: the pages made from home-page sections (/best/ /slate/ /news/ /targets/ /all/) share one head: title, one-line
+# introduction, then the sections. Also the home page's doors grid and its footer line.
+WK_CSS = """
+.wk{max-width:1360px;margin:14px auto 0;padding:0}
+.wkh{max-width:1360px;margin:0 auto;padding:0 16px} .wkh h1{margin:0 0 6px;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1} .wkh .lead{margin:0;color:var(--mute);font-size:15px;line-height:1.5;max-width:70ch}
+.wk .sec:first-of-type{margin-top:18px}
+.nwf{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch} .nwf::-webkit-scrollbar{display:none}
+.nwf button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:36px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer} .nwf button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.nwh:first-of-type{margin-top:6px}
+@media (max-width:560px){ .wkh h1{font-size:34px} }
+"""
+HOME_COMPACT_CSS = """
+/* 11/10 evening: the short home page */
+.hfoot{max-width:1360px;margin:26px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.55} .hfoot a{color:var(--ink)}
+.plays.teaser > [hidden]{display:none} #bestt .tznote a{color:var(--ink)}
+@media (max-width:760px){
+  .sec{margin-top:24px}
+  #record .rec{grid-template-columns:1fr 1fr;gap:8px} #record .rec div{padding:10px 12px} #record .rec b{font-size:24px} #record .rec span{font-size:12px;line-height:1.35}
+  .tdnewsl li p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+}
+"""
+
 def posts_gallery():
     if not POSTS_DIR or not os.path.isdir(POSTS_DIR): return ""
     files = sorted([f for f in os.listdir(POSTS_DIR) if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".gif")) and not f.startswith(".")], reverse=True)[:6]
@@ -805,7 +914,13 @@ def landing(weeks):
     import home as HOME, live as LIVE
     home_html, home_js = HOME.sections(IN, OUT, latest)
     global LANDING_HOME_PARTS
-    LANDING_HOME_PARTS = {"home_html": home_html, "home_js": home_js, "tiles": tile_html, "gal": GAL}
+    # owner 11/10 9:39 PM: the home page is short now - eight doors instead of the twenty-tile directory (which is /all/, written from the menu)
+    doors = [("/boards/", "Matchup Boards", "One board per game"), ("/build/", "Parlay Builder", (f"{nlegs:,} legs priced" if nlegs else "Every prop, priced")), ("/best/", "Model's Best", "The week's edges"),
+             ("/live/", "Live", "Your legs vs the box score"), ("/player/", "Players", "Lines, hit rates, logs"), ("/team/", "Fantasy", "Start / sit, trades, DFS"),
+             ("/receipts/", "Receipts", (f"Week {latest} graded" if latest else "Every week, graded")), ("/all/", "Every page", "The whole site on one screen")]
+    doors_html = ('<section class="sec" id="doors"><h2 class="t">Where to next</h2><div class="nxl doors">'
+                  + "".join(f'<a href="{h}"><b>{html.escape(t)}</b><small>{html.escape(d)}</small></a>' for h, t, d in doors) + '</div></section>\n')
+    LANDING_HOME_PARTS = {"home_html": home_html, "home_js": home_js, "tiles": tile_html, "gal": GAL, "blocks": dict(HOME.BLOCKS), "doors": doors_html}
     return ('<title>BetSweep</title>\n'
             '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@1,800&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">\n'
             '<style>' + LANDING_CSS + HOME.HOME_CSS + LIVE.LIVE_CSS + f'.hero{{--banner:url("data:image/png;base64,{BANNER}")}}' + '</style>\n'
@@ -882,7 +997,7 @@ except Exception as _e: print("note: inline image pass skipped:", _e)
 if os.path.exists(os.path.join(OUT, "today.html")):
     import home as _HOME, live as _LIVE
     _tb = open(os.path.join(OUT, "today.html")).read()
-    _tb = _tb.replace("<style>", '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@1,800&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">\n<style>' + LANDING_CSS + _HOME.HOME_CSS + _LIVE.LIVE_CSS, 1)   # the Today page reuses the landing/home CSS (sections, play cards) and the live score chips
+    _tb = _tb.replace("<style>", '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@1,800&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">\n<style>' + LANDING_CSS + _HOME.HOME_CSS + _LIVE.LIVE_CSS + HOME_COMPACT_CSS, 1)   # the Today page reuses the landing/home CSS (sections, play cards) and the live score chips
     open(os.path.join(OUT, "today_wrapped.html"), "w").write(_tb)
     # owner 11/5: Today and Home are one page. "/" = Today's day view + the home page's week sections (promos, Model's Best, top plays, next man up,
     # floor legs, best parlay, slate) + the tiles / how-it-works; /today/ redirects to "/" so old links, the installed app and shared links still land.
@@ -898,6 +1013,47 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         made.append(place_plain(os.path.join(OUT, "today_wrapped.html"), os.path.join(SITE, "today"), "/today/"))
     try: shutil.copy(os.path.join(OUT, "today.json"), os.path.join(SITE, "b", "today.json")); print("wrote /b/today.json (morning briefs per game day)")
     except Exception as _e: print("note: /b/today.json not written:", _e)
+    # ---- owner 11/10 9:39 PM ("compact the home page ... some things can move to different or new pages. Slate probably doesn't need to be
+    # on the home page"): the sections that left "/" each get an address. Same HTML home.py / build_today.py always made, same CSS and
+    # scripts (kickoff state, "+ Slip" bar), one page each: /best/ /slate/ /news/ /targets/ - and /all/, the directory, from NAV_GROUPS.
+    try:
+        _B = LANDING_HOME_PARTS.get("blocks") or {}
+        try: _TP = json.load(open(os.path.join(OUT, "today_parts.json")))
+        except Exception: _TP = {}
+        _wkw = _B.get("week") or ""
+        def _week_page(path, title, lead, inner, desc, tail=""):
+            body = (f'<title>{html.escape(title)} · BetSweep</title>\n<meta name="description" content="{html.escape(desc)}">\n'
+                    '<style>' + LANDING_CSS + _HOME.HOME_CSS + _LIVE.LIVE_CSS + _TP.get("css", "") + WK_CSS + '</style>\n'
+                    f'<main class="wk"><header class="wkh"><h1>{html.escape(title)}</h1><p class="lead">{lead}</p></header>\n{inner}\n</main>\n' + tail)
+            fn = os.path.join(OUT, "wk_" + path.strip("/").replace("/", "_") + ".html"); open(fn, "w").write(body)
+            made.append(place_plain(fn, os.path.join(SITE, *path.strip("/").split("/")), path)); return path
+        _wk_made = []
+        _slipjs = (_B.get("bar") or "") + "\n<script>" + _LIVE.LIVE_JS + "</script>\n" + (_B.get("js") or "")
+        _best = "".join(_B.get(k, "") for k in ("best", "plays", "nextman", "radar", "parlay"))
+        _best = _best.replace('<h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>', "", 1)   # the page title says it
+        if not _B.get("plays_n"): _best = re.sub(r'<section class="sec" id="plays">.*?</section>', "", _best, count=1, flags=re.S)   # an empty "top plays" note is not a section
+        if _best:
+            _wk_made.append(_week_page("/best/", "Model's Best", f"Week {_wkw}. Where the model and FanDuel's price disagree the most, the thinned rooms, and every game's best parlay. Each leg shows the model's chance beside the chance the price needs.",
+                                       _best, "Model's Best on BetSweep: the week's plus-money edges, near-even looks, next man up, touchdown and game-line radar, and the best parlay for every game.", _slipjs))
+        if _B.get("slate_cards"):
+            _wk_made.append(_week_page("/slate/", f"Week {_wkw} games", f"All {_B.get('ngames', '')} games with the model's line, the total and the likeliest script. Tap a game for its matchup board; scores update here on game day.",
+                                       f'<section class="sec" id="slate">{_B["slate_cards"]}</section>', f"Every Week {_wkw} NFL game on one screen: kickoff, the model's line and total, the likeliest game script, live scores on game day.", "<script>" + _LIVE.LIVE_JS + "</script>\n" + _HOME.home_js(_B.get("games") or [])))
+        if _TP.get("news"):
+            _teams = "".join(f'<button type="button" data-t="{html.escape(t)}">{html.escape(t)}</button>' for t in _TP.get("teams") or [])
+            _wk_made.append(_week_page("/news/", "News desk", f"Week {_wkw}, as of {html.escape(str(_TP.get('stamp', '')))} CT. {_TP.get('n', '')} notes that moved the model's numbers, read from ESPN, RotoWire, CBS, Yahoo and the team injury pages at every rebuild. The chips on player names across the site update every 10 minutes.",
+                                       (_TP.get("stale") or "") + f'<section class="sec" id="news"><div class="nwf" id="nwf"><button type="button" data-t="" class="on">All teams</button>{_teams}</div>{_TP["news"]}<p class="none" id="nwnone" hidden>No notes for that team this week.</p></section>',
+                                       f"The Week {_wkw} NFL news that moved BetSweep's model: who is out, limited, questionable or back, and whose role changed.",
+                                       "<script>(function(){var f=document.getElementById('nwf');if(!f)return;f.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var t=b.getAttribute('data-t');[].forEach.call(f.children,function(x){x.classList.toggle('on',x===b)});var n=0;[].forEach.call(document.querySelectorAll('#news .tdnewsl li'),function(li){var on=!t||li.getAttribute('data-team')===t;li.hidden=!on;if(on)n++});[].forEach.call(document.querySelectorAll('#news .tdnewsl'),function(ul){var any=ul.querySelector('li:not([hidden])');ul.hidden=!any;if(ul.previousElementSibling)ul.previousElementSibling.hidden=!any});document.getElementById('nwnone').hidden=n>0})})();</script>\n"))
+        if _TP.get("targets"):
+            _wk_made.append(_week_page("/targets/", "Trade desk", f"Buy low and sell high after Week {int(_wkw) - 1 if str(_wkw).isdigit() else _wkw}, from snaps and schedule rather than the box score: players whose role says more (or less) than their recent points.",
+                                       _TP["targets"].replace('<h2 class="t">Trade desk <small class="tsub">buy low, sell high · snaps and schedule, not the box score</small></h2>', "", 1),
+                                       "Fantasy football buy-low and sell-high targets from BetSweep's model: role, snaps and schedule against market rank."))
+        _groups = "".join(f'<section class="sec"><h2 class="t">{html.escape(t)}</h2><div class="nxl doors">' + "".join(f'<a href="{kp}"><b>{html.escape(kt)}</b><small>{html.escape(kd)}</small></a>' for kp, kt, kd in kids) + '</div></section>'
+                          for _p, t, kids in ([(None, "Start here", [("/", "Today", "Today's games, the Daily Sweep, the news"), ("/short/", "Short view", "Picks first, reading optional"), ("/me/", "My BetSweep", "Your slips, record and bankroll")])] + [g for g in NAV_GROUPS if g[2]]))
+        _wk_made.append(_week_page("/all/", "Every page", "Everything on BetSweep, grouped the way the menu is.", _groups, "Every page on BetSweep on one screen: games, betting tools, contests, players, fantasy and the graded record."))
+        print("week pages:", ", ".join(_wk_made))
+    except Exception as _e:
+        print("WARN week pages failed:", _e)
 # ---- 11/5 (out-of-the-box batch): /api/ - a plain page listing every public JSON the site serves, so anyone can build on the numbers ----
 _API = [
     ("/b/plus.json", "This week's plus-money and touchdown-tier legs with the price at build time: {week, built, legs:[{pl, m, ln, o, p, tier, ...}]}.", "every rebuild"),

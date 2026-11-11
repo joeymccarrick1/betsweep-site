@@ -20,8 +20,10 @@ GOOGLE = False
 # owner 11/10 (deep dive): anonymous page counts - one "+1" per page view, the path only (sql/betsweep-pagehits.sql: table page_hits,
 # function hit). OFF until the owner has run that SQL: switching it on adds the request to every page AND changes the privacy page in
 # the same build (build_legal.py reads this flag), because that page promises to change first. Set PAGE_COUNTS_SINCE to the date.
-PAGE_COUNTS = False
-PAGE_COUNTS_SINCE = ""
+# 11/10 9:25 PM: the owner had the SQL in hand ("On it"), so the switch is on. The request fails quietly until the function exists and
+# starts counting the moment it does - nothing else to do on either side. (The session cannot reach Supabase to confirm the function.)
+PAGE_COUNTS = True
+PAGE_COUNTS_SINCE = "November 10, 2026"
 HIT_JS = r"""
 /* page counts (owner 11/10): one anonymous +1 per page view - the page's path and nothing else. No cookie, no id. Skipped when the browser sends Do Not Track or Global Privacy Control. */
 (function(){ try{ var n = navigator; if(n.globalPrivacyControl || n.doNotTrack === '1' || window.doNotTrack === '1') return; if(/bot|crawl|spider|headless|lighthouse/i.test(n.userAgent || '')) return;

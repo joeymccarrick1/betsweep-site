@@ -112,6 +112,24 @@ def sections(IN_, OUT_):
         except Exception: _pct = ""
         # owner 11/5: label the likeliest script so it doesn't read as a second, different projection
         return f"Model {E(g['a'])} {g['pa']:.0f} – {E(g['b'])} {g['pb']:.0f} · {E(fav)} by {marg:.1f}" + (f" · likeliest script: {E(g['most'])}{_pct}" if g.get('most') else "")
+    def stat_strip(g):
+        """owner 11/10 9:39 PM ("The first section with today's game looks really good though. Just make it better"): the card opened with one
+        run-on line - FanDuel's spread, the total, the model's score, the margin and the script. The three numbers are a strip; the
+        script is its own sentence under it."""
+        L = GL.get(g["gid"]) or {}; cells = []
+        sp = L.get("spread"); home = L.get("home"); away = L.get("away")
+        if sp is not None and home:   # the favorite's side of FanDuel's line ("BUF −7.5", not "NYJ +7.5")
+            cells.append(("Spread", f"{E(home)} PK" if not sp else f"{E(home)} −{abs(sp):g}" if sp < 0 else f"{E(away or home)} −{abs(sp):g}" if away else f"{E(home)} +{sp:g}"))
+        if L.get("total") is not None: cells.append(("Total", f"{L['total']:g}"))
+        hi, lo = (g["a"], g["b"]) if g["pa"] >= g["pb"] else (g["b"], g["a"]); ph, pl_ = max(g["pa"], g["pb"]), min(g["pa"], g["pb"])
+        cells.append(("Model", f"{E(hi)} {ph:.0f}–{pl_:.0f}"))
+        return '<div class="tdstats">' + "".join(f"<span><i>{k}</i><b>{v}</b></span>" for k, v in cells) + "</div>"
+    def script_only(g):
+        try: _pr = json.loads(g["probs"]) if isinstance(g.get("probs"), str) else g.get("probs"); _pct = f" ({max(_pr):.0f}%)" if _pr and len(_pr) == 4 else ""
+        except Exception: _pct = ""
+        most = str(g.get("most") or "").strip()
+        if most and not most.split(" ")[0].isupper(): most = most[:1].lower() + most[1:]   # "Close, low scoring" reads on; "BUF by 10+" keeps its capitals
+        return f"Likeliest script: {E(most)}{_pct}" if most else ""
     def market_line(g):
         L = GL.get(g["gid"]) or {}
         if "spread" not in L and "total" not in L: return ""
@@ -144,13 +162,17 @@ def sections(IN_, OUT_):
             bp_html = ('<div class="tdbp"><small>Best parlay for this game</small><ul>' + "".join(f'<li><b>{E(str(x[0]))}</b> <span>{E(HOME.leg_line(x[1], x[2]))}</span><em>{E(odds(x[3]))}</em></li>' for x in bp["legs"][:4]) + '</ul>'
                        + (f'<a class="more" href="/boards/#g-{E(g["gid"])}">Full card →</a>') + '</div>')
         cards.append(f'''<article class="tdgame" id="td-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-date="{E(ct_date(g.get("ko")) or "")}" data-fin="{E(g.get("fin", ""))}">
- <header><div class="tdm"><span class="tm">{E(away)}</span><span class="at">@</span><span class="tm">{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="gl"></span></div></header>
- <p class="tdl">{market_line(g)}{" · " if market_line(g) else ""}{script_line(g)}</p>
- {(f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>' + swb.get(g["gid"], "")) if say else ""}
+ <header><div class="tdm"><span class="tm">{E(away)}</span><span class="at">@</span><span class="tm">{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="tdcd" data-ko="{g.get("ko") or ""}"></span><span class="gl"></span></div></header>
+ {stat_strip(g)}
+ {f'<p class="tdl">{script_only(g)}</p>' if script_only(g) else ""}
+ {(f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>') if say else ""}
+ <button type="button" class="tdtog" aria-expanded="false"><span>More<em> on this game</em></span><i>▾</i></button>
+ <div class="tdmore">{swb.get(g["gid"], "") if say else ""}
  {f'<div class="tdchips">{chip_html}</div>' if chip_html else ""}
  {f'<ul class="tdnews">{news_html}</ul>' if news_html else ""}
- {f'<button type="button" class="tdtog" aria-expanded="false">Looks &amp; parlay <i>▾</i></button><div class="tdmore"><div class="plays tdplays">{legs_html}</div>{bp_html}</div>' if (legs_html or bp_html) else ""}
- <div class="tdlinks"><a href="/boards/#g-{E(g["gid"])}">Matchup card</a><a href="/build/#g-{E(g["gid"])}">Builder</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#lv-{E(g["gid"])}">Live</a></div>
+ {f'<div class="plays tdplays">{legs_html}</div>{bp_html}' if (legs_html or bp_html) else ""}
+ </div>
+ <div class="tdlinks"><a class="pri" href="/boards/#g-{E(g["gid"])}">Matchup board</a><a href="/build/#g-{E(g["gid"])}">Build a slip</a><a href="/dossier/{E(g["gid"])}/">Preview</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#lv-{E(g["gid"])}">Live</a></div>
 </article>''')
     # ---- news that moved the model (whole week, newest first) -------------------------------------------------------------------------
     sev = {"bad": 0, "watch": 1, "good": 2, "info": 3}
@@ -275,17 +297,16 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 {under_html}
 {stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
-<section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p></section>
+<section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p>
+ <p class="tdall"><a href="/slate/">All {len(games)} games this week</a><a href="/boards/">Matchup Boards</a></p></section>
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>
-<section class="sec" id="tdask"><h2 class="t">Ask the model <small class="tsub">the week's numbers, in a sentence or two</small></h2>
- <form class="askbox" id="askform"><input type="text" id="askq" maxlength="400" placeholder="Charbonnet 60+ rush yds tonight?" autocomplete="off"><button type="submit" class="bsbtn" id="askgo">Ask</button></form>
+<section class="sec" id="tdnewsS"><div class="sech"><h2 class="t">News desk</h2><a class="seeall" href="/news/">All {len(news)} notes</a></div>{("<ul class='tdnewsl' id='tdnewsl' data-cap='3'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}</section>
+<section class="sec" id="tdask"><h2 class="t">Ask the model</h2>
+ <form class="askbox" id="askform"><input type="text" id="askq" maxlength="400" placeholder="Charbonnet 60+ rush yds tonight?" autocomplete="off" aria-label="Ask the model a question about this week"><button type="submit" class="bsbtn" id="askgo">Ask</button></form>
  <p class="asknote" id="asknote">Signed-in users get 20 questions a day. Answers quote the model's chance, the FanDuel price and the flags - nothing it does not have.</p>
  <div class="askans" id="askans" hidden></div>
 </section>
-<section class="sec" id="tdnewsS"><h2 class="t">News that moved the model <small class="tsub">as of {E(stamp)} CT</small></h2>{("<ul class='tdnewsl' id='tdnewsl'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}<p class="none" style="margin-top:8px;font-size:12.5px">From the news desk: ESPN, RotoWire, CBS, Yahoo and the team injury pages, read at every rebuild. Red = out, amber = limited or a role change, green = back or a bigger role. Live injury chips on names update every 10 minutes everywhere on the site.</p></section>
-{tgt_html}
-<section class="sec" id="tdweek"><h2 class="t">The rest of the week</h2><div class="tdweek" id="tdweeklist"></div></section>
-<section class="sec" id="record"><h2 class="t">Track record</h2>{rec_html}<p class="none" style="margin-top:8px;font-size:12.5px"><a href="/how/" style="color:var(--ink)">How BetSweep picks</a> · <a href="/season/" style="color:var(--ink)">every week graded</a></p></section>
+<section class="sec" id="record"><div class="sech"><h2 class="t">Track record</h2><a class="seeall" href="/receipts/">Every week</a></div>{rec_html}<p class="none" style="margin-top:8px;font-size:12.5px"><a href="/how/" style="color:var(--ink)">How BetSweep picks</a></p></section>
 <div class="hsbar" id="hsbar" data-week="{E(str(W))}"><b></b><a href="/build/">Open betslip</a></div>
 <script>window.__TD = {json.dumps({"week": W, "built": built.isoformat(), "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""), "home": (GL.get(g["gid"]) or {}).get("home", g["b"]), "away": (GL.get(g["gid"]) or {}).get("away", g["a"])} for g in games], "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
 {TODAY_JS}
@@ -294,6 +315,15 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 '''
     if swb and any(vg.get(g["gid"]) and swb.get(g["gid"]) for g in games): body += SWC.get("js", "") + "\n"   # the share-card style + script, once (same one the boards carry)
     open(os.path.join(OUT_, "today.html"), "w").write(body)
+    # owner 11/10 9:39 PM ("compact the home page ... some things can move to different or new pages"): the full news list, the trade
+    # desk and the week's game list are no longer on "/". build_site.py wraps these fragments as /news/ and /targets/ (the slate page
+    # is built from home.py's cards).
+    def news_li(n): return f'<li class="{E(n["k"])}" data-team="{E(n.get("team", ""))}" data-player="{E(n["player"])}"><span class="nt">{E(tag_short(n))}</span><div><b>{E(n["player"])} <small>{E(n.get("team", ""))} {E(n.get("pos", ""))}</small></b><p>{E(clean_txt(n))}</p></div></li>'
+    groups = [("Out or doubtful", [n for n in news if n["k"] == "bad"]), ("Limited, questionable or a smaller role", [n for n in news if n["k"] == "watch"]), ("Back, or a bigger role", [n for n in news if n["k"] == "good"])]
+    json.dump({"week": W, "stamp": stamp, "n": len(news), "css": TODAY_CSS,
+               "news": "".join(f'<h2 class="t nwh">{E(t)} <small class="tsub">{len(ns)}</small></h2><ul class="tdnewsl">{"".join(news_li(n) for n in ns)}</ul>' for t, ns in groups if ns),
+               "stale": stale_html, "targets": tgt_html, "teams": sorted({n.get("team", "") for n in news if n.get("team")})},
+              open(os.path.join(OUT_, "today_parts.json"), "w"))
     print(f"wrote out/today.html + today.json: {len(games)} games over {len(days)} days, {sum(len(v) for v in legs_by_g.values())} plus/TD legs, {len(news)} news notes, voice lines {len(vg)}")
     return body
 
@@ -333,6 +363,20 @@ TODAY_CSS = r"""
 /* owner 11/5: Listen - the brief read aloud by the phone's own voice */
 .tdlisten{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer} .tdlisten.on{border-color:var(--red);color:var(--red)}
 @media (max-width:560px){.tdm{font-size:26px} .tdh1 h1{font-size:34px}}
+/* 11/10 evening (owner: "The first section with today's game looks really good though. Just make it better"; "compact the home page") */
+.tdstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:0;background:var(--chalk);border-radius:10px;overflow:hidden} .tdstats span{display:flex;flex-direction:column;gap:1px;padding:8px 12px;min-width:0} .tdstats span + span{border-left:1px solid var(--line)}
+.tdstats i{font-style:normal;font-family:var(--body);font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)} .tdstats b{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tdk .tdcd{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute);margin-top:1px} .tdk .tdcd:empty{display:none}
+.tdlinks a.pri{background:var(--ink);border-color:var(--ink);color:var(--bg);flex:1 1 100%;text-align:center;font-size:13.5px;padding:10px 12px;border-radius:8px}
+/* a folded card (three or more games on the day): head, the three numbers, the take, then two buttons side by side */
+.tdgame.compact:not(.open){flex-direction:row;flex-wrap:wrap} .tdgame.compact:not(.open) > *{flex:1 1 100%;min-width:0} .tdgame.compact:not(.open) > .tdl{display:none}
+.tdgame.compact:not(.open) > .tdlinks,.tdgame.compact:not(.open) > .tdtog{flex:1 1 calc(50% - 5px);margin:0} .tdgame.compact:not(.open) .tdlinks a:not(.pri){display:none} .tdgame.compact:not(.open) .tdlinks a.pri{padding:0 8px;min-height:40px;display:flex;align-items:center;justify-content:center}
+.tdgame.compact .tdtog{order:5;min-height:40px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:8px} .tdgame.compact .tdlinks{order:4} .tdgame.compact.open .tdtog{order:0} .tdtog em{font-style:normal}
+@media (max-width:480px){ .tdgame.compact:not(.open) .tdtog em{display:none} }
+.tdall{display:flex;gap:8px;margin:10px 0 0} .tdall a{flex:1;text-align:center;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;background:var(--card)} .tdall a:hover{border-color:var(--red)}
+#tdask .asknote{display:none} #tdask:focus-within .asknote{display:block}
+.nwh{margin-top:22px}
+@media (max-width:560px){ .tdnews{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px} .tdnews li{min-width:0;line-height:1.3} }
 """
 
 TODAY_JS = r"""<script>
@@ -379,23 +423,29 @@ TODAY_JS = r"""<script>
   else { title.textContent = 'Week ' + T.week + ' is in the books'; sub.textContent = 'Receipts grade Tuesday · the next slate lands Thursday morning'; }
   var showG = {}; shown.forEach(function(g){ showG[g.gid] = 1; });
   document.querySelectorAll('.tdgame').forEach(function(el){ el.classList.toggle('show', !!showG[el.getAttribute('data-gid')]); });
+  // 11/10 evening: on a day with three or more games every card folds to its head, the three numbers and the take ("More on this
+  // game" opens the share button, weather, injuries, looks and parlay), and Today's looks shows three cards, not six
   if(shown.length > 2){ document.querySelectorAll('.tdgame.show').forEach(function(el){ if(el.querySelector('.tdmore')) el.classList.add('compact'); });
-    var plays = [].slice.call(document.querySelectorAll('.tdgame.show .play[data-gap]')).sort(function(a, b){ return (+b.getAttribute('data-gap')) - (+a.getAttribute('data-gap')); }).slice(0, 6);
+    var plays = [].slice.call(document.querySelectorAll('.tdgame.show .play[data-gap]')).sort(function(a, b){ return (+b.getAttribute('data-gap')) - (+a.getAttribute('data-gap')); }).slice(0, 3);
     if(plays.length){ var grid = document.getElementById('tdlooksgrid'); plays.forEach(function(p, i){ var c = p.cloneNode(true); c.classList.toggle('lead', i === 0); grid.appendChild(c); }); document.getElementById('tdlooks').hidden = false; } }
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.tdtog'); if(!b) return; var card = b.closest('.tdgame'); card.classList.toggle('open'); b.setAttribute('aria-expanded', card.classList.contains('open')); });
   if(!shown.length){ none.hidden = false; none.innerHTML = '<div class="tdempty"><b>No games on the board.</b> The week is graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> page; Thursday morning\'s rebuild brings the next slate. Your <a href="/team/" style="color:var(--ink)">fantasy team</a> and the <a href="/trade/" style="color:var(--ink)">trade calculator</a> work all week.</div>'; }
   // the rest of the week
-  var wk = document.getElementById('tdweeklist'); var html = '';
+  var wk = document.getElementById('tdweeklist') || {}; var html = '';
   dates.forEach(function(d){ if(d === pick) return; html += '<div class="tdwd"><b>' + esc(shortDay(d)) + (d < today ? ' · final' : '') + '</b><div class="g">' + byDay[d].map(function(g){ return '<a href="/boards/#g-' + esc(g.gid) + '" class="' + (d < today ? 'post' : '') + '">' + esc(g.away) + ' @ ' + esc(g.home) + '<small>' + esc((g.kick || '').replace(/^\w{3}\s*/, '')) + '</small></a>'; }).join('') + '</div></div>'; });
-  if(html) wk.innerHTML = html; else document.getElementById('tdweek').hidden = true;
+  if(html) wk.innerHTML = html; else if(document.getElementById('tdweek')) document.getElementById('tdweek').hidden = true;
+  // kickoff countdown on each card (the live score chip takes over at kickoff)
+  function cd(){ var t = Date.now(); document.querySelectorAll('.tdcd[data-ko]').forEach(function(el){ var d = (+el.getAttribute('data-ko')) - t; if(!(d > 0)){ el.textContent = ''; return; }
+    var m = Math.floor(d / 60000), h = Math.floor(m / 60), dd = Math.floor(h / 24);
+    el.textContent = dd >= 1 ? 'in ' + dd + 'd ' + (h % 24) + 'h' : h >= 1 ? 'in ' + h + 'h ' + (m % 60) + 'm' : 'in ' + m + 'm'; }); }
+  cd(); setInterval(cd, 30000);
   // news: today's teams first
   var tms = {}; shown.forEach(function(g){ tms[g.a] = 1; tms[g.b] = 1; });
   var nl = document.getElementById('tdnewsl');
   if(nl){ var items = [].slice.call(nl.children); items.sort(function(x, y){ var a = tms[x.getAttribute('data-team')] ? 0 : 1, b = tms[y.getAttribute('data-team')] ? 0 : 1; return a - b; }); items.forEach(function(li){ nl.appendChild(li); }); }
   // audit 11/10: the list ran ~5,800px on a phone (30 notes, a quarter of the page). The first eight show (today's teams first); the rest open on tap.
-  if(nl){ var NCAP = 8, lis = [].slice.call(nl.children); if(lis.length > NCAP + 2){ lis.forEach(function(li, i){ if(i >= NCAP) li.hidden = true; });
-    var mb = document.createElement('button'); mb.type = 'button'; mb.className = 'tdnewsmore'; mb.textContent = 'Show all ' + lis.length + ' news notes';
-    mb.addEventListener('click', function(){ lis.forEach(function(li){ li.hidden = false; }); mb.remove(); }); nl.parentNode.insertBefore(mb, nl.nextSibling); } }
+  // 11/10 evening: the home page shows the first three (today's teams first); the whole list is /news/
+  if(nl){ var NCAP = +nl.getAttribute('data-cap') || 8, lis = [].slice.call(nl.children); if(lis.length > NCAP){ lis.forEach(function(li, i){ if(i >= NCAP) li.hidden = true; }); } }
   // ---- you today: slip legs in these games + your Sleeper roster vs the news ----
   var you = document.getElementById('tdyou'), box = document.getElementById('tdyoubox'); var rows = [];
   function render(){ if(!rows.length) return; you.hidden = false; box.innerHTML = rows.map(function(r){ return '<div class="yrow ' + esc(r.k || '') + '"><span class="yk">' + esc(r.kind) + '</span><div><b>' + esc(r.title) + '</b><small>' + esc(r.sub) + '</small></div>' + (r.href ? '<a href="' + esc(r.href) + '">' + esc(r.cta || 'Open') + '</a>' : '') + '</div>'; }).join(''); }

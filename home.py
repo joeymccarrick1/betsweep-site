@@ -327,15 +327,16 @@ def dec_to_us(d):
     if d <= 1: return ""
     return f"+{round((d-1)*100)}" if d >= 2 else f"-{round(100/(d-1))}"
 
-def parlay_block(ps):
+def parlay_block(ps, compact=False):
+    """compact=True (the home page since 11/10 evening): the lead parlay alone; every game's parlay is on /best/"""
     if not ps: return ""
     top = ps[0]
     legs = "".join(f'<li><b>{E(l["pl"])}</b><span>{E(leg_line(l["m"], l["ln"]))} <small>{E(odds_str(l["o"]))}</small></span><em>{l["p"]*100:.0f}%</em></li>' for l in top["legs"])
     others = "".join(f'<a class="pmini" href="/boards/#g-{E(p["gid"])}" data-gid="{E(p["gid"])}" data-ko="{p.get("ko") or ""}"><b>{at_gid(p["gid"])}</b><span>{len(p["legs"])} legs · {E(dec_to_us(p["dec"]))}</span><em>model {p["pj"]*100:.0f}% · EV {p["ev"]*100:+.0f}%</em></a>' for p in ps[1:5])
     return (f'<div class="parlay" data-gid="{E(top["gid"])}" data-ko="{top.get("ko") or ""}"><div class="phd"><small>Best same-game parlay</small><h3>{at_gid(top["gid"])} <span>{E(top.get("kick",""))}</span></h3>'
             f'<p>Built for the game\'s most likely script ({E(top["fit"])}); the model gives the full slip <b>{top["pj"]*100:.0f}%</b> against a FanDuel-equivalent price of <b>{E(dec_to_us(top["dec"]))}</b> (EV {top["ev"]*100:+.0f}%).</p></div>'
-            f'<ul class="plegs">{legs}</ul><div class="pfoot">' + (f'<a class="fdb" href="{E(top["fd"])}" target="_blank" rel="noopener">Add all to FanDuel</a>' if top.get("fd") else "") + BL.buttons(top.get("bl") or [], single=False) + f'<a class="more" href="/boards/#g-{E(top["gid"])}">Open the board →</a><a class="more" href="{E(build_href(top["gid"], [(l["pl"], l["m"], l["ln"]) for l in top["legs"]]))}">Edit in the builder →</a></div></div>'
-            + (f'<div class="pothers">{others}</div>' if others else ""))
+            f'<ul class="plegs">{legs}</ul><div class="pfoot">' + (f'<a class="fdb" href="{E(top["fd"])}" target="_blank" rel="noopener">Add all to FanDuel</a>' if top.get("fd") else "") + BL.buttons(top.get("bl") or [], single=False).replace(">Bet it on ", ">") + f'<a class="more" href="/boards/#g-{E(top["gid"])}">Open the board</a><a class="more" href="{E(build_href(top["gid"], [(l["pl"], l["m"], l["ln"]) for l in top["legs"]]))}">Edit in the builder</a></div></div>'
+            + (f'<div class="pothers">{others}</div>' if (others and not compact) else ""))
 
 # ---------- slate ----------
 def slate(D):
@@ -588,6 +589,9 @@ SWEEP_CSS = """
 .swhero .swtease p{margin:0 0 6px;line-height:1.45;font-size:14.5px} .swhero .swtease p:last-child{margin-bottom:0}
 .swhero .swtease .swnext b{font-family:var(--display);font-weight:800;letter-spacing:.02em;font-size:16px}
 .swhero .swtease .swlast{color:var(--mute);font-size:13px} .swhero .swtease .swlast b.w{color:var(--good)} .swhero .swtease .swlast b.l{color:#e07070}
+/* 11/10 evening (owner: "compact the home page"): with no slip posted the block is its title, the record and one line saying when the next one lands */
+.swhero.teasing .swtease{padding:10px 14px;border-style:solid;border-width:1px;border-color:var(--line);border-left:3px solid var(--red);border-radius:10px} .swhero.teasing .swtease > p:first-child,.swhero.teasing .swfoot{display:none}
+.swhero.teasing .swtease p{font-size:14px}
 .swhero .swfoot{margin-top:8px;font-size:12.5px;max-width:580px} .swhero .swfoot a{color:var(--ink)}
 .promo .pa .swshare{cursor:pointer;background:none;text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 11px}
 .promo .pa .swshare:hover{border-color:var(--red)}
@@ -607,6 +611,7 @@ SWEEP_JS = r"""<script>(function(){ function go(){
       c = card(d.d, true); if(c){ show = c; break; }                             // today's (or the next day's) Sweep is posted
       if(t < d.ko){ next = d; break; } }                                         // not posted yet, still before kickoff
     cards.forEach(function(x){ x.hidden = x !== show; });
+    sec.classList.toggle('teasing', !show);   // no slip posted for the day: the block is a slim strip (CSS), not a box of copy
     if(!tease) return;
     tease.hidden = !!show; if(show) return;
     var nx = tease.querySelector('.swnext'), ls = tease.querySelector('.swlast');
@@ -742,6 +747,31 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .game.post{opacity:.6;order:9}
 .rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .rec div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px} .rec b{display:block;font-family:var(--display);font-weight:700;font-size:30px;line-height:1;margin-bottom:4px} .rec span{color:var(--mute);font-size:13px;line-height:1.4} .rec a{color:var(--ink)}
+
+/* ---- 11/10 evening phone pass (owner: "Most people will use their phones ... Make sure it looks really good all over") ---- */
+/* the note over a group of cards was five lines of tracked capitals; it is a sentence now */
+.subt{font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;font-size:13px;line-height:1.45;color:var(--mute);margin:16px 0 10px;max-width:72ch}
+.subt:first-of-type{margin-top:0}
+@media (max-width:760px){
+  /* a parlay's book buttons: one full-width FanDuel button, the other books side by side under it (three squeezed columns before) */
+  .pfoot{flex-wrap:wrap;gap:8px} .pfoot .fdb,.pfoot .dkb,.pfoot .hrb{display:inline-flex;align-items:center;justify-content:center;min-height:40px;text-align:center;flex:1 1 calc(50% - 4px)} .pfoot .fdb{flex-basis:100%}
+  .pfoot .more{flex:1 1 calc(50% - 4px);min-height:36px;display:inline-flex;align-items:center}
+  /* a leg card: the three books fill one row and are tall enough to tap */
+  .play{padding:12px 12px 11px;gap:7px} .play .who b{font-size:20px} .play .nums{font-size:19px;padding:7px 10px}
+  .play .foot .bks{display:flex;width:100%;margin-left:0;gap:6px;flex-wrap:nowrap} .play .foot .bks a{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;min-height:38px;text-align:center;white-space:nowrap;padding-left:6px;padding-right:6px} .play .foot .bks a.fdb{flex-grow:1.5}
+  .play .more.slipt{min-height:34px}
+  .parlay{padding:14px 14px 12px} .parlay h3{font-size:23px} .parlay p{font-size:13.5px}
+  .pfoot .hrb,.pfoot .dkb{margin-left:0}
+}
+/* home page: Model's Best as rows */
+.mbl{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden} .mbl[hidden]{display:none}
+.mbrow{padding:11px 14px 10px;border-top:1px solid var(--line)} .mbrow:first-child,.mbrow[hidden] + .mbrow{border-top:0} .mbrow[hidden],.mbrow.started{display:none}
+.mbl .mbrow:not([hidden]) ~ .mbrow:not([hidden]){border-top:1px solid var(--line)}
+.mb1{display:flex;align-items:baseline;gap:8px;min-width:0} .mbn{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.01em;color:var(--ink);text-decoration:none;white-space:nowrap} a.mbn:hover{text-decoration:underline}
+.mbw{flex:1;min-width:0;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .mbo{font-family:var(--display);font-weight:700;font-size:19px;font-variant-numeric:tabular-nums}
+.mb2{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px} .mb2 small{color:var(--mute);font-size:12.5px;line-height:1.35} .mb2 i{font-style:normal;font-weight:700} .mb2 i.pos{color:var(--good)} .mb2 i.neg{color:#e07070}
+.mb2 .more{flex:none;color:var(--mute);text-decoration:none;font-size:12.5px;font-weight:600} .mb2 .more.slipt{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink);font-weight:700} .mb2 .more.inslip{background:var(--red);border-color:var(--red);color:#fff}
+@media (max-width:420px){ .mb1{flex-wrap:wrap} .mbn{flex:1 1 100%} }
 """
 
 def home_js(games):
@@ -766,7 +796,7 @@ def home_js(games):
     document.querySelectorAll('.promo').forEach(function(el){ var st = el.querySelector('[data-role=pst]'); if(!st || el.classList.contains('busted') || /^Cashed/.test(st.textContent)) return; var f = +el.getAttribute('data-first-ko'), l = +el.getAttribute('data-last-ko');
       if(l && now > l + 4.5*3600e3){ el.hidden = true; } else if(f && now >= f){ st.textContent = 'In play'; st.className = 'st live'; } });
     var psec = document.getElementById('promo'); if(psec && !psec.querySelector('.promo:not([hidden])')) psec.hidden = true;   // every promo archived: drop the section
-    ['.play','.pmini','.parlay'].forEach(function(sel){ document.querySelectorAll(sel).forEach(function(el){ var g = el.getAttribute('data-gid'); if(g && started[g]) el.classList.add('started'); }); });
+    ['.play','.pmini','.parlay','.mbrow'].forEach(function(sel){ document.querySelectorAll(sel).forEach(function(el){ var g = el.getAttribute('data-gid'); if(g && started[g]) el.classList.add('started'); }); });
     document.querySelectorAll('.plays').forEach(function(grid){ var left = grid.querySelectorAll('.play:not(.started)').length; var note = grid.nextElementSibling;
       if(note && note.classList.contains('allstarted')) note.hidden = left > 0; });
   }
@@ -793,6 +823,28 @@ def model_best(D):
         return out
     return pick("plus", lambda l: -gap(l), 8), pick("td", lambda l: -gap(l), 4), pick("even", lambda l: -gap(l), 6)   # 11/4: plus-money edge tier leads; even-odds demoted; safer tier off the home page (break-even at best)
 
+BLOCKS = {}   # filled by sections(): the same HTML, by name, for the pages that carry the week sections since the home page was compacted
+def best_teaser(D, cards, total):
+    """home page (owner 11/10 9:39 PM: "Let's compact the home page ... some things can move to different or new pages"): Model's Best is
+    three rows and a link - player, leg, price, the model's chance against the chance the price needs, and "+ Slip". The cards with
+    the three books are on /best/. Up to eight candidates are written; the script shows the first three that are not already on
+    screen in today's game card (on a one-game Thursday the game's looks ARE the week's best) and have not kicked off."""
+    if not cards: return ""
+    try: from plydata import slugify as _slug
+    except Exception: _slug = None
+    def row(x):
+        e = x.get("e") or 0; nm = E(x["pl"])
+        who = f'<a class="mbn" href="/player/{_slug(x["pl"])}/">{nm}</a>' if _slug else f'<b class="mbn">{nm}</b>'
+        ctx = (E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", ""))
+        return (f'<li class="mbrow" data-k="{E(leg_key(x["pl"], x["m"], x["ln"]))}" data-gid="{E(x.get("gid", ""))}" data-ko="{x.get("ko") or ""}">'
+                f'<div class="mb1">{who}<span class="mbw">{E(leg_line(x["m"], x["ln"]))}</span><b class="mbo">{E(odds_str(x["o"]))}</b></div>'
+                f'<div class="mb2"><small>{ctx} · model {x["p"]*100:.0f}%, price needs {(x["bk"] or 0)*100:.0f}% · <i class="{"pos" if e > 0 else "neg"}">{e*100:+.0f}</i></small>'
+                f'<a class="more" href="{E(build_href(x.get("gid"), [(x["pl"], x["m"], x["ln"])]))}" title="Open the parlay builder with this leg in your slip">+ Builder</a></div></li>')
+    return ('<section class="sec" id="bestt"><div class="sech"><h2 class="t">Model\'s Best</h2>'
+            f'<a class="seeall" href="/best/">All {total} picks</a></div>'
+            f'<ul class="mbl teaser" data-cap="3">{"".join(row(x) for x in cards[:8])}</ul>'
+            '<p class="none tznote" hidden>The model\'s best looks right now are the ones in today\'s game above. <a href="/best/">The whole list</a> has every game.</p></section>')
+
 def sections(IN, OUT, latest_week=None):
     D = load(IN, OUT)
     week = D["bd"].get("week") or ""
@@ -801,19 +853,23 @@ def sections(IN, OUT, latest_week=None):
     try: _swtot = SW.record(json.load(open(os.path.join(IN, "promos.json")))["values"])["total"]   # any Daily Sweep row on the tab, any week
     except Exception: _swtot = 0
     pb = promos_block(OUT, _swtot > 0)
-    if pb: out.append(pb)
+    B = BLOCKS; B.clear(); B["week"] = week
+    if pb: out.append(pb); B["promos"] = pb
     mbe, mbt, mbs = model_best(D)
+    B["best_teaser"] = best_teaser(D, list(mbe) + list(mbt) + list(mbs), len(mbe) + len(mbt) + len(mbs))
     if mbe or mbt or mbs:
         out.append('<section class="sec" id="best"><h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>'
                    + (f'<div class="subt">Plus-money edges · +150 or longer where the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) · Weeks 6–8: 41% hit at about +200, +31% at a unit each (150 legs)</div><div class="plays">{"".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))}</div>' if mbe else "")
                    + (f'<div class="subt">Touchdowns the model likes at +200 or shorter · longer-priced scorers have paid (+8% at +151 and up, 246 legs); favorites have not</div><div class="plays">{"".join(play_card(x) for x in mbt)}</div>' if mbt else "")
                    + (f'<div class="subt">Near even money, model 8+ points off FanDuel · 59% in Weeks 6–7, 45% in Week 8 — tracked, not a lead; rushing yards removed</div><div class="plays">{"".join(play_card(x, "floor") for x in mbs)}</div>' if mbs else "")
                    + '<p class="none allstarted" hidden>All kicked off.</p><p class="none" style="margin-top:10px;font-size:12.5px">Graded every week on the season page. The whole priced pool loses about 8% at FanDuel\'s prices — the edge lives in the few hundred plus-money legs a week the model sees differently, not in heavy favorites. <a href="/build/?best=1" style="color:var(--ink)">All Model\'s Best legs in the builder →</a></p></section>')
+    if mbe or mbt or mbs: B["best"] = out[-1]
     plays_html = "".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(tp))
     out.append('<section class="sec" id="plays"><h2 class="t">The model\'s top plays this week</h2>'
                + (f'<div class="plays">{plays_html}</div><p class="none allstarted" hidden>Every top play has kicked off. The <a href="/live/" style="color:var(--ink)">Live page</a> tracks what is still open; the next slate\'s plays land after the next rebuild.</p>'
                   if tp else '<p class="none">No clean plays on the sheet right now - the next rebuild refreshes this.</p>')
                + '<p class="none" style="margin-top:10px;font-size:12.5px">From the sheet\'s Best Legs: strong-value lines with no warnings, best line per player, floor lines only (no above-projection rungs, no cold streaks, no longest-reception legs), and the leg must stay likely when FanDuel\'s price gets an equal vote. Model % is the projected hit rate; "price needs" is what FanDuel\'s odds imply; edge is the gap in points.</p></section>')
+    B["plays"] = out[-1]; B["plays_n"] = len(tp)
     if fl and False:   # 11/4 audit: floor legs (-130..-400) lost 9-12% in every market across Weeks 6-8 - the section and its ready slip are off the home page
         out.append('<section class="sec" id="floor"><h2 class="t">Floor legs <small class="tsub">parlay anchors</small></h2>'
                    + f'<div class="plays">{"".join(play_card(x, "floor") for x in fl)}</div><p class="none allstarted" hidden>All kicked off.</p>'
@@ -823,20 +879,27 @@ def sections(IN, OUT, latest_week=None):
         out.append('<section class="sec" id="nextman"><h2 class="t">Next man up <small class="tsub">thinned rooms</small></h2>'
                    + f'<div class="plays">{nextman_block(nm)}</div><p class="none allstarted" hidden>All kicked off.</p>'
                    + '<p class="none" style="margin-top:10px;font-size:12.5px">Players first in line when several absences stack up at one position - the Josh Cuevas case (BAL TE, Week 6: two tight ends out, FanDuel priced his receptions on a one-target-a-game history, he caught four). Room math = his own recent volume plus ~60% of what the absent players leave behind, turned into a catch count; FanDuel often has not moved yet. Volume legs only - receptions and short yardage - not touchdowns.</p></section>')
+    if nm: B["nextman"] = out[-1]
     if td or gl:
-        out.append('<section class="sec"><h2 class="t">Also on the radar</h2>'
+        out.append('<section class="sec" id="radar"><h2 class="t">Also on the radar</h2>'
                    + (f'<div class="subt">Anytime touchdown · priced fairly, model agrees</div><div class="plays">{"".join(play_card(x) for x in td)}</div><p class="none allstarted" hidden>All kicked off.</p>' if td else "")
                    + (f'<div class="subt">Game lines the model is 8+ points off the market on · information, not picks: the game model has not beaten the closing line yet (Week 6 moneylines 7–7 vs favourites 9–5)</div><div class="plays">{"".join(gl_card(x) for x in gl)}</div><p class="none allstarted" hidden>All kicked off.</p>' if gl else "")
                    + '</section>')
+    if td or gl: B["radar"] = out[-1]
     if ps:
         out.append(f'<section class="sec" id="parlay"><h2 class="t">Best parlay</h2><div class="ptwo">{parlay_block(ps)}</div></section>')
+        B["parlay"] = out[-1]
+        B["parlay_lead"] = (f'<section class="sec" id="parlay"><div class="sech"><h2 class="t">Best parlay</h2>' + (f'<a class="seeall" href="/best/#parlay">Every game</a>' if len(ps) > 1 else "")
+                            + f'</div><div class="ptwo">{parlay_block(ps, compact=True)}</div></section>')
     if D["bd"]["games"]:
         out.append(f'<section class="sec" id="slate"><h2 class="t">Week {week} slate</h2>{slate(D)}<p class="none" style="margin-top:8px;font-size:12.5px">Model line and total, most likely game script. Tap a game for its board. Scores update live on game day.</p></section>')
+        B["slate"] = out[-1]; B["slate_cards"] = slate(D); B["ngames"] = len(D["bd"]["games"])
     out.append(f'<section class="sec" id="record"><h2 class="t">Track record</h2>{record_block(R, latest_week)}</section>')
     # owner 10/30: "add players on the home page to my betslip without jumping to the parlay builder" - every "+ Builder" link becomes a
     # "+ Slip" toggle that writes the shared slip key (bs_slipk_w<W>, the same one the boards, player pages and builder use); a bar at the
     # bottom counts the legs and opens the betslip. Links still work without JavaScript (they open the builder with the legs added).
     out.append(f'<div class="hsbar" id="hsbar" data-week="{E(str(week))}"><b></b><a href="/build/">Open betslip</a></div>')
+    B["bar"] = out[-1]; B["js"] = home_js(D["bd"]["games"]) + HOME_SLIP_JS; B["games"] = D["bd"]["games"]
     return "\n".join(out), home_js(D["bd"]["games"]) + HOME_SLIP_JS
 
 HOME_SLIP_JS = r"""<script>(function(){
@@ -859,4 +922,12 @@ HOME_SLIP_JS = r"""<script>(function(){
     if(all) s = s.filter(function(k){ return ks.indexOf(k) < 0; }); else ks.forEach(function(k){ if(!m[k]) s.push(k); });
     put(s); paint(); bar.animate && bar.animate([{transform: 'translateX(-50%) scale(1.06)'}, {transform: 'translateX(-50%) scale(1)'}], {duration: 220}); });
   window.addEventListener('storage', paint); paint();
+})();
+/* home page, Model's Best teaser: the first three candidates that are not already on screen in today's game card and have not kicked off */
+(function(){ var t = document.querySelector('.mbl.teaser'); if(!t) return; var cap = +t.getAttribute('data-cap') || 3, sec = t.closest('section'), note = sec && sec.querySelector('.tznote');
+  function run(){ var up = {}; document.querySelectorAll('.tdgame.show .play[data-k], #tdlooksgrid .play[data-k]').forEach(function(p){ if(p.offsetParent !== null) up[p.getAttribute('data-k')] = 1; });
+    var n = 0; [].slice.call(t.children).forEach(function(p){ var on = !up[p.getAttribute('data-k')] && !p.classList.contains('started') && n < cap; p.hidden = !on; if(on) n++; });
+    t.hidden = n === 0; if(note) note.hidden = n > 0; }
+  run(); setTimeout(run, 600); setTimeout(run, 2500);
+  document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('.tdtog')) setTimeout(run, 40); });
 })();</script>"""
