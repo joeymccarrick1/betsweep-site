@@ -106,6 +106,48 @@
      "pulled": "2026-11-10 6:24"
     }
    }
+  },
+  "Deebo Samuel Sr.|2026-11-11T21:03": {
+   "pl": "Deebo Samuel Sr.",
+   "tm": "SF",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-11T21:03:53Z",
+   "legs": {
+    "George Kittle|Receiving Yards|70": {
+     "pl": "George Kittle",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "built": 120,
+     "p": 0.4318,
+     "first": null,
+     "moved": null,
+     "now": 120.0,
+     "pulled": "2026-11-11 6:34"
+    },
+    "George Kittle|Longest Reception|30": {
+     "pl": "George Kittle",
+     "m": "Longest Reception",
+     "ln": 30.0,
+     "built": 220,
+     "p": 0.2503,
+     "first": null,
+     "moved": null,
+     "now": 220.0,
+     "pulled": "2026-11-11 6:34"
+    },
+    "George Kittle|Receptions|5": {
+     "pl": "George Kittle",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": -180,
+     "p": 0.5468,
+     "first": null,
+     "moved": null,
+     "now": -180.0,
+     "pulled": "2026-11-11 6:34"
+    }
+   }
   }
  }
 }
