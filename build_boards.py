@@ -92,6 +92,10 @@ def ftd_strip(a, b):
         return f'<span class="sp">{E(r[0])} <small>{E(r[1])}</small><b>{r[3]*100:.1f}%</b> <small>fair {E(r[4])}</small>{price}{btn}</span>'
     return (f'<div class="splays ftd"><span class="lt">First TD <small>model, whole game</small></span>{"".join(one(r) for r in rs)}'
             f'<a class="ftdmore" href="https://betsweep.co/firsttd/">Every player + FanDuel prices →</a></div>')
+def _last(n):
+    """surname for the coverage line: 'Asante Samuel Jr.' -> 'Samuel Jr.' (11/11: it printed 'Jr.' for the corner)"""
+    t = str(n).split(" ")
+    return " ".join(t[-2:]) if len(t) > 2 and t[-1].rstrip(".") in ("Jr", "Sr", "II", "III", "IV") else t[-1]
 def cov_strip(a, b):
     """Mike Clay WR-CB read for both teams' receivers (flags.py WRCB): who draws the softer corner this week. One line per game card."""
     def arrow(c):
@@ -109,7 +113,7 @@ def cov_strip(a, b):
             ar, cls = arrow(c); dtr, dfr = c.get("d_tr"), c.get("d_fr")
             if dtr is not None and abs(dtr) > 1: dtr = dtr / 100.0
             tip = f"vs {c['cb']}" + (f" on ~{(c['exp']*100 if c['exp'] <= 1 else c['exp']):.0f}% of routes" if c.get("exp") is not None else "") + (f" · Clay: targets {dtr*100:+.0f}%, pts/route {dfr:+.2f} vs his season rates" if dtr is not None and dfr is not None else "")
-            out.append(f'<span class="sp {cls}" title="{E(tip)}">{E(c["name"].split(" ")[-1] if len(c["name"]) > 14 else c["name"])} <small>{E(c["cb"].split(" ")[-1])}</small><b>{ar}</b></span>')
+            out.append(f'<span class="sp {cls}" title="{E(tip)}">{E(_last(c["name"]) if len(c["name"]) > 14 else c["name"])} <small>{E(_last(c["cb"]))}</small><b>{ar}</b></span>')
         return f'<span class="covt"><em>{t}</em>{"".join(out)}</span>'
     ta, tb = team(a), team(b)
     if not (ta or tb): return ""
