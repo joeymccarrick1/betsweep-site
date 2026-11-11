@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>https://betsweep.co/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+<url><loc>https://betsweep.co/all/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/api/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/badbeats/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/beat/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/benefits/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://betsweep.co/best/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/boards/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
 <url><loc>https://betsweep.co/boost/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/build/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
@@ -28,6 +30,7 @@
 <url><loc>https://betsweep.co/guide/</loc><lastmod>2026-11-11</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/how/</loc><lastmod>2026-11-11</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/live/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://betsweep.co/news/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/pairs/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/player/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
 <url><loc>https://betsweep.co/player/aaron-jones/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>
@@ -412,9 +415,11 @@
 <url><loc>https://betsweep.co/season/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/shop/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/short/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://betsweep.co/slate/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/social/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/survivor/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/sweep/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://betsweep.co/targets/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/team/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/team/compare/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://betsweep.co/teams/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
