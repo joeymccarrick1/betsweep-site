@@ -551,7 +551,7 @@ try:
     def _under_now(r, gid):
         m = re.search(r"(\d{1,2})/(\d{1,2})", str(r[7]) if len(r) > 7 else ""); k = _kday.get(gid)
         return bool(m and k and (int(m.group(1)), int(m.group(2))) == (k.month, k.day))
-    NSTALE = 0
+    NSTALE = 0; RUSH_UNDER_RATE = 0.57
     for r in vals("unders.json")[1:]:
         if len(r) < 10: continue
         mk, pt, uo = r[2], num(r[3]), num(r[4])
@@ -562,10 +562,16 @@ try:
         bku = (100 / (uo + 100)) if uo > 0 else (-uo / (-uo + 100))
         ov = num(r[5]); bko = ((100 / (ov + 100)) if ov > 0 else (-ov / (-ov + 100))) if ov is not None else None
         raw_u = round(1 - base["raw_p"], 4)
+        # owner 11/11 ("just do the first 2"): a rushing-yards under shows the flat rate these unders have hit, not the model's number.
+        # Weeks 6-9, 312 main lines: the under won 57.1% (54.5-58.4% each week), but the model's number did not sort them - where it had
+        # the over at 50%+ the under still hit 59%, its 70%+ unders hit 41% (n=17), its 60%+ went 13-15 at real prices in Week 9. raw_p
+        # keeps the model's number so the Tuesday unders freeze and grade go on unchanged. Re-fit RUSH_UNDER_RATE when a week is graded.
+        _flat = RUSH_UNDER_RATE if mk == "Rushing Yards" else None
+        _shown = _flat if _flat is not None else CALIB.shown(raw_u, bku, "Under " + mk)
         LEGS.append({"i": len(LEGS), "pl": base["pl"], "pos": base["pos"], "tm": base["tm"], "opp": base["opp"], "g": base["g"], "m": "Under " + mk, "ms": SHORT.get(mk, mk),
-                     "ln": pt, "o": int(uo), "raw_p": raw_u, "p": round(CALIB.shown(raw_u, bku, "Under " + mk), 4), "bk": round(bku, 4), "e": round(CALIB.shown(raw_u, bku, "Under " + mk) - bku, 4), "u": 1,
+                     "ln": pt, "o": int(uo), "raw_p": raw_u, "p": round(_shown, 4), "bk": round(bku, 4), "e": round(_shown - bku, 4), "u": 1, **({"flat": 1} if _flat is not None else {}),
                      "bko": round(bko, 4) if bko is not None else None, "w": "",
-                     "fh": [["info", "Under", f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Model projects {base.get('proj')} - {(1 - base['raw_p']) * 100:.0f}% that he stays under {pt:g}."]],
+                     "fh": [["info", "Under", (f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Shown at {RUSH_UNDER_RATE * 100:.0f}%: the rate main-line rushing unders have hit in Weeks 6-9 (312 lines). The model's own number for this one ({(1 - base['raw_p']) * 100:.0f}%) has not sorted rushing unders, so it is not used." if _flat is not None else f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Model projects {base.get('proj')} - {(1 - base['raw_p']) * 100:.0f}% that he stays under {pt:g}.")]],
                      "proj": base.get("proj"), "avg": base.get("avg"), "n": base.get("n"), "c": base.get("c", ""), "gd": base.get("gd", ""),
                      "fd": _ufd(r), "dr": base.get("dr"), "sk": base.get("sk", "")})
         NUND += 1
@@ -761,7 +767,9 @@ for _l in LEGS:
 # were shown at 25% model / 75% book while the boards showed 50/50. One blend now: pm = the raw model %, p = calib.shrink(raw, book).
 for _l in LEGS:
     if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None or _l.get("raw_p") is None: continue
-    _l["pm"] = _l["raw_p"]; _l["p"] = round(CALIB.shown(_l["raw_p"], _l["bk"], _l.get("m")), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
+    _l["pm"] = _l["raw_p"]
+    if _l.get("flat"): continue   # 11/11: a rushing under keeps the flat graded rate (see RUSH_UNDER_RATE)
+    _l["p"] = round(CALIB.shown(_l["raw_p"], _l["bk"], _l.get("m")), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
 # owner 11/5 ("how each team does against each stat percentage wise ... WR1 ... considered in our projections and parlays"): defense vs
 # role (defrole.py) - the opposing QB1 / RB1 / WR1 / WR2 / TE1's record vs this defense (beat his own average; FanDuel main line when
 # graded). Small tested weight (logit +0.25 x shrunk rate gap, research/def_role.py) on p, plus a flag with the numbers on the leg.
@@ -769,7 +777,7 @@ try:
     import defrole as _DR
     _DRD = _DR.load(IN, WEEK); _ndr = 0
     for _l in LEGS:
-        if _l.get("gl") or _l.get("p") is None: continue
+        if _l.get("gl") or _l.get("p") is None or _l.get("flat"): continue
         _m = _l.get("m", ""); _under = _m.startswith("Under ")
         _p2, _note, _inf = _DRD.adjust(_l.get("pl"), _l.get("tm"), _l.get("opp"), _m[6:] if _under else _m, _l["p"], under=_under)
         if not _inf: continue

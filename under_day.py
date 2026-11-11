@@ -43,7 +43,12 @@ def candidates(bd):
         # every under without that tag, however wide its gap looks
         far = any(isinstance(f, (list, tuple)) and len(f) > 1 and str(f[1]).startswith("Market disagrees") for f in l.get("fh") or [])
         if l["p"] >= MIN_P and l["p"] >= be: out.append((far, round(l["p"] - be, 4), l))
-    out.sort(key=lambda x: (x[0], -x[1], -x[2]["p"], x[2]["pl"]))
+    # owner 11/11 (after the Weeks 6-9 grade): a receptions under comes first. That is the market where the model's under number has been
+    # right - its 60-70% unders hit 61.5% (n=122), its 70%+ hit 69.8% (n=53). Rushing unders win as a class (57% of 312) but the model's
+    # own rushing number does not sort them, so they carry the flat rate (build_builder.py) and come after; receiving yards (model says
+    # 64%, got 54%) and passing yards come last.
+    rank = {"Under Receptions": 0, "Under Rushing Yards": 1}
+    out.sort(key=lambda x: (x[0], rank.get(x[2]["m"], 2), -x[1], -x[2]["p"], x[2]["pl"]))
     return [l for _, _, l in out]
 
 
