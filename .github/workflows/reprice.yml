@@ -3,12 +3,20 @@
 # RUNBOOK lists, in order). It never writes to the Google Sheet, re-uses the Sweep says lines the last session published
 # (/b/voice.json) and leaves season/ and the receipts to the Tuesday session. Nothing is pushed unless the build passes its own
 # checks AND a headless-browser crawl of the pages it is about to publish.
-#   schedule ........ every hour at :20, 6:20 AM - 11:20 PM Central: publishes only when a FanDuel price or the list of legs moved
+#   schedule ........ hourly on game days (Thu / Sun / Mon), every three hours otherwise, 6:20 AM - 11:20 PM Central. Publishes only
+#                     when at least three player props or main game lines moved (each publish adds a few MB to this repo's history,
+#                     so alternate-ladder noise does not earn one)
 #   Run workflow .... publish = all (a full rebuild on demand), changed (same as the schedule) or none (build and check only)
 # Turn it off: Actions > reprice > "..." > Disable workflow. The rebuild sessions keep working either way.
 name: reprice
 on:
-  # schedule: [{cron: "20 0-5,12-23 * * *"}]      (switched on once the first hand-run has been read)
+  schedule:
+    # game days (Thursday, Sunday, Monday, Central): every hour at :20 from 6:20 AM to 11:20 PM
+    - cron: "20 12-23 * * 0,1,4"
+    - cron: "20 0-5 * * 1,2,5"
+    # other days: every three hours, 6:20 AM to 9:20 PM Central
+    - cron: "20 12,15,18,21 * * 2,3,5,6"
+    - cron: "20 0,3 * * 3,4,6,0"
   workflow_dispatch:
     inputs:
       publish:
