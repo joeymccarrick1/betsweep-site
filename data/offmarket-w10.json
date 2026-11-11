@@ -36,6 +36,18 @@
    "gap": 3.5,
    "p": 0.2715,
    "seen": "2026-11-11 6:34"
+  },
+  "Brock Purdy|Rushing Yards|25": {
+   "pl": "Brock Purdy",
+   "m": "Rushing Yards",
+   "ln": 25.0,
+   "g": "DAL-SF",
+   "fd": 158.0,
+   "dk": 122.0,
+   "hr": 130.0,
+   "gap": 4.7,
+   "p": 0.3019,
+   "seen": "2026-11-11 6:34"
   }
  }
 }
