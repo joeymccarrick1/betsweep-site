@@ -66,7 +66,7 @@ jobs:
           if git status --porcelain | grep -q .; then :; else echo "nothing copied"; exit 0; fi
           python3 -m http.server 8801 >/dev/null 2>&1 &
           sleep 2
-          if [ "$PUBLISH" = "all" ]; then PAGES=""; else PAGES='^/$|^/(boards|build|live|short|firsttd|beat|pairs|teasers|boost|sweep|survivor|me|team|dfs)/$'; fi
+          if [ "$PUBLISH" = "all" ]; then PAGES=""; else PAGES='^/$|^/(boards|build|live|short|firsttd|beat|pairs|teasers|boost|shop|sweep|survivor|me|team|dfs)/$'; fi
           SITE="$PWD" python3 ../gen/tests/site_crawl.py $PAGES
           python3 ../gen/tests/gate.py
       - name: Publish
