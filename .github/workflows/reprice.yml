@@ -1,0 +1,86 @@
+# Auto-reprice (owner 11/10: "Hourly auto-reprice with no Claude session, which also ends blocked manual rebuilds").
+# Rebuilds the whole site from the newest sheet mirror with the generators on gen-overrides (reprice.py there runs every script the
+# RUNBOOK lists, in order). It never writes to the Google Sheet, re-uses the Sweep says lines the last session published
+# (/b/voice.json) and leaves season/ and the receipts to the Tuesday session. Nothing is pushed unless the build passes its own
+# checks AND a headless-browser crawl of the pages it is about to publish.
+#   schedule ........ every hour at :20, 6:20 AM - 11:20 PM Central: publishes only when a FanDuel price or the list of legs moved
+#   Run workflow .... publish = all (a full rebuild on demand), changed (same as the schedule) or none (build and check only)
+# Turn it off: Actions > reprice > "..." > Disable workflow. The rebuild sessions keep working either way.
+name: reprice
+on:
+  # schedule: [{cron: "20 0-5,12-23 * * *"}]      (switched on once the first hand-run has been read)
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "all = publish the whole build now; changed = only if prices moved; none = build and check only"
+        type: choice
+        default: changed
+        options: [changed, all, none]
+permissions: {contents: write}
+concurrency: {group: reprice, cancel-in-progress: false}
+jobs:
+  reprice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUBLISH: ${{ inputs.publish || 'changed' }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {path: site}
+      - uses: actions/checkout@v4
+        with: {ref: gen-overrides, path: gen}
+      - uses: actions/checkout@v4
+        with: {ref: sheet-mirror, path: sm}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - id: day
+        run: echo "d=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4          # nflverse downloads (play-by-play, weekly stats, rosters): fetched once a day
+        with:
+          path: |
+            gen/in/*.csv
+            gen/in/*.csv.gz
+          key: nflverse-${{ steps.day.outputs.d }}
+      - uses: actions/cache@v4
+        with: {path: ~/.cache/ms-playwright, key: playwright-chromium-v1}
+      - run: |
+          pip install -q numpy scipy pillow playwright
+          python -m playwright install --with-deps chromium >/dev/null
+      - name: Build
+        id: build
+        run: |
+          cd gen
+          set +e
+          python3 reprice.py --mirror ../sm/in --clone ../site --publish "$PUBLISH" | tee ../reprice.log
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          grep '^REPRICE ' ../reprice.log | tail -1 | cut -c9- > ../reprice.json || true
+          # 2 = mirror too old, 3 = week rolled (a session's job): quiet skips, not failures
+          if [ "$code" = "2" ] || [ "$code" = "3" ]; then echo "skipped (exit $code)"; exit 0; fi
+          exit $code
+      - name: Browser check of what is about to go out
+        if: steps.build.outputs.code == '0' && env.PUBLISH != 'none'
+        run: |
+          cd site
+          if git status --porcelain | grep -q .; then :; else echo "nothing copied"; exit 0; fi
+          python3 -m http.server 8801 >/dev/null 2>&1 &
+          sleep 2
+          if [ "$PUBLISH" = "all" ]; then PAGES=""; else PAGES='^/$|^/(boards|build|live|short|firsttd|beat|pairs|teasers|boost|sweep|survivor|me|team|dfs)/$'; fi
+          SITE="$PWD" python3 ../gen/tests/site_crawl.py $PAGES
+          python3 ../gen/tests/gate.py
+      - name: Publish
+        if: steps.build.outputs.code == '0' && env.PUBLISH != 'none'
+        run: |
+          cd site
+          git config user.name BetSweep; git config user.email support@betsweep.co
+          git add -A
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          WEEK=$(python3 -c "import json;print(json.load(open('../reprice.json')).get('week',''))" 2>/dev/null || true)
+          MOVED=$(python3 -c "import json;d=json.load(open('../reprice.json'));print(d.get('prices_moved',0))" 2>/dev/null || echo 0)
+          git commit -qm "Week ${WEEK} reprice $(date -u +%FT%TZ) (${MOVED} prices moved)"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0; sleep 7; done; exit 1
+      - name: Summary
+        if: always()
+        run: |
+          { echo '### reprice'; echo '```'; tail -60 reprice.log 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
