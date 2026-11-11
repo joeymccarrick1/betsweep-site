@@ -113,8 +113,67 @@ for x in sorted(pool, key=lambda x: -x[10]):
     if x[8] < 0.5 or x[1] in seen_p or x[4] in seen_g or (under and n_under >= MAX_UNDERS): continue
     model.append(x[0]); seen_p.add(x[1]); seen_g.add(x[4]); n_under += under
     if len(model) == 5: break
+# ---- suggested legs (owner 11/11 8:20 AM: "On beat the model your five can we have suggested legs around -110 that we can scroll through
+# to build our five. Include percentage and position ranking in that stat vs defensive matchup in that stat for each leg") ----------------
+# Around -110 = priced -125 to +100. One row per player, stat and side: the rung nearest -110. Only legs the model gives 50% or better (the
+# contest counts hits, not odds). Each row carries the site's matchup pair (owner 10/29: "offense ranking vs defensive ranking"): his team's
+# rank at his position in that stat (offranks.py, 1 = produces the most) against the opponent's rank against that position in that stat
+# (the sheet's defense tab, 1 = allows the most) - the same two numbers as the builder's pill. An under uses its stat's ranks (the builder
+# shows none on unders); Rush + Rec carries two pairs, rushing and receiving; Longest Reception uses receiving yards; a TD leg uses the
+# position's TD column. The page hides a row once its game kicks off or the risk layer rules the player out.
+SUG_LO, SUG_HI = -125, 100
+IN = os.path.join(HERE, "in")
+def _vals(f):
+    d = json.load(open(os.path.join(IN, f))); return d["values"] if isinstance(d, dict) else d
+DRK, DCOL = {}, {}
+try:
+    _rr = _vals("ranks.json"); DCOL = {c: i for i, c in enumerate(_rr[0][1:])}
+    for r in _rr[1:]:
+        if r and str(r[0]).startswith("LAST 3"): break
+        if not r or r[0] in ("Defense", ""): continue
+        try: DRK[r[0]] = [int(float(x)) if str(x).strip() != "" else None for x in r[1:16]]
+        except Exception: pass
+except Exception as _e: print("note: defense ranks unavailable:", _e)
+try:
+    import offranks as _ORK; _OR = _ORK.load(IN, W)
+except Exception as _e: _ORK = None; _OR = None; print("note: offense ranks unavailable:", _e)
+def stat_cols(pos, m):
+    """[(label, rank column), ...] for a market at a position; [] when the rank tables have no column for it"""
+    m = m[6:] if m.startswith("Under ") else m
+    if m == "Passing Yards" and pos == "QB": return [("pass yds", "QB Pass Yds")]
+    if m == "Passing TDs" and pos == "QB": return [("pass TDs", "QB Pass TD")]
+    if m == "Rushing Yards" and pos in ("QB", "RB"): return [("rush yds", f"{pos} Rush Yds")]
+    if m in ("Receiving Yards", "Longest Reception") and pos in ("RB", "WR", "TE"): return [("rec yds", f"{pos} Rec Yds")]
+    if m == "Receptions" and pos in ("RB", "WR", "TE"): return [("catches", f"{pos} Receptions")]
+    if m == "Rush + Rec Yards" and pos == "RB": return [("rush yds", "RB Rush Yds"), ("rec yds", "RB Rec Yds")]
+    if m in ("Anytime TD", "First TD", "2+ TD"): return [("rush TDs", f"{pos} Rush TD")] if pos in ("QB", "RB") else ([("rec TDs", f"{pos} Rec TD")] if pos in ("WR", "TE") else [])
+    return []
+def matchup(pos, tm, opp, m):
+    out = []
+    for lab, c in stat_cols(pos, m):
+        o = _ORK.rank(_OR, tm, c) if _OR else None
+        d = (DRK.get(opp) or [None] * 15)[DCOL[c]] if c in DCOL else None
+        if o is not None and d is not None: out.append([lab, o, d])
+    return out
+POS = {(l["pl"], l["m"], l.get("ln", 1)): l.get("pos") for l in D["legs"]}
+KICK = {g["gid"]: g.get("kick", "") for g in D.get("games", [])}
+_imp = lambda o: (-o / (-o + 100.0)) if o < 0 else 100.0 / (o + 100.0)
+_best = {}
+for x in pool:
+    if not (SUG_LO <= x[7] <= SUG_HI) or x[8] < 0.5: continue
+    fam = (x[1], x[5])   # player + market (the side is in the market name): one rung each
+    d = abs(_imp(x[7]) - _imp(-110))
+    if fam not in _best or (d, -x[8]) < _best[fam][0]: _best[fam] = ((d, -x[8]), x)
+sug = []
+for _, x in _best.values():
+    pos = POS.get((x[1], x[5], x[6])) or ""
+    mu = matchup(pos, x[2], x[3], x[5])
+    if pos not in ("QB", "RB", "WR", "TE") or not mu: continue     # every suggested row shows the matchup the owner asked for
+    sug.append([x[0], pos, KICK.get(x[4], ""), mu])
+_p = {x[0]: x[8] for x in pool}
+sug.sort(key=lambda s_: -_p[s_[0]])
 built = dt.datetime.now(dt.timezone.utc)
-json.dump({"week": W, "built": built.isoformat(), "model": model, "pool": [x[:10] for x in pool]}, open(os.path.join(OUT, "beat.json"), "w"), separators=(",", ":"))
+json.dump({"week": W, "built": built.isoformat(), "model": model, "pool": [x[:10] for x in pool], "sug": sug, "band": [SUG_LO, SUG_HI]}, open(os.path.join(OUT, "beat.json"), "w"), separators=(",", ":"))
 try:
     import account as ACCT; _link, _base = ACCT._base_css()
 except Exception: _link, _base = "", ""
@@ -133,6 +192,17 @@ body = f'''<title>Beat the model · Week {W} · BetSweep</title>
 .pool li b{{display:block;font-weight:600}} .pool li small{{color:var(--mute);font-size:12px}} .pool .o{{font-family:var(--display);font-weight:700}} .pool .pc{{font-family:var(--display);color:var(--mute);font-size:13px}}
 .btsub{{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}} .btsub input{{flex:1;min-width:140px;font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}}
 .btsub button{{font:inherit;font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;min-height:44px;padding:0 18px;border-radius:8px;border:0;background:var(--red);color:#fff;cursor:pointer}} .btsub button[disabled]{{opacity:.5;cursor:default}}
+.sug{{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}} .sugh{{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}} .sugh b{{font-family:var(--display);font-weight:700;font-size:17px}} .sugh span{{font-family:var(--display);font-weight:700;font-size:13px;color:var(--mute)}}
+.sug > small{{display:block;color:var(--mute);font-size:12.5px;line-height:1.4;margin:2px 0 8px}}
+.sugf{{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}} .sugf::-webkit-scrollbar{{display:none}}
+.sugf button{{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;min-height:40px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer}} .sugf button.on{{background:var(--ink);border-color:var(--ink);color:var(--bg)}} .sugf i{{flex:none;width:1px;background:var(--line);margin:6px 3px}}
+.sugl{{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;max-height:min(62vh,540px);overflow-y:auto;-webkit-overflow-scrolling:touch}}
+.sugl li{{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:start;background:var(--chalk);border-radius:10px;padding:9px 10px 9px 12px;cursor:pointer;border:1.5px solid transparent}} .sugl li:focus-visible{{outline:2px solid var(--red);outline-offset:1px}}
+.sugl li.on{{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--chalk))}} .sugl li.gone{{opacity:.45;cursor:not-allowed}} .sugl li.none{{display:block;cursor:default;color:var(--mute);font-size:13.5px;background:none;border:1.5px dashed var(--line)}}
+.sugl .w b{{font-weight:600;font-size:15px}} .sugl .w b i{{font-style:normal;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;color:var(--mute);margin-left:6px}} .sugl .w small{{display:block;color:var(--mute);font-size:12.5px;line-height:1.4}}
+.sugl .n{{text-align:right;white-space:nowrap}} .sugl .n b{{display:block;font-family:var(--display);font-weight:700;font-size:22px;line-height:1}} .sugl .n small{{display:block;font-family:var(--display);font-weight:700;font-size:13px;color:var(--mute);margin-top:3px}}
+.sugl .mu{{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;margin-top:5px}} .sugl .mu em{{font-style:normal;font-size:12px;color:var(--mute)}} .sugl .mu .ad{{margin-left:auto;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}} .sugl li.on .ad{{color:var(--good)}}
+.sugl .mup{{display:inline-flex;align-items:stretch;border-radius:5px;overflow:hidden;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.03em;white-space:nowrap}} .sugl .mup i{{font-style:normal;color:#fff;padding:3px 7px}} .sugl .mup u{{text-decoration:none;font-weight:600;font-size:10.5px;padding:3px 5px;background:var(--card);color:var(--mute)}}
 .btnote{{font-size:13px;color:var(--mute);margin-top:8px;line-height:1.45}} .btnote.ok{{color:var(--good)}} .btnote.err{{color:var(--bad)}}
 table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}} .lb th.r,.lb td.r{{text-align:right;font-variant-numeric:tabular-nums}} .lb thead th{{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}} .lb tr.model td{{color:var(--redtxt,var(--red));font-weight:600}} .lb tr.me td{{background:color-mix(in srgb,var(--good) 9%,transparent)}}
 {LEAGUE_CSS}
@@ -140,10 +210,15 @@ table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{pa
 </style>
 <main class="bt" data-week="{W}">
 <h1><small>Week {W}</small>Beat the model</h1>
-<p class="m">Five FanDuel legs, yours against the model's. Every player prop priced between -150 and +150 is in the pool, one leg per player. Hits count, not odds, so there is no prize for five -800 favourites. Picks lock when a leg's game kicks off; Tuesday grades everyone and the leaderboard keeps the season score.</p>
+<p class="m">Five FanDuel legs, yours against the model's. Every player prop priced between -150 and +150 is in the pool, one leg per player; the suggested list under your five has the ones near -110 with the model's chance and the matchup. Hits count, not odds, so there is no prize for five -800 favourites. Picks lock when a leg's game kicks off; Tuesday grades everyone and the leaderboard keeps the season score.</p>
 <div class="btgrid">
  <section class="btcard"><h2>The model's five <small id="btmnote">this week's build</small></h2><ul class="legl" id="btmodel"></ul></section>
  <section class="btcard"><h2>Your five <small id="btyn">0 of 5</small></h2><ul class="legl" id="btmine"></ul>
+  <div class="sug" id="btsug" hidden><div class="sugh"><b>Suggested legs</b><span id="btsugn"></span></div>
+   <small>Priced near -110 (-125 to +100), one line per player and stat, the model's most likely first. Tap a leg to add it.</small>
+   <div class="sugf" id="btsugf" role="group" aria-label="Filter the suggested legs"><button type="button" data-side="over" class="on">Overs</button><button type="button" data-side="under">Unders</button><i></i><button type="button" data-pos="" class="on">All</button><button type="button" data-pos="QB">QB</button><button type="button" data-pos="RB">RB</button><button type="button" data-pos="WR">WR</button><button type="button" data-pos="TE">TE</button></div>
+   <ul class="sugl" id="btsugl"></ul>
+   <p class="btnote">The colored pair is the matchup in that leg's stat: his team's rank at his position (#1 produces the most) against the defense's rank against that position (#1 allows the most). Green helps the leg, red hurts it.</p></div>
   <div class="pick"><input type="search" id="btq" placeholder="Search a player or market (Allen 250, Anytime TD, Receptions)" autocomplete="off"><ul class="pool" id="btpool"></ul></div>
   <div class="btsub"><input type="text" id="btname" maxlength="20" placeholder="Name on the leaderboard"><button type="button" id="btgo" disabled>Lock in five</button></div>
   <p class="btnote" id="btnote">Sign in (menu, top right) to submit. Picks are one set per week; you can change them until a chosen leg's game kicks off.</p>
@@ -163,7 +238,28 @@ table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{pa
   function legLi(k, opts){{ var l = POOL[k]; var g = GRADES && GRADES[k]; if (!l) return '<li class="' + (g || '') + '"><div><b>' + esc(k.split('|')[0]) + '</b><small>' + esc(k.split('|').slice(1).join(' ')) + '</small></div><span></span><span></span></li>';
     return '<li class="' + (g || '') + '"><div><b>' + esc(l[1]) + '</b><small>' + esc(line(l)) + ' · ' + esc(l[2]) + ' v ' + esc(l[3]) + (g ? ' · ' + g.toUpperCase() : '') + '</small></div><span class="o">' + am(l[7]) + '</span>' + (opts && opts.rm ? '<button type="button" class="rm" data-k="' + esc(k) + '" aria-label="Remove">✕</button>' : '<span class="pc">' + Math.round(l[8] * 100) + '%</span>') + '</li>'; }}
   function paintModel(){{ $('btmodel').innerHTML = MODEL.map(function(k){{ return legLi(k); }}).join('') || '<li class="empty">No picks yet.</li>'; $('btmnote').textContent = FROZEN ? 'frozen at the first build of the week' : "this week's build"; }}
-  function paintMine(){{ var h = MINE.map(function(k){{ return legLi(k, {{rm: !LOCKED}}); }}); while (h.length < 5) h.push('<li class="empty">Pick ' + (h.length + 1) + ' of 5</li>'); $('btmine').innerHTML = h.join(''); $('btyn').textContent = MINE.length + ' of 5' + (LOCKED ? ' · locked' : ''); $('btgo').disabled = LOCKED || MINE.length !== 5; paintPool(); }}
+  // suggested legs (owner 11/11): beat.json "sug" = [key, pos, kick, [[stat, offense rank, defense rank], ...]], the model's most likely first
+  var SUG = [], SIDE = 'over', SPOS = '';
+  function rankColor(r){{ var t = (r-1)/31, h, l; if(t < 0.5){{ h = 140 - 95*(t/0.5); l = 0.30 + 0.08*(t/0.5); }} else {{ h = 45 - 45*((t-0.5)/0.5); l = 0.38 - 0.10*((t-0.5)/0.5); }} return 'hsl(' + Math.round(h) + ' 62% ' + Math.round(l*100) + '%)'; }}
+  function ruled(l){{ try {{ var v = window.BSRisk && BSRisk.verdict ? BSRisk.verdict(l[1], l[5]) : null; return !!(v && v.level === 'block'); }} catch(e){{ return false; }} }}
+  function paintSug(){{ var box = $('btsug'); if (!box) return; if (!SUG.length || LOCKED){{ box.hidden = true; return; }} box.hidden = false;
+    var minePl = {{}}; MINE.forEach(function(k){{ minePl[POOL[k] ? POOL[k][1] : k.split('|')[0]] = 1; }});
+    var rows = SUG.filter(function(s){{ var l = POOL[s[0]]; return l && !started(l) && !ruled(l) && (/^Under /.test(l[5]) ? SIDE === 'under' : SIDE === 'over') && (!SPOS || s[1] === SPOS); }});
+    $('btsugn').textContent = MINE.length + ' of 5 picked';
+    $('btsugl').innerHTML = rows.map(function(s){{ var k = s[0], l = POOL[k], u = /^Under /.test(l[5]), on = MINE.indexOf(k) >= 0, gone = !on && (minePl[l[1]] || MINE.length >= 5);
+      var mu = s[3].map(function(m){{ var o = m[1], d = m[2];   // green helps this leg: an under wants the high numbers
+        return '<span class="mup" title="' + esc(l[2]) + ' ' + s[1] + 's rank #' + o + ' in ' + esc(m[0]) + ' produced; ' + esc(l[3]) + ' ranks #' + d + ' in ' + esc(m[0]) + ' allowed to ' + s[1] + 's"><i style="background:' + rankColor(u ? 33 - o : o) + '">' + esc(l[2]) + ' ' + s[1] + 's #' + o + '</i><u>vs</u><i style="background:' + rankColor(u ? 33 - d : d) + '">' + esc(l[3]) + ' def #' + d + '</i></span><em>' + esc(m[0]) + '</em>'; }}).join('');
+      return '<li class="' + (on ? 'on' : '') + (gone ? ' gone' : '') + '" data-k="' + esc(k) + '" role="button" tabindex="0" aria-pressed="' + on + '"><div class="w"><b>' + esc(l[1]) + '<i>' + s[1] + '</i></b><small>' + esc(line(l)) + '</small><small>' + esc(l[2]) + ' v ' + esc(l[3]) + (s[2] ? ' · ' + esc(s[2]) : '') + '</small></div>' +
+        '<div class="n"><b>' + Math.round(l[8] * 100) + '%</b><small>' + am(l[7]) + '</small></div><div class="mu">' + mu + '<span class="ad">' + (on ? '\u2713 In your five' : gone ? (MINE.length >= 5 ? 'Five picked' : 'Player picked') : '+ Add') + '</span></div></li>'; }}).join('') ||
+      '<li class="none">No ' + (SIDE === 'under' ? 'under' : 'over') + (SPOS ? ' for a ' + SPOS : '') + ' near -110 clears 50% right now. Try ' + (SIDE === 'under' ? 'Overs' : 'Unders') + ', another position, or the search below.</li>'; }}
+  function tapSug(li){{ if (!li || LOCKED) return; var k = li.getAttribute('data-k'), l = POOL[k]; if (!l || started(l)) return;
+    var i = MINE.indexOf(k); if (i >= 0) MINE.splice(i, 1); else {{ if (MINE.length >= 5) return; if (MINE.some(function(x){{ return POOL[x] && POOL[x][1] === l[1]; }})) return; MINE.push(k); }}
+    var ul = $('btsugl'), top = ul.scrollTop; paintMine(); ul.scrollTop = top; }}
+  $('btsugl').addEventListener('click', function(e){{ tapSug(e.target.closest('li[data-k]')); }});
+  $('btsugl').addEventListener('keydown', function(e){{ if (e.key !== 'Enter' && e.key !== ' ') return; var li = e.target.closest('li[data-k]'); if (!li) return; e.preventDefault(); var k = li.getAttribute('data-k'); tapSug(li); var n = $('btsugl').querySelector('li[data-k="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); if (n) n.focus(); }});
+  $('btsugf').addEventListener('click', function(e){{ var b = e.target.closest('button'); if (!b) return; if (b.hasAttribute('data-side')) SIDE = b.getAttribute('data-side'); else SPOS = b.getAttribute('data-pos');
+    [].forEach.call($('btsugf').querySelectorAll('button'), function(x){{ var on = x.hasAttribute('data-side') ? x.getAttribute('data-side') === SIDE : x.getAttribute('data-pos') === SPOS; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }}); paintSug(); $('btsugl').scrollTop = 0; }});
+  function paintMine(){{ var h = MINE.map(function(k){{ return legLi(k, {{rm: !LOCKED}}); }}); while (h.length < 5) h.push('<li class="empty">Pick ' + (h.length + 1) + ' of 5</li>'); $('btmine').innerHTML = h.join(''); $('btyn').textContent = MINE.length + ' of 5' + (LOCKED ? ' · locked' : ''); $('btgo').disabled = LOCKED || MINE.length !== 5; paintPool(); paintSug(); }}
   function paintPool(){{ var q = ($('btq').value || '').trim().toLowerCase(); var ul = $('btpool'); if (!q || LOCKED){{ ul.innerHTML = ''; return; }}
     var ws = q.split(/\\s+/); var hits = Object.keys(POOL).filter(function(k){{ var l = POOL[k]; var s = (l[1] + ' ' + l[5] + ' ' + l[6] + ' ' + l[2] + ' ' + l[3]).toLowerCase(); return ws.every(function(w){{ return s.indexOf(w) >= 0; }}); }}).slice(0, 40);
     var minePl = {{}}; MINE.forEach(function(k){{ minePl[POOL[k] ? POOL[k][1] : k.split('|')[0]] = 1; }});
@@ -204,7 +300,7 @@ table.lb{{width:100%;border-collapse:collapse;font-size:14px}} .lb th,.lb td{{pa
           h += '<tr><td>' + w + '</td><td>' + win.join(', ') + '</td><td class="r">' + top + '/5</td><td class="r">' + (mr && mr.hits != null ? mr.hits + '/5' : '—') + '</td><td class="r">' + ps.length + '</td></tr>'; }});
         h += '</tbody></table>'; }}
       $('btlb').innerHTML = h; }}).catch(function(){{ $('btlb').innerHTML = '<p class="btnote">Leaderboard unavailable right now.</p>'; }}); }}
-  fetch('/b/beat.json').then(function(r){{ return r.json(); }}).then(function(j){{ DATA = j; (j.pool || []).forEach(function(l){{ POOL[l[0]] = l; }}); MODEL = j.model || []; paintModel(); paintMine();
+  fetch('/b/beat.json').then(function(r){{ return r.json(); }}).then(function(j){{ DATA = j; (j.pool || []).forEach(function(l){{ POOL[l[0]] = l; }}); MODEL = j.model || []; SUG = j.sug || []; paintModel(); paintMine();
     try {{ var nm = localStorage.getItem('bs_beat_name'); if (nm) $('btname').value = nm; }} catch(e){{}}
     // last week's grades for the model's card when the week has turned (graded-w<W-1>) - shown under the leaderboard by the Tuesday build
     var tries = 0; (function wait(){{ if (window.bsAccount && window.bsAccount.client){{ loadMine(); loadLB(); window.addEventListener('bs-account', function(){{ loadMine(); loadLB(); }}); document.addEventListener('bs-account', function(){{ loadMine(); loadLB(); }}); }} else if (tries++ < 40) setTimeout(wait, 250); else loadLB(); }})(); }});
