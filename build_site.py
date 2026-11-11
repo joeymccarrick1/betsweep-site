@@ -125,7 +125,7 @@ open(os.path.join(SITE, ".nojekyll"), "w").write("")
 
 NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay Builder"), ("/player/", "Players"), ("/live/", "Live"), ("/social/", "Social"), ("/team/", "Fantasy"), ("/usage/", "Usage"), ("/trade/", "Trade"), ("/firsttd/", "First TD"), ("/dfs/", "DFS"), ("/receipts/", "Receipts"), ("/season/", "Season")]
 # owner 10/30: "start grouping pages in the menu ... Fantasy and then it drops down to teams, trade, and dfs. Group like pages"
-NAV_GROUPS = [("/", "Home", None), ("/simple/", "Simple view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
+NAV_GROUPS = [("/", "Home", None), ("/short/", "Short view", None),   # owner 11/10: the short version for casual visitors (build_simple.py)
               (None, "Betting", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/build/?ask=", "Ask BetSweep", "Any player, stat or line"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/firsttd/", "First TD", "Who scores first"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced"), ("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")]),
@@ -520,8 +520,11 @@ if os.path.exists(os.path.join(OUT, "pairs.html")):
 try:
     import build_simple as _SIMPLE
     print(_SIMPLE.build(OUT))
-    made.append(place_plain(os.path.join(OUT, "simple.html"), os.path.join(SITE, "simple"), "/simple/"))
-except BaseException as _e: print("note: Simple view not built this run:", _e)
+    made.append(place_plain(os.path.join(OUT, "simple.html"), os.path.join(SITE, "short"), "/short/"))
+    # the page first went live as /simple/ ("Simple view") for an afternoon: that address keeps working and lands on /short/
+    os.makedirs(os.path.join(SITE, "simple"), exist_ok=True)
+    open(os.path.join(SITE, "simple", "index.html"), "w").write('<!doctype html><html><head><meta charset="utf-8"><title>BetSweep</title><link rel="canonical" href="/short/"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=/short/"><script>location.replace("/short/" + location.search + location.hash)</script></head><body><a href="/short/">BetSweep, the short version</a></body></html>')
+except BaseException as _e: print("note: Short view not built this run:", _e)
 # owner 11/10: /survivor/ - the Survivor planner (build_survivor.py): elimination pools, the best pick now and the team to save for each week left
 if os.path.exists(os.path.join(OUT, "survivor.html")):
     made.append(place_plain(os.path.join(OUT, "survivor.html"), os.path.join(SITE, "survivor"), "/survivor/"))

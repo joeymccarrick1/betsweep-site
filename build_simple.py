@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""build_simple.py - the Simple view at /simple/ (owner 11/10: casual friends "want to just open up the app and everything they could
+"""build_simple.py - the Short view at /short/ (first shipped as "Simple view" at /simple/; owner 11/10 evening: "Let's call Simple view, Short view instead" - the file and its outputs keep the old name, the page, its address and every word a visitor sees say Short; /simple/ redirects). Owner 11/10: casual friends "want to just open up the app and everything they could
 want is right there and not have to do any extra reading"; "Just make sure that simple mode stays with the same overall aesthetic.
 Let's just push it to the site").
 
@@ -105,9 +105,9 @@ JS = r"""
       var out = !!(v && v.level === 'block'); li.classList.toggle('gone', out); if(out) bad = true; });
     var go = ez.querySelector('.bsbtn'), fn = $('sveasyfn'); if(go) go.hidden = bad; if(fn && bad) fn.textContent = 'One of these players has been ruled out since this was built. Fresh picks come with the next update.'; }
   document.addEventListener('bs-risk', risk); risk();
-  // Simple / Full: the choice is kept on this device
+  // Short / Full: the choice is kept on this device (bs_view = 'short'; 'simple' is the same choice, stored before the rename)
   var full = $('svfull'); if(full) full.addEventListener('click', function(){ setPref('full'); location.href = '/'; });
-  var keep = $('svkeep'); function keepLine(){ if(!keep) return; if(pref() === 'simple'){ keep.innerHTML = 'Simple is your home page on this device.'; } else { keep.innerHTML = 'Like it short? <button type="button" id="svkeepb">Make this my home page</button>'; var b = $('svkeepb'); if(b) b.addEventListener('click', function(){ setPref('simple'); keepLine(); }); } }
+  var keep = $('svkeep'); function keepLine(){ if(!keep) return; var pv = pref(); if(pv === 'short' || pv === 'simple'){ keep.innerHTML = 'Short view is your home page on this device.'; } else { keep.innerHTML = 'Like it short? <button type="button" id="svkeepb">Make this my home page</button>'; var b = $('svkeepb'); if(b) b.addEventListener('click', function(){ setPref('short'); keepLine(); }); } }
   keepLine();
 })();
 """
@@ -179,7 +179,7 @@ def build(out_dir=OUT):
 {CSS}</style>
 <div class="sv">
 <div class="svhead"><h1>The short version</h1><span class="sub">Week {E(str(WEEK))}. Picks first, reading optional.</span></div>
-<div class="svbar"><div class="seg" role="group" aria-label="View"><button type="button" class="on" aria-pressed="true">Simple</button><button type="button" id="svfull" aria-pressed="false">Full</button></div><p class="keep" id="svkeep"></p></div>
+<div class="svbar"><div class="seg" role="group" aria-label="View"><button type="button" class="on" aria-pressed="true">Short</button><button type="button" id="svfull" aria-pressed="false">Full</button></div><p class="keep" id="svkeep"></p></div>
 {sweep_html}{easy_html}
 <h2 id="svgames" class="brush out">Who wins <small>tap a game for its best parlay</small></h2>
 {games_html}
@@ -191,7 +191,7 @@ def build(out_dir=OUT):
     open(os.path.join(out_dir, "simple.html"), "w").write(page)
     json.dump({"week": WEEK, "easy": [{"pl": l["pl"], "m": l["m"], "ln": l["ln"], "o": l["o"], "p": l["p"], "g": l["g"], "fd": [l["fd"]["m"], l["fd"]["s"]]} for l in easy], "easy_link": easy_link,
                "slip": (sw.get("title") if sw else None), "games": rows_json}, open(os.path.join(out_dir, "simple.json"), "w"))
-    return f"wrote out/simple.html (Simple view, /simple/): week {WEEK}, {len(GAMES)} games, {len(easy)} easy picks, house slip {'yes' if sw else 'none posted'}, Sweep says lines {sum(1 for r in rows_json if r['say'])}"
+    return f"wrote out/simple.html (Short view, /short/): week {WEEK}, {len(GAMES)} games, {len(easy)} easy picks, house slip {'yes' if sw else 'none posted'}, Sweep says lines {sum(1 for r in rows_json if r['say'])}"
 
 if __name__ == "__main__":
     print(build())

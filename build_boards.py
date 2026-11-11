@@ -131,28 +131,34 @@ SWEEPCARD_JS = r"""<style>.swcard{display:block;margin:6px 0 10px;font:inherit;f
 .swov img{max-width:min(92vw,520px);max-height:70vh;border-radius:12px}.swov .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.swov button,.swov a{font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;border:0;background:#f4efe3;color:#0d1626;text-decoration:none;cursor:pointer}.swov .p{background:#d7332a;color:#fff}</style>
 <script>(function(){   // owner 11/10: Sweep says share cards - drawn in the browser, square (feed) or story size, shared as an image
   if (window.__swc) return; window.__swc = 1;
+  var LOGO = new Image(); LOGO.src = '/wordmark.png';   // owner 11/10: the real wordmark on the card (cream letters, red sweep), not the word set in red type
   function wrap(ctx, text, maxW){ var w = String(text).split(/\s+/), lines = [], cur = ''; w.forEach(function(x){ var t = cur ? cur + ' ' + x : x; if (ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = x; } else cur = t; }); if (cur) lines.push(cur); return lines; }
   function draw(d, story){
     var W = 1080, H = story ? 1920 : 1080, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
     x.fillStyle = '#0d1626'; x.fillRect(0, 0, W, H);
     x.strokeStyle = 'rgba(244,239,227,.06)'; x.lineWidth = 3; for (var i = -H; i < W; i += 90){ x.beginPath(); x.moveTo(i, H); x.lineTo(i + H, 0); x.stroke(); }   // chalk lines
-    var top = story ? 300 : 110, pad = 90;
+    var top = story ? 300 : 90, pad = 90;
     x.fillStyle = '#d7332a'; x.fillRect(pad, top, 16, 120);
     x.fillStyle = '#f4efe3'; x.font = 'italic 800 64px "Barlow Condensed", Impact, sans-serif'; x.fillText('SWEEP SAYS', pad + 40, top + 62);
     x.fillStyle = 'rgba(244,239,227,.7)'; x.font = '700 40px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText((d.g || '') + '  \u00b7  WEEK ' + (d.w || ''), pad + 40, top + 112);
-    x.fillStyle = '#f4efe3'; var fs = story ? 66 : 58; x.font = '600 ' + fs + 'px Georgia, "Times New Roman", serif';
-    var ls = wrap(x, '“' + d.t + '”', W - pad * 2), y = top + 220; ls.slice(0, story ? 9 : 6).forEach(function(l){ x.fillText(l, pad, y); y += fs * 1.25; });
+    // the footer is measured first so the take above it knows its room: the wordmark when it has loaded, the old red word when it has not
+    var hasLogo = LOGO.complete && LOGO.naturalWidth > 0, lw = story ? 500 : 430, lh = hasLogo ? Math.round(lw * LOGO.naturalHeight / LOGO.naturalWidth) : 0;
+    var ty = H - (story ? 182 : 52), ftop = hasLogo ? ty - 44 - lh : ty - 110;   // ty = the small print's baseline, ftop = top of the footer
+    x.fillStyle = '#f4efe3'; var fs = story ? 66 : 58, maxL = story ? 9 : 6, y0 = top + 220, room = ftop - (story ? 60 : 34) - (d.l ? 170 + (story ? 80 : 30) : 0) - y0, ls;
+    for (;;){ x.font = '600 ' + fs + 'px Georgia, "Times New Roman", serif'; ls = wrap(x, '“' + d.t + '”', W - pad * 2); if ((ls.length <= maxL && ls.length * fs * 1.25 <= room) || fs <= 40) break; fs -= 2; }
+    var y = y0; ls.slice(0, maxL).forEach(function(l){ x.fillText(l, pad, y); y += fs * 1.25; });
     if (d.l){ y += story ? 80 : 30; var bh = 170; x.fillStyle = '#f4efe3'; x.fillRect(pad, y, W - pad * 2, bh); x.fillStyle = '#d7332a'; x.fillRect(pad, y, 14, bh);
       x.fillStyle = '#6b655c'; x.font = '700 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('THE LEG THAT BACKS IT', pad + 44, y + 52);
       x.fillStyle = '#0d1626'; var lf = 52, lt = d.l; x.font = '800 52px "Barlow Condensed", Arial Narrow, sans-serif'; while (x.measureText(lt + '   ' + d.o).width > W - pad * 2 - 80 && lf > 30){ lf -= 2; x.font = '800 ' + lf + 'px "Barlow Condensed", Arial Narrow, sans-serif'; }
       x.fillText(lt, pad + 44, y + 122); x.fillStyle = '#d7332a'; x.textAlign = 'right'; x.fillText(d.o || '', W - pad - 30, y + 122); x.textAlign = 'left'; }
-    var fy = H - (story ? 230 : 110); x.fillStyle = '#d7332a'; x.font = 'italic 900 64px "Barlow Condensed", Impact, sans-serif'; x.fillText('BetSweep', pad, fy);
-    x.fillStyle = 'rgba(244,239,227,.75)'; x.font = '600 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('betsweep.co  \u00b7  21+  \u00b7  gamble responsibly', pad, fy + 48);
+    if (hasLogo) x.drawImage(LOGO, pad, ty - 44 - lh, lw, lh); else { x.fillStyle = '#d7332a'; x.font = 'italic 900 64px "Barlow Condensed", Impact, sans-serif'; x.fillText('BetSweep', pad, ty - 48); }
+    x.fillStyle = 'rgba(244,239,227,.75)'; x.font = '600 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('betsweep.co  \u00b7  21+  \u00b7  gamble responsibly', pad, ty);
     return c; }
   function show(d){ var ov = document.createElement('div'); ov.className = 'swov'; document.body.appendChild(ov); var story = false;
     function render(){ var c = draw(d, story); ov.innerHTML = '<img alt="Sweep says card"><div class="row"><button type="button" class="p" data-a="share">Share image</button><button type="button" data-a="size">' + (story ? 'Square (feed)' : 'Story size') + '</button>' + (d.u ? '<a href="' + d.u + '" target="_blank" rel="noopener">Bet the leg on FanDuel</a>' : '') + '<button type="button" data-a="close">Close</button></div>';
       ov.querySelector('img').src = c.toDataURL('image/png'); ov._c = c; }
     render();
+    if (!(LOGO.complete && LOGO.naturalWidth > 0)) LOGO.addEventListener('load', function(){ if (ov.parentNode) render(); });
     ov.addEventListener('click', function(ev){ var a = ev.target.getAttribute && ev.target.getAttribute('data-a'); if (ev.target === ov || a === 'close'){ ov.remove(); return; }
       if (a === 'size'){ story = !story; render(); return; }
       if (a === 'share'){ ov._c.toBlob(function(b){ var fn = 'sweep-says-' + String(d.g).replace(/\W+/g, '-').toLowerCase() + (story ? '-story' : '') + '.png', file = new File([b], fn, {type: 'image/png'}), txt = 'Sweep says: ' + d.t + (d.l ? '\nThe leg: ' + d.l + ' ' + d.o : '') + '\nbetsweep.co';
@@ -187,21 +193,42 @@ def lean_text(lean): return " and ".join(x for x in (("the " + lean["total"].low
 LEAN_LOG = []   # one entry per game with a lean: what it was, the slip built under it and the slip the same run would have printed without it
 _RISKW = {"bad": 3, "watch": 1, "good": -1}
 def _risk(l): return max(0, sum(_RISKW.get(f.get("k"), 0) for f in (l.get("flags") or [])))
-def sweep_card(gid, line):
-    """owner 11/10: shareable 'Sweep says' card - the game's line plus the single best LOW-RISK leg that backs it. The leg is the rebuild
-    session's pick (voice.json "picks": {gid: "Player|Market|Line"}, RUNBOOK 1v) when it is low risk; otherwise the game's highest-chance
-    low-risk leg priced -300..+150 (never when the line calls for unders - the card then shares the line alone). The image is drawn in the
-    browser (SWEEPCARD_JS), nothing is stored."""
+SWEEP_NOTES = []   # (gid, why) for every game line whose card shares the line alone - printed after the build so the run can fix line or pick
+_PLAY_RE = re.compile(r"\b(?:play|take|bet|back|ride|tail|hammer|grab)\s+((?:[A-Z][A-Za-z.'\-]+\s?){1,3})")
+def _last(n): return re.sub(r"\s+(Jr\.?|Sr\.?|II|III|IV|V)$", "", str(n).strip()).split(" ")[-1]
+def _half_up(x): return int(math.floor(float(x) + 0.5))
+def sweep_pick(gid, line, pick, legs):
+    """-> (leg, "") or (None, why). The leg is the rebuild session's pick for this line (voice.json "picks": {gid: "Player|Market|Line"},
+    RUNBOOK 1v) and nothing else. owner 11/10 evening ("You're saying play Skattebo catching passes and then share a different leg. I like
+    McCarthy passing but that's not what sweep says"): the card used to fall back to the game's safest leg when the pick was refused,
+    which put McCarthy's passing yards under a line about Skattebo. Now a pick that is missing, is not on this game's board, has no
+    price, belongs to a player who is out or questionable, is not low risk (score 2+), or is not a player the line itself tells the
+    reader to play, leaves the card with the line alone - never with another leg."""
     a, b = (gid.split("-") + [""])[:2]
-    pick = (VOICE.get("picks") or {}).get(gid); leg = None
-    def ok(l): return l["team"] in (a, b) and l["status"] not in ("OUT", "BYE", "QUESTIONABLE") and l.get("odds") is not None and l.get("p") is not None and _risk(l) < 2
-    if pick:
-        pp = pick.split("|")
-        for l in LEGS:
-            if ok(l) and l["player"] == pp[0] and l["market"] == pp[1] and len(pp) > 2 and str(int(l["line"] or 1)) == str(int(float(pp[2]))): leg = l; break
-    if leg is None and "under" not in str(line).lower():
-        c = [l for l in LEGS if ok(l) and -300 <= l["odds"] <= 150 and l["market"] not in ("Longest Reception", "Rushing Yards")]
-        if c: leg = max(c, key=lambda l: l["p"])
+    if not pick: return None, "no pick written for this line"
+    pp = [x.strip() for x in str(pick).split("|")]
+    try: want = _half_up(pp[2]) if len(pp) > 2 and pp[2] != "" else 1
+    except Exception: return None, f"pick '{pick}' has a line that is not a number"
+    if len(pp) < 2: return None, f"pick '{pick}' is not Player|Market|Line"
+    cand = [l for l in legs if l["team"] in (a, b) and l["player"] == pp[0] and l["market"] == pp[1] and _half_up(l["line"] or 1) == want]
+    if not cand: return None, f"pick '{pick}' is not a leg on this game's board" + (" (the boards carry no player unders)" if pp[1].startswith("Under") else "")
+    l = cand[0]
+    if l["status"] in ("OUT", "BYE", "QUESTIONABLE"): return None, f"pick '{pick}': the player is {l['status']}"
+    if l.get("odds") is None or l.get("p") is None: return None, f"pick '{pick}' has no FanDuel price"
+    if _risk(l) >= 2:
+        tags = [f.get("tag", "") for f in (l.get("flags") or []) if f.get("k") in ("bad", "watch")]
+        return None, f"pick '{pick}' is not low risk (score {_risk(l)}: {', '.join(tags[:4])})"
+    # the play the line names must be the pick: "play Skattebo catching passes" cannot ride with a McCarthy leg
+    board = {_last(x["player"]) for x in legs if x["team"] in (a, b)}
+    told = {w.strip(".,'") for m in _PLAY_RE.finditer(str(line)) for w in m.group(1).split()} & board
+    if told and _last(pp[0]) not in told: return None, f"the line tells the reader to play {' / '.join(sorted(told))} but the pick is {pp[0]}"
+    return l, ""
+def sweep_card(gid, line):
+    """owner 11/10: shareable 'Sweep says' card - the game's line plus the ONE low-risk leg that backs it (sweep_pick), or the line alone.
+    The image is drawn in the browser (SWEEPCARD_JS), nothing is stored."""
+    a, b = (gid.split("-") + [""])[:2]
+    leg, why = sweep_pick(gid, line, (VOICE.get("picks") or {}).get(gid) if isinstance(VOICE.get("picks"), dict) else None, LEGS)
+    if leg is None: SWEEP_NOTES.append((gid, why))
     lt = lu = lo = ""
     if leg is not None:
         mk = leg["market"]
@@ -1334,6 +1361,8 @@ import live as LIVE
 import books as BOOKS
 json.dump(BEST_PARLAYS, open(os.path.join(OUT, "best_parlays.json"), "w"))   # for build_calls.py (model-calls archive)
 json.dump({"week": int(WEEK), "games": LEAN_LOG}, open(os.path.join(OUT, "sweep_leans.json"), "w"))   # owner 11/10: Sweep says leads; build_calls.py archives what the lean changed
+_nb = len(SWEEP_BTNS); _alone = [x for x in SWEEP_NOTES if x[1] != "no pick written for this line"]
+print(f"sweep cards: {_nb} lines, {_nb - len(SWEEP_NOTES)} carry their leg, {len(SWEEP_NOTES) - len(_alone)} have no pick" + ("" if not _alone else "; PICK REFUSED (fix the pick or the line, then run this script again): " + "; ".join(f"{g}: {w}" for g, w in _alone)))
 print(f"sweep leans: {len(LEAN_LOG)} games with a lean on record" + ("" if not LEAN_LOG else "; best parlay changed in " + str(sum(1 for x in LEAN_LOG if x["changed"])) + ", carries the line's own leg in " + str(sum(1 for x in LEAN_LOG if x["backed"])) + ", no agreeing slip in " + str(sum(1 for x in LEAN_LOG if not x["built"])) + ": " + "; ".join(x["gid"] + " " + x["text"] + (" (changed)" if x["changed"] else "") for x in LEAN_LOG)))
 page = (open(os.path.join(HERE, "template.html")).read().replace("/*SLIPDATA*/null", json.dumps(SLIP_DATA, separators=(",", ":"))).replace("/*LIVEJS*/", LIVE.LIVE_JS).replace("/*BOOKSJS*/", BOOKS.BOOKS_JS).replace("/*BOOKSCSS*/", BOOKS.BOOKS_CSS).replace("<!--BOOKSHTML-->", BOOKS.panel_html("bslipBooksPanel")).replace("/*LIVECSS*/", LIVE.LIVE_CSS)
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/FQVqm3BhG4BfMPd63tRQRa" class="tool">Parlay Builder →</a> <a href="#summary">Slate</a> ' + " ".join(nav)).replace("{{CARDS}}", summary + "\n" + "\n".join(cards))
