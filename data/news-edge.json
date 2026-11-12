@@ -256,6 +256,48 @@
      "pulled": "2026-11-11 6:34"
     }
    }
+  },
+  "A.J. Brown|2026-11-12T16:29": {
+   "pl": "A.J. Brown",
+   "tm": "NE",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-12T16:29:07Z",
+   "legs": {
+    "Hunter Henry|Receiving Yards|40": {
+     "pl": "Hunter Henry",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "built": 114,
+     "p": 0.4713,
+     "first": null,
+     "moved": null,
+     "now": 114.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Hunter Henry|Receptions|3": {
+     "pl": "Hunter Henry",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": -225,
+     "p": 0.6602,
+     "first": null,
+     "moved": null,
+     "now": -225.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Hunter Henry|Longest Reception|20": {
+     "pl": "Hunter Henry",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 115,
+     "p": 0.393,
+     "first": null,
+     "moved": null,
+     "now": 115.0,
+     "pulled": "2026-11-12 6:34"
+    }
+   }
   }
  }
 }
