@@ -75,6 +75,7 @@ BUILD = [
     ("legal", "build_legal.py", "soft"),
     ("shadow slips", "shadow_slips.py", "soft"),
     ("promos", "build_promo.py {clone}/promo-slips", "hard"),
+    ("today (with promos)", "build_today.py", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
     ("site", "build_site.py betsweep.co {clone}/posts", "hard"),
 ]
 

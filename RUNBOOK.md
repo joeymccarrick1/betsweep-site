@@ -505,3 +505,8 @@ Owner: "Can ask betsweep just be on the Menu? I'd want this on the menu of every
 Under Receiving Yards for those names, so the next-best under takes the day's card. Players not on the chart (tight ends, backs) are untouched.
 If the chart has no rows for the week, nothing is skipped and the build prints a note. Same rule when hand-picking slip legs: no receiver
 under against a soft draw, no receiver over against a shadow or Tough coverage.
+
+### The home page is built once more after the promos (11/12)
+reprice.py ran build_today.py before build_promo.py, and each workflow run starts with an empty out/, so a Sweep added to the PROMO tab never
+reached the home page hero (11/12: "Daily Sweep: Wet Work" was in /b/promos.json and at /b/w10-1/ but the hero showed only the teaser). BUILD
+now has a "today (with promos)" pass right after "promos". Check after any promo publish: `grep -c "<the slip name>" index.html` must be 1+.
