@@ -1,8 +1,8 @@
 {
  "news": [],
  "week": 10,
- "built": "Thu 11/12 3:50 PM",
- "checked": "2026-11-12T22:51:03Z",
+ "built": "Thu 11/12 5:31 PM",
+ "checked": "2026-11-12T23:46:53Z",
  "legs_checked": 1474,
  "moves": [
   {
@@ -19,8 +19,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Cam Skattebo rush yds 60+: FanDuel +102 at build -> -144 now (+9.5 implied pts toward the model)"
+  },
+  {
+   "key": "Darnell Mooney|Longest Reception|20",
+   "pl": "Darnell Mooney",
+   "m": "Longest Reception",
+   "ln": 20.0,
+   "gid": "NYG-WAS",
+   "ko": 1794532500000,
+   "built": 250,
+   "now": 330.0,
+   "pts": -5.3,
+   "p": 0.2325,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-12 16:35",
+   "detail": "Darnell Mooney long rec 20+: FanDuel +250 at build -> +330 now (-5.3 implied pts against us)"
   },
   {
    "key": "Cam Skattebo|Receptions|2",
@@ -36,7 +53,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Cam Skattebo rec 2+: FanDuel +128 at build -> +106 now (+4.7 implied pts toward the model)"
   },
   {
@@ -53,25 +70,25 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Isaiah Likely rec 6+: FanDuel +158 at build -> +194 now (-4.7 implied pts against us)"
   },
   {
-   "key": "Cam Skattebo|Receiving Yards|10",
-   "pl": "Cam Skattebo",
+   "key": "Darnell Mooney|Receiving Yards|15",
+   "pl": "Darnell Mooney",
    "m": "Receiving Yards",
-   "ln": 10.0,
+   "ln": 15.0,
    "gid": "NYG-WAS",
    "ko": 1794532500000,
-   "built": 130,
-   "now": 110.0,
-   "pts": 4.1,
-   "p": 0.4812,
-   "value": false,
-   "dir": "SHORTENED",
+   "built": -113,
+   "now": 106.0,
+   "pts": -4.5,
+   "p": 0.539,
+   "value": true,
+   "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
-   "detail": "Cam Skattebo rec yds 10+: FanDuel +130 at build -> +110 now (+4.1 implied pts toward the model)"
+   "pulled": "2026-11-12 16:35",
+   "detail": "Darnell Mooney rec yds 15+: FanDuel -113 at build -> +106 now (-4.5 implied pts against us)"
   },
   {
    "key": "Theo Johnson|Longest Reception|10",
@@ -87,8 +104,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Theo Johnson long rec 10+: FanDuel +170 at build -> +145 now (+3.8 implied pts toward the model)"
+  },
+  {
+   "key": "Cam Skattebo|Receiving Yards|10",
+   "pl": "Cam Skattebo",
+   "m": "Receiving Yards",
+   "ln": 10.0,
+   "gid": "NYG-WAS",
+   "ko": 1794532500000,
+   "built": 130,
+   "now": 112.0,
+   "pts": 3.7,
+   "p": 0.4812,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-12 16:35",
+   "detail": "Cam Skattebo rec yds 10+: FanDuel +130 at build -> +112 now (+3.7 implied pts toward the model)"
   },
   {
    "key": "Devin Singletary|Receptions|3",
@@ -104,7 +138,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Devin Singletary rec 3+: FanDuel +320 at build -> +265 now (+3.6 implied pts toward the model)"
   },
   {
@@ -121,25 +155,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Devin Singletary rec yds 10+: FanDuel +102 at build -> -113 now (+3.5 implied pts toward the model)"
   },
   {
-   "key": "Malik Nabers|Receiving Yards|70",
-   "pl": "Malik Nabers",
-   "m": "Receiving Yards",
-   "ln": 70.0,
+   "key": "Devin Singletary|Longest Reception|10",
+   "pl": "Devin Singletary",
+   "m": "Longest Reception",
+   "ln": 10.0,
    "gid": "NYG-WAS",
    "ko": 1794532500000,
-   "built": -113,
-   "now": 102.0,
-   "pts": -3.5,
-   "p": 0.516,
+   "built": 150,
+   "now": 130.0,
+   "pts": 3.5,
+   "p": 0.3401,
    "value": false,
-   "dir": "DRIFTED",
+   "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
-   "detail": "Malik Nabers rec yds 70+: FanDuel -113 at build -> +102 now (-3.5 implied pts against us)"
+   "pulled": "2026-11-12 16:35",
+   "detail": "Devin Singletary long rec 10+: FanDuel +150 at build -> +130 now (+3.5 implied pts toward the model)"
   },
   {
    "key": "Cam Skattebo|Longest Reception|10",
@@ -155,8 +189,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 15:35",
+   "pulled": "2026-11-12 16:35",
    "detail": "Cam Skattebo long rec 10+: FanDuel +190 at build -> +165 now (+3.3 implied pts toward the model)"
+  },
+  {
+   "key": "Malik Nabers|Receiving Yards|70",
+   "pl": "Malik Nabers",
+   "m": "Receiving Yards",
+   "ln": 70.0,
+   "gid": "NYG-WAS",
+   "ko": 1794532500000,
+   "built": -113,
+   "now": 100.0,
+   "pts": -3.1,
+   "p": 0.516,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-12 16:35",
+   "detail": "Malik Nabers rec yds 70+: FanDuel -113 at build -> +100 now (-3.1 implied pts against us)"
   }
  ]
 }
