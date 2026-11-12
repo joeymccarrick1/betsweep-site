@@ -298,6 +298,220 @@
      "pulled": "2026-11-12 6:34"
     }
    }
+  },
+  "Bam Knight|2026-11-12T22:38": {
+   "pl": "Bam Knight",
+   "tm": "ARI",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-12T22:38:24Z",
+   "legs": {
+    "Tyler Allgeier|Receptions|4": {
+     "pl": "Tyler Allgeier",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 230,
+     "p": 0.3235,
+     "first": null,
+     "moved": null,
+     "now": 230.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Tyler Allgeier|Rush + Rec Yards|57": {
+     "pl": "Tyler Allgeier",
+     "m": "Rush + Rec Yards",
+     "ln": 57.0,
+     "built": -115,
+     "p": 0.5469,
+     "first": null,
+     "moved": null,
+     "now": -115.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Tyler Allgeier|Receiving Yards|11": {
+     "pl": "Tyler Allgeier",
+     "m": "Receiving Yards",
+     "ln": 11.0,
+     "built": -114,
+     "p": 0.5158,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Tyler Allgeier|Rushing Yards|30": {
+     "pl": "Tyler Allgeier",
+     "m": "Rushing Yards",
+     "ln": 30.0,
+     "built": -290,
+     "p": 0.6346,
+     "first": null,
+     "moved": null,
+     "now": -290.0,
+     "pulled": "2026-11-12 6:34"
+    }
+   }
+  },
+  "Garrett Wilson|2026-11-12T22:38": {
+   "pl": "Garrett Wilson",
+   "tm": "NYJ",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-12T22:38:24Z",
+   "legs": {
+    "Mason Taylor|Receptions|3": {
+     "pl": "Mason Taylor",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 138,
+     "p": 0.4723,
+     "first": null,
+     "moved": null,
+     "now": 138.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Mason Taylor|Receiving Yards|16": {
+     "pl": "Mason Taylor",
+     "m": "Receiving Yards",
+     "ln": 16.0,
+     "built": -114,
+     "p": 0.5537,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Kenyon Sadiq|Receiving Yards|25": {
+     "pl": "Kenyon Sadiq",
+     "m": "Receiving Yards",
+     "ln": 25.0,
+     "built": 114,
+     "p": 0.4662,
+     "first": null,
+     "moved": null,
+     "now": 114.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Adonai Mitchell|Receiving Yards|37": {
+     "pl": "Adonai Mitchell",
+     "m": "Receiving Yards",
+     "ln": 37.0,
+     "built": -114,
+     "p": 0.5224,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Kenyon Sadiq|Receptions|4": {
+     "pl": "Kenyon Sadiq",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 270,
+     "p": 0.243,
+     "first": null,
+     "moved": null,
+     "now": 270.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Adonai Mitchell|Receptions|5": {
+     "pl": "Adonai Mitchell",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 350,
+     "p": 0.1871,
+     "first": null,
+     "moved": null,
+     "now": 350.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Mason Taylor|Longest Reception|15": {
+     "pl": "Mason Taylor",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": 210,
+     "p": 0.2799,
+     "first": null,
+     "moved": null,
+     "now": 210.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Kenyon Sadiq|Longest Reception|20": {
+     "pl": "Kenyon Sadiq",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 260,
+     "p": 0.2262,
+     "first": null,
+     "moved": null,
+     "now": 260.0,
+     "pulled": "2026-11-12 6:34"
+    },
+    "Adonai Mitchell|Longest Reception|30": {
+     "pl": "Adonai Mitchell",
+     "m": "Longest Reception",
+     "ln": 30.0,
+     "built": 270,
+     "p": 0.2177,
+     "first": null,
+     "moved": null,
+     "now": 270.0,
+     "pulled": "2026-11-12 6:34"
+    }
+   }
+  },
+  "Cam Skattebo|2026-11-12T22:38": {
+   "pl": "Cam Skattebo",
+   "tm": "NYG",
+   "pos": "RB",
+   "st": "Inactive",
+   "ts": "2026-11-12T22:38:24Z",
+   "legs": {
+    "Devin Singletary|Receptions|3": {
+     "pl": "Devin Singletary",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 320,
+     "p": 0.2765,
+     "first": null,
+     "moved": null,
+     "now": 265.0,
+     "pulled": "2026-11-12 15:35"
+    },
+    "Devin Singletary|Receiving Yards|10": {
+     "pl": "Devin Singletary",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": 102,
+     "p": 0.4812,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-12 15:35"
+    },
+    "Devin Singletary|Rush + Rec Yards|38": {
+     "pl": "Devin Singletary",
+     "m": "Rush + Rec Yards",
+     "ln": 38.0,
+     "built": -113,
+     "p": 0.4335,
+     "first": null,
+     "moved": null,
+     "now": -113.0,
+     "pulled": "2026-11-12 15:35"
+    },
+    "Devin Singletary|Rushing Yards|15": {
+     "pl": "Devin Singletary",
+     "m": "Rushing Yards",
+     "ln": 15.0,
+     "built": -290,
+     "p": 0.6304,
+     "first": null,
+     "moved": null,
+     "now": -300.0,
+     "pulled": "2026-11-12 15:35"
+    }
+   }
   }
  }
 }
