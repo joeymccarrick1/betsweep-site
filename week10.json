@@ -1,0 +1,466 @@
+{
+ "week": 10,
+ "drafted": "2026-11-11 20:20 CT (weekly run, builder 2026-11-12 01:54 UTC)",
+ "promos": [
+  {
+   "slot": "sweep_sun",
+   "name": "Daily Sweep: Four Corners",
+   "type": "sweep",
+   "game": "multi",
+   "legs": [
+    {
+     "pl": "Christian McCaffrey",
+     "m": "Receptions",
+     "ln": 4.0,
+     "o": -220,
+     "p": 0.692,
+     "bk": 0.688,
+     "game": "DAL-SF",
+     "fd": {
+      "m": "42.624347702",
+      "s": "61401641"
+     },
+     "risk": 0,
+     "why": "4+ in 5 of 8; proj 5.2 catches; 49ers without Mike Evans (18% of targets); Dallas lets RB1s run 53% over their average (#2)"
+    },
+    {
+     "pl": "Rico Dowdle",
+     "m": "Receptions",
+     "ln": 2.0,
+     "o": -250,
+     "p": 0.69,
+     "bk": 0.714,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309727",
+      "s": "73607684"
+     },
+     "risk": 0,
+     "why": "2+ in 4 of 5; proj 2.7; 'Reliable' - his FanDuel lines hit 19 of 27; Pittsburgh trails by 10+ in 33% of endings (CIN by 10+ is the likeliest) - backs catch the checkdowns"
+    },
+    {
+     "pl": "JAX -4.5",
+     "m": "Spread",
+     "ln": -4.5,
+     "o": -280,
+     "p": 0.677,
+     "bk": 0.737,
+     "game": "JAX-TEN",
+     "fd": {
+      "m": "42.624063431",
+      "s": "12213249"
+     },
+     "risk": 0,
+     "why": "JAX by 10+ is the slate's likeliest blowout (53%); model JAX 27.3-17.0; -4.5 leaves a 6-point cushion under the -10.5 market"
+    },
+    {
+     "pl": "LA -3.5",
+     "m": "Spread",
+     "ln": -3.5,
+     "o": -265,
+     "p": 0.676,
+     "bk": 0.726,
+     "game": "ARI-LA",
+     "fd": {
+      "m": "42.624063914",
+      "s": "12267846"
+     },
+     "risk": 0,
+     "why": "LA by 10+ in 50% of endings; Arizona starts rookie Carson Beck (debut) and is missing 46% of its targets"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624347702&selectionId[0]=61401641&marketId[1]=42.624309727&selectionId[1]=73607684&marketId[2]=42.624063431&selectionId[2]=12213249&marketId[3]=42.624063914&selectionId[3]=12267846",
+   "price": "+281",
+   "chance": 0.218,
+   "caption": "Daily Sweep: Four Corners +281\nChristian McCaffrey 4+ catches | Rico Dowdle 2+ catches | Jaguars -4.5 | Rams -3.5\nMcCaffrey is the 49ers' target sponge with Mike Evans out. Dowdle is Pittsburgh's checkdown back in a game it trails. Jacksonville and the Rams have the slate's two likeliest blowouts (53% and 50%), and we only need them by 5 and 4.\n21+ | gamble responsibly",
+   "note": "Model 21.8% (FanDuel multiplied +281 = 26.2% implied). Argue against: two legs are short favorites covering - Jacksonville scored 23.3 vs defenses like Tennessee's (28.6 season) and the Rams have no Nacua or Adams; a flat favorites Sunday kills both. Answer: -4.5 / -3.5 leave 6 points under the market spreads, and the other two legs are catch counts on different teams.",
+   "post": false,
+   "first_kickoff": "Sun 8:30 AM CT (Munich) - post before the Sun 7:40 AM rebuild; McCaffrey's game is 3:25 PM"
+  },
+  {
+   "slot": "saturday",
+   "name": "Sunday single: JSN 110+",
+   "type": "single",
+   "game": "LV-SEA",
+   "legs": [
+    {
+     "pl": "Jaxon Smith-Njigba",
+     "m": "Receiving Yards",
+     "ln": 110.0,
+     "o": 174,
+     "p": 0.379,
+     "bk": 0.365,
+     "game": "LV-SEA",
+     "fd": {
+      "m": "42.624416831",
+      "s": "48103127"
+     },
+     "risk": 0,
+     "why": "110+ in 6 of 9, avg 115; proj 111; model-only 44% vs FanDuel 36%; coverage edge vs Darien Porter (18% targets/route); LV allows SEA's WR1 role 29% over average"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.624416831&selectionId=48103127",
+   "price": "+174",
+   "chance": 0.379,
+   "caption": "Sunday single +174\nJaxon Smith-Njigba 110+ rec yds\n110+ in 6 of 9 and he draws Darien Porter, the corner our chart likes most for him. Model 44% vs FanDuel 36%.\n21+ | gamble responsibly",
+   "note": "Replaces Saturday Model's Best (only one Sunday game has a clean plus-money edge). Needs Drew Lock (Questionable, oblique) - check_weekend pulls it if Lock is out.",
+   "post": false,
+   "poster": "singles-sun-w10-square.png"
+  },
+  {
+   "slot": "sunday_main",
+   "name": "Chalk Talk TDs",
+   "type": "favorite_tds",
+   "game": "multi",
+   "legs": [
+    {
+     "pl": "Christian McCaffrey",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -290,
+     "p": 0.694,
+     "bk": 0.744,
+     "game": "DAL-SF",
+     "fd": {
+      "m": "42.624336764",
+      "s": "10609932"
+     },
+     "risk": 0,
+     "why": "TD in 7 of 8; DAL lets RB1s go 53% over their average (#2)"
+    },
+    {
+     "pl": "Jahmyr Gibbs",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -280,
+     "p": 0.682,
+     "bk": 0.737,
+     "game": "DET-NE",
+     "fd": {
+      "m": "42.623980876",
+      "s": "42323726"
+     },
+     "risk": 0,
+     "why": "TD in 7 of 8; total 50.5"
+    },
+    {
+     "pl": "Bijan Robinson",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -180,
+     "p": 0.573,
+     "bk": 0.643,
+     "game": "ATL-KC",
+     "fd": {
+      "m": "42.624451089",
+      "s": "38093938"
+     },
+     "risk": 0,
+     "why": "TD in 4 of 9; red-zone model 52% (37% red-zone share)"
+    },
+    {
+     "pl": "Jaxon Smith-Njigba",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -105,
+     "p": 0.444,
+     "bk": 0.512,
+     "game": "LV-SEA",
+     "fd": {
+      "m": "42.624371973",
+      "s": "36914881"
+     },
+     "risk": 0,
+     "why": "TD in 6 of 9; soft matchup + coverage edge vs Darien Porter - but Drew Lock is Questionable (oblique)"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624336764&selectionId[0]=10609932&marketId[1]=42.623980876&selectionId[1]=42323726&marketId[2]=42.624451089&selectionId[2]=38093938&marketId[3]=42.624371973&selectionId[3]=36914881",
+   "price": "+454",
+   "chance": 0.12,
+   "caption": "Chalk Talk TDs +454\nMcCaffrey, Gibbs, Bijan, JSN to score\nThree backs who score most weeks (7 of 8, 7 of 8, 4 of 9) plus Seattle's WR1 on a soft matchup.\n21+ | gamble responsibly",
+   "note": "Audit fact: the 11/4 audit found TD favorites did not pay; recipe kept per owner rule 3. JSN leg needs Lock.",
+   "post": false
+  },
+  {
+   "slot": "snf",
+   "name": "Checkdown City",
+   "type": "+500",
+   "game": "CIN-PIT",
+   "legs": [
+    {
+     "pl": "Chase Brown",
+     "m": "Receiving Yards",
+     "ln": 20.0,
+     "o": -166,
+     "p": 0.597,
+     "bk": 0.624,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309714",
+      "s": "73619977"
+     },
+     "risk": 1,
+     "why": "PIT allows the most receiving yards to RBs in the NFL (#1 season and last 3); proj 25.5"
+    },
+    {
+     "pl": "Rico Dowdle",
+     "m": "Receptions",
+     "ln": 2.0,
+     "o": -250,
+     "p": 0.69,
+     "bk": 0.714,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309727",
+      "s": "73607684"
+     },
+     "risk": 0,
+     "why": "2+ in 4 of 5; 'Reliable' (19 of 27 FanDuel lines hit)"
+    },
+    {
+     "pl": "Jaylen Warren",
+     "m": "Receiving Yards",
+     "ln": 25.0,
+     "o": -125,
+     "p": 0.552,
+     "bk": 0.556,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309718",
+      "s": "49447263"
+     },
+     "risk": 1,
+     "why": "proj 32.8, avg 36.8; 20+ in 7 of 8; Pittsburgh's chase-mode checkdown back"
+    },
+    {
+     "pl": "Bengals ML",
+     "m": "Moneyline",
+     "ln": 0,
+     "o": -184,
+     "p": 0.608,
+     "bk": 0.648,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.622280954",
+      "s": "50210"
+     },
+     "risk": 0,
+     "why": "model CIN 25.8-22.1, CIN by 10+ is the likeliest ending (33%); Sweep says right on CIN -3.5"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624309714&selectionId[0]=73619977&marketId[1]=42.624309727&selectionId[1]=73607684&marketId[2]=42.624309718&selectionId[2]=49447263&marketId[3]=42.622280954&selectionId[3]=50210",
+   "price": "+523",
+   "chance": 0.138,
+   "price_est": "+430",
+   "price_note": "same-game - check FanDuel's SGP price; estimate = 0.85 / product of FanDuel implied",
+   "caption": "Checkdown City +430 est\nChase Brown 20+ rec yds | Rico Dowdle 2+ catches | Jaylen Warren 25+ rec yds | Bengals ML\nPittsburgh gives up the most RB receiving yards in the league, and when the Steelers chase, their backs get the ball.\n21+ | gamble responsibly",
+   "note": "Same-game - check FanDuel's SGP price (est +430; legs multiplied +523). Dowdle 2+ is also in the Daily Sweep. Audit fact: 11/4 market mix says no floor legs; owner rule 3 favorites kept.",
+   "post": false
+  },
+  {
+   "slot": "snf",
+   "name": "Sunday Night Heist",
+   "type": "lottery",
+   "game": "CIN-PIT",
+   "legs": [
+    {
+     "pl": "Ja'Marr Chase",
+     "m": "First TD",
+     "ln": 1,
+     "o": 600,
+     "p": 0.123,
+     "bk": 0.143,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624289673",
+      "s": "26809165"
+     },
+     "risk": 0,
+     "why": "Hot: 119 rec yds/g last 3 (+35%), Role Up; coverage edge vs Asante Samuel Jr. (14% targets/route) - the reason to back him into a PIT defense that holds WR1s to 0.87x"
+    },
+    {
+     "pl": "Bengals ML",
+     "m": "Moneyline",
+     "ln": 0,
+     "o": -184,
+     "p": 0.608,
+     "bk": 0.648,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.622280954",
+      "s": "50210"
+     },
+     "risk": 0,
+     "why": "CIN by 10+ is the likeliest ending (33%)"
+    },
+    {
+     "pl": "Chase Brown",
+     "m": "Receiving Yards",
+     "ln": 20.0,
+     "o": -166,
+     "p": 0.597,
+     "bk": 0.624,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309714",
+      "s": "73619977"
+     },
+     "risk": 1,
+     "why": "PIT allows the most RB receiving yards in the league"
+    },
+    {
+     "pl": "Rico Dowdle",
+     "m": "Receptions",
+     "ln": 2.0,
+     "o": -250,
+     "p": 0.69,
+     "bk": 0.714,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309727",
+      "s": "73607684"
+     },
+     "risk": 0,
+     "why": "2+ in 4 of 5"
+    },
+    {
+     "pl": "Jaylen Warren",
+     "m": "Receiving Yards",
+     "ln": 25.0,
+     "o": -125,
+     "p": 0.552,
+     "bk": 0.556,
+     "game": "CIN-PIT",
+     "fd": {
+      "m": "42.624309718",
+      "s": "49447263"
+     },
+     "risk": 1,
+     "why": "proj 32.8; 20+ in 7 of 8"
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624289673&selectionId[0]=26809165&marketId[1]=42.622280954&selectionId[1]=50210&marketId[2]=42.624309714&selectionId[2]=73619977&marketId[3]=42.624309727&selectionId[3]=73607684&marketId[4]=42.624309718&selectionId[4]=49447263",
+   "price": "+4263",
+   "chance": 0.017,
+   "price_est": "+3606",
+   "price_note": "same-game - check FanDuel's SGP price; estimate = 0.85 / product of FanDuel implied",
+   "caption": "LOTTERY: Sunday Night Heist +3606 est\nJa'Marr Chase first TD + Checkdown City\nThe story: Cincinnati scores first through Chase and Pittsburgh chases with its backs all night.\n21+ | gamble responsibly",
+   "note": "Same-game - check FanDuel's SGP price (est +3606; legs multiplied +4263). 1.7% independent floor.",
+   "post": false
+  }
+ ],
+ "either_or": [
+  {
+   "game": "DAL-SF",
+   "pair": "Christian McCaffrey or George Kittle",
+   "p": [
+    0.69,
+    0.43
+   ],
+   "note": "Kittle carries a Rain flag (roof can close)"
+  },
+  {
+   "game": "DET-NE",
+   "pair": "Jahmyr Gibbs or Amon-Ra St. Brown",
+   "p": [
+    0.68,
+    0.47
+   ]
+  },
+  {
+   "game": "ATL-KC",
+   "pair": "Bijan Robinson or Kenneth Walker III",
+   "p": [
+    0.57,
+    0.62
+   ],
+   "note": "Walker cold L3"
+  },
+  {
+   "game": "CIN-PIT",
+   "pair": "Ja'Marr Chase or Chase Brown",
+   "p": [
+    0.49,
+    0.5
+   ]
+  },
+  {
+   "game": "LV-SEA",
+   "pair": "Jaxon Smith-Njigba or Zach Charbonnet",
+   "p": [
+    0.44,
+    0.44
+   ],
+   "note": "needs Lock"
+  }
+ ],
+ "not_drafted": {
+  "sweep_thu": "No Thursday Daily Sweep: HIGH weather (rain, gusts 33) bars every NYG-WAS passing/receiving leg, every TD leg carries a bad flag, and the model total (41.8) sits on the 41.5 line - low confidence. Only game lines left (all negative edge); 3 of them price under +130.",
+  "thursday": "No clean leg at any price: weather HIGH + flags. Best game-line candidate WAS +2.5 -115 is negative edge (52% vs 53%).",
+  "saturday_sgp": "SGP of the week not drafted: top game DAL-SF has one clean player (McCaffrey; Rain flags on the rest), next DET-NE is low confidence (no ending above 30%) and tops out near +800 at recipe rungs. check_weekend retries.",
+  "sweep_mon": "props not posted yet (BAL-LAC has game lines only) - must be approved before Sunday's last rebuild",
+  "mnf": "props not posted yet (+500 and Piss Missile Monday) - check_weekend drafts them"
+ },
+ "assist_log": [
+  {
+   "Date": "2026-11-15",
+   "Week": 10,
+   "Game(s)": "multi",
+   "Slip": "Daily Sweep: Four Corners",
+   "Legs": "Christian McCaffrey 4+ rec | Rico Dowdle 2+ rec | JAX -4.5 | LA -3.5",
+   "Price": 281,
+   "Type": "sweep",
+   "Built by": "promo desk (weekly)",
+   "Result": "",
+   "Notes": ""
+  },
+  {
+   "Date": "2026-11-15",
+   "Week": 10,
+   "Game(s)": "LV-SEA",
+   "Slip": "Sunday single: JSN 110+",
+   "Legs": "Jaxon Smith-Njigba 110+ rec yds",
+   "Price": 174,
+   "Type": "single",
+   "Built by": "promo desk (weekly)",
+   "Result": "",
+   "Notes": ""
+  },
+  {
+   "Date": "2026-11-15",
+   "Week": 10,
+   "Game(s)": "multi",
+   "Slip": "Chalk Talk TDs",
+   "Legs": "Christian McCaffrey ATD | Jahmyr Gibbs ATD | Bijan Robinson ATD | Jaxon Smith-Njigba ATD",
+   "Price": 454,
+   "Type": "favorite_tds",
+   "Built by": "promo desk (weekly)",
+   "Result": "",
+   "Notes": ""
+  },
+  {
+   "Date": "2026-11-15",
+   "Week": 10,
+   "Game(s)": "CIN-PIT",
+   "Slip": "Checkdown City",
+   "Legs": "Chase Brown 20+ rec yds | Rico Dowdle 2+ rec | Jaylen Warren 25+ rec yds | Bengals ML",
+   "Price": 430,
+   "Type": "+500",
+   "Built by": "promo desk (weekly)",
+   "Result": "",
+   "Notes": ""
+  },
+  {
+   "Date": "2026-11-15",
+   "Week": 10,
+   "Game(s)": "CIN-PIT",
+   "Slip": "Sunday Night Heist",
+   "Legs": "Ja'Marr Chase first TD | Bengals ML | Chase Brown 20+ rec yds | Rico Dowdle 2+ rec | Jaylen Warren 25+ rec yds",
+   "Price": 3606,
+   "Type": "lottery",
+   "Built by": "promo desk (weekly)",
+   "Result": "",
+   "Notes": ""
+  }
+ ]
+}
