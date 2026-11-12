@@ -86,3 +86,13 @@ Daily Sweep (Monday), +500 and Piss Missile Monday are not drafted. BAL-LAC has 
 
 Assumed: "Model's Best" plus-tier legs from a backup-/first-start-QB offense fall under rule 5, and the ~35% confidence bar treats 33% as borderline-OK. Singles are saved as singles-sun-w10 so Week 9's singles-sun files stay intact.
 Skipped: every NYG-WAS prop (HIGH weather and flags), Skattebo (ESPN "Out", contradicted by the news), GB-MIN (QB flux), the LV-SEA Raiders legs (rule 5), and Chase 70+ (0.87x WR1 matchup, 0 of 3 against similar defenses). DAL-SF's non-McCaffrey legs all carry Rain flags.
+
+## check_thursday (Thu 11/12 ~9:35 AM CT; builder 8:28 AM CT, ESPN mirror 14:28Z, weather 8:28 CT)
+### Daily Sweep: Wet Work (LIVE on the tab - the record stays as posted; flags reported only)
+- FLAG Stefon Diggs 25+ rec yds: posted -330, now -270 (76.7% -> 73.0%, 3.7 pts against us). The leg carries a bad Wind flag, and weather is still HIGH (gusts 33, rain 45%), which bars receiving legs.
+- FLAG Cam Skattebo 5+ rec yds: posted -188, now -174 (1.8 pts against). Snaps-down bad flag, risk score 3 ("Some risk", rule 1). ESPN still lists him Out, but the news says full practice and no designation, so he is expected to play.
+- NOTE Under 47.5: -280, no change. The card's Sweep says (model 41.7 on 41.5) does not call for unders (rule 4). It matches the likeliest ending, close & low (39%).
+- OK NYG +5.5: posted -320, now -310 (0.6 pts against). Model 68%.
+- Slip multiplied: +256 at post, +287 now (+9%, under the 15% bar). Model 20.6% at post.
+- Swap: none on the record. The only clean same-game legs are game lines priced under the market (Over 34.5 -290, model 70% vs 74% implied). Inactives for NYG-WAS are not posted yet.
+### Single / +500 / Thursday Night Thievery: still nothing. The weather is still HIGH and no leg at -150..+150 has a positive edge. The best is WAS +2.5 -115 (52% vs 53%).
