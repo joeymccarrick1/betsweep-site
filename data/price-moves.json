@@ -1,10 +1,27 @@
 {
  "news": [],
  "week": 10,
- "built": "Thu 11/12 2:08 PM",
- "checked": "2026-11-12T20:54:08Z",
- "legs_checked": 1472,
+ "built": "Thu 11/12 3:07 PM",
+ "checked": "2026-11-12T21:51:21Z",
+ "legs_checked": 1469,
  "moves": [
+  {
+   "key": "Cam Skattebo|Rushing Yards|60",
+   "pl": "Cam Skattebo",
+   "m": "Rushing Yards",
+   "ln": 60.0,
+   "gid": "NYG-WAS",
+   "ko": 1794532500000,
+   "built": 102,
+   "now": -144.0,
+   "pts": 9.5,
+   "p": 0.3958,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-12 15:35",
+   "detail": "Cam Skattebo rush yds 60+: FanDuel +102 at build -> -144 now (+9.5 implied pts toward the model)"
+  },
   {
    "key": "Cam Skattebo|Receptions|2",
    "pl": "Cam Skattebo",
@@ -19,7 +36,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 13:35",
+   "pulled": "2026-11-12 15:35",
    "detail": "Cam Skattebo rec 2+: FanDuel +128 at build -> +106 now (+4.7 implied pts toward the model)"
   },
   {
@@ -36,25 +53,8 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-12 13:35",
+   "pulled": "2026-11-12 15:35",
    "detail": "Isaiah Likely rec 6+: FanDuel +158 at build -> +194 now (-4.7 implied pts against us)"
-  },
-  {
-   "key": "Theo Johnson|Under Receptions|1",
-   "pl": "Theo Johnson",
-   "m": "Under Receptions",
-   "ln": 0.5,
-   "gid": "NYG-WAS",
-   "ko": 1794532500000,
-   "built": 134,
-   "now": 112.0,
-   "pts": 4.4,
-   "p": 0.3172,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-12 13:35",
-   "detail": "Theo Johnson under rec 0.5: FanDuel +134 at build -> +112 now (+4.4 implied pts toward the model)"
   },
   {
    "key": "Cam Skattebo|Receiving Yards|10",
@@ -70,8 +70,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 13:35",
+   "pulled": "2026-11-12 15:35",
    "detail": "Cam Skattebo rec yds 10+: FanDuel +130 at build -> +110 now (+4.1 implied pts toward the model)"
+  },
+  {
+   "key": "Theo Johnson|Longest Reception|10",
+   "pl": "Theo Johnson",
+   "m": "Longest Reception",
+   "ln": 10.0,
+   "gid": "NYG-WAS",
+   "ko": 1794532500000,
+   "built": 170,
+   "now": 145.0,
+   "pts": 3.8,
+   "p": 0.3259,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "plus",
+   "pulled": "2026-11-12 15:35",
+   "detail": "Theo Johnson long rec 10+: FanDuel +170 at build -> +145 now (+3.8 implied pts toward the model)"
   },
   {
    "key": "Devin Singletary|Receptions|3",
@@ -81,14 +98,14 @@
    "gid": "NYG-WAS",
    "ko": 1794532500000,
    "built": 320,
-   "now": 260.0,
-   "pts": 4.0,
+   "now": 265.0,
+   "pts": 3.6,
    "p": 0.2765,
    "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-12 13:35",
-   "detail": "Devin Singletary rec 3+: FanDuel +320 at build -> +260 now (+4.0 implied pts toward the model)"
+   "pulled": "2026-11-12 15:35",
+   "detail": "Devin Singletary rec 3+: FanDuel +320 at build -> +265 now (+3.6 implied pts toward the model)"
   },
   {
    "key": "Devin Singletary|Receiving Yards|10",
@@ -104,8 +121,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 13:35",
+   "pulled": "2026-11-12 15:35",
    "detail": "Devin Singletary rec yds 10+: FanDuel +102 at build -> -113 now (+3.5 implied pts toward the model)"
+  },
+  {
+   "key": "Malik Nabers|Receiving Yards|70",
+   "pl": "Malik Nabers",
+   "m": "Receiving Yards",
+   "ln": 70.0,
+   "gid": "NYG-WAS",
+   "ko": 1794532500000,
+   "built": -113,
+   "now": 102.0,
+   "pts": -3.5,
+   "p": 0.516,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-12 15:35",
+   "detail": "Malik Nabers rec yds 70+: FanDuel -113 at build -> +102 now (-3.5 implied pts against us)"
   },
   {
    "key": "Cam Skattebo|Longest Reception|10",
@@ -121,25 +155,8 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-12 13:35",
+   "pulled": "2026-11-12 15:35",
    "detail": "Cam Skattebo long rec 10+: FanDuel +190 at build -> +165 now (+3.3 implied pts toward the model)"
-  },
-  {
-   "key": "Malik Nabers|Receiving Yards|70",
-   "pl": "Malik Nabers",
-   "m": "Receiving Yards",
-   "ln": 70.0,
-   "gid": "NYG-WAS",
-   "ko": 1794532500000,
-   "built": -113,
-   "now": 100.0,
-   "pts": -3.1,
-   "p": 0.516,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-12 13:35",
-   "detail": "Malik Nabers rec yds 70+: FanDuel -113 at build -> +100 now (-3.1 implied pts against us)"
   }
  ]
 }
