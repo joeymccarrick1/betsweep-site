@@ -672,6 +672,84 @@ def sweep_block(IN, OUT, games):
     return html_, bool(sw) or R["total"] > 0
 
 
+# ---------- winners (owner 11/13: "I'd like us to have a winning promo section on the home page") ----------
+WINNERS_CSS = """
+.winners .wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;max-width:1180px;margin-top:10px}
+.winners .wcard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--good);border-radius:12px;padding:12px 14px 10px}
+.winners .wtop{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.winners .wtop h3{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:23px;letter-spacing:-.01em;line-height:1.05}
+.winners .wtop .wo{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;color:var(--good);font-variant-numeric:tabular-nums}
+.winners .wmeta{margin:3px 0 8px;color:var(--mute);font-size:12.5px}
+.winners ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.winners li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.winners li span:first-child::before{content:"\\2713\\00a0";color:var(--good);font-weight:700}
+.winners li .wa{color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+.winners .wfoot{display:flex;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:13px;color:var(--mute)} .winners .wfoot b{color:var(--ink)} .winners .wfoot a{color:var(--ink)}
+"""
+_WSTAT = {"Receiving Yards": ("Rec Yds", "yds"), "Receptions": ("Receptions", "catches"), "Rushing Yards": ("Rush Yds", "yds"), "Passing Yards": ("Pass Yds", "yds")}
+
+def winners_block(IN, limit=6):
+    """every promoted bet the PROMO tab grades as a win, newest first: name, FanDuel price as posted, the legs, what $10 won. Reads only the
+    sheet mirror (in/promos.json, every week's rows) so a win stays up after its week is over; the final stat beside a leg comes from
+    in/gamelog.json when that week's row is there and is left off when it is not (never guessed). Returns "" until there is a win."""
+    import re as _re, datetime as _dt
+    try: v = json.load(open(os.path.join(IN, "promos.json")))["values"]
+    except Exception: return ""
+    H = {str(c).strip().split(" (")[0]: i for i, c in enumerate(v[0])}
+    if any(k not in H for k in ("Week", "Slot", "Title", "Legs", "FanDuel odds", "Result")): return ""
+    GL = {}
+    try:
+        g = json.load(open(os.path.join(IN, "gamelog.json")))["values"]; GH = {c: i for i, c in enumerate(g[0])}
+        for r in g[1:]:
+            if r: GL[(str(r[GH["Week"]]).strip(), str(r[GH["Player"]]).strip())] = (r, GH)
+    except Exception: pass
+    wins = []
+    for n, r in enumerate(v[1:]):
+        r = list(r) + [""] * (len(v[0]) - len(r))
+        if SW.res_kind(r[H["Result"]]) != "W": continue
+        try: wk = int(float(r[H["Week"]])); slot = int(float(r[H["Slot"]]))
+        except Exception: continue
+        wins.append((wk, slot, n, r))
+    if not wins: return ""
+    cards = []
+    for wk, slot, n, r in sorted(wins, reverse=True)[:limit]:
+        title = SW.name(r[H["Title"]]) if SW.is_sweep(r[H["Title"]]) else str(r[H["Title"]]).strip()
+        kind = "The Daily Sweep" if SW.is_sweep(r[H["Title"]]) else "Promoted bet"
+        o = SW._num(r[H["FanDuel odds"]]); gids = []; lis = ""
+        for ln in str(r[H["Legs"]]).split("\n"):
+            parts = [x.strip() for x in ln.split("|")]
+            if not parts or not parts[0]: continue
+            who = parts[0]; mk = parts[1] if len(parts) > 1 else ""
+            for m in _re.finditer(r"\(([A-Z]{2,3})-([A-Z]{2,3})\)", who):
+                if m.group(0)[1:-1] not in gids: gids.append(m.group(0)[1:-1])
+            who = _re.sub(r"\s*\([A-Z]{2,3}-[A-Z]{2,3}\)", "", who)
+            m = _re.match(r"^(.*?)\s+(\d+(?:\.\d+)?)\+$", mk)
+            if mk in ("Spread", "Total", "Moneyline", ""): text = who
+            elif m: text = f"{who} {m.group(2)}+ {m.group(1).lower()}"
+            else: text = f"{who} {mk[0].lower() + mk[1:]}"
+            act = ""
+            if m and m.group(1) in _WSTAT and (str(wk), who) in GL:
+                row, GH = GL[(str(wk), who)]; col, unit = _WSTAT[m.group(1)]
+                try: act = f'<span class="wa">{int(float(row[GH[col]]))} {unit}</span>'
+                except Exception: act = ""
+            lis += f"<li><span>{E(text)}</span>{act}</li>"
+        when = f"Week {wk}"
+        try: when = _dt.datetime.strptime(str(r[H["Posted"]]).strip()[:10], "%Y-%m-%d").strftime("%a %-m/%-d") + f" · Week {wk}"
+        except Exception: pass
+        if len(gids) == 1:
+            import html as _h
+            try: when += " · " + _h.unescape(at_gid(gids[0]))
+            except Exception: pass
+        pay = ""
+        if o: pay = f'<b>$10 won ${(10 * o / 100 if o > 0 else 1000 / -o):,.2f}</b>'
+        cards.append(f'<article class="wcard"><div class="wtop"><h3>{E(title)}</h3><span class="wo">{E(odds_str(o)) if o else ""}</span></div>'
+                     f'<p class="wmeta">{E(kind)} · {E(when)}</p><ul>{lis}</ul>'
+                     f'<p class="wfoot"><span>{pay}</span><a href="/b/w{wk}-{slot}/">See the slip</a></p></article>')
+    return (f'<section class="sec winners" id="winners"><style>{WINNERS_CSS}</style><h2 class="t">Winners <small class="tsub">promoted bets that cashed</small></h2>'
+            f'<div class="wgrid">{"".join(cards)}</div>'
+            f'<p class="none" style="margin-top:8px;font-size:12.5px">Posted here before kickoff at FanDuel\'s price. Every promoted bet, wins and misses, is on the <a href="/receipts/">receipts</a>.</p></section>')
+
+
 # ---------- assemble ----------
 HOME_CSS = r"""
 .hsbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bs-tabs,0px) + 12px);z-index:65;display:none;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:999px;padding:8px 8px 8px 16px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:13px;font-weight:600;white-space:nowrap}

@@ -510,3 +510,10 @@ under against a soft draw, no receiver over against a shadow or Tough coverage.
 reprice.py ran build_today.py before build_promo.py, and each workflow run starts with an empty out/, so a Sweep added to the PROMO tab never
 reached the home page hero (11/12: "Daily Sweep: Wet Work" was in /b/promos.json and at /b/w10-1/ but the hero showed only the teaser). BUILD
 now has a "today (with promos)" pass right after "promos". Check after any promo publish: `grep -c "<the slip name>" index.html` must be 1+.
+
+### Winners section on the home page (owner 11/13)
+`home.winners_block(IN)` lists every row of the PROMO tab whose Result is a win (sweep.res_kind == "W"), newest first, up to six: name,
+FanDuel price from column E, the legs, what $10 won, a link to /b/w<week>-<slot>/. It reads only in/promos.json (all weeks), so a win stays
+up after its week ends; a leg's final stat is added from in/gamelog.json when that week's row exists, never guessed. The date line comes from
+the Posted column (YYYY-MM-DD) - fill it when grading. The section sits right under the Daily Sweep hero and is absent until there is a win.
+First entry: Week 10 "Daily Sweep: Wet Work" +302 (WAS 24, NYG 21; Diggs 83 rec yds, Skattebo 44 rec yds, total 45), graded from ESPN's box 11/13.

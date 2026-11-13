@@ -285,6 +285,8 @@ def sections(IN_, OUT_):
     # ---- the Daily Sweep (owner 11/10): the house slip of the game day, first thing on the page (home.py sweep_block; sweep.py has the rules) ----
     try: sweep_html, _sw_on = HOME.sweep_block(IN_, OUT_, games)
     except Exception as _e: print("note: Daily Sweep block skipped:", _e); sweep_html = ""
+    try: winners_html = HOME.winners_block(IN_)      # owner 11/13: a winning-promo section on the home page
+    except Exception as _e: print("note: winners block skipped:", _e); winners_html = ""
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     body = f'''<title>Today · BetSweep</title>
@@ -294,6 +296,7 @@ def sections(IN_, OUT_):
 try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 'simple') && location.pathname === '/' && !location.hash && (!location.search || location.search === '?source=app')) location.replace('/short/'); }}catch(e){{}}</script>
 <section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdshare" id="tdsimple" href="/short/" title="The short version: picks first, reading optional" onclick="try{{localStorage.setItem('bs_view','short')}}catch(e){{}}">Short view</a><a class="tdlive" href="/live/">Live</a></div></section>
 {sweep_html}
+{winners_html}
 {under_html}
 {stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
