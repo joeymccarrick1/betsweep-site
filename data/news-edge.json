@@ -512,6 +512,114 @@
      "pulled": "2026-11-12 15:35"
     }
    }
+  },
+  "Chris Bell|2026-11-13T16:21": {
+   "pl": "Chris Bell",
+   "tm": "MIA",
+   "pos": "WR",
+   "st": "Doubtful",
+   "ts": "2026-11-13T16:21:20Z",
+   "legs": {
+    "Caleb Douglas|Receiving Yards|25": {
+     "pl": "Caleb Douglas",
+     "m": "Receiving Yards",
+     "ln": 25.0,
+     "built": -330,
+     "p": 0.7589,
+     "first": null,
+     "moved": null,
+     "now": -330.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Greg Dulcich|Receiving Yards|35": {
+     "pl": "Greg Dulcich",
+     "m": "Receiving Yards",
+     "ln": 35.0,
+     "built": -114,
+     "p": 0.5147,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Malik Washington|Receptions|5": {
+     "pl": "Malik Washington",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 194,
+     "p": 0.3189,
+     "first": null,
+     "moved": null,
+     "now": 194.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Malik Washington|Receiving Yards|36": {
+     "pl": "Malik Washington",
+     "m": "Receiving Yards",
+     "ln": 36.0,
+     "built": -114,
+     "p": 0.51,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Caleb Douglas|Receptions|5": {
+     "pl": "Caleb Douglas",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 220,
+     "p": 0.2734,
+     "first": null,
+     "moved": null,
+     "now": 220.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Caleb Douglas|Longest Reception|15": {
+     "pl": "Caleb Douglas",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -290,
+     "p": 0.6895,
+     "first": null,
+     "moved": null,
+     "now": -290.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Malik Washington|Longest Reception|15": {
+     "pl": "Malik Washington",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -185,
+     "p": 0.5855,
+     "first": null,
+     "moved": null,
+     "now": -185.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Greg Dulcich|Longest Reception|20": {
+     "pl": "Greg Dulcich",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 140,
+     "p": 0.3432,
+     "first": null,
+     "moved": null,
+     "now": 140.0,
+     "pulled": "2026-11-13 6:34"
+    },
+    "Greg Dulcich|Receptions|5": {
+     "pl": "Greg Dulcich",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 194,
+     "p": 0.2513,
+     "first": null,
+     "moved": null,
+     "now": 194.0,
+     "pulled": "2026-11-13 6:34"
+    }
+   }
   }
  }
 }
