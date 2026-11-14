@@ -347,6 +347,11 @@ try:
         if ln is None or odds is None or normname(name) in OUT_NOW: continue
         tm = _NMP.team.get(name) or next((t for n, t in _NMP.team.items() if normname(n) == normname(name)), None)
         nm2 = name if name in _NMP.team else next((n for n in _NMP.team if normname(n) == normname(name)), name)
+        # 11/14: the pricer takes a player's team from his last game log, so a traded QB (Kirk Cousins, LV -> MIN on 11/10) kept his old
+        # team and his Passing TDs leg landed in LV-SEA while FanDuel lists it under Vikings @ Packers. The game named on the FanDuel row wins.
+        _gt = [t for t in _opp_of if any(g["gid"] == _opp_of[t][1] and ((g["a"] == t and g.get("na") and g["na"] in str(r[8])) or (g["b"] == t and g.get("nb") and g["nb"] in str(r[8]))) for g in GAMES)]
+        if _gt and tm not in _gt:
+            tm = next((t for t in _gt if any(normname(x[0]) == normname(name) and x[1] == t for x in (vals("proj_qb.json")[1:] + vals("proj_rb.json")[1:] + vals("proj_wr.json")[1:] + vals("proj_te.json")[1:]) if len(x) > 1)), None)
         if not tm or tm not in _opp_of: continue
         opp, gid = _opp_of[tm]; res = _NMP.prob(nm2, mk, ln, opp)
         if not res: continue

@@ -539,3 +539,9 @@ still linked it; those two pages lost their styling and the gate held the next p
 GitHub's "Run failed" email). Fixed by restoring the file on main (2ffd475). reprice.copy_into_clone now restores any hashed s/ file that
 a page still links from the clone's git history, so this heals on the next publish. The boards session itself still needs the same care:
 it must add to s/, never replace it.
+
+### Traded QB's newer markets follow FanDuel's game (11/14)
+Kirk Cousins (LV -> MIN 11/10; Fernando Mendoza starts for LV) had his Passing TDs leg filed under LV-SEA: newmkt.Pricer takes the team from
+the player's last game log. The sheet itself was right (projection tabs and availability have him MIN, Mendoza LV QB1). build_builder now
+checks the FanDuel row's game name (links column I) and, when the pricer's team is not in that game, takes the team the projection tabs give
+him for that game. The Week 10 slips built in chat never used that leg.
