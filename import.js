@@ -53,7 +53,7 @@
             hit = gl.filter(function(l){ return l.pl === pl && inGame(l); })[0]; } }
         else { var ab = Object.keys(NICK).filter(function(k){ return title.indexOf(NICK[k]) >= 0; })[0];
           if (ab){ if (m === 'Moneyline') hit = gl.filter(function(l){ return l.pl === NICK[ab] + ' ML'; })[0];
-            else { var sp = title.replace(/[−–—~]/g, '-').match(/\(?\s*([+-]?)\s*(\d+(?:\.\d+)?)\s*\)?\s*$/);
+            else { var tt2 = title.replace(/[−–—~]/g, '-'), sp = tt2.match(/\(\s*([+-]?)\s*(\d+(?:\.\d+)?)\s*\)/) || tt2.match(/([+-]?)\s*(\d+(?:\.\d+)?)\s*$/);   // 11/14: the bracketed number wins wherever it sits - the odds after it can read as junk ("(+2.5) 1M" was -111)
               if (sp){ var num = +sp[2], cand = sp[1] ? [sp[1] + num] : ['+' + num, '-' + num];   // sign lost in the read: whichever of the two this team has
                 hit = gl.filter(function(l){ return cand.some(function(c){ return l.pl === ab + ' ' + c; }) && inGame(l); })[0]; } } } }
         if (hit) out.legs.push({ok: true, key: legKey(hit), label: hit.pl + (m === 'Total' ? ' (' + hit.g + ')' : ''), odds: odds, leg: hit});
