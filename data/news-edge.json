@@ -769,6 +769,155 @@
      "pulled": "2026-11-13 6:34"
     }
    }
+  },
+  "David Montgomery|2026-11-14T21:36": {
+   "pl": "David Montgomery",
+   "tm": "HOU",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-14T21:36:16Z",
+   "legs": {}
+  },
+  "Will Mallory|2026-11-14T21:36": {
+   "pl": "Will Mallory",
+   "tm": "IND",
+   "pos": "TE",
+   "st": "Out",
+   "ts": "2026-11-14T21:36:16Z",
+   "legs": {
+    "Ashton Dulin|Receiving Yards|10": {
+     "pl": "Ashton Dulin",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "built": -194,
+     "p": 0.6422,
+     "first": null,
+     "moved": null,
+     "now": -194.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Tyler Warren|Receiving Yards|45": {
+     "pl": "Tyler Warren",
+     "m": "Receiving Yards",
+     "ln": 45.0,
+     "built": -114,
+     "p": 0.4902,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Tyler Warren|Longest Reception|20": {
+     "pl": "Tyler Warren",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 210,
+     "p": 0.2664,
+     "first": null,
+     "moved": null,
+     "now": 210.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Laquon Treadwell|Longest Reception|30": {
+     "pl": "Laquon Treadwell",
+     "m": "Longest Reception",
+     "ln": 30.0,
+     "built": 310,
+     "p": 0.1827,
+     "first": null,
+     "moved": null,
+     "now": 310.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Deion Burks|Longest Reception|20": {
+     "pl": "Deion Burks",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 270,
+     "p": 0.2084,
+     "first": null,
+     "moved": null,
+     "now": 270.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Laquon Treadwell|Receiving Yards|29": {
+     "pl": "Laquon Treadwell",
+     "m": "Receiving Yards",
+     "ln": 29.0,
+     "built": -114,
+     "p": 0.459,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Deion Burks|Receiving Yards|18": {
+     "pl": "Deion Burks",
+     "m": "Receiving Yards",
+     "ln": 18.0,
+     "built": -114,
+     "p": 0.4563,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Ashton Dulin|Longest Reception|20": {
+     "pl": "Ashton Dulin",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 200,
+     "p": 0.2561,
+     "first": null,
+     "moved": null,
+     "now": 200.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Tyler Warren|Receptions|7": {
+     "pl": "Tyler Warren",
+     "m": "Receptions",
+     "ln": 7.0,
+     "built": 142,
+     "p": 0.3257,
+     "first": null,
+     "moved": null,
+     "now": 142.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Laquon Treadwell|Receptions|4": {
+     "pl": "Laquon Treadwell",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 290,
+     "p": 0.1635,
+     "first": null,
+     "moved": null,
+     "now": 290.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Ashton Dulin|Receptions|3": {
+     "pl": "Ashton Dulin",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 290,
+     "p": 0.149,
+     "first": null,
+     "moved": null,
+     "now": 290.0,
+     "pulled": "2026-11-14 6:34"
+    },
+    "Deion Burks|Receptions|3": {
+     "pl": "Deion Burks",
+     "m": "Receptions",
+     "ln": 3.0,
+     "built": 164,
+     "p": 0.225,
+     "first": null,
+     "moved": null,
+     "now": 164.0,
+     "pulled": "2026-11-14 6:34"
+    }
+   }
   }
  }
 }
