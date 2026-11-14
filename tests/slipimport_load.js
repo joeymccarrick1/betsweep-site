@@ -15,7 +15,7 @@ Kansas City Chiefs @ Atlanta Falcons SUN 12:01PM CT
 Buffalo Bills -7.5 -110
 SPREAD
 Buffalo Bills @ New York Jets SUN 12:01PM CT
-Carolina Panthers (+2.5) -111
+Carolina Panthers (+2.5) 1M
 ALTERNATE SPREAD
 Carolina Panthers @ New Orleans S... SUN 12:01PM CT
 Cleveland Browns (+3.5) +100
