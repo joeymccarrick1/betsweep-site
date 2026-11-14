@@ -120,7 +120,7 @@ a{color:var(--ink)}
     var dec = legs.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
     var odds = r.fd_odds != null ? r.fd_odds : (legs.every(function(l){ return l.o != null; }) ? Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)) : null);
     var p = legs.every(function(l){ return l.p != null; }) ? legs.reduce(function(a, l){ return a * l.p; }, 1) : null;
-    var keys = legs.map(function(l){ return l.k; }).filter(Boolean); var build = keys.length === legs.length ? '/build/?' + keys.map(function(k){ return 'add=' + encodeURIComponent(k); }).join('&') : '/build/';
+    var keys = legs.map(function(l){ return l.k; }).filter(Boolean); var build = keys.length === legs.length ? '/build/?' + legs.map(function(l){ return 'add=' + encodeURIComponent(l.gl && l.g ? l.k + '@' + l.g : l.k); }).join('&') : '/build/';   // 11/14: game lines carry their game
     var last = Math.max.apply(null, legs.map(function(l){ return +l.ko || 0; }));
     var url = post ? 'https://betsweep.co/b/?p=' + post : 'https://betsweep.co/b/?s=' + code;
     // FanDuel re-issues prop ids during the week: rebuild the link from this week's ids (books.json) when every leg is there
@@ -131,7 +131,7 @@ a{color:var(--ink)}
     var fd = r.link ? '<a class="fd" href="' + esc(r.link) + '" target="_blank" rel="noopener">Bet it on FanDuel' + (odds != null ? ' · ' + am(odds) : '') + '</a>' : '';
     box.innerHTML = '<div class="hd"><span class="tag">' + (post ? 'Social' : 'Betslip') + '</span><span class="wk">Week ' + esc(W) + '</span>' + (last && Date.now() > last ? '<span class="st">Started</span>' : '<span class="st live">Pregame</span>') + '</div>'
       + '<h1>' + esc(r.title || (legs.length + '-leg parlay')) + '</h1><div class="meta">' + legs.length + ' legs · priced by the BetSweep model · snapshot when the link was made, prices move</div>'
-      + '<ul class="legs">' + legs.map(function(l){ var sub = [lnTxt(l), l.opp && !/\//.test(l.tm || '') ? 'vs ' + l.opp : ''].filter(Boolean).join(' · ');
+      + '<ul class="legs">' + legs.map(function(l){ var sub = [lnTxt(l), l.gl && l.g ? String(l.g).replace('-', ' vs ') : (l.opp && !/\//.test(l.tm || '') ? 'vs ' + l.opp : '')].filter(Boolean).join(' · ');
           return '<li><b>' + esc(l.pl) + '</b><span class="o">' + am(l.o) + '</span><small>' + esc(sub) + '</small>' + (l.p != null ? '<span class="mp">model ' + Math.round(l.p * 100) + '%</span>' : '') + '</li>'; }).join('') + '</ul>'
       + '<div class="pf"><div class="big"><small>FanDuel</small>' + (odds != null ? am(odds) : '<span style="font-size:16px;font-weight:600">price on FanDuel</span>') + '</div><div class="md">' + (p == null ? 'Model price not available for every leg' : p < 0.03 ? '<b>Longshot</b> · model ' + (p < 0.01 ? 'under 1' : Math.round(p * 100)) + '% to hit' : '<b>Model ' + (p * 100).toFixed(1) + '%</b> to hit (legs multiplied)') + '</div></div>'
       + '<div class="go">' + fd + (last && Date.now() > last ? '' : bookBtns(legs, map)) + '<div class="row">' + (keys.length === legs.length ? '<button type="button" class="sv" data-slip="' + esc(JSON.stringify({w: +W, n: r.title || (legs.length + '-leg parlay'), k: keys, o: odds, fd: r.link || null})) + '">Save slip</button>' : '') + '<a href="' + esc(build) + '">Load into the builder</a><button type="button" class="shb" data-st="' + esc(stext) + '" data-su="' + esc(url) + '">Share</button></div></div>'
