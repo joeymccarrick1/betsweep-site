@@ -562,3 +562,10 @@ loads a slip, and saves it on the slip (g) like the builder's Save slip; My BetS
 carries its game (builder too), so My BetSweep grades totals from the final score instead of "totals need the game"; totals saved before
 11/14 without a game stay ungraded rather than guessed. Test: `node tests/slipimport_load.js <builder data json>` - the owner's slip, all 12
 legs must resolve to their own games.
+
+### Every place a slip travels keeps each total's game (owner 11/14, Social post)
+"Can this show the games? How do we tell what under it's taking?" - his 12-leg Social post listed "Under 49.5 game total" with no game. Worse,
+Social's Tail on FanDuel re-resolved each leg's FanDuel ids by key alone (fdmap), so every total with a shared number would have opened the
+first game's market. Fixed together: Social shows "· DET vs NE" on every leg; fdmap also carries key@GAME for game lines and fdIds uses it
+(never the bare key for a game line); Social's Load into my slip writes bs_slipg; the single-post page (/b/?p=) shows the game and hands
+the builder key@GAME; the builder's ?add= accepts key@GAME; a promo's Tail saves its totals' games (data-g, home._tail_g).

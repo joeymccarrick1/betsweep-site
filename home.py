@@ -475,7 +475,7 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
 PROMO_TAIL_JS = r"""<script>(function(){ function go(){ if(window.__bsPromoCpy) return; window.__bsPromoCpy = 1; document.querySelectorAll('.promo .slink .cpy').forEach(function(b){ b.addEventListener('click', function(){ var t = b.dataset.copy; function done(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1400); } if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function(){ prompt('Copy this link', t); }); else prompt('Copy this link', t); }); }); } if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();</script>
 <script>(function(){ function go(){ if(window.__bsPromoTail) return; window.__bsPromoTail = 1; document.querySelectorAll('.promo .tail').forEach(function(b){ var key = 'bs_slips_w' + b.dataset.w, id = b.dataset.id; function has(){ try{ return (JSON.parse(localStorage.getItem(key)||'[]')||[]).some(function(s){ return s && s.id === id; }); }catch(e){ return false; } }
   function paint(){ var on = has(); b.textContent = on ? 'Tailed ✓' : 'Tail'; b.classList.toggle('on', on); }
-  b.addEventListener('click', function(){ var slips = []; try{ slips = JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(e){} if (has()){ slips = slips.filter(function(s){ return !s || s.id !== id; }); } else { slips.push({id: id, name: b.dataset.name, keys: JSON.parse(b.dataset.keys), odds: b.dataset.odds ? +b.dataset.odds : null, stake: 1, promo: true}); }
+  b.addEventListener('click', function(){ var slips = []; try{ slips = JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(e){} if (has()){ slips = slips.filter(function(s){ return !s || s.id !== id; }); } else { slips.push({id: id, name: b.dataset.name, keys: JSON.parse(b.dataset.keys), g: JSON.parse(b.dataset.g || '{}'), odds: b.dataset.odds ? +b.dataset.odds : null, stake: 1, promo: true}); }
     try{ localStorage.setItem(key, JSON.stringify(slips)); }catch(e){} paint(); var t = document.createElement('div'); t.textContent = has() ? 'Saved to My BetSweep - graded after the games' : 'Removed from your slips'; t.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120'; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2500); });
   paint(); }); } if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();</script>"""
 
@@ -516,7 +516,7 @@ def promo_card(p, kicker="Promoted", hero=False):
         return (l["who"], mm.group(1).title().replace("Td", "TD"), float(mm.group(2))) if mm else None
     bkeys = [_bkey(l) for l in p["legs"]]
     edit = f'<a href="{E(build_href((p["legs"][0] or {}).get("gid"), [k for k in bkeys if k]))}">Edit in the builder</a>' if bkeys and all(bkeys) else ""
-    tail = f'<button type="button" class="tail" data-w="{p["week"]}" data-id="promo-{p["week"]}-{p["slot"]}" data-name="{E(p["title"])}" data-keys="{E(json.dumps([l.get("key") for l in p["legs"] if l.get("key")]))}" data-odds="{int(p["fd"]) if p.get("fd") else ""}">Tail</button>' if all(l.get("key") for l in p["legs"]) else ""
+    tail = f'<button type="button" class="tail" data-w="{p["week"]}" data-id="promo-{p["week"]}-{p["slot"]}" data-name="{E(p["title"])}" data-keys="{E(json.dumps([l.get("key") for l in p["legs"] if l.get("key")]))}" data-g="{E(json.dumps(_tail_g(p)))}" data-odds="{int(p["fd"]) if p.get("fd") else ""}">Tail</button>' if all(l.get("key") for l in p["legs"]) else ""
     bk = "".join(f'<a class="{b}" href="{E(v["url"])}" target="_blank" rel="noopener" title="{E((BL.NAMES[b] + " uses its nearest line: " + "; ".join(v["subs"]) + ". Prices and model % shown are FanDuel's.") if v["subs"] else "Opens " + BL.NAMES[b] + " with these legs on the betslip")}">Bet it on {BL.NAMES[b]}{"≈" if v["subs"] else ""}</a>' for b, v in (p.get("books") or {}).items())
     btns = (f'<a class="fd" href="{E(p["link"])}" target="_blank" rel="noopener">Bet it on FanDuel</a>' if p.get("link") else "") + bk + tail + edit + f'<a href="{E(share)}" target="_blank" rel="noopener">Share on X</a><a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>Post 4:5</a><a href="{E(p["img"]["square"])}" download>Square</a><a href="{E(p["img"]["story"])}" download>Story</a>'
     _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
@@ -670,6 +670,14 @@ def sweep_block(IN, OUT, games):
              f'<p class="none swfoot">Graded Tuesday at the posted FanDuel price, one unit each. {E(SW.record_text(R))}. <a href="/how/">How we pick</a> · <a href="/receipts/">Receipts</a></p>'
              f'{PROMO_TAIL_JS}{PROMO_LIVE_JS}{SWEEP_JS}</section>')
     return html_, bool(sw) or R["total"] > 0
+
+
+def _tail_g(p):
+    """11/14: which game each total on a promo belongs to ({key: [gid, ...]}, slip order) - a total's key has no game, so a tailed promo saves it"""
+    g = {}
+    for l in p["legs"]:
+        if l.get("key") and "|Total|" in str(l["key"]) and l.get("gid"): g.setdefault(l["key"], []).append(l["gid"])
+    return g
 
 
 # ---------- winners (owner 11/13: "I'd like us to have a winning promo section on the home page") ----------

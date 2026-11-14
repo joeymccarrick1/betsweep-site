@@ -254,7 +254,10 @@ PAGE_JS = r"""<script>(function(){
   var sort = 'top', POSTS = [], MYV = {}, A = null, G = {}, BOX = {}, FIRST = {};
   try { sort = localStorage.getItem('bs_social_sort') || 'top'; } catch(e){}
   function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = 'Could not reach the feed - check your connection and reload.'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }
-  function legText(l){
+  // owner 11/14 ("Can this show the games? How do we tell what under it's taking?"): every leg names its game
+  function gameTxt(l){ return l.g ? ' · ' + esc(String(l.g).replace('-', ' vs ')) : ''; }
+  function legText(l){ return legText0(l).replace(/<\/small>$/, gameTxt(l) + '</small>'); }
+  function legText0(l){
     if(l.gl) return esc(l.pl) + ' <small>' + esc(l.m === 'Total' ? 'game total' : l.m.toLowerCase()) + '</small>';
     if(/TD$/.test(l.m)) return esc(l.pl) + ' <small>' + esc(l.m.toLowerCase()) + '</small>';
     if(/^Under /.test(l.m)) return esc(l.pl) + ' <small>' + esc((l.ms || l.m.slice(6)).toLowerCase()) + ' under ' + l.ln + '</small>';
@@ -265,7 +268,7 @@ PAGE_JS = r"""<script>(function(){
   // leg by its key (player|market|line) against the latest odds pull (FDMAP, embedded at build time, refreshed every rebuild) and only falls back
   // to the frozen ids when the leg is no longer in the pull. The slip bar says when some legs could not be re-priced.
   var FDMAP = window.__BS_FDMAP || {};
-  function fdIds(l){ var f = l.k && FDMAP[l.k]; if(f) return {m: f[0], s: f[1], fresh: true}; return l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s, fresh: false} : null; }
+  function fdIds(l){ var f = l.k && ((l.g && FDMAP[l.k + '@' + l.g]) || (l.gl ? null : FDMAP[l.k])); if(f) return {m: f[0], s: f[1], fresh: true}; return l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s, fresh: false} : null; }
   function fdUrl(ls){ var ok = ls.map(function(l){ return (l.ko && Date.now() >= l.ko) ? null : fdIds(l); }).filter(Boolean); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(f, i){ return 'marketId[' + i + ']=' + encodeURIComponent(f.m) + '&selectionId[' + i + ']=' + encodeURIComponent(f.s); }).join('&'); }
   function ago(t){ var m = Math.round((Date.now() - new Date(t).getTime()) / 6e4); return m < 60 ? m + 'm ago' : m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'; }
@@ -346,7 +349,9 @@ PAGE_JS = r"""<script>(function(){
       q.then(function(r){ v.disabled = false; if(r.error) return; if(MYV[id]){ delete MYV[id]; p.score = Math.max(0, p.score - 1); } else { MYV[id] = 1; p.score++; }
         v.classList.toggle('on', !!MYV[id]); v.setAttribute('aria-pressed', !!MYV[id]); v.querySelector('b').textContent = p.score; }); return; }
     if(ld){ var p2 = POSTS.filter(function(x){ return x.id === +ld.dataset.load; })[0]; if(!p2) return;
-      try { localStorage.setItem('bs_slipk_w' + W, JSON.stringify(p2.legs.map(function(l){ return l.k; }))); localStorage.removeItem('bs_slip_w' + W); } catch(err){}
+      try { localStorage.setItem('bs_slipk_w' + W, JSON.stringify(p2.legs.map(function(l){ return l.k; }))); localStorage.removeItem('bs_slip_w' + W);
+        var gm = {}; p2.legs.forEach(function(l){ if(l.gl && l.g) (gm[l.k] = gm[l.k] || []).push(l.g); });   // 11/14: totals load into their own game (bs_slipg, as the builder keeps it)
+        if(Object.keys(gm).length) localStorage.setItem('bs_slipg_w' + W, JSON.stringify(gm)); else localStorage.removeItem('bs_slipg_w' + W); } catch(err){}
       location.href = '/build/'; return; }
     if(del){ if(!confirmInline(del, 'Delete?')) return; A.client.from('feed_posts').delete().eq('id', +del.dataset.del).then(function(r){ if(!r.error){ POSTS = POSTS.filter(function(x){ return x.id !== +del.dataset.del; }); render(); } }); return; }
     if(rep){ if(!confirmInline(rep, 'Report?')) return; A.client.from('feed_reports').insert({post_id: +rep.dataset.rep}).then(function(){ rep.textContent = 'Reported'; rep.disabled = true; }); }
@@ -425,6 +430,7 @@ def fdmap():
         except Exception: ln = 1.0
         k = f"{l['pl']}|{l['m']}|{int(math.floor((ln or 1) + 0.5))}"
         m.setdefault(k, [fd["m"], fd["s"]])
+        if l.get("gl") and l.get("g"): m[f"{k}@{l['g']}"] = [fd["m"], fd["s"]]   # 11/14: a total's key is in several games ("Over 49.5" was DET-NE and CIN-PIT) - the game picks the right one
     return m
 
 def page(week):

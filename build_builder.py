@@ -1241,7 +1241,9 @@ BUILDER_JS = r"""
       // owner 11/5: inactive-alert swap links (?drop=Player&add=key) take the ruled-out player's legs off the open slip first
       new URLSearchParams(location.search).getAll('drop').forEach(function(nm){ var n = String(nm).toLowerCase(); Object.keys(sel).forEach(function(i){ if(legs[i] && String(legs[i].pl).toLowerCase() === n) delete sel[i]; });
         for(var x = extraKeys.length - 1; x >= 0; x--) if(String(extraKeys[x]).split('|')[0].toLowerCase() === n) extraKeys.splice(x, 1); });
-      adds.forEach(function(k){ if(k in KEYIDX){ var i = KEYIDX[k]; if(started(legs[i].g)) ADDED.late.push(legs[i]); else { sel[i] = true; ADDED.ok.push(legs[i]); } } else ADDED.missing.push(k); });
+      adds.forEach(function(k){ var at = String(k).split('@'); if(at.length === 2 && KEYG[at[0]] && KEYG[at[0]][at[1]] != null){ var ig = KEYG[at[0]][at[1]]; if(started(legs[ig].g)) ADDED.late.push(legs[ig]); else { sel[ig] = true; ADDED.ok.push(legs[ig]); } return; }   // 11/14: key@GAME picks a total in its own game
+        if(at.length === 2) k = at[0];
+        if(k in KEYIDX){ var i = KEYIDX[k]; if(started(legs[i].g)) ADDED.late.push(legs[i]); else { sel[i] = true; ADDED.ok.push(legs[i]); } } else ADDED.missing.push(k); });
       save(); history.replaceState(null, '', location.pathname + location.hash);
     }
   } catch(e){}
