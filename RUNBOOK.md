@@ -517,3 +517,12 @@ FanDuel price from column E, the legs, what $10 won, a link to /b/w<week>-<slot>
 up after its week ends; a leg's final stat is added from in/gamelog.json when that week's row exists, never guessed. The date line comes from
 the Posted column (YYYY-MM-DD) - fill it when grading. The section sits right under the Daily Sweep hero and is absent until there is a win.
 First entry: Week 10 "Daily Sweep: Wet Work" +302 (WAS 24, NYG 21; Diggs 83 rec yds, Skattebo 44 rec yds, total 45), graded from ESPN's box 11/13.
+
+### No under on a player whose role is growing (owner 11/13)
+Austin Ekeler under 1.5 receptions was the 11/12 Under of the day and the first draft of that day's Daily Sweep; he caught 4. He carried
+Fill-in volume, Role Up and Healthy again, with both other Washington backs out, in a rain game. Those are "good" flags, so the risk score
+read the under as clean (0) - the score does not know which side of the line a leg is on. `under_day.role_against(l, pf)` now drops an
+under when the player's or leg's good flags argue for the over (AGAINST: growing role, hot form, soft matchup, plus Targets up / Trail
+script for catches and Carries up / Lead script for rushing). Hand-built slips follow the same rule: before any under, read the player's
+flags as if the leg were the over - if they would make us like the over, the under is out, whatever the risk tag says. When the owner
+pushes back on a leg, re-check that leg from scratch.

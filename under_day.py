@@ -52,11 +52,29 @@ def soft_draws(in_dir, week):
     return out
 
 
+# owner 11/13, after Austin Ekeler under 1.5 receptions (the 11/12 Under of the day, and nearly a Daily Sweep leg) lost with 4 catches:
+# "Need to be more cognizant about legs like that". He carried Fill-in volume, Role Up and Healthy again - every one a reason to like the
+# OVER, and the risk score counts them as good flags whatever side the leg is on. An under is skipped when the player's own flags say his
+# role is growing or his matchup is soft for that stat: the site's read disagrees with the under, the same idea as the coverage skip.
+GROWING = ("Role Up", "Fill-in volume", "Snaps up", "News: role up", "Depth chart: promoted", "Room thinned", "Healthy again", "Hot L3", "Soft matchup")
+AGAINST = {"rec": GROWING + ("Targets up", "Trail script", "Soft vs RB targets", "Thin secondary"),
+           "rush": GROWING + ("Carries up", "Lead script", "Soft vs QB runs"),
+           "pass": GROWING + ("Trail script", "Thin secondary")}
+
+def role_against(l, pf):
+    """the flags on this player or leg that argue for the over, [] when none"""
+    m = l.get("m") or ""; k = "rec" if "Recept" in m or "Receiving" in m else "rush" if "Rush" in m else "pass" if "Pass" in m else None
+    if not k: return []
+    fl = list(pf.get(l.get("pl")) or []) + list(l.get("fh") or [])
+    return sorted({str(f[1]) for f in fl if isinstance(f, (list, tuple)) and len(f) > 1 and f[0] == "good" and str(f[1]).startswith(AGAINST[k])})
+
+
 def candidates(bd, soft=()):
-    out = []
+    out = []; pf = bd.get("pf") or {}
     for l in bd.get("legs") or []:
         if l.get("m") not in STAT or l.get("o") is None or l.get("p") is None: continue
         if l.get("m") in ("Under Receptions", "Under Receiving Yards") and str(l.get("pl", "")).strip().lower() in soft: continue   # coverage disagrees with the under
+        if role_against(l, pf): continue   # his role or matchup argues for the over
         fd = l.get("fd") or {}
         if not (fd.get("m") and fd.get("s")): continue
         if any(isinstance(f, (list, tuple)) and len(f) > 1 and str(f[1]).startswith(("Q ", "Q·", "Questionable", "Doubtful", "OUT")) for f in l.get("fh") or []): continue

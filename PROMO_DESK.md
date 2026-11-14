@@ -227,3 +227,8 @@ runs add a 4-line Reel/TikTok script (hook, the slip, the one stat, the call to 
 
 ## Similar defenses (owner 11/6)
 Every builder leg on a player's main stat carries `sd` = [split vs his 3 most similar past opponents, avg in those games, season avg, opponents, games above average]. When choosing a best bet or the legs of a promo, among legs that already pass this desk's leg filter and parlay rules, prefer the leg with the higher split (and 3/3 consistency); say the split in the write-up ("averaged 62 rec yds against defenses like Baltimore's"). Never use it to let in a leg the filter rejects.
+
+## Unders: read the flags as if the leg were the over (owner 11/13)
+The risk tag does not know a leg's side. Before any under goes on a slip, look at the player's flags: Role Up, Fill-in volume, Snaps up,
+Targets up, Carries up, Healthy again, Hot L3, Soft matchup, Trail script (catches), Lead script (rushing), a teammate at his position
+out. Any of them means no under on that player. Ekeler under 1.5 receptions on 11/12 (4 catches) is the case this rule comes from.
