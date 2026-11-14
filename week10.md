@@ -96,3 +96,58 @@ Skipped: every NYG-WAS prop (HIGH weather and flags), Skattebo (ESPN "Out", cont
 - Slip multiplied: +256 at post, +287 now (+9%, under the 15% bar). Model 20.6% at post.
 - Swap: none on the record. The only clean same-game legs are game lines priced under the market (Over 34.5 -290, model 70% vs 74% implied). Inactives for NYG-WAS are not posted yet.
 ### Single / +500 / Thursday Night Thievery: still nothing. The weather is still HIGH and no leg at -150..+150 has a positive edge. The best is WAS +2.5 -115 (52% vs 53%).
+
+## check_weekend (Sat 11/14 ~1:20 PM CT; builder Sat 11:22 AM CT, ESPN mirror 17:20Z)
+News: Kenneth Walker III OUT (groin; Emmett Johnson starts). Drew Lock has no designation (cleared). Amon-Ra St. Brown Q (ribs). A.J. Brown and Rhamondre Stevenson Q. Mike Evans OUT. Lamar Jackson out; Jacoby Brissett starts MNF. No inactives yet.
+
+### FLAG - Daily Sweep: Four Corners -> swap (now +256, model 21.8%)
+- FLAG Christian McCaffrey 4+ rec: -220 -> -192 (68.8% -> 65.8%, 3.0 pts against; Snaps falling).
+- Swap: **Brock Purdy 225+ pass yds -280 (72%)**. Proj 258, at least 189 every start, 272 avg vs ARI/LV/ATL-type defenses. DAL is missing safeties Locke and J. Thomas. Reason vs the 0.82x QB1 leak: thin secondary.
+- LA -3.5 -> **LA -4.5 -250 (65%)** to hold the price (Purdy alone made it +241).
+- OK Rico Dowdle 2+ rec -250 (flat). OK JAX -4.5: -280 -> -295, the market came our way.
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624347687&selectionId[0]=50945616&marketId[1]=42.624309727&selectionId[1]=73607684&marketId[2]=42.624063431&selectionId[2]=12213249&marketId[3]=42.624063914&selectionId[3]=12267847
+- Alt keeping McCaffrey: McCaffrey 25+ rec yds -210 + Dowdle + JAX -4.5 + LA -3.5 = +271, 21.5%.
+- Argue against: Dallas holds QB1s to 0.82x, and a flat favorite kills it. Answer: four legs, four games, and Purdy's 225 is under his floor in all but one start.
+
+### FLAG - Sunday single: JSN 110+ -> Xavier Worthy 4+ rec +188 (model-only 52% vs FanDuel 35%)
+- JSN 110+ is gone from FanDuel's ladder (top rung 90+, which is already in your LIVE Best Legs Five).
+- Worthy: 4+ in 4 of 8, proj 4.4. ATL lets KC's WR1 role run 27% over average (#6), and Walker is out. Overlaps your LIVE Worthy 3+. Alt: Noah Fant 2+ rec +168 (57% vs 37%, but 3 of 7).
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId=42.624733136&selectionId=73293470. Poster: singles-sun-w10-v2-square.png / -story.png / .txt
+
+### NEW - SGP of the week: Big D Shootout (LOTTERY, DAL-SF) - legs multiplied +3339, est SGP +2816, 2.4% independent floor
+Script: a shootout (32%; model SF 30.0-25.5, total 55.5).
+Legs: Purdy 225+ pass yds -280 · Dak Prescott 250+ pass yds -200 · McCaffrey ATD -270 · McCaffrey 30+ rec yds -144 · Keenan Allen 20+ rec yds -114 · Javonte Williams 10+ rec yds -192 · Demarcus Robinson 25+ rec yds -148 · Dak 2+ pass TDs -192
+Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624347687&selectionId[0]=50945616&marketId[1]=42.624347686&selectionId[1]=40856415&marketId[2]=42.624336764&selectionId[2]=10609932&marketId[3]=42.624347697&selectionId[3]=73139316&marketId[4]=42.625274258&selectionId[4]=14807213&marketId[5]=42.624347696&selectionId[5]=73636977&marketId[6]=42.624850090&selectionId[6]=89390985&marketId[7]=42.624336813&selectionId[7]=11889993
+Kittle is left out because he is already in two of your LIVE slips. Lamb and Pickens carry bad flags.
+
+### OK - Chalk Talk TDs (+458 now)
+Bijan -180 -> -230 (5.4 pts our way, so lead with him). The other legs moved 1.4-2.4 pts against, all under the 3-pt bar. Lock is cleared for the JSN leg.
+
+### OK - Checkdown City (+522 / est +429) and Sunday Night Heist (+4568 / est +3869)
+No leg moved 3+ pts. The CIN weather row still reads "forecast unavailable".
+
+### Either/Or update
+- ATL-KC: Walker is OUT, so the pair is now **Bijan Robinson or Rashee Rice** (61% / 36%). Emmett Johnson has no ATD line yet.
+- DET-NE: confirm St. Brown at inactives. Fallback: Gibbs or Jameson Williams.
+
+### MNF (LAC @ BAL) - NOT drafted: no Monday Sweep, no +500, no Piss Missile Monday
+- All 189 BAL-LAC props carry a bad flag. Every player has 'O/U 38.5', which makes each one Some risk or worse (rule 1). Only game lines are clean, and all are negative edge.
+- Brissett's first Ravens start, for an offense that just lost 33-10, sets off rules 5 and 13. Sweep says close & low (40%). Shootout is 9%.
+- If you want one anyway, these are the least-risky blocks (all "Some risk"): Herbert 175+ pass yds -245 (72%, 7 of 8), Herbert 1+ pass TD -250, Ravens ML -225, Under 44.5 -245.
+
+### Your LIVE posts (record stays as posted; flags only)
+No leg has an injury or out. These legs carry bad flags:
+- Boerkircher 5+ (Boom/bust)
+- Kyren Williams 10+ (O/U 39.5)
+- Burrow 250+ (FD pass yds 3/8)
+- Golden 50+ (MIN WR matchup)
+- Rice ATD (2 of 5)
+- Corum ATD (wide range + 39.5 total)
+
+### ASSIST rows changed
+| 2026-11-15 | 10 | multi | Daily Sweep: Four Corners | Brock Purdy 225+ pass yds \| Rico Dowdle 2+ rec \| JAX -4.5 \| LA -4.5 | 256 | sweep | promo desk |
+| 2026-11-15 | 10 | ATL-KC | Sunday single: Worthy 4+ | Xavier Worthy 4+ rec | 188 | single | promo desk |
+| 2026-11-15 | 10 | DAL-SF | Big D Shootout | Brock Purdy 225+ pass yds \| Dak Prescott 250+ pass yds \| Christian McCaffrey ATD \| Christian McCaffrey 30+ rec yds \| Keenan Allen 20+ rec yds \| Javonte Williams 10+ rec yds \| Demarcus Robinson 25+ rec yds \| Dak Prescott 2+ pass TDs | 2816 | lottery | promo desk |
+
+Assumed: a 3.0-pt drift meets the "3+" FLAG bar, and the Sunday Sweep was moved up one spread rung rather than adding a leg.
+Skipped: every BAL-LAC prop (38.5-total flag, Brissett), Kittle (already in LIVE slips), Lamb / Pickens / Deebo (bad flags), Keenan Allen receptions (Losing zone + Market disagrees).
