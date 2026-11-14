@@ -545,3 +545,11 @@ Kirk Cousins (LV -> MIN 11/10; Fernando Mendoza starts for LV) had his Passing T
 the player's last game log. The sheet itself was right (projection tabs and availability have him MIN, Mendoza LV QB1). build_builder now
 checks the FanDuel row's game name (links column I) and, when the pricer's team is not in that game, takes the team the projection tabs give
 him for that game. The Week 10 slips built in chat never used that leg.
+
+### Slip import reads alternate spreads and totals (owner 11/14)
+"When I import a slip with alt gamelines, it doesn't import correctly saying game line not on this week's board." FanDuel prints alternate
+lines in brackets - "Tennessee Titans (+19.5)" / ALTERNATE SPREAD, "Over (40.5)" / ALTERNATE TOTAL POINTS - and the importer's patterns
+wanted the number bare at the end of the line, so every alt line failed (main lines with a unicode minus, "Green Bay Packers (−3)", too).
+slipimport.parse now accepts the brackets, a −/–/~ minus or a lost sign (tries both, keeps the one that team has), and matches a total
+inside the game header the legs sit under (FanDuel prints "X @ Y" above the legs, so before this a total could land in another game).
+Test: `node tests/slipimport_altlines.js <builder data json>` - four screenshot texts from 11/14, every leg must read OK.

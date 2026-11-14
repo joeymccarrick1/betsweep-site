@@ -71,12 +71,13 @@ IMPORT_JS = r"""(function(){
     var L = String(text).split(/\n+/).map(function(s){ return s.replace(/[|]/g, ' ').replace(/\s+/g, ' ').trim(); }).filter(Boolean);
     L.forEach(function(s, i){ var h = s.match(/(\d+)\s*Leg[^+\-]*?([+-]\d{3,7})/i); if (h && out.odds == null) out.odds = +h[2];
       if (/TOTAL WAGER/i.test(s) && i > 0){ var w = L[i-1].match(/\$\s*(\d+(?:\.\d{1,2})?)/); if (w) out.stake = +w[1]; } });
-    var used = {};
+    var used = {}, hdr = '';
     L.forEach(function(s, i){
+      if (/ @ /.test(s)) hdr = s;   // 11/14: the game header sits above its legs; a total must come from that game, not the first "Over 40.5" on the board
       var m = descriptor(s); if (m === undefined) return;
       // the title: the nearest line above with real words (skip lone odds / icon noise and the game line)
       var t = '', j = i - 1; while (j >= 0 && j >= i - 3){ var c = L[j]; if (c.replace(/[^A-Za-z]/g, '').length >= 4 && !/ @ /.test(c) && descriptor(c) === undefined && !used[j]){ t = c; used[j] = 1; break; } j--; }
-      var game = (L[i+1] && / @ /.test(L[i+1])) ? L[i+1] : '';
+      var game = (L[i+1] && / @ /.test(L[i+1])) ? L[i+1] : hdr;
       var odds = oddsIn(t) || oddsIn(s) || (L[i-1] && /^[+\-−~“"]?\d{3,6}$/.test(L[i-1]) ? oddsIn(L[i-1]) : null);
       var title = t.replace(/\s*[+\-−~“"]?\d{3,6}\s*$/, '');
       var raw = (title || s).replace(/^[^A-Za-z]*(?:[A-Za-z]{1,2}[^A-Za-z]+)?/, '');
@@ -86,11 +87,14 @@ IMPORT_JS = r"""(function(){
         else out.legs.push({ok: false, raw: raw, why: 'could not read both names'}); return; }
       if (m === 'Moneyline' || m === 'Spread' || m === 'Total'){
         var gl = legs.filter(function(l){ return l.gl && l.m === m; }), hit = null;
-        if (m === 'Total'){ var tm = title.match(/(Over|Under)\s*\+?(\d+(?:\.\d+)?)/i); if (tm){ var pl = tm[1][0].toUpperCase() + tm[1].slice(1).toLowerCase() + ' ' + tm[2];
-            hit = gl.filter(function(l){ return l.pl === pl && (!game || game.indexOf(NICK[l.g.split('-')[0]] || '~') >= 0 || game.indexOf(NICK[l.g.split('-')[1]] || '~') >= 0); })[0]; } }
+        var inGame = function(l){ return !game || game.indexOf(NICK[l.g.split('-')[0]] || '~') >= 0 || game.indexOf(NICK[l.g.split('-')[1]] || '~') >= 0; };
+        if (m === 'Total'){ var tm = title.match(/(Over|Under)\s*\(?\s*\+?(\d+(?:\.\d+)?)/i); if (tm){ var pl = tm[1][0].toUpperCase() + tm[1].slice(1).toLowerCase() + ' ' + (+tm[2]);
+            hit = gl.filter(function(l){ return l.pl === pl && inGame(l); })[0]; } }
         else { var ab = Object.keys(NICK).filter(function(k){ return title.indexOf(NICK[k]) >= 0; })[0];
           if (ab){ if (m === 'Moneyline') hit = gl.filter(function(l){ return l.pl === NICK[ab] + ' ML'; })[0];
-            else { var sp = title.match(/([+-]\d+(?:\.\d+)?)\s*$/); if (sp) hit = gl.filter(function(l){ return l.pl === ab + ' ' + sp[1]; })[0]; } } }
+            else { var sp = title.replace(/[−–—~]/g, '-').match(/\(?\s*([+-]?)\s*(\d+(?:\.\d+)?)\s*\)?\s*$/);
+              if (sp){ var num = +sp[2], cand = sp[1] ? [sp[1] + num] : ['+' + num, '-' + num];   // sign lost in the read: whichever of the two this team has
+                hit = gl.filter(function(l){ return cand.some(function(c){ return l.pl === ab + ' ' + c; }) && inGame(l); })[0]; } } } }
         if (hit) out.legs.push({ok: true, key: legKey(hit), label: hit.pl + (m === 'Total' ? ' (' + hit.g + ')' : ''), odds: odds, leg: hit});
         else out.legs.push({ok: false, raw: raw, why: 'game line not on this week\'s board'}); return; }
       // player props: name from the caps line (cleaner), else the title
