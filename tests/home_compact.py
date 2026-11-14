@@ -72,7 +72,7 @@ with sync_playwright() as pw:
         ok(pg.evaluate("(function(){ var c = document.querySelector('.tdgame.show'); return c.classList.contains('open') && c.querySelector('.tdmore').offsetParent !== null; })()"), "  More on this game opens it")
         pg.context.close()
     # ---- the pages the sections moved to ----
-    for path, sel, least in (("/best/", ".play, .parlay", 1), ("/slate/", "a.game", 2), ("/news/", ".tdnewsl li", 1), ("/all/", ".nxl a", 30)):
+    for path, sel, least in (("/best/", ".play, .parlay", 1), ("/news/", ".tdnewsl li", 1), ("/all/", ".nxl a", 30)):
         if not has_file(path): ok(path == "/best/" and False, f"{path} exists"); continue
         pg, errs = page(path)
         n = pg.evaluate("(s) => document.querySelectorAll(s).length", sel)

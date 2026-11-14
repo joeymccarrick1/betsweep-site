@@ -526,3 +526,9 @@ under when the player's or leg's good flags argue for the over (AGAINST: growing
 script for catches and Carries up / Lead script for rushing). Hand-built slips follow the same rule: before any under, read the player's
 flags as if the leg were the over - if they would make us like the over, the under is out, whatever the risk tag says. When the owner
 pushes back on a leg, re-check that leg from scratch.
+
+### /slate/ ("This week's games") retired (owner 11/13)
+"We already have all that info on other pages." build_site.py no longer builds or links it: out of the menu, the next-door strips
+(/survivor/, /teams/, /dfs/ point at the Matchup Boards instead) and the sitemap; the home page's "All N games this week" goes to /boards/.
+site/slate/index.html is a noindex forwarding stub to /boards/ so old links and bookmarks still land somewhere. home.slate() still feeds
+nothing public; leave it until the next clean-up.

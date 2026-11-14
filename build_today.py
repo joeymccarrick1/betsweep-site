@@ -301,7 +301,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 {stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p>
- <p class="tdall"><a href="/slate/">All {len(games)} games this week</a><a href="/boards/">Matchup Boards</a></p></section>
+ <p class="tdall"><a href="/boards/">All {len(games)} games this week</a></p></section>
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>
 <section class="sec" id="tdnewsS"><div class="sech"><h2 class="t">News desk</h2><a class="seeall" href="/news/">All {len(news)} notes</a></div>{("<ul class='tdnewsl' id='tdnewsl' data-cap='3'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}</section>
 <section class="sec" id="record"><div class="sech"><h2 class="t">Track record</h2><a class="seeall" href="/receipts/">Every week</a></div>{rec_html}<p class="none" style="margin-top:8px;font-size:12.5px"><a href="/how/" style="color:var(--ink)">How BetSweep picks</a></p></section>

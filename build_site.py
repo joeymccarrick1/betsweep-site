@@ -143,7 +143,7 @@ NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay 
 # and the six groups. The Theme switch is a card on /me/ (account.me_page). The Short view is reached from the home page's own button
 # (build_today.py #tdsimple) and from nowhere else: no line here, no door in NEXT, no entry on /all/.
 NAV_GROUPS = [("/", "Today", None),
-              (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/slate/", "This week's games", "Lines and scripts at a glance"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
+              (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
               (None, "Play", [("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
@@ -156,7 +156,6 @@ NAV_GROUPS = [("/", "Today", None),
 # no entry (the home page, the legal pages, /all/) gets no strip.
 NEXT = {
  "/boards/": [("/build/", "Parlay Builder", "Turn these boards into a slip"), ("/dossier/", "Game previews", "The read before the bet"), ("/best/", "Model's Best", "The week's edges in one list")],
- "/slate/": [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "What moved the numbers")],
  "/dossier/": [("/boards/", "Matchup Boards", "Every player's lines for the game"), ("/build/", "Parlay Builder", "Build the slip"), ("/news/", "News desk", "What moved the numbers")],
  "/news/": [("/benefits/", "Who benefits", "Where the work goes when a starter sits"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/boards/", "Matchup Boards", "See it in the lines")],
  "/best/": [("/build/?best=1", "Open them in the builder", "Every Model's Best leg, ready to add"), ("/boards/", "Matchup Boards", "The full read on each game"), ("/season/", "How it has graded", "Every week, in public")],
@@ -171,17 +170,17 @@ NEXT = {
  "/live/": [("/me/", "My BetSweep", "Your slips, record and bankroll"), ("/receipts/", "Receipts", "How every week graded"), ("/badbeats/", "Missed by one", "The week's bad beats")],
  "/me/": [("/live/", "Live", "Your legs against the box score"), ("/build/", "Parlay Builder", "Build the next one"), ("/beat/", "Beat the model", "Your five against its five")],
  "/beat/": [("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week"), ("/best/", "Model's Best", "What the model would take")],
- "/survivor/": [("/slate/", "This week's games", "Lines and scripts at a glance"), ("/beat/", "Beat the model", "Your five against its five"), ("/teasers/", "Teaser finder", "Spreads moved your way")],
+ "/survivor/": [("/boards/", "Matchup Boards", "One board per game"), ("/beat/", "Beat the model", "Your five against its five"), ("/teasers/", "Teaser finder", "Spreads moved your way")],
  "/social/": [("/build/", "Parlay Builder", "Build a slip to post"), ("/beat/", "Beat the model", "Your five against its five"), ("/live/", "Live", "Track what you tailed")],
  "/player/": [("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out"), ("/teams/", "Teams", "Stats, results, box scores")],
- "/teams/": [("/player/", "Players", "Lines, hit rates, game logs"), ("/slate/", "This week's games", "Lines and scripts at a glance"), ("/usage/", "Usage trends", "Rising and falling roles")],
+ "/teams/": [("/player/", "Players", "Lines, hit rates, game logs"), ("/boards/", "Matchup Boards", "One board per game"), ("/usage/", "Usage trends", "Rising and falling roles")],
  "/usage/": [("/benefits/", "Who benefits", "When a starter is out"), ("/player/", "Players", "Lines, hit rates, game logs"), ("/targets/", "Trade desk", "Buy low, sell high")],
  "/benefits/": [("/usage/", "Usage trends", "Rising and falling roles"), ("/news/", "News desk", "Who is out, limited or back"), ("/build/", "Parlay Builder", "Price the backup's legs")],
  "/team/compare/": [("/team/", "My team", "Start / sit for the whole roster"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high")],
  "/team/": [("/team/compare/", "Who should I start?", "Two players, one call"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")],
  "/trade/": [("/targets/", "Trade desk", "Buy low, sell high"), ("/team/", "My team", "Start / sit for the whole roster"), ("/usage/", "Usage trends", "Rising and falling roles")],
  "/targets/": [("/trade/", "Trade calculator", "Price the whole offer"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/team/", "My team", "Start / sit for the whole roster")],
- "/dfs/": [("/team/", "My team", "Season-long start / sit"), ("/player/", "Players", "Lines, hit rates, game logs"), ("/slate/", "This week's games", "Totals and scripts")],
+ "/dfs/": [("/team/", "My team", "Season-long start / sit"), ("/player/", "Players", "Lines, hit rates, game logs"), ("/boards/", "Matchup Boards", "Totals and scripts")],
  "/receipts/": [("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/how/", "How BetSweep picks", "The method and the record")],
  "/season/": [("/receipts/", "Receipts", "Week by week"), ("/how/", "How BetSweep picks", "The method and the record"), ("/boards/", "This week's boards", "What the model says now")],
  "/badbeats/": [("/receipts/", "Receipts", "Every week, graded"), ("/sweep/", "Sweep my slip", "Find the weak leg first"), ("/boards/", "This week's boards", "What the model says now")],
@@ -1068,9 +1067,11 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         if _best:
             _wk_made.append(_week_page("/best/", "Model's Best", f"Week {_wkw}. Where the model and FanDuel's price disagree the most, the thinned rooms, and every game's best parlay. Each leg shows the model's chance beside the chance the price needs.",
                                        _best, "Model's Best on BetSweep: the week's plus-money edges, near-even looks, next man up, touchdown and game-line radar, and the best parlay for every game.", _slipjs))
-        if _B.get("slate_cards"):
-            _wk_made.append(_week_page("/slate/", f"Week {_wkw} games", f"All {_B.get('ngames', '')} games with the model's line, the total and the likeliest script. Tap a game for its matchup board; scores update here on game day.",
-                                       f'<section class="sec" id="slate">{_B["slate_cards"]}</section>', f"Every Week {_wkw} NFL game on one screen: kickoff, the model's line and total, the likeliest game script, live scores on game day.", "<script>" + _LIVE.LIVE_JS + "</script>\n" + _HOME.home_js(_B.get("games") or [])))
+        # owner 11/13: "I don't think we need the 'this weeks games' page. We already have all that info on other pages" - /slate/ is no
+        # longer built or linked; the old address forwards to the Matchup Boards (one board per game, same lines and scripts).
+        os.makedirs(os.path.join(SITE, "slate"), exist_ok=True)
+        open(os.path.join(SITE, "slate", "index.html"), "w").write('<!doctype html><html><head><meta charset="utf-8"><title>BetSweep</title><link rel="canonical" href="/boards/"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=/boards/">'
+            '<script>location.replace("/boards/" + location.search + location.hash)</script></head><body><a href="/boards/">Matchup Boards</a></body></html>')
         if _TP.get("news"):
             _teams = "".join(f'<button type="button" data-t="{html.escape(t)}">{html.escape(t)}</button>' for t in _TP.get("teams") or [])
             _wk_made.append(_week_page("/news/", "News desk", f"Week {_wkw}, as of {html.escape(str(_TP.get('stamp', '')))} CT. {_TP.get('n', '')} notes that moved the model's numbers, read from ESPN, RotoWire, CBS, Yahoo and the team injury pages at every rebuild. The chips on player names across the site update every 10 minutes.",
