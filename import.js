@@ -95,12 +95,18 @@
 
   // owner 11/1: "when I import a slip from Fanduel I can load it to my betslip on betsweep" - the open betslip is bs_slipk_w<W> (the same key the
   // builder, boards and player pages share); legs the builder prices come up in the slip with the model's numbers, the rest stay on the saved slip.
-  function loadSlip(BS, keys){
+  // 11/14: a total's key has no game in it ("Over 49.5|Total|50" is a line in several games), so the builder also reads bs_slipg_w<W>
+  // ({key: [gid, ...]} in slip order) to put each one back in its own game. The importer never wrote it, so every imported total opened
+  // in the first game with that number (owner's 12-leg slip: seven totals all came back as DET-NE). gmapOf builds it from the matched legs.
+  function gmapOf(BS, legs){ var n = {}; (BS.legs || []).forEach(function(l){ var k = legKey(l); (n[k] = n[k] || {})[l.g] = 1; });
+    var g = {}; legs.forEach(function(x){ if (x && x.key && x.leg && x.leg.g && n[x.key] && (Object.keys(n[x.key]).length > 1 || x.leg.m === 'Total')) (g[x.key] = g[x.key] || []).push(x.leg.g); }); return g; }
+  function loadSlip(BS, keys, gm){
     var W = BS.week, have = {}; (BS.legs || []).forEach(function(l){ have[legKey(l)] = 1; });
     var on = keys.filter(function(k){ return have[k]; }), off = keys.length - on.length;
+    try{ if (gm && Object.keys(gm).length) localStorage.setItem('bs_slipg_w' + W, JSON.stringify(gm)); else localStorage.removeItem('bs_slipg_w' + W); }catch(e){}
     try{ localStorage.setItem('bs_slipk_w' + W, JSON.stringify(on)); if (off) sessionStorage.setItem('bs_impnote', off + ' leg' + (off === 1 ? '' : 's') + ' from your FanDuel slip ' + (off === 1 ? 'is' : 'are') + ' not on the builder board (games already under way, either-player TDs or lines we do not price) - ' + (off === 1 ? 'it stays' : 'they stay') + ' on the saved slip.'); }catch(e){}
     location.href = '/build/#slip'; }
-  window.BSLoadSlip = function(keys){ return builderData().then(function(BS){ loadSlip(BS, keys); }); };
+  window.BSLoadSlip = function(keys, gm){ return builderData().then(function(BS){ loadSlip(BS, keys, gm); }); };
   // ---- the card on /me/ ----
   function am(o){ o = +o; return isNaN(o) || !o ? '' : (o > 0 ? '+' + o : String(o)); }
   function setup(){
@@ -120,17 +126,18 @@
       if (!good.length){ out.innerHTML = h + '</ul><p class="st">None of these legs are markets BetSweep prices, so there is nothing to save. Player yards, catches, touchdowns and game lines import fine.</p>'; return; }
       h += '</ul><div class="row"><input type="text" id="impname" maxlength="60" value="FanDuel ' + (good.length) + '-leg' + (R.odds ? ' ' + am(R.odds) : '') + '"><input type="text" id="impodds" inputmode="text" maxlength="9" style="flex:0 0 110px;min-width:0" placeholder="Odds +650" value="' + (R.odds ? am(R.odds) : '') + '"><button type="button" class="cta" id="impsave">Save slip</button><button type="button" class="sec" id="impload" style="font:inherit;font-weight:700;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer">Load into betslip</button></div>';
       out.innerHTML = h;
-      function ticked(){ var keys = []; out.querySelectorAll('input[type=checkbox]').forEach(function(c){ if (c.checked) keys.push(R.legs[+c.dataset.i].key); }); return keys; }
-      document.getElementById('impload').addEventListener('click', function(){ var keys = ticked(); if (!keys.length){ say('Nothing ticked - nothing to load.'); return; } loadSlip(BS, keys); });
+      function tickedLegs(){ var ls = []; out.querySelectorAll('input[type=checkbox]').forEach(function(c){ if (c.checked) ls.push(R.legs[+c.dataset.i]); }); return ls; }
+      function ticked(){ return tickedLegs().map(function(x){ return x.key; }); }
+      document.getElementById('impload').addEventListener('click', function(){ var ls = tickedLegs(); if (!ls.length){ say('Nothing ticked - nothing to load.'); return; } loadSlip(BS, ls.map(function(x){ return x.key; }), gmapOf(BS, ls)); });
       document.getElementById('impsave').addEventListener('click', function(){
-        var keys = []; out.querySelectorAll('input[type=checkbox]').forEach(function(c){ if (c.checked) keys.push(R.legs[+c.dataset.i].key); });
+        var tl = tickedLegs(), keys = tl.map(function(x){ return x.key; }), gm = gmapOf(BS, tl);
         if (!keys.length){ say('Nothing ticked - nothing saved.'); return; }
         var W = BS.week, k = 'bs_slips_w' + W, all = []; try{ all = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(e){ all = []; }
         var od = parseInt(String(document.getElementById('impodds').value || '').replace(/[^0-9+-]/g, ''), 10); if (isNaN(od) || Math.abs(od) < 100) od = R.odds || null;
-        all.push({id: 'fd' + Date.now(), name: (document.getElementById('impname').value || 'FanDuel slip').trim().slice(0, 60), keys: keys, odds: od, stake: R.stake || undefined, saved: Date.now(), src: 'fanduel-screenshot'});
+        all.push({id: 'fd' + Date.now(), name: (document.getElementById('impname').value || 'FanDuel slip').trim().slice(0, 60), keys: keys, g: gm, odds: od, stake: R.stake || undefined, saved: Date.now(), src: 'fanduel-screenshot'});
         try{ localStorage.setItem(k, JSON.stringify(all)); }catch(e){ say('Your browser would not let us save it (private mode?).'); return; }
         say('<span class="ok">Saved "' + esc(all[all.length-1].name) + '" with ' + keys.length + ' legs.</span> It is in Your record above, graded after the games, and your slip alerts now watch it. <button type="button" class="cta" id="imploaded" style="margin-left:6px;padding:6px 12px;font-size:13px">Load into betslip</button>');
-        var lb = document.getElementById('imploaded'); if (lb) lb.addEventListener('click', function(){ loadSlip(BS, keys); });
+        var lb = document.getElementById('imploaded'); if (lb) lb.addEventListener('click', function(){ loadSlip(BS, keys, gm); });
         document.dispatchEvent(new CustomEvent('bs-account', {detail: {imported: true}})); });
     }
     inp.addEventListener('change', function(){ go(inp.files && inp.files[0]); inp.value = ''; });

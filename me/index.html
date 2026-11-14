@@ -148,13 +148,17 @@ a{color:var(--ink)}
   function clvOf(s, k, c){ var mine = (s.px && s.px[k] && s.px[k].o != null) ? +s.px[k].o : (c && c.build && c.build[k] ? +c.build[k].o : null); var cl = c && c.close && c.close[k] ? +c.close[k].o : null;
     if (mine == null || cl == null) return null; return {mine: mine, close: cl, pts: Math.round((imp(cl) - imp(mine)) * 1000) / 10}; }
   // grade one slip key against the week's box scores: returns {r: 'HIT'|'MISS'|'PUSH'|'?', a: actual text}
-  function gradeKey(k, d){ if (!d) return {r: '?', a: 'not final'}; var p = String(k).split('|'); if (p.length < 3) return {r: '?', a: ''};
+  function onlyGame(){ return null; }   // a total saved before 11/14 carries no game: left ungraded rather than guessed
+  function gradeKey(k, d, gid){ if (!d) return {r: '?', a: 'not final'}; var p = String(k).split('|'); if (p.length < 3) return {r: '?', a: ''};
     var who = p[0], m = p[1], ln = parseFloat(p[2]); var S = {"Passing Yards":0, "Passing TDs":1, "Rushing Yards":3, "Receptions":5, "Receiving Yards":6, "Longest Reception":8};
     function team(t){ var n = Object.keys(NICK).filter(function(x){ return t.indexOf(x) >= 0; })[0]; return n ? NICK[n] : null; }
     function gameOf(ab){ var out = null; Object.keys(d.games||{}).forEach(function(g){ var q = g.split('-'); if (q[0]===ab || q[1]===ab) out = {a:q[0], h:q[1], as:d.games[g][0], hs:d.games[g][1]}; }); return out; }
     if (m === 'Moneyline'){ var t = team(who), gm = t && gameOf(t); if (!gm) return {r:'?', a:'game not final'}; var marg = (t===gm.h ? gm.hs-gm.as : gm.as-gm.hs); return {r: marg>0?'HIT':marg<0?'MISS':'PUSH', a: gm.a+' '+gm.as+' @ '+gm.h+' '+gm.hs}; }
     if (m === 'Spread'){ var t2 = team(who), gm2 = t2 && gameOf(t2), mm = who.match(/([+-]?\d+(?:\.\d+)?)\s*$/); if (!gm2 || !mm) return {r:'?', a:'game not final'}; var v = (t2===gm2.h ? gm2.hs-gm2.as : gm2.as-gm2.hs) + parseFloat(mm[1]); return {r: v>0?'HIT':v<0?'MISS':'PUSH', a: gm2.a+' '+gm2.as+' @ '+gm2.h+' '+gm2.hs}; }
-    if (m === 'Total') return {r:'?', a:'totals need the game - coming'};
+    if (m === 'Total'){ var tt = who.match(/^(Over|Under)\s+(\d+(?:\.\d+)?)/i), gg = null;   // 11/14: the slip's game map (s.g) says which game; a key only one game uses carries none, so fall back to that one game
+      Object.keys(d.games||{}).forEach(function(g){ var q = g.split('-'); if (gid && (g === gid || (q[1] + '-' + q[0]) === gid || gid.split('-').sort().join() === q.slice().sort().join())) gg = d.games[g]; });
+      if (!tt || !gg) return {r:'?', a: gid ? 'game not final' : 'game not on record'}; var sum = (+gg[0]) + (+gg[1]), line = parseFloat(tt[2]), over = /^o/i.test(tt[1]);
+      return {r: sum === line ? 'PUSH' : ((sum > line) === over ? 'HIT' : 'MISS'), a: sum + ' total'}; }
     if (m === 'First TD') return {r:'?', a:'first TD graded on the receipt'};
     if (m === 'Either TD'){ var names = who.split(/\s+or\s+/); var hit = names.some(function(n){ var b = d.box[n.trim()]; return b && (b[4]+b[7]) >= 1; }); var any = names.some(function(n){ return !!d.box[n.trim()]; }); return any ? {r: hit?'HIT':'MISS', a: hit?'scored':'no TD'} : {r:'?', a:'no box score'}; }
     var b = d.box[who]; if (!b) return {r:'?', a:'no box score (did not play?)'};
@@ -186,7 +190,7 @@ a{color:var(--ink)}
     if (!sl.length){ bankRender([]); el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
     else { el.innerHTML = '<li class="none">Grading…</li>';
       Promise.all(sl.map(function(x){ return getBox(x.w); }).concat(sl.map(function(x){ return getClose(x.w); }))).then(function(all){ var ds = all.slice(0, sl.length), cs = all.slice(sl.length); var W = 0, L = 0, U = 0, P = 0, BK = [], BRK = {m:{}, n:{}, o:{}}, html = '', lastW = null, topW = sl.length ? sl[0].w : 0, CB = 0, CN = 0, CP = 0;
-        sl.forEach(function(x, i){ var s = x.s, d = ds[i], c = cs[i], gs = (s.keys||[]).map(function(k){ return {k:k, g: gradeKey(k, d), clv: clvOf(s, k, c)}; });
+        sl.forEach(function(x, i){ var s = x.s, d = ds[i], c = cs[i], seen = {}, gs = (s.keys||[]).map(function(k){ var n = seen[k] = (seen[k] || 0) + 1, gid = s.g && s.g[k] ? s.g[k][n - 1] : (/\|Total\|/.test(k) ? onlyGame(k) : null); return {k:k, g: gradeKey(k, d, gid), clv: clvOf(s, k, c)}; });
           var withClv = gs.filter(function(g){ return g.clv; }), beat = withClv.filter(function(g){ return g.clv.pts > 0; }).length, avg = withClv.length ? withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0) / withClv.length : null;
           CB += beat; CN += withClv.length; CP += withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0);
           var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
@@ -203,7 +207,7 @@ a{color:var(--ink)}
           if (oneAway){ var q0 = String(oneAway.k).split('|'), gg = oneAway.g, short = (gg.v != null && gg.need != null) ? (Math.round((gg.need - gg.v) * 10) / 10) + ' short (' + gg.v + ' vs ' + gg.need + '+)' : (gg.a || 'missed');
             extra += '<small class="away">One leg away: <b>' + esc(q0[0]) + ' ' + esc(q0[1].toLowerCase()) + '</b> ' + esc(short) + '</small>'; }
           var bet = (res==='PENDING' && s.fd && !d) ? '<a class="fdl" href="'+esc(s.fd)+'" target="_blank" rel="noopener">Bet on FanDuel</a>' : '';
-          if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'">Load into betslip</button>';   // owner 11/1
+          if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'" data-g="'+esc(JSON.stringify(s.g||{}))+'">Load into betslip</button>';   // owner 11/1
           if (x.w !== lastW){ lastW = x.w; var wn = sl.filter(function(y){ return y.w === x.w; }).length; html += '<li class="wkh'+(x.w === topW ? ' on' : '')+'" data-w="'+x.w+'"><button type="button" class="wkt">Week '+x.w+' <small>'+wn+' slip'+(wn===1?'':'s')+'</small><i>▾</i></button></li>'; }
           html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small>'+extra+'<button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : '')+cv; }).join(' &nbsp; ')+'</span></li>'; });
         el.innerHTML = html; bankRender(BK); brkRender(BRK); document.getElementById('record').textContent = ((W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : '')) + (CN ? ' · beat the close on '+CB+' of '+CN+' legs ('+(CP/CN>=0?'+':'')+(CP/CN).toFixed(1)+' pts avg)' : ''); }); }
@@ -296,8 +300,8 @@ a{color:var(--ink)}
       var h = e.target.closest && e.target.closest('.me .card > h2'); if (h && !e.target.closest('a,button')){ var c = h.parentNode; c.classList.toggle('shut'); st[c.id] = !c.classList.contains('shut'); try{ localStorage.setItem('bs_me_fold2', JSON.stringify(st)); }catch(x){} return; }
       var w = e.target.closest && e.target.closest('.wkt'); if (w){ var li = w.parentNode, on = !li.classList.contains('on'); li.classList.toggle('on', on); document.querySelectorAll('.me li.sl.w' + li.dataset.w).forEach(function(x){ x.classList.toggle('wkoff', !on); }); return; }
       var g = e.target.closest && e.target.closest('.lgt'); if (g){ g.parentNode.classList.toggle('lo'); } }); })();
-  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.ldb'); if (!b) return; var ks = []; try{ ks = JSON.parse(b.getAttribute('data-keys')) || []; }catch(x){}
-    if (window.BSLoadSlip) window.BSLoadSlip(ks); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks); }, 800); } });
+  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.ldb'); if (!b) return; var ks = [], gm = {}; try{ ks = JSON.parse(b.getAttribute('data-keys')) || []; gm = JSON.parse(b.getAttribute('data-g') || '{}') || {}; }catch(x){}
+    if (window.BSLoadSlip) window.BSLoadSlip(ks, gm); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks, gm); }, 800); } });
 })();
 </script>
 <script defer src="/import.js"></script>
