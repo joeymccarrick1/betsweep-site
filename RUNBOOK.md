@@ -532,3 +532,10 @@ pushes back on a leg, re-check that leg from scratch.
 (/survivor/, /teams/, /dfs/ point at the Matchup Boards instead) and the sitemap; the home page's "All N games this week" goes to /boards/.
 site/slate/index.html is a noindex forwarding stub to /boards/ so old links and bookmarks still land somewhere. home.slate() still feeds
 nothing public; leave it until the next clean-up.
+
+### A still-linked stylesheet is put back automatically (11/14)
+The Saturday boards session replaced s/ wholesale (commit 3afd734) and dropped s/tpl-14c6dc7c9d.css while /receipts/week9/ and /season/
+still linked it; those two pages lost their styling and the gate held the next publish ("MISSING FILE ... 404 /s/tpl-..."; the owner got
+GitHub's "Run failed" email). Fixed by restoring the file on main (2ffd475). reprice.copy_into_clone now restores any hashed s/ file that
+a page still links from the clone's git history, so this heals on the next publish. The boards session itself still needs the same care:
+it must add to s/, never replace it.

@@ -219,6 +219,15 @@ def copy_into_clone(clone):
         gone = sorted(hashed - used)
         for f in gone: os.remove(os.path.join(sdir, f))
         log(f"s/: {len(hashed) - len(gone)} hashed files in use" + (f", pruned {', '.join(gone)}" if gone else ""))
+        # 11/14: the Saturday boards session replaced s/ wholesale and dropped the stylesheet /receipts/week9/ and /season/ still link; the
+        # gate then held every publish. A linked file that is missing is put back from the clone's own git history when it was ever there.
+        for f in sorted(used - set(os.listdir(sdir))):
+            try:
+                h = subprocess.run(["git", "-C", clone, "log", "-1", "--format=%H", "--diff-filter=D", "--", f"s/{f}"], capture_output=True, text=True).stdout.strip()
+                if not h: continue
+                b = subprocess.run(["git", "-C", clone, "show", f"{h}^:s/{f}"], capture_output=True).stdout
+                if b: open(os.path.join(sdir, f), "wb").write(b); log(f"s/: restored {f} from history (still linked)")
+            except Exception as e: log(f"s/: could not restore {f}: {e}")
     mk = os.path.join(clone, "lab", "merged", "make.py")
     if os.path.exists(mk):
         r = subprocess.run([sys.executable, "lab/merged/make.py"], cwd=clone, capture_output=True, text=True)
