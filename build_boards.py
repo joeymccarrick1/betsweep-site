@@ -1251,7 +1251,7 @@ for a, b, pl_all in blocks:
  {faceoff_block(a, b)}
  {mbs_block(a, b)}
  <div class="cols"><ul class="col">{team_col(pl, a, maxppr)}</ul><ul class="col">{team_col(pl, b, maxppr)}</ul></div>
- <footer class="ft"><span class="brand"><img src="data:image/png;base64,{LOGO_S}" alt=""><span>BetSweep</span></span><span>PPR projection · bar scaled to this game's top player · Week {WEEK}</span><button class="snap more" type="button" data-target="{gid}">Show all players</button><button class="snap" type="button" data-target="{gid}">Copy card as image</button><button class="snap story" type="button" data-target="{gid}">Story 9:16</button></footer>
+ <footer class="ft"><span class="brand"><img src="data:image/png;base64,{LOGO_S}" alt=""><span>BetSweep</span></span><span>PPR projection · bar scaled to this game's top player · Week {WEEK}</span><button class="snap more" type="button" data-target="{gid}">Show all players</button></footer>
 </section>''')
 
 json.dump({"header": CONF_HDR, "values": CONF_ARC}, open(os.path.join(HERE if "HERE" in globals() else os.path.dirname(os.path.abspath(__file__)), "out", "conf_rows.json"), "w"))
@@ -1289,7 +1289,7 @@ summary = f'''<section class="card summary" id="summary">
   <div><h3>Trust least <small>most flags · tap a game</small></h3><ul class="bl">{conf_html_sum}</ul></div>
   <div><h3>Weather watch <small>kickoff-hour forecast</small></h3><ul class="bl">{wx_html}</ul></div>
  </div>
- <footer class="ft"><span class="brand"><img src="data:image/png;base64,{LOGO_S}" alt=""><span>BetSweep</span></span><span>Picks. Data. Edge. Sweep.</span><button class="snap" type="button" data-target="summary">Copy card as image</button><button class="snap story" type="button" data-target="summary">Story 9:16</button></footer>
+ <footer class="ft"><span class="brand"><img src="data:image/png;base64,{LOGO_S}" alt=""><span>BetSweep</span></span><span>Picks. Data. Edge. Sweep.</span></footer>
 </section>'''
 
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
