@@ -1225,7 +1225,7 @@ BUILDER_JS = r"""
       else { var gs = Object.keys(m); for(var x = 0; x < gs.length; x++){ if(!used[m[gs[x]]]){ i = m[gs[x]]; break; } } }
       if(i != null) used[i] = 1; return i; });
   }
-  function gmapOf(idxs){ var g = {}; idxs.forEach(function(i){ var l = legs[+i]; if(!l) return; var k = legKey(l); if(KEYG[k] && Object.keys(KEYG[k]).length > 1) (g[k] = g[k] || []).push(l.g); }); return g; }
+  function gmapOf(idxs){ var g = {}; idxs.forEach(function(i){ var l = legs[+i]; if(!l) return; var k = legKey(l); if(KEYG[k] && (Object.keys(KEYG[k]).length > 1 || l.m === 'Total')) (g[k] = g[k] || []).push(l.g); }); return g; }
   try {
     var ks = JSON.parse(localStorage.getItem(KEYS) || 'null');
     if(Array.isArray(ks)){ var ix0 = resolveKeys(ks, readG()); ks.forEach(function(k, n){ if(ix0[n] != null) sel[ix0[n]] = true; else extraKeys.push(k); }); }

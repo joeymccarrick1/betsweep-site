@@ -553,3 +553,12 @@ wanted the number bare at the end of the line, so every alt line failed (main li
 slipimport.parse now accepts the brackets, a −/–/~ minus or a lost sign (tries both, keeps the one that team has), and matches a total
 inside the game header the legs sit under (FanDuel prints "X @ Y" above the legs, so before this a total could land in another game).
 Test: `node tests/slipimport_altlines.js <builder data json>` - four screenshot texts from 11/14, every leg must read OK.
+
+### Imported totals load into their own game; totals graded on My BetSweep (owner 11/14, second report)
+The owner's imported 12-leg game-line slip loaded with all seven totals in DET-NE. A total's key ("Over 49.5|Total|50") has no game in it;
+the builder puts each one back in its game from bs_slipg_w<W> ({key: [gid, ...]}, slip order), but the importer never wrote that map, so
+every total resolved to the first game with that number. slipimport now builds the map from the matched legs (gmapOf), writes it when it
+loads a slip, and saves it on the slip (g) like the builder's Save slip; My BetSweep's "Load into betslip" passes it too. Every total now
+carries its game (builder too), so My BetSweep grades totals from the final score instead of "totals need the game"; totals saved before
+11/14 without a game stay ungraded rather than guessed. Test: `node tests/slipimport_load.js <builder data json>` - the owner's slip, all 12
+legs must resolve to their own games.
