@@ -84,6 +84,42 @@
    "gap": 3.5,
    "p": 0.393,
    "seen": "2026-11-13 6:34"
+  },
+  "Xavier Worthy|Receptions|4": {
+   "pl": "Xavier Worthy",
+   "m": "Receptions",
+   "ln": 4.0,
+   "g": "ATL-KC",
+   "fd": 194.0,
+   "dk": 167.0,
+   "hr": 170.0,
+   "gap": 3.0,
+   "p": 0.4353,
+   "seen": "2026-11-14 23:42"
+  },
+  "Drew Sample|Receptions|2": {
+   "pl": "Drew Sample",
+   "m": "Receptions",
+   "ln": 2.0,
+   "g": "CIN-PIT",
+   "fd": 220.0,
+   "dk": 161.0,
+   "hr": 160.0,
+   "gap": 7.1,
+   "p": 0.3685,
+   "seen": "2026-11-14 23:42"
+  },
+  "Christian Watson|Longest Reception|30": {
+   "pl": "Christian Watson",
+   "m": "Longest Reception",
+   "ln": 30.0,
+   "g": "GB-MIN",
+   "fd": 105.0,
+   "dk": -122.0,
+   "hr": -115.0,
+   "gap": 4.7,
+   "p": 0.417,
+   "seen": "2026-11-14 23:42"
   }
  }
 }
