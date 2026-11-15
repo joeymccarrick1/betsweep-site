@@ -581,3 +581,11 @@ sticky at the top with a "Close" label, the FanDuel/DraftKings/Hard Rock row is 
 bar. `.bld .panel/h2/[hidden]` rules also apply under `.slipwrap` since the slip may live outside `.bld`.
 Check: /tmp/slipchk2.py style Playwright run (open slip with 1 and 10 legs at 390x844, 375x667, 390x600): bar visible at top/middle/end of
 the slip scroll, FanDuel never below the sheet, sheet top >= header bottom, Close works mid-scroll. Desktop slip position unchanged.
+
+## Builder reload loop ("freaking out flashing", 11/15)
+Owner screen recording: signed in, /build/ flashed between the page and a half-drawn page with "Synced from your account" over and over.
+Cause: the builder's save() on load called localStorage.removeItem('bs_slipg_w<W>') whenever the slip had no totals (11/14 game-map change).
+The account copy still had that key, so account.js pull() saw it missing locally, restored it, reported "changed" and reloaded the page;
+the builder removed it again on load -> endless reload. Reproduced with a stubbed signed-in Supabase (/tmp/loopchk.py): 12 loads in 15s before.
+Fix: builder/slipimport never removeItem the game map (write it, '{}' when empty); pull() pushes a local removal instead of restoring when the
+local removal is newer; and a sync reload happens at most once per tab per 2 minutes (sessionStorage bs_sync_rl). After: 2 loads (one sync).

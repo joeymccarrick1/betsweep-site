@@ -96,6 +96,7 @@ ACCOUNT_JS = r"""
       // remote newer than local -> take it; local newer (or only local) -> push it
       Object.keys(remote).forEach(function(k){ var rt = Date.parse(remote[k].updated_at)||0, lt = meta[k]||0, lv = null; try{ lv = localStorage.getItem(k); }catch(e){}
         var rv = remote[k].value && remote[k].value.v; if (rv == null) return;
+        if (lv === null && lt > rt){ pending[k] = null; return; }   // 11/15: removed here after the account copy was written - push the removal, don't restore it
         if (lv === null || rt > lt){ if (lv !== rv){ _set(k, rv); changed = true; } meta[k] = rt; } else if (lt > rt && lv !== rv){ pending[k] = lv; } });
       try{ for (var i=0;i<localStorage.length;i++){ var k = localStorage.key(i); if (SYNC.test(k) && !remote[k]) pending[k] = localStorage.getItem(k); } }catch(e){}
       saveMeta(); flush(); return changed; }); }
@@ -131,7 +132,11 @@ ACCOUNT_JS = r"""
       var g = dlg.querySelector('#bsgoogle'); if (g) g.addEventListener('click', function(){ sb.auth.signInWithOAuth({provider: 'google', options: {redirectTo: location.origin + location.pathname}}); }); }
     dlg.hidden = false; setTimeout(function(){ var i = dlg.querySelector('#bsemail'); if(i) i.focus(); }, 50); }
   function toast(t){ var el = document.createElement('div'); el.textContent = t; el.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120;box-shadow:0 8px 24px rgba(0,0,0,.3)'; document.body.appendChild(el); setTimeout(function(){ el.remove(); }, 3500); }
-  function onSession(s){ var u = s && s.user; if (u && (!user || user.id !== u.id)){ user = u; window.bsAccount.user = u; paint(); pull().then(function(changed){ ready = true; document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: u, changed: changed}})); if (changed && !/\/me\//.test(location.pathname)){ toast('Synced from your account'); setTimeout(function(){ location.reload(); }, 900); } }); }
+  function onSession(s){ var u = s && s.user; if (u && (!user || user.id !== u.id)){ user = u; window.bsAccount.user = u; paint(); pull().then(function(changed){ ready = true; document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: u, changed: changed}})); if (changed && !/\/me\//.test(location.pathname)){ toast('Synced from your account');
+        // 11/15 (owner video: the builder "freaking out flashing"): a page that rewrote a synced key on load made every pull look like a change, so
+        // the page reloaded itself over and over. One sync reload per tab per 2 minutes; past that the synced data shows on the next visit.
+        var last = 0; try { last = +sessionStorage.getItem('bs_sync_rl') || 0; } catch(e){}
+        if (Date.now() - last > 120000){ try { sessionStorage.setItem('bs_sync_rl', String(Date.now())); } catch(e){} setTimeout(function(){ location.reload(); }, 900); } } }); }
     else if (!u){ user = null; window.bsAccount.user = null; ready = false; paint(); document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: null}})); } }
   paint();
   sb.auth.getSession().then(function(r){ onSession(r.data && r.data.session); });
