@@ -76,7 +76,7 @@
    "note": "Model 21.8% (FanDuel multiplied +256 = 28.1% implied). Argue against: Dallas holds QB1s to 0.82x (#29) and two legs are favorites covering - a sloppy SF passing day plus one flat favorite kills it. Answer: Purdy's 225 sits under his worst-case floor in all but one start (189 low), DAL is thin at safety, and the four legs live in four different games.",
    "post": false,
    "first_kickoff": "Sun 8:30 AM CT (Munich) - post before the Sun 7:40 AM rebuild; McCaffrey's game is 3:25 PM",
-   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): FLAG McCaffrey 4+ rec drifted -220 -> -192 (68.8% -> 65.8%, 3.0 pts against; Snaps falling, Model disagrees with consensus). Swapped for Brock Purdy 225+ pass yds (-280, 71.7%); LA -3.5 -> LA -4.5 (-250) to keep the price at +256 (Purdy at -280 alone dropped it to +241). JAX -4.5 -280 -> -295 and LA -3.5 -265 -> -295 came our way. Alt if you'd rather keep McCaffrey: McCaffrey 25+ rec yds (-210) with LA -3.5 = +271, 21.5%."
+   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): FLAG McCaffrey 4+ rec drifted -220 -> -192 (68.8% -> 65.8%, 3.0 pts against; Snaps falling, Model disagrees with consensus). Swapped for Brock Purdy 225+ pass yds (-280, 71.7%); LA -3.5 -> LA -4.5 (-250) to keep the price at +256 (Purdy at -280 alone dropped it to +241). JAX -4.5 -280 -> -295 and LA -3.5 -265 -> -295 came our way. Alt if you'd rather keep McCaffrey: McCaffrey 25+ rec yds (-210) with LA -3.5 = +271, 21.5%. | check_sunday Sun 11/15 ~10:35 AM CT (builder Sun 10:05 AM CT, ESPN mirror 16:27Z): DO NOT POST - Sunday already has a Daily Sweep on the tab ('Daily Sweep: Sure Hands', LIVE). One Sweep per day."
   },
   {
    "slot": "saturday",
@@ -244,7 +244,7 @@
    "post": false,
    "note": "LOTTERY. Script: shootout (32%, model 30.0-25.5, total 55.5 - the slate's biggest) - both QBs throw, McCaffrey scores, the thinned SF room spreads catches. 2.4% independent floor (correlation makes it higher). Legs multiplied +3339; FanDuel's SGP price will be lower (est +2816). Reached +3000 by moving Keenan Allen 15+ (-178) up to 20+ (-114). Kittle left out (already in your LIVE 'One From Every Game' and 'Sneaky Six-Pointers'); Lamb / Pickens carry bad flags.",
    "caption": "LOTTERY: Big D Shootout +2816 est\nPurdy 225+ | Dak 250+ & 2 TDs | CMC TD & 30+ rec yds | Keenan Allen 20+ | Javonte 10+ rec yds | Demarcus Robinson 25+\nThe biggest total on the board (55.5) and the model's #2 ending is a shootout. Both QBs throw, CMC scores, and the 49ers' depth eats with Evans out. Lottery - play small.\n21+ | gamble responsibly",
-   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): drafted now (Wednesday had no clean shape; DAL-SF Rain flags have cleared - roof game, forecast unavailable)."
+   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): drafted now (Wednesday had no clean shape; DAL-SF Rain flags have cleared - roof game, forecast unavailable). | check_sunday Sun 11/15 ~10:35 AM CT (builder Sun 10:05 AM CT, ESPN mirror 16:27Z) (out of scope, noticed): Keenan Allen ids 42.625274258/14807213 now read back as the 23+ rung (-113); the 20+ rung is 42.625274260/73444995 (-144). Javonte Williams 10+ rec now scores 3 (Some risk, rule 1)."
   },
   {
    "slot": "sunday_main",
@@ -266,23 +266,23 @@
      },
      "risk": 0,
      "why": "TD in 7 of 8; DAL lets RB1s go 53% over their average (#2)",
-     "o_now": -270
+     "o_now": -260
     },
     {
-     "pl": "Jahmyr Gibbs",
+     "pl": "James Cook",
      "m": "Anytime TD",
      "ln": 1.0,
-     "o": -280,
-     "p": 0.682,
-     "bk": 0.737,
-     "game": "DET-NE",
+     "o": -160,
+     "p": 0.6124,
+     "bk": 0.615,
+     "game": "BUF-NYJ",
      "fd": {
-      "m": "42.623980876",
-      "s": "42323726"
+      "m": "42.624608243",
+      "s": "42200635"
      },
      "risk": 0,
-     "why": "TD in 7 of 8; total 50.5",
-     "o_now": -260
+     "why": "TD in 7 of 8; red-zone model 68% (35% red-zone share); BUF by 10+ is the likeliest ending (44%)",
+     "o_now": -160
     },
     {
      "pl": "Bijan Robinson",
@@ -317,14 +317,14 @@
      "o_now": 105
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624336764&selectionId[0]=10609932&marketId[1]=42.623980876&selectionId[1]=42323726&marketId[2]=42.624451089&selectionId[2]=38093938&marketId[3]=42.624371973&selectionId[3]=36914881",
-   "price": "+454",
-   "chance": 0.12,
-   "caption": "Chalk Talk TDs +454\nMcCaffrey, Gibbs, Bijan, JSN to score\nThree backs who score most weeks (7 of 8, 7 of 8, 4 of 9) plus Seattle's WR1 on a soft matchup.\n21+ | gamble responsibly",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624336764&selectionId[0]=10609932&marketId[1]=42.624608243&selectionId[1]=42200635&marketId[2]=42.624451089&selectionId[2]=38093938&marketId[3]=42.624371973&selectionId[3]=36914881",
+   "price": "+562",
+   "chance": 0.11,
+   "caption": "Chalk Talk TDs +562\nMcCaffrey, Cook, Bijan, JSN to score\nThree backs who score most weeks (7 of 8, 7 of 8, 4 of 9) plus Seattle's WR1 on a soft matchup.\n21+ | gamble responsibly",
    "note": "Audit fact: the 11/4 audit found TD favorites did not pay; recipe kept per owner rule 3. JSN leg needs Lock.",
    "post": false,
-   "price_now": "+458",
-   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): OK. Bijan -180 -> -230 (5.4 pts our way - lead with him). McCaffrey -290 -> -270 (1.4 against), Gibbs -280 -> -260 (1.5 against), JSN -105 -> +105 (2.4 against) - all under 3. Drew Lock cleared (no designation). Multiplied now +458 (was +454)."
+   "price_now": "+562",
+   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): OK. Bijan -180 -> -230 (5.4 pts our way - lead with him). McCaffrey -290 -> -270 (1.4 against), Gibbs -280 -> -260 (1.5 against), JSN -105 -> +105 (2.4 against) - all under 3. Drew Lock cleared (no designation). Multiplied now +458 (was +454). | check_sunday Sun 11/15 ~10:35 AM CT (builder Sun 10:05 AM CT, ESPN mirror 16:27Z): FLAG - Jahmyr Gibbs' game (DET-NE, Munich 8:30 AM CT) has started; swapped for James Cook ATD (-160, 61.2%, BUF-NYJ noon). Price +454 -> +562 (Cook is longer than Gibbs was). Other legs: McCaffrey -260, Bijan -230 (our way), JSN +105 - none 3+ against. Cook overlaps your LIVE 'Either Way, Six' pair Cook or Kincaid."
   },
   {
    "slot": "snf",
@@ -401,8 +401,8 @@
    "caption": "Checkdown City +430 est\nChase Brown 20+ rec yds | Rico Dowdle 2+ catches | Jaylen Warren 25+ rec yds | Bengals ML\nPittsburgh gives up the most RB receiving yards in the league, and when the Steelers chase, their backs get the ball.\n21+ | gamble responsibly",
    "note": "Same-game - check FanDuel's SGP price (est +430; legs multiplied +523). Dowdle 2+ is also in the Daily Sweep. Audit fact: 11/4 market mix says no floor legs; owner rule 3 favorites kept.",
    "post": false,
-   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): OK. No leg moved 3+ pts (Bengals ML -184 -> -178, Chase Brown 20+ -166 -> -172, Chase first TD +600 -> +650, others flat). CIN weather still 'forecast unavailable' - recheck Sunday.",
-   "price_now": "+522 (est SGP +429)"
+   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): OK. No leg moved 3+ pts (Bengals ML -184 -> -178, Chase Brown 20+ -166 -> -172, Chase first TD +600 -> +650, others flat). CIN weather still 'forecast unavailable' - recheck Sunday. | check_sunday Sun 11/15 ~10:35 AM CT (builder Sun 10:05 AM CT, ESPN mirror 16:27Z): OK. CIN-PIT weather now LOW (44F, wind 5). No leg 3+ against (Chase Brown 20+ -166 -> -192 our way; Bengals ML -184 -> -178, 0.8 against). Pat Freiermuth (PIT TE) Questionable, illness - not on the slip. Official inactives ~5:50 PM CT - not out yet.",
+   "price_now": "+502 (est SGP +411)"
   },
   {
    "slot": "snf",
@@ -494,8 +494,8 @@
    "caption": "LOTTERY: Sunday Night Heist +3606 est\nJa'Marr Chase first TD + Checkdown City\nThe story: Cincinnati scores first through Chase and Pittsburgh chases with its backs all night.\n21+ | gamble responsibly",
    "note": "Same-game - check FanDuel's SGP price (est +3606; legs multiplied +4263). 1.7% independent floor.",
    "post": false,
-   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): OK. No leg moved 3+ pts (Bengals ML -184 -> -178, Chase Brown 20+ -166 -> -172, Chase first TD +600 -> +650, others flat). CIN weather still 'forecast unavailable' - recheck Sunday.",
-   "price_now": "+4568 (est SGP +3869)"
+   "check": "check_weekend Sat 11/14 ~1:20 PM CT (builder Sat 11:22 AM CT, ESPN mirror 17:20Z): OK. No leg moved 3+ pts (Bengals ML -184 -> -178, Chase Brown 20+ -166 -> -172, Chase first TD +600 -> +650, others flat). CIN weather still 'forecast unavailable' - recheck Sunday. | check_sunday Sun 11/15 ~10:35 AM CT (builder Sun 10:05 AM CT, ESPN mirror 16:27Z): OK. CIN-PIT weather now LOW (44F, wind 5). No leg 3+ against (Chase Brown 20+ -166 -> -192 our way; Bengals ML -184 -> -178, 0.8 against). Pat Freiermuth (PIT TE) Questionable, illness - not on the slip. Official inactives ~5:50 PM CT - not out yet.",
+   "price_now": "+4415 (est SGP +3734)"
   }
  ],
  "either_or": [
@@ -580,12 +580,12 @@
    "Week": 10,
    "Game(s)": "multi",
    "Slip": "Chalk Talk TDs",
-   "Legs": "Christian McCaffrey ATD | Jahmyr Gibbs ATD | Bijan Robinson ATD | Jaxon Smith-Njigba ATD",
-   "Price": 454,
+   "Legs": "Christian McCaffrey ATD | James Cook ATD | Bijan Robinson ATD | Jaxon Smith-Njigba ATD",
+   "Price": 562,
    "Type": "favorite_tds",
    "Built by": "promo desk (weekly)",
    "Result": "",
-   "Notes": ""
+   "Notes": "check_sunday swap: Gibbs out (game started), Cook in"
   },
   {
    "Date": "2026-11-15",
@@ -629,6 +629,11 @@
    "run": "check_weekend",
    "at": "2026-11-14T19:20Z",
    "summary": "FLAG Four Corners (McCaffrey drift) -> swap; FLAG JSN 110+ (rung gone) -> Worthy 4+; OK Chalk Talk / Checkdown City / Sunday Night Heist; SGP of the week drafted (Big D Shootout); Monday Sweep / +500 / PMM not drafted (no clean BAL-LAC props)."
+  },
+  {
+   "run": "check_sunday",
+   "at": "2026-11-15T16:35Z",
+   "summary": "FLAG Chalk Talk TDs (Gibbs game started) -> James Cook ATD, +562. OK Checkdown City, Sunday Night Heist. Four Corners: do not post (Sure Hands is Sunday's LIVE Sweep). LIVE alert: Drake Maye out for rest of DET-NE (ankle) - 'One From Every Game' Maye 225+ leg."
   }
  ]
 }

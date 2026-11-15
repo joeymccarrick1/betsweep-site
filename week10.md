@@ -151,3 +151,14 @@ No leg has an injury or out. These legs carry bad flags:
 
 Assumed: a 3.0-pt drift meets the "3+" FLAG bar, and the Sunday Sweep was moved up one spread rung rather than adding a leg.
 Skipped: every BAL-LAC prop (38.5-total flag, Brissett), Kittle (already in LIVE slips), Lamb / Pickens / Deebo (bad flags), Keenan Allen receptions (Losing zone + Market disagrees).
+
+---
+## check_sunday - Sun 11/15 ~10:35 AM CT (builder 10:05 AM CT, ESPN mirror 16:27Z)
+- **Chalk Talk TDs - FLAG.** Gibbs' game (DET-NE, Munich) already kicked off. Swap: **James Cook ATD -160 (61.2%; TD in 7 of 8, red-zone model 68%, BUF by 10+ likeliest at 44%).** New slip McCaffrey / Cook / Bijan / JSN = **+562 (11.0%)**.
+  Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624336764&selectionId[0]=10609932&marketId[1]=42.624608243&selectionId[1]=42200635&marketId[2]=42.624451089&selectionId[2]=38093938&marketId[3]=42.624371973&selectionId[3]=36914881
+  Bijan -180 -> -230 (our way, lead with him). Cook overlaps your LIVE "Either Way, Six" Cook-or-Kincaid pair.
+- **Checkdown City - OK.** Legs multiplied +502 (est SGP +411). CIN-PIT weather now LOW. No leg 3+ against.
+- **Sunday Night Heist - OK.** Legs multiplied +4415 (est SGP +3734).
+- **Daily Sweep: Four Corners - do not post.** "Daily Sweep: Sure Hands" is already Sunday's LIVE Sweep.
+- **LIVE alert:** Drake Maye ruled out for the rest of DET-NE (ankle) - the Maye 225+ leg in "One From Every Game" is in trouble.
+- SNF inactives not out yet (~5:50 PM CT).
