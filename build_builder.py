@@ -871,9 +871,9 @@ BUILDER_CSS = r"""
 .trk{display:block;font-size:10px;color:var(--mute);white-space:nowrap} .ar small .trk{display:inline;margin-left:3px}
 
 .bld{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start}
-.bld .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.bld h2{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;margin:0;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mute);display:flex;align-items:center;gap:10px}
-.bld h2 b{color:var(--ink)}
+.bld .panel,.slipwrap .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bld h2,.slipwrap h2{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;margin:0;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mute);display:flex;align-items:center;gap:10px}
+.bld h2 b,.slipwrap h2 b{color:var(--ink)}
 .filters{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:center;font-size:12.5px}
 .filters select,.filters input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
 .filters input[type=search]{min-width:150px}
@@ -883,7 +883,7 @@ BUILDER_CSS = r"""
 .seg button{font:inherit;font-size:12px;padding:5px 9px;background:none;border:0;color:var(--mute);cursor:pointer}
 .seg button.on{background:var(--chalk);color:var(--ink)}
 .legs{list-style:none;margin:0;padding:0;max-height:calc(100vh - 230px);overflow:auto}
-.bld [hidden]{display:none!important}
+.bld [hidden],.slipwrap [hidden]{display:none!important}
 .tabs{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .helpbtn.qb{display:inline-flex;align-items:center;gap:8px;white-space:nowrap} .helpbtn.qb b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;font-size:13px;line-height:1} .helpbtn.qb[aria-expanded="true"]{color:var(--red)}
 @media (max-width:560px){ .helpbtn.qb{padding:0;width:36px;min-height:36px;justify-content:center;border-radius:50%} .helpbtn.qb span{display:none} }
@@ -1129,6 +1129,19 @@ BUILDER_CSS = r"""
   .slipbar b{font-family:var(--display);font-size:16px}
   .slipbar .n{background:var(--red);color:#fff;border-radius:99px;padding:1px 8px;font-weight:700;font-size:12px}
   body{padding-bottom:64px}
+  /* owner 11/14 ("the screen gets weird on the phone where I can't see some of the buttons"). Root cause: phones zoom page content 1.1x
+     (BIGGER_CSS in build_site.py) and the slip sat inside the zoomed grid, so the fixed sheet came out 10% bigger than its own numbers:
+     it ran up under the site header (hiding its close bar) and stopped short of the tab bar (page peeking through). On phones the script
+     now moves the slip out to <body>, which the zoom skips, so its size and position are real pixels; only the slip's contents get the
+     1.1x so the text matches the page. The sheet stops below the header in the visible height (dvh), the open/close bar stays pinned at
+     the top while the slip scrolls, the FanDuel/DraftKings row stays pinned at the bottom, and the sheet tucks 10px behind the tab bar. */
+  body > .slipwrap{bottom:calc(var(--bs-tabs,0px) - 10px);padding-bottom:10px;max-height:calc(100vh - var(--bs-tabs,0px) - 60px);max-height:calc(100dvh - var(--bs-tabs,0px) - 46px - env(safe-area-inset-top,0px));overscroll-behavior:contain;-webkit-overflow-scrolling:touch;transform:translateY(calc(100% - 62px))}
+  body > .slipwrap.open{transform:none}
+  body > .slipwrap > .panel{zoom:1.06;overflow:visible}
+  @media (max-width:760px){ body > .slipwrap > .panel{zoom:1.1} }
+  .slipwrap .slipbar{position:sticky;top:0;z-index:4;background:var(--card);border-bottom:1px solid var(--line);font-size:14px}
+  .slipwrap.open .slipbar::after{content:"Close \25BE";font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
+  .slipwrap.open .acts.books3{position:sticky;bottom:0;z-index:3;background:var(--card);grid-column:1/-1;margin:0;padding:10px 14px;box-shadow:0 -8px 14px rgba(0,0,0,.14)}
   .lg{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pz who who" "mk mk add";row-gap:6px}   /* owner 10/28: name + game on top; then the arrow, the prop, its dots and matchup, + Add; the prices; model / book / edge */
   .lg > .pz{grid-area:pz} .lg > .who{grid-area:who} .lg > button{grid-area:add;align-self:start;margin-top:2px} .lg > .nums:not(.bk){display:none} .lg > .mk .d,.lg > .mk small.bks,.lg > .who .dprow{display:none} .lg > .mk .m{display:inline}
   .lg > .mk .dprow.m{display:inline-flex} .lg > .mk small.bkl{display:block;flex-basis:100%;font-size:12px;color:var(--mute)} .lg > .mk small.bkl .best{color:var(--good);font-weight:700} .lg > .mk small.mp{flex-basis:100%} .lg > .mk small.mp b{font-weight:700} .lg > .mk{grid-area:mk;text-align:left;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px} .lg > .mk small{display:inline;text-align:left} .lg > .nums:not(.bk){grid-area:nums;align-self:center}
@@ -2177,6 +2190,11 @@ BUILDER_JS = r"""
     rng.addEventListener('input', function(){ $('#tgtVal').textContent = decToAm(sliderToDec(+rng.value)); clearTimeout(t); t = setTimeout(function(){ retarget(sliderToDec(+rng.value)); }, 120); });
   })();
   $('.slipbar').addEventListener('click', function(){ $('.slipwrap').classList.toggle('open'); });
+  // 11/14: on phones the slip is a fixed bottom sheet; it lives under <body> there so the page's 1.1x phone zoom doesn't stretch it (see the CSS note)
+  (function(){ var w = $('.slipwrap'); if(!w || !window.matchMedia) return; var home = w.parentNode, mark = document.createComment('slip');
+    home.insertBefore(mark, w); var mq = matchMedia('(max-width:900px)');
+    function place(){ if(mq.matches){ if(w.parentNode !== document.body) document.body.appendChild(w); } else if(w.parentNode !== home){ home.insertBefore(w, mark); w.classList.remove('open'); } }
+    place(); if(mq.addEventListener) mq.addEventListener('change', place); else if(mq.addListener) mq.addListener(place); })();
   // owner 11/1: a FanDuel slip loaded from My BetSweep lands here (#slip) - open the slip and say which legs could not come along
   try{ var imn = sessionStorage.getItem('bs_impnote'); if (imn){ sessionStorage.removeItem('bs_impnote'); setTimeout(function(){ var fn = $('#fdnote'); if (fn) fn.textContent = imn; }, 900); } }catch(e){}
   if (location.hash === '#slip') $('.slipwrap').classList.add('open');

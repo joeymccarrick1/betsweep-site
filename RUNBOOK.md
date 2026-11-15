@@ -569,3 +569,15 @@ Social's Tail on FanDuel re-resolved each leg's FanDuel ids by key alone (fdmap)
 first game's market. Fixed together: Social shows "· DET vs NE" on every leg; fdmap also carries key@GAME for game lines and fdIds uses it
 (never the bare key for a game line); Social's Load into my slip writes bs_slipg; the single-post page (/b/?p=) shows the game and hands
 the builder key@GAME; the builder's ?add= accepts key@GAME; a promo's Tail saves its totals' games (data-g, home._tail_g).
+
+## Phone Parlay Builder: slip sheet covered by header / buttons hidden (11/14)
+Owner: "on the parlay builder a lot of times the screen gets weird on the phone where I can't see some of the buttons."
+Root cause: phones zoom page content 1.1x (BIGGER_CSS in build_site.py, `body > :not(...)`). The slip (`aside.slipwrap`, a fixed bottom
+sheet on phones) sat inside the zoomed `.bld` grid, so its height and bottom offset were scaled 10%: open, it ran ~20px up under the site
+header (its own open/close bar hidden behind the header) and stopped short of the tab bar (page content peeking through the gap).
+Fix: BIGGER_CSS skips `.slipwrap`; on screens <=900px the builder script moves the slip to <body> (and back above 900px), so its geometry is
+real pixels; only `.slipwrap > .panel` gets the 1.1x (1.06 at 761-900). Open sheet tops out just under the header (dvh), the slip bar is
+sticky at the top with a "Close" label, the FanDuel/DraftKings/Hard Rock row is sticky at the bottom, the sheet tucks 10px behind the tab
+bar. `.bld .panel/h2/[hidden]` rules also apply under `.slipwrap` since the slip may live outside `.bld`.
+Check: /tmp/slipchk2.py style Playwright run (open slip with 1 and 10 legs at 390x844, 375x667, 390x600): bar visible at top/middle/end of
+the slip scroll, FanDuel never below the sheet, sheet top >= header bottom, Close works mid-scroll. Desktop slip position unchanged.

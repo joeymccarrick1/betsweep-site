@@ -18,14 +18,14 @@ BIGGER_CSS = """
 /* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
 @media (max-width:760px){
  body{margin:0 !important;padding-left:5px !important;padding-right:5px !important}
- body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.1}
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar):not(.slipwrap){zoom:1.1}
 }
 /* owner 10/23 (betslip "stuck" mid-screen with the tab bar): iOS Safari zooms the page in when a form field under 16px gets focus (the
    builder search box, the filter dropdowns, the slip-name box were 13px) and stays zoomed, so the fixed tab bar and slip sit mid-screen.
    16px fields on touch screens stop the zoom. */
 @media (pointer:coarse){ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important} }
 @media (min-width:761px){
- body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar){zoom:1.06}
+ body > :not(.sitenav):not(.apptabs):not(script):not(style):not(.bsdlg):not(.hero):not(.installbar):not(.slipwrap){zoom:1.06}
 }
 @media (max-width:760px){.hero{min-height:0 !important;aspect-ratio:1600/640 !important;background-size:100% auto !important;background-position:center 50% !important}}
 
