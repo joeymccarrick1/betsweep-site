@@ -37,3 +37,9 @@ Not open yet: Monday night (BAL-LAC), Woody Marks (Montgomery questionable).
 2. Get FanDuel's real either-or prices from the owner; compare with the model column. Worth it when the model
    chance beats the price's break-even (e.g. -190 needs 65.5%, -300 needs 75%, -400 needs 80%).
 3. Same-game pairs only. Judge as a pair. Low-risk rule and the six slip checks apply to any parlay built from these.
+
+## Updates Sun 11/15 12:40 AM CT
+- Walker OUT (owner). KC pair now Bijan or Rashee Rice (75%, break-even about -304). FanDuel: Emmett Johnson -175; model 44%, so hold.
+- Tuten (ankle, DNP) and Rodriguez Jr. (hand) are both questionable; Titans pair Pollard or Tuten 72% (break-even about -258).
+- Travis Etienne (NO) returns from IR (owner). FanDuel has him small (7.5 rush yds, TD +1000). He may take some of Kamara's goal-line work,
+  so Olave or Kamara is a little weaker; still worth it at -150 or shorter.
