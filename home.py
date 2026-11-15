@@ -681,6 +681,16 @@ def _tail_g(p):
 
 
 # ---------- winners (owner 11/13: "I'd like us to have a winning promo section on the home page") ----------
+WINNERS_FOLD_CSS = """
+.winners .wfold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 0;-webkit-tap-highlight-color:transparent}
+.winners .wfold>summary::-webkit-details-marker{display:none}
+.winners .wfold>summary h2{margin:0}
+.winners .wtog{flex:none;width:30px;height:30px;border:1px solid var(--line);border-radius:999px;display:grid;place-items:center}
+.winners .wtog::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-2px) rotate(45deg);transition:transform .15s}
+.winners .wfold[open] .wtog::before{transform:translateY(2px) rotate(-135deg)}
+.winners .wfold>summary:focus-visible{outline:2px solid var(--red);outline-offset:4px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){.winners .wtog::before{transition:none}}
+"""
 WINNERS_CSS = """
 .winners .wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;max-width:1180px;margin-top:10px}
 .winners .wcard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--good);border-radius:12px;padding:12px 14px 10px}
@@ -753,9 +763,13 @@ def winners_block(IN, limit=6):
         cards.append(f'<article class="wcard"><div class="wtop"><h3>{E(title)}</h3><span class="wo">{E(odds_str(o)) if o else ""}</span></div>'
                      f'<p class="wmeta">{E(kind)} · {E(when)}</p><ul>{lis}</ul>'
                      f'<p class="wfoot"><span>{pay}</span><a href="/b/w{wk}-{slot}/">See the slip</a></p></article>')
-    return (f'<section class="sec winners" id="winners"><style>{WINNERS_CSS}</style><h2 class="t">Winners <small class="tsub">promoted bets that cashed</small></h2>'
+    # owner 11/15: "make winners collapsible" - closed by default, one tap opens it; the visitor's choice is remembered (bs_winners_open)
+    return (f'<section class="sec winners" id="winners"><style>{WINNERS_CSS}{WINNERS_FOLD_CSS}</style><details class="wfold" id="wfold">'
+            f'<summary><h2 class="t">Winners <small class="tsub">{len(wins)} promoted bet{"s" if len(wins) != 1 else ""} cashed</small></h2><span class="wtog" aria-hidden="true"></span></summary>'
             f'<div class="wgrid">{"".join(cards)}</div>'
-            f'<p class="none" style="margin-top:8px;font-size:12.5px">Posted here before kickoff at FanDuel\'s price. Every promoted bet, wins and misses, is on the <a href="/receipts/">receipts</a>.</p></section>')
+            f'<p class="none" style="margin-top:8px;font-size:12.5px">Posted here before kickoff at FanDuel\'s price. Every promoted bet, wins and misses, is on the <a href="/receipts/">receipts</a>.</p></details>'
+            "<script>(function(){var d=document.getElementById('wfold');if(!d)return;try{if(localStorage.getItem('bs_winners_open')==='1')d.open=true;}catch(e){}"
+            "d.addEventListener('toggle',function(){try{localStorage.setItem('bs_winners_open',d.open?'1':'0');}catch(e){}});})();</script></section>")
 
 
 # ---------- assemble ----------

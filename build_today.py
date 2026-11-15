@@ -297,6 +297,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdshare" id="tdsimple" href="/short/" title="The short version: picks first, reading optional" onclick="try{{localStorage.setItem('bs_view','short')}}catch(e){{}}">Short view</a><a class="tdlive" href="/live/">Live</a></div></section>
 {sweep_html}
 {winners_html}
+<!--bs:promos-->
 {under_html}
 {stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>

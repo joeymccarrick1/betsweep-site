@@ -29,7 +29,12 @@ FOOT = ('<p class="hfoot">BetSweep™ · Picks. Data. Edge. Sweep. Information a
 
 def merge(today, parts):
     B = parts.get("blocks") or {}
-    week = "\n".join(x for x in (B.get("promos", ""), B.get("best_teaser", ""), B.get("parlay_lead", "")) if x)
+    # owner 11/15: home order is Daily Sweep, Winners, Promos, then everything else - promos go at build_today.py's <!--bs:promos--> marker
+    # (right after Winners); the other week blocks stay after today's games. No marker (older today.html): promos ride with the week blocks.
+    promos = B.get("promos", "")
+    if promos and "<!--bs:promos-->" in today: today = today.replace("<!--bs:promos-->", promos, 1); promos = ""
+    else: today = today.replace("<!--bs:promos-->", "", 1)
+    week = "\n".join(x for x in (promos, B.get("best_teaser", ""), B.get("parlay_lead", "")) if x)
     # 1. the week's short blocks go after today's games, before "You today"
     anchor = re.search(r'<section class="sec" id="tdyou"', today)
     if not anchor: raise ValueError("Today page has no #tdyou section")

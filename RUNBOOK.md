@@ -589,3 +589,9 @@ The account copy still had that key, so account.js pull() saw it missing locally
 the builder removed it again on load -> endless reload. Reproduced with a stubbed signed-in Supabase (/tmp/loopchk.py): 12 loads in 15s before.
 Fix: builder/slipimport never removeItem the game map (write it, '{}' when empty); pull() pushes a local removal instead of restoring when the
 local removal is newer; and a sync reload happens at most once per tab per 2 minutes (sessionStorage bs_sync_rl). After: 2 loads (one sync).
+
+## Home order + collapsible Winners (11/15)
+Owner: "make winners collapsible ... Daily Sweep, Winners, Promos, Everything else". home.winners_block wraps the cards in
+<details id="wfold"> (closed by default, choice remembered in localStorage bs_winners_open). build_today.py leaves <!--bs:promos-->
+right after Winners; landing_merge.merge drops the promos block there (falls back to the old spot with the other week blocks if the
+marker is missing). Order now: sweep, winners, promo, bsunder, tdlooks, tdday, bestt, parlay, tdyou, news, record.
