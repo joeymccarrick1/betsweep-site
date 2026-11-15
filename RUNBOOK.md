@@ -605,3 +605,9 @@ Fix (build_live.py): render() wraps renderCore(); Gamecast is drawn in its own t
 the cache is cleared and the page redraws without summaries; if it still fails, #upd says what broke.
 Also: sw.js caches only ok responses (a 404 for a hashed file would otherwise stick until the next build), and reprice.copy_into_clone
 keeps the previous build's linked data-<hash>.js in each replaced folder (pages cached a few minutes still find their data).
+
+## Live blank, the real cause: snapshot legs without "ms" (11/15 9:21 AM)
+The 9:00 fix put the error on screen: "undefined is not an object (evaluating 'l.ms.toLowerCase')". Once a game kicks off the builder
+drops its legs, so Live fills them from in/legsnaps.json (D.extra, snap:1) - and those rows had no "ms" (short market name). Any saved
+or starred slip holding such a leg made legText() throw and nothing drew. Fix: snapshot legs get "ms" from the builder's own
+market->short map, and legText falls back to l.m. Check: a saved slip with a snapshot leg (e.g. a started game's yardage leg) draws.

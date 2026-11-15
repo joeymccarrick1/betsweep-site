@@ -90,6 +90,7 @@ for g in games:
 # with that leg could no longer be tracked here. Add the latest pre-kickoff frozen copy of every leg this week ('V2 - FanDuel Leg Snapshots',
 # in/legsnaps.json) that the builder no longer carries, so every slip leg keeps its live line, status and model chance.
 try:
+    _MS = {l["m"]: l["ms"] for l in D["legs"] if l.get("ms")}   # 11/15: snapshot legs had no short market name and blanked the Live page once a slip held one
     _have = {(l["pl"], l["m"], round(float(l.get("ln") or 1))) for l in D["legs"]}; _gids = {g["gid"] for g in D["games"]}; _add = 0
     _v = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "in", "legsnaps.json")))["values"]; _h = {c: i for i, c in enumerate(_v[0])}
     for _r in _v[1:]:
@@ -103,7 +104,7 @@ try:
         _have.add((_pl, _m, round(_ln)))
         try: _bk = float(_r[_h["Book implied %"]])
         except Exception: _bk = None
-        extra.append({"pl": _pl, "m": _m, "ln": _ln, "o": _o, "p": _p, "bk": _bk, "tm": _tm, "opp": _op, "g": _g, "snap": 1}); _add += 1
+        extra.append({"pl": _pl, "m": _m, "ms": _MS.get(_m, _m), "ln": _ln, "o": _o, "p": _p, "bk": _bk, "tm": _tm, "opp": _op, "g": _g, "snap": 1}); _add += 1
     print(f"live page: {_add} legs restored from the pre-kickoff snapshots (no longer priced by FanDuel)")
 except Exception as _e:
     print("note: no leg snapshots for the live page:", _e)
@@ -605,7 +606,7 @@ JS = r"""
     var onp = cur / el; var rel = onp / l.ln;
     return rel >= 1.15 ? '<span class="pace up">ahead of pace</span>' : rel >= 0.9 ? '' : '<span class="pace dn">behind</span>';
   }
-  function legText(l){ if(l.gl) return l.pl; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : l.m === 'Anytime TD' ? 'anytime TD' : (l.m === '2+ TD' || l.m === '3+ TD') ? l.m : l.ms.toLowerCase() + ' ' + ((l.u || /^Under /.test(l.m || '')) ? 'under ' + l.ln : Math.round(l.ln) + '+')); }
+  function legText(l){ if(l.gl) return l.pl; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : l.m === 'Anytime TD' ? 'anytime TD' : (l.m === '2+ TD' || l.m === '3+ TD') ? l.m : String(l.ms || l.m || '').toLowerCase() + ' ' + ((l.u || /^Under /.test(l.m || '')) ? 'under ' + l.ln : Math.round(l.ln) + '+')); }
   function liked(l){ return l.bp || (l.e >= 0.05 && !l.w) || (l.m === 'Anytime TD' && l.e >= 0.03 && !l.w); }
   function pickScore(l){ var k = legKey(l); return (INSLIP[k] ? 400 : 0) + (STARS[k] ? 300 : 0) + (l.bp ? 200 : 0) + (l.e || 0) * 100; }
   // ---- DOM diff: replace only the cards whose HTML changed, keep the rest (and the scroll position) in place ----
