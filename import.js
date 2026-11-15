@@ -103,7 +103,7 @@
   function loadSlip(BS, keys, gm){
     var W = BS.week, have = {}; (BS.legs || []).forEach(function(l){ have[legKey(l)] = 1; });
     var on = keys.filter(function(k){ return have[k]; }), off = keys.length - on.length;
-    try{ if (gm && Object.keys(gm).length) localStorage.setItem('bs_slipg_w' + W, JSON.stringify(gm)); else localStorage.removeItem('bs_slipg_w' + W); }catch(e){}
+    try{ localStorage.setItem('bs_slipg_w' + W, JSON.stringify(gm || {}));   /* 11/15: never removeItem here - a removal undone by the account sync reloaded the page in a loop */ }catch(e){}
     try{ localStorage.setItem('bs_slipk_w' + W, JSON.stringify(on)); if (off) sessionStorage.setItem('bs_impnote', off + ' leg' + (off === 1 ? '' : 's') + ' from your FanDuel slip ' + (off === 1 ? 'is' : 'are') + ' not on the builder board (games already under way, either-player TDs or lines we do not price) - ' + (off === 1 ? 'it stays' : 'they stay') + ' on the saved slip.'); }catch(e){}
     location.href = '/build/#slip'; }
   window.BSLoadSlip = function(keys, gm){ return builderData().then(function(BS){ loadSlip(BS, keys, gm); }); };
