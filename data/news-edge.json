@@ -918,6 +918,30 @@
      "pulled": "2026-11-14 6:34"
     }
    }
+  },
+  "Ladd McConkey|2026-11-15T20:06": {
+   "pl": "Ladd McConkey",
+   "tm": "LAC",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-15T20:06:10Z",
+   "legs": {}
+  },
+  "Omar Cooper Jr.|2026-11-15T20:06": {
+   "pl": "Omar Cooper Jr.",
+   "tm": "NYJ",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-15T20:06:10Z",
+   "legs": {}
+  },
+  "Woody Marks|2026-11-15T20:24": {
+   "pl": "Woody Marks",
+   "tm": "HOU",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-15T20:24:11Z",
+   "legs": {}
   }
  }
 }
