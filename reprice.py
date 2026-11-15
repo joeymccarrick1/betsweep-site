@@ -201,8 +201,21 @@ def copy_into_clone(clone):
                 for f in glob.glob(os.path.join(src, "*.png")): shutil.copy2(f, dst)
             elif name in MERGE: shutil.copytree(src, dst, dirs_exist_ok=True)
             else:
-                if os.path.isdir(dst): shutil.rmtree(dst)
+                # 11/15 (owner: Live page blank): a page cached for a few minutes (GitHub Pages, the phone) still names the previous
+                # build's hashed data file. Keep the data-<hash>.js files the folder had before this copy, one generation back.
+                keep = {}
+                if os.path.isdir(dst):
+                    linked = set()
+                    for hf in glob.glob(os.path.join(dst, "**", "*.html"), recursive=True):
+                        try: linked.update(re.findall(r"data-[0-9a-f]{8,}\.js", open(hf, encoding="utf-8", errors="ignore").read()))
+                        except Exception: pass
+                    for f in linked:   # only what the outgoing pages link - so exactly one generation is kept, never a pile
+                        fp = os.path.join(dst, f)
+                        if os.path.exists(fp): keep[f] = open(fp, "rb").read()
+                    shutil.rmtree(dst)
                 shutil.copytree(src, dst)
+                for f, b in keep.items():
+                    if not os.path.exists(os.path.join(dst, f)): open(os.path.join(dst, f), "wb").write(b)
         else: shutil.copy2(src, dst)
         done.append(name)
     if "promo" not in done and os.path.isdir(os.path.join(clone, "promo")): shutil.rmtree(os.path.join(clone, "promo"))   # last week's posters

@@ -664,7 +664,17 @@ JS = r"""
   function swLive(){ if(SWCH) return; SWCH = setInterval(function(){ if(SWOPEN && !document.hidden) swLoad(); }, 15000); }   // an open room refreshes every 15 s (no realtime feed: it would broadcast whole rows)
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.swb'); if(!b) return; ev.preventDefault(); ev.stopPropagation(); swOpen(b.getAttribute('data-k')); }, true);
   setTimeout(function(){ swLoad(); swLive(); }, 1500); setInterval(swLoad, 60000); document.addEventListener('bs-account', function(){ swLoad(); swLive(); });
+  // owner 11/15 9:00 AM (screenshot: Live "legit just actually blank" once DET-NE kicked off): one bad field in a live game's data threw inside
+  // render, every redraw threw the same way (the cached summary brought it back on reload), and nothing was ever drawn. Now each live
+  // game's Gamecast is drawn on its own (a failure drops only that panel), and any other failure still draws a line saying what broke.
+  var RENDER_FAILS = 0;
   function render(force){
+    try { renderCore(force); RENDER_FAILS = 0; }
+    catch(err){ RENDER_FAILS++; try { console.error('BetSweep live render', err); } catch(e){}
+      if(RENDER_FAILS === 1){ try { localStorage.removeItem('bs_live_cache_w' + D.week); } catch(e){} SUMM = {}; try { renderCore(force); RENDER_FAILS = 0; return; } catch(e3){} }
+      var u = $('#upd'); if(u) u.textContent = 'Live could not draw this page (' + String(err && err.message || err).slice(0, 120) + '). Tap \u21bb to retry; scores still update.'; }
+  }
+  function renderCore(force){
     var wrap = $('#lv'); var now = Date.now(); var html = ''; var parts = []; loadSlips();
     var ae = document.activeElement; if(!force && ae && ae.tagName === 'INPUT' && ae.dataset && ae.dataset.sid && wrap.contains(ae)){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1500); } return; }   // 11/6: never re-render under a cursor - a live update mid-typing wiped the field
     if(!force && Date.now() - LASTSCROLL < 900){ if(!RENDER_WAIT){ RENDER_WAIT = setTimeout(function(){ RENDER_WAIT = null; render(); }, 1000); } return; }   // never re-render under a finger: iOS kills the scroll
@@ -799,7 +809,7 @@ JS = r"""
       var tbtn = function(t, nm, c){ return '<button type="button" class="tfb' + (TFv === t ? ' on' : '') + '" data-g="' + gid + '" data-t="' + t + '">' + badge(t, c) + '<span>' + esc(nm || t) + '</span></button>'; };
       var teamBar = '';
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
-      if(s.st === 'in' && SUMM[gid]) sit = gamecast(gid);
+      if(s.st === 'in' && SUMM[gid]){ try { sit = gamecast(gid); } catch(gcErr){ sit = ''; try { console.error('BetSweep gamecast ' + gid, gcErr); } catch(e){} } }
       var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? details(g, s) + sit + drill + teamBar + body : '') + '</section>';
       if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length]); else if(s.st === 'pre' && liveG.length) UP.push([gid, sec, g]); else parts.push([gid, sec]);
     });

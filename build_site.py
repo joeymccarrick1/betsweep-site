@@ -103,13 +103,13 @@ self.addEventListener('fetch', function(e){
   var url = new URL(req.url);
   if(url.origin !== location.origin) return;   // ESPN, fonts, FanDuel links: straight to the network
   if(url.pathname.indexOf('/data/') === 0 || req.cache === 'no-store' || req.cache === 'reload'){   // 11/5: hourly files (risk notes, price moves) must not be pinned for a whole build
-    e.respondWith(fetch(req).then(function(r){ var copy = r.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); return r; }).catch(function(){ return caches.match(req); })); return; }
+    e.respondWith(fetch(req).then(function(r){ if(r && r.ok){ var copy = r.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); } return r; }).catch(function(){ return caches.match(req); })); return; }
   if(req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')){
-    e.respondWith(fetch(req).then(function(r){ var copy = r.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); return r; })
+    e.respondWith(fetch(req).then(function(r){ if(r && r.ok){ var copy = r.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); } return r; })
       .catch(function(){ return caches.match(req).then(function(r){ return r || caches.match('/offline.html'); }); }));
     return;
   }
-  e.respondWith(caches.match(req).then(function(r){ return r || fetch(req).then(function(res){ var copy = res.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); return res; }); }));
+  e.respondWith(caches.match(req).then(function(r){ return r || fetch(req).then(function(res){ if(res && res.ok){ var copy = res.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); } return res;   /* 11/15: never keep a 404 or an error page (a script missing for a moment would stay missing until the next build) */ }); }));
 });
 // slip alerts (owner 10/30): the Supabase function "slip-alerts" pushes {title, body, url, tag}; tapping opens the page
 self.addEventListener('push', function(e){

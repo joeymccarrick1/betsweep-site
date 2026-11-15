@@ -595,3 +595,13 @@ Owner: "make winners collapsible ... Daily Sweep, Winners, Promos, Everything el
 <details id="wfold"> (closed by default, choice remembered in localStorage bs_winners_open). build_today.py leaves <!--bs:promos-->
 right after Winners; landing_merge.merge drops the promos block there (falls back to the old spot with the other week blocks if the
 marker is missing). Order now: sweep, winners, promo, bsunder, tdlooks, tdday, bestt, parlay, tdyou, news, record.
+
+## Live page blank once a game kicks off (11/15)
+Owner screenshot 9:00 AM: /live/ showed the header and chips only (no "updated" line, no cards) after DET-NE kicked off.
+Cause: render() threw on a live game's ESPN summary (Gamecast reads drives/plays), and the 10-minute cache (bs_live_cache_w<W>)
+brought the same summary back on every reload, so every redraw threw and nothing was ever drawn. Reproduced with a summary whose
+drives.previous holds a null: live version blank after reload, fixed version draws all cards.
+Fix (build_live.py): render() wraps renderCore(); Gamecast is drawn in its own try (a failure drops only that panel); on a failure
+the cache is cleared and the page redraws without summaries; if it still fails, #upd says what broke.
+Also: sw.js caches only ok responses (a 404 for a hashed file would otherwise stick until the next build), and reprice.copy_into_clone
+keeps the previous build's linked data-<hash>.js in each replaced folder (pages cached a few minutes still find their data).
