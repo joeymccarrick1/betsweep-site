@@ -1,0 +1,562 @@
+{
+ "params": {
+  "half_life": 150.0,
+  "k_games": 1.0,
+  "cap": 80.0,
+  "sd_margin": 15.95,
+  "w_recent": 0.15,
+  "w_match": 0.25
+ },
+ "tuned_on": "2025",
+ "holdout": "2026 to date",
+ "data_through": "2026-11-15",
+ "tuning_log": {
+  "lines": [
+   {
+    "knob": "half_life",
+    "value": 150.0,
+    "margin_mae": 12.7644
+   },
+   {
+    "knob": "half_life",
+    "value": 300.0,
+    "margin_mae": 12.7765
+   },
+   {
+    "knob": "half_life",
+    "value": 500.0,
+    "margin_mae": 12.9892
+   },
+   {
+    "knob": "half_life",
+    "value": 900.0,
+    "margin_mae": 13.2106
+   },
+   {
+    "knob": "k_games",
+    "value": 1.0,
+    "margin_mae": 12.5914
+   },
+   {
+    "knob": "k_games",
+    "value": 2.0,
+    "margin_mae": 12.7644
+   },
+   {
+    "knob": "k_games",
+    "value": 4.0,
+    "margin_mae": 13.1861
+   },
+   {
+    "knob": "k_games",
+    "value": 8.0,
+    "margin_mae": 13.7994
+   },
+   {
+    "knob": "cap",
+    "value": 49.0,
+    "margin_mae": 12.7571
+   },
+   {
+    "knob": "cap",
+    "value": 56.0,
+    "margin_mae": 12.6338
+   },
+   {
+    "knob": "cap",
+    "value": 63.0,
+    "margin_mae": 12.5914
+   },
+   {
+    "knob": "cap",
+    "value": 80.0,
+    "margin_mae": 12.573
+   }
+  ],
+  "player": [
+   {
+    "knob": "w_recent",
+    "value": 0.0,
+    "mae_vs_season_avg": 0.99746
+   },
+   {
+    "knob": "w_recent",
+    "value": 0.15,
+    "mae_vs_season_avg": 0.99534
+   },
+   {
+    "knob": "w_recent",
+    "value": 0.3,
+    "mae_vs_season_avg": 0.99638
+   },
+   {
+    "knob": "w_recent",
+    "value": 0.5,
+    "mae_vs_season_avg": 1.00319
+   },
+   {
+    "knob": "w_match",
+    "value": 0.0,
+    "mae_vs_season_avg": 0.99783
+   },
+   {
+    "knob": "w_match",
+    "value": 0.25,
+    "mae_vs_season_avg": 0.99443
+   },
+   {
+    "knob": "w_match",
+    "value": 0.5,
+    "mae_vs_season_avg": 0.99534
+   },
+   {
+    "knob": "w_match",
+    "value": 0.75,
+    "mae_vs_season_avg": 1.00028
+   },
+   {
+    "knob": "w_match",
+    "value": 1.0,
+    "mae_vs_season_avg": 1.00855
+   }
+  ]
+ },
+ "lines": {
+  "2025": {
+   "games_with_a_line": 947,
+   "margin_mae": {
+    "model": 12.594491219847619,
+    "book": 11.895459345300951,
+    "elo_only": 12.712891762869571
+   },
+   "total_mae": {
+    "model": 12.848651675605824,
+    "book": 12.44403379091869
+   },
+   "winner_picked": {
+    "model": 0.7592397043294614,
+    "book": 0.7676874340021119
+   },
+   "against_the_spread": [
+    {
+     "min_gap": 0.0,
+     "bets": 935,
+     "wins": 480,
+     "win_pct": 0.5133689839572193
+    },
+    {
+     "min_gap": 3.0,
+     "bets": 521,
+     "wins": 280,
+     "win_pct": 0.5374280230326296
+    },
+    {
+     "min_gap": 5.0,
+     "bets": 311,
+     "wins": 169,
+     "win_pct": 0.5434083601286174
+    },
+    {
+     "min_gap": 7.0,
+     "bets": 179,
+     "wins": 97,
+     "win_pct": 0.5418994413407822
+    },
+    {
+     "min_gap": 10.0,
+     "bets": 85,
+     "wins": 43,
+     "win_pct": 0.5058823529411764
+    }
+   ],
+   "totals": [
+    {
+     "min_gap": 0.0,
+     "bets": 947,
+     "wins": 481,
+     "win_pct": 0.5079197465681098
+    },
+    {
+     "min_gap": 3.0,
+     "bets": 441,
+     "wins": 215,
+     "win_pct": 0.4875283446712018
+    },
+    {
+     "min_gap": 5.0,
+     "bets": 215,
+     "wins": 103,
+     "win_pct": 0.4790697674418605
+    },
+    {
+     "min_gap": 7.0,
+     "bets": 98,
+     "wins": 52,
+     "win_pct": 0.5306122448979592
+    }
+   ],
+   "weight_on_model_vs_book": {
+    "margin": 0.09415534035250274,
+    "total": 0.08826159398616835
+   },
+   "fbs_vs_fbs": {
+    "games": 806,
+    "margin_mae_model": 12.385767840986865,
+    "margin_mae_book": 11.849875930521092
+   },
+   "elo_games": 805
+  },
+  "2026": {
+   "games_with_a_line": 751,
+   "margin_mae": {
+    "model": 13.285143178740693,
+    "book": 11.891478029294275,
+    "elo_only": 12.89555202918441
+   },
+   "total_mae": {
+    "model": 12.873854298558367,
+    "book": 12.245672436750999
+   },
+   "winner_picked": {
+    "model": 0.7430093209054593,
+    "book": 0.7829560585885486
+   },
+   "against_the_spread": [
+    {
+     "min_gap": 0.0,
+     "bets": 741,
+     "wins": 352,
+     "win_pct": 0.4750337381916329
+    },
+    {
+     "min_gap": 3.0,
+     "bets": 430,
+     "wins": 201,
+     "win_pct": 0.46744186046511627
+    },
+    {
+     "min_gap": 5.0,
+     "bets": 279,
+     "wins": 125,
+     "win_pct": 0.44802867383512546
+    },
+    {
+     "min_gap": 7.0,
+     "bets": 172,
+     "wins": 78,
+     "win_pct": 0.45348837209302323
+    },
+    {
+     "min_gap": 10.0,
+     "bets": 89,
+     "wins": 40,
+     "win_pct": 0.449438202247191
+    }
+   ],
+   "totals": [
+    {
+     "min_gap": 0.0,
+     "bets": 751,
+     "wins": 366,
+     "win_pct": 0.4873501997336884
+    },
+    {
+     "min_gap": 3.0,
+     "bets": 371,
+     "wins": 167,
+     "win_pct": 0.4501347708894879
+    },
+    {
+     "min_gap": 5.0,
+     "bets": 169,
+     "wins": 75,
+     "win_pct": 0.4437869822485207
+    },
+    {
+     "min_gap": 7.0,
+     "bets": 78,
+     "wins": 43,
+     "win_pct": 0.5512820512820513
+    }
+   ],
+   "weight_on_model_vs_book": {
+    "margin": -0.1285645188609898,
+    "total": -0.09767684217629426
+   },
+   "fbs_vs_fbs": {
+    "games": 628,
+    "margin_mae_model": 12.887318988666346,
+    "margin_mae_book": 11.76751592356688
+   },
+   "elo_games": 628
+  }
+ },
+ "player": {
+  "2025": {
+   "pass_yds": {
+    "player_games": 1096,
+    "mae_season_avg": 69.3400883357316,
+    "mae_baseline": 69.05379496074183,
+    "mae_with_matchup": 68.75753424241063,
+    "gain_vs_season_avg_pct": 0.840140396851452
+   },
+   "rush_yds": {
+    "player_games": 2480,
+    "mae_season_avg": 30.530449710459788,
+    "mae_baseline": 30.43178915993281,
+    "mae_with_matchup": 30.235548321940726,
+    "gain_vs_season_avg_pct": 0.9659254656115612
+   },
+   "rec_yds": {
+    "player_games": 4059,
+    "mae_season_avg": 26.700607296265094,
+    "mae_baseline": 26.64699762492168,
+    "mae_with_matchup": 26.599865814983797,
+    "gain_vs_season_avg_pct": 0.3773003368930383
+   },
+   "rec": {
+    "player_games": 4850,
+    "mae_season_avg": 1.5799837327620834,
+    "mae_baseline": 1.5810612193362192,
+    "mae_with_matchup": 1.5792909012794543,
+    "gain_vs_season_avg_pct": 0.04385054531023114
+   }
+  },
+  "2026": {
+   "pass_yds": {
+    "player_games": 792,
+    "mae_season_avg": 66.52473895703062,
+    "mae_baseline": 66.5169057890412,
+    "mae_with_matchup": 65.86386978201176,
+    "gain_vs_season_avg_pct": 0.9934186670701894
+   },
+   "rush_yds": {
+    "player_games": 1737,
+    "mae_season_avg": 33.543108899671935,
+    "mae_baseline": 33.46989216949493,
+    "mae_with_matchup": 33.1575469831123,
+    "gain_vs_season_avg_pct": 1.1494519417173277
+   },
+   "rec_yds": {
+    "player_games": 3023,
+    "mae_season_avg": 27.74467180189972,
+    "mae_baseline": 27.760907723327502,
+    "mae_with_matchup": 27.703061619521474,
+    "gain_vs_season_avg_pct": 0.1499753995121922
+   },
+   "rec": {
+    "player_games": 3294,
+    "mae_season_avg": 1.6897909619221092,
+    "mae_baseline": 1.6877464076097954,
+    "mae_with_matchup": 1.6866619630799504,
+    "gain_vs_season_avg_pct": 0.18517076447134295
+   }
+  }
+ },
+ "grid_today": {
+  "league_points_per_team": 26.34898734705235,
+  "home_edge": 1.0706895704362345,
+  "top25": [
+   {
+    "team": "Notre Dame Fighting Irish",
+    "offense": 1.522,
+    "defense_allowed": 0.582,
+    "points_for_vs_avg": 40.107,
+    "points_against_vs_avg": 15.327,
+    "net_vs_avg": 24.78
+   },
+   {
+    "team": "Georgia Bulldogs",
+    "offense": 1.5,
+    "defense_allowed": 0.58,
+    "points_for_vs_avg": 39.534,
+    "points_against_vs_avg": 15.293,
+    "net_vs_avg": 24.241
+   },
+   {
+    "team": "Miami Hurricanes",
+    "offense": 1.615,
+    "defense_allowed": 0.716,
+    "points_for_vs_avg": 42.557,
+    "points_against_vs_avg": 18.867,
+    "net_vs_avg": 23.69
+   },
+   {
+    "team": "Alabama Crimson Tide",
+    "offense": 1.477,
+    "defense_allowed": 0.659,
+    "points_for_vs_avg": 38.924,
+    "points_against_vs_avg": 17.367,
+    "net_vs_avg": 21.557
+   },
+   {
+    "team": "Indiana Hoosiers",
+    "offense": 1.293,
+    "defense_allowed": 0.501,
+    "points_for_vs_avg": 34.081,
+    "points_against_vs_avg": 13.189,
+    "net_vs_avg": 20.892
+   },
+   {
+    "team": "Ohio State Buckeyes",
+    "offense": 1.406,
+    "defense_allowed": 0.616,
+    "points_for_vs_avg": 37.045,
+    "points_against_vs_avg": 16.232,
+    "net_vs_avg": 20.813
+   },
+   {
+    "team": "Wake Forest Demon Deacons",
+    "offense": 1.399,
+    "defense_allowed": 0.651,
+    "points_for_vs_avg": 36.851,
+    "points_against_vs_avg": 17.14,
+    "net_vs_avg": 19.711
+   },
+   {
+    "team": "Utah Utes",
+    "offense": 1.44,
+    "defense_allowed": 0.749,
+    "points_for_vs_avg": 37.942,
+    "points_against_vs_avg": 19.745,
+    "net_vs_avg": 18.197
+   },
+   {
+    "team": "Oregon Ducks",
+    "offense": 1.395,
+    "defense_allowed": 0.706,
+    "points_for_vs_avg": 36.769,
+    "points_against_vs_avg": 18.612,
+    "net_vs_avg": 18.157
+   },
+   {
+    "team": "Texas Longhorns",
+    "offense": 1.288,
+    "defense_allowed": 0.643,
+    "points_for_vs_avg": 33.925,
+    "points_against_vs_avg": 16.934,
+    "net_vs_avg": 16.991
+   },
+   {
+    "team": "Tennessee Volunteers",
+    "offense": 1.277,
+    "defense_allowed": 0.656,
+    "points_for_vs_avg": 33.641,
+    "points_against_vs_avg": 17.29,
+    "net_vs_avg": 16.35
+   },
+   {
+    "team": "Ole Miss Rebels",
+    "offense": 1.442,
+    "defense_allowed": 0.831,
+    "points_for_vs_avg": 38.008,
+    "points_against_vs_avg": 21.897,
+    "net_vs_avg": 16.112
+   },
+   {
+    "team": "LSU Tigers",
+    "offense": 1.3,
+    "defense_allowed": 0.705,
+    "points_for_vs_avg": 34.251,
+    "points_against_vs_avg": 18.577,
+    "net_vs_avg": 15.674
+   },
+   {
+    "team": "Iowa Hawkeyes",
+    "offense": 1.088,
+    "defense_allowed": 0.545,
+    "points_for_vs_avg": 28.663,
+    "points_against_vs_avg": 14.355,
+    "net_vs_avg": 14.308
+   },
+   {
+    "team": "Texas Tech Red Raiders",
+    "offense": 1.345,
+    "defense_allowed": 0.833,
+    "points_for_vs_avg": 35.445,
+    "points_against_vs_avg": 21.945,
+    "net_vs_avg": 13.5
+   },
+   {
+    "team": "USC Trojans",
+    "offense": 1.373,
+    "defense_allowed": 0.864,
+    "points_for_vs_avg": 36.184,
+    "points_against_vs_avg": 22.776,
+    "net_vs_avg": 13.407
+   },
+   {
+    "team": "Duke Blue Devils",
+    "offense": 1.21,
+    "defense_allowed": 0.738,
+    "points_for_vs_avg": 31.891,
+    "points_against_vs_avg": 19.447,
+    "net_vs_avg": 12.444
+   },
+   {
+    "team": "BYU Cougars",
+    "offense": 1.152,
+    "defense_allowed": 0.686,
+    "points_for_vs_avg": 30.354,
+    "points_against_vs_avg": 18.069,
+    "net_vs_avg": 12.285
+   },
+   {
+    "team": "UCLA Bruins",
+    "offense": 1.158,
+    "defense_allowed": 0.696,
+    "points_for_vs_avg": 30.515,
+    "points_against_vs_avg": 18.336,
+    "net_vs_avg": 12.179
+   },
+   {
+    "team": "Louisville Cardinals",
+    "offense": 1.316,
+    "defense_allowed": 0.87,
+    "points_for_vs_avg": 34.67,
+    "points_against_vs_avg": 22.933,
+    "net_vs_avg": 11.737
+   },
+   {
+    "team": "Penn State Nittany Lions",
+    "offense": 1.207,
+    "defense_allowed": 0.765,
+    "points_for_vs_avg": 31.815,
+    "points_against_vs_avg": 20.158,
+    "net_vs_avg": 11.658
+   },
+   {
+    "team": "Arizona Wildcats",
+    "offense": 1.24,
+    "defense_allowed": 0.826,
+    "points_for_vs_avg": 32.663,
+    "points_against_vs_avg": 21.753,
+    "net_vs_avg": 10.911
+   },
+   {
+    "team": "Nebraska Cornhuskers",
+    "offense": 1.08,
+    "defense_allowed": 0.685,
+    "points_for_vs_avg": 28.45,
+    "points_against_vs_avg": 18.057,
+    "net_vs_avg": 10.393
+   },
+   {
+    "team": "Missouri Tigers",
+    "offense": 1.169,
+    "defense_allowed": 0.809,
+    "points_for_vs_avg": 30.811,
+    "points_against_vs_avg": 21.321,
+    "net_vs_avg": 9.49
+   },
+   {
+    "team": "Baylor Bears",
+    "offense": 1.165,
+    "defense_allowed": 0.812,
+    "points_for_vs_avg": 30.708,
+    "points_against_vs_avg": 21.384,
+    "net_vs_avg": 9.324
+   }
+  ]
+ }
+}
