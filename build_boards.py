@@ -1153,6 +1153,56 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
     rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "pjh": pjh, "ev": ev, "dec": d, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"], "lean": (dict(lean, changed=LEAN_LOG[-1]["changed"], backed=LEAN_LOG[-1]["backed"]) if lean else None)}
     return html_, rec
 BEST_PARLAYS = []
+# ---- the pre-kickoff best parlay stays on the card (alpha plan 1b) ----
+_BP_NOW = float(os.environ.get("BS_NOW_MS") or 0) or __import__("time").time() * 1000      # BS_NOW_MS: tests only
+_BP_FILE = f"best-parlays-w{WEEK}.json"
+def _bp_load():
+    """the parlays on file: the published copy (the site clone, BS_SITE) first, else the last local build's"""
+    for path in ([os.path.join(os.environ["BS_SITE"], "data", _BP_FILE)] if os.environ.get("BS_SITE") else []) + [os.path.join(OUT, "data", _BP_FILE)]:
+        try:
+            d = json.load(open(path, encoding="utf-8"))
+            if int(d.get("week") or 0) == int(WEEK) and isinstance(d.get("games"), dict): return d["games"]
+        except Exception: pass
+    return {}
+BP_FROZEN = _bp_load()
+def bp_grade(rec, a, b):
+    """('W' | 'L' | None, hits, legs, text of the leg that lost) for a filed parlay: player legs from the game log (home._glog - the
+    sheet's, or the nflverse weekly file), game lines from the final score. None until every leg can be graded or one has lost."""
+    try: import home as _HM, gamelines as _GLM
+    except Exception: return (None, 0, 0, "")
+    G = _HM._glog(IN); g = game_for(a, b); legs = rec.get("legs") or []; hits = 0; unknown = 0
+    fin = bool(g) and g.get("home_score", "") not in ("", None) and g.get("away_score", "") not in ("", None)
+    ab = {n.lower(): t for t, n in _GLM.NICK.items()}
+    for l in legs:
+        name, mk, ln = str(l[0]), str(l[1]), l[2]; ok = None
+        if mk in ("Total", "Moneyline", "Spread"):
+            if fin:
+                hs, as_ = float(g["home_score"]), float(g["away_score"]); sc = {g["home_team"]: hs, g["away_team"]: as_}
+                if mk == "Total":
+                    m = re.match(r"\s*(Over|Under)\s+(\d+(?:\.\d+)?)", name, re.I)
+                    if m: ok = (hs + as_ > float(m.group(2))) if m.group(1).lower() == "over" else (hs + as_ < float(m.group(2)))
+                else:
+                    t = name.split()[0]; side = t if t in sc else ab.get(t.lower())
+                    if side in sc:
+                        m = re.search(r"([+-]\d+(?:\.\d+)?)", name) if mk == "Spread" else None
+                        opp = [v for k, v in sc.items() if k != side][0]
+                        if mk == "Moneyline": ok = sc[side] > opp
+                        elif m: ok = sc[side] + float(m.group(1)) > opp
+        elif mk in _HM._GSTAT:
+            row = G.get((str(WEEK), _HM._pkey(name)))
+            if row and not (mk == "Longest Reception" and row.get("_nolong")):
+                try: ok = sum(row.get(c, 0) for c in _HM._GSTAT[mk]) >= (2 if mk == "2+ TD" else float(ln))
+                except Exception: ok = None
+        if ok is None: unknown += 1
+        elif ok: hits += 1
+        else: return ("L", hits, len(legs), f"{name}" + (f" {int(ln) if float(ln) == int(ln) else ln}+ {mk.lower()}" if mk in _HM._GSTAT and mk not in ("Anytime TD", "2+ TD") else (" TD" if mk == "Anytime TD" else "")))
+    return ("W", hits, len(legs), "") if legs and not unknown else (None, hits, len(legs), "")
+def _bp_locked(fz, a, b):
+    """the filed card with its state: locked at kickoff, then Cashed / Missed"""
+    k, hits, n, why = bp_grade(fz.get("rec") or {}, a, b)
+    chip = ('<em class="bpst won">Cashed</em>' if k == "W" else f'<em class="bpst lost">Missed: {html.escape(why)}</em>' if k == "L" else '<em class="bpst">Locked at kickoff</em>')
+    h = str(fz.get("html") or "")
+    return h.replace('<div class="bestslip">', f'<div class="bestslip locked{" won" if k == "W" else " lost" if k == "L" else ""}">', 1).replace('<span class="lt">Best parlay', f'<span class="lt">Best parlay {chip}', 1)
 ROLE_RISK = ("Target competition", "Backfield competition", "Rising", "Limited", "Snaps down", "Role Down", "Carries down", "Targets down",
              "Cold L3", "Fill-in", "Usage falling", "Boom/bust", "Backup QB", "Fringe role", "Target squeeze")   # keep in step with home.py
 
@@ -1253,8 +1303,16 @@ for a, b, pl_all in blocks:
     # owner 11/16 (first Monday rebuild since the publish check was fixed): a game that has kicked off gets no best parlay. Its pre-game
     # prices are gone, and a slip for a finished game reads as broken (DET-NE "Under 50.5 + NE +2.5" sat on the card the morning after
     # a 35-10 final).
-    if _ko and float(_ko) < __import__("time").time() * 1000: bp_html, bp_rec = "", None
-    else: bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"], _lean)
+    # Alpha plan 1b (11/16, later the same day): the card KEEPS the parlay it showed before kickoff. Every build before a game's kickoff
+    # files that game's parlay in BP_FROZEN (published as data/best-parlays-w<week>.json); after kickoff the card shows the filed one,
+    # marked as locked, and grades it once the box score is in. A game with nothing on file shows no parlay (never a new one).
+    if _ko and float(_ko) < _BP_NOW:
+        _fz = BP_FROZEN.get(gid)
+        bp_html, bp_rec = (_bp_locked(_fz, a, b), _fz.get("rec")) if _fz and _fz.get("html") else ("", None)
+    else:
+        bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"], _lean)
+        if bp_rec and bp_html: BP_FROZEN[gid] = {"html": bp_html, "rec": bp_rec, "ko": _ko, "at": datetime.datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M")}
+        else: BP_FROZEN.pop(gid, None)
     CONF_ROWS.append((gid, cf["grade"], cf["score"], [(k, t_) for _, k, t_ in cf["flags"]]))
     if _ko is None or _ko > datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000:
         _m = cf["mkt"] or {}
@@ -1265,6 +1323,7 @@ for a, b, pl_all in blocks:
     conf_html = conf_block(a, b, s, cf, either_way(a, b), _lr)
     if bp_rec: BEST_PARLAYS.append(bp_rec)
     elif bp_html: pass   # 11/10: a lean with no agreeing slip explains itself
+    elif _ko and float(_ko) < _BP_NOW: bp_html = ""   # 11/16: a game that has kicked off with no parlay on file shows nothing - "FanDuel has too few legs priced" is not the reason any more
     else: bp_html = '<div class="bestslip none"><span class="lt">Best parlay</span><span class="bpwarn">no build this run: FanDuel has too few clean, healthy legs priced in this game to land a -110 to +500 slip</span></div>'
     plays_html, most = script_plays(a, b, pl, s)
     kk = max(range(4), key=lambda i: (s[5:9][i] or 0))
@@ -1417,6 +1476,9 @@ for l_ in SLIP_LEGS:   # trim: the page rebuilds the warning text from the bad f
 SLIP_DATA = {"week": WEEK, "legs": SLIP_LEGS, "corr": CORR, "glcorr": GLCORR, "gsort": GSORT, "builder": "https://betsweep.co/build/"}
 import live as LIVE
 import books as BOOKS
+os.makedirs(os.path.join(OUT, "data"), exist_ok=True)
+json.dump({"week": WEEK, "games": BP_FROZEN, "note": "the best parlay each game card showed at its last build before kickoff"}, open(os.path.join(OUT, "data", _BP_FILE), "w", encoding="utf-8"), ensure_ascii=False)
+print(f"best parlays on file: {len(BP_FROZEN)} game(s) -> out/data/{_BP_FILE}")
 json.dump(BEST_PARLAYS, open(os.path.join(OUT, "best_parlays.json"), "w"))   # for build_calls.py (model-calls archive)
 json.dump({"week": int(WEEK), "games": LEAN_LOG}, open(os.path.join(OUT, "sweep_leans.json"), "w"))   # owner 11/10: Sweep says leads; build_calls.py archives what the lean changed
 _nb = len(SWEEP_BTNS); _alone = [x for x in SWEEP_NOTES if x[1] != "no pick written for this line"]

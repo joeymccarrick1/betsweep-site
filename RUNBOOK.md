@@ -791,3 +791,13 @@ does not list stays open (never a miss) - such a slip ends as "Final · n graded
   that killed it. Unknown players are never a miss. Display only; the record is still the sheet's Result (Tuesday).
 - **Social**: a **Lost** tab beside Cashed; a busted house slip comes off the pin.
 - Tests: `python3 tests/home_filing.py [shots]` (18 checks), `python3 tests/social_feed.py [shots]` (22).
+
+## Game cards keep their pre-kickoff best parlay (alpha plan 1b, 11/16)
+
+build_boards.py files each game's best parlay on every build BEFORE its kickoff in `BP_FROZEN`, written to
+`out/data/best-parlays-w<week>.json` and published as `/data/best-parlays-w<week>.json` (html + record + when it was filed). The next
+build reads the published copy from the site clone (BS_SITE), else the last local one. After kickoff the card shows the filed parlay
+with a chip - "Locked at kickoff", then "Cashed" or "Missed: <leg>" once `bp_grade` can grade it (player legs from the game log /
+nflverse weekly file via home._glog, game lines from the final score) - and its add buttons are hidden. A game with nothing on file
+shows no parlay block at all (the old "FanDuel has too few legs priced" line is only for games still to be played).
+`BS_NOW_MS=<ms> python3 build_boards.py` builds as if it were that moment (tests only).
