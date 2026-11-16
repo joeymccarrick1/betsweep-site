@@ -2,25 +2,7 @@
  "news": [],
  "week": 10,
  "built": "Sun 11/15 1:17 PM",
- "checked": "2026-11-16T00:59:07Z",
- "legs_checked": 257,
- "moves": [
-  {
-   "key": "Chase Brown|Rushing Yards|50",
-   "pl": "Chase Brown",
-   "m": "Rushing Yards",
-   "ln": 50.0,
-   "gid": "CIN-PIT",
-   "ko": 1794792000000,
-   "built": 102,
-   "now": 118.0,
-   "pts": -3.6,
-   "p": 0.3777,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-15 17:35",
-   "detail": "Chase Brown rush yds 50+: FanDuel +102 at build -> +118 now (-3.6 implied pts against us)"
-  }
- ]
+ "checked": "2026-11-16T07:56:03Z",
+ "legs_checked": 123,
+ "moves": []
 }
