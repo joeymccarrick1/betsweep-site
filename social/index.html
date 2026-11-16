@@ -285,6 +285,11 @@ a{color:var(--ink)}
       // owner 11/16: "Once one leg kills it, the bet should be off the pages or put into a lost tab"
       info.textContent = lost.length ? lost.length + ' slip' + (lost.length === 1 ? '' : 's') + ' busted this week' : 'A slip lands here the moment one leg kills it';
       list.innerHTML = lost.length ? lost.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>Nothing has busted this week.</b>Every posted slip is still alive.' + POSTBTN + '</div>';
+    } else if(GF){
+      // one game asked for (a Boards card says "3 slips on Social"): show every slip on it - open first, then cashed, then lost - so the count on the card is what the reader finds
+      var allg = open.concat(won, lost);
+      info.textContent = allg.length + ' slip' + (allg.length === 1 ? '' : 's') + ' on this game' + (open.length ? ' · ' + open.length + ' open' : '') + (won.length ? ' · ' + won.length + ' cashed' : '') + (lost.length ? ' · ' + lost.length + ' lost' : '');
+      list.innerHTML = allg.length ? allg.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>No slips on this game yet.</b>Build one and post it so others can tail it.' + POSTBTN + '</div>';
     } else {
       info.textContent = open.length + ' open slip' + (open.length === 1 ? '' : 's') + (won.length ? ' · ' + won.length + ' cashed this week' : '') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
       if(!open.length && !LAST) loadLast();
