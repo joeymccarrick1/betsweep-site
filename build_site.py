@@ -266,6 +266,7 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .apptabs{display:none;position:fixed;left:0;right:0;bottom:0;z-index:70;background:#141a24;border-top:1px solid #2a3240;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.35)}
 .apptabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#a9a294;text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
 .apptabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+@media (hover:none){ .apptabs a:active{transform:scale(.94)} button:active{transform:scale(.98)} }
 .apptabs a.on{color:#fff} .apptabs a.on svg{stroke:#d7332a}
 @media (max-width:760px){ .dfs .mt{font-size:12px} .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
 @media (display-mode: standalone){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} .sitenav .menu{display:inline-flex} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
@@ -624,7 +625,7 @@ try: WEEK_NOW = int(json.load(open(os.path.join(OUT, "builder_data.json")))["wee
 except Exception: WEEK_NOW = 0
 _sl, _sb = ACCT._base_css()
 os.makedirs(os.path.join(SITE, "social"), exist_ok=True)
-open(os.path.join(SITE, "social", "index.html"), "w").write(wrap(SOCIAL.page(WEEK_NOW).replace("__BASE__", _sl).replace("__BASECSS__", _sb), "BetSweep Social", "Betslips posted by BetSweep users - tail them on FanDuel and upvote the best. Slips leave the feed once a leg loses or the games end.", "/social/", "/og.png"))
+open(os.path.join(SITE, "social", "index.html"), "w").write(wrap(SOCIAL.page(WEEK_NOW, SOCIAL.house_html(globals().get("OUT", "out"), WEEK_NOW)).replace("__BASE__", _sl).replace("__BASECSS__", _sb), "BetSweep Social", "Betslips posted by BetSweep users - tail them on FanDuel and upvote the best. Slips leave the feed once a leg loses or the games end.", "/social/", "/og.png"))
 open(os.path.join(SITE, "me", "index.html"), "w").write(wrap(ACCT.me_page(), "My BetSweep", "Your saved betslips, fantasy teams, trade scenarios and Sleeper league - synced to your account when you sign in.", "/me/", "/og.png"))
 if os.path.exists(os.path.join(OUT, "trade.html")):
     made.append(place(os.path.join(OUT, "trade.html"), os.path.join(OUT, "img-none"), os.path.join(SITE, "trade"), "/trade/"))

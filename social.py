@@ -205,7 +205,20 @@ POST_JS = r"""<script>(function(){
 })();</script>"""
 
 # ---------------- /social/ page ----------------
-PAGE_CSS = """.sharps h2{font-family:var(--display);font-size:22px;margin:4px 0 2px} .sharps ol{list-style:none;margin:8px 0 10px;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+.soc .hcard{background:var(--card);border:2px solid var(--red);border-radius:14px;padding:14px 14px 12px;margin:0 0 12px}
+.soc .hcard header{display:flex;align-items:center;gap:10px} .soc .hcard header b{display:block;font-weight:700;font-size:16px;line-height:1.1;color:var(--ink)} .soc .hcard header span{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+.soc .hcard .av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--red);color:#fff;font-family:var(--display);font-weight:700;font-size:14px;font-style:normal}
+.soc .hcard h3{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1;margin:12px 0 6px;color:var(--ink)}
+.soc .hcard ul{list-style:none;margin:0;padding:0} .soc .hcard li{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--line);font-size:14.5px;line-height:1.25;color:var(--ink)}
+.soc .hcard li em{margin-left:auto;font-family:var(--display);font-weight:700;font-size:16px;font-style:normal}
+.soc .hcard li.more{display:block} .soc .hcard li.more summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5px} .soc .hcard li.more ul{margin-top:6px}
+.soc .hcard .dot{flex:none;width:10px;height:10px;border-radius:50%;border:2px solid var(--line)}
+.soc .hfoot{display:flex;align-items:baseline;gap:10px;border-top:1px solid var(--line);padding-top:10px} .soc .hfoot .px{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;color:var(--ink)} .soc .hfoot .meta{color:var(--mute);font-size:12.5px}
+.soc .hacts{display:flex;gap:8px;margin-top:12px} .soc .hacts a{border-radius:10px;padding:12px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border:1.5px solid var(--ink);color:var(--ink);text-decoration:none;text-align:center} .soc .hacts a.tail{flex:1;background:var(--red);border-color:var(--red);color:#fff}
+.soc .skel{display:block;height:92px;border-radius:14px;margin:0 0 10px;background:linear-gradient(90deg,var(--card) 25%,var(--line) 50%,var(--card) 75%);background-size:200% 100%;animation:bsskel 1.2s ease-in-out infinite} @keyframes bsskel{0%{background-position:200% 0}100%{background-position:-200% 0}} @media (prefers-reduced-motion:reduce){.soc .skel{animation:none}}
+.soc a:active,.soc button:active{transform:scale(.98)}
+.sharps h2{font-family:var(--display);font-size:22px;margin:4px 0 2px} .sharps ol{list-style:none;margin:8px 0 10px;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
 .sharps li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)} .sharps li:first-child{border-top:0}
 .sharps .rk{font-family:var(--display);font-weight:800;font-size:18px;color:var(--mute);text-align:center} .sharps li:nth-child(-n+3) .rk{color:var(--red)}
 .sharps .who b{font-size:15px} .sharps .who small{display:block;color:var(--mute);font-size:12px;margin-top:1px}
@@ -433,7 +446,38 @@ def fdmap():
         if l.get("gl") and l.get("g"): m[f"{k}@{l['g']}"] = [fd["m"], fd["s"]]   # 11/14: a total's key is in several games ("Over 49.5" was DET-NE and CIN-PIT) - the game picks the right one
     return m
 
-def page(week):
+def house_html(OUT, week, limit=3, _records=None):
+    """owner 11/16 (Social, step 1 - never empty): this week's open house slips (the Daily Sweep first, then promos) pinned above the
+    feed as posts from BetSweep. Built from out/promos.json at build time, so there is no database change. A slip is pinned only while
+    every leg's kickoff is still ahead and it has no result: this card has no live grading, so once the first game starts the slip
+    leaves the pin (it is on Today with live grading) - a slip that has already lost a leg is never shown here as open. Graded winners
+    come back under the Cashed tab when that step is built (research/alpha_plan.md)."""
+    import os, time, html
+    try: allp = _records if _records is not None else json.load(open(os.path.join(OUT, "promos.json")))
+    except Exception: return ""
+    now = time.time() * 1000; E = html.escape
+    def live(p):
+        if str(p.get("week")) != str(week) or p.get("status", "LIVE") != "LIVE" or (p.get("result") or "").strip() or (p.get("checks") or {}).get("block"): return False
+        kos = [float(l["ko"]) for l in p.get("legs") or [] if l.get("ko")]
+        return bool(kos) and len(kos) == len(p.get("legs") or []) and now < min(kos)
+    def am(x):
+        try: x = float(x); return f"+{x:.0f}" if x > 0 else f"{x:.0f}"
+        except Exception: return ""
+    is_sweep = lambda p: str(p.get("title", "")).lower().startswith("daily sweep")
+    ps = sorted([p for p in allp if live(p)], key=lambda p: (0 if is_sweep(p) else 1, -float(p.get("slot") or 0)))[:limit]
+    cards = []
+    for p in ps:
+        li = [f'<li><span class="dot"></span><span>{E(str(l.get("disp") or l.get("who") or ""))}</span><em>{E(am(l.get("o")))}</em></li>' for l in p["legs"]]
+        legs = "".join(li[:4]) + (f'<li class="more"><details><summary>+{len(li) - 4} more legs</summary><ul>{"".join(li[4:])}</ul></details></li>' if len(li) > 4 else "")   # a 12-leg slip must not fill the screen
+        _pd = str(p.get("posted") or ""); _pd = f"{int(_pd[5:7])}/{int(_pd[8:10])}" if len(_pd) >= 10 and _pd[4] == "-" else _pd
+        meta = f'graded chance about {p["hp"] * 100:.0f}%' if p.get("hp") else (f'model {p["p"] * 100:.0f}% to hit' if p.get("p") else f'{len(p["legs"])} legs')
+        tail = f'<a class="tail" href="{E(str(p["link"]))}" target="_blank" rel="noopener">Tail on FanDuel</a>' if p.get("link") else ""
+        cards.append(f'<article class="hcard"><header><i class="av">BS</i><div><b>BetSweep</b><span>House slip · {"Daily Sweep" if is_sweep(p) else "Promo"}{(" · posted " + E(_pd)) if _pd else ""}</span></div></header>'
+                     f'<h3>{E(str(p.get("name") or p.get("title") or ""))}</h3><ul>{legs}</ul><div class="hfoot"><span class="px">{E(am(p.get("fd")))}</span><span class="meta">{meta}</span></div>'
+                     f'<div class="hacts">{tail}<a href="/#promo">See it on Today</a></div></article>')
+    return ('<div class="house"><span class="lab">House slips</span>' + "".join(cards) + "</div>") if cards else ""
+
+def page(week, house=""):
     return (f"""<title>BetSweep Social</title>
 <script>window.__BS_FDMAP = {json.dumps(fdmap(), separators=(",", ":"))};</script>
 <meta name="description" content="Betslips posted by BetSweep users - tail them on FanDuel, upvote the best ones. Slips leave the feed once a leg loses or the games end.">
@@ -441,10 +485,11 @@ __BASE__
 <style>__BASECSS__{PAGE_CSS}</style>
 <div class="soc">
  <h1>Social</h1>
- <p class="lede">Slips posted by BetSweep users this week. Upvote the ones you like - the most-upvoted sit on top. Tail on FanDuel in one tap, or load a slip into the Parlay Builder to see the model's price. A slip comes down on its own once a leg loses or every game in it is over.</p>
+ <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
  <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="sharp">Sharps</button></span></div>
- <p class="lede" id="feedinfo">Loading…</p>
+ {house}
+ <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>
- <p class="rules">Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
+ <p class="rules">How it works: the most-upvoted slips sit on top. Load any slip into the Parlay Builder to see our price for it. A slip comes down once a leg loses or every game in it is over. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
 </div>
 """ + PAGE_JS.replace("__WEEK__", json.dumps(int(week))))
