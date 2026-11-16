@@ -385,10 +385,10 @@ APP_TABS = [("/", "Today", '<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><p
             ("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
             ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
             ("/live/", "Live", '<svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg>'),
-            ("/me/", "Me", '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>')]
-# owner 11/15 ("navigation overall ... bring BetSweep to alpha"): the five jobs people open a betting app for - today's picks, research,
-# build, track, my stuff (Action Network, Pikkit, Outlier and Props.cash all anchor on a home tab and a my-bets tab). Was 11/5: Boards,
-# Builder, Fantasy, Live, Social - Fantasy and Social stay in the menu and on /all/.
+            ("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>')]
+# owner 11/15 ("navigation overall ... bring BetSweep to alpha") and 11/16 ("I want people to use social and that be a prominent piece
+# to BetSweep ... I'm okay if fantasy is in the menu"): Today, Boards, Builder, Live, Social. Was 11/5: Boards, Builder, Fantasy, Live,
+# Social. Fantasy and My BetSweep are in the menu and on /all/.
 def apptabs(path):
     # five bottom tabs; Fantasy lights up for every page in the Fantasy group
     def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/" and path.startswith(("/today/", "/short/"))) or (p == "/boards/" and path.startswith(("/player/", "/dossier/", "/news/", "/best/")))

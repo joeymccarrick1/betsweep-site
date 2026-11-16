@@ -1,0 +1,59 @@
+<style>
+.sx{padding-bottom:30px;overflow-x:hidden}
+.sx .ribbon{background:#141a24;color:#f7f3e8;font:700 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:7px 10px;border-radius:6px;display:inline-block;margin:0 0 10px}
+.sx-head h1{margin:0}
+.sx-head small{display:block;color:#5b6472;font:500 14px/1.3 'IBM Plex Sans',sans-serif;margin:2px 0 10px}
+.sx-seg,.sx-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.sx-seg{margin:0 0 14px}
+.sx-seg button{flex:none;border:1.5px solid #cfc6b1;background:#f7f3e8;color:#141a24;border-radius:999px;padding:9px 16px;font:700 14px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.sx-seg button.on{background:#141a24;border-color:#141a24;color:#fff}
+.sx-lab{font:700 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5b6472}
+.sx-chips{margin:8px 0 14px}
+.sx-chips a{flex:none;display:flex;align-items:center;gap:8px;background:#f7f3e8;border:1px solid #ddd5c2;border-radius:999px;padding:5px 12px 5px 5px;text-decoration:none;color:#141a24;font:600 14px/1 'IBM Plex Sans',sans-serif}
+.sx-chips em{font-style:normal;color:#1f7a4a;font-weight:700}
+.av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--c,#141a24);color:#fff;font:700 14px/1 'Barlow Condensed',sans-serif;font-style:normal}
+.sx-chips .av{width:28px;height:28px;font-size:12px}
+.sx-card{background:#f7f3e8;border:1px solid #ddd5c2;border-radius:14px;padding:14px 14px 12px;margin:0 0 12px}
+.sx-card.house{border:2px solid #d7332a}
+.sx-card header{display:flex;align-items:center;gap:10px}
+.sx-card header div{flex:1;min-width:0}
+.sx-card header b{display:block;font:700 16px/1.1 'IBM Plex Sans',sans-serif;color:#141a24}
+.sx-card header span{display:block;color:#5b6472;font:500 12.5px/1.3 'IBM Plex Sans',sans-serif;margin-top:2px}
+.sx-card .rec{font:700 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;color:#1f7a4a;background:#e6efe2;border-radius:999px;padding:6px 9px;font-style:normal;white-space:nowrap}
+.sx-card h3{font:800 22px/1.1 'Barlow Condensed',sans-serif;margin:12px 0 6px;color:#141a24}
+.sx-card ul{list-style:none;margin:0;padding:0}
+.sx-card li{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid #e3dccb;font:500 14.5px/1.25 'IBM Plex Sans',sans-serif;color:#2a3240}
+.sx-card li em{margin-left:auto;font:700 16px/1 'Barlow Condensed',sans-serif;font-style:normal;color:#141a24}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;border:2px solid #b9b09a}
+.sx-foot{display:flex;align-items:baseline;gap:10px;border-top:1px solid #e3dccb;padding-top:10px}
+.sx-foot .px{font:800 34px/1 'Barlow Condensed',sans-serif;color:#141a24}
+.sx-foot .meta{color:#5b6472;font:500 12.5px/1.3 'IBM Plex Sans',sans-serif}
+.sx-acts{display:flex;gap:8px;margin-top:12px}
+.sx-acts a,.sx-acts button{border-radius:10px;padding:12px;font:700 14px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;border:1.5px solid #141a24;background:transparent;color:#141a24;text-decoration:none;text-align:center}
+.sx-acts a.tail{flex:1;background:#d7332a;border-color:#d7332a;color:#fff}
+.sx-react{display:flex;gap:14px;margin-top:10px;color:#5b6472;font:600 13px/1 'IBM Plex Sans',sans-serif}
+.sx-fab{position:fixed;right:16px;bottom:calc(64px + 14px);background:#d7332a;color:#fff;border-radius:999px;padding:14px 18px;font:700 15px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 8px 22px rgba(215,51,42,.35);z-index:60;text-decoration:none}
+</style>
+<div class="soc sx">
+ <span class="ribbon">Mockup · sample data</span>
+ <div class="sx-head"><h1>Social</h1><small>Slips people are riding this week</small></div>
+ <div class="sx-seg"><button class="on">Top</button><button>New</button><button>Following</button><button>Cashed</button><button>Sharps</button></div>
+ <span class="sx-lab">This week's sharps</span>
+ <div class="sx-chips"><a><i class="av" style="--c:#d7332a">TT</i>tailgate_tom <em>+6.2u</em></a><a><i class="av" style="--c:#1f7a4a">SS</i>sunday_sam <em>+4.0u</em></a><a><i class="av" style="--c:#2b5fa8">OO</i>overs_only <em>+2.7u</em></a></div>
+ <article class="sx-card house">
+  <header><i class="av" style="--c:#d7332a">BS</i><div><b>BetSweep</b><span>House slip · Daily Sweep · 9:02 AM</span></div><em class="rec">3-2 · +1.8u</em></header>
+  <h3>Sample: Two-Leg Tuesday</h3>
+  <ul><li><span class="dot"></span><span><b>Player One</b> 60+ receiving yards</span><em>-125</em></li><li><span class="dot"></span><span><b>Player Two</b> 5+ receptions</span><em>+105</em></li></ul>
+  <div class="sx-foot"><span class="px">+269</span><span class="meta">graded chance about 24% · 41 people tailed</span></div>
+  <div class="sx-acts"><a class="tail">Tail on FanDuel</a><button>Load</button><button>▲ 28</button></div>
+ </article>
+ <article class="sx-card">
+  <header><i class="av" style="--c:#2b5fa8">OO</i><div><b>overs_only</b><span>Sunday 3-legger · 11:40 AM</span></div><em class="rec">12-9 · +2.7u</em></header>
+  <h3>Sample: Afternoon Three</h3>
+  <ul><li><span class="dot"></span><span><b>Player Three</b> 225+ passing yards</span><em>-140</em></li><li><span class="dot"></span><span><b>Player Four</b> anytime TD</span><em>+120</em></li><li><span class="dot"></span><span><b>Player Five</b> 40+ receiving yards</span><em>-115</em></li></ul>
+  <div class="sx-foot"><span class="px">+605</span><span class="meta">graded chance about 11% · 9 people tailed</span></div>
+  <div class="sx-acts"><a class="tail">Tail on FanDuel</a><button>Load</button><button>▲ 7</button></div>
+  <div class="sx-react"><span>🔥 12</span><span>💰 4</span><span>😬 1</span></div>
+ </article>
+ <a class="sx-fab" href="/build/">+ Post a slip</a>
+</div>
