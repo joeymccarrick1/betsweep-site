@@ -224,12 +224,12 @@ def main():
             print(f"post {p.get('id')} wk{p.get('week')} {len(p.get('legs') or [])} leg(s) at {p.get('fd_odds')}: {res or 'LEFT - ' + str(why)}")
             for l in p.get("legs") or []:
                 try:
-                    wk = int(p.get("week")); r = grade_leg(l, wk, F); g = F.game(wk, l.get("g")); had = ""
+                    wk = int(p.get("week")); lr = grade_leg(l, wk, F); g = F.game(wk, l.get("g")); had = ""
                     if g and l.get("gl"): had = f"final {g['a']} {g['sa']:.0f} {g['h']} {g['sh']:.0f}"
-                    elif g and isinstance(r, str):
-                        rows = [F.player(n.strip(), l, wk, g) for n in re.split(r"\s+or\s+", str(l.get("pl") or ""))]
-                        had = " / ".join(", ".join(f"{k} {v:g}" for k, v in x.items() if v) or "nothing in the box" if isinstance(x, dict) else str(x) for x in rows)
-                    print(f"    {r if isinstance(r, str) else 'unknown: ' + r[1]:8} {l.get('pl')} | {l.get('m')} | {l.get('ln')} | {l.get('g')}" + (f"   [{had}]" if had else ""))
+                    elif g and isinstance(lr, str):
+                        prs = [F.player(n.strip(), l, wk, g) for n in re.split(r"\s+or\s+", str(l.get("pl") or ""))]      # not "rows": that is the list of results being built
+                        had = " / ".join(", ".join(f"{k} {v:g}" for k, v in x.items() if v) or "zero in every counted stat" if isinstance(x, dict) else str(x) for x in prs)
+                    print(f"    {lr if isinstance(lr, str) else 'unknown: ' + lr[1]:8} {l.get('pl')} | {l.get('m')} | {l.get('ln')} | {l.get('g')}" + (f"   [{had}]" if had else ""))
                 except Exception as e: print("    (could not explain this leg:", type(e).__name__, ")")
         if res: rows.append({"id": p["id"], "result": res, "units": units})
         else: left.setdefault(why, []).append(p.get("id"))

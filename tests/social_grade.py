@@ -62,4 +62,9 @@ pf = os.path.join(T, "posts.json"); json.dump([won, P(3, [leg("Zay Flowers", "Re
 out = subprocess.run([sys.executable, os.path.join(HERE, "..", "social_grade.py"), "--in", T, "--posts", pf, "--write"], capture_output=True, text=True, env=dict(os.environ, FEED_GRADE_SECRET="s3cr3t-value-for-test"))
 S = json.loads([x for x in out.stdout.splitlines() if x.startswith("SOCIALGRADE ")][-1][12:])
 check(out.returncode == 0 and (S["posts"], S["won"], S["lost"], S["left"]) == (3, 1, 1, 1) and S["result"] == "graded from a file; nothing written" and "s3cr3t" not in out.stdout + out.stderr, f"the command grades a file of posts, writes nothing, and never prints the secret ({S['result']})")
+# 11/16: --detail once reused the name of the results list for a player's stat lines and crashed after printing; the two runs must agree
+out2 = subprocess.run([sys.executable, os.path.join(HERE, "..", "social_grade.py"), "--in", T, "--posts", pf, "--detail"], capture_output=True, text=True)
+S2 = json.loads(([x for x in out2.stdout.splitlines() if x.startswith("SOCIALGRADE ")] or ["SOCIALGRADE {}"])[-1][12:])
+check(out2.returncode == 0 and (S2.get("posts"), S2.get("won"), S2.get("lost"), S2.get("left")) == (3, 1, 1, 1) and out2.stdout.count("\npost ") + out2.stdout.startswith("post ") == 3 and "    miss     Zay Flowers | Receiving Yards | 50 | BAL-LAC   [rec 3, recy 49]" in out2.stdout,
+      "--detail lists every leg with its numbers and ends with the same counts as a plain run")
 print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
