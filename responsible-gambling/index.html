@@ -617,7 +617,8 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
     var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });
     msg(started.length ? 'Remove the legs from games that already kicked off first.' : '', !!started.length);
-    $('sdH').textContent = '…'; A.client.rpc('feed_handle', {u: A.user.id}).then(function(r){ $('sdH').textContent = r.data ? '@' + r.data : '(assigned when you post)'; }, function(){ $('sdH').textContent = '(assigned when you post)'; });
+    $('sdH').textContent = '…'; A.client.from('feed_profiles').select('handle').eq('user_id', A.user.id).then(function(q){ var h = q && q.data && q.data[0] && q.data[0].handle;   // 11/16: the name the account chose (sql/social_v4.sql), else the assigned one
+      if(h){ $('sdH').textContent = '@' + h; return; } return A.client.rpc('feed_handle', {u: A.user.id}).then(function(r){ $('sdH').textContent = r.data ? '@' + r.data : '(assigned when you post)'; }); }, function(){ $('sdH').textContent = '(assigned when you post)'; });
     $('sdGo').disabled = !!started.length; dlg.hidden = false; $('sdT').focus();
   });
   function alertish(t){ var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = '⚠ ' + t; } }
