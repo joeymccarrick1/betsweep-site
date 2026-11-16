@@ -91,7 +91,7 @@ page = f"""<title>Sweep my slip · BetSweep</title>
 <div class="steps">
  <div><b>Chance vs price</b><span>The model's chance the whole slip cashes, next to what the price needs.</span></div>
  <div><b>Weakest leg</b><span>The riskiest leg and why, in a few words.</span></div>
- <div><b>Safer swap</b><span>One tap moves it to a safer line and shows the new price.</span></div>
+ <div><b>Easier swap</b><span>One tap moves it to an easier line and shows the new price.</span></div>
 </div>
 <p class="fn">It prices player yards, catches, touchdowns and game lines that are on this week's board; anything else is named on the verdict and left out of the numbers. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
 </div>

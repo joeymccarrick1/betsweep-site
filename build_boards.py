@@ -1246,7 +1246,11 @@ for a, b, pl_all in blocks:
     _ko = kick_ms(a, b); _lr = lean_reads(a, b)
     cf = CF.assess(a, b, s[2] or 0, s[3] or 0)
     _lean = sweep_lean(gid, a, b)
-    bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"], _lean)
+    # owner 11/16 (first Monday rebuild since the publish check was fixed): a game that has kicked off gets no best parlay. Its pre-game
+    # prices are gone, and a slip for a finished game reads as broken (DET-NE "Under 50.5 + NE +2.5" sat on the card the morning after
+    # a 35-10 final).
+    if _ko and float(_ko) < __import__("time").time() * 1000: bp_html, bp_rec = "", None
+    else: bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"], _lean)
     CONF_ROWS.append((gid, cf["grade"], cf["score"], [(k, t_) for _, k, t_ in cf["flags"]]))
     if _ko is None or _ko > datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000:
         _m = cf["mkt"] or {}
