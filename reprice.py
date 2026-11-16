@@ -293,6 +293,14 @@ def main():
     env = dict(os.environ); env.setdefault("BS_SITE", clone); env["PYTHONUNBUFFERED"] = "1"
     sub = lambda c: c.format(clone=clone, W=W, Wprev=W - 1)
     failed = {"hard": [], "flag": [], "soft": []}; warns = []
+    # 11/16: FanDuel posts Thursday's game early, and on a Monday the price tabs hold next week's game beside this week's projections
+    # (weekgate.py). Those rows never reach a page: they are taken out of ./in before any step reads it.
+    try:
+        import weekgate as _WG
+        _wg = _WG.clean(IN, W); S["next_week_rows"] = sum(n for v in _wg.values() for n in v.values())
+        log("[weekgate] " + _WG.report(_wg).split(": ", 1)[-1])
+    except Exception as e:
+        warns.append(f"weekgate did not run ({e}): next week's prices may be on the board"); log("[weekgate] FAILED: " + str(e))
     steps = ([] if a.skip_desk else DESK) + BUILD
     if not a.skip_desk:      # the desk reads the public feeds branch; raw.githubusercontent.com first, this fetch is the fall-back they use
         r = subprocess.run(["git", "-C", clone, "fetch", "-q", "--depth", "1", "origin", "+feeds:refs/remotes/origin/feeds"], capture_output=True, text=True)

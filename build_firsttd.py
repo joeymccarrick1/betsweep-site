@@ -23,6 +23,10 @@ def num(x):
     try: return float(str(x).replace(",", "").replace("%", "").replace("+", ""))
     except Exception: return None
 exec(open(os.path.join(HERE, "brand.py")).read())   # NAMES, TEAMCOL, badge(), LOGO, BANNER
+try:
+    import weekgate as _WG; _wg = _WG.clean(IN)   # 11/16: next week's prices (Thursday's game goes up early) stay out of this week's build
+    if _wg: print(_WG.report(_wg))
+except Exception as _e: print("warn: weekgate skipped:", _e)
 boards = vals("boards.json"); WEEK = int(float(boards[1][1]))
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
 

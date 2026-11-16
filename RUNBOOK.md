@@ -749,3 +749,22 @@ whole-board comparison (added 11/10) blocked every late-week publish (792 legs a
   keep the words they were built with; rechrome now swaps the exact old label for today's ("Safer (65%+)" -> "Short-priced (65%+)").
   That is the one content change rechrome makes. Add a pair when a label is renamed; exact strings only.
 - Wording: "a safer swap" -> "an easier swap" (slip check, home door), ladder button label "easier line" (builder and template.html).
+
+## Next week's prices stay out of this week's build (weekgate.py, 11/16)
+
+FanDuel posts Thursday's game early. On the Monday of Week 10 the price tabs already held Colts @ Texans (Thu 11/19, Week 11): 122 Leg
+Board rows, 285 links, 26 first-TD prices, 20 unders, 222 game-line rows, plus the other books' prices for twelve Week 11 games. The Leg
+Board joins price to projection by player, so those rows carried Week 10's projection against Week 10's opponent, and the builders filed
+them under the team's (finished) Week 10 game. The first Monday rebuild that could publish put 150 of them on the site for about 35
+minutes (home page Model's Best, Boards, First TD, the shadow list, the flag audit). Until that morning the board-shrank check had
+blocked every Monday publish, which is why it had not shown before.
+
+- `weekgate.clean(IN, week)` drops, from legboard / bestlegs / links / bookodds / gamelines / ftdodds / unders in ./in, every row whose
+  Game is not a pair on the week's schedule (in/games.csv), or is the right pair but four-plus days from the scheduled date. Rows with
+  no readable game are kept. Archives (legsnaps, results_legs, closing) are not touched.
+- Called by reprice.py right after the mirror is copied in (log line `[weekgate] ...`, summary field `next_week_rows`), and by
+  build_firsttd.py, build_boards.py and build_builder.py as their first step.
+- **By hand:** after `cp -r <mirror>/in/. in/`, run `python3 weekgate.py` before any desk step (consensus.py reads bookodds).
+  `python3 weekgate.py --check` only reports; `python3 weekgate.py selftest` = 16 checks.
+- Thursday's game appears on the site when the week rolls (Tuesday), with its own projections.
+- Still open in the SHEET: the Leg Board tab itself shows those rows with the wrong week's projection until the roll.

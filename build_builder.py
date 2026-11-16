@@ -20,6 +20,10 @@ def pct(x):
     return v / 100 if ("%" in str(x) or abs(v) > 1.5) else v
 exec(open(os.path.join(HERE, "brand.py")).read())
 
+try:
+    import weekgate as _WG; _wg = _WG.clean(IN)   # 11/16: next week's prices (Thursday's game goes up early) stay out of this week's build
+    if _wg: print(_WG.report(_wg))
+except Exception as _e: print("warn: weekgate skipped:", _e)
 boards = vals("boards.json"); WEEK = int(float(boards[1][1]))
 scripts_raw = vals("scripts.json"); legs_raw = vals("legboard.json")
 try: CORR = {r[0]: num(r[1]) for r in vals("corr.json")[1:] if r and "|" in str(r[0])}

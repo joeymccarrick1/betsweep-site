@@ -36,6 +36,10 @@ def pct(x):
     return v
 
 # ---------------- inputs ----------------
+try:
+    import weekgate as _WG; _wg = _WG.clean(IN)   # 11/16: next week's prices (Thursday's game goes up early) stay out of this week's build
+    if _wg: print(_WG.report(_wg))
+except Exception as _e: print("warn: weekgate skipped:", _e)
 boards = vals("boards.json"); WEEK = int(float(boards[1][1]))
 ranks_raw = vals("ranks.json"); weather_raw = vals("weather.json"); avail_raw = vals("avail.json")
 scripts_raw = vals("scripts.json"); legs_raw = vals("legboard.json"); best_raw = vals("bestlegs.json")
