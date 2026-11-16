@@ -26,6 +26,13 @@
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
+/* 11/16: played games fold on the boards ("N games already played"); the builder has its own (details.gdone) */
+.grid>details.bdone{grid-column:1/-1;min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+details.bdone>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;row-gap:2px;align-items:center;min-height:48px;padding:13px 18px 13px 16px;color:var(--ink)} details.bdone>summary::-webkit-details-marker{display:none}
+details.bdone>summary b{grid-column:1;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2} details.bdone>summary small{grid-column:1;color:var(--mute);font-size:13px;line-height:1.35}
+details.bdone>summary::after{content:"";grid-column:2;grid-row:1 / span 2;width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.bdone[open]>summary::after{transform:translateY(2px) rotate(225deg)}
+details.bdone>.bdgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,640px),1fr));gap:22px;padding:0 10px 10px}
+body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:14px}
 
 .ftdwrap{max-width:none;margin:0;padding:0;color:var(--ink)}
 .ftdwrap .badge{width:30px;height:22px;font-size:10px;border-radius:5px;padding-bottom:2px;box-shadow:inset 0 -3px 0 var(--s)}
@@ -89,7 +96,7 @@
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>First TD Scorer</b></h1>
-    <p>Who scores first in every Week 10 game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price next to it with the edge. Built Mon 11/16 4:02 PM CT.</p>
+    <p>Who scores first in every Week 10 game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price next to it with the edge. Built Mon 11/16 4:44 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="#ftd-WAS-NYG">WAS·NYG</a><a href="#ftd-NE-DET">NE·DET</a><a href="#ftd-BUF-NYJ">BUF·NYJ</a><a href="#ftd-CAR-NO">CAR·NO</a><a href="#ftd-HOU-CLE">HOU·CLE</a><a href="#ftd-JAX-TEN">JAX·TEN</a><a href="#ftd-KC-ATL">KC·ATL</a><a href="#ftd-MIA-IND">MIA·IND</a><a href="#ftd-MIN-GB">MIN·GB</a><a href="#ftd-LA-ARI">LA·ARI</a><a href="#ftd-SEA-LV">SEA·LV</a><a href="#ftd-SF-DAL">SF·DAL</a><a href="#ftd-PIT-CIN">PIT·CIN</a><a href="#ftd-LAC-BAL">LAC·BAL</a></nav>
   
@@ -105,7 +112,7 @@
  <div class="how"><h3>How we get the number</h3>
   <p>Each player's chance of the game's first touchdown is his share of the projected touchdowns in that game: his projected rushing + receiving TD over both teams' total, times 94.6% (the remaining 5.4% covers a defensive or special-teams first TD and games with no TD). That is the whole model: team strength, pace and game script are already inside the projections, so the share is the clean way to convert them. Tested on every 2025 and 2026 game since Week 3 (317 games): it beats an even split by a wide margin and is calibrated top to bottom, and no extra tilt toward the favorite or the top option improved it.</p>
   <dl><dt>First TD</dt><dd>the model's probability he scores the game's first touchdown</dd><dt>Fair</dt><dd>the American odds that probability converts to, no vig</dd><dt>FanDuel / Book %</dt><dd>FanDuel's first touchdown scorer price and the hit rate it implies</dd><dt>Edge</dt><dd>First TD % minus Book %, in points: <b>VALUE</b> at +3 or better, <b>FAIR</b> from 0 to +3, <b>PASS</b> below 0</dd></dl>
-  <p style="margin-top:8px;color:var(--mute);font-size:13px">First TD is a high-variance market by nature: the best number on the slate is usually under 20%. Treat these as single legs or small plays, and shop the price. Built Mon 11/16 4:02 PM CT from the live sheet. Information only, not a guarantee; 21+, please bet responsibly.</p>
+  <p style="margin-top:8px;color:var(--mute);font-size:13px">First TD is a high-variance market by nature: the best number on the slate is usually under 20%. Treat these as single legs or small plays, and shop the price. Built Mon 11/16 4:44 PM CT from the live sheet. Information only, not a guarantee; 21+, please bet responsibly.</p>
  </div>
  <section class="ftd" id="ftd-WAS-NYG">
  <div class="fhd" style="--ca:#5A1414;--cb:#0B2265">
@@ -308,7 +315,9 @@
   var gameCards = document.querySelectorAll('.card[id]:not(.summary) .hd');
   if(gameCards.length > 1 && !document.body.classList.contains('nocompact')){
     document.body.classList.add('compact');
-    function expandHash(){ var h = location.hash && document.getElementById(location.hash.slice(1)); if(h && h.classList.contains('card')){ h.classList.add('expanded'); h.scrollIntoView({block:'start'}); } }
+    function expandHash(){ var h = location.hash && document.getElementById(location.hash.slice(1)); if(h && h.classList.contains('card')){ var d = h.closest('details.bdone'); if(d) d.open = true; h.classList.add('expanded'); h.scrollIntoView({block:'start'}); } }
+    // a link to a finished game (its chip, the slate table) opens the fold before the jump, also when the address already ends in that game
+    document.addEventListener('click', function(ev){ var a = ev.target.closest && ev.target.closest('a[href^="#"]'); if(!a || a.getAttribute('href').length < 2) return; var t = document.getElementById(a.getAttribute('href').slice(1)), d = t && t.closest('details.bdone'); if(d && !d.open){ d.open = true; if(location.hash === a.getAttribute('href')){ t.classList.add('expanded'); t.scrollIntoView({block:'start'}); } } });
     document.querySelectorAll('.card.summary .hd').forEach(function(hd){
       hd.addEventListener('click', function(ev){ if(ev.target.closest('a,button')) return; var c = hd.closest('.card'); var open = c.classList.toggle('expanded'); if(open) c.scrollIntoView({block:'start', behavior:'smooth'}); });
     });
@@ -482,13 +491,35 @@
     });
     sinkPlayed();
   }
+  // 11/16: finished games fold. While a game is still to come, the finished scorecards sit inside "N games already played" at the foot
+  // of the grid (closed until the reader opens it, or a link asks for one of them); when nothing is left to play there is no fold and
+  // every card is in the grid in kickoff order. Cards are only moved when they are out of place, so the minute-by-minute live update
+  // does not disturb an open card.
   function sinkPlayed(){
     var grid = document.querySelector('.grid'); if(!grid) return;
-    var cards = [].slice.call(grid.querySelectorAll(':scope > .card[data-ko]'));
+    var cards = [].slice.call(grid.querySelectorAll('.card[data-ko]'));   // in the grid or in its fold
     cards.forEach(function(c, i){ if(c.dataset.ord == null) c.dataset.ord = i; });
-    var key = function(c){ return (c.classList.contains('done') ? 1000 : 0) + (+c.dataset.ord); };
-    var want = cards.slice().sort(function(x, y){ return key(x) - key(y); });
-    if(want.some(function(c, i){ return c !== cards[i]; })) want.forEach(function(c){ grid.appendChild(c); });
+    cards.sort(function(x, y){ return (+x.dataset.ord) - (+y.dataset.ord); });
+    var up = cards.filter(function(c){ return !c.classList.contains('done'); }), dn = cards.filter(function(c){ return c.classList.contains('done'); });
+    var fold = grid.querySelector(':scope > details.bdone'), same = function(x, y){ return x.length === y.length && !x.some(function(c, i){ return c !== y[i]; }); };
+    if(up.length && dn.length && !document.body.classList.contains('render')){
+      var made = !fold;
+      if(!fold){ fold = document.createElement('details'); fold.className = 'bdone'; fold.innerHTML = '<summary><b></b> <small>finals, graded parlays and projections</small></summary><div class="bdgrid"></div>'; grid.appendChild(fold); }
+      var box = fold.querySelector('.bdgrid'), open = fold.open;
+      if(!same([].slice.call(grid.querySelectorAll(':scope > .card[data-ko]')), up)) up.forEach(function(c){ grid.insertBefore(c, fold); });
+      if(!same([].slice.call(box.children), dn)){ dn.forEach(function(c){ if(c.parentNode !== box && c.classList.contains('expanded')) open = true; box.appendChild(c); }); }   // a card the reader has open is not folded out of sight
+      if(grid.lastElementChild !== fold) grid.appendChild(fold);
+      fold.querySelector('summary b').textContent = dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played';
+      // only when the fold is first made (the page arrived on a link to a finished game): later the reader's own open / closed choice stands
+      var h = made && location.hash && document.getElementById(location.hash.slice(1)), jump = !!(h && fold.contains(h));
+      if(jump) open = true;
+      if(open && !fold.open) fold.open = true;
+      if(jump) h.scrollIntoView({block: 'start'});
+    } else {
+      if(fold){ [].slice.call(fold.querySelectorAll('.card[data-ko]')).forEach(function(c){ grid.insertBefore(c, fold); }); fold.remove(); }
+      var want = up.concat(dn);
+      if(!same([].slice.call(grid.querySelectorAll(':scope > .card[data-ko]')), want)) want.forEach(function(c){ grid.appendChild(c); });
+    }
     var nav = document.querySelector('nav.nav'); if(!nav) return;
     var links = [].slice.call(nav.querySelectorAll('a[href^="#"]')).filter(function(a){ return a.getAttribute('href') !== '#summary'; });
     var played = {}; cards.forEach(function(c){ if(c.classList.contains('done')) played[c.id] = 1; });

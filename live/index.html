@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model&#x27;s chance from here. Built Mon 11/16 4:02 PM CT.">
+<meta name="description" content="What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model&#x27;s chance from here. Built Mon 11/16 4:44 PM CT.">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -13,10 +13,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BetSweep">
 <link rel="canonical" href="https://betsweep.co/live/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="BetSweep">
-<meta property="og:title" content="BetSweep Live"><meta property="og:description" content="What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model&#x27;s chance from here. Built Mon 11/16 4:02 PM CT.">
+<meta property="og:title" content="BetSweep Live"><meta property="og:description" content="What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model&#x27;s chance from here. Built Mon 11/16 4:44 PM CT.">
 <meta property="og:url" content="https://betsweep.co/live/"><meta property="og:image" content="https://betsweep.co/og.png">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BetSweep Live">
-<meta name="twitter:description" content="What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model&#x27;s chance from here. Built Mon 11/16 4:02 PM CT."><meta name="twitter:image" content="https://betsweep.co/og.png">
+<meta name="twitter:description" content="What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model&#x27;s chance from here. Built Mon 11/16 4:44 PM CT."><meta name="twitter:image" content="https://betsweep.co/og.png">
 <script>window.__BS_ACCOUNT={url:"https://fuwiqijgkgbzvnfnsans.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU",google:false};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
 <link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><meta charset="utf-8">
@@ -26,6 +26,13 @@
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
+/* 11/16: played games fold on the boards ("N games already played"); the builder has its own (details.gdone) */
+.grid>details.bdone{grid-column:1/-1;min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+details.bdone>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;row-gap:2px;align-items:center;min-height:48px;padding:13px 18px 13px 16px;color:var(--ink)} details.bdone>summary::-webkit-details-marker{display:none}
+details.bdone>summary b{grid-column:1;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2} details.bdone>summary small{grid-column:1;color:var(--mute);font-size:13px;line-height:1.35}
+details.bdone>summary::after{content:"";grid-column:2;grid-row:1 / span 2;width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.bdone[open]>summary::after{transform:translateY(2px) rotate(225deg)}
+details.bdone>.bdgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,640px),1fr));gap:22px;padding:0 10px 10px}
+body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:14px}
 
 /* owner 11/10 sweat rooms */
 .swb{font:inherit;font-size:12px;line-height:1;margin-left:6px;padding:3px 6px;border-radius:999px;border:1px solid var(--line,#d8d1c2);background:transparent;cursor:pointer;vertical-align:middle}
@@ -207,7 +214,7 @@ ul.chg{list-style:none;margin:0;padding:0} ul.chg li{display:grid;grid-template-
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>Live</b></h1>
-    <p>What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model's chance from here. Built Mon 11/16 4:02 PM CT.</p>
+    <p>What the model likes that has not happened yet. Every tracked Week 10 leg against the live box score, with the model's chance from here. Built Mon 11/16 4:44 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/build/" class="tool">Parlay Builder</a> <a href="#lv-NYG-WAS">NYG·WAS</a> <a href="#lv-DET-NE">DET·NE</a> <a href="#lv-ATL-KC">ATL·KC</a> <a href="#lv-BUF-NYJ">NYJ·BUF</a> <a href="#lv-CAR-NO">NO·CAR</a> <a href="#lv-CLE-HOU">CLE·HOU</a> <a href="#lv-GB-MIN">GB·MIN</a> <a href="#lv-IND-MIA">IND·MIA</a> <a href="#lv-JAX-TEN">TEN·JAX</a> <a href="#lv-ARI-LA">ARI·LA</a> <a href="#lv-LV-SEA">LV·SEA</a> <a href="#lv-DAL-SF">DAL·SF</a> <a href="#lv-CIN-PIT">CIN·PIT</a> <a href="#lv-BAL-LAC">BAL·LAC</a></nav>
   
@@ -225,7 +232,7 @@ ul.chg{list-style:none;margin:0;padding:0} ul.chg li{display:grid;grid-template-
  <div id="lvdrill" hidden></div>
 
 </div>
-<script src="/live/data-05514b5c6c5f.js"></script>
+<script src="/live/data-154bdb1a90bc.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -1241,7 +1248,9 @@ window.BSLive = (function(){
   var gameCards = document.querySelectorAll('.card[id]:not(.summary) .hd');
   if(gameCards.length > 1 && !document.body.classList.contains('nocompact')){
     document.body.classList.add('compact');
-    function expandHash(){ var h = location.hash && document.getElementById(location.hash.slice(1)); if(h && h.classList.contains('card')){ h.classList.add('expanded'); h.scrollIntoView({block:'start'}); } }
+    function expandHash(){ var h = location.hash && document.getElementById(location.hash.slice(1)); if(h && h.classList.contains('card')){ var d = h.closest('details.bdone'); if(d) d.open = true; h.classList.add('expanded'); h.scrollIntoView({block:'start'}); } }
+    // a link to a finished game (its chip, the slate table) opens the fold before the jump, also when the address already ends in that game
+    document.addEventListener('click', function(ev){ var a = ev.target.closest && ev.target.closest('a[href^="#"]'); if(!a || a.getAttribute('href').length < 2) return; var t = document.getElementById(a.getAttribute('href').slice(1)), d = t && t.closest('details.bdone'); if(d && !d.open){ d.open = true; if(location.hash === a.getAttribute('href')){ t.classList.add('expanded'); t.scrollIntoView({block:'start'}); } } });
     document.querySelectorAll('.card.summary .hd').forEach(function(hd){
       hd.addEventListener('click', function(ev){ if(ev.target.closest('a,button')) return; var c = hd.closest('.card'); var open = c.classList.toggle('expanded'); if(open) c.scrollIntoView({block:'start', behavior:'smooth'}); });
     });

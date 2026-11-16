@@ -26,6 +26,13 @@
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
+/* 11/16: played games fold on the boards ("N games already played"); the builder has its own (details.gdone) */
+.grid>details.bdone{grid-column:1/-1;min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+details.bdone>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;row-gap:2px;align-items:center;min-height:48px;padding:13px 18px 13px 16px;color:var(--ink)} details.bdone>summary::-webkit-details-marker{display:none}
+details.bdone>summary b{grid-column:1;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2} details.bdone>summary small{grid-column:1;color:var(--mute);font-size:13px;line-height:1.35}
+details.bdone>summary::after{content:"";grid-column:2;grid-row:1 / span 2;width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.bdone[open]>summary::after{transform:translateY(2px) rotate(225deg)}
+details.bdone>.bdgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,640px),1fr));gap:22px;padding:0 10px 10px}
+body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:14px}
 
 .bq{margin:10px 0 14px} .bqh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 2px} .bqh b{font-family:var(--display);font-weight:700;font-size:18px} .bqh small{color:var(--mute);font-size:12.5px}
 .bqf{display:flex;gap:6px;overflow-x:auto;margin:8px 0;scrollbar-width:none} .bqf::-webkit-scrollbar{display:none} .bqf button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:38px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer} .bqf button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)} .bqf i{flex:none;width:1px;background:var(--line);margin:6px 3px}
@@ -415,7 +422,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 10 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Mon 11/16 4:02 PM CT.</p>
+    <p>Every FanDuel player prop on the Week 10 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Mon 11/16 4:44 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-BAL-LAC">BAL·LAC</a> <a href="#g-NYG-WAS" class="played">NYG·WAS</a> <a href="#g-DET-NE" class="played">DET·NE</a> <a href="#g-ATL-KC" class="played">ATL·KC</a> <a href="#g-BUF-NYJ" class="played">BUF·NYJ</a> <a href="#g-CAR-NO" class="played">CAR·NO</a> <a href="#g-CLE-HOU" class="played">CLE·HOU</a> <a href="#g-GB-MIN" class="played">GB·MIN</a> <a href="#g-IND-MIA" class="played">IND·MIA</a> <a href="#g-JAX-TEN" class="played">JAX·TEN</a> <a href="#g-ARI-LA" class="played">ARI·LA</a> <a href="#g-LV-SEA" class="played">LV·SEA</a> <a href="#g-DAL-SF" class="played">DAL·SF</a> <a href="#g-CIN-PIT" class="played">CIN·PIT</a></nav>
   
@@ -490,7 +497,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Mon 11/16 4:02 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Mon 11/16 4:44 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -515,7 +522,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-f7fc4111a94f.js"></script>
+<script src="/build/data-bd5d56907a0d.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -1789,7 +1796,9 @@ window.BSBooks = { attach: function(btn, panel, getText){
   var gameCards = document.querySelectorAll('.card[id]:not(.summary) .hd');
   if(gameCards.length > 1 && !document.body.classList.contains('nocompact')){
     document.body.classList.add('compact');
-    function expandHash(){ var h = location.hash && document.getElementById(location.hash.slice(1)); if(h && h.classList.contains('card')){ h.classList.add('expanded'); h.scrollIntoView({block:'start'}); } }
+    function expandHash(){ var h = location.hash && document.getElementById(location.hash.slice(1)); if(h && h.classList.contains('card')){ var d = h.closest('details.bdone'); if(d) d.open = true; h.classList.add('expanded'); h.scrollIntoView({block:'start'}); } }
+    // a link to a finished game (its chip, the slate table) opens the fold before the jump, also when the address already ends in that game
+    document.addEventListener('click', function(ev){ var a = ev.target.closest && ev.target.closest('a[href^="#"]'); if(!a || a.getAttribute('href').length < 2) return; var t = document.getElementById(a.getAttribute('href').slice(1)), d = t && t.closest('details.bdone'); if(d && !d.open){ d.open = true; if(location.hash === a.getAttribute('href')){ t.classList.add('expanded'); t.scrollIntoView({block:'start'}); } } });
     document.querySelectorAll('.card.summary .hd').forEach(function(hd){
       hd.addEventListener('click', function(ev){ if(ev.target.closest('a,button')) return; var c = hd.closest('.card'); var open = c.classList.toggle('expanded'); if(open) c.scrollIntoView({block:'start', behavior:'smooth'}); });
     });
@@ -1963,13 +1972,35 @@ window.BSBooks = { attach: function(btn, panel, getText){
     });
     sinkPlayed();
   }
+  // 11/16: finished games fold. While a game is still to come, the finished scorecards sit inside "N games already played" at the foot
+  // of the grid (closed until the reader opens it, or a link asks for one of them); when nothing is left to play there is no fold and
+  // every card is in the grid in kickoff order. Cards are only moved when they are out of place, so the minute-by-minute live update
+  // does not disturb an open card.
   function sinkPlayed(){
     var grid = document.querySelector('.grid'); if(!grid) return;
-    var cards = [].slice.call(grid.querySelectorAll(':scope > .card[data-ko]'));
+    var cards = [].slice.call(grid.querySelectorAll('.card[data-ko]'));   // in the grid or in its fold
     cards.forEach(function(c, i){ if(c.dataset.ord == null) c.dataset.ord = i; });
-    var key = function(c){ return (c.classList.contains('done') ? 1000 : 0) + (+c.dataset.ord); };
-    var want = cards.slice().sort(function(x, y){ return key(x) - key(y); });
-    if(want.some(function(c, i){ return c !== cards[i]; })) want.forEach(function(c){ grid.appendChild(c); });
+    cards.sort(function(x, y){ return (+x.dataset.ord) - (+y.dataset.ord); });
+    var up = cards.filter(function(c){ return !c.classList.contains('done'); }), dn = cards.filter(function(c){ return c.classList.contains('done'); });
+    var fold = grid.querySelector(':scope > details.bdone'), same = function(x, y){ return x.length === y.length && !x.some(function(c, i){ return c !== y[i]; }); };
+    if(up.length && dn.length && !document.body.classList.contains('render')){
+      var made = !fold;
+      if(!fold){ fold = document.createElement('details'); fold.className = 'bdone'; fold.innerHTML = '<summary><b></b> <small>finals, graded parlays and projections</small></summary><div class="bdgrid"></div>'; grid.appendChild(fold); }
+      var box = fold.querySelector('.bdgrid'), open = fold.open;
+      if(!same([].slice.call(grid.querySelectorAll(':scope > .card[data-ko]')), up)) up.forEach(function(c){ grid.insertBefore(c, fold); });
+      if(!same([].slice.call(box.children), dn)){ dn.forEach(function(c){ if(c.parentNode !== box && c.classList.contains('expanded')) open = true; box.appendChild(c); }); }   // a card the reader has open is not folded out of sight
+      if(grid.lastElementChild !== fold) grid.appendChild(fold);
+      fold.querySelector('summary b').textContent = dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played';
+      // only when the fold is first made (the page arrived on a link to a finished game): later the reader's own open / closed choice stands
+      var h = made && location.hash && document.getElementById(location.hash.slice(1)), jump = !!(h && fold.contains(h));
+      if(jump) open = true;
+      if(open && !fold.open) fold.open = true;
+      if(jump) h.scrollIntoView({block: 'start'});
+    } else {
+      if(fold){ [].slice.call(fold.querySelectorAll('.card[data-ko]')).forEach(function(c){ grid.insertBefore(c, fold); }); fold.remove(); }
+      var want = up.concat(dn);
+      if(!same([].slice.call(grid.querySelectorAll(':scope > .card[data-ko]')), want)) want.forEach(function(c){ grid.appendChild(c); });
+    }
     var nav = document.querySelector('nav.nav'); if(!nav) return;
     var links = [].slice.call(nav.querySelectorAll('a[href^="#"]')).filter(function(a){ return a.getAttribute('href') !== '#summary'; });
     var played = {}; cards.forEach(function(c){ if(c.classList.contains('done')) played[c.id] = 1; });

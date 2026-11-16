@@ -26,6 +26,13 @@
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
 .card{content-visibility:auto;contain-intrinsic-size:auto 900px} body.render .card,.card.shooting{content-visibility:visible}
+/* 11/16: played games fold on the boards ("N games already played"); the builder has its own (details.gdone) */
+.grid>details.bdone{grid-column:1/-1;min-width:0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+details.bdone>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;row-gap:2px;align-items:center;min-height:48px;padding:13px 18px 13px 16px;color:var(--ink)} details.bdone>summary::-webkit-details-marker{display:none}
+details.bdone>summary b{grid-column:1;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2} details.bdone>summary small{grid-column:1;color:var(--mute);font-size:13px;line-height:1.35}
+details.bdone>summary::after{content:"";grid-column:2;grid-row:1 / span 2;width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.bdone[open]>summary::after{transform:translateY(2px) rotate(225deg)}
+details.bdone>.bdgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,640px),1fr));gap:22px;padding:0 10px 10px}
+body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:14px}
 
 .bq{margin:10px 0 14px} .bqh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 2px} .bqh b{font-family:var(--display);font-weight:700;font-size:18px} .bqh small{color:var(--mute);font-size:12.5px}
 .bqf{display:flex;gap:6px;overflow-x:auto;margin:8px 0;scrollbar-width:none} .bqf::-webkit-scrollbar{display:none} .bqf button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:38px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer} .bqf button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)} .bqf i{flex:none;width:1px;background:var(--line);margin:6px 3px}
