@@ -14,10 +14,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "grade = record results (needs FEED_GRADE_SECRET); dry = read and report only; detail = dry, with every leg and its numbers; probe = what the database has"
+        description: "grade = record results (needs FEED_GRADE_SECRET); dry = read and report only; detail = dry, with every leg and its numbers; probe = what the database has; check = does the database accept the secret (writes nothing)"
         type: choice
         default: grade
-        options: [grade, dry, detail, probe]
+        options: [grade, dry, detail, probe, check]
 permissions: {contents: read}
 concurrency: {group: social-grade, cancel-in-progress: false}
 jobs:
@@ -37,6 +37,7 @@ jobs:
         run: |
           cd gen; mkdir -p in
           if [ "$MODE" = "probe" ]; then python3 social_grade.py --probe | tee ../grade.log; exit 0; fi
+          if [ "$MODE" = "check" ]; then python3 social_grade.py --check | tee ../grade.log; exit 0; fi
           if [ "$MODE" = "grade" ] && [ -n "$FEED_GRADE_SECRET" ]; then W=--write; else W=; echo "dry run (mode $MODE, secret $([ -n "$FEED_GRADE_SECRET" ] && echo set || echo not set))"; fi
           if [ "$MODE" = "detail" ]; then W=--detail; fi
           python3 social_grade.py --fetch $W | tee ../grade.log
