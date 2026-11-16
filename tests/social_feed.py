@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 now = int(time.time() * 1000); PAST = now - 20 * 3600e3; FUT = now + 5 * 3600e3
 def leg(pl, m, ln, g, ko, o=-150, gl=None): d = {"pl": pl, "m": m, "ln": ln, "g": g, "ko": ko, "o": o, "k": f"{pl}|{m}|{ln}"}; d.update({"gl": gl} if gl else {}); return d
-def post(i, h, title, legs, score=0, week=10): return {"id": i, "user_id": "u%d" % i, "handle": h, "title": title, "week": week, "legs": legs, "fd_odds": 300 + i, "first_ko": min(l["ko"] for l in legs), "last_ko": max(l["ko"] for l in legs), "score": score, "created_at": "2026-11-15T20:00:00Z"}
+def post(i, h, title, legs, score=0, week=10): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "tails": 2 if i == 1 else 0, "rx": {"fire": 3} if i == 1 else {}, "result": None, "units": None, "handle": h, "title": title, "week": week, "legs": legs, "fd_odds": 300 + i, "first_ko": min(l["ko"] for l in legs), "last_ko": max(l["ko"] for l in legs), "score": score, "created_at": "2026-11-15T20:00:00Z"}
 POSTS = [post(1, "opener", "Tonight", [leg("Justin Herbert", "Passing Yards", 175, "BAL-LAC", FUT)], 5),
          post(2, "winner", "SNF four", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST), leg("Ja'Marr Chase", "Anytime TD", 1, "CIN-PIT", PAST), leg("Over 41.5", "Total", 41.5, "CIN-PIT", PAST, gl={"k": "T", "side": "OVER"})], 3),
          post(3, "loser", "Two TDs", [leg("Ja'Marr Chase", "2+ TD", 1, "CIN-PIT", PAST), leg("Joe Burrow", "Passing TDs", 1, "CIN-PIT", PAST)], 1),
@@ -17,9 +17,16 @@ def ath(n, st): return {"athlete": {"displayName": n}, "stats": st}
 SUMMARY = {"boxscore": {"players": [{"statistics": [{"name": "passing", "keys": ["passingYards", "passingTouchdowns"], "athletes": [ath("Joe Burrow", ["409", "3"])]},
             {"name": "receiving", "keys": ["receptions", "receivingYards", "longReception", "receivingTouchdowns"], "athletes": [ath("Ja'Marr Chase", ["11", "231", "60", "1"])]}]}]}, "scoringPlays": []}
 FAKE = """window.__POSTS = %s; window.__LASTW = %s; try{ if(localStorage.getItem("t_empty")) window.__POSTS = []; }catch(e){}
-function Q(rows){ var f = {}, q = {select: function(){ return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
-  then: function(cb){ var r = rows.filter(function(p){ return f.week == null || p.week === f.week; }); return Promise.resolve({data: r, error: null}).then(cb); }}; return q; }
-window.bsAccount = {user: null, client: {from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS.concat(window.__LASTW)) : Q([]); }}};""" % (json.dumps(POSTS), json.dumps(LASTW))
+window.__CALLS = [];
+var U1 = "00000000-0000-0000-0000-000000000001", ME = "00000000-0000-0000-0000-0000000000aa";
+var T = {feed_records: [{user_id: U1, handle: "opener", graded: 20, won: 12, lost: 8, units: 6.4, posts: 21}], feed_profiles: [{user_id: U1, handle: "opener", color: 2}], feed_tails: [], feed_reactions: [], feed_follows: []};
+function Q(rows, t){ var f = {}, q = {select: function(){ return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
+  insert: function(o){ window.__CALLS.push(t + ':insert:' + JSON.stringify(o)); return Promise.resolve({error: null}); }, upsert: function(o){ window.__CALLS.push(t + ':upsert:' + o.kind); return Promise.resolve({error: null}); },
+  delete: function(){ window.__CALLS.push(t + ':delete'); return q; },
+  then: function(cb){ var r = rows.filter(function(p){ return (f.week == null || p.week === f.week) && (f.user_id == null || p.user_id === f.user_id || t !== 'feed_posts' && t !== 'feed_records' && t !== 'feed_profiles'); }); return Promise.resolve({data: r, error: null}).then(cb); }}; return q; }
+var SIGNED = false; try { SIGNED = !!localStorage.getItem("t_user"); } catch(e){}
+window.bsAccount = {user: SIGNED ? {id: ME} : null, client: {rpc: function(n){ window.__CALLS.push('rpc:' + n); return Promise.resolve({data: {user_id: ME, handle: "MeUser", color: 4}, error: null}); },
+  from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS.concat(window.__LASTW), t) : Q(T[t] || [], t); }}};""" % (json.dumps(POSTS), json.dumps(LASTW))
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 async def main():
@@ -60,6 +67,24 @@ async def main():
             check("No open slips right now" in t and "Build a slip and post it" in t, f"[{theme}] empty feed says so and offers the action")
             check("Last week's winners" in t and await pg.locator("#feed article.post").count() == 1 and "Week 9 hit" in t, f"[{theme}] last week's winner shown from the graded box file, the loser is not")
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-empty-{theme}.png")
+            # ---- people (v3): avatar, record, tail, reactions, profile, follow, Following tab ----
+            await pg.evaluate("localStorage.removeItem('t_empty'); localStorage.setItem('t_user', '1'); localStorage.setItem('bs_social_sort', 'top')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            c1 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return {av: (c.querySelector('.av')||{}).textContent, rec: (c.querySelector('.rec')||{}).textContent, fire: (c.querySelector('[data-rx=\"1|fire\"] b')||{}).textContent, tn: (c.querySelector('.tn')||{}).textContent, tail: (c.querySelector('[data-tail]')||{}).textContent}; })()")
+            check(c1 == {"av": "OP", "rec": "12-8 · +6.4u", "fire": "3", "tn": "2 tailing", "tail": "I'm tailing"}, f"[{theme}] a post shows avatar, record, reaction count, tail count and a tail button ({c1})")
+            await pg.click('#p1 [data-tail]'); await pg.wait_for_timeout(300); await pg.click('#p1 [data-rx="1|lock"]'); await pg.wait_for_timeout(300)
+            c2 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return [c.querySelector('[data-tail]').textContent, c.querySelector('.tn').textContent, c.querySelector('[data-rx=\"1|lock\"]').className, (c.querySelector('[data-rx=\"1|lock\"] b')||{}).textContent, window.__CALLS.filter(function(x){ return /tails:insert|reactions:upsert:lock|rpc:feed_profile_me/.test(x); }).length]; })()")
+            check(c2 == ["Tailing ✓", "3 tailing", "on", "1", 3], f"[{theme}] tailing and reacting update the card and write to the database ({c2})")
+            if SHOTS: await pg.evaluate("document.getElementById('p1').scrollIntoView({block:'center'})"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/social-people-{theme}.png")
+            await pg.click('#p1 b.h'); await pg.wait_for_timeout(700)
+            pr = await pg.evaluate("(function(){ var s = document.querySelector('.prof'); return s ? [s.querySelector('h2').textContent, Array.from(s.querySelectorAll('dd')).map(function(d){ return d.textContent; }).join('|'), s.querySelector('.fol').textContent, document.querySelectorAll('#feed article.post').length] : null; })()")
+            check(pr == ["@opener", "12-8|+6.4|20", "Follow", 1], f"[{theme}] tapping a name opens the profile with record, units and their slips ({pr})")
+            await pg.click('.prof .fol'); await pg.wait_for_timeout(300)
+            if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-profile-{theme}.png")
+            check(await pg.inner_text('.prof .fol') == "Following ✓" and "1 follower" in await pg.inner_text('.prof .pn p'), f"[{theme}] following flips the button and the follower count")
+            await pg.click('.seg button[data-s="following"]'); await pg.wait_for_timeout(400)
+            check(await ids() == ["p1"] and "1 person you follow" in await pg.inner_text("#feedinfo"), f"[{theme}] the Following tab lists the followed poster's open slip")
+            m2 = await pg.evaluate("({over: document.documentElement.scrollWidth - document.documentElement.clientWidth})")
+            check(m2["over"] == 0, f"[{theme}] no sideways scroll with six tabs")
             hs = await pg.evaluate("Array.from(document.querySelectorAll('.hcard .hst')).map(x => x.className + '|' + x.textContent)")
             print(f"   [{theme}] house cards: {hs}")
             check(not errs, f"[{theme}] no script errors {errs[:2]}")

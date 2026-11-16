@@ -235,6 +235,18 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc .bar .seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .soc .empty{padding:26px 16px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:12px}
 .soc .empty b{display:block;font-family:var(--display);font-size:20px;color:var(--ink);margin-bottom:4px} .soc .empty .act{display:inline-block;margin-top:14px;background:var(--red);color:#fff;font-weight:700;text-decoration:none;border-radius:10px;padding:12px 18px}
+.post .av,.soc .prof .av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;font-style:normal;color:#fff;letter-spacing:.02em}
+.av.c0{background:#c2410c}.av.c1{background:#0f766e}.av.c2{background:#1d4ed8}.av.c3{background:#7e22ce}.av.c4{background:#be123c}.av.c5{background:#4d7c0f}.av.c6{background:#b45309}.av.c7{background:#334155}
+.post .who b.h{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px} .post .who .rec{display:inline-block;margin-left:7px;font-size:12px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.post .rx{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 14px 2px} .post .rx button{display:inline-flex;align-items:center;gap:5px;min-height:36px;min-width:44px;justify-content:center;border:1px solid var(--line);border-radius:999px;background:none;color:var(--ink);font:inherit;font-size:14px;padding:4px 10px;cursor:pointer}
+.post .rx button i{font-style:normal} .post .rx button b{font-size:12.5px;font-variant-numeric:tabular-nums} .post .rx button.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)} .post .rx .tn{margin-left:auto;font-size:12.5px;color:var(--mute);font-weight:600}
+.post .pf button.tl.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.soc a.back{display:inline-block;margin:0 0 10px;color:var(--ink);font-weight:700;font-size:14px;text-decoration:none;padding:8px 0}
+.soc .prof{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
+.soc .prof .av.big{width:52px;height:52px;font-size:19px} .soc .prof h2{margin:0;font-family:var(--display);font-size:22px;color:var(--ink);overflow-wrap:anywhere} .soc .prof .pn p{margin:2px 0 0;color:var(--mute);font-size:13px}
+.soc .prof .fol{font:inherit;font-weight:700;font-size:13.5px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--red);background:var(--red);color:#fff;cursor:pointer} .soc .prof .fol.on{background:none;color:var(--ink);border-color:var(--line)}
+.soc .prof .pstats{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 0} .soc .prof .pstats div{border:1px solid var(--line);border-radius:10px;padding:8px 10px} .soc .prof dt{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);font-weight:700} .soc .prof dd{margin:2px 0 0;font-family:var(--display);font-weight:800;font-size:24px;color:var(--ink)} .soc .prof dd.up{color:var(--good)} .soc .prof dd.dn{color:var(--bad)}
+.soc .prof .pnote{grid-column:1 / -1;margin:0;color:var(--mute);font-size:12.5px}
 .soc h2.sec{font-family:var(--display);font-size:20px;margin:22px 0 10px;color:var(--ink)}
 .soc details.bust{margin:6px 0 12px} .soc details.bust summary{cursor:pointer;color:var(--mute);font-weight:700;font-size:14px;padding:12px 2px;min-height:44px} .soc details.bust[open] summary{margin-bottom:6px}
 .post.over.busted{opacity:.78} .post.over.cashed{border-color:var(--good)}
@@ -273,6 +285,14 @@ PAGE_JS = r"""<script>(function(){
   var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
   var am = function(o){ return o == null ? '' : (o > 0 ? '+' + o : '' + o); };
   var sort = 'top', POSTS = [], MYV = {}, A = null, G = {}, BOX = {}, FIRST = {};
+  // alpha step 2 (11/16, after the owner ran sql/social_v3.sql): people. V3 turns false if the database does not have the new columns,
+  // and the page then behaves exactly as before.
+  var V3 = true, PROF = {}, REC = {}, MYT = {}, MYRX = {}, FOL = {}, VIEW = null, UPOSTS = null;
+  var COLS = 'id,user_id,handle,title,week,legs,fd_odds,first_ko,last_ko,score,created_at', COLS3 = COLS + ',tails,rx,result,units';
+  var RXK = [['fire', '🔥', 'Fire'], ['lock', '🔒', 'Lock'], ['fade', '👎', 'Fade'], ['rip', '🪦', 'RIP']];
+  function hcol(p){ var q = PROF[p.user_id]; if(q) return q.color; var h = 0, t = String(p.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
+  function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
+  function recTxt(uid){ var r = REC[uid]; if(!r || !r.graded) return ''; var u = +r.units || 0; return r.won + '-' + r.lost + ' · ' + (u >= 0 ? '+' : '') + u.toFixed(1) + 'u'; }
   try { sort = localStorage.getItem('bs_social_sort') || 'top'; } catch(e){}
   function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = 'Could not reach the feed - check your connection and reload.'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }
   // owner 11/14 ("Can this show the games? How do we tell what under it's taking?"): every leg names its game
@@ -334,14 +354,17 @@ PAGE_JS = r"""<script>(function(){
     return {hits: hits, n: ls.length, st: dead ? 'busted' : (ls.length && hits === ls.length) ? 'cashed' : fin ? 'done' : live ? 'live' : 'open'}; }
   function settled(x){ return x.st === 'busted' || x.st === 'cashed' || x.st === 'done'; }
   function card(p, me, C, old){
-    var ls = p.legs || [], x = stateOf(p, C), over = settled(x), url = over || old ? null : fdUrl(ls), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
-    var badge = x.st === 'cashed' ? '<span class="res won">Cashed</span>' : x.st === 'busted' ? '<span class="res lost">Busted · ' + x.hits + ' of ' + x.n + ' hit</span>' : x.st === 'done' ? '<span class="res">Final · ' + x.hits + ' of ' + x.n + ' graded hits</span>' : '';
+    var ls = p.legs || [], x = p.result ? {st: p.result === 'won' ? 'cashed' : p.result === 'lost' ? 'busted' : 'done', hits: p.result === 'won' ? ls.length : 0, n: ls.length, graded: 1} : stateOf(p, C), over = settled(x), url = over || old ? null : fdUrl(ls), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
+    var badge = x.st === 'cashed' ? '<span class="res won">Cashed' + (p.units != null ? ' · +' + (+p.units).toFixed(1) + 'u' : '') + '</span>' : x.st === 'busted' ? '<span class="res lost">Busted' + (x.graded ? '' : ' · ' + x.hits + ' of ' + x.n + ' hit') + '</span>' : x.st === 'done' ? '<span class="res">Final · ' + x.hits + ' of ' + x.n + ' graded hits</span>' : '';
     return '<article class="post' + (p.user_id === me ? ' mine' : '') + (over ? ' over ' + x.st : '') + '" id="p' + p.id + '" data-id="' + p.id + '">' +
       '<div class="ph">' + (old ? '' : '<button type="button" class="vote' + (MYV[p.id] ? ' on' : '') + '" data-v="' + p.id + '" aria-pressed="' + !!MYV[p.id] + '" aria-label="Upvote"><i>▲</i><b>' + p.score + '</b></button>') +
-      '<div class="who"><b>@' + esc(p.handle) + '</b>' + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
+      '<i class="av c' + hcol(p) + '" aria-hidden="true">' + esc(inits(p.handle)) + '</i>' +
+      '<div class="who"><b' + (V3 ? ' class="h" data-u="' + esc(p.user_id) + '" role="link" tabindex="0"' : '') + '>@' + esc(p.handle) + '</b>' + (recTxt(p.user_id) ? '<span class="rec">' + esc(recTxt(p.user_id)) + '</span>' : '') + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
       '<div class="od">' + esc(am(p.fd_odds)) + '</div></div>' +
       '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
-      '<div class="pf">' + badge + (url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '') +
+      (V3 && !old ? '<div class="rx">' + RXK.map(function(k){ var n = (p.rx || {})[k[0]] || 0; return '<button type="button" data-rx="' + p.id + '|' + k[0] + '" class="' + (MYRX[p.id] === k[0] ? 'on' : '') + '" aria-pressed="' + (MYRX[p.id] === k[0]) + '" aria-label="' + k[2] + (n ? ', ' + n : '') + '"><i>' + k[1] + '</i>' + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
+        (p.tails ? '<span class="tn">' + p.tails + ' tailing</span>' : '') + '</div>' : '') +
+      '<div class="pf">' + badge + (V3 && !old && !started && !over && p.user_id !== me ? '<button type="button" class="tl' + (MYT[p.id] ? ' on' : '') + '" data-tail="' + p.id + '" aria-pressed="' + !!MYT[p.id] + '">' + (MYT[p.id] ? 'Tailing ✓' : 'I\'m tailing') + '</button>' : '') + (url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '') +
       (!started && !old ? '<button type="button" data-load="' + p.id + '">Load into my slip</button>' : '') +
       (old ? '' : (p.user_id === me ? '<button type="button" class="mini" data-del="' + p.id + '">Delete</button>' : (me && !over ? '<button type="button" class="mini" data-rep="' + p.id + '">Report</button>' : ''))) +
       '<a class="open" href="/b/?p=' + p.id + '">Open slip →</a>' + (over ? '' : '<span class="st' + (x.st === 'live' ? ' live' : '') + '">' + (x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : 'Kicks off ' + new Date(p.first_ko).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'})) + '</span>') + '</div></article>';
@@ -352,15 +375,24 @@ PAGE_JS = r"""<script>(function(){
     var won = LAST.posts.filter(function(p){ return stateOf(p, LAST.C).st === 'cashed'; }).sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); }).slice(0, 5);
     return won.length ? '<h2 class="sec">Last week\'s winners</h2>' + won.map(function(p){ return card(p, me, LAST.C, true); }).join('') : '';
   }
-  function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (MYV[p.id] ? 'v' : '') + p.score; }).join(',') + '|' + (LAST ? LAST.posts.length : '-'); }
+  function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (MYV[p.id] ? 'v' : '') + p.score + (MYT[p.id] ? 't' : '') + (p.tails || 0) + (MYRX[p.id] || '') + JSON.stringify(p.rx || {}) + (FOL[p.user_id] ? 'f' : ''); }).join(',') + '|' + (LAST ? LAST.posts.length : '-'); }
   var SIG = null;
   function render(){
     var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'lost' || sort === 'sharp';   // the pinned house slips belong to the open feed
+    if(VIEW){ SIG = null; if(hb) hb.hidden = true; profile(); return; }
     if(sort === 'sharp'){ SIG = null; sharps(); return; }
     SIG = sig();
     var me = A && A.user ? A.user.id : null, by = sort === 'new' ? function(a, b){ return new Date(b.created_at) - new Date(a.created_at); } : function(a, b){ return (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)); };
     var open = [], won = [], lost = [];
-    POSTS.slice().sort(by).forEach(function(p){ var x = stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
+    POSTS.slice().sort(by).forEach(function(p){ var x = p.result ? {st: p.result === 'won' ? 'cashed' : 'busted'} : stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
+    if(sort === 'following'){
+      var mine = open.filter(function(p){ return FOL[p.user_id]; }), nf = Object.keys(FOL).length;
+      if(hb) hb.hidden = true;
+      info.textContent = !me ? 'Sign in to follow people' : nf ? 'Open slips from the ' + nf + ' ' + (nf === 1 ? 'person' : 'people') + ' you follow' : 'You are not following anyone yet';
+      list.innerHTML = mine.length ? mine.map(function(p){ return card(p, me); }).join('')
+        : '<div class="empty"><b>' + (!me ? 'Follow the people whose slips you like.' : nf ? 'Nobody you follow has an open slip.' : 'Nobody followed yet.') + '</b>' + (!me ? 'Sign in, then tap a name on any slip to see their record and follow them.' : 'Tap a name on any slip to see their record and follow them.') + '<a class="act" href="#" data-go="top">See the top slips</a></div>';
+      return;
+    }
     won.sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); });
     var cb = document.querySelector('.soc .seg button[data-s="cashed"]'); if(cb) cb.textContent = 'Cashed' + (won.length ? ' ' + won.length : '');
     var lb = document.querySelector('.soc .seg button[data-s="lost"]'); if(lb) lb.textContent = 'Lost' + (lost.length ? ' ' + lost.length : '');
@@ -382,6 +414,29 @@ PAGE_JS = r"""<script>(function(){
     gradeHouse();
     if(location.hash){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
   }
+  function profile(){
+    var me = A && A.user ? A.user.id : null, u = VIEW, d = UPOSTS && UPOSTS.u === u ? UPOSTS : null;
+    info.textContent = '';
+    if(!d){ list.innerHTML = '<p class="lede"><span class="skel"></span><span class="skel"></span></p>';
+      Promise.all([A.client.from('feed_posts').select(COLS3).eq('status', 'open').eq('user_id', u).order('created_at', {ascending: false}).limit(40),
+                   A.client.from('feed_records').select('user_id,handle,graded,won,lost,units,posts').eq('user_id', u),
+                   A.client.from('feed_profiles').select('user_id,handle,color').eq('user_id', u),
+                   A.client.from('feed_follows').select('follower').eq('followee', u)])
+        .then(function(r){ UPOSTS = {u: u, posts: ((r[0] || {}).data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; }), rec: (((r[1] || {}).data || [])[0]) || null, prof: (((r[2] || {}).data || [])[0]) || null, fans: (((r[3] || {}).data || []).length)};
+          if(UPOSTS.prof) PROF[u] = UPOSTS.prof; if(UPOSTS.rec) REC[u] = UPOSTS.rec; if(VIEW === u) render(); })
+        .catch(function(){ UPOSTS = {u: u, posts: [], rec: null, prof: null, fans: 0}; if(VIEW === u) render(); });
+      return; }
+    var h = (d.prof && d.prof.handle) || (d.rec && d.rec.handle) || (d.posts[0] && d.posts[0].handle) || 'user', r = d.rec || {graded: 0, won: 0, lost: 0, units: 0, posts: d.posts.length}, un = +r.units || 0;
+    list.innerHTML = '<a class="back" href="#" data-go="back">← Back to the feed</a>' +
+      '<section class="prof"><i class="av big c' + hcol({user_id: u, handle: h}) + '" aria-hidden="true">' + esc(inits(h)) + '</i><div class="pn"><h2>@' + esc(h) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + ' · ' + (r.posts || d.posts.length) + ' slip' + ((r.posts || d.posts.length) === 1 ? '' : 's') + ' posted</p></div>' +
+      (u !== me ? '<button type="button" class="fol' + (FOL[u] ? ' on' : '') + '" data-fol="' + esc(u) + '" aria-pressed="' + !!FOL[u] + '">' + (FOL[u] ? 'Following ✓' : 'Follow') + '</button>' : '') +
+      '<dl class="pstats"><div><dt>Record</dt><dd>' + (r.graded ? r.won + '-' + r.lost : '—') + '</dd></div><div><dt>Units</dt><dd class="' + (r.graded ? (un >= 0 ? 'up' : 'dn') : '') + '">' + (r.graded ? (un >= 0 ? '+' : '') + un.toFixed(1) : '—') + '</dd></div><div><dt>Graded</dt><dd>' + (r.graded || 0) + '</dd></div></dl>' +
+      (r.graded ? '' : '<p class="pnote">No graded slips yet. A slip is graded after its last game ends; the record counts one unit a slip.</p>') + '</section>' +
+      (d.posts.length ? '<h2 class="sec">Slips</h2>' + d.posts.map(function(p){ return card(p, me, null, p.week !== W); }).join('') : '<div class="empty"><b>No slips posted yet.</b></div>');
+  }
+  function openUser(u){ VIEW = u; UPOSTS = null; try { history.pushState({u: u}, '', '#u=' + u); } catch(e){} render(); window.scrollTo(0, 0); }
+  function closeUser(){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} render(); }
+  window.addEventListener('popstate', function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); VIEW = m ? m[1] : null; if(A) render(); });
   var LAST = null, LAST_BUSY = false;
   function loadLast(){
     if(LAST || LAST_BUSY || !A || W < 2) return; LAST_BUSY = true;
@@ -394,19 +449,47 @@ PAGE_JS = r"""<script>(function(){
         LAST = {posts: (q.data || []), C: C}; if(sort !== 'sharp') render(); })
       .catch(function(){ LAST = {posts: [], C: CUR}; });
   }
+  function people(done){
+    var ids = {}; POSTS.forEach(function(p){ ids[p.user_id] = 1; }); ids = Object.keys(ids); var me = A.user ? A.user.id : null, jobs = [];
+    if(!V3 || !ids.length){ done(); return; }
+    jobs.push(A.client.from('feed_records').select('user_id,graded,won,lost,units').in('user_id', ids).then(function(r){ REC = {}; (r.data || []).forEach(function(x){ REC[x.user_id] = x; }); }));
+    jobs.push(A.client.from('feed_profiles').select('user_id,color').in('user_id', ids).then(function(r){ (r.data || []).forEach(function(x){ PROF[x.user_id] = x; }); }));
+    if(me){ var pids = POSTS.map(function(p){ return p.id; });
+      jobs.push(A.client.from('feed_tails').select('post_id').eq('user_id', me).in('post_id', pids).then(function(r){ MYT = {}; (r.data || []).forEach(function(x){ MYT[x.post_id] = 1; }); }));
+      jobs.push(A.client.from('feed_reactions').select('post_id,kind').eq('user_id', me).in('post_id', pids).then(function(r){ MYRX = {}; (r.data || []).forEach(function(x){ MYRX[x.post_id] = x.kind; }); }));
+      jobs.push(A.client.from('feed_follows').select('followee').eq('follower', me).then(function(r){ FOL = {}; (r.data || []).forEach(function(x){ FOL[x.followee] = 1; }); }));
+      if(!PROF[me] && A.client.rpc) jobs.push(A.client.rpc('feed_profile_me').then(function(r){ if(r && r.data && r.data.user_id) PROF[r.data.user_id] = r.data; })); }
+    Promise.all(jobs.map(function(j){ return Promise.resolve(j).catch(function(){}); })).then(done, done);
+  }
   function load(){
-    A.client.from('feed_posts').select('id,user_id,handle,title,week,legs,fd_odds,first_ko,last_ko,score,created_at').eq('status', 'open').eq('week', W)
+    A.client.from('feed_posts').select(V3 ? COLS3 : COLS).eq('status', 'open').eq('week', W)
       .order('score', {ascending: false}).order('created_at', {ascending: false}).limit(200).then(function(r){
+        if(r.error && V3 && (r.error.code === '42703' || r.error.code === 'PGRST204' || /column/i.test(r.error.message || ''))){ V3 = false; load(); return; }   // the database is still on v2
         if(r.error){ info.textContent = (r.error.code === '42P01' || r.error.code === 'PGRST205') ? 'Social is being set up - check back soon.' : 'Could not load the feed (' + r.error.message + (r.error.code ? ', ' + r.error.code : '') + ').'; try{ console.error('feed load', r.error); }catch(e){} list.innerHTML = '<div class="empty"><b>The feed did not load.</b>Check your connection and try again.<a class="act" href="/social/">Reload</a></div>'; return; }
         POSTS = (r.data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; });
         if(!SHARP && !SHARP_BUSY) setTimeout(function(){ sharpLoad(function(){ if(sort !== 'sharp' && Object.keys(SHARP_BADGE).length) render(); }); }, 1200);
         var me = A.user ? A.user.id : null;
-        if(!me || !POSTS.length){ MYV = {}; render(); poll(); return; }
-        A.client.from('feed_votes').select('post_id').eq('user_id', me).in('post_id', POSTS.map(function(p){ return p.id; })).then(function(v){ MYV = {}; (v.data || []).forEach(function(x){ MYV[x.post_id] = 1; }); render(); poll(); });
+        if(!me || !POSTS.length){ MYV = {}; people(function(){ render(); poll(); }); return; }
+        A.client.from('feed_votes').select('post_id').eq('user_id', me).in('post_id', POSTS.map(function(p){ return p.id; })).then(function(v){ MYV = {}; (v.data || []).forEach(function(x){ MYV[x.post_id] = 1; }); people(function(){ render(); poll(); }); });
       });
   }
   function needSignIn(){ var s = document.querySelector('#bsacct button'); if(s) s.click(); }
   list.addEventListener('click', function(e){
+    var go = e.target.closest('[data-go]'); if(go){ e.preventDefault(); if(go.dataset.go === 'back') closeUser(); else { var tb = document.querySelector('.soc .seg button[data-s="' + go.dataset.go + '"]'); if(tb) tb.click(); } return; }
+    var hu = e.target.closest('b.h[data-u]'); if(hu){ openUser(hu.dataset.u); return; }
+    var tl = e.target.closest('[data-tail]'), rx = e.target.closest('[data-rx]'), fo = e.target.closest('[data-fol]');
+    if(tl || rx || fo){ if(!A.user){ needSignIn(); return; } }
+    if(tl){ var tid = +tl.dataset.tail, tp = POSTS.concat((UPOSTS || {}).posts || []).filter(function(x){ return x.id === tid; }); if(!tp.length) return; tl.disabled = true;
+      (MYT[tid] ? A.client.from('feed_tails').delete().eq('post_id', tid).eq('user_id', A.user.id) : A.client.from('feed_tails').insert({post_id: tid})).then(function(r){ tl.disabled = false;
+        if(r.error){ tl.textContent = /kicked off/i.test(r.error.message || '') ? 'Already kicked off' : 'Try again'; return; }
+        var d = MYT[tid] ? -1 : 1; if(MYT[tid]) delete MYT[tid]; else MYT[tid] = 1; tp.forEach(function(x){ x.tails = Math.max(0, (x.tails || 0) + d); }); render(); }); return; }
+    if(rx){ var pr = rx.dataset.rx.split('|'), rid = +pr[0], kind = pr[1], rp = POSTS.concat((UPOSTS || {}).posts || []).filter(function(x){ return x.id === rid; }); if(!rp.length) return; var was = MYRX[rid]; rx.disabled = true;
+      (was === kind ? A.client.from('feed_reactions').delete().eq('post_id', rid).eq('user_id', A.user.id) : A.client.from('feed_reactions').upsert({post_id: rid, user_id: A.user.id, kind: kind}, {onConflict: 'post_id,user_id'})).then(function(r){ rx.disabled = false; if(r.error) return;
+        rp.forEach(function(x){ var o = Object.assign({}, x.rx || {}); if(was){ o[was] = Math.max(0, (o[was] || 0) - 1); if(!o[was]) delete o[was]; } if(was !== kind) o[kind] = (o[kind] || 0) + 1; x.rx = o; });
+        if(was === kind) delete MYRX[rid]; else MYRX[rid] = kind; render(); }); return; }
+    if(fo){ var fu = fo.dataset.fol; fo.disabled = true;
+      (FOL[fu] ? A.client.from('feed_follows').delete().eq('follower', A.user.id).eq('followee', fu) : A.client.from('feed_follows').insert({followee: fu})).then(function(r){ fo.disabled = false; if(r.error) return;
+        if(FOL[fu]){ delete FOL[fu]; if(UPOSTS && UPOSTS.u === fu) UPOSTS.fans = Math.max(0, UPOSTS.fans - 1); } else { FOL[fu] = 1; if(UPOSTS && UPOSTS.u === fu) UPOSTS.fans++; } render(); }); return; }
     if(!e.target.closest('button, a, input') && (e.target.closest('.post .who') || e.target.closest('.post ul'))){ var art = e.target.closest('article.post'); if(art){ location.href = '/b/?p=' + art.dataset.id; return; } }
     var v = e.target.closest('[data-v]'), ld = e.target.closest('[data-load]'), del = e.target.closest('[data-del]'), rep = e.target.closest('[data-rep]');
     if(v){ if(!A.user){ needSignIn(); return; } var id = +v.dataset.v, p = POSTS.filter(function(x){ return x.id === id; })[0]; if(!p) return; v.disabled = true;
@@ -423,7 +506,8 @@ PAGE_JS = r"""<script>(function(){
   });
   function confirmInline(b, q){ if(b.dataset.armed) return true; b.dataset.armed = 1; var t = b.textContent; b.textContent = q + ' tap again'; setTimeout(function(){ delete b.dataset.armed; if(!b.disabled) b.textContent = t; }, 3000); return false; }
   document.querySelectorAll('.soc .seg button').forEach(function(b){ b.classList.toggle('on', b.dataset.s === sort); b.addEventListener('click', function(){ sort = b.dataset.s; try { localStorage.setItem('bs_social_sort', sort); } catch(e){}
-    document.querySelectorAll('.soc .seg button').forEach(function(x){ x.classList.toggle('on', x === b); }); render(); }); });
+    document.querySelectorAll('.soc .seg button').forEach(function(x){ x.classList.toggle('on', x === b); }); if(VIEW){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} } render(); }); });
+  (function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); if(m) VIEW = m[1]; })();
   // ---- live grading (same rules as the home page's promoted bets): a slip leaves the feed when a leg loses or every game is over ----
   var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
   function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
@@ -584,7 +668,7 @@ __BASE__
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>

@@ -819,3 +819,14 @@ HTML and CSS (site variables), no script. Still to do from step 6: the same pict
 Tested 11/16 on a throwaway Postgres 16 with a mock auth schema: installs twice cleanly on top of v1; a user cannot edit a handle,
 arrive pre-tailed or pre-graded, follow himself, follow as someone else, tail after kickoff or grade without the secret (the
 placeholder itself is refused). Not tested against Supabase. Nothing on the site reads these tables yet.
+
+## Social people, page side (alpha plan step 2, 11/16 - the owner ran sql/social_v3.sql at 11:47 AM CT)
+
+social.py PAGE_JS: every post shows an avatar (colour from feed_profiles, else from the handle), the poster's record from
+`feed_records` ("12-8 · +6.4u", only once something is graded), four one-tap reactions with counts (`rx`), a tail count and an
+"I'm tailing" button before kickoff (not on your own slip). Tapping a name opens a profile (`#u=<uuid>`): record, units, graded
+count, followers, Follow, their slips (older weeks use the stored `result`). New **Following** tab. A signed-in account gets its
+profile row through `feed_profile_me()`. If the database lacks the v3 columns the page drops to v2 behaviour (`V3 = false`).
+NOT built yet: the grading job that calls `feed_grade` (needs the owner's secret as a repo secret) - until it runs every record
+reads as ungraded; "this week's sharps" strip; alerts. Tested with a faked client only (tests/social_feed.py, 34 checks) - this
+workspace cannot reach Supabase, so the first real check is the owner tapping a reaction while signed in.
