@@ -194,6 +194,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--in", dest="IN", default=os.path.join(HERE, "in")); ap.add_argument("--season", type=int); ap.add_argument("--week", type=int)
     ap.add_argument("--posts"); ap.add_argument("--fetch", action="store_true"); ap.add_argument("--write", action="store_true"); ap.add_argument("--probe", action="store_true")
+    ap.add_argument("--detail", action="store_true", help="print every leg with its grade and the numbers behind it (legs only - no usernames, titles or ids of people)")
     a = ap.parse_args(); S = {"started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     if a.probe:
         S["probe"] = probe(); print("SOCIALGRADE " + json.dumps(S, separators=(",", ":"))); return 0 if S["probe"].get("reachable") else 1
@@ -219,6 +220,17 @@ def main():
     rows, left = [], {}
     for p in posts:
         res, units, why = grade_post(p, F)
+        if a.detail:
+            print(f"post {p.get('id')} wk{p.get('week')} {len(p.get('legs') or [])} leg(s) at {p.get('fd_odds')}: {res or 'LEFT - ' + str(why)}")
+            for l in p.get("legs") or []:
+                try:
+                    wk = int(p.get("week")); r = grade_leg(l, wk, F); g = F.game(wk, l.get("g")); had = ""
+                    if g and l.get("gl"): had = f"final {g['a']} {g['sa']:.0f} {g['h']} {g['sh']:.0f}"
+                    elif g and isinstance(r, str):
+                        rows = [F.player(n.strip(), l, wk, g) for n in re.split(r"\s+or\s+", str(l.get("pl") or ""))]
+                        had = " / ".join(", ".join(f"{k} {v:g}" for k, v in x.items() if v) or "nothing in the box" if isinstance(x, dict) else str(x) for x in rows)
+                    print(f"    {r if isinstance(r, str) else 'unknown: ' + r[1]:8} {l.get('pl')} | {l.get('m')} | {l.get('ln')} | {l.get('g')}" + (f"   [{had}]" if had else ""))
+                except Exception as e: print("    (could not explain this leg:", type(e).__name__, ")")
         if res: rows.append({"id": p["id"], "result": res, "units": units})
         else: left.setdefault(why, []).append(p.get("id"))
     S.update(posts=len(posts), won=sum(r["result"] == "won" for r in rows), lost=sum(r["result"] == "lost" for r in rows), push=sum(r["result"] == "push" for r in rows),
