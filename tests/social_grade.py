@@ -67,4 +67,13 @@ out2 = subprocess.run([sys.executable, os.path.join(HERE, "..", "social_grade.py
 S2 = json.loads(([x for x in out2.stdout.splitlines() if x.startswith("SOCIALGRADE ")] or ["SOCIALGRADE {}"])[-1][12:])
 check(out2.returncode == 0 and (S2.get("posts"), S2.get("won"), S2.get("lost"), S2.get("left")) == (3, 1, 1, 1) and out2.stdout.count("\npost ") + out2.stdout.startswith("post ") == 3 and "    miss     Zay Flowers | Receiving Yards | 50 | BAL-LAC   [rec 3, recy 49]" in out2.stdout,
       "--detail lists every leg with its numbers and ends with the same counts as a plain run")
+# --check: asks the database about the secret with an EMPTY list of results, so it cannot write; the secret is never in its message
+calls = []; real = SG.rest
+def fake(path, params=None, body=None, head=False, prefer=None):
+    calls.append((path, body)); return {"ok": True, "data": 0} if body and body.get("p_secret") == "right" else {"ok": False, "status": 400, "error": "Not allowed"}
+SG.rest = fake
+good, bad, none = SG.check_secret("right"), SG.check_secret("wrong-value"), SG.check_secret("")
+SG.rest = real
+check(good[0] and "accepted" in good[1] and not bad[0] and "REFUSED" in bad[1] and not none[0] and "not set" in none[1] and len(calls) == 2 and all(c[0] == "rpc/feed_grade" and c[1]["p_rows"] == [] for c in calls)
+      and "right" not in good[1] and "wrong-value" not in bad[1], "--check sends an empty list (nothing can be written), tells accepted from refused from not set, and never repeats the secret")
 print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

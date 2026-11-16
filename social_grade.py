@@ -17,6 +17,7 @@ A post is graded only when the result is certain:
   python3 social_grade.py                       dry run against the live database, files from ./in
   python3 social_grade.py --fetch               download fresh nflverse files into ./in first (the scheduled job does)
   python3 social_grade.py --write               record results (needs FEED_GRADE_SECRET)
+  python3 social_grade.py --check               does the database accept FEED_GRADE_SECRET? (sends an empty list; writes nothing)
   python3 social_grade.py --probe               read-only: which Social scripts the database has had, and how much is in it (counts only)
   python3 social_grade.py --posts FILE.json     grade posts from a file instead of the database (tests)
 """
@@ -179,6 +180,14 @@ def probe():
         out["open_posts_by_week"] = {str(k): by[k] for k in sorted(by, key=lambda v: (v is None, v))}
     return out
 
+def check_secret(secret):
+    """does the database accept this secret? An empty list of results is sent, so nothing can be written either way."""
+    if not secret: return (False, "FEED_GRADE_SECRET is not set in this run")
+    r = rest("rpc/feed_grade", body={"p_secret": secret, "p_rows": []})
+    if r["ok"]: return (True, "the database accepted the secret; nothing was written (an empty list was sent)")
+    if r.get("status") == 0: return (False, f"could not reach the database ({r.get('error')})")
+    return (False, f"the database REFUSED the secret (HTTP {r.get('status')}: {r.get('error')}) - the value in GitHub is not the one in the database")
+
 def fetch(IN, season):
     import subprocess
     for name, path in (("games.csv", "schedules/games.csv"), (f"stats_player_week_{season}.csv", f"stats_player/stats_player_week_{season}.csv"), (f"snap_counts_{season}.csv", f"snap_counts/snap_counts_{season}.csv")):
@@ -194,8 +203,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--in", dest="IN", default=os.path.join(HERE, "in")); ap.add_argument("--season", type=int); ap.add_argument("--week", type=int)
     ap.add_argument("--posts"); ap.add_argument("--fetch", action="store_true"); ap.add_argument("--write", action="store_true"); ap.add_argument("--probe", action="store_true")
+    ap.add_argument("--check", action="store_true", help="only ask the database whether it accepts FEED_GRADE_SECRET (sends an empty list; writes nothing)")
     ap.add_argument("--detail", action="store_true", help="print every leg with its grade and the numbers behind it (legs only - no usernames, titles or ids of people)")
     a = ap.parse_args(); S = {"started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    if a.check:
+        ok, msg = check_secret(os.environ.get("FEED_GRADE_SECRET") or ""); S["secret_ok"] = ok; S["result"] = msg
+        print(msg); print("SOCIALGRADE " + json.dumps(S, separators=(",", ":"))); return 0 if ok else 1
     if a.probe:
         S["probe"] = probe(); print("SOCIALGRADE " + json.dumps(S, separators=(",", ":"))); return 0 if S["probe"].get("reachable") else 1
     if a.fetch:
