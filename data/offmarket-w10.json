@@ -132,6 +132,66 @@
    "gap": 3.8,
    "p": 0.4597,
    "seen": "2026-11-15 18:34"
+  },
+  "Justice Hill|Receiving Yards|25": {
+   "pl": "Justice Hill",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "BAL-LAC",
+   "fd": 350.0,
+   "dk": 289.0,
+   "hr": 230.0,
+   "gap": 3.5,
+   "p": 0.2102,
+   "seen": "2026-11-16 10:35"
+  },
+  "Josh Cuevas|Receptions|2": {
+   "pl": "Josh Cuevas",
+   "m": "Receptions",
+   "ln": 2.0,
+   "g": "BAL-LAC",
+   "fd": 194.0,
+   "dk": 163.0,
+   "hr": 165.0,
+   "gap": 3.7,
+   "p": 0.3275,
+   "seen": "2026-11-16 10:35"
+  },
+  "Quentin Johnston|Receptions|4": {
+   "pl": "Quentin Johnston",
+   "m": "Receptions",
+   "ln": 4.0,
+   "g": "BAL-LAC",
+   "fd": 270.0,
+   "dk": 225.0,
+   "hr": 220.0,
+   "gap": 3.7,
+   "p": 0.257,
+   "seen": "2026-11-16 10:35"
+  },
+  "Ja'Kobi Lane|Receiving Yards|40": {
+   "pl": "Ja'Kobi Lane",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "BAL-LAC",
+   "fd": 310.0,
+   "dk": 251.0,
+   "hr": 260.0,
+   "gap": 3.4,
+   "p": 0.2165,
+   "seen": "2026-11-16 10:35"
+  },
+  "Keaton Mitchell|Receiving Yards|25": {
+   "pl": "Keaton Mitchell",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "BAL-LAC",
+   "fd": 350.0,
+   "dk": 285.0,
+   "hr": 230.0,
+   "gap": 3.8,
+   "p": 0.1915,
+   "seen": "2026-11-16 10:35"
   }
  }
 }
