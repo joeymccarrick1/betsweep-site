@@ -46,6 +46,7 @@ jobs:
         run: |
           echo "Actions secret named FEED_GRADE_SECRET: ${{ secrets.FEED_GRADE_SECRET != '' }}"
           echo "Actions VARIABLE named FEED_GRADE_SECRET (wrong tab - variables are not hidden): ${{ vars.FEED_GRADE_SECRET != '' }}"
+          echo "Actions secret named SHEETS_SA_JSON (an older one that is known to exist - shows this check can see secrets at all): ${{ secrets.SHEETS_SA_JSON != '' }}"
           echo "Actions secret named CRON_SECRET: ${{ secrets.CRON_SECRET != '' }}"
           echo "Actions secret named FEED_GRADE: ${{ secrets.FEED_GRADE != '' }}"
           echo "Actions secret named GRADE_SECRET: ${{ secrets.GRADE_SECRET != '' }}"
