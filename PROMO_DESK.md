@@ -232,3 +232,10 @@ Every builder leg on a player's main stat carries `sd` = [split vs his 3 most si
 The risk tag does not know a leg's side. Before any under goes on a slip, look at the player's flags: Role Up, Fill-in volume, Snaps up,
 Targets up, Carries up, Healthy again, Hot L3, Soft matchup, Trail script (catches), Lead script (rushing), a teammate at his position
 out. Any of them means no under on that player. Ekeler under 1.5 receptions on 11/12 (4 catches) is the case this rule comes from.
+
+## Night-game parlays given in chat: ask before kickoff whether one goes up (owner 11/16)
+
+On 11/15 the owner cashed his own mix of the SNF parlays given in chat (+308) and asked why it was not posted. It was never a promo:
+Sunday already had its Daily Sweep (one per game day) and nobody said "post it" before kickoff. A winner is never added to the record
+after the fact. So whenever parlays for a stand-alone night game (TNF, SNF, MNF) are given in chat, end by asking whether one of them
+should go up as a promo before kickoff - and do not call a chat slip a "Sweep" unless it is the day's Daily Sweep.
