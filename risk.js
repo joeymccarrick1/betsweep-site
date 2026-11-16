@@ -44,6 +44,8 @@
     if (r.status === 'LIMITED') return {level: 'warn', label: 'Limited', why: 'BetSweep note - limited role' + d, short: 'Limited'};
     if (r.status === 'STARTING') return {level: 'good', label: 'Starting', why: 'BetSweep note - starting' + d, short: 'Starting'};
     if (r.status === 'ROLE_UP') return {level: 'good', label: 'Role up', why: 'BetSweep note - bigger role' + d, short: 'Role up'};
+    if (r.status === 'AVOID') return {level: 'warn', label: 'Avoid', why: 'BetSweep note - keep him off slips' + d, short: 'Avoid'};
+    if (r.status === 'WRONG_FLAG') return {level: 'good', label: 'Flag overruled', why: 'BetSweep note - a flag on him was marked wrong' + d + '. The next rebuild takes it off.', short: 'Overruled'};
     return null; }
   function chip(v){ return '<span class="bsrc bsr-' + v.level + '" title="' + esc(v.why) + '">' + (v.level === 'block' ? '⛔ ' : v.level === 'warn' ? '⚠ ' : '▲ ') + esc(v.label) + '</span>'; }
   // ---- decorate names wherever they appear ----
@@ -133,16 +135,16 @@
       var cur = (P[nrm(name)] || []).filter(function(x){ return x.kind === 'note'; })[0] || {};
       var box = document.createElement('div'); box.className = 'bsrnote';
       box.innerHTML = '<div class="bsrh"><b>Your BetSweep note</b><span>Only you see this box</span></div><p>Shows on every page within minutes; the next rebuild adjusts his numbers.</p><div class="row">' +
-        '<select id="bsrst">' + [['', '- none -'], ['HURT', 'Hurt / playing through it'], ['LIMITED', 'Limited role'], ['OUT', 'Out'], ['STARTING', 'Starting'], ['ROLE_UP', 'Role up']].map(function(o){ return '<option value="' + o[0] + '"' + (cur.status === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
+        '<select id="bsrst">' + [['', '- none -'], ['HURT', 'Hurt / playing through it'], ['LIMITED', 'Limited role'], ['OUT', 'Out'], ['STARTING', 'Starting'], ['ROLE_UP', 'Role up'], ['AVOID', 'Avoid - keep him off slips'], ['WRONG_FLAG', 'A flag on him is wrong (name it in the note)']].map(function(o){ return '<option value="' + o[0] + '"' + (cur.status === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
         '<input id="bsrdt" maxlength="200" placeholder="e.g. could barely walk last week" value="' + esc(cur.detail || '') + '"><button type="button" id="bsrsv">Save</button></div><small id="bsrmsg"></small>';
       var hd = pp.closest('header') || pp; hd.parentNode.insertBefore(box, hd.nextSibling);   // below the whole name / team header, full width
       document.getElementById('bsrsv').addEventListener('click', function(){ var st = document.getElementById('bsrst').value, dt = document.getElementById('bsrdt').value.trim().slice(0, 200), id = 'note|' + nrm(name), msg = document.getElementById('bsrmsg');
         var W = +((document.querySelector('.pp') || {}).getAttribute ? document.querySelector('.pp').getAttribute('data-week') : 0) || 0;
         var q = !st ? A.client.from('risk_feed').delete().eq('id', id)
-          : A.client.from('risk_feed').upsert({id: id, kind: 'note', week: W, player: name, status: st, level: (st === 'OUT' ? 'block' : (st === 'STARTING' || st === 'ROLE_UP') ? 'good' : 'warn'), detail: dt || null, by_owner: true, updated_at: new Date().toISOString()});
+          : A.client.from('risk_feed').upsert({id: id, kind: 'note', week: W, player: name, status: st, level: (st === 'OUT' ? 'block' : (st === 'STARTING' || st === 'ROLE_UP' || st === 'WRONG_FLAG') ? 'good' : 'warn'), detail: dt || null, by_owner: true, updated_at: new Date().toISOString()});
         q.then(function(r){ msg.textContent = r && r.error ? 'Could not save: ' + r.error.message : (st ? 'Saved - live on every page now.' : 'Cleared.'); load(); }); }); }); }
   document.addEventListener('bs-account', function(){ owner(); });
-  window.BSRisk = {blockAdd: function(pl, m){ var v = verdict(pl, m); if (v && v.level === 'block'){ toast(pl + ': ' + v.why); return true; } return false; }, verdict: verdict, avoid: function(pl, m){ var v = verdict(pl, m); return !!(v && v.level !== 'good'); }, rows: function(){ return ROWS; }, reload: load};
+  window.BSRisk = {move: function(k){ return MOVES[k] || null; }, blockAdd: function(pl, m){ var v = verdict(pl, m); if (v && v.level === 'block'){ toast(pl + ': ' + v.why); return true; } return false; }, verdict: verdict, avoid: function(pl, m){ var v = verdict(pl, m); return !!(v && v.level !== 'good'); }, rows: function(){ return ROWS; }, reload: load};
   function start(){ watch(); load(); setInterval(load, 180000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
