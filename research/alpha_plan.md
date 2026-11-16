@@ -23,6 +23,9 @@ Read this file first when the work is picked up again.
 1. **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
    data/box-w<W>.json); stop hiding finished slips, sort them under Cashed / Busted; live grading on the pinned house slips so they can
    stay through the games; last week's winners when nothing is open; empty state with an action.
+1b. **Game cards keep their pre-kickoff best parlay.** Since 11/16 a card shows no best parlay once its game kicks off (a rebuild used
+   to invent a game-line one for a finished game). Better: publish `data/best-parlays-w<week>.json`, keep each game's record from the
+   last build before its kickoff, show it on the card through the game and grade it when the game is final. Before Thursday's kickoff.
 2. **Social - people.** SQL for the owner to run (same way as gen/social.sql): profiles (handle, avatar color), follows, tails, reactions,
    and graded results per post (result, units) written by a scheduled job. Then: avatar + handle + record in units on every post, a
    profile view with graded history, Following tab, "this week's sharps" strip.

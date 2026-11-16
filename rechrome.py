@@ -14,8 +14,9 @@ the shared furniture replaced:
   the shared script link (before 11/5: the inline app script)           -> this build's /s/app-<hash>.js
   the bottom tab bar                                                    -> apptabs(path)
   "Where to next", when the page has none and NEXT has doors for it      -> next_strip(path)
+  a label the site has renamed since the page was built (RENAMED)       -> today's name
 
-Nothing else is touched: the page's own content, styles, data and scripts stay byte for byte. A page whose furniture cannot be found is
+Nothing else is touched: apart from a renamed label, the page's own content, styles, data and scripts stay byte for byte. A page whose furniture cannot be found is
 left alone and named in the log. The copy step (reprice.copy_into_clone) then publishes these like any page the build made, and prunes
 the old hashed stylesheets and scripts once no page links them.
 
@@ -34,6 +35,17 @@ APP_TAG = re.compile(r'<script src="/s/app-[0-9a-f]+\.js" defer></script>')
 STYLE = re.compile(r'<style>(.*?)</style>[ \t]*\n?', re.S)
 SCRIPT = re.compile(r'<script>(.*?)</script>[ \t]*\n?', re.S)
 FOOT = '<p style="max-width:1360px;margin:10px auto 40px;'
+
+
+# The one exception to "content stays byte for byte" (owner 11/15, "Yeah sure" to dropping the word "safe" from the 65%+ tier; found on
+# the 11/16 rebuild): a label the site has renamed. The Week 9 receipt and /season/ were built with the old name and a reprice does not
+# rebuild them, so they would keep it. Exact strings only - add a pair when a label is renamed, never a pattern.
+RENAMED = [(">Safer (65%+)<", ">Short-priced (65%+)<"), ("Safer 65%+", "Short-priced 65%+"), ("and safer 65%+ legs", "and short-priced 65%+ legs")]
+
+
+def renamed(t):
+    for a, b in RENAMED: t = t.replace(a, b)
+    return t
 
 
 def _old_chrome_css(css):
@@ -87,7 +99,7 @@ def rechrome(t, path, sitenav, apptabs, next_strip, shared):
         i = t.rfind(FOOT)
         if i < 0: i = t.rfind('<nav class="apptabs"')
         if i > 0: t = t[:i] + nx + t[i:]
-    return t, ""
+    return renamed(t), ""
 
 
 def _pages(root, skip):
@@ -120,7 +132,7 @@ def refresh(clone, site, sitenav, apptabs, next_strip, shared, merge, protected,
             skipped.append(rel); log(f"rechrome: {rel} unreadable ({e})"); continue
         if 'id="sitenav"' not in t: continue
         path = page_path(rel)
-        if sitenav(path) in t and shared["site"] in t and shared["app"] in t: continue     # already this build's
+        if sitenav(path) in t and shared["site"] in t and shared["app"] in t and renamed(t) == t: continue     # already this build's
         new, why = rechrome(t, path, sitenav, apptabs, next_strip, shared)
         if new is None:
             skipped.append(rel); log(f"rechrome: {rel} left as it is - {why}"); continue

@@ -4,7 +4,7 @@
 A visitor uploads or pastes a screenshot of ANY FanDuel slip - his own or one somebody posted. The picture is read on his device by
 the same reader /me/ uses (import.js, slipimport.py: tesseract in the browser, legs matched against this week's board); nothing is
 uploaded. The legs go into the betslip and the Parlay Builder opens with the verdict showing (build_builder.py sweepBlock): the
-slip's chance against its price, how many legs are low risk, the weakest leg, and a safer swap one tap applies. Legs we do not price
+slip's chance against its price, how many legs are low risk, the weakest leg, and an easier swap one tap applies. Legs we do not price
 are named on the verdict, never guessed at.
 
 Writes out/slipcheck.html (placed at /sweep/ by build_site.py). No data of its own - the page reads the board the builder publishes.
@@ -74,13 +74,13 @@ try:
     import account as ACCT; _link, _base = ACCT._base_css()
 except Exception: _link, _base = "", ""
 page = f"""<title>Sweep my slip · BetSweep</title>
-<meta name="description" content="Screenshot any FanDuel slip and get a plain verdict before you bet it: its chance against its price, the weakest leg, and a safer swap. Read on your device; nothing is uploaded.">
+<meta name="description" content="Screenshot any FanDuel slip and get a plain verdict before you bet it: its chance against its price, the weakest leg, and an easier swap. Read on your device; nothing is uploaded.">
 {_link}
 <style>{_base}
 {CSS}</style>
 <div class="sc">
 <h1>Sweep my slip</h1>
-<p class="lead">Before you place it, sweep it. Screenshot any FanDuel slip, yours or one somebody posted, and get a plain verdict: its chance against its price, the weakest leg, and a safer swap.</p>
+<p class="lead">Before you place it, sweep it. Screenshot any FanDuel slip, yours or one somebody posted, and get a plain verdict: its chance against its price, the weakest leg, and an easier swap.</p>
 <div class="drop" id="scdrop">
  <div class="btns"><label class="cta">Choose screenshot<input type="file" id="scfile" accept="image/*" hidden></label><button type="button" class="cta alt" id="scpaste">Paste screenshot</button></div>
  <div id="scpbox" contenteditable="true" hidden></div>

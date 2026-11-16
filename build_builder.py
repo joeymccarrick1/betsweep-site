@@ -726,7 +726,7 @@ for l in _safe_best.values():
     if not l.get("tier"): l["tier"] = "safe"
 for l in LEGS:
     if l.get("tier"): NT[l["tier"]] += 1
-print(f"model's best: {NT['plus']} plus-money edges, {NT['even']} even-odds (overs + unders), {NT['td']} TDs, {NT['safe']} safer legs")
+print(f"model's best: {NT['plus']} plus-money edges, {NT['even']} even-odds (overs + unders), {NT['td']} TDs, {NT['safe']} short-priced legs")
 # frozen copy of the tier for its own scorecard (appended to 'V2 - Model Best Picks' by the runbook, graded by build_season.py)
 try:
     _ko = {g["gid"]: g.get("ko") for g in GAMES}; _now = datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000
@@ -1401,7 +1401,7 @@ BUILDER_JS = r"""
   function fader(l, cls){
     var g = ladderOf(l); if(!g || g.length < 2 || isTD(l)) return '';
     var i = g.indexOf(l);
-    return '<span class="lad ' + (cls||'') + '" data-k="' + esc(l.pl + '|' + l.m) + '" data-i="' + i + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="safer line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>';
+    return '<span class="lad ' + (cls||'') + '" data-k="' + esc(l.pl + '|' + l.m) + '" data-i="' + i + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="easier line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>';
   }
   function fade(k, d, fromSlip){
     var g = GROUPS[k]; if(!g) return;

@@ -736,3 +736,16 @@ sweep selftest, boards + builder + site build clean, phone-sized browser sweep o
 live site, and blocks under 60%. Finished games no longer count, so a Sunday-night or Monday rebuild can publish; a broken pull on a game
 still to be played is still blocked. On a new week the board is not compared with last week's - it needs 200 legs. Before this, the
 whole-board comparison (added 11/10) blocked every late-week publish (792 legs against 3,912 on 11/15).
+
+## After the 11/16 rebuild: two things the first Monday publish showed
+
+- **No best parlay on a game that has kicked off** (build_boards.py, at the `best_parlay` call). A rebuild after kickoff used to build a
+  new "best parlay" for a game already played - the player legs are gone by then, so it fell back to game lines nobody could bet any
+  more (DET-NE "Under 50.5 + NE +2.5" the morning after). The card now shows none once kickoff has passed. The pre-kickoff pick is
+  still frozen in 'AUTO - Model Calls Archive' (build_calls.py only writes games not yet started), so grading is not affected.
+  Open (alpha plan, item 1b): keep the pre-kickoff parlay on the card through the game and grade it there, from a published
+  `data/best-parlays-w<week>.json`, instead of hiding it.
+- **Renamed labels on pages a reprice does not rebuild** (rechrome.py, `RENAMED`). /season/ (Tuesday session) and the older receipts
+  keep the words they were built with; rechrome now swaps the exact old label for today's ("Safer (65%+)" -> "Short-priced (65%+)").
+  That is the one content change rechrome makes. Add a pair when a label is renamed; exact strings only.
+- Wording: "a safer swap" -> "an easier swap" (slip check, home door), ladder button label "easier line" (builder and template.html).

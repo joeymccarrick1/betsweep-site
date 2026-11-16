@@ -332,7 +332,7 @@ def best_block():
         n, h, u = T[(tier, 0)]
         rows += f'<tr><td>{lab.get(tier, tier)}</td>{cells}<td><b>{h/n*100:.0f}%</b> <small>({n})</small></td><td style="color:var({"--good" if u >= 0 else "--bad"});font-weight:700;white-space:nowrap">{u:+.1f}u ({u/n*100:+.0f}%)</td></tr>'
     return f"""<section class="card calib"><h2>Model's Best <small>graded · frozen before kickoff</small></h2>
-<p>The tier the home page and builder lead with: lines near even money where the model is 8+ points off FanDuel (mostly unders), touchdowns the model likes, and safer 65%+ legs. Graded from the box scores at the frozen FanDuel price, 1 unit each. Break-even at −110 is 52.4%.</p>
+<p>The tier the home page and builder lead with: lines near even money where the model is 8+ points off FanDuel (mostly unders), touchdowns the model likes, and short-priced 65%+ legs. Graded from the box scores at the frozen FanDuel price, 1 unit each. Break-even at −110 is 52.4%.</p>
 <div class="tblwrap"><table class="season" style="min-width:0;width:100%"><thead><tr><th>Tier</th>{"".join(f"<th>Wk {w}</th>" for w in weeks)}<th>Hit</th><th>Units</th></tr></thead><tbody>{rows}</tbody></table></div></section>"""
 try: best_html = best_block()
 except Exception as _e: print("warn: Model's Best block skipped:", _e); best_html = ""
