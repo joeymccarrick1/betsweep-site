@@ -29,6 +29,18 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 
 a{color:var(--ink)}
+.l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.l10c{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 8px;min-width:0}
+.l10c figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:6px} .l10c .mk{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.l10c .ct{font-size:15px;color:var(--ink);line-height:1.3} .l10c .ct b{font-family:var(--display);font-size:19px} .l10c .ct small{color:var(--mute);font-size:12px;margin-left:4px}
+.l10c .plot{position:relative;height:190px} .l10c ol{list-style:none;margin:0;padding:0;height:100%;display:flex;gap:4px;align-items:stretch}
+.l10c li{flex:1;min-width:0;display:grid;grid-template-rows:18px 1fr 16px 18px;justify-items:center;text-align:center}
+.l10c li .v{font-size:11px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:18px}
+.l10c li .b{align-self:end;width:100%;max-width:26px;border-radius:4px 4px 0 0;background:var(--mute)}
+.l10c li.ov .b{background:var(--good)} .l10c li.un .b{background:var(--bad);opacity:.75}
+.l10c li .k{font-size:11px;font-weight:800;line-height:16px;color:var(--mute)} .l10c li.ov .k{color:var(--good)} .l10c li.un .k{color:var(--bad)}
+.l10c li .o{font-size:10px;color:var(--mute);line-height:18px;letter-spacing:.02em}
+.l10c .ln{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);pointer-events:none} .l10c .ln i{position:absolute;right:0;top:-9px;font-style:normal;font-size:10.5px;font-weight:700;background:var(--ink);color:var(--bg);border-radius:4px;padding:1px 5px;line-height:1.4}
 
 .pp{max-width:1100px;margin:16px auto 40px}
 .pp a{color:var(--ink)}
