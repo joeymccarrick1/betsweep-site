@@ -37,17 +37,18 @@ async def main():
                     last: (document.querySelector('#swtease .swlast') || {}).textContent || '', over: document.documentElement.scrollWidth - document.documentElement.clientWidth})""")
                 print(f"   [{case} {theme}]", json.dumps(st)[:520])
                 if case == "bust":
-                    check(any(x.startswith("Piss Missile Monday|Busted") for x in st["lost"]) and "Piss Missile Monday" not in st["promo"], f"[{case} {theme}] the busted promo left the promo list and sits in Lost")
-                    check(any(x.startswith("Herbo Fully Loaded|Busted") for x in st["lost"]) and not st["hero"], f"[{case} {theme}] the busted Sweep is off the hero with a copy in Lost")
+                    check("Piss Missile Monday" not in st["promo"] and st["lkids"] == 0 and not st["built"], f"[{case} {theme}] the busted promo left the page and there is no Lost section on Today")
+                    check(not st["hero"], f"[{case} {theme}] the busted Sweep is off the hero")
                     check("Missed" in st["last"] and "Herbo" in st["last"], f"[{case} {theme}] the hero strip names the missed Sweep ({st['last'][:70]})")
-                    check(st["lsub"] == f"{st['lkids']} busted" and st["lkids"] == len(st["built"]) + 2, f"[{case} {theme}] Lost counts every card in it ({st['lsub']}: {len(st['built'])} from the build + 2 live)")
-                    check("Sure Hands" in st["built"] and "One From Every Game" in st["built"] and st["promo"] == [], f"[{case} {theme}] Sunday's slips that lost a leg are under Lost, not in the promo list ({st['built']})")
+                    check(st["promo"] == [], f"[{case} {theme}] no dead slip is left in the promo list")
+                    rc = open(os.path.join(ROOT, "receipts", "index.html"), encoding="utf-8").read()
+                    check("This week" in rc and "Sure Hands" in rc and "One From Every Game" in rc and "Busted: John Metchie III" in rc, f"[{case} {theme}] the week's misses are listed on the receipts page")
                 else:
                     check(any(x.startswith("Piss Missile Monday|Cashed") for x in st["won"]) and st["wopen"] and "Piss Missile Monday" not in st["promo"], f"[{case} {theme}] the cashed promo moved to Winners and the fold opened")
                     check(st["hero"] == ["Herbo Fully Loaded|Cashed"] and not st["lost"], f"[{case} {theme}] the cashed Sweep stays in the hero, no live card in Lost ({st['hero']})")
                 check(st["over"] == 0 and not errs, f"[{case} {theme}] no sideways scroll, no script errors {errs[:1]}")
                 if SHOTS:
-                    await pg.evaluate("(function(){ var d = document.querySelector('#lost details'); if(d) d.open = true; var e = document.getElementById(%s); if(e) e.scrollIntoView(); })()" % json.dumps("lost" if case == "bust" else "winners"))
+                    await pg.evaluate("(function(){ var e = document.getElementById(%s); if(e) e.scrollIntoView(); })()" % json.dumps("sweep" if case == "bust" else "winners"))
                     await pg.wait_for_timeout(300); await pg.screenshot(path=f"{SHOTS}/home-{case}-{theme}.png")
                 await ctx.close()
         await b.close()

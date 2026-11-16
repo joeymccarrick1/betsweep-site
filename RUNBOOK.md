@@ -838,3 +838,10 @@ official, moderator, staff, fanduel, draftkings), unique ignoring case, one chan
 either initials or one of 24 fixed emoji (no uploads - nothing to moderate). Old posts take the new name; new posts carry the profile's
 name. Direct edits of feed_profiles are closed. Page: a **My profile** button on Social, **Edit profile** on your own profile.
 Until v4 is run the page hides the editor (`V4 = false`). Tested on the throwaway Postgres and with the faked client (42 checks).
+
+## Correction, 11/16 12:05 PM: no Lost section on Today - the week's misses live on /receipts/
+
+Owner: "I don't want the lost promos on the today/home page. Just in receipts somewhere." The Lost fold on Today (added at 10:42 AM)
+is gone: a busted promo card is simply hidden the moment a leg dies, a busted Sweep leaves the hero (strip: "Last ... Missed"), and
+slips the game log already shows lost are not built into the promo grid. `home.lost_block` now renders "This week's misses" at the
+foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its Lost tab.

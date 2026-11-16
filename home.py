@@ -452,9 +452,9 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
       // winners"): the moment a leg dies the card moves into the Lost fold - no waiting for the game to end; a promo that cashes moves
       // into Winners (and opens it). The Sweep hero is not moved: a busted Sweep is archived (the hero shows its one-line result) and a
       // copy goes into Lost; a cashed Sweep stays in the hero as the day's winner.
-      if(dead && !card.dataset.filed){ card.dataset.filed = 'L';
-        if(card.dataset.keep){ var cp = card.cloneNode(true); cp.removeAttribute('data-keep'); cp.removeAttribute('data-day'); cp.hidden = false; cp.classList.remove('sweep'); fileCard(cp, 'L'); card.dataset.arch = '1'; }
-        else fileCard(card, 'L'); }
+      // owner 11/16, an hour later: "I don't want the lost promos on the today/home page. Just in receipts somewhere." A busted card
+      // simply leaves this page (the Sweep hero falls back to its one-line strip); the week's misses are listed on /receipts/.
+      if(dead && !card.dataset.filed){ card.dataset.filed = 'L'; if(card.dataset.keep) card.dataset.arch = '1'; else card.hidden = true; }
       else if(!dead && card.dataset.live === 'W' && !card.dataset.filed && !card.dataset.keep){ card.dataset.filed = 'W'; fileCard(card, 'W'); }
       if(!card.hidden && !card.dataset.keep && !card.dataset.filed) anyShown = true;
     });
@@ -839,7 +839,7 @@ def lost_block(IN, week, OUT=None):
         o = SW._num(r[H["FanDuel odds"]]); n = len([x for x in str(r[H["Legs"]]).split("\n") if x.strip()])
         cards += (f'<article class="lcard"><span class="lo">{E(odds_str(o)) if o else ""}</span><h3>{E(title)}</h3>'
                   f'<p>{"The Daily Sweep" if SW.is_sweep(r[H["Title"]]) else "Promoted bet"} · {n} legs · {E(str(r[H["Result"]]).strip())} · <a href="/b/w{int(week)}-{slot}/">See the slip</a></p></article>')
-    return (css + f'<section class="sec lostsec" id="lost"><details class="lfold"><summary><h2 class="t">Lost <small class="tsub">{rows_n} busted</small></h2></summary>'
+    return (css + f'<section class="sec lostsec" id="lost"><details class="lfold" open><summary><h2 class="t">This week\'s misses <small class="tsub">{rows_n} promoted bet{"s" if rows_n != 1 else ""}</small></h2></summary>'
             f'<div class="lgrid">{cards}</div></details></section>')
 
 

@@ -1002,8 +1002,14 @@ try:
         _w = int(float(_r[_ph["Week"]])); _d = _prw.setdefault(_w, [0, 0]); _d[0 if _res in ("hit", "cashed") else 1] += 1
 except Exception: pass
 _cards = "".join(f'<a href="/receipts/week{w}/"><b>Week {w}</b><small>{"posted slips " + str(_prw[w][0]) + "–" + str(_prw[w][1]) if w in _prw else "every leg graded"}</small></a>' for w in sorted(weeks, reverse=True)) or "<p>No receipts yet.</p>"
+# owner 11/16 ("I don't want the lost promos on the today/home page. Just in receipts somewhere."): this week's promoted bets that
+# have lost a leg, listed here until Tuesday's receipt has them (home.lost_block: the sheet's misses + the game log's).
+try:
+    import home as _HML
+    _LOST_HTML = _HML.lost_block(IN, WEEK_NOW, OUT)
+except Exception as _e: print("note: this week's misses skipped on /receipts/:", _e); _LOST_HTML = ""
 _rec = _simple("BetSweep Receipts", '<h1>Receipts</h1><p>Every week we freeze the model\'s legs and game calls before kickoff, then grade them against the box scores - hits and misses. Pick a week, or see the whole season.</p>'
-               f'<div class="wk">{_cards}</div><div class="go"><a href="/season/">Season to date</a><a href="/boards/">This week\'s boards</a></div>')
+               f'<div class="wk">{_cards}</div><div class="go"><a href="/season/">Season to date</a><a href="/boards/">This week\'s boards</a></div>' + _LOST_HTML)
 os.makedirs(os.path.join(SITE, "receipts"), exist_ok=True)
 open(os.path.join(SITE, "receipts", "index.html"), "w").write(wrap(_rec, "BetSweep Receipts", "Every weekly receipt: what the model said before kickoff and what happened.", "/receipts/", "/og.png"))
 open(os.path.join(SITE, "index.html"), "w").write(wrap(landing(weeks), "BetSweep", "NFL projections priced against FanDuel, graded every week. Matchup boards, a parlay builder with FanDuel links, and receipts.", "/", "/og.png"))
