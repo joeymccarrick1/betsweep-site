@@ -682,3 +682,19 @@ The build prints how many legs the gate passed over. Numbers behind it (Weeks 6-
 - the model's chances at the top are not real: legs it had at 70-80% hit 65.2% (310 legs), 80-90% hit 56.4% (55). Legs passing the card's
   "65%+ and at or above the price" test: model 72.6%, FanDuel 66.8%, hit 67.0% (400 legs); at -200 or shorter 65.7% against 72.3% priced.
 Open question for the owner: cap the model's chance at FanDuel's no-vig chance for "cash often" picks (the model may lower a leg, never raise it).
+
+## Fill-in games need a teammate with a real role (owner 11/15: "Skowronek had nothing to do with Bernard. sko doesn't play snaps at all really")
+
+`injweeks.fill()` credited a player's snap rise to ANY same-position teammate who was out those weeks and is back now. Ben Skowronek
+(0-21% of PIT snaps) was out Weeks 6-8, so Germie Bernard's 91-94% snap weeks - caused by Pittman and Roman Wilson being out - were credited
+to him: "Fill-in fading" on the flags, and those weeks set aside from Bernard's snap and usage trends (build_snaps.py, build_usage.py and
+flags.py all call fill()). Now the absent teammate's median snap share in the games he played must be `MIN_VACATED_SHARE` (25%) or more.
+Week 10 inputs: 124 players with fill-in weeks before, 119 after; the same error had Bucky Irving filling in for Sean Tucker (1% of snaps),
+Josh Downs for Anthony Gould (0%), KC Concepcion and Malachi Corley for Tylan Wallace (16%). The flag text now states the hurt teammate's
+snap share, so a wrong attribution is visible on its face.
+
+Tested the same night and NOT built (research/slip_shapes.md has the method): a "targets cushion" on receptions floors (median targets
+minus the line: under 2 hit 67.7%, 2-3.5 63.0%, 4+ 67.1% - nothing there) and the player's own clear rate against the price (10+ points
+over the price hit 59.1%, the worst group - hot streaks are already priced). Forecast error (Brier) on 3,821 graded legs: FanDuel's no-vig
+price 0.2402, our model 0.2482, own clear rate 0.2600; on legs the model had at 70%+ the model was worst (0.2821 vs FanDuel 0.2379). The
+lowest of the three numbers was the only blend that stayed calibrated at the top (said 64.1%, hit 66.0%; said 72.1%, hit 68.2%).

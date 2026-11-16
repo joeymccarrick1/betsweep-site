@@ -127,6 +127,12 @@ class Weeks:
         for k, p in self.pos.items():
             if k == me or k[1] != team or p != pos: continue
             if not self.back_now(self.disp.get(k, k[0]), k[1]): continue
+            # owner 11/15 ("Skowronek had nothing to do with Bernard. sko doesn't play snaps at all really"): a teammate only vacates a role
+            # if he had one - a median snap share of 25%+ in the games he played. Ben Skowronek (0-21% of PIT snaps) was out Weeks 6-8 and
+            # came back, so Germie Bernard's 91-94% snap weeks (Pittman and Wilson were the ones out) were credited to him: flagged
+            # "Fill-in fading" and set aside from Bernard's snap and usage trends. Same error had Bucky Irving "filling in" for Sean Tucker (1%).
+            _ts = sorted((self.snap.get(k) or {}).values())
+            if not _ts or _ts[len(_ts) // 2] < MIN_VACATED_SHARE: continue
             for w, why in list(self._lim.get(k, {}).items()) + list(self._abs.get(k, {}).items()):
                 cand.setdefault(w, (self.disp.get(k, k[0].title()), why))
         # only weeks where HIS share actually rose (8+ points over his own share in the other games) - a starter who kept his usual role
@@ -137,6 +143,8 @@ class Weeks:
         for w, x in cand.items():
             if w in mine and ref is not None and mine[w] >= ref + 0.08: out[w] = x
         return out
+
+MIN_VACATED_SHARE = 0.25   # fill(): the absent teammate's median snap share must be at least this for his absence to explain a rise
 
 def load(IN, WEEK, season=2026):
     try: return Weeks(IN, WEEK, season)

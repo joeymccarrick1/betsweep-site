@@ -371,7 +371,11 @@ class Engine:
                 if t in self.QUEST or (r and r[0] == "Questionable"): return f"{t} may return (Questionable)"
                 if r and r[1] and not r[1].startswith("Full"): return f"{t} is practising ({r[1].replace(' Participation in Practice', '').replace(' In Practice', '').lower()})"
                 return f"{t} is back"
-            wks = ", ".join(f"Week {w} ({t}: {x.split(' - ')[0]})" for w, (t, x) in sorted(fill_recent.items()))
+            def _shr(t):   # owner 11/15: say how much the hurt teammate actually plays, so a wrong attribution is visible on its face
+                try:
+                    v = sorted((self.IW.snap.get((INJN(t), INJT(team))) or {}).values()); return f", {v[len(v) // 2] * 100:.0f}% of snaps when healthy" if v else ""
+                except Exception: return ""
+            wks = ", ".join(f"Week {w} ({t}{_shr(t)}: {x.split(' - ')[0]})" for w, (t, x) in sorted(fill_recent.items()))
             add("watch", "Fill-in fading", f"His recent bump came while a teammate was hurt - {wks}. {'; '.join(_st(t) for t in who)} this week, so his share is likely to fall back toward his normal role; those games are set aside from his trends.")
         # --- replacement starter with no game log (fillin.py sets Engine.FILLIN = {name: note}) ---
         if name in getattr(self, "FILLIN", {}):
