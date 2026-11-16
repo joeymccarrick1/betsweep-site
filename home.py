@@ -409,11 +409,12 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
   function parseBox(js, gid){
     try { (js.boxscore.players || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || cat.labels || [];
       (cat.athletes || []).forEach(function(a){ var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
-        var r = BOX[n] = BOX[n] || {pass: 0, rush: 0, rec: 0, recy: 0, long: 0, td: 0, g: gid}; var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
+        var r = BOX[n] = BOX[n] || {pass: 0, ptd: 0, rush: 0, rec: 0, recy: 0, long: 0, td: 0, rtd: 0, ctd: 0, g: gid}; var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
         var num = function(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; };
-        if(cat.name === 'passing') r.pass = num(S.passingYards != null ? S.passingYards : S.YDS);
-        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.td += num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
-        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = Math.max(r.long, num(S.longReception != null ? S.longReception : S.LONG)); r.td += num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
+        // 11/16: TDs are set per category and summed, not added on every read (the box is re-read each minute and '+=' doubled them)
+        if(cat.name === 'passing'){ r.pass = num(S.passingYards != null ? S.passingYards : S.YDS); r.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); }
+        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); r.td = r.rtd + r.ctd; }
+        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = Math.max(r.long, num(S.longReception != null ? S.longReception : S.LONG)); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); r.td = r.rtd + r.ctd; }
       }); }); });
       var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
       if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
@@ -429,6 +430,7 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
     var rows = names.map(function(n){ return BOX[norm(n)]; });
     if(/^first/i.test(mk)){ var f = FIRST[L.g]; if(!f) return fin ? 'dead' : 'open'; return f === norm(L.who) ? 'hit' : 'dead'; }
     if(/^(anytime|either)/i.test(mk)){ if(rows.some(function(r){ return r && r.td >= 1; })) return 'hit'; return fin ? (rows.some(function(r){ return r; }) ? 'dead' : 'open') : 'open'; }
+    var pt = mk.match(/^Passing TDs\s+(\d+)\+?/i); if(pt){ var q = rows[0]; if(q && (q.ptd || 0) >= +pt[1]) return 'hit'; return fin && q ? 'dead' : 'open'; }   // 11/16: the Sweep's passing-TD leg could never grade
     var m = mk.match(STAT); if(!m) return 'open'; var need = +m[2], r = rows[0];
     if(!r) return 'open';   // no box line yet / inactive (FanDuel voids) - never call it dead
     var k = m[1].toLowerCase(), v = k === 'passing yards' ? r.pass : k === 'rushing yards' ? r.rush : k === 'receiving yards' ? r.recy : k === 'receptions' ? r.rec : k === 'longest reception' ? r.long : r.rush + r.recy;
@@ -441,17 +443,40 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
       ls.forEach(function(L){ var s = grade(L); L.li.classList.toggle('hit', s === 'hit'); L.li.classList.toggle('dead', s === 'dead');
         if(s === 'hit') hits++; if(s === 'dead' && !dead){ dead = L; deadFinal = (G[L.g] || {}).st === 'post'; } });
       var st = card.querySelector('[data-role=pst]');
-      if(dead){ card.classList.add('busted'); if(st){ st.textContent = 'Busted: ' + dead.who + (dead.mk && !/td$/i.test(dead.mk) ? ' ' + dead.mk.replace(/\s+(\d)/, ' $1') : (/td$/i.test(dead.mk) ? ' TD' : '')); st.className = 'st loss'; }
-        if(deadFinal && !card.dataset.keep) card.hidden = true; }
-      else if(ls.length && hits === ls.length){ if(st){ st.textContent = 'Cashed'; st.className = 'st win'; } }
-      card.dataset.live = dead ? (deadFinal ? 'L' : 'busted') : (ls.length && hits === ls.length ? 'W' : 'open');
-      if(!card.hidden && !card.dataset.keep) anyShown = true;
+      if(dead){ card.classList.add('busted'); if(st){ st.textContent = 'Busted: ' + dead.who + (dead.mk && !/td$/i.test(dead.mk) ? ' ' + dead.mk.replace(/\s+(\d)/, ' $1') : (/td$/i.test(dead.mk) ? ' TD' : '')); st.className = 'st loss'; } }
+      // 11/16: "cashed" needs EVERY leg of the card graded - a 13-leg slip whose Sunday legs have left the board was called Cashed when its one Monday leg hit
+      var whole = ls.length && ls.length === card.querySelectorAll('ul.pl > li').length, won = !dead && whole && hits === ls.length;
+      if(won){ if(st){ st.textContent = 'Cashed'; st.className = 'st win'; } }
+      card.dataset.live = dead ? 'L' : (won ? 'W' : 'open');
+      // owner 11/16 ("Once one leg kills it, the bet should be off the pages or put into a lost tab. If it wins then it gets put into
+      // winners"): the moment a leg dies the card moves into the Lost fold - no waiting for the game to end; a promo that cashes moves
+      // into Winners (and opens it). The Sweep hero is not moved: a busted Sweep is archived (the hero shows its one-line result) and a
+      // copy goes into Lost; a cashed Sweep stays in the hero as the day's winner.
+      if(dead && !card.dataset.filed){ card.dataset.filed = 'L';
+        if(card.dataset.keep){ var cp = card.cloneNode(true); cp.removeAttribute('data-keep'); cp.removeAttribute('data-day'); cp.hidden = false; cp.classList.remove('sweep'); fileCard(cp, 'L'); card.dataset.arch = '1'; }
+        else fileCard(card, 'L'); }
+      else if(!dead && card.dataset.live === 'W' && !card.dataset.filed && !card.dataset.keep){ card.dataset.filed = 'W'; fileCard(card, 'W'); }
+      if(!card.hidden && !card.dataset.keep && !card.dataset.filed) anyShown = true;
     });
     var sec = document.getElementById('promo'); if(sec && !anyShown) sec.hidden = true;
     var gs = {}; legs.forEach(function(L){ gs[L.g] = 1; }); gs = Object.keys(gs);
     if(gs.length && gs.every(function(g){ return G[g] && G[g].st === 'post'; })) settled = true;   // every game final: nothing left to fetch
     try { document.dispatchEvent(new CustomEvent('bs-promo-live')); } catch(e){}
   }
+  function fold(kind){
+    var id = kind === 'W' ? 'winners' : 'lost', sec = document.getElementById(id);
+    if(!sec){ sec = document.createElement('section'); sec.className = 'sec lostsec'; sec.id = id;
+      sec.innerHTML = '<details class="lfold"><summary><h2 class="t">' + (kind === 'W' ? 'Winners' : 'Lost') + ' <small class="tsub"></small></h2></summary><div class="lgrid"></div></details>';
+      var after = (kind === 'L' && document.getElementById('winners')) || document.getElementById('promo') || document.getElementById('sweep');
+      if(after && after.parentNode) after.parentNode.insertBefore(sec, after.nextSibling); else document.body.appendChild(sec); }
+    return sec; }
+  function fileCard(card, kind){ try {
+    var sec = fold(kind), grid = sec.querySelector('.lgrid') || sec.querySelector('.wgrid'); if(!grid) return;
+    grid.insertBefore(card, grid.firstChild);
+    var sub = sec.querySelector('.tsub'), d = sec.querySelector('details');
+    if(kind === 'L'){ if(sub) sub.textContent = grid.children.length + ' busted'; }
+    else { if(sub && !/just/.test(sub.textContent)) sub.textContent += (sub.textContent ? ' · ' : '') + 'one just cashed'; if(d) d.open = true; }
+  } catch(e){} }
   var busy = false;
   function poll(){
     if(busy || settled || !active()) return; busy = true;
@@ -478,6 +503,67 @@ PROMO_TAIL_JS = r"""<script>(function(){ function go(){ if(window.__bsPromoCpy) 
   b.addEventListener('click', function(){ var slips = []; try{ slips = JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(e){} if (has()){ slips = slips.filter(function(s){ return !s || s.id !== id; }); } else { slips.push({id: id, name: b.dataset.name, keys: JSON.parse(b.dataset.keys), g: JSON.parse(b.dataset.g || '{}'), odds: b.dataset.odds ? +b.dataset.odds : null, stake: 1, promo: true}); }
     try{ localStorage.setItem(key, JSON.stringify(slips)); }catch(e){} paint(); var t = document.createElement('div'); t.textContent = has() ? 'Saved to My BetSweep - graded after the games' : 'Removed from your slips'; t.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120'; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2500); });
   paint(); }); } if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();</script>"""
+
+# ---------- owner 11/16: a promo that has lost a leg is off the page (it goes under "Lost") ----------
+# The live script can only grade a leg whose game is on the board. Once a game is over its legs leave the build, so on a Monday the
+# Sunday slips sat in the promo grid as if they were open - one of them had lost by a yard. built_state() grades a promo from the
+# game log (the sheet's box scores, final games only): 'L' + the leg that killed it, 'W' when every leg is in the log and hit, else
+# None (a leg whose player has no row that week is unknown, never a miss). Display only - the record is still the sheet's Result.
+_GSTAT = {"Passing Yards": ("Pass Yds",), "Rushing Yards": ("Rush Yds",), "Receiving Yards": ("Rec Yds",), "Receptions": ("Receptions",), "Longest Reception": ("Longest Rec",),
+          "Rush + Rec Yards": ("Rush Yds", "Rec Yds"), "Passing TDs": ("Pass TD",), "Anytime TD": ("Rush TD", "Rec TD"), "2+ TD": ("Rush TD", "Rec TD"), "Either TD": ("Rush TD", "Rec TD")}
+_GLOG_CACHE = {}
+def _glog(IN):
+    if IN not in _GLOG_CACHE:
+        d = {}
+        try:
+            g = json.load(open(os.path.join(IN, "gamelog.json")))["values"]; H = {c: i for i, c in enumerate(g[0])}
+            for r in g[1:]:
+                if len(r) > H["Player"] and r[H["Player"]]:
+                    def f(c):
+                        try: return float(r[H[c]])
+                        except Exception: return 0.0
+                    d[(str(r[H["Week"]]).split(".")[0].strip(), _pkey(r[H["Player"]]))] = {c: f(c) for c in H if c in ("Pass Yds", "Pass TD", "Rush Yds", "Rush TD", "Receptions", "Rec Yds", "Rec TD", "Longest Rec")}
+        except Exception: d = {}
+        # the sheet's game log gets a week on Tuesday; until then the nflverse weekly file (finished games only) fills that week in
+        try:
+            import csv as _csv, glob as _glob, re as _re
+            have = {k[0] for k in d}; fs = sorted(_glob.glob(os.path.join(IN, "stats_player_week_*.csv")))
+            if fs:
+                def nf(x):
+                    try: return float(x or 0)
+                    except Exception: return 0.0
+                with open(fs[-1], newline="") as f:
+                    for r in _csv.DictReader(f):
+                        if r.get("season_type", "REG") != "REG" or r.get("week") in have or not r.get("player_display_name"): continue
+                        d[(str(r["week"]), _pkey(r["player_display_name"]))] = {"Pass Yds": nf(r.get("passing_yards")), "Pass TD": nf(r.get("passing_tds")), "Rush Yds": nf(r.get("rushing_yards")), "Rush TD": nf(r.get("rushing_tds")),
+                                                                              "Receptions": nf(r.get("receptions")), "Rec Yds": nf(r.get("receiving_yards")), "Rec TD": nf(r.get("receiving_tds")), "_nolong": 1}
+        except Exception as _e: print("note: weekly stats file not read for promo grading:", _e)
+        _GLOG_CACHE[IN] = d
+    return _GLOG_CACHE[IN]
+
+def _pkey(n):
+    import re as _re
+    return _re.sub(r"\s+", " ", _re.sub(r"[^a-z ]", "", _re.sub(r"\s+(jr|sr|ii|iii|iv|v)\.?$", "", str(n).lower().replace(".", "")))).strip()
+
+def built_state(p, IN):
+    """('L', leg text) / ('W', None) / None for a promo record from out/promos.json, graded from the game log"""
+    G = _glog(IN); wk = str(p.get("week")); hits = 0; legs = p.get("legs") or []
+    for l in legs:
+        parts = str(l.get("key") or "").split("|")
+        if len(parts) != 3 or parts[1] not in _GSTAT: continue
+        try: need = float(parts[2])
+        except Exception: continue
+        if parts[1] == "2+ TD": need = 2
+        rows = [G.get((wk, _pkey(n))) for n in (parts[0].split(" or ") if parts[1] == "Either TD" else [parts[0]])]
+        if not all(rows): continue                       # someone is not in the log yet: unknown
+        if parts[1] == "Longest Reception" and any(r.get("_nolong") for r in rows): continue   # the weekly file has no longest catch
+        v = max(sum(r.get(c, 0) for c in _GSTAT[parts[1]]) for r in rows)
+        if v >= need: hits += 1
+        else: return ("L", str(l.get("disp") or l.get("who") or ""))
+    return ("W", None) if legs and hits == len(legs) else None
+
+def _in_of(OUT): return os.path.join(os.path.dirname(os.path.abspath(OUT)), "in")
+
 
 def promo_card(p, kicker="Promoted", hero=False):
     """one promoted-bet card (the home page's Promoted bets / Side action grid, and the Daily Sweep hero with hero=True)"""
@@ -535,7 +621,7 @@ def promo_card(p, kicker="Promoted", hero=False):
         import html as _h
         gl_ = " · ".join(_h.unescape(at_gid(g)) for g in gids[:2]) + (f" +{len(gids) - 2}" if len(gids) > 2 else "")
         title = p.get("name") or (_h.unescape(at_gid(gids[0])) if len(gids) == 1 else f"{len(gids)} games, one slip" if gids else "Today's slip")
-        kres = SW.res_kind(p.get("result"))
+        kres = SW.res_kind(p.get("result")) or ((p.get("_built") or (None,))[0] if (p.get("_built") or (None,))[0] == "L" else None)   # 11/16: a Sweep the game log shows lost a leg reads Missed, not "graded Tuesday"
         st = '<span class="st win">Cashed</span>' if kres == "W" else ('<span class="st loss">Missed</span>' if kres == "L" else '<span class="st" data-role="pst">Pregame</span>')
         _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
         import re as _re2
@@ -559,6 +645,7 @@ def promos_block(OUT, sweep_exists=False):
         if p.get("status", "LIVE") != "LIVE": return False
         if (p.get("result") or "").strip(): return False
         if (p.get("checks") or {}).get("block"): return False   # promo check failed (build_promo prints why): never post a broken card
+        if (built_state(p, _in_of(OUT)) or (None,))[0] == "L": return False   # 11/16: a leg has already lost - the card is under Lost
         lk = p.get("last_ko")
         return not (lk and _now > float(lk) + 4.5 * 3600e3)
     try: allp = json.load(open(os.path.join(OUT, "promos.json")))
@@ -612,6 +699,7 @@ SWEEP_JS = r"""<script>(function(){ function go(){
     for(i = 0; i < days.length; i++){ d = days[i];
       if(t >= d.end){ c = card(d.d); if(c) last = {d: d, c: c}; continue; }     // that day is over
       c = card(d.d, true); if(c){ show = c; break; }                             // today's (or the next day's) Sweep is posted
+      c = card(d.d); if(c && c.dataset.arch && c.dataset.live === 'L'){ last = {d: d, c: c}; continue; }   // 11/16: today's Sweep lost a leg - it is in Lost, the strip says so
       if(t < d.ko){ next = d; break; } }                                         // not posted yet, still before kickoff
     cards.forEach(function(x){ x.hidden = x !== show; });
     sec.classList.toggle('teasing', !show);   // no slip posted for the day: the block is a slim strip (CSS), not a box of copy
@@ -661,6 +749,7 @@ def sweep_block(IN, OUT, games):
     lab = {d["d"]: d["lab"] for d in days}
     cards = []
     for p in sorted(sw, key=lambda p: p.get("first_ko") or 0):
+        p = dict(p, _built=built_state(p, IN))
         c = promo_card(p, f'The Daily Sweep · {lab.get(p.get("day"), "")}'.rstrip(" ·"), hero=True)
         if p.get("status") == "HIDDEN": c = c.replace('<article class="promo sweep"', '<article class="promo sweep" data-arch="1"', 1)   # archived by the owner: never the current card, still the "last" line
         cards.append(c.replace('<article class="promo sweep"', '<article class="promo sweep" hidden', 1))   # the script un-hides the right one; without JavaScript the teaser shows
@@ -708,6 +797,51 @@ WINNERS_CSS = """
 .winners .wfoot{display:flex;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:13px;color:var(--mute)} .winners .wfoot b{color:var(--ink)} .winners .wfoot a{color:var(--ink)}
 """
 _WSTAT = {"Receiving Yards": ("Rec Yds", "yds"), "Receptions": ("Receptions", "catches"), "Rushing Yards": ("Rush Yds", "yds"), "Passing Yards": ("Pass Yds", "yds")}
+
+LOST_CSS = """.lostsec{margin-top:14px} .lostsec details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;min-height:44px} .lostsec details>summary::-webkit-details-marker{display:none}
+.lostsec summary h2{margin:0} .lostsec summary h2::after{content:"";display:inline-block;width:8px;height:8px;margin-left:12px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)}
+.lostsec details[open] summary h2::after{transform:translateY(1px) rotate(-135deg)}
+.lostsec .lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;max-width:1180px;margin-top:10px}
+.lostsec .lcard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:12px;padding:12px 14px 10px;opacity:.9}
+.lostsec .lcard h3{margin:0;font-family:var(--display);font-weight:800;font-size:20px;line-height:1.1;color:var(--ink)} .lostsec .lcard .lo{float:right;font-family:var(--display);font-weight:800;font-size:20px;color:var(--mute)}
+.lostsec .lcard p{margin:3px 0 0;color:var(--mute);font-size:12.5px} .lostsec .lcard a{color:var(--ink)}
+.lostsec .promo{opacity:.85}"""
+
+
+def lost_block(IN, week, OUT=None):
+    """owner 11/16: this week's promoted bets the PROMO tab grades as a miss, folded under "Lost" (closed). The live script adds a card
+    here the moment one of its legs dies; this is the built half, for misses already graded on the sheet. The <style> is always
+    returned so the fold the script creates is styled too."""
+    css = f"<style>{LOST_CSS}</style>"
+    try: v = json.load(open(os.path.join(IN, "promos.json")))["values"]
+    except Exception: return css
+    H = {str(c).strip().split(" (")[0]: i for i, c in enumerate(v[0])}
+    if any(k not in H for k in ("Week", "Slot", "Title", "Legs", "FanDuel odds", "Result")): return css
+    rows = []
+    for r in v[1:]:
+        r = list(r) + [""] * (len(v[0]) - len(r))
+        try: wk = int(float(r[H["Week"]])); slot = int(float(r[H["Slot"]]))
+        except Exception: continue
+        if wk == int(week) and SW.res_kind(r[H["Result"]]) == "L": rows.append((slot, r))
+    cards = ""; have = {slot for slot, _ in rows}; extra = []
+    try:   # promos the game log already shows lost a leg, before the sheet has a Result for them
+        for p in json.load(open(os.path.join(OUT, "promos.json"))) if OUT else []:
+            b = built_state(p, IN)
+            if str(p.get("week")) == str(int(week)) and p.get("status", "LIVE") == "LIVE" and not (p.get("result") or "").strip() and b and b[0] == "L" and int(p.get("slot") or 0) not in have: extra.append((int(p.get("slot") or 0), p, b[1]))
+    except Exception as _e: print("note: built losses skipped:", _e)
+    if not rows and not extra: return css
+    for slot, p, why in sorted(extra, key=lambda x: -x[0]):
+        cards += (f'<article class="lcard"><span class="lo">{E(odds_str(p["fd"])) if p.get("fd") else ""}</span><h3>{E(str(p.get("name") or p.get("title") or ""))}</h3>'
+                  f'<p>{"The Daily Sweep" if SW.is_sweep(p.get("title", "")) else "Promoted bet"} · {len(p.get("legs") or [])} legs · Busted: {E(why)} · <a href="/b/w{int(week)}-{slot}/">See the slip</a></p></article>')
+    rows_n = len(rows) + len(extra)
+    for slot, r in sorted(rows, reverse=True):
+        title = SW.name(r[H["Title"]]) if SW.is_sweep(r[H["Title"]]) else str(r[H["Title"]]).strip()
+        o = SW._num(r[H["FanDuel odds"]]); n = len([x for x in str(r[H["Legs"]]).split("\n") if x.strip()])
+        cards += (f'<article class="lcard"><span class="lo">{E(odds_str(o)) if o else ""}</span><h3>{E(title)}</h3>'
+                  f'<p>{"The Daily Sweep" if SW.is_sweep(r[H["Title"]]) else "Promoted bet"} · {n} legs · {E(str(r[H["Result"]]).strip())} · <a href="/b/w{int(week)}-{slot}/">See the slip</a></p></article>')
+    return (css + f'<section class="sec lostsec" id="lost"><details class="lfold"><summary><h2 class="t">Lost <small class="tsub">{rows_n} busted</small></h2></summary>'
+            f'<div class="lgrid">{cards}</div></details></section>')
+
 
 def winners_block(IN, limit=6):
     """every promoted bet the PROMO tab grades as a win, newest first: name, FanDuel price as posted, the legs, what $10 won. Reads only the

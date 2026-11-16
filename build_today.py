@@ -287,6 +287,8 @@ def sections(IN_, OUT_):
     except Exception as _e: print("note: Daily Sweep block skipped:", _e); sweep_html = ""
     try: winners_html = HOME.winners_block(IN_)      # owner 11/13: a winning-promo section on the home page
     except Exception as _e: print("note: winners block skipped:", _e); winners_html = ""
+    try: winners_html += HOME.lost_block(IN_, W, OUT_)   # owner 11/16: busted promos fold under "Lost"; the live script files a card there the moment a leg dies
+    except Exception as _e: print("note: lost block skipped:", _e)
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     body = f'''<title>Today · BetSweep</title>

@@ -778,3 +778,16 @@ same code, so they stay pinned through the game and for HOUSE_HOURS (12) after t
 Grader changes: TDs are set per read, not added (a re-read doubled them); Passing TDs and Either TD are graded; a player the live box
 does not list stays open (never a miss) - such a slip ends as "Final · n graded hits". Test: `python3 tests/social_feed.py [shots_dir]`
 (fakes the account client and ESPN; needs ./site built).
+
+## Busted slips leave the page, winners go to Winners (owner 11/16)
+
+"Once one leg kills it, the bet should be off the pages or put into a lost tab. If it wins then it gets put into winners."
+- **Home, live** (home.py PROMO_LIVE_JS): the moment a leg dies the card moves into a **Lost** fold (no waiting for the final); a promo
+  that cashes moves into Winners and opens it. The Sweep hero is not moved: a busted Sweep is archived (strip: "Last ... Missed") with
+  a copy in Lost; a cashed Sweep stays in the hero. "Cashed" now needs every leg of the card graded (a 13-leg slip whose Sunday legs
+  had left the board was called Cashed when its one Monday leg hit). Passing-TD legs grade; TDs are set per read, not added.
+- **Home, built** (`built_state`, `lost_block`): a promo is graded from the game log - the sheet's, or the nflverse weekly file for a
+  week the sheet does not have yet - and one that has lost a leg is left out of the promo grid and listed under Lost with the leg
+  that killed it. Unknown players are never a miss. Display only; the record is still the sheet's Result (Tuesday).
+- **Social**: a **Lost** tab beside Cashed; a busted house slip comes off the pin.
+- Tests: `python3 tests/home_filing.py [shots]` (18 checks), `python3 tests/social_feed.py [shots]` (22).

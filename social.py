@@ -241,7 +241,7 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .post .pf .res{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--mute);margin-right:auto} .post .pf .res.won{color:var(--good)} .post .pf .res.lost{color:var(--bad)}
 .soc .hcard li.hit .dot{background:var(--good);border-color:var(--good)} .soc .hcard li.dead .dot{background:var(--bad);border-color:var(--bad)} .soc .hcard li.dead{opacity:.6}
 .soc .hcard .hst{color:var(--mute);font-size:13px} .soc .hcard .hst.live{color:var(--ink);font-weight:700} .soc .hcard .hst.cashed{color:var(--good);font-weight:800} .soc .hcard .hst.busted{color:var(--bad);font-weight:800}
-.soc .house[hidden]{display:none} .soc .hcard.over{border-color:var(--line)} .soc .hcard a[hidden]{display:none}
+.soc .house[hidden],.soc .hcard[hidden]{display:none} .soc .bar .seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:100%} .soc .bar .seg::-webkit-scrollbar{display:none} .soc .bar .seg button{flex:none} .soc .hcard.over{border-color:var(--line)} .soc .hcard a[hidden]{display:none}
 .post{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 12px;overflow:hidden}
 /* owner 10/30: tap a post -> its short-link page (/b/?p=<id>): FanDuel / DraftKings / Hard Rock buttons, Save slip, Load into the builder */
 .post .ph .who,.post ul{cursor:pointer} .post:hover{border-color:color-mix(in srgb,var(--red) 55%,var(--line))} .post a.open{font-size:12.5px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap}
@@ -355,7 +355,7 @@ PAGE_JS = r"""<script>(function(){
   function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (MYV[p.id] ? 'v' : '') + p.score; }).join(',') + '|' + (LAST ? LAST.posts.length : '-'); }
   var SIG = null;
   function render(){
-    var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'sharp';   // the pinned house slips belong to the open feed
+    var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'lost' || sort === 'sharp';   // the pinned house slips belong to the open feed
     if(sort === 'sharp'){ SIG = null; sharps(); return; }
     SIG = sig();
     var me = A && A.user ? A.user.id : null, by = sort === 'new' ? function(a, b){ return new Date(b.created_at) - new Date(a.created_at); } : function(a, b){ return (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)); };
@@ -363,11 +363,16 @@ PAGE_JS = r"""<script>(function(){
     POSTS.slice().sort(by).forEach(function(p){ var x = stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
     won.sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); });
     var cb = document.querySelector('.soc .seg button[data-s="cashed"]'); if(cb) cb.textContent = 'Cashed' + (won.length ? ' ' + won.length : '');
+    var lb = document.querySelector('.soc .seg button[data-s="lost"]'); if(lb) lb.textContent = 'Lost' + (lost.length ? ' ' + lost.length : '');
     if(sort === 'cashed'){
       info.textContent = won.length ? won.length + ' slip' + (won.length === 1 ? '' : 's') + ' cashed this week' : 'Slips that hit every leg land here';
       if(!won.length && !lost.length && !LAST) loadLast();
       list.innerHTML = (won.length ? won.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>Nothing has cashed yet this week.</b>A posted slip moves here the moment its last leg hits.' + POSTBTN + '</div>') +
-        (lost.length ? '<details class="bust"><summary>Busted this week (' + lost.length + ')</summary>' + lost.map(function(p){ return card(p, me); }).join('') + '</details>' : '') + (won.length ? '' : lastWeekHtml(me));
+        (won.length ? '' : lastWeekHtml(me));
+    } else if(sort === 'lost'){
+      // owner 11/16: "Once one leg kills it, the bet should be off the pages or put into a lost tab"
+      info.textContent = lost.length ? lost.length + ' slip' + (lost.length === 1 ? '' : 's') + ' busted this week' : 'A slip lands here the moment one leg kills it';
+      list.innerHTML = lost.length ? lost.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>Nothing has busted this week.</b>Every posted slip is still alive.' + POSTBTN + '</div>';
     } else {
       info.textContent = open.length + ' open slip' + (open.length === 1 ? '' : 's') + (won.length ? ' · ' + won.length + ' cashed this week' : '') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
       if(!open.length && !LAST) loadLast();
@@ -460,7 +465,7 @@ PAGE_JS = r"""<script>(function(){
       (h.legs || []).forEach(function(l, i){ var li = c.querySelector('li[data-i="' + i + '"]'), s = gradeLeg(l); if(li){ li.classList.toggle('hit', s === 'hit'); li.classList.toggle('dead', s === 'dead'); } });
       var st = c.querySelector('.hst'); if(!st) return;
       st.textContent = x.st === 'cashed' ? 'Cashed' : x.st === 'busted' ? 'Busted · ' + x.hits + ' of ' + x.n + ' hit' : x.st === 'done' ? 'Final' : x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : st.getAttribute('data-pre') || '';
-      st.className = 'hst ' + x.st; c.classList.toggle('over', settled(x));
+      st.className = 'hst ' + x.st; c.classList.toggle('over', settled(x)); c.hidden = x.st === 'busted';   // owner 11/16: a busted slip comes off the page (it is under Lost on Today)
       var t = c.querySelector('a.tail'); if(t && x.st !== 'open') t.hidden = true; });
   }
   function grade(){ if(sort === 'sharp'){ gradeHouse(); return; } if(sig() !== SIG) render(); else gradeHouse(); }
@@ -579,10 +584,10 @@ __BASE__
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>
- <p class="rules">How it works: the most-upvoted slips sit on top. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, one that loses a leg folds under Busted. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
+ <p class="rules">How it works: the most-upvoted slips sit on top. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg moves to Lost right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
 </div>
 """ + PAGE_JS.replace("__WEEK__", json.dumps(int(week))))
