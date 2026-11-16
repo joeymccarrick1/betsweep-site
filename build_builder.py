@@ -638,6 +638,18 @@ for l in LEGS:
     elif _z:
         l.setdefault("fh", []).append(["info", "Near-zero games", f"Finished under half this line ({l['ln'] / 2:g}) in {_z} of {len(_gs)} games."])
 print(f"near-zero: {_nnz} floor legs flagged; team under its prices: {_ntr} legs")
+# owner 11/15 ("We should've never bet on Atlanta" - KC by 10+ was the model's most likely ending and Atlanta lost 35-13): yardage overs on
+# the team the model's most likely ending has LOSING by 10+. Weeks 6-9, graded FanDuel floor legs (-180 or shorter): 61.0% against a 70.7%
+# price on that side (439 legs, 232 player-weeks, t -2.4) vs 67.9% on the projected big winner; by FanDuel spread, underdogs of 3+ hit 61.1%
+# (57-66% in each of the four weeks) vs 67.6% for favorites of 3+. Receptions held up on the losing side (69.2%), so they are left alone.
+try:
+    _MOSTG = {g["gid"]: g.get("most") for g in GAMES}; _nls = 0
+    for l in LEGS:
+        if l.get("gl") or str(l.get("m", "")).startswith("Under") or l.get("m") not in ("Rushing Yards", "Receiving Yards", "Passing Yards", "Rush + Rec Yards", "Longest Reception"): continue
+        if l.get("opp") and _MOSTG.get(l.get("g")) == f'{l["opp"]} by 10+':
+            l.setdefault("fh", []).append(["bad", "Losing side", f"The model's most likely ending is {l['opp']} by 10+. Yardage floors on the team projected to lose big hit 61% against a 71% price in Weeks 6-9 (439 legs); the projected winner's hit 68%."]); _nls += 1
+    print(f"losing side: {_nls} yardage legs flagged")
+except Exception as _e: print("warn: losing-side flag skipped:", _e)
 try:
     os.makedirs(os.path.join(OUT, "data"), exist_ok=True)   # owner 11/9 + 11/15: one file with every player's and team-market's record against its prices
     json.dump({"week": WEEK, "note": "hits minus the fair rate FanDuel's price implied, shrunk toward zero (players 12 phantom legs, team-markets 20); points",
@@ -1691,7 +1703,7 @@ BUILDER_JS = r"""
     // point. Week 9: legs that drifted hit 6 pts under their price, legs that shortened 7 over (71 and 67 legs - a lean, not proof).
     try { var mv = !l.gl && window.BSRisk && window.BSRisk.move && window.BSRisk.move(legKey(l)); if(mv && !mv.news && mv.dir === 'DRIFTED') s += 1; } catch(e){}
     // owner 11/15: these four never wash out against good flags (keep in step with sweep.HARD_RISK)
-    if((l.fl || []).some(function(f){ return f[1] === 'Losing zone' || f[1] === 'Fringe role' || f[1] === 'Blowout script' || f[1] === 'Target squeeze'; })) s = Math.max(s, 2);
+    if((l.fl || []).some(function(f){ return f[1] === 'Losing zone' || f[1] === 'Fringe role' || f[1] === 'Blowout script' || f[1] === 'Target squeeze' || f[1] === 'Losing side' || f[1] === 'Near-zero risk'; })) s = Math.max(s, 2);
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v) s += v.level === 'block' ? 10 : v.level === 'warn' ? 3 : -1; return Math.max(0, s); }
   function riskTag(l){ if(isGL(l)) return ''; var s = riskScore(l); if(s < 2) return ''; var hi = s >= 4;
     return ' <span class="rsk' + (hi ? ' hi' : '') + '" title="Risk score ' + s + ': model flags plus live injury / weather / BetSweep notes">' + (hi ? 'High risk' : 'Some risk') + '</span>'; }

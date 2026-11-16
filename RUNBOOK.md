@@ -663,3 +663,10 @@ Code only; ships with the next rebuild that passes the publish gates. Full numbe
    chat-built slips.
 6. **Pre-kickoff re-check**: already built (push/slip-alerts.ts, every 10 minutes: Out / Doubtful / game-day inactives on saved slips, with a
    swap idea; line-move pushes on saved legs). Nothing added. It only watches slips saved to an account, not slips sent in chat.
+
+## Losing side (owner 11/15: "We should've never bet on Atlanta")
+
+`build_builder.py` flags yardage overs (rushing, receiving, passing, rush + rec, longest reception) on the team the model's most likely ending
+has losing by 10+ as `bad` "Losing side". Weeks 6-9 floor legs on that side hit 61% against a 71% price (439 legs); receptions held up and
+are left alone. "Losing side" and "Near-zero risk" joined `sweep.HARD_RISK` (and the builder's JS list), so no good flags can clear them.
+Numbers and the slip-shape replay: `research/slip_shapes.md`.
