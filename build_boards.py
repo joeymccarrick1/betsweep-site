@@ -995,7 +995,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
         # owner 11/15 ("Why in the world would we have Germie Bernard 4+ receptions as the models best bet for this game. He has 0."): the
         # game-card parlay now has to pass the same risk check as the Parlay Builder's tag (sweep.risk_score: bad 3, watch 1, good -1, hard
         # tags) - Some risk or High risk = out. Bernard carried "FD rec yds 1/4" (bad) and "Fill-in fading" (watch: his 6-11-3-5 catch run
-        # came while Skowronek was out, and Skowronek was back) = 4 = High risk on the builder while this card called him the best parlay;
+        # was first blamed on Skowronek's absence - wrong, the owner corrected it: Pittman and Roman Wilson were the ones out) = 4 = High risk on the builder while this card called him the best parlay;
         # the ROLE_RISK gate above only reads `bad` flags. Weeks 8-9 best-parlay player legs: low risk 16 hit / 6 missed, Some or High 2 / 4.
         try:
             import sweep as _SWP

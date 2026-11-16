@@ -755,8 +755,8 @@ whole-board comparison (added 11/10) blocked every late-week publish (792 legs a
 FanDuel posts Thursday's game early. On the Monday of Week 10 the price tabs already held Colts @ Texans (Thu 11/19, Week 11): 122 Leg
 Board rows, 285 links, 26 first-TD prices, 20 unders, 222 game-line rows, plus the other books' prices for twelve Week 11 games. The Leg
 Board joins price to projection by player, so those rows carried Week 10's projection against Week 10's opponent, and the builders filed
-them under the team's (finished) Week 10 game. The first Monday rebuild that could publish put 150 of them on the site for about 35
-minutes (home page Model's Best, Boards, First TD, the shadow list, the flag audit). Until that morning the board-shrank check had
+them under the team's (finished) Week 10 game. The first Monday rebuild that could publish put 150 of them on the site for 31 minutes
+(13:57Z to 14:28Z: home page Model's Best, Boards, First TD, the shadow list, the flag audit). Until that morning the board-shrank check had
 blocked every Monday publish, which is why it had not shown before.
 
 - `weekgate.clean(IN, week)` drops, from legboard / bestlegs / links / bookodds / gamelines / ftdodds / unders in ./in, every row whose
