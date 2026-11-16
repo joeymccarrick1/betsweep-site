@@ -32,7 +32,7 @@ Read this file first when the work is picked up again.
 1b. ~~Game cards keep their pre-kickoff best parlay~~ DONE 11/16 (RUNBOOK). Also done 11/16: busted promos / social slips move to Lost at once, winners to Winners. Was: **Game cards keep their pre-kickoff best parlay.** Since 11/16 a card shows no best parlay once its game kicks off (a rebuild used
    to invent a game-line one for a finished game). Better: publish `data/best-parlays-w<week>.json`, keep each game's record from the
    last build before its kickoff, show it on the card through the game and grade it when the game is final. Before Thursday's kickoff.
-2. **Social - people.** SQL for the owner to run (same way as gen/social.sql): profiles (handle, avatar color), follows, tails, reactions,
+2. (SQL written and tested 11/16: sql/social_v3.sql, sent to the owner to run - WAITING ON THE OWNER; build the page side only after he confirms it ran) **Social - people.** SQL for the owner to run (same way as gen/social.sql): profiles (handle, avatar color), follows, tails, reactions,
    and graded results per post (result, units) written by a scheduled job. Then: avatar + handle + record in units on every post, a
    profile view with graded history, Following tab, "this week's sharps" strip.
 3. **Social - post from a screenshot** (reuse slipimport.py's reader, then the existing post form).

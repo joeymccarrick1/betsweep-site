@@ -809,3 +809,13 @@ rec yds, catches; WR and TE rec yds, catches): a bar a game, oldest to newest, u
 FanDuel rung priced closest to even drawn across as a dashed line, each bar marked over / under by colour and by a tick or dash, and
 "Cleared 81+ in 3 of 9" in words. No props on the board this week = the season average is drawn and nothing is called a hit. Plain
 HTML and CSS (site variables), no script. Still to do from step 6: the same picture inside a leg's details in the builder.
+
+## Social v3 database script (alpha plan step 2, 11/16) - the owner runs it
+
+`sql/social_v3.sql` (placeholder `__CRON_SECRET__`, never commit a filled copy): feed_profiles (assigned handle, avatar colour;
+`feed_profile_me()` makes it), feed_follows, feed_tails (only before the slip's first kickoff; count on the post), feed_reactions
+(one per account per post: fire / lock / fade / rip; counts in `feed_posts.rx`), graded results on the post (`result`, `units`,
+`graded_at`) written only through `feed_grade(secret, rows)`, and the view `feed_records` (graded, won, lost, units per account).
+Tested 11/16 on a throwaway Postgres 16 with a mock auth schema: installs twice cleanly on top of v1; a user cannot edit a handle,
+arrive pre-tailed or pre-graded, follow himself, follow as someone else, tail after kickoff or grade without the secret (the
+placeholder itself is refused). Not tested against Supabase. Nothing on the site reads these tables yet.
