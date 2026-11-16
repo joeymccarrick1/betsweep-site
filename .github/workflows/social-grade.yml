@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "Actions secret named FEED_GRADE_SECRET: ${{ secrets.FEED_GRADE_SECRET != '' }}"
           echo "Actions VARIABLE named FEED_GRADE_SECRET (wrong tab - variables are not hidden): ${{ vars.FEED_GRADE_SECRET != '' }}"
-          echo "Actions secret named SHEETS_SA_JSON (an older one that is known to exist - shows this check can see secrets at all): ${{ secrets.SHEETS_SA_JSON != '' }}"
+          # (11/16: a line here once tested an older secret to prove the check can see secrets - it could, and naming a JSON secret in a job makes GitHub hide every brace in that job's log, so it is gone)
           echo "Actions secret named CRON_SECRET: ${{ secrets.CRON_SECRET != '' }}"
           echo "Actions secret named FEED_GRADE: ${{ secrets.FEED_GRADE != '' }}"
           echo "Actions secret named GRADE_SECRET: ${{ secrets.GRADE_SECRET != '' }}"
