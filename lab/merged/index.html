@@ -199,6 +199,10 @@
 .hist .sum{display:block;margin-top:4px;color:var(--ink)}
 .hist .sum b{font-weight:700}
 .hist[hidden]{display:none}
+details.gdone{margin:14px 0 0;border:1px solid var(--line);border-radius:12px;background:var(--card)} details.gdone>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-height:48px;padding:13px 16px;color:var(--ink)}
+details.gdone>summary::-webkit-details-marker{display:none} details.gdone>summary b{font-family:var(--display);font-weight:700;font-size:17px} details.gdone>summary small{color:var(--mute);font-size:13px}
+details.gdone>summary::after{content:"";width:9px;height:9px;margin-left:auto;align-self:center;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.gdone[open]>summary::after{transform:translateY(2px) rotate(-135deg)}
+details.gdone>.gcard{margin:0 10px 10px}
 .hist .l10b{position:relative;height:150px;margin:2px 0 8px;max-width:440px} .hist .l10b ol{list-style:none;margin:0;padding:0 46px 0 0;height:100%;display:flex;gap:4px;align-items:stretch}   /* the gutter on the right holds the line's label, clear of the last bar */
 .hist .l10b li{flex:1;min-width:0;display:grid;grid-template-rows:16px 1fr 14px 16px;justify-items:center;text-align:center;margin:0;padding:0;border:0;background:none}
 .hist .l10b li .v{font-size:10.5px;font-weight:700;color:var(--ink);line-height:16px;font-variant-numeric:tabular-nums}

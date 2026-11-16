@@ -98,6 +98,7 @@ a{color:var(--ink)}
 .soc .pedit .em i{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);font-style:normal;font-size:22px;color:var(--ink)} .soc .pedit .em input:checked + i{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
 .soc .pedit .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)} .soc .pedit .msg{min-height:18px;margin:4px 0 8px;font-size:13.5px;color:var(--mute)} .soc .pedit .msg.err{color:var(--bad);font-weight:700}
 .soc .pedit .pbtn{display:flex;gap:8px} .soc .pedit .pbtn button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .soc .pedit .pbtn .sv{background:var(--red);border-color:var(--red);color:#fff}
+.soc .gfbar{margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:14px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline} .soc .gfbar a{margin-left:auto;color:var(--ink);font-weight:700}
 .soc a.back{display:inline-block;margin:0 0 10px;color:var(--ink);font-weight:700;font-size:14px;text-decoration:none;padding:8px 0}
 .soc .prof{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
 .soc .prof .av.big{width:52px;height:52px;font-size:19px} .soc .prof h2{margin:0;font-family:var(--display);font-size:22px;color:var(--ink);overflow-wrap:anywhere} .soc .prof .pn p{margin:2px 0 0;color:var(--mute);font-size:13px}
@@ -158,6 +159,10 @@ a{color:var(--ink)}
   // alpha step 2 (11/16, after the owner ran sql/social_v3.sql): people. V3 turns false if the database does not have the new columns,
   // and the page then behaves exactly as before.
   var V3 = true, PROF = {}, REC = {}, MYT = {}, MYRX = {}, FOL = {}, VIEW = null, UPOSTS = null;
+  // alpha step 5 (11/16): a game card on Boards links here with #g=<game>; the feed then shows only slips with a leg in that game
+  var GF = (function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); return m ? m[1] : null; })();
+  function inGame(p){ if(!GF) return true; var alt = GF.split('-').reverse().join('-'); return (p.legs || []).some(function(l){ return l.g === GF || l.g === alt; }); }
+  function gfBar(){ return GF ? '<p class="gfbar">Slips with a leg in <b>' + esc(GF.replace('-', ' vs ')) + '</b> <a href="#" data-go="allgames">Show every game</a></p>' : ''; }
   var COLS = 'id,user_id,handle,title,week,legs,fd_odds,first_ko,last_ko,score,created_at', COLS3 = COLS + ',tails,rx,result,units';
   var RXK = [['fire', '🔥', 'Fire'], ['lock', '🔒', 'Lock'], ['fade', '👎', 'Fade'], ['rip', '🪦', 'RIP']];
   function hcol(p){ var q = PROF[p.user_id]; if(q) return q.color; var h = 0, t = String(p.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
@@ -259,7 +264,7 @@ a{color:var(--ink)}
     SIG = sig();
     var me = A && A.user ? A.user.id : null, by = sort === 'new' ? function(a, b){ return new Date(b.created_at) - new Date(a.created_at); } : function(a, b){ return (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)); };
     var open = [], won = [], lost = [];
-    POSTS.slice().sort(by).forEach(function(p){ var x = p.result ? {st: p.result === 'won' ? 'cashed' : 'busted'} : stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
+    POSTS.filter(inGame).sort(by).forEach(function(p){ var x = p.result ? {st: p.result === 'won' ? 'cashed' : 'busted'} : stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
     if(sort === 'following'){
       var mine = open.filter(function(p){ return FOL[p.user_id]; }), nf = Object.keys(FOL).length;
       if(hb) hb.hidden = true;
@@ -286,8 +291,9 @@ a{color:var(--ink)}
       list.innerHTML = open.length ? open.map(function(p){ return card(p, me); }).join('')
         : '<div class="empty"><b>No open slips right now.</b>' + (won.length ? won.length + ' cashed this week - they are under the Cashed tab. ' : '') + 'Be the first on the board for the next game.' + POSTBTN + '</div>' + (won.length ? '' : lastWeekHtml(me));
     }
+    if(GF){ list.insertAdjacentHTML('afterbegin', gfBar()); if(hb && sort !== 'cashed' && sort !== 'lost') hb.hidden = true; }   // one game asked for: the pinned house slips step aside
     gradeHouse();
-    if(location.hash){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
+    if(location.hash && !GF){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
   }
   function profile(){
     var me = A && A.user ? A.user.id : null, u = VIEW, d = UPOSTS && UPOSTS.u === u ? UPOSTS : null;
@@ -329,6 +335,7 @@ a{color:var(--ink)}
   function openUser(u){ EDIT = false; VIEW = u; UPOSTS = null; try { history.pushState({u: u}, '', '#u=' + u); } catch(e){} render(); window.scrollTo(0, 0); }
   function closeUser(){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} render(); }
   window.addEventListener('popstate', function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); VIEW = m ? m[1] : null; if(A) render(); });
+  window.addEventListener('hashchange', function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && m[1] !== GF){ GF = m[1]; if(A) render(); } });
   var LAST = null, LAST_BUSY = false;
   function loadLast(){
     if(LAST || LAST_BUSY || !A || W < 2) return; LAST_BUSY = true;
@@ -368,7 +375,7 @@ a{color:var(--ink)}
   }
   function needSignIn(){ var s = document.querySelector('#bsacct button'); if(s) s.click(); }
   list.addEventListener('click', function(e){
-    var go = e.target.closest('[data-go]'); if(go){ e.preventDefault(); if(go.dataset.go === 'back') closeUser(); else { var tb = document.querySelector('.soc .seg button[data-s="' + go.dataset.go + '"]'); if(tb) tb.click(); } return; }
+    var go = e.target.closest('[data-go]'); if(go){ e.preventDefault(); if(go.dataset.go === 'back') closeUser(); else if(go.dataset.go === 'allgames'){ GF = null; try { history.replaceState({}, '', location.pathname); } catch(e2){} render(); } else { var tb = document.querySelector('.soc .seg button[data-s="' + go.dataset.go + '"]'); if(tb) tb.click(); } return; }
     var hu = e.target.closest('b.h[data-u]'); if(hu){ openUser(hu.dataset.u); return; }
     var ed = e.target.closest('[data-edit]'); if(ed){ EDIT = ed.dataset.edit === '1'; render(); if(EDIT){ var i0 = document.getElementById('peh'); if(i0) i0.focus(); } return; }
     var tl = e.target.closest('[data-tail]'), rx = e.target.closest('[data-rx]'), fo = e.target.closest('[data-fol]');

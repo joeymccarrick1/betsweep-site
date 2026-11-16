@@ -199,6 +199,10 @@
 .hist .sum{display:block;margin-top:4px;color:var(--ink)}
 .hist .sum b{font-weight:700}
 .hist[hidden]{display:none}
+details.gdone{margin:14px 0 0;border:1px solid var(--line);border-radius:12px;background:var(--card)} details.gdone>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-height:48px;padding:13px 16px;color:var(--ink)}
+details.gdone>summary::-webkit-details-marker{display:none} details.gdone>summary b{font-family:var(--display);font-weight:700;font-size:17px} details.gdone>summary small{color:var(--mute);font-size:13px}
+details.gdone>summary::after{content:"";width:9px;height:9px;margin-left:auto;align-self:center;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.gdone[open]>summary::after{transform:translateY(2px) rotate(-135deg)}
+details.gdone>.gcard{margin:0 10px 10px}
 .hist .l10b{position:relative;height:150px;margin:2px 0 8px;max-width:440px} .hist .l10b ol{list-style:none;margin:0;padding:0 46px 0 0;height:100%;display:flex;gap:4px;align-items:stretch}   /* the gutter on the right holds the line's label, clear of the last bar */
 .hist .l10b li{flex:1;min-width:0;display:grid;grid-template-rows:16px 1fr 14px 16px;justify-items:center;text-align:center;margin:0;padding:0;border:0;background:none}
 .hist .l10b li .v{font-size:10.5px;font-weight:700;color:var(--ink);line-height:16px;font-variant-numeric:tabular-nums}
@@ -411,9 +415,9 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 10 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Mon 11/16 2:53 PM CT.</p>
+    <p>Every FanDuel player prop on the Week 10 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Mon 11/16 3:24 PM CT.</p>
   </div>
-  <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-NYG-WAS">NYG·WAS</a> <a href="#g-DET-NE">DET·NE</a> <a href="#g-ATL-KC">ATL·KC</a> <a href="#g-BUF-NYJ">BUF·NYJ</a> <a href="#g-CAR-NO">CAR·NO</a> <a href="#g-CLE-HOU">CLE·HOU</a> <a href="#g-GB-MIN">GB·MIN</a> <a href="#g-IND-MIA">IND·MIA</a> <a href="#g-JAX-TEN">JAX·TEN</a> <a href="#g-ARI-LA">ARI·LA</a> <a href="#g-LV-SEA">LV·SEA</a> <a href="#g-DAL-SF">DAL·SF</a> <a href="#g-CIN-PIT">CIN·PIT</a> <a href="#g-BAL-LAC">BAL·LAC</a></nav>
+  <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-BAL-LAC">BAL·LAC</a> <a href="#g-NYG-WAS" class="played">NYG·WAS</a> <a href="#g-DET-NE" class="played">DET·NE</a> <a href="#g-ATL-KC" class="played">ATL·KC</a> <a href="#g-BUF-NYJ" class="played">BUF·NYJ</a> <a href="#g-CAR-NO" class="played">CAR·NO</a> <a href="#g-CLE-HOU" class="played">CLE·HOU</a> <a href="#g-GB-MIN" class="played">GB·MIN</a> <a href="#g-IND-MIA" class="played">IND·MIA</a> <a href="#g-JAX-TEN" class="played">JAX·TEN</a> <a href="#g-ARI-LA" class="played">ARI·LA</a> <a href="#g-LV-SEA" class="played">LV·SEA</a> <a href="#g-DAL-SF" class="played">DAL·SF</a> <a href="#g-CIN-PIT" class="played">CIN·PIT</a></nav>
   
 </div>
 
@@ -486,7 +490,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Mon 11/16 2:53 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Mon 11/16 3:24 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -511,7 +515,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-a3b91141d5c9.js"></script>
+<script src="/build/data-be917fd1fda7.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -995,8 +999,11 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var wrap = $('#games'); if(!wrap) return;
     var posOrd = {QB:0, RB:1, WR:2, TE:3};
     // finished games sink below the ones still to come or in progress (kickoff order kept within each group)
-    var ord = gorder.filter(function(gid){ return !finished(gid); }).concat(gorder.filter(function(gid){ return finished(gid); }));
-    wrap.innerHTML = ord.map(function(gid){
+    // alpha page pass, Builder (11/16): on a Monday thirteen finished games stood under the one still to be played - 5,300 of the page's
+    // 7,200 pixels, each with a grid of prices nobody can bet. Finished games fold into one closed row ("13 games already played") and
+    // lose their price grid; the fold stays as the reader left it across re-draws, and is open when nothing is left to play.
+    var up = gorder.filter(function(gid){ return !finished(gid); }), dn = gorder.filter(function(gid){ return finished(gid); });
+    function one(gid){
       var g = games[gid], gl = gameLegs(gid), off = started(gid), open = !!openG[gid] && !off;
       var best = null; gl.forEach(function(l){ if(!best || l.e > best.e) best = l; });
       var nAll = legs.filter(function(l){ return l.g === gid; }).length;
@@ -1017,9 +1024,17 @@ window.BSBooks = { attach: function(btn, panel, getText){
       }
       var lv = LV[gid], tk = (lv && window.BSLive) ? window.BSLive.tickHtml(g, lv) : '';
       return '<section class="gcard' + (open ? ' open' : '') + (off ? ' off' : '') + (finished(gid) ? ' done' : '') + (lv && lv.st === 'in' ? ' live' : '') + '" id="g-' + gid + '">' + head +
-        '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + glGrid(g, off) + body + '</section>';
-    }).join('');
+        '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + (finished(gid) ? '' : glGrid(g, off)) + body + '</section>';
+    }
+    wrap.innerHTML = up.map(one).join('') + (dn.length ? '<details class="gdone"' + (doneOpen || !up.length ? ' open' : '') + '><summary><b>' + dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played</b> <small>finals and what the model projected</small></summary>' + dn.map(one).join('') + '</details>' : '');
+    chipState();
   }
+  // the chip row is ordered when the page is built; which chips are dimmed follows the clock, so a page opened after kickoff is right too
+  function chipState(){ gorder.forEach(function(gid){ var a = document.querySelector('nav.nav a[href="#g-' + gid + '"]'); if(a) a.classList.toggle('played', started(gid)); }); }
+  var doneOpen = false;
+  document.addEventListener('toggle', function(e){ if(e.target && e.target.classList && e.target.classList.contains('gdone')) doneOpen = e.target.open; }, true);
+  // a chip (or any link) to a finished game opens the fold first, so the jump lands on something
+  document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('a[href^="#g-"]'); if(!a) return; var t = document.getElementById(a.getAttribute('href').slice(1)), d = t && t.closest('details.gdone'); if(d && !d.open){ d.open = true; doneOpen = true; } });
   function isFiltered(){ return st.game !== 'all' || st.market !== 'all' || st.pos !== 'all' || st.odds !== 'all' || st.clean || st.floor || st.soft || st.tier || !!st.snaps || !st.best || st.q.trim() !== ''; }
   function setView(v){
     st.view = v;
