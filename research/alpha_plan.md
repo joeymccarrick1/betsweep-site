@@ -19,8 +19,14 @@ Read this file first when the work is picked up again.
   change; long slips fold after four legs); one-line intro with "how it works" moved to the foot; loading placeholders instead of
   "Loading..."; touch feedback on buttons and tabs. Mockup markup: research/social_mock_block.html.
 
+- 11/16 Social step 1 DONE (gen e7309c5d, live 16:16Z): every post of the week is loaded and graded on the page; Cashed tab (winners,
+  busted folded under), last week's winners + a post button when nothing is open, pinned house slips graded live through their game
+  (`window.__BS_HOUSE`, HOUSE_HOURS = 12), TD double-count fixed, a player missing from the live box is never called a miss.
+  tests/social_feed.py (20 checks, light + dark). Not done from step 1: nothing - "last week's winners" needs data/box-w<W-1>.json,
+  which the Tuesday session writes.
+
 ## Next, in this order
-1. **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
+1. ~~Social - never empty, finished~~ (done 11/16, see above). Was: **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
    data/box-w<W>.json); stop hiding finished slips, sort them under Cashed / Busted; live grading on the pinned house slips so they can
    stay through the games; last week's winners when nothing is open; empty state with an action.
 1b. **Game cards keep their pre-kickoff best parlay.** Since 11/16 a card shows no best parlay once its game kicks off (a rebuild used

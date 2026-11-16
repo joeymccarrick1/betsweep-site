@@ -768,3 +768,13 @@ blocked every Monday publish, which is why it had not shown before.
   `python3 weekgate.py --check` only reports; `python3 weekgate.py selftest` = 16 checks.
 - Thursday's game appears on the site when the week rolls (Tuesday), with its own projections.
 - Still open in the SHEET: the Leg Board tab itself shows those rows with the wrong week's projection until the roll.
+
+## Social: settled slips stay (alpha step 1, 11/16)
+
+social.py loads every open-status post of the week (no more "last 4.5 hours") and grades each on the page: open / live under Top and
+New; **Cashed** tab = slips with every leg hit, busted ones folded under it; nothing open and nothing cashed -> "Last week's winners"
+from `data/box-w<W-1>.json` plus a post button. House slips (`house_html`) carry their legs in `window.__BS_HOUSE` and are graded by the
+same code, so they stay pinned through the game and for HOUSE_HOURS (12) after the last kickoff; hidden on the Cashed and Sharps tabs.
+Grader changes: TDs are set per read, not added (a re-read doubled them); Passing TDs and Either TD are graded; a player the live box
+does not list stays open (never a miss) - such a slip ends as "Final · n graded hits". Test: `python3 tests/social_feed.py [shots_dir]`
+(fakes the account client and ESPN; needs ./site built).
