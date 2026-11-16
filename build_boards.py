@@ -1488,6 +1488,10 @@ page = (open(os.path.join(HERE, "template.html")).read().replace("/*SLIPDATA*/nu
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/FQVqm3BhG4BfMPd63tRQRa" class="tool">Parlay Builder →</a> <a href="#summary">Slate</a> ' + " ".join(nav)).replace("{{CARDS}}", summary + "\n" + "\n".join(cards))
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ARCHIVE).replace("{{DESC}}", f"Model projections, matchup colors and the best FanDuel leg per player, from the Fantasy Projection Model 2026. Page built {stamp} CT from the live sheet: projections, per-game defense ranks (season and last 3 weeks), FanDuel lines and the kickoff-hour forecast."))
 page = (page.replace("</body>", SWEEPCARD_JS + "</body>", 1) if "</body>" in page else page + SWEEPCARD_JS)   # owner 11/10: Sweep says share cards
+try:   # alpha plan step 5 (11/16): each game card says how many posted slips have a leg in that game and links to them
+    import social as _SOCB; _sj = _SOCB.cards_js(WEEK)
+    page = (page.replace("</body>", _sj + "</body>", 1) if "</body>" in page else page + _sj)
+except Exception as _e: print("note: Social counts on game cards skipped:", _e)
 try: json.dump({"week": int(WEEK), "js": SWEEPCARD_JS, "btn": SWEEP_BTNS}, open(os.path.join(OUT, "sweepcards.json"), "w"))   # for build_today.py: the home cards show the same Sweep says line
 except Exception as _e: print("note: sweepcards.json not written:", _e)
 out = os.path.join(OUT, "matchup-boards.html"); open(out, "w").write(page)

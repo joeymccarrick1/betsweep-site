@@ -25,6 +25,13 @@ Read this file first when the work is picked up again.
   tests/social_feed.py (20 checks, light + dark). Not done from step 1: nothing - "last week's winners" needs data/box-w<W-1>.json,
   which the Tuesday session writes.
 
+- 11/16 step 2 page side DONE (v3 people features live; own username + avatar, sql/social_v4.sql sent to the owner). Left from step 2:
+  the grading job that calls `feed_grade` (needs the grading secret as a repo secret - the owner adds it) and the "this week's sharps" strip.
+- 11/16 step 5 DONE: "Top on Social" on Today (`social.strip_html`), "N slips on Social" / "Post a slip for this game" on Boards game
+  cards (`social.cards_js`), and Social opens on one game from those links (`/social/#g=BAL-LAC`). tests/social_elsewhere.py (19 checks).
+- 11/16 step 6 DONE: last-games picture on player pages and in the builder's leg details.
+- 11/16 Builder (first items of the step 9 page pass): played games fold under "N games already played" (Monday page 11,900px ->
+  1,900px), chip row leads with games still to come, played chips dimmed by the clock. tests/builder_fold.py (24 checks).
 ## Next, in this order
 1. ~~Social - never empty, finished~~ (done 11/16, see above). Was: **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
    data/box-w<W>.json); stop hiding finished slips, sort them under Cashed / Busted; live grading on the pinned house slips so they can
@@ -38,7 +45,7 @@ Read this file first when the work is picked up again.
 3. **Social - post from a screenshot** (reuse slipimport.py's reader, then the existing post form).
 4. **Social - reasons to return.** Push when someone tails you / a slip you tailed cashes (push/slip-alerts.ts pattern; owner deploys),
    share card when a posted slip wins (promo story PNG pattern), tail counts, one-tap reactions (no comments).
-5. **Social elsewhere.** "Top on Social" strip on Today; "N slips posted" on game cards.
+5. (DONE 11/16) 5. **Social elsewhere.** "Top on Social" strip on Today; "N slips posted" on game cards.
 6. (DONE 11/16: player pages and the builder's leg details) **Player pages and leg details lead with a last-10-games picture against the line** (bars, line marker, hit count).
 7. **My bets hub on /me/**: open slips, record in units, profit calendar; profile icon in the header that opens it.
 8. **Design system**: one button set (primary red, secondary outline, quiet text), one card, one chip, one radius scale; content first

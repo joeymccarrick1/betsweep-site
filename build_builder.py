@@ -1148,6 +1148,10 @@ BUILDER_CSS = r"""
 .hist .sum{display:block;margin-top:4px;color:var(--ink)}
 .hist .sum b{font-weight:700}
 .hist[hidden]{display:none}
+details.gdone{margin:14px 0 0;border:1px solid var(--line);border-radius:12px;background:var(--card)} details.gdone>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-height:48px;padding:13px 16px;color:var(--ink)}
+details.gdone>summary::-webkit-details-marker{display:none} details.gdone>summary b{font-family:var(--display);font-weight:700;font-size:17px} details.gdone>summary small{color:var(--mute);font-size:13px}
+details.gdone>summary::after{content:"";width:9px;height:9px;margin-left:auto;align-self:center;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg)} details.gdone[open]>summary::after{transform:translateY(2px) rotate(-135deg)}
+details.gdone>.gcard{margin:0 10px 10px}
 .hist .l10b{position:relative;height:150px;margin:2px 0 8px;max-width:440px} .hist .l10b ol{list-style:none;margin:0;padding:0 46px 0 0;height:100%;display:flex;gap:4px;align-items:stretch}   /* the gutter on the right holds the line's label, clear of the last bar */
 .hist .l10b li{flex:1;min-width:0;display:grid;grid-template-rows:16px 1fr 14px 16px;justify-items:center;text-align:center;margin:0;padding:0;border:0;background:none}
 .hist .l10b li .v{font-size:10.5px;font-weight:700;color:var(--ink);line-height:16px;font-variant-numeric:tabular-nums}
@@ -1727,8 +1731,11 @@ BUILDER_JS = r"""
     var wrap = $('#games'); if(!wrap) return;
     var posOrd = {QB:0, RB:1, WR:2, TE:3};
     // finished games sink below the ones still to come or in progress (kickoff order kept within each group)
-    var ord = gorder.filter(function(gid){ return !finished(gid); }).concat(gorder.filter(function(gid){ return finished(gid); }));
-    wrap.innerHTML = ord.map(function(gid){
+    // alpha page pass, Builder (11/16): on a Monday thirteen finished games stood under the one still to be played - 5,300 of the page's
+    // 7,200 pixels, each with a grid of prices nobody can bet. Finished games fold into one closed row ("13 games already played") and
+    // lose their price grid; the fold stays as the reader left it across re-draws, and is open when nothing is left to play.
+    var up = gorder.filter(function(gid){ return !finished(gid); }), dn = gorder.filter(function(gid){ return finished(gid); });
+    function one(gid){
       var g = games[gid], gl = gameLegs(gid), off = started(gid), open = !!openG[gid] && !off;
       var best = null; gl.forEach(function(l){ if(!best || l.e > best.e) best = l; });
       var nAll = legs.filter(function(l){ return l.g === gid; }).length;
@@ -1749,9 +1756,17 @@ BUILDER_JS = r"""
       }
       var lv = LV[gid], tk = (lv && window.BSLive) ? window.BSLive.tickHtml(g, lv) : '';
       return '<section class="gcard' + (open ? ' open' : '') + (off ? ' off' : '') + (finished(gid) ? ' done' : '') + (lv && lv.st === 'in' ? ' live' : '') + '" id="g-' + gid + '">' + head +
-        '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + glGrid(g, off) + body + '</section>';
-    }).join('');
+        '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + (finished(gid) ? '' : glGrid(g, off)) + body + '</section>';
+    }
+    wrap.innerHTML = up.map(one).join('') + (dn.length ? '<details class="gdone"' + (doneOpen || !up.length ? ' open' : '') + '><summary><b>' + dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played</b> <small>finals and what the model projected</small></summary>' + dn.map(one).join('') + '</details>' : '');
+    chipState();
   }
+  // the chip row is ordered when the page is built; which chips are dimmed follows the clock, so a page opened after kickoff is right too
+  function chipState(){ gorder.forEach(function(gid){ var a = document.querySelector('nav.nav a[href="#g-' + gid + '"]'); if(a) a.classList.toggle('played', started(gid)); }); }
+  var doneOpen = false;
+  document.addEventListener('toggle', function(e){ if(e.target && e.target.classList && e.target.classList.contains('gdone')) doneOpen = e.target.open; }, true);
+  // a chip (or any link) to a finished game opens the fold first, so the jump lands on something
+  document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('a[href^="#g-"]'); if(!a) return; var t = document.getElementById(a.getAttribute('href').slice(1)), d = t && t.closest('details.gdone'); if(d && !d.open){ d.open = true; doneOpen = true; } });
   function isFiltered(){ return st.game !== 'all' || st.market !== 'all' || st.pos !== 'all' || st.odds !== 'all' || st.clean || st.floor || st.soft || st.tier || !!st.snaps || !st.best || st.q.trim() !== ''; }
   function setView(v){
     st.view = v;
@@ -2469,12 +2484,13 @@ body = f'''<div class="bld">
 <script>{BOOKS.BOOKS_JS}</script>
 <script>{BUILDER_JS}</script>'''
 
+_NOW_MS = __import__("time").time() * 1000   # 11/16: games still to be played lead the chip row; a played game's chip is dimmed (template: nav a.played)
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep Parlay Builder</title>")
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>Parlay Builder</b></h1>")
         .replace("</style>", BUILDER_CSS + LIVE.LIVE_CSS + BOOKS.BOOKS_CSS + "\n</style>", 1)
         .replace("{{DESC}}", f"Every FanDuel player prop on the Week {WEEK} slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built {stamp} CT.")
-        .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv" class="tool">Matchup Boards →</a> ' + " ".join(f'<a href="#g-{g["gid"]}">{g["a"]}·{g["b"]}</a>' for g in sorted(GAMES, key=lambda g: g.get("ko") or 0))).replace("{{CARDS}}", body)
+        .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv" class="tool">Matchup Boards →</a> ' + " ".join(f'<a href="#g-{g["gid"]}"{" class=\"played\"" if (g.get("ko") or 0) and g["ko"] < _NOW_MS else ""}>{g["a"]}·{g["b"]}</a>' for g in sorted(GAMES, key=lambda g: (1 if (g.get("ko") or 0) and g["ko"] < _NOW_MS else 0, g.get("ko") or 0)))).replace("{{CARDS}}", body)
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ""))
 page = re.sub(r'<div class="key">.*?</div>\n', '', page, count=1, flags=re.S)
 page = page.replace('<div class="grid">', '<div class="grid" style="display:block">', 1)

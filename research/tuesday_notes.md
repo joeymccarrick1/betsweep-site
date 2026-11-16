@@ -9,6 +9,15 @@
 - **Game-card best parlay**: tonight's (BAL-LAC) is two game lines (Under 38.5 + Chargers ML, EV -3%): under the new rules no slip with a
   player leg beat it. Check the full Week 11 cards: player legs or fallbacks? If most are fallbacks the bar is
   too tight for a card that is supposed to have a pick, or the card should say "nothing clears the bar" instead.
-- **Freeze the pre-kickoff best parlay** on the card and grade it (alpha plan 1b) before Thursday's kickoff.
 - Shadow list after the gate: 1 single (Herbert 225+ pass yds +158), 0 pairs for MNF. The 14:13Z copy of data/learned-w10-1116.json
   had three wrong-week singles (Jones, Schultz, Stroud) - overwritten at 14:27Z; do not grade those.
+- **Freeze the pre-kickoff best parlay**: done 11/16 (RUNBOOK); on Tuesday check that Week 10's frozen cards graded themselves.
+- **Stale status flags.** Monday's BAL-LAC card carried "Justin Herbert is questionable" as a risk flag, dated Nov 7, though he had been
+  off the injury report since Nov 12. That one flag fed the card's Low confidence and the risk tag on his legs. Find where the status
+  comes from, how old a status may be before it is dropped, and whether a later "full participant / removed from the report" row
+  clears it. Until then read the flag's date before trusting it.
+- **Best-rung star: which chance?** The builder's "best rung +N% EV" star uses the model's shown chance. On the graded chance (how
+  often legs like it have really hit this season) almost no rung is +EV. Decide which one the star should use; if graded, most ladders
+  lose the star, which may be the honest answer. (Separate from the 11/16 bug where every leg wore a wrong star - fixed.)
+- **Today promo cards say "PREGAME"** as fixed text when live scores cannot load; after kickoff with no data they still say it. Small.
+- **Finished cards in the builder's fold are still tall** (full projection block each). If people open the fold, shorten them.

@@ -289,6 +289,9 @@ def sections(IN_, OUT_):
     except Exception as _e: print("note: winners block skipped:", _e); winners_html = ""
     # owner 11/16: busted promos are NOT listed on this page (he tried a "Lost" fold here for an hour and took it off) - they leave it,
     # and the week's misses are on /receipts/ (build_site.py, home.lost_block).
+    try:   # alpha plan step 5 (11/16): the three most-upvoted open slips, right under the promos
+        import social as _SOC; social_strip = _SOC.strip_html(W)
+    except Exception as _e: print("note: Social strip skipped:", _e); social_strip = ""
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     body = f'''<title>Today · BetSweep</title>
@@ -300,6 +303,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 {sweep_html}
 {winners_html}
 <!--bs:promos-->
+{social_strip}
 {under_html}
 {stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>

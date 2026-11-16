@@ -858,3 +858,27 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   newest, against THIS leg's line (works for unders and TD legs), tick or dash under each bar, the line's label in a gutter on the
   right. The page's game log keeps ten games now (`GL_KEEP`, was six), so "4 of 8 this season" is the season again (it said "of 6").
   Text fixes: "scored a TD" (was "cleared scored a TD").
+
+## 11/16 late afternoon: played games fold in the builder; Social shows up on Today and on game cards (alpha plan step 5)
+
+- **Builder: "N games already played".** `renderGames()` splits the week into games still to come and finished ones
+  (`finished(gid)`: live final, or a final score from the build, or kickoff + 4.5 h). Finished cards go inside
+  `<details class="gdone">` at the foot of the list, closed while anything is left to play and open by itself when nothing is. They
+  lose their price grid (nothing to bet). `doneOpen` keeps the reader's choice across re-draws; a tap on any `#g-<gid>` link opens the
+  fold first so the jump lands. On Monday the page went from about 11,900px to 1,900px on a phone.
+- **Chip row**: games still to come first (build time, `_NOW_MS`), played games after them and dimmed (`a.played`). The dimming is
+  re-applied on the page by `chipState()` from the clock, so a page built before kickoff is right when opened after it. Order is only
+  set at build time.
+- **Today: "Top on Social"** (`social.strip_html(week)`, placed after the promos by build_today.py). Reads this week's posts with the
+  site's account client, keeps the ones with a game still to be played, shows the three with the most upvotes (title or first leg,
+  poster, leg count, tail count, price, upvotes), and links to all of them. Nobody has posted: one line and "Post the first slip".
+  No account client (script blocked, offline): the section hides itself after a few seconds. It never writes anything.
+- **Boards: a line on each game card** (`social.cards_js(week)`, appended by build_boards.py): "N slips on Social" ->
+  `/social/#g=<gid>`, or for a game still to come with none, "Post a slip for this game" -> `/build/#g-<gid>`. A finished game with no
+  slips gets nothing.
+- **Social: one game at a time.** `/social/#g=BAL-LAC` keeps only slips with a leg in that game (`inGame`), says so in a bar
+  (`gfBar`), hides the pinned house slips, and "Show every game" clears it. Works with every tab.
+- Tests: `python3 tests/social_elsewhere.py` (19 checks) and `python3 tests/builder_fold.py` (24 checks; it freezes the page clock an
+  hour before the week's last kickoff, so it means the same thing on any day). Both run light and dark at 390x844. Neither reads the
+  real database - the account client is faked - so what real posts look like there is still to be seen with real posts.
+

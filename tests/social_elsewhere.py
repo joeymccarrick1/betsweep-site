@@ -1,0 +1,80 @@
+"""Social on other pages (alpha plan step 5, 11/16): "Top on Social" on Today, "N slips on Social" on Boards game cards, and the
+one-game filter on Social (/social/#g=BAL-LAC). Serves ./site with a faked account client.  python3 tests/social_elsewhere.py [shots_dir]"""
+import asyncio, json, os, sys, threading, http.server, functools, time
+from playwright.async_api import async_playwright
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
+now = int(time.time() * 1000); FUT = now + 3 * 3600e3; PAST = now - 30 * 3600e3
+def leg(pl, m, ln, g, ko): return {"pl": pl, "m": m, "ln": ln, "g": g, "ko": ko, "o": -150, "k": f"{pl}|{m}|{ln}"}
+def post(i, h, title, legs, score, tails=0): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "handle": h, "title": title, "week": 10, "legs": legs, "fd_odds": 250 + 10 * i, "first_ko": min(l["ko"] for l in legs), "last_ko": max(l["ko"] for l in legs), "score": score, "tails": tails, "rx": {}, "result": None, "units": None, "created_at": "2026-11-16T15:00:00Z"}
+POSTS = [post(1, "HerbFan", "Herbo time", [leg("Justin Herbert", "Passing Yards", 175, "BAL-LAC", FUT), leg("Derrick Henry", "Anytime TD", 1, "BAL-LAC", FUT)], 7, 4),
+         post(2, "RunHeavy", "", [leg("Derrick Henry", "Rushing Yards", 60, "BAL-LAC", FUT)], 9),
+         post(3, "LateOne", "Monday three", [leg("Zay Flowers", "Receiving Yards", 50, "BAL-LAC", FUT), leg("Omarion Hampton", "Anytime TD", 1, "BAL-LAC", FUT), leg("Over 38.5", "Total", 38.5, "BAL-LAC", FUT)], 2),
+         post(4, "Fourth", "Also tonight", [leg("Justin Herbert", "Rushing Yards", 15, "BAL-LAC", FUT)], 1),
+         post(5, "Sunday", "Old slip", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST)], 30)]
+FAKE = """window.__POSTS = %s; try{ if(localStorage.getItem("t_empty")) window.__POSTS = window.__POSTS.filter(function(p){ return p.id === 5; }); }catch(e){}
+var PRO = [{user_id: "00000000-0000-0000-0000-000000000001", handle: "HerbFan", color: 2, emoji: "\\ud83c\\udfc8"}];
+function Q(rows, t){ var f = {}, cols = '', q = {select: function(c){ cols = c || ''; return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
+  then: function(cb, eb){ var old = false; try{ old = !!localStorage.getItem("t_nov4"); }catch(e){}
+    if(old && t === 'feed_profiles' && /emoji/.test(cols)) return Promise.resolve({data: null, error: {message: 'column feed_profiles.emoji does not exist'}}).then(cb, eb);
+    return Promise.resolve({data: rows.map(function(p){ if(old && t === 'feed_profiles'){ var c = {}; for(var k in p) if(k !== 'emoji') c[k] = p[k]; return c; } return p; }).filter(function(p){ return f.week == null || p.week == null || p.week === f.week; }).slice().sort(function(a, b){ return (b.score || 0) - (a.score || 0); }), error: null}).then(cb, eb); }}; return q; }
+window.bsAccount = {user: null, client: {rpc: function(){ return Promise.resolve({data: null, error: null}); }, from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS, t) : t === 'feed_profiles' ? Q(PRO, t) : Q([], t); }}};""" % json.dumps(POSTS)
+ok = [0, 0]
+def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
+async def main():
+    class H(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8851), functools.partial(H, directory=ROOT)); threading.Thread(target=srv.serve_forever, daemon=True).start()
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        for theme in ("light", "dark"):
+            ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+            await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}" + FAKE)
+            await ctx.route("**/site.api.espn.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body='{"events":[]}'))
+            pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
+            # ---- Today ----
+            await pg.goto("http://127.0.0.1:8851/?x=1", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
+            st = await pg.evaluate("""() => { var s = document.getElementById('socstrip'); if(!s) return null; s.scrollIntoView({block: 'center'}); var o = document.documentElement;
+                return {hidden: s.hidden, rows: Array.from(s.querySelectorAll('a.ssp')).map(function(a){ return a.querySelector('.w b').textContent + ' | ' + a.querySelector('.w small').textContent + ' | ' + a.querySelector('.od').textContent + ' | ' + a.getAttribute('href') + ' | ' + a.querySelector('.av').textContent; }),
+                        all: s.querySelector('.seeall').textContent, over: o.scrollWidth - o.clientWidth, after: (s.previousElementSibling || {}).id || (s.previousElementSibling || {}).className, minH: Math.min.apply(null, Array.from(s.querySelectorAll('a.ssp')).map(function(a){ return a.getBoundingClientRect().height; }))}; }""")
+            print(f"   [{theme}] strip:", json.dumps(st, ensure_ascii=False)[:700])
+            check(st and not st["hidden"] and len(st["rows"]) == 3 and st["rows"][0].startswith("Derrick Henry 60+ | @RunHeavy · 1 leg | +270▲ 9 | /b/?p=2"), f"[{theme}] Today lists the three most-upvoted slips still to be played, top first; an untitled slip is named by its leg")
+            check(st and "Herbo time | @HerbFan · 2 legs · 4 tailing" in st["rows"][1] and st["rows"][1].endswith("🏈") and all("Old slip" not in r for r in st["rows"]), f"[{theme}] tail count and the poster's chosen avatar show; Sunday's finished slip is not listed")
+            check(st and st["all"] == "All 4 slips" and st["over"] == 0 and st["minH"] >= 56, f"[{theme}] the link counts the open slips, rows are tap-sized, no sideways scroll ({st and st['all']}, {st and st['minH']})")
+            if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/today-social-{theme}.png")
+            # ---- Boards ----
+            await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
+            bd = await pg.evaluate("""() => { var o = document.documentElement; function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; }
+                var c = document.getElementById('BAL-LAC'); c.querySelector('.ginfo').scrollIntoView({block: 'center'}); return {mnf: a('BAL-LAC'), cin: a('CIN-PIT'), det: a('DET-NE'), over: o.scrollWidth - o.clientWidth}; }""")
+            check(bd == {"mnf": "4 slips on Social -> /social/#g=BAL-LAC", "cin": "1 slip on Social -> /social/#g=CIN-PIT", "det": None, "over": 0}, f"[{theme}] Boards: each game card counts its posted slips and links to them; a finished game with none says nothing ({bd})")
+            if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/boards-social-{theme}.png")
+            # ---- Social, one game ----
+            await pg.goto("http://127.0.0.1:8851/social/#g=BAL-LAC", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            so = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), bar: (document.querySelector('#feed .gfbar') || {}).textContent || '', house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden)})""")
+            check(so["ids"] == ["p2", "p1", "p3", "p4"] and "BAL vs LAC" in so["bar"] and not so["house"], f"[{theme}] Social opened from a game card shows that game's slips only, says so, and the house slips step aside ({so})")
+            if SHOTS: await pg.evaluate("window.scrollTo(0, Math.max(0, document.querySelector('#feed .gfbar').getBoundingClientRect().top + scrollY - 190))"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/social-onegame-{theme}.png")
+            await pg.click('#feed .gfbar a'); await pg.wait_for_timeout(400)
+            so2 = await pg.evaluate("""() => ({bar: !!document.querySelector('#feed .gfbar'), house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden), hash: location.hash})""")
+            check(so2 == {"bar": False, "house": True, "hash": ""}, f"[{theme}] 'Show every game' clears the filter ({so2})")
+            # ---- nobody has posted ----
+            await pg.evaluate("localStorage.setItem('t_empty', '1')"); await pg.goto("http://127.0.0.1:8851/?x=2", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
+            em = await pg.evaluate("""() => { var s = document.getElementById('socstrip'); s.scrollIntoView({block: 'center'}); var e = s.querySelector('.ssempty'); return e ? [e.querySelector('b').textContent, e.querySelector('a').textContent, e.querySelector('a').getAttribute('href'), s.querySelector('.seeall').textContent] : null; }""")
+            check(em == ["No slips up for the games left this week.", "Post the first slip", "/build/", "Open Social"], f"[{theme}] with nothing posted the strip invites the first slip ({em})")
+            if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/today-social-empty-{theme}.png")
+            await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
+            b2 = await pg.evaluate("""() => { function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; } return [a('BAL-LAC'), a('DET-NE')]; }""")
+            check(b2 == ["Post a slip for this game -> /build/#g-BAL-LAC", None], f"[{theme}] an upcoming game nobody has posted on offers the builder ({b2})")
+            await pg.evaluate("localStorage.removeItem('t_empty')")
+            # ---- a database that has not had sql/social_v4.sql yet (no emoji column): the poster's colour still shows ----
+            await pg.evaluate("localStorage.setItem('t_nov4', '1')"); await pg.goto("http://127.0.0.1:8851/?x=4", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
+            o4 = await pg.evaluate("""() => { var a = Array.from(document.querySelectorAll('#socstrip a.ssp')).filter(function(x){ return /HerbFan/.test(x.textContent); })[0], v = a && a.querySelector('.av'); return v ? [v.textContent, v.className] : null; }""")
+            check(o4 == ["HF", "av c2"], f"[{theme}] before the username script is run the strip still shows the poster's colour and initials ({o4})")
+            await pg.evaluate("localStorage.removeItem('t_nov4')")
+            check(not errs, f"[{theme}] no script errors {errs[:2]}")
+            await ctx.close()
+        # no account client at all: the strip hides, nothing breaks
+        ctx = await b.new_context(viewport={"width": 390, "height": 844}); pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
+        await pg.goto("http://127.0.0.1:8851/?x=3", wait_until="domcontentloaded"); await pg.wait_for_timeout(7500)
+        check(await pg.evaluate("document.getElementById('socstrip').hidden") and not errs, f"without the account client the strip hides itself and nothing errors {errs[:1]}")
+        await b.close()
+    srv.shutdown(); print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
+asyncio.run(main())

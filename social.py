@@ -251,6 +251,7 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc .pedit .em i{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);font-style:normal;font-size:22px;color:var(--ink)} .soc .pedit .em input:checked + i{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
 .soc .pedit .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)} .soc .pedit .msg{min-height:18px;margin:4px 0 8px;font-size:13.5px;color:var(--mute)} .soc .pedit .msg.err{color:var(--bad);font-weight:700}
 .soc .pedit .pbtn{display:flex;gap:8px} .soc .pedit .pbtn button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .soc .pedit .pbtn .sv{background:var(--red);border-color:var(--red);color:#fff}
+.soc .gfbar{margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:14px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline} .soc .gfbar a{margin-left:auto;color:var(--ink);font-weight:700}
 .soc a.back{display:inline-block;margin:0 0 10px;color:var(--ink);font-weight:700;font-size:14px;text-decoration:none;padding:8px 0}
 .soc .prof{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
 .soc .prof .av.big{width:52px;height:52px;font-size:19px} .soc .prof h2{margin:0;font-family:var(--display);font-size:22px;color:var(--ink);overflow-wrap:anywhere} .soc .prof .pn p{margin:2px 0 0;color:var(--mute);font-size:13px}
@@ -298,6 +299,10 @@ PAGE_JS = r"""<script>(function(){
   // alpha step 2 (11/16, after the owner ran sql/social_v3.sql): people. V3 turns false if the database does not have the new columns,
   // and the page then behaves exactly as before.
   var V3 = true, PROF = {}, REC = {}, MYT = {}, MYRX = {}, FOL = {}, VIEW = null, UPOSTS = null;
+  // alpha step 5 (11/16): a game card on Boards links here with #g=<game>; the feed then shows only slips with a leg in that game
+  var GF = (function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); return m ? m[1] : null; })();
+  function inGame(p){ if(!GF) return true; var alt = GF.split('-').reverse().join('-'); return (p.legs || []).some(function(l){ return l.g === GF || l.g === alt; }); }
+  function gfBar(){ return GF ? '<p class="gfbar">Slips with a leg in <b>' + esc(GF.replace('-', ' vs ')) + '</b> <a href="#" data-go="allgames">Show every game</a></p>' : ''; }
   var COLS = 'id,user_id,handle,title,week,legs,fd_odds,first_ko,last_ko,score,created_at', COLS3 = COLS + ',tails,rx,result,units';
   var RXK = [['fire', '🔥', 'Fire'], ['lock', '🔒', 'Lock'], ['fade', '👎', 'Fade'], ['rip', '🪦', 'RIP']];
   function hcol(p){ var q = PROF[p.user_id]; if(q) return q.color; var h = 0, t = String(p.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
@@ -399,7 +404,7 @@ PAGE_JS = r"""<script>(function(){
     SIG = sig();
     var me = A && A.user ? A.user.id : null, by = sort === 'new' ? function(a, b){ return new Date(b.created_at) - new Date(a.created_at); } : function(a, b){ return (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)); };
     var open = [], won = [], lost = [];
-    POSTS.slice().sort(by).forEach(function(p){ var x = p.result ? {st: p.result === 'won' ? 'cashed' : 'busted'} : stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
+    POSTS.filter(inGame).sort(by).forEach(function(p){ var x = p.result ? {st: p.result === 'won' ? 'cashed' : 'busted'} : stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
     if(sort === 'following'){
       var mine = open.filter(function(p){ return FOL[p.user_id]; }), nf = Object.keys(FOL).length;
       if(hb) hb.hidden = true;
@@ -426,8 +431,9 @@ PAGE_JS = r"""<script>(function(){
       list.innerHTML = open.length ? open.map(function(p){ return card(p, me); }).join('')
         : '<div class="empty"><b>No open slips right now.</b>' + (won.length ? won.length + ' cashed this week - they are under the Cashed tab. ' : '') + 'Be the first on the board for the next game.' + POSTBTN + '</div>' + (won.length ? '' : lastWeekHtml(me));
     }
+    if(GF){ list.insertAdjacentHTML('afterbegin', gfBar()); if(hb && sort !== 'cashed' && sort !== 'lost') hb.hidden = true; }   // one game asked for: the pinned house slips step aside
     gradeHouse();
-    if(location.hash){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
+    if(location.hash && !GF){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
   }
   function profile(){
     var me = A && A.user ? A.user.id : null, u = VIEW, d = UPOSTS && UPOSTS.u === u ? UPOSTS : null;
@@ -469,6 +475,7 @@ PAGE_JS = r"""<script>(function(){
   function openUser(u){ EDIT = false; VIEW = u; UPOSTS = null; try { history.pushState({u: u}, '', '#u=' + u); } catch(e){} render(); window.scrollTo(0, 0); }
   function closeUser(){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} render(); }
   window.addEventListener('popstate', function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); VIEW = m ? m[1] : null; if(A) render(); });
+  window.addEventListener('hashchange', function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && m[1] !== GF){ GF = m[1]; if(A) render(); } });
   var LAST = null, LAST_BUSY = false;
   function loadLast(){
     if(LAST || LAST_BUSY || !A || W < 2) return; LAST_BUSY = true;
@@ -508,7 +515,7 @@ PAGE_JS = r"""<script>(function(){
   }
   function needSignIn(){ var s = document.querySelector('#bsacct button'); if(s) s.click(); }
   list.addEventListener('click', function(e){
-    var go = e.target.closest('[data-go]'); if(go){ e.preventDefault(); if(go.dataset.go === 'back') closeUser(); else { var tb = document.querySelector('.soc .seg button[data-s="' + go.dataset.go + '"]'); if(tb) tb.click(); } return; }
+    var go = e.target.closest('[data-go]'); if(go){ e.preventDefault(); if(go.dataset.go === 'back') closeUser(); else if(go.dataset.go === 'allgames'){ GF = null; try { history.replaceState({}, '', location.pathname); } catch(e2){} render(); } else { var tb = document.querySelector('.soc .seg button[data-s="' + go.dataset.go + '"]'); if(tb) tb.click(); } return; }
     var hu = e.target.closest('b.h[data-u]'); if(hu){ openUser(hu.dataset.u); return; }
     var ed = e.target.closest('[data-edit]'); if(ed){ EDIT = ed.dataset.edit === '1'; render(); if(EDIT){ var i0 = document.getElementById('peh'); if(i0) i0.focus(); } return; }
     var tl = e.target.closest('[data-tail]'), rx = e.target.closest('[data-rx]'), fo = e.target.closest('[data-fol]');
@@ -692,6 +699,79 @@ def house_html(OUT, week, limit=3, _records=None, _now=None):
     if not cards: return ""
     return ('<div class="house"><span class="lab">House slips</span>' + "".join(cards) + "</div>"
             + "<script>window.__BS_HOUSE = " + json.dumps(data, separators=(",", ":")).replace("</", "<\\/") + ";</script>")
+
+
+# ---------- alpha plan step 5 (owner 11/16: "I want people to use social and that be a prominent piece"): Social on other pages ----------
+# strip_html(): "Top on Social" on Today - the three most-upvoted slips whose games are still to come or running, each a link to the
+# slip; when nobody has posted, an invitation with the button. cards_js(): on Boards every game card says how many posted slips have a
+# leg in that game and links to them (/social/#g=<gid>); an upcoming game with none offers "Post a slip for this game". Both read the
+# feed with the page's own account client (window.bsAccount) and stay silent if it is not there or the read fails.
+STRIP_CSS = """.socstrip .ssl{display:grid;gap:8px}
+.socstrip a.ssp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;min-height:60px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink)}
+.socstrip a.ssp:active{transform:scale(.99)} .socstrip .av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;font-style:normal;color:#fff}
+.socstrip .av.c0{background:#c2410c}.socstrip .av.c1{background:#0f766e}.socstrip .av.c2{background:#1d4ed8}.socstrip .av.c3{background:#7e22ce}.socstrip .av.c4{background:#be123c}.socstrip .av.c5{background:#4d7c0f}.socstrip .av.c6{background:#b45309}.socstrip .av.c7{background:#334155} .socstrip .av.em{font-size:18px}
+.socstrip .ssp .w{min-width:0} .socstrip .ssp .w b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .socstrip .ssp .w small{display:block;color:var(--mute);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.socstrip .ssp .od{text-align:right;font-family:var(--display);font-weight:800;font-size:20px;line-height:1.05;font-variant-numeric:tabular-nums} .socstrip .ssp .od small{display:block;font-family:var(--body,inherit);font-weight:600;font-size:11.5px;color:var(--mute)}
+.socstrip .ssempty{border:1px dashed var(--line);border-radius:12px;padding:14px;color:var(--mute);font-size:14px;line-height:1.4} .socstrip .ssempty b{display:block;font-family:var(--display);font-size:18px;line-height:1.2;color:var(--ink);margin-bottom:2px}
+.socstrip .ssempty span{display:block} .socstrip .ssempty a{display:inline-block;margin-top:12px;background:var(--red);color:#fff;font-weight:700;text-decoration:none;border-radius:10px;padding:12px 18px;min-height:44px;box-sizing:border-box}
+.socstrip .sk{display:block;height:60px;border-radius:12px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
+@media (prefers-reduced-motion:no-preference){ .socstrip .sk{animation:sspulse 1.2s ease-in-out infinite alternate} @keyframes sspulse{from{opacity:.55}to{opacity:1}} }"""
+
+STRIP_JS = r"""(function(){
+  var W = __WEEK__, box = document.getElementById('socstrip'); if(!box) return; var list = box.querySelector('.ssl'), all = box.querySelector('.seeall');
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function am(o){ o = +o; return !o ? '' : (o > 0 ? '+' : '') + Math.round(o); }
+  function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
+  function hcol(h){ var x = 0, t = String(h || ''); for(var i = 0; i < t.length; i++) x = (x * 31 + t.charCodeAt(i)) % 8; return x; }
+  function leg(l){ if(!l) return ''; if(l.gl || /TD$/.test(l.m)) return l.pl + (l.gl ? '' : ' ' + String(l.m).toLowerCase()); if(/^Under /.test(l.m)) return l.pl + ' under ' + l.ln; return l.pl + ' ' + Math.round(l.ln) + '+'; }
+  function wait(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount.client); if(n > 40){ box.hidden = true; return; } setTimeout(function(){ wait(cb, n + 1); }, 150); }
+  function empty(){ list.innerHTML = '<div class="ssempty"><b>No slips up for the games left this week.</b><span>Build one and post it so others can tail it.</span><a href="/build/">Post the first slip</a></div>'; }
+  function draw(rows, prof){
+    var now = Date.now(), live = rows.filter(function(p){ return +p.last_ko > now - 4.5 * 3600e3; });   // games still to come, or running
+    if(all) all.textContent = live.length > 3 ? 'All ' + live.length + ' slips' : 'Open Social';
+    if(!live.length){ empty(); return; }
+    list.innerHTML = live.slice(0, 3).map(function(p){ var ls = p.legs || [], q = prof[p.user_id] || {}, pre = +p.first_ko > now;
+      return '<a class="ssp" href="/b/?p=' + p.id + '"><i class="av c' + (q.color != null ? q.color : hcol(p.handle)) + (q.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(q.emoji || inits(p.handle)) + '</i>' +
+        '<span class="w"><b>' + esc(p.title || leg(ls[0]) + (ls.length > 1 ? ' + ' + (ls.length - 1) + ' more' : '')) + '</b><small>@' + esc(p.handle) + ' · ' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + (p.tails ? ' · ' + p.tails + ' tailing' : '') + (pre ? '' : ' · live') + '</small></span>' +
+        '<span class="od">' + esc(am(p.fd_odds)) + '<small>▲ ' + (p.score || 0) + '</small></span></a>'; }).join('');
+  }
+  wait(function(sb){
+    function read(cols){ return sb.from('feed_posts').select(cols).eq('status', 'open').eq('week', W).order('score', {ascending: false}).order('created_at', {ascending: false}).limit(60); }
+    read('id,user_id,handle,title,legs,fd_odds,first_ko,last_ko,score,tails').then(function(r){
+      if(r.error) return read('id,user_id,handle,title,legs,fd_odds,first_ko,last_ko,score');   // a database still on the older columns
+      return r; }).then(function(r){
+      if(!r || r.error){ box.hidden = true; return; }
+      var rows = r.data || [], ids = {}; rows.slice(0, 12).forEach(function(p){ ids[p.user_id] = 1; }); ids = Object.keys(ids);
+      if(!ids.length){ draw(rows, {}); return; }
+      function pr(cols){ return sb.from('feed_profiles').select(cols).in('user_id', ids); }
+      pr('user_id,color,emoji').then(function(q){ return q && q.error ? pr('user_id,color') : q; })   // before sql/social_v4.sql there is no emoji column
+        .then(function(q){ var m = {}; ((q && q.data) || []).forEach(function(x){ m[x.user_id] = x; }); draw(rows, m); }, function(){ draw(rows, {}); });
+    }, function(){ box.hidden = true; });
+  });
+})();"""
+
+def strip_html(week):
+    return ('<section class="sec socstrip" id="socstrip"><style>' + STRIP_CSS + '</style><div class="sech"><h2 class="t">Top on Social <small class="tsub">slips people posted</small></h2><a class="seeall" href="/social/">Open Social</a></div>'
+            '<div class="ssl" aria-live="polite"><span class="sk"></span><span class="sk"></span></div>'
+            '<script>' + STRIP_JS.replace("__WEEK__", str(int(week))) + '</script></section>')
+
+
+CARDS_CSS = """.ginfo a.socn{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;white-space:nowrap} .ginfo a.socn.has{color:var(--ink);font-weight:700;text-decoration-color:var(--red)}"""
+CARDS_JS = r"""(function(){
+  var W = __WEEK__, cards = document.querySelectorAll('section.card[id][data-ko]'); if(!cards.length) return;
+  function wait(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount.client); if(n > 40) return; setTimeout(function(){ wait(cb, n + 1); }, 150); }
+  wait(function(sb){ sb.from('feed_posts').select('id,legs').eq('status', 'open').eq('week', W).limit(300).then(function(r){
+    if(!r || r.error) return; var n = {};
+    (r.data || []).forEach(function(p){ var seen = {}; (p.legs || []).forEach(function(l){ if(l && l.g && !seen[l.g]){ seen[l.g] = 1; n[l.g] = (n[l.g] || 0) + 1; } }); });
+    cards.forEach(function(c){ var gid = c.id, k = n[gid] || n[gid.split('-').reverse().join('-')] || 0, gi = c.querySelector('.ginfo'), pre = (+c.dataset.ko || 0) > Date.now();
+      if(!gi || gi.querySelector('.socn') || (!k && !pre)) return;
+      var sep = document.createElement('i'); sep.textContent = '·'; var a = document.createElement('a'); a.className = 'socn' + (k ? ' has' : '');
+      a.href = k ? '/social/#g=' + gid : '/build/#g-' + gid; a.textContent = k ? k + (k === 1 ? ' slip' : ' slips') + ' on Social' : 'Post a slip for this game';
+      gi.appendChild(sep); gi.appendChild(a); }); }, function(){}); });
+})();"""
+
+def cards_js(week):
+    return "<style>" + CARDS_CSS + "</style><script>" + CARDS_JS.replace("__WEEK__", str(int(week))) + "</script>"
 
 
 def page(week, house=""):
