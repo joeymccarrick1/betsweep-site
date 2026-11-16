@@ -912,4 +912,12 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   week's posted slips (six lost on the same legs, three not final). feed_grade itself was tested on the throwaway Postgres with
   sql/social_v3.sql. NOT checked from the workspace: the live database (out of reach there) - the workflow's own log is the check.
 - **Not graded by this job yet:** First TD legs (needs the first scorer from play-by-play) and longest reception (not in the weekly file).
+- **First look at the real database (11/16 21:50Z, through the workflow's `probe`, counts only):** both Social scripts are in
+  (v3 and v4). 24 open posts (Week 8: 9, Week 9: 7, Week 10: 8), 0 graded, 1 profile, 1 reaction, 0 tails, 0 follows.
+  Dry run: 24 read, 24 lost, 0 won, 0 left - every one has at least one leg that missed on the numbers (checked leg by leg with
+  `detail`; the nine legs graded as zero each have a zero stat line or snaps on the field). NOTHING WRITTEN - no secret yet. The
+  first real run will therefore record 24 losses; the owner was told before adding the secret.
+- **A game's Social link shows that game's slips, settled or not** (11/16). `/social/#g=CIN-PIT` used to open on the Top tab, which
+  lists open slips only - so a card saying "3 slips on Social" led to "No open slips". With a game asked for, the feed lists every
+  slip on it: open, then cashed, then lost.
 

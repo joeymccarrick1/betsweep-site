@@ -11,7 +11,7 @@ POSTS = [post(1, "HerbFan", "Herbo time", [leg("Justin Herbert", "Passing Yards"
          post(2, "RunHeavy", "", [leg("Derrick Henry", "Rushing Yards", 60, "BAL-LAC", FUT)], 9),
          post(3, "LateOne", "Monday three", [leg("Zay Flowers", "Receiving Yards", 50, "BAL-LAC", FUT), leg("Omarion Hampton", "Anytime TD", 1, "BAL-LAC", FUT), leg("Over 38.5", "Total", 38.5, "BAL-LAC", FUT)], 2),
          post(4, "Fourth", "Also tonight", [leg("Justin Herbert", "Rushing Yards", 15, "BAL-LAC", FUT)], 1),
-         post(5, "Sunday", "Old slip", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST)], 30)]
+         dict(post(5, "Sunday", "Old slip", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST)], 30), result="lost", units=-1)]   # a finished, graded slip
 FAKE = """window.__POSTS = %s; try{ if(localStorage.getItem("t_empty")) window.__POSTS = window.__POSTS.filter(function(p){ return p.id === 5; }); }catch(e){}
 var PRO = [{user_id: "00000000-0000-0000-0000-000000000001", handle: "HerbFan", color: 2, emoji: "\\ud83c\\udfc8"}];
 function Q(rows, t){ var f = {}, cols = '', q = {select: function(c){ cols = c || ''; return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
@@ -56,6 +56,10 @@ async def main():
             await pg.click('#feed .gfbar a'); await pg.wait_for_timeout(400)
             so2 = await pg.evaluate("""() => ({bar: !!document.querySelector('#feed .gfbar'), house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden), hash: location.hash})""")
             check(so2 == {"bar": False, "house": True, "hash": ""}, f"[{theme}] 'Show every game' clears the filter ({so2})")
+            # a finished game: the card said "1 slip on Social", so that slip is what the link shows, though it lost
+            await pg.goto("http://127.0.0.1:8851/social/?y=1#g=CIN-PIT", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            sf = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), info: (document.getElementById('feedinfo') || {}).textContent || '', empty: !!document.querySelector('#feed .empty')})""")
+            check(sf["ids"] == ["p5"] and not sf["empty"] and "1 slip on this game" in sf["info"] and "1 lost" in sf["info"], f"[{theme}] a finished game's link shows its slips even though they are settled ({sf})")
             # ---- nobody has posted ----
             await pg.evaluate("localStorage.setItem('t_empty', '1')"); await pg.goto("http://127.0.0.1:8851/?x=2", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             em = await pg.evaluate("""() => { var s = document.getElementById('socstrip'); s.scrollIntoView({block: 'center'}); var e = s.querySelector('.ssempty'); return e ? [e.querySelector('b').textContent, e.querySelector('a').textContent, e.querySelector('a').getAttribute('href'), s.querySelector('.seeall').textContent] : null; }""")
