@@ -845,3 +845,16 @@ Owner: "I don't want the lost promos on the today/home page. Just in receipts so
 is gone: a busted promo card is simply hidden the moment a leg dies, a busted Sweep leaves the hero (strip: "Last ... Missed"), and
 slips the game log already shows lost are not built into the promo grid. `home.lost_block` now renders "This week's misses" at the
 foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its Lost tab.
+
+## 11/16 afternoon: a bogus "best rung +53% EV" chip on every graded leg (fixed), and the picture in a leg's details
+
+- **Bug, live 13:57Z-20:5xZ on 11/16.** The honest-chance block (11/15) wrote the price-band rate to `l["br"]` - the key the page's
+  best-rung star (`trk()`) reads as its EV. Every leg with a band rate (302 of 302 player legs that afternoon) wore "best rung +NN% EV"
+  with its band rate as NN (Herbert 200+ at -113: "+53% EV" beside "losing zone"). The band rate now rides as `l["bnd"]`
+  (build_promo reads that); `br` is the best-rung EV again and nothing else. After the fix 30 ladders have a star, 1 of the 18 default
+  cards. Found while testing the chart below. Open question for Tuesday: the star's EV still uses the model's shown chance, not the
+  graded one - on the graded chance almost no rung is +EV.
+- **Leg details lead with the picture** (alpha plan step 6, builder half): `l10()` in the page script - up to ten games, oldest to
+  newest, against THIS leg's line (works for unders and TD legs), tick or dash under each bar, the line's label in a gutter on the
+  right. The page's game log keeps ten games now (`GL_KEEP`, was six), so "4 of 8 this season" is the season again (it said "of 6").
+  Text fixes: "scored a TD" (was "cleared scored a TD").

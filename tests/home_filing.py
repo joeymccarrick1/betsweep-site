@@ -11,8 +11,10 @@ def summary(herb, briss, flowers, henry_td, hampton_td):
         {"name": "rushing", "keys": ["rushingYards", "rushingTouchdowns"], "athletes": [ath("Justin Herbert", [str(herb[2]), "0"]), ath("Derrick Henry", ["80", str(henry_td)]), ath("Omarion Hampton", ["40", str(hampton_td)])]},
         {"name": "receiving", "keys": ["receptions", "receivingYards", "longReception", "receivingTouchdowns"], "athletes": [ath("Zay Flowers", ["5", str(flowers), "20", "0"])]}]}]}, "scoringPlays": []}
 def board(state, bal, lac): return {"events": [{"id": "E1", "status": {"type": {"state": state}}, "competitions": [{"competitors": [{"team": {"abbreviation": "BAL"}, "score": str(bal)}, {"team": {"abbreviation": "LAC"}, "score": str(lac)}]}]}]}
-CASES = {"bust": (board("post", 20, 10), summary((250, 2, 20), 210, 60, 1, 1)),      # 30 points: both overs dead, Chargers lose
-         "cash": (board("post", 21, 24), summary((260, 2, 20), 210, 60, 1, 1))}      # 45 points, Chargers win, every leg clears
+CASES = {"bust": (board("post", 20, 10), summary((250, 2, 20), 210, 60, 1, 1)),      # 30 points: both overs dead, Chargers lose by 10
+         "cash": (board("post", 21, 24), summary((260, 2, 20), 210, 60, 1, 1)),      # 45 points, Chargers win, every leg clears
+         "cover": (board("post", 27, 24), summary((260, 2, 20), 210, 60, 1, 1)),     # Chargers lose by 3 and cover +7.5: the Missile (11/16: +7.5 replaced the moneyline) still cashes
+         "nocover": (board("post", 34, 24), summary((260, 2, 20), 210, 60, 1, 1))}   # 58 points, Chargers lose by 10: the Missile dies on the spread, the Sweep cashes
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 async def main():
@@ -43,6 +45,9 @@ async def main():
                     check(st["promo"] == [], f"[{case} {theme}] no dead slip is left in the promo list")
                     rc = open(os.path.join(ROOT, "receipts", "index.html"), encoding="utf-8").read()
                     check("This week" in rc and "Sure Hands" in rc and "One From Every Game" in rc and "Busted: John Metchie III" in rc, f"[{case} {theme}] the week's misses are listed on the receipts page")
+                elif case == "nocover":
+                    check("Piss Missile Monday" not in st["promo"] and not any(x.startswith("Piss Missile Monday") for x in st["won"]), f"[{case} {theme}] a 10-point loss kills the +7.5 leg: the Missile leaves the page")
+                    check(st["hero"] == ["Herbo Fully Loaded|Cashed"], f"[{case} {theme}] the Sweep (no side in it) still cashes ({st['hero']})")
                 else:
                     check(any(x.startswith("Piss Missile Monday|Cashed") for x in st["won"]) and st["wopen"] and "Piss Missile Monday" not in st["promo"], f"[{case} {theme}] the cashed promo moved to Winners and the fold opened")
                     check(st["hero"] == ["Herbo Fully Loaded|Cashed"] and not st["lost"], f"[{case} {theme}] the cashed Sweep stays in the hero, no live card in Lost ({st['hero']})")

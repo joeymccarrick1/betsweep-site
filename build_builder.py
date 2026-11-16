@@ -169,7 +169,8 @@ try:
         GL.setdefault(r[1], []).append({"w": wk, "opp": r[GH["Opponent"]] if "Opponent" in GH else "", "pass": gv(r, "Pass Yds"), "rush": gv(r, "Rush Yds"),
                                          "rec": gv(r, "Receptions"), "recy": gv(r, "Rec Yds"), "long": gv(r, "Longest Rec") if "Longest Rec" in GH else None,
                                          "rr": (gv(r, "Rush Yds") or 0) + (gv(r, "Rec Yds") or 0), "td": (gv(r, "Rush TD") or 0) + (gv(r, "Rec TD") or 0)})
-    for k in GL: GL[k] = sorted(GL[k], key=lambda g: -g["w"])[:6]
+    GL_KEEP = 10   # alpha plan step 6 (11/16): the leg-details picture draws up to ten games (was six; nothing else reads GL)
+    for k in GL: GL[k] = sorted(GL[k], key=lambda g: -g["w"])[:GL_KEEP]
 except Exception: pass
 # defense: what each D allowed per game to each position, by stat (last 6 weeks), plus league per-game averages
 DEF = {}; LG = {}
@@ -664,7 +665,9 @@ try:
         _mp = l.get("raw_p") if l.get("raw_p") is not None else l.get("p")
         _b = _HN.band(l.get("m"), l["o"]); _c = _HN.chance(l.get("m"), l["o"], _mp)
         if _b is None: continue
-        l["br"] = round(_b, 4); l["hp"] = round(_c, 4)
+        # 11/16: the band rate rides as "bnd". It was written to l["br"] for a day (11/15-16) - the SAME key the best-rung star reads as its EV
+        # (trk() in the page script), so every graded leg wore "best rung +53% EV" with its band rate as the number. Never reuse "br".
+        l["bnd"] = round(_b, 4); l["hp"] = round(_c, 4)
         if not l.get("gl") and _HN.ratio(l.get("m"), l["o"])[2] != "none":
             l.setdefault("fh", []).append(["info", "Price check", f"Legs at this price in this market have hit {_b * 100:.0f}% (FanDuel's price implies {_HON.implied(l['o']) * 100:.0f}%)."]); _nh += 1
         if not l.get("gl") and l.get("m") in _NZ_STAT and l.get("ln") and FE:
@@ -1145,6 +1148,13 @@ BUILDER_CSS = r"""
 .hist .sum{display:block;margin-top:4px;color:var(--ink)}
 .hist .sum b{font-weight:700}
 .hist[hidden]{display:none}
+.hist .l10b{position:relative;height:150px;margin:2px 0 8px;max-width:440px} .hist .l10b ol{list-style:none;margin:0;padding:0 46px 0 0;height:100%;display:flex;gap:4px;align-items:stretch}   /* the gutter on the right holds the line's label, clear of the last bar */
+.hist .l10b li{flex:1;min-width:0;display:grid;grid-template-rows:16px 1fr 14px 16px;justify-items:center;text-align:center;margin:0;padding:0;border:0;background:none}
+.hist .l10b li .v{font-size:10.5px;font-weight:700;color:var(--ink);line-height:16px;font-variant-numeric:tabular-nums}
+.hist .l10b li .b{align-self:end;width:100%;max-width:24px;border-radius:3px 3px 0 0;background:var(--bad);opacity:.75} .hist .l10b li.ov .b{background:var(--good);opacity:1}
+.hist .l10b li .k{font-size:10px;font-weight:800;line-height:14px;color:var(--bad)} .hist .l10b li.ov .k{color:var(--good)}
+.hist .l10b li .o{font-size:9.5px;color:var(--mute);line-height:16px;letter-spacing:.02em}
+.hist .l10b .ln{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);pointer-events:none} .hist .l10b .ln i{position:absolute;right:0;top:-9px;font-style:normal;font-size:10px;font-weight:700;background:var(--ink);color:var(--bg);border-radius:4px;padding:1px 5px;line-height:1.4}
 .slip li .why{grid-column:1/-1} .slip li .hrs{grid-column:1/-1;font-size:12px;color:var(--mute);padding:4px 8px;border-left:3px solid #c9a227;background:rgba(201,162,39,.08)} .slip li .hrs.on{border-left-color:#1a1a1a} .slip li .hrs b{display:inline;font-weight:700;color:var(--ink)} .slip li .hrs button{font:inherit;font-size:11.5px;font-weight:700;margin-left:6px;padding:3px 8px;border:1px solid #c9a227;border-radius:3px;background:#1a1a1a;color:#e8c55a;cursor:pointer} .slip li small.swl{font-weight:700;color:#8a6d12;margin-left:4px} .slip li .hrs.dk{border-left-color:#53d337;background:rgba(83,211,55,.10)} .slip li .hrs.dk button{background:#53d337;border-color:#53d337;color:#0b1a07} .slip li .hrs.hr{border-left-color:#5b2d8e;background:rgba(91,45,142,.08)} .slip li .hrs.hr button{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .slip li small.swl.dk{color:#2f8f1c} .slip li small.swl.hr{color:#5b2d8e}
 .lg .gdo{color:var(--bad);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .bar{height:4px;background:var(--barbg);border-radius:2px;position:relative;width:64px;margin-left:auto}
@@ -1574,6 +1584,16 @@ BUILDER_JS = r"""
     if(l.m === 'First TD') return '';   // no real first-TD history per game in the feed; the anytime TD row already shows his TD games
     return '<span class="l5" title="last ' + gs.length + ' games vs this line, newest first"> ' + dots + '<small>' + hit + '/' + gs.length + '</small></span>';
   }
+  // alpha plan step 6 (owner 11/16): a leg's details lead with a picture - his last games (up to ten, oldest to newest) against THIS
+  // leg's line. Same drawing as the player page (build_players.last10_block): colour plus a tick or a dash, the value over each bar.
+  function l10(l, gs, need, won){
+    var a = gs.filter(function(g){ return g[l.sk] != null; }).slice(0, 10).reverse(); if(a.length < 2 || l.m === 'First TD') return '';
+    var td = isTD(l), vals = a.map(function(g){ return +g[l.sk] || 0; }), line = l.u ? +l.ln : +need, top = Math.max(Math.max.apply(null, vals), line) * 1.12 || 1;
+    var hits = vals.filter(won).length, lab = l.u ? 'under ' + l.ln : td ? (need > 1 ? need + '+ TDs' : 'a TD') : Math.round(l.ln) + '+';
+    return '<div class="l10b" role="img" aria-label="' + esc(l.pl + ' ' + l.ms + ', last ' + vals.length + ' games, oldest first: ' + vals.map(function(v){ return td ? v : Math.round(v); }).join(', ') + '. ' + (l.u ? 'Stayed ' : td ? 'Scored ' : 'Cleared ') + lab + ' in ' + hits + ' of ' + vals.length + '.') + '"><ol>' +
+      a.map(function(g, i){ var v = vals[i], ok = won(v); return '<li class="' + (ok ? 'ov' : 'un') + '" title="Week ' + g.w + (g.opp ? ' vs ' + esc(g.opp) : '') + ': ' + (td ? v : Math.round(v)) + '"><span class="v">' + (td ? v : Math.round(v)) + '</span><span class="b" style="height:' + Math.max(2, v / top * 100).toFixed(1) + '%"></span><span class="k">' + (ok ? '\u2713' : '\u2013') + '</span><span class="o">' + esc(g.opp || '') + '</span></li>'; }).join('') +
+      '</ol><span class="ln" style="bottom:calc(30px + (100% - 46px) * ' + (line / top).toFixed(4) + ')"><i>' + esc(lab) + '</i></span></div>';
+  }
   function histBlock(l){
     var k = l.pl + '|' + l.m; if(!openHist[k] || isGL(l)) return '';
     var gs = D.gl[l.pl] || []; var need = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : isTD(l) ? 1 : l.ln;
@@ -1584,7 +1604,8 @@ BUILDER_JS = r"""
     var l3 = gs.slice(0, 3).filter(function(g){ return g[l.sk] != null; }), l3hit = l3.filter(function(g){ return wonH(g[l.sk]); }).length;
     var all = gs.filter(function(g){ return g[l.sk] != null; }), allhit = all.filter(function(g){ return wonH(g[l.sk]); }).length;
     var line = l.u ? 'under ' + l.ln + ' ' + l.ms.toLowerCase() : l.m === '2+ TD' || l.m === '3+ TD' ? 'scored ' + need + '+ TDs' : isTD(l) ? 'scored a TD' : Math.round(l.ln) + '+ ' + l.ms.toLowerCase();
-    var body = gs.length ? items + '<span class="sum"><b>' + l3hit + ' of ' + l3.length + '</b> of his last ' + l3.length + (l.u ? ' stayed ' : ' cleared ') + esc(line) + ' · <b>' + allhit + ' of ' + all.length + '</b> this season' + (l.avg != null && l.m !== 'Anytime TD' ? ' · season avg ' + l.avg : '') + (l.proj != null && l.m !== 'Anytime TD' ? ' · model proj ' + l.proj : '') + '</span>' : '<span class="sum">No game log yet this season for ' + esc(l.pl) + '.</span>';
+    var chart = l10(l, gs, need, wonH);   // the picture replaces the five-game text row when there are two or more games to draw
+    var body = gs.length ? (chart || items) + '<span class="sum"><b>' + l3hit + ' of ' + l3.length + '</b> of his last ' + l3.length + (l.u ? ' stayed ' : isTD(l) ? ' ' : ' cleared ') + esc(line) + ' · <b>' + allhit + ' of ' + all.length + '</b> ' + (l.n != null && l.n > all.length ? 'of his last ' + all.length : 'this season') + (l.avg != null && l.m !== 'Anytime TD' ? ' · season avg ' + l.avg : '') + (l.proj != null && l.m !== 'Anytime TD' ? ' · model proj ' + l.proj : '') + '</span>' : '<span class="sum">No game log yet this season for ' + esc(l.pl) + '.</span>';
     var dgs = ((D.def[l.opp] || {})[l.pos] || {})[l.sk] || []; var lgavg = (D.lg[l.pos] || {})[l.sk];
     var posLabel = l.pos + 's', unit = isTD(l) ? 'TDs' : l.ms.toLowerCase();
     var cleared = function(g){ var c = (g.pl || []).some(function(x){ return x[1] >= need; }) || (g.topv != null && g.topv >= need); return l.u ? !c : c; };   // unders: nobody cleared the line

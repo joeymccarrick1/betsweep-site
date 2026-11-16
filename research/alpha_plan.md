@@ -39,7 +39,7 @@ Read this file first when the work is picked up again.
 4. **Social - reasons to return.** Push when someone tails you / a slip you tailed cashes (push/slip-alerts.ts pattern; owner deploys),
    share card when a posted slip wins (promo story PNG pattern), tail counts, one-tap reactions (no comments).
 5. **Social elsewhere.** "Top on Social" strip on Today; "N slips posted" on game cards.
-6. (player pages DONE 11/16; leg details in the builder still to do) **Player pages and leg details lead with a last-10-games picture against the line** (bars, line marker, hit count).
+6. (DONE 11/16: player pages and the builder's leg details) **Player pages and leg details lead with a last-10-games picture against the line** (bars, line marker, hit count).
 7. **My bets hub on /me/**: open slips, record in units, profit calendar; profile icon in the header that opens it.
 8. **Design system**: one button set (primary red, secondary outline, quiet text), one card, one chip, one radius scale; content first
    (intro paragraphs to one line, help behind an info button); placeholders and designed empty / error states everywhere; avatars for people,

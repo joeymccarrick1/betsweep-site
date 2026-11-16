@@ -120,7 +120,7 @@ PCSS = r""".l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(
 .l10c{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 8px;min-width:0}
 .l10c figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:6px} .l10c .mk{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 .l10c .ct{font-size:15px;color:var(--ink);line-height:1.3} .l10c .ct b{font-family:var(--display);font-size:19px} .l10c .ct small{color:var(--mute);font-size:12px;margin-left:4px}
-.l10c .plot{position:relative;height:190px} .l10c ol{list-style:none;margin:0;padding:0;height:100%;display:flex;gap:4px;align-items:stretch}
+.l10c .plot{position:relative;height:190px} .l10c ol{list-style:none;margin:0;padding:0 48px 0 0;height:100%;display:flex;gap:4px;align-items:stretch}
 .l10c li{flex:1;min-width:0;display:grid;grid-template-rows:18px 1fr 16px 18px;justify-items:center;text-align:center}
 .l10c li .v{font-size:11px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:18px}
 .l10c li .b{align-self:end;width:100%;max-width:26px;border-radius:4px 4px 0 0;background:var(--mute)}

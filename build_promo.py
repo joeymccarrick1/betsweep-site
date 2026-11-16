@@ -97,7 +97,7 @@ def price_leg(who, market, odds):
     mk = market.strip(); w = who.strip(); out = {"p": None, "bk": None, "gid": "", "tm": "", "opp": "", "kick": "", "ko": None, "disp": f"{w} · {mk}", "rank": None, "key": slip_key(w, mk)}
     def fill(l):
         out["src"] = {k: l.get(k) for k in ("pl", "m", "g", "tm", "c", "gl")}
-        out["hp"] = l.get("hp"); out["br"] = l.get("br")   # owner 11/15: the honest chance (honest.py, set by build_builder.py) rides with the leg
+        out["hp"] = l.get("hp"); out["br"] = l.get("bnd")   # owner 11/15: the honest chance (honest.py, set by build_builder.py) rides with the leg
         try: out["risk"] = SW.risk_score(l, bd)   # 0-1 low, 2-3 "Some risk", 4+ "High risk" - what the builder's slip shows before the live list
         except Exception: out["risk"] = None
         g = GAMES.get(l["g"], {}); hist = next((h[1] for h in (l.get("fh") or []) if "/" in str(h[1])), "")
