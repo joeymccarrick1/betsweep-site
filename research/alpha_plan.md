@@ -32,6 +32,8 @@ Read this file first when the work is picked up again.
 - 11/16 step 6 DONE: last-games picture on player pages and in the builder's leg details.
 - 11/16 Builder (first items of the step 9 page pass): played games fold under "N games already played" (Monday page 11,900px ->
   1,900px), chip row leads with games still to come, played chips dimmed by the clock. tests/builder_fold.py (24 checks).
+- 11/16 step 2 grading job BUILT: social_grade.py + the `social-grade` workflow (RUNBOOK). It runs dry until the owner adds the repo
+  secret FEED_GRADE_SECRET. Left from step 2: the "this week's sharps" strip (needs graded records to exist first).
 ## Next, in this order
 1. ~~Social - never empty, finished~~ (done 11/16, see above). Was: **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
    data/box-w<W>.json); stop hiding finished slips, sort them under Cashed / Busted; live grading on the pinned house slips so they can

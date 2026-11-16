@@ -881,10 +881,35 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
 - Tests: `python3 tests/social_elsewhere.py` (19 checks) and `python3 tests/builder_fold.py` (24 checks; it freezes the page clock an
   hour before the week's last kickoff, so it means the same thing on any day). Both run light and dark at 390x844. Neither reads the
   real database - the account client is faked - so what real posts look like there is still to be seen with real posts.
-- **Fixed 40 minutes after it went out (live 21:28Z-21:4xZ): the Today strip hid every real post.** The database returns
+- **Fixed 17 minutes after it went out (live 21:28Z-21:45Z): the Today strip hid every real post.** The database returns
   `first_ko` / `last_ko` as text ("2026-11-17T01:15:00+00:00"); the strip did `+p.last_ko`, which is NaN, so every post failed the
   "game still to come" test and the strip showed "No slips up..." whatever had been posted. It reads them with `Date.parse` now. The
   test passed because its fake database answered with numbers. Both Social tests' fakes now answer with text, as the database does.
   **Rule: a fake of the database must copy the column types in sql/*.sql** (timestamptz -> ISO text, numeric -> number, jsonb -> object).
 - Wording under the leg chart: "**0** of his last 3 scored a TD" (was "0 of 3 of his last 3").
+
+## Social grading job (alpha plan step 2, 11/16): social_grade.py + the `social-grade` workflow
+
+- **What it does.** Every morning (9:40 AM Central) the `social-grade` workflow on main checks out gen-overrides, downloads the
+  nflverse schedule, weekly player stats and snap counts, reads open ungraded posts whose last game has kicked off (public key, the
+  same read any visitor's browser makes) and grades each one. Results go to the database through `feed_grade(secret, rows)` - the
+  only way `result` / `units` can be written - and from there to the record on every post and profile (`feed_records`).
+- **Certain or nothing.** lost = one leg missed; won = every leg hit (units = profit on one unit at the posted price); push = every
+  leg pushed. Anything else is LEFT and reported with its reason, then read again the next morning: a game without a final score,
+  stats or snap counts not out yet, a player who did not play (the book voids the leg and re-prices the slip - a price the job does
+  not know), a pushed leg beside winners, First TD and longest-reception legs, unknown markets. A player with no stat line counts as
+  zero only when the snap counts show him on the field. A player is looked up inside the two teams of his leg's game, so two men
+  with one name are never mixed.
+- **The secret.** The job writes only when the repo secret `FEED_GRADE_SECRET` holds the value the owner put in the database with
+  his copy of sql/social_v3.sql (11/16). Without it every run is a dry run. The value is never printed and is not in this repo.
+  Owner, once: GitHub > betsweep-site > Settings > Secrets and variables > Actions > New repository secret > name
+  FEED_GRADE_SECRET, value = the long value in his READY file on the `cron_secret` line. A wrong value makes `feed_grade` refuse;
+  the run then fails loudly and nothing is written.
+- **Run it by hand:** Actions > social-grade > Run workflow > mode `grade` (default), `dry` (read and report, write nothing) or
+  `probe` (which Social scripts the database has had and how much is in it - counts and yes/no only, no names).
+- **Checked:** tests/social_grade.py (24 checks on made-up finals: rounding like the page, unders, game lines both ways, pushes,
+  shared names, did-not-play, the secret never printed). On real Week 10 data it agrees with the promo grader on all nine of the
+  week's posted slips (six lost on the same legs, three not final). feed_grade itself was tested on the throwaway Postgres with
+  sql/social_v3.sql. NOT checked from the workspace: the live database (out of reach there) - the workflow's own log is the check.
+- **Not graded by this job yet:** First TD legs (needs the first scorer from play-by-play) and longest reception (not in the weekly file).
 
