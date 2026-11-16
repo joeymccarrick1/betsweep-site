@@ -729,3 +729,10 @@ sweep selftest, boards + builder + site build clean, phone-sized browser sweep o
   its picks +6.2% a leg (698 legs) against -4.9% for the model's (1,633); features were chosen on the same weeks, so it grades in the
   shadow first. Drives nothing on the site until the owner says so.
 - **"Safer" is gone**: tier labels now read "Short-priced" (results, season, ask, builder, guide); "safer swap" -> "easier swap".
+
+## The board-shrank check compares like with like (owner 11/16: "Can we start a rebuild to get everything going today")
+
+`reprice.board_shrank(bd, live, W)`: within a week it counts only the legs of games that have not kicked off, in the new build and on the
+live site, and blocks under 60%. Finished games no longer count, so a Sunday-night or Monday rebuild can publish; a broken pull on a game
+still to be played is still blocked. On a new week the board is not compared with last week's - it needs 200 legs. Before this, the
+whole-board comparison (added 11/10) blocked every late-week publish (792 legs against 3,912 on 11/15).

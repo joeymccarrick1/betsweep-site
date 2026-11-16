@@ -99,6 +99,25 @@ def week_of_inputs():
     return int(float(next(r[1] for r in vals("settings.json") if r and str(r[0]).strip().lower() == "projection week")))
 
 
+def board_shrank(bd, live, W, now_ms=None):
+    """The "did the board shrink?" publish check, comparing like with like (owner 11/16: "Can we start a rebuild to get everything going
+    today"). Legs leave the board as games kick off, so by Sunday night a healthy board is a fraction of Sunday morning's (792 legs against
+    3,912 live on 11/15) and the old whole-board comparison blocked every late-week publish since it was added on 11/10.
+      same week  -> count only the legs of games that have NOT kicked off yet, in the new build and on the live site; under 60% = blocked.
+                    A broken pull (a game still to be played losing its props) still fails; finished games no longer count.
+      new week   -> the new board is not compared with last week's; it needs 200 legs (the same floor as a first publish).
+    Returns the reason as text, or None when the board is fine."""
+    import time as _t
+    now = now_ms if now_ms is not None else _t.time() * 1000
+    new_legs = bd.get("legs") or []; live_legs = (live or {}).get("legs") or []
+    if not live_legs or int((live or {}).get("week") or 0) != int(W):
+        return f"only {len(new_legs)} legs priced" if len(new_legs) < 200 else None
+    ko = {g.get("gid"): g.get("ko") for g in ((live or {}).get("games") or [])}; ko.update({g.get("gid"): g.get("ko") for g in (bd.get("games") or []) if g.get("ko")})
+    still = lambda l: float(ko.get(l.get("g")) or 0) > now
+    n_new = sum(1 for l in new_legs if still(l)); n_live = sum(1 for l in live_legs if still(l))
+    if n_live and n_new < 0.6 * n_live: return f"the board shrank: {n_new} legs against {n_live} live in games still to be played"
+    return None
+
 def live_data(clone):
     """The builder data the clone is serving: {"week", "built", "legs": {key: (odds, status)}}, or None."""
     fs = sorted(glob.glob(os.path.join(clone, "build", "data-*.js")))
@@ -173,8 +192,8 @@ def check_site(W, live):
     except Exception as e: return bad + [f"out/builder_data.json unreadable: {e}"]
     if int(bd.get("week") or 0) != W: bad.append(f"builder data is week {bd.get('week')}, inputs are week {W}")
     n_new, n_live = len(bd.get("legs") or []), len((live or {}).get("legs") or [])
-    if n_live and n_new < 0.6 * n_live: bad.append(f"the board shrank: {n_new} legs against {n_live} live")
-    if not n_live and n_new < 200: bad.append(f"only {n_new} legs priced")
+    _sh = board_shrank(bd, live, W)
+    if _sh: bad.append(_sh)
     g_new, g_live = len(bd.get("games") or []), len((live or {}).get("games") or [])
     if g_live and g_new < g_live - 1 and int((live or {}).get("week") or 0) == W: bad.append(f"games fell from {g_live} to {g_new}")
     try:
