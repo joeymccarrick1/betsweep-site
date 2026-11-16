@@ -487,7 +487,9 @@ def promo_card(p, kicker="Promoted", hero=False):
         who = l["who"]; ml = l["disp"][len(who):].strip(" ·") if l["disp"].startswith(who) else l["disp"]
         rk = l.get("rank"); mk = f'{l["opp"]} #{rk[0]} vs {"QB rush" if l.get("pos") == "QB" else l.get("pos", "")} TDs' if rk else ""
         sub = " · ".join(x for x in [ml, l.get("kick", ""), mk] if x)
-        mp = f'<span class="mp">model {l["p"]*100:.0f}%</span>' if l.get("p") is not None else ""
+        # owner 11/15 (honest chances everywhere a pick is shown): what legs at this price have actually hit; the model's number is the tooltip
+        if l.get("hp") is not None and l.get("p") is not None: mp = f'<span class="mp" title="Legs at this price have hit about {l["hp"]*100:.0f}% this season. Our model alone says {l["p"]*100:.0f}%.">graded {l["hp"]*100:.0f}%</span>'
+        else: mp = f'<span class="mp">model {l["p"]*100:.0f}%</span>' if l.get("p") is not None else ""
         _gx = f' data-glx="{E(json.dumps(l["glx"]))}"' if l.get("glx") else ""
         legs += f'<li data-g="{E(l.get("gid") or "")}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
     res = (p.get("result") or "").upper()
@@ -495,6 +497,7 @@ def promo_card(p, kicker="Promoted", hero=False):
     # audit 10/26: a +11825 lotto showing "Model 0.1% to hit · fair +181169" read like the site arguing against its own post -
     # longshots (model under 3%) are labelled as such and the fair price is dropped
     if p.get("p") and p["p"] < 0.03: model = f'<b>Longshot</b> · model {"under 1" if p["p"] < 0.01 else format(p["p"]*100, ".0f")}% to hit - a small-stake swing, not a value bet'
+    elif p.get("hp") and p.get("p"): model = f'<b>About {p["hp"]*100:.0f}%</b> to hit <span title="What legs at these prices have actually hit this season. Our model alone says {p["p"]*100:.1f}%.">(graded)</span> · fair {E(p.get("hfair") or p["fair"])}'
     else: model = f'<b>Model {p["p"]*100:.1f}%</b> to hit · fair {E(p["fair"])}' if p.get("p") else "Model price not available for every leg"
     # X caption written for @Playbook's parser (Action Network's bot: tag it and it replies with a tail link for every sportsbook):
     # one plain leg per line, "Player Market N+ odds", no bullets or model numbers, the book named, @Playbook on its own line.

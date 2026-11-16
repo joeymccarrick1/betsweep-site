@@ -267,7 +267,7 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 .apptabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#a9a294;text-decoration:none;font-family:'Barlow Condensed','IBM Plex Sans',system-ui,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
 .apptabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .apptabs a.on{color:#fff} .apptabs a.on svg{stroke:#d7332a}
-@media (max-width:760px){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
+@media (max-width:760px){ .dfs .mt{font-size:12px} .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
 @media (display-mode: standalone){ .apptabs{display:flex} body{padding-bottom:calc(64px + env(safe-area-inset-bottom))} .sitenav .menu{display:inline-flex} :root{--bs-tabs:calc(64px + env(safe-area-inset-bottom))} .slipwrap,.bslip{bottom:var(--bs-tabs)} .dfs .mbar{bottom:calc(var(--bs-tabs) + 12px)} }
 .installbar{display:none;align-items:center;gap:10px;max-width:1360px;margin:10px auto 0;padding:10px 14px;background:#141a24;color:#f1e8d8;border-radius:8px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px}
 .installbar.show{display:flex} .installbar b{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
@@ -381,14 +381,17 @@ def _write_shared():
 _H2C_STUB = ('<script>window.html2canvas=window.html2canvas||function(el,o){return (window.__bsh2c||(window.__bsh2c=new Promise(function(res,rej){var s=document.createElement("script");'
              's.src="/s/html2canvas.min.js";s.onload=function(){res(window.html2canvas)};s.onerror=rej;document.head.appendChild(s)}))).then(function(h){return h(el,o)})};</script>')
 # owner 11/5: "merge Today and the Home Screen together. Lose the today button and give back the social button" - Today's content is the home page now (the logo goes home)
-APP_TABS = [("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
+APP_TABS = [("/", "Today", '<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>'),
+            ("/boards/", "Boards", '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>'),
             ("/build/", "Builder", '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>'),
-            ("/team/", "Fantasy", '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'),
             ("/live/", "Live", '<svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg>'),
-            ("/social/", "Social", '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>')]   # owner 11/5: Boards, Builder, Fantasy, Live, Social
+            ("/me/", "Me", '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>')]
+# owner 11/15 ("navigation overall ... bring BetSweep to alpha"): the five jobs people open a betting app for - today's picks, research,
+# build, track, my stuff (Action Network, Pikkit, Outlier and Props.cash all anchor on a home tab and a my-bets tab). Was 11/5: Boards,
+# Builder, Fantasy, Live, Social - Fantasy and Social stay in the menu and on /all/.
 def apptabs(path):
     # five bottom tabs; Fantasy lights up for every page in the Fantasy group
-    def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/team/" and path.startswith(("/trade/", "/dfs/")))
+    def on(p): return path == p or (p != "/" and path.startswith(p)) or (p == "/" and path.startswith(("/today/", "/short/"))) or (p == "/boards/" and path.startswith(("/player/", "/dossier/", "/news/", "/best/")))
     return '<nav class="apptabs" aria-label="app tabs">' + "".join(f'<a href="{p}" class="{"on" if on(p) else ""}">{svg}<span>{t}</span></a>' for p, t, svg in APP_TABS) + '</nav>\n'
 APP_JS = r"""<script>
 (function(){

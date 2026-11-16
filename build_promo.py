@@ -22,6 +22,16 @@ E = html.escape
 import sweep as SW   # owner 11/10: the Daily Sweep - a promo row whose Title starts with "Daily Sweep" (sweep.py has the rules)
 import pairs as PAIRS
 
+def _hp_joint(p, legs):
+    """The promo's chance on the honest numbers: the model's joint chance scaled by each leg's (honest chance / model chance). Legs
+    without an honest chance (either-or pairs, game lines we do not grade) keep the model's number."""
+    try:
+        x = float(p)
+        for l in legs:
+            if l.get("hp") and l.get("p"): x *= min(1.3, max(0.4, l["hp"] / l["p"]))
+        return max(0.0001, min(0.99, x))
+    except Exception: return None
+
 def num(x):
     try: return float(str(x).replace("+", "").replace(",", "").replace("%", ""))
     except Exception: return None
@@ -87,6 +97,7 @@ def price_leg(who, market, odds):
     mk = market.strip(); w = who.strip(); out = {"p": None, "bk": None, "gid": "", "tm": "", "opp": "", "kick": "", "ko": None, "disp": f"{w} · {mk}", "rank": None, "key": slip_key(w, mk)}
     def fill(l):
         out["src"] = {k: l.get(k) for k in ("pl", "m", "g", "tm", "c", "gl")}
+        out["hp"] = l.get("hp"); out["br"] = l.get("br")   # owner 11/15: the honest chance (honest.py, set by build_builder.py) rides with the leg
         try: out["risk"] = SW.risk_score(l, bd)   # 0-1 low, 2-3 "Some risk", 4+ "High risk" - what the builder's slip shows before the live list
         except Exception: out["risk"] = None
         g = GAMES.get(l["g"], {}); hist = next((h[1] for h in (l.get("fh") or []) if "/" in str(h[1])), "")
@@ -270,6 +281,7 @@ def parse_rows():
         kos = [l["ko"] for l in legs if l["ko"]]
         out.append({"week": int(num(wk)), "slot": int(num(slot) or 0), "title": title.strip(), "legs": legs, "fd": fdo, "fd_dec": dec(fdo) if fdo else None, "link": link.strip(),
                     "status": (status or "LIVE").strip().upper(), "caption": caption.strip(), "result": result.strip().upper(), "posted": posted.strip(),
+                    "hp": _hp_joint(p, legs) if priced else None, "hfair": am(_hp_joint(p, legs)) if (priced and _hp_joint(p, legs)) else "",
                     "p": p if priced else None, "p_indep": p_indep, "fair": am(p) if priced else "", "checks": {"block": block, "warn": warn}, "ev": ((p * dec(fdo) - 1) if (priced and fdo) else None),
                     "same_game": same, "first_ko": min(kos) if kos else None, "last_ko": max(kos) if kos else None, "books": books,
                     "img": {"feed": f"/promo/{int(num(wk))}-{int(num(slot) or 0)}-feed.png", "square": f"/promo/{int(num(wk))}-{int(num(slot) or 0)}-square.png", "story": f"/promo/{int(num(wk))}-{int(num(slot) or 0)}-story.png"}})
