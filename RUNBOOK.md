@@ -881,4 +881,10 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
 - Tests: `python3 tests/social_elsewhere.py` (19 checks) and `python3 tests/builder_fold.py` (24 checks; it freezes the page clock an
   hour before the week's last kickoff, so it means the same thing on any day). Both run light and dark at 390x844. Neither reads the
   real database - the account client is faked - so what real posts look like there is still to be seen with real posts.
+- **Fixed 40 minutes after it went out (live 21:28Z-21:4xZ): the Today strip hid every real post.** The database returns
+  `first_ko` / `last_ko` as text ("2026-11-17T01:15:00+00:00"); the strip did `+p.last_ko`, which is NaN, so every post failed the
+  "game still to come" test and the strip showed "No slips up..." whatever had been posted. It reads them with `Date.parse` now. The
+  test passed because its fake database answered with numbers. Both Social tests' fakes now answer with text, as the database does.
+  **Rule: a fake of the database must copy the column types in sql/*.sql** (timestamptz -> ISO text, numeric -> number, jsonb -> object).
+- Wording under the leg chart: "**0** of his last 3 scored a TD" (was "0 of 3 of his last 3").
 

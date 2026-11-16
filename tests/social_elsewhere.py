@@ -4,8 +4,9 @@ import asyncio, json, os, sys, threading, http.server, functools, time
 from playwright.async_api import async_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 now = int(time.time() * 1000); FUT = now + 3 * 3600e3; PAST = now - 30 * 3600e3
+def iso(ms): return __import__("datetime").datetime.fromtimestamp(ms / 1000, __import__("datetime").timezone.utc).isoformat()   # the database returns timestamptz as text
 def leg(pl, m, ln, g, ko): return {"pl": pl, "m": m, "ln": ln, "g": g, "ko": ko, "o": -150, "k": f"{pl}|{m}|{ln}"}
-def post(i, h, title, legs, score, tails=0): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "handle": h, "title": title, "week": 10, "legs": legs, "fd_odds": 250 + 10 * i, "first_ko": min(l["ko"] for l in legs), "last_ko": max(l["ko"] for l in legs), "score": score, "tails": tails, "rx": {}, "result": None, "units": None, "created_at": "2026-11-16T15:00:00Z"}
+def post(i, h, title, legs, score, tails=0): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "handle": h, "title": title, "week": 10, "legs": legs, "fd_odds": 250 + 10 * i, "first_ko": iso(min(l["ko"] for l in legs)), "last_ko": iso(max(l["ko"] for l in legs)), "score": score, "tails": tails, "rx": {}, "result": None, "units": None, "created_at": "2026-11-16T15:00:00Z"}
 POSTS = [post(1, "HerbFan", "Herbo time", [leg("Justin Herbert", "Passing Yards", 175, "BAL-LAC", FUT), leg("Derrick Henry", "Anytime TD", 1, "BAL-LAC", FUT)], 7, 4),
          post(2, "RunHeavy", "", [leg("Derrick Henry", "Rushing Yards", 60, "BAL-LAC", FUT)], 9),
          post(3, "LateOne", "Monday three", [leg("Zay Flowers", "Receiving Yards", 50, "BAL-LAC", FUT), leg("Omarion Hampton", "Anytime TD", 1, "BAL-LAC", FUT), leg("Over 38.5", "Total", 38.5, "BAL-LAC", FUT)], 2),

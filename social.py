@@ -727,10 +727,12 @@ STRIP_JS = r"""(function(){
   function wait(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount.client); if(n > 40){ box.hidden = true; return; } setTimeout(function(){ wait(cb, n + 1); }, 150); }
   function empty(){ list.innerHTML = '<div class="ssempty"><b>No slips up for the games left this week.</b><span>Build one and post it so others can tail it.</span><a href="/build/">Post the first slip</a></div>'; }
   function draw(rows, prof){
-    var now = Date.now(), live = rows.filter(function(p){ return +p.last_ko > now - 4.5 * 3600e3; });   // games still to come, or running
+    // the database returns kickoff times as text ("2026-11-17T01:15:00+00:00"), never as a number: "+p.last_ko" is NaN and hid every real post (11/16, live 21:28Z until fixed)
+    function ms(v){ var t = typeof v === 'number' ? v : Date.parse(v); return isNaN(t) ? 0 : t; }
+    var now = Date.now(), live = rows.filter(function(p){ return ms(p.last_ko) > now - 4.5 * 3600e3; });   // games still to come, or running
     if(all) all.textContent = live.length > 3 ? 'All ' + live.length + ' slips' : 'Open Social';
     if(!live.length){ empty(); return; }
-    list.innerHTML = live.slice(0, 3).map(function(p){ var ls = p.legs || [], q = prof[p.user_id] || {}, pre = +p.first_ko > now;
+    list.innerHTML = live.slice(0, 3).map(function(p){ var ls = p.legs || [], q = prof[p.user_id] || {}, pre = ms(p.first_ko) > now;
       return '<a class="ssp" href="/b/?p=' + p.id + '"><i class="av c' + (q.color != null ? q.color : hcol(p.handle)) + (q.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(q.emoji || inits(p.handle)) + '</i>' +
         '<span class="w"><b>' + esc(p.title || leg(ls[0]) + (ls.length > 1 ? ' + ' + (ls.length - 1) + ' more' : '')) + '</b><small>@' + esc(p.handle) + ' · ' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + (p.tails ? ' · ' + p.tails + ' tailing' : '') + (pre ? '' : ' · live') + '</small></span>' +
         '<span class="od">' + esc(am(p.fd_odds)) + '<small>▲ ' + (p.score || 0) + '</small></span></a>'; }).join('');
