@@ -611,6 +611,16 @@ _safe_best = {}
 # 11/4 audit of 4,929 graded legs (Weeks 6-8): Rushing Yards lost at every depth, both sides (-19% overs; Model's Best Week 8 rushing overs
 # 24% hit, unders 31%) - out of every tier. The one cut that paid in all three weeks: plus-money legs (+150 or longer) where the raw model is
 # 5+ points over FanDuel's implied %, in receptions / receiving yards / anytime TD / passing yards: 150 legs, 41% hit vs 32% implied, +31% at 1u.
+# owner 11/15 (Kyren Williams 10+ receiving yards lost in a 34-6 Rams win the model had called "LA by 10+"): a running back catches
+# fewer passes when his team is far ahead (it runs, and starters sit), so his receiving legs are a risk in a game the model's likeliest
+# ending is his team by 10+. Rushing legs keep the player-level "Lead script" plus; for TDs the either-or pair with his backup covers it.
+_MOST = {g["gid"]: g.get("most") for g in GAMES}
+_nbl = 0
+for l in LEGS:
+    if l.get("gl") or l.get("pos") != "RB" or str(l.get("m", "")).startswith("Under"): continue
+    if l.get("m") in ("Receiving Yards", "Receptions", "Longest Reception") and l.get("tm") and _MOST.get(l.get("g")) == f'{l["tm"]} by 10+':
+        l.setdefault("fh", []).append(["bad", "Blowout script", f'Model\'s likeliest ending is {l["tm"]} by 10+: a back\'s catches drop when his team is far ahead.']); _nbl += 1
+print(f"blowout script: {_nbl} running-back receiving legs flagged")
 # owner 11/6 edge map (edgemap.py): every model-edge leg gets its zone from the graded record of edges in its market x price band;
 # a losing-zone leg never makes a Model's Best tier, a quick build or a listed parlay, and every edge leg shows the record behind it.
 try:

@@ -611,3 +611,14 @@ The 9:00 fix put the error on screen: "undefined is not an object (evaluating 'l
 drops its legs, so Live fills them from in/legsnaps.json (D.extra, snap:1) - and those rows had no "ms" (short market name). Any saved
 or starred slip holding such a leg made legText() throw and nothing drew. Fix: snapshot legs get "ms" from the builder's own
 market->short map, and legText falls back to l.m. Check: a saved slip with a snapshot leg (e.g. a started game's yardage leg) draws.
+
+## Risk check: real role, one big game, blowout script (11/15)
+Owner after Week 10 Sunday (Metchie 5+, Fant 5+, Ridley 10+, Schultz 20+ yards and Kyren Williams 10+ receiving yards all lost on low
+lines): "Yes make those changes" + "we have to understand when trends are going down and when there's more crowded rooms".
+flags.py (WR/TE, player level): `Fringe role` (bad) = under 4 targets a game over his last four AND not in his team's top three targets;
+`Quiet games` (watch) = 30%+ of games with one catch or none; `One big game` (watch) = season target average leans on one game
+(max >= 2x median, average without it <= 82% of the average). build_builder.py (leg level): `Blowout script` (bad) on a running back's
+receptions / receiving yards / longest reception when the model's likeliest ending is his team by 10+.
+Checked on the game log through Week 9: Metchie, Fant and Ridley come out Fringe role, Schultz One big game. Low-risk legs on the
+remaining Week 10 board went 118 -> 84. Chat-only rules (not in code): one slip per player per day, flat stakes, three legs when the
+goal is cashing more often.

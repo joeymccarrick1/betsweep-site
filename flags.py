@@ -528,6 +528,30 @@ class Engine:
                 d = (v3 - va) / va
                 if d >= 0.25: add("good", f"{vlab.title()} up", f"Usage rising: {v3:.1f} {vlab}/g last 3 vs {va:.1f} season.")
                 elif d <= -0.25: add("bad", f"{vlab.title()} down", f"Usage falling: {v3:.1f} {vlab}/g last 3 vs {va:.1f} season.")
+        # --- owner 11/15 slip rules (after Week 10 Sunday: Metchie 5+, Fant 5+, Ridley 10+ and Schultz 20+ yards all lost on "safe" low lines) ---
+        # "Floor legs only on players with a real role - top three on their team in targets or four-plus targets a game - judged by how
+        #  often they finish near zero, not how often they clear the line" and "we have to understand when trends are going down".
+        if pos in ("WR", "TE") and len(gs) >= 3:
+            tv = [g.get("Targets") or 0 for g in gs]; rc = [g.get("Receptions") or 0 for g in gs]
+            recent = tv[-4:]; r_avg = sum(recent) / len(recent)
+            top3 = True
+            if team:
+                room = []
+                for tn in set(self.BY_TEAM.get(team, {}).get("WR", []) + self.BY_TEAM.get(team, {}).get("TE", []) + self.BY_TEAM.get(team, {}).get("RB", [])):
+                    if tn in self.OUT and tn != name: continue
+                    tg_ = [g.get("Targets") or 0 for g in self.games(tn) if g.get("team") == team][-4:]
+                    if tg_: room.append((sum(tg_) / len(tg_), tn))
+                room.sort(reverse=True)
+                top3 = name in [n for _, n in room[:3]]
+            zeros = sum(1 for x in rc if x <= 1)
+            if r_avg < 4 and not top3:
+                add("bad", "Fringe role", f"{r_avg:.1f} targets a game over his last {len(recent)} and not among {team or 'his team'}'s top three targets; {zeros} of {len(rc)} games with one catch or none. A low line is not a safe line on this little work.")
+            elif len(rc) >= 4 and zeros / len(rc) >= 0.3:
+                add("watch", "Quiet games", f"{zeros} of {len(rc)} games with one catch or none this season.")
+            if len(tv) >= 5:
+                sa_ = sum(tv) / len(tv); mx = max(tv); rest = (sum(tv) - mx) / (len(tv) - 1); med = sorted(tv)[len(tv) // 2]
+                if sa_ >= 4 and mx >= 2 * max(med, 1) and rest <= 0.82 * sa_:
+                    add("watch", "One big game", f"His {sa_:.1f}-target average leans on one {mx:.0f}-target game; it is {rest:.1f} a game without it ({', '.join(str(int(x)) for x in tv[-6:])} over his last {min(6, len(tv))}).")
         # --- floor / volatility ---
         if pos in MAIN_STAT and len(gs) >= 4:
             st, lab = MAIN_STAT[pos]; sa = self.avg(gs, st); v = [g[st] for g in gs if g.get(st) is not None]
