@@ -159,7 +159,7 @@
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 306 players projected for Week 10. Built Mon 11/16 7:52 AM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 306 players projected for Week 10. Built Mon 11/16 8:10 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -239,7 +239,7 @@
   </section>
  </div>
 </div>
-<script src="/team/data-d0b7ecf18dae.js"></script>
+<script src="/team/data-e857485fa990.js"></script>
 <script>
 (function(){
   var D = window.__BS, P = D.players, WEEK = D.week;
@@ -1006,7 +1006,7 @@
   Object.keys(GROUPS).forEach(function(gk){ GROUPS[gk].sort(function(a,b){ return a.ln - b.ln; }); });
   function ladderOf(l){ return l.gl ? null : GROUPS[l.pl + '|' + l.m]; }
   function fader(l){ var g = ladderOf(l); if(!g || g.length < 2 || isTD(l)) return ''; var i = g.indexOf(l);
-    return '<span class="lad" data-k="' + esc(l.k) + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="safer line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>'; }
+    return '<span class="lad" data-k="' + esc(l.k) + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="easier line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>'; }
   function fade(k, d){ var l = byKey[k]; if(!l) return; var g = ladderOf(l); if(!g) return; var i = Math.max(0, Math.min(g.length-1, g.indexOf(l) + d)); if(g[i] === l) return;
     sel = sel.map(function(x){ return x === k ? g[i].k : x; }); save(); render(); }
   function flagsOf(l){ if(l.fl) return l.fl; var g = ladderOf(l) || []; var src = g.filter(function(x){ return x.fl; })[0]; return src ? src.fl.filter(function(f){ return !/line|hit rate|hits? (at|this)/i.test(f[1] + ' ' + f[2]); }) : []; }

@@ -408,7 +408,7 @@
   Object.keys(GROUPS).forEach(function(gk){ GROUPS[gk].sort(function(a,b){ return a.ln - b.ln; }); });
   function ladderOf(l){ return l.gl ? null : GROUPS[l.pl + '|' + l.m]; }
   function fader(l){ var g = ladderOf(l); if(!g || g.length < 2 || isTD(l)) return ''; var i = g.indexOf(l);
-    return '<span class="lad" data-k="' + esc(l.k) + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="safer line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>'; }
+    return '<span class="lad" data-k="' + esc(l.k) + '"><button type="button" data-d="-1" ' + (i<=0?'disabled':'') + ' aria-label="easier line">‹</button><b>' + Math.round(l.ln) + '+</b><button type="button" data-d="1" ' + (i>=g.length-1?'disabled':'') + ' aria-label="longer line">›</button><span class="dots" aria-hidden="true">' + g.map(function(_,j){ return '<i class="' + (j===i?'on':'') + '"></i>'; }).join('') + '</span></span>'; }
   function fade(k, d){ var l = byKey[k]; if(!l) return; var g = ladderOf(l); if(!g) return; var i = Math.max(0, Math.min(g.length-1, g.indexOf(l) + d)); if(g[i] === l) return;
     sel = sel.map(function(x){ return x === k ? g[i].k : x; }); save(); render(); }
   function flagsOf(l){ if(l.fl) return l.fl; var g = ladderOf(l) || []; var src = g.filter(function(x){ return x.fl; })[0]; return src ? src.fl.filter(function(f){ return !/line|hit rate|hits? (at|this)/i.test(f[1] + ' ' + f[2]); }) : []; }
