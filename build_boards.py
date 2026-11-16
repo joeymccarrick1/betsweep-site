@@ -345,6 +345,12 @@ def odds_str(o):
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import flags as FLAGS
 FE = FLAGS.Engine(IN, WEEK)
+# owner 11/15 ("Yes build all of that"): the honest chance - what graded FanDuel legs at this price in this market have actually hit,
+# nudged a little by the model (honest.py). The game-card parlay shows and prices itself on it; the model's own number stays in the tooltip.
+import honest as HONEST
+HON = HONEST.load(IN)
+import sweep as _SWPB
+_FAILED_TAGS = {t for t, _w in _SWPB.TAG_W.items() if _w == 0}   # flags that failed the Tuesday grade: off the boards, still on the player page
 import faceoff as FACEOFF   # receiver face-off on each game card (owner 10/22: Burden over Odunze was visible in usage + corner data)
 try: FO = FACEOFF.load(IN, WEEK)
 except Exception as e: FO = {}; print("note: receiver face-off unavailable:", e)
@@ -368,6 +374,13 @@ for l in LEGS:
                 _gap = _inf["shr"] - _inf["lg"]
                 fl = list(fl) + [{"k": "good" if _gap > 0.05 else "watch" if _gap < -0.05 else "info", "tag": f"vs {_inf['role']}s", "txt": _note}]
         except Exception: pass
+    try: fl = [f for f in FE.strip_overruled(l["player"], list(fl)) if f.get("tag") not in _FAILED_TAGS]   # flags the owner marked wrong / flags that failed the grade
+    except Exception: pass
+    try:
+        _mp = l.get("raw_p") if l.get("raw_p") is not None else l.get("p")
+        l["br"] = HON.band(l["market"], l["odds"]) if l.get("odds") is not None else None
+        l["hp"] = HON.chance(l["market"], l["odds"], _mp) if l.get("odds") is not None else None
+    except Exception: l["br"] = l["hp"] = None
     l["flags"] = fl; l["warn"] = FLAGS.warn_text(fl); l["note"] = FLAGS.note_text(fl); l["good"] = FLAGS.good_text(fl); l["hit"] = FLAGS.hit_of(fl)
 # ---- projected snap share (projsnaps.py): recency-weighted share, redistributed for same-position OUTs / returners; computed once
 # per build, out/projsnaps.json is read by build_builder.py. Shown as a small chip on each player's row; nothing else uses it. ----
@@ -933,6 +946,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
         # trend gate: a line the player has cleared in only a minority of recent games is not a "cash often" leg; other
         # warnings (projection far from season average / market) stay in but are shown with a flag
         h = l.get("hit"); trend_bad = bool(h and h[1] >= 3 and h[0] / h[1] <= 0.4)
+        if h and h[1] >= 5 and l.get("br") is not None and h[0] / h[1] < l["br"] - 0.15: continue   # owner 11/15 (show the work): no best-bet label when he has done it far less often than legs at this price do
         if trend_bad and h[0] / h[1] < 0.3: continue   # never use a line he has cleared under 30% of the time this season
         if GAMEDAY.get(l["player"].lower(), {}).get("status", "").startswith("CONFIRMED"): continue
         if "/" in l["player"]: continue
@@ -946,9 +960,13 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
         # owner 11/6 (Ravens TNF, implied 15 pts): receiving-yards overs on teams the market expects under 19 points went -21% / -11% / +3% in
         # Weeks 6-8 and -79% on TNF (research/team_total_overs.py). Provisional - out of listed parlays; re-check Tuesdays.
         if l["market"] == "Receiving Yards" and _team_total(l["team"]) is not None and _team_total(l["team"]) < 19: continue
-        if _o is not None and _o <= -250 and not (_rp is not None and _rp >= l["book"] and l["p"] >= l["book"]): continue   # no paying up for -250 and shorter
-        if l["market"] != "Anytime TD" and not (_rp is not None and l["book"] is not None and ((l["p"] >= 0.65 and _rp >= l["book"]) or (_o is not None and -135 <= _o <= 115 and _rp - l["book"] >= 0.08))): continue
-        if l["market"] == "Anytime TD" and not (_rp is not None and _rp >= l["book"] and _o is not None and _o <= 200): continue
+        # owner 11/15 (move the best bet off floor legs). Weeks 6-9, receiving yards / receptions / passing yards: legs the model liked at
+        # -200 or shorter hit 62.7% against 72.1% priced (-12.6% a leg, 161 legs); legs it had 8+ points over the price from -199 to +250
+        # returned +5% to +14% a leg (mid 100 legs, even 124, plus 136; positive in three of four weeks, not yet proven). So: nothing at
+        # -200 or shorter, and a player leg needs the model 8+ over the price (or 65%+ and at/above the price between -199 and -130).
+        if _o is None or _o <= -200: continue
+        if l["market"] != "Anytime TD" and not (_rp is not None and l["book"] is not None and ((_o <= 250 and _rp - l["book"] >= 0.08) or (-199 <= _o <= -130 and l["p"] >= 0.65 and _rp >= l["book"]))): continue
+        if l["market"] == "Anytime TD" and not (_rp is not None and _rp >= l["book"] and _o <= 200): continue
         role = roles.get(l["player"], ""); p = l["p"]; ps = []
         for k in range(4):
             sc_a = ["LEAD", "CLOSE_LOW", "SHOOTOUT", "TRAIL"][k]; sc = sc_a if l["team"] == a else {"LEAD": "TRAIL", "TRAIL": "LEAD"}.get(sc_a, sc_a)
@@ -985,7 +1003,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
                 if len(_gsz) >= 4 and sum(1 for x in _gsz if x < 0.5 * l["line"]) * 3 >= len(_gsz): BP_RISK_OUT.append((l["player"], l["market"], l.get("line"))); continue
         except Exception as _e: print("warn: best-parlay risk gate skipped:", _e)
         prob = sum(w[k] * ps[k] for k in range(4))
-        rows[id(l)] = {"l": l, "ps": ps, "prob": prob, "padj": prob * (1 - 0.06 * nbad), "nbad": nbad, "pmin": min(ps), "scripts": set(), "floor": floor, "tb": trend_bad}
+        rows[id(l)] = {"l": l, "ps": ps, "prob": prob, "hf": (min(1.3, max(0.5, l["hp"] / l["p"])) if l.get("hp") and l.get("p") else 1.0), "padj": prob * (1 - 0.06 * nbad), "nbad": nbad, "pmin": min(ps), "scripts": set(), "floor": floor, "tb": trend_bad}
     # game lines (moneyline / spread / total) compete for the same slip: each already carries its chance under each ending, so it mixes with
     # the player legs coherently (a JAX -2.5 is near-certain when the game ends "JAX by 10+" and a coin flip when it ends close). Legs where the
     # model and the market disagree by 4+ points are left out (the model's game projections are not back-tested yet).
@@ -1098,6 +1116,9 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
     pj, ev, d, combo, C, plus, near = got
     by_k = [joint_prob([r["ps"][k] for r in combo], C, n=12000) if w[k] > 0 else 0.0 for k in range(4)]
     pj = sum(w[k] * by_k[k] for k in range(4)); ev = pj * d - 1
+    # the honest version of the same slip: each leg's chance under each ending scaled by (honest chance / model chance)
+    by_kh = [joint_prob([min(0.99, r["ps"][k] * r.get("hf", 1.0)) for r in combo], C, n=12000) if w[k] > 0 else 0.0 for k in range(4)]
+    pjh = sum(w[k] * by_kh[k] for k in range(4)); evh = pjh * d - 1
     fit_k = max(range(4), key=lambda k: w[k] * by_k[k])   # the ending this slip is built for (largest share of its hit chance)
     best = max(combo, key=lambda r: r["padj"] + (r["prob"] - r["l"]["book"]) - 0.05 * r["nbad"] - (0.1 if r["tb"] else 0))
     covered = sorted(set().union(*[r["scripts"] for r in combo]))
@@ -1112,13 +1133,20 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
             by_end = ", ".join(f"{lab[k]} {r['ps'][k]*100:.0f}%" for k in range(4))
             why = f'{r["prob"]*100:.0f}% to hit mixing its chance under each ending ({by_end}); {"FanDuel" if l["src"] == "fd" else "the consensus line"} implies {l["book"]*100:.0f}%. ' + flag_tip(l)
         return (f'<span class="bpl{" best" if r is best else ""}{" glbpl" if l.get("gl") else ""}" title="{E(why)}">{"<em title=\"best leg\">★</em>" if r is best else ""}{E(l["player"])}{(" " + mk) if mk else ""}{" <span class=wf role=button tabindex=0 title=" + chr(34) + E(flag) + chr(34) + " data-f=" + chr(34) + E(flag) + chr(34) + " data-p=" + chr(34) + E(l["player"]) + chr(34) + ">⚠</span>" if flag else ""} <small>{odds_str(l["odds"])}</small>'
-                f'<b>{r["prob"]*100:.0f}%</b>{ei(e)}{plus_btn(l)}</span>')
+                f'<b>{min(0.99, r["prob"] * r.get("hf", 1.0))*100:.0f}%</b>{ei(e)}{plus_btn(l)}</span>')
     legs_html = "".join(leg_html(r) for r in combo)
+    def work_txt(r):   # owner 11/15 (show the work on every best bet): how often he has done it, FanDuel's chance, what legs at this price hit
+        l = r["l"]
+        if l.get("gl") or l.get("br") is None: return ""
+        h = l.get("hit"); own = f"done it {h[0]} of {h[1]}" if h and h[1] else "no games on record"
+        return f'{E(l["player"])}: {own} · FanDuel implies {l["book"]*100:.0f}% · legs at this price have hit {l["br"]*100:.0f}%'
+    _work = "<br>".join(x for x in (work_txt(r) for r in combo) if x)
+    work_html = f'<span class="bpwork" style="display:block;flex-basis:100%;font-size:12px;line-height:1.4;opacity:.85;margin-top:6px"><b>Show the work</b><br>{_work}</span>' if _work else ""
     note = "" if plus else ('<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this one is within 5 cents of fair</span>' if near else '<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this is the closest</span>')
     note += sw_note
-    html_ = (f'<div class="bestslip"><span class="lt">Best parlay <small>{len(combo)} legs</small></span><span class="bpodds" title="FanDuel price for the {len(combo)}-leg slip">{am_from_dec(d)}</span>{legs_html}'
-             f'<span class="bpnum">model <b>{pj*100:.0f}%</b> to hit · fair {fair_odds(pj)} · EV <b class="{"up" if ev>=0 else "dn"}">{"+" if ev>=0 else ""}${ev:.2f}</b> per $1 · does best if <b title="if the game ends {E(lab[fit_k])}, this slip hits {by_k[fit_k]*100:.0f}% of the time">{E(lab[fit_k])}</b> <span title="the model&#39;s chance of that ending">({w[fit_k]*100:.0f}% likely)</span></span>{note}{fd_button([r["l"] for r in combo], "best parlay")}</div>')
-    rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "ev": ev, "dec": d, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"], "lean": (dict(lean, changed=LEAN_LOG[-1]["changed"], backed=LEAN_LOG[-1]["backed"]) if lean else None)}
+    html_ = (f'<div class="bestslip"><span class="lt">Best parlay <small>{len(combo)} legs</small></span><span class="bpodds" title="FanDuel price for the {len(combo)}-leg slip">{am_from_dec(d)}</span>{legs_html}{work_html}'
+             f'<span class="bpnum">about <b>{pjh*100:.0f}%</b> to hit <small title="What legs at these prices have actually hit this season, nudged by our model. The model alone says {pj*100:.0f}%.">graded</small> · fair {fair_odds(pjh)} · EV <b class="{"up" if evh>=0 else "dn"}">{"+" if evh>=0 else ""}${evh:.2f}</b> per $1 · does best if <b title="if the game ends {E(lab[fit_k])}, this slip hits {by_k[fit_k]*100:.0f}% of the time">{E(lab[fit_k])}</b> <span title="the model&#39;s chance of that ending">({w[fit_k]*100:.0f}% likely)</span></span>{note}{fd_button([r["l"] for r in combo], "best parlay")}</div>')
+    rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "pjh": pjh, "ev": ev, "dec": d, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"], "lean": (dict(lean, changed=LEAN_LOG[-1]["changed"], backed=LEAN_LOG[-1]["backed"]) if lean else None)}
     return html_, rec
 BEST_PARLAYS = []
 ROLE_RISK = ("Target competition", "Backfield competition", "Rising", "Limited", "Snaps down", "Role Down", "Carries down", "Targets down",

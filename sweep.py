@@ -155,7 +155,7 @@ def dependence(legs, qb_of=None):
             out.append(f'{len(ls)} of {len(legs)} legs need {tm}\'s passing game ({", ".join(sorted({x["pl"] for x in ls}))}): one bad day from {qb or "the quarterback"} sinks them together')
     return out
 
-HARD_RISK = {"Losing zone", "Fringe role", "Blowout script", "Target squeeze", "Losing side", "Near-zero risk"}
+HARD_RISK = {"Losing zone", "Fringe role", "Blowout script", "Target squeeze", "Losing side", "Near-zero risk", "Avoid (BetSweep)"}
 
 def risk_tag(score):
     return "High risk" if score >= 4 else "Some risk" if score >= 2 else ""

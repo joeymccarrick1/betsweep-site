@@ -698,3 +698,34 @@ minus the line: under 2 hit 67.7%, 2-3.5 63.0%, 4+ 67.1% - nothing there) and th
 over the price hit 59.1%, the worst group - hot streaks are already priced). Forecast error (Brier) on 3,821 graded legs: FanDuel's no-vig
 price 0.2402, our model 0.2482, own clear rate 0.2600; on legs the model had at 70%+ the model was worst (0.2821 vs FanDuel 0.2379). The
 lowest of the three numbers was the only blend that stayed calibrated at the top (said 64.1%, hit 66.0%; said 72.1%, hit 68.2%).
+
+## Honest chance, best bets off floor legs, show the work, owner veto, shadow list (owner 11/15: "Yes build all of that" ... "do everything you can think of")
+
+Code only; ships with the next rebuild that passes the publish gates. Tests run 11/15: `python3 honest.py`, `python3 learned.py`,
+sweep selftest, boards + builder + site build clean, phone-sized browser sweep of 41 pages (no JS errors, no sideways scroll).
+
+- **honest.py** - the honest chance of a leg: what graded FanDuel legs at that price in that market actually hit (rebuilt from
+  in/legsnaps.json every run, capped at 68%), minus a quarter of the gap when the model is lower, plus a fifth when the model is higher
+  on a leg priced longer than -200. Each week scored on the other weeks: forecast error 0.2344 (model 0.2411, FanDuel no-vig 0.2351);
+  it said 64.2% and legs hit 65.8%; legs the model had at 70%+ - model 75.6%, honest 63.0%, hit 63.4%. Tested and NOT used: a full model
+  veto (too pessimistic: said 64%, hit 67%) and the player's own clear rate (no gain). Leg fields: `br` (band rate), `hp` (honest chance).
+- **Game-card best parlay** (`build_boards.best_parlay`): no leg at -200 or shorter; a player leg needs the model 8+ points over the price
+  (to +250), or 65%+ and at/above the price between -199 and -130. Weeks 6-9 (receiving yards, receptions, passing yards): model-liked
+  floors -12.6% a leg (161 legs); model 8+ over the price on mid / even / plus legs +5% to +14% a leg (100 / 124 / 136 legs; not proven).
+  The card shows the honest chance, fair price and EV ("graded"; the model's own number is in the tooltip) and a "Show the work" line per
+  player leg: how often he has done it, FanDuel's implied chance, what legs at that price have hit. A leg he has cleared 15+ points less
+  often than the band rate (5+ games) gets no best-bet label. On a thin board the slip falls back to game lines - check Tuesday's cards.
+- **Builder**: every leg carries `br` / `hp` and an info flag "Price check"; the slip notes add a "reality check" (the legs' honest
+  chances multiplied, next to the model's). Flags that failed the grade (weight 0 in `sweep.TAG_W`) and flags the owner marked wrong are
+  dropped from the builder and the boards; the player page keeps everything.
+- **Owner veto** (player-page note panel, risk.py): two new choices. "Avoid" -> `bad` flag "Avoid (BetSweep)", a hard tag, live on every
+  page at once. "A flag on him is wrong" (name the flag in the note) -> that flag is dropped for him this week at the next rebuild and
+  listed in the flag check. No database change: `risk_feed.status` is free text and risk_notes.py ignores the two for availability.
+- **data/flag-audit.json** (the Tuesday flag check): the flags that moved the most players out of the low-risk pool, with the text each
+  shows; the 20 biggest model-vs-FanDuel gaps (each is a real edge or an input bug - 11/15 top: Jacoby Brissett 200+ pass yds, model 26%
+  vs FanDuel 62%, projection 156 vs a 215 average); the players with a flag overruled.
+- **learned.py** - results-trained SHADOW list, `data/learned-w<week>-<mmdd>.json` on every build (singles 3+ points over the price, one
+  per player; two-leg pairs from different games). Ridge logistic fit on all graded legs starting from FanDuel's price. Leave-one-week-out:
+  its picks +6.2% a leg (698 legs) against -4.9% for the model's (1,633); features were chosen on the same weeks, so it grades in the
+  shadow first. Drives nothing on the site until the owner says so.
+- **"Safer" is gone**: tier labels now read "Short-priced" (results, season, ask, builder, guide); "safer swap" -> "easier swap".

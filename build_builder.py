@@ -650,6 +650,24 @@ try:
             l.setdefault("fh", []).append(["bad", "Losing side", f"The model's most likely ending is {l['opp']} by 10+. Yardage floors on the team projected to lose big hit 61% against a 71% price in Weeks 6-9 (439 legs); the projected winner's hit 68%."]); _nls += 1
     print(f"losing side: {_nls} yardage legs flagged")
 except Exception as _e: print("warn: losing-side flag skipped:", _e)
+# owner 11/15 ("Yes build all of that"): the honest chance on every leg - what graded FanDuel legs at this price in this market have
+# actually hit, nudged a little by the model (honest.py; the model's own chance stays in p / raw_p). br = that band rate, hp = the chance.
+try:
+    import honest as _HON
+    _HN = _HON.load(globals().get("IN", "in")); _nh = 0
+    for l in LEGS:
+        if l.get("o") is None: continue
+        _mp = l.get("raw_p") if l.get("raw_p") is not None else l.get("p")
+        _b = _HN.band(l.get("m"), l["o"]); _c = _HN.chance(l.get("m"), l["o"], _mp)
+        if _b is None: continue
+        l["br"] = round(_b, 4); l["hp"] = round(_c, 4)
+        if not l.get("gl") and _HN.ratio(l.get("m"), l["o"])[2] != "none":
+            l.setdefault("fh", []).append(["info", "Price check", f"Legs at this price in this market have hit {_b * 100:.0f}% (FanDuel's price implies {_HON.implied(l['o']) * 100:.0f}%)."]); _nh += 1
+        if not l.get("gl") and l.get("m") in _NZ_STAT and l.get("ln") and FE:
+            _gz = [g.get(_NZ_STAT[l["m"]]) or 0 for g in FE.games(l["pl"])]
+            if len(_gz) >= 4: l["nzr"] = round(sum(1 for x in _gz if x < 0.5 * l["ln"]) / len(_gz), 3)
+    print(f"honest chance: {_nh} legs carry a price check ({_HN.n} graded legs behind the table)")
+except Exception as _e: print("warn: honest chance skipped:", _e)
 try:
     os.makedirs(os.path.join(OUT, "data"), exist_ok=True)   # owner 11/9 + 11/15: one file with every player's and team-market's record against its prices
     json.dump({"week": WEEK, "note": "hits minus the fair rate FanDuel's price implied, shrunk toward zero (players 12 phantom legs, team-markets 20); points",
@@ -899,6 +917,48 @@ try:
     import scenario as _SCN
     print(f"scenario explorer: {_SCN.attach(LEGS, GAMES, IN, os.path.dirname(os.path.abspath(__file__)))} player legs + {sum(1 for l in LEGS if l.get('gl') and l.get('sc'))} game lines carry per-ending chances")
 except Exception as _e: print("warn: scenario explorer skipped:", _e)
+# owner 11/15: flags that failed the Tuesday grade (weight 0 in sweep.TAG_W) and flags he marked wrong on a player page stay off the
+# builder; the player page keeps everything.
+try:
+    import sweep as _SW0
+    _failed = {t for t, _w in _SW0.TAG_W.items() if _w == 0}; _nf = 0
+    for _pl in list(PF):
+        _b4 = len(PF[_pl]); PF[_pl] = [f for f in FE.strip_overruled(_pl, PF[_pl]) if f[1] not in _failed]; _nf += _b4 - len(PF[_pl])
+    for l in LEGS:
+        if l.get("fh"):
+            _b4 = len(l["fh"]); l["fh"] = [f for f in FE.strip_overruled(l.get("pl") or "", l["fh"]) if f[1] not in _failed]; _nf += _b4 - len(l["fh"])
+    print(f"flags kept off the builder (failed the grade or marked wrong): {_nf}")
+except Exception as _e: print("warn: flag cleanup skipped:", _e)
+# owner 11/15: the Tuesday flag check (which flags moved the most players out of the low-risk pool, with the text each one shows) and
+# the 20 biggest gaps between our model and FanDuel (each one is either a real edge or a bug in the inputs) -> data/flag-audit.json
+try:
+    os.makedirs(os.path.join(OUT, "data"), exist_ok=True); _mv = {}
+    for l in LEGS:
+        if l.get("gl") or l.get("o") is None or _SW0.risk_score(l, {"pf": PF}) < 2: continue
+        for f in [x for x in list(l.get("fh") or []) + list(PF.get(l.get("pl")) or []) if x[0] in ("bad", "watch")]:
+            if _SW0.risk_score(dict(l, fh=[x for x in (l.get("fh") or []) if x is not f]), {"pf": {l.get("pl"): [x for x in (PF.get(l.get("pl")) or []) if x is not f]}}) < 2:
+                _e2 = _mv.setdefault(f[1], {"tag": f[1], "kind": f[0], "legs": 0, "players": set(), "example": None}); _e2["legs"] += 1; _e2["players"].add(l.get("pl"))
+                if _e2["example"] is None: _e2["example"] = {"pl": l.get("pl"), "txt": f[2] if len(f) > 2 else ""}
+    _aud = sorted(({**e, "players": len(e["players"])} for e in _mv.values()), key=lambda e: -e["players"])[:25]
+    _mpv = lambda l: l.get("raw_p") if l.get("raw_p") is not None else l.get("p")
+    _gaps = sorted(({"pl": l["pl"], "tm": l.get("tm"), "m": l["m"], "ln": l["ln"], "o": l["o"], "model": round(_mpv(l), 3), "fd": round(l["bk"], 3), "gap": round(_mpv(l) - l["bk"], 3), "proj": l.get("proj"), "avg": l.get("avg")}
+                    for l in LEGS if not l.get("gl") and l.get("pl") and l.get("o") is not None and l.get("bk") is not None and _mpv(l) is not None and -400 <= l["o"] <= 400), key=lambda x: -abs(x["gap"]))
+    _seen = set(); _g20 = []
+    for x in _gaps:
+        if x["pl"] in _seen: continue
+        _seen.add(x["pl"]); _g20.append(x)
+        if len(_g20) >= 20: break
+    json.dump({"week": WEEK, "built": stamp, "flags": _aud, "gaps": _g20, "overruled": sorted(k for k, v in (getattr(FE, "NOTES", {}) or {}).items() if v.get("status") == "WRONG_FLAG")},
+              open(os.path.join(OUT, "data", "flag-audit.json"), "w"), separators=(",", ":"))
+    print("flag check: biggest movers", [(e["tag"], e["players"]) for e in _aud[:5]], "| biggest model-vs-FanDuel gaps", [(x["pl"], x["m"], x["gap"]) for x in _g20[:3]])
+except Exception as _e: print("warn: flag check skipped:", _e)
+# owner 11/15 ("do everything you can think of"): the results-trained SHADOW list (learned.py) - written every build, graded on Tuesdays,
+# drives nothing on the site
+try:
+    import learned as _LRN
+    _lp = _LRN.picks(globals().get("IN", "in"), LEGS, GAMES, WEEK, out_dir=os.path.join(OUT, "data"), risk_of=lambda l: _SW0.risk_score(l, {"pf": PF}))
+    print(f"shadow list: {len(_lp.get('singles', []))} singles, {len(_lp.get('pairs', []))} pairs" + (f" ({_lp['note']})" if _lp.get("note") else ""), [(r["pl"], r["m"], r["ln"], r["o"], r["edge"]) for r in _lp.get("singles", [])[:3]])
+except Exception as _e: print("warn: shadow list skipped:", _e)
 import sweep as _SWP
 DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "tw": _SWP.TAG_W, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
@@ -1272,7 +1332,7 @@ BUILDER_JS = r"""
   var BN = {dk: 'DraftKings', hr: 'Hard Rock'};
   function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.ba && l.ba[b]) return {s: l.ba[b].s, o: l.ba[b].o, ln: l.ba[b].ln, sub: true}; return null; }
   function subName(l, x){ if(l.gl){ var sd = l.gl.side; return l.m === 'Total' ? (sd === 'OVER' ? 'Over ' : 'Under ') + x.ln : sd + ' ' + (x.ln > 0 ? '+' : '') + x.ln; } return l.pl + ' ' + x.ln + '+'; }
-  var TIERL = {plus: "Model's Best · plus-money edge", even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · safer"};
+  var TIERL = {plus: "Model's Best · plus-money edge", even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · short-priced"};
   var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - Weeks 6-8: 41% hit at about +200, +31% at 1u on 150 legs', even: 'Priced near even money and the model is 8+ pts off FanDuel - in Weeks 6-7 these unders won 59%, overs 55%', td: 'Anytime TD the model rates at or above FanDuel\'s price - 34% hit at ~+270 in Weeks 6-7 (small sample)', safe: 'Model 65%+ and at or above the price - 65% hit at about -195 in Weeks 6-7'};
   function tierChip(l){ return l.tier ? '<span class="tierb t-' + l.tier + '" title="' + esc(TIERT[l.tier]) + '">' + TIERL[l.tier] + '</span>' : ''; }
   function lnTxt(l){ return l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'; }   // unders show FanDuel's main line ('under 74.5')
@@ -1703,13 +1763,13 @@ BUILDER_JS = r"""
     // point. Week 9: legs that drifted hit 6 pts under their price, legs that shortened 7 over (71 and 67 legs - a lean, not proof).
     try { var mv = !l.gl && window.BSRisk && window.BSRisk.move && window.BSRisk.move(legKey(l)); if(mv && !mv.news && mv.dir === 'DRIFTED') s += 1; } catch(e){}
     // owner 11/15: these four never wash out against good flags (keep in step with sweep.HARD_RISK)
-    if((l.fl || []).some(function(f){ return f[1] === 'Losing zone' || f[1] === 'Fringe role' || f[1] === 'Blowout script' || f[1] === 'Target squeeze' || f[1] === 'Losing side' || f[1] === 'Near-zero risk'; })) s = Math.max(s, 2);
+    if((l.fl || []).some(function(f){ return f[1] === 'Losing zone' || f[1] === 'Fringe role' || f[1] === 'Blowout script' || f[1] === 'Target squeeze' || f[1] === 'Losing side' || f[1] === 'Near-zero risk' || f[1] === 'Avoid (BetSweep)'; })) s = Math.max(s, 2);
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v) s += v.level === 'block' ? 10 : v.level === 'warn' ? 3 : -1; return Math.max(0, s); }
   function riskTag(l){ if(isGL(l)) return ''; var s = riskScore(l); if(s < 2) return ''; var hi = s >= 4;
     return ' <span class="rsk' + (hi ? ' hi' : '') + '" title="Risk score ' + s + ': model flags plus live injury / weather / BetSweep notes">' + (hi ? 'High risk' : 'Some risk') + '</span>'; }
   document.addEventListener('bs-risk', function(){ try{ renderSlip(); }catch(e){} });
   // ---- owner 11/10 "Sweep my slip": a plain verdict on whatever is in the slip - its chance against its price, how many legs are low
-  // risk, the weakest leg, and a safer swap that one tap applies. Nothing new is computed: the chance is joint(), the risk is riskScore(),
+  // risk, the weakest leg, and an easier swap that one tap applies. Nothing new is computed: the chance is joint(), the risk is riskScore(),
   // the conflicts are the slip notes. Opens by itself when the page is reached from /sweep/ (a screenshot read by import.js, ?sweep=1)
   // and from the "Sweep this slip" button. SWX = what the screenshot page passed along: the price printed on the slip and the legs
   // it could not match (those are named, never guessed at).
@@ -1847,6 +1907,9 @@ BUILDER_JS = r"""
     var pls = {}; ls.forEach(function(l){ pls[l.pl] = (pls[l.pl]||0)+1; }); var dupe = Object.keys(pls).filter(function(p){ return pls[p] > 1; }); if(dupe.length) flags.push('same player twice: ' + dupe.join(', '));
     // owner 11/15 (legs that fail together): the quarterback's passing legs and his pass catchers' receiving legs are one bet on that
     // passing game (keep in step with sweep.dependence), and the correlation matrix says how many separate bets the slip really is
+    // owner 11/15 (show the real hit rate for the price): l.hp = what graded legs at this price in this market have hit, nudged by the model
+    if(ls.length >= 2 && ls.every(function(l){ return l.hp || isGL(l); })){ var hj = 1, mj = 1, hs = []; ls.forEach(function(l){ var h = l.hp || l.p || 0.5; hj *= h; mj *= (l.p || h); if(!isGL(l)) hs.push(Math.round(h * 100) + '%'); });
+      if(hs.length && mj - hj >= 0.02) flags.push('reality check: legs at these prices have hit about ' + hs.join(', ') + ', so this slip is roughly ' + Math.round(hj * 100) + '% to cash before any same-game link (the model alone multiplies to ' + Math.round(mj * 100) + '%)'); }
     var PASSM = {'Passing Yards':1, 'Receiving Yards':1, 'Receptions':1, 'Longest Reception':1, 'Passing TDs':1, 'Completions':1}, pg = {};
     ls.forEach(function(l){ if(isGL(l) || l.u || !PASSM[l.m] || !l.tm) return; (pg[l.tm] = pg[l.tm] || []).push(l); });
     Object.keys(pg).forEach(function(tm){ var x = pg[tm]; if(ls.length < 3 || x.length < 2 || !(x.length >= 3 || x.length * 2 > ls.length)) return;
@@ -2365,7 +2428,7 @@ body = f'''<div class="bld">
    <div class="take" id="take" style="display:none"></div>
    <div class="flags" id="flags"></div>
    <div class="acts books3"><a class="fd" id="sendfd" href="#" target="_blank" rel="noopener" aria-disabled="true">FanDuel</a><a class="fd dk" id="senddk" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">DraftKings</a><a class="fd hr" id="sendhr" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Hard Rock</a></div>
-   <div class="acts"><button type="button" class="pri" id="savesl">Save slip</button><button type="button" class="pri" id="copy">Copy slip</button><button type="button" id="sweepbtn" title="A plain verdict on this slip: its chance against its price, the weakest leg and a safer swap">Sweep this slip</button><button type="button" id="clear">Clear</button></div>
+   <div class="acts"><button type="button" class="pri" id="savesl">Save slip</button><button type="button" class="pri" id="copy">Copy slip</button><button type="button" id="sweepbtn" title="A plain verdict on this slip: its chance against its price, the weakest leg and an easier swap">Sweep this slip</button><button type="button" id="clear">Clear</button></div>
    <div class="acts share"><button type="button" class="social" id="postsl" title="Post this slip to BetSweep Social for others to tail and upvote"><img src="data:image/png;base64,{LOGO_S}" alt=""><span><b>Post to BetSweep Social</b><small>let people tail it · upvotes put it on top</small></span></button>{SHORTL.BTN_HTML}</div>
    <p class="note" id="fdnote" style="padding-top:0"></p>
    <p class="note" id="bknote" style="padding-top:0"></p>

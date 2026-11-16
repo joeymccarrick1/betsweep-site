@@ -323,7 +323,7 @@ def best_block():
         for key in ((tier, w), (tier, 0)):
             d = T[key]; d[0] += 1; d[1] += int(hit); d[2] += ((o / 100) if o > 0 else (100 / -o)) if hit else -1.0
     if not T: return '<section class="card calib"><h2>Model\'s Best <small>graded</small></h2><p>The tier is frozen before every kickoff from Week 8 on; the first grades land next Tuesday.</p></section>'
-    lab = {"even": "Even money · overs", "even (unders)": "Even money · unders", "td": "Touchdowns", "safe": "Safer (65%+)"}
+    lab = {"even": "Even money · overs", "even (unders)": "Even money · unders", "td": "Touchdowns", "safe": "Short-priced (65%+)"}
     weeks = sorted({w for _, w in T if w})
     rows = ""
     for tier in ("even (unders)", "even", "td", "safe"):

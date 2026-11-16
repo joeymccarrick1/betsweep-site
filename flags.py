@@ -312,6 +312,19 @@ class Engine:
         if not v: return None
         return (sum(1 for x in v if x >= ln), len(v))
 
+    # ---------- owner 11/15 ("Make your eye an input"): flags he marks wrong on a player page are dropped for the week ----------
+    def overruled(self, name):
+        """Lower-cased flag names the owner marked wrong for this player (note status WRONG_FLAG; the note text names the flag or flags)."""
+        nt = self.NOTES.get(_nn(name)) or {}
+        if nt.get("status") != "WRONG_FLAG": return []
+        return [t.strip().lower() for t in re.split(r"[,;/]", str(nt.get("detail") or "")) if len(t.strip()) >= 4]
+
+    def strip_overruled(self, name, flags):
+        terms = self.overruled(name)
+        if not terms: return flags
+        tag = lambda f: str((f.get("tag") if isinstance(f, dict) else (f[1] if len(f) > 1 else "")) or "")
+        return [f for f in flags if tag(f).endswith("(BetSweep)") or not any(t in tag(f).lower() for t in terms)]
+
     # ---------- player flags ----------
     def player(self, name, team=None, pos=None, opp=None):
         key = (name, team, pos, opp)
@@ -355,6 +368,7 @@ class Engine:
             elif _nt["status"] == "LIMITED": add("bad", "Limited role (BetSweep)", f"BetSweep note: expect a limited role{_d}.")
             elif _nt["status"] == "STARTING": add("good", "Starting (BetSweep)", f"BetSweep note: confirmed starter{_d}.")
             elif _nt["status"] == "ROLE_UP": add("good", "Role up (BetSweep)", f"BetSweep note: bigger role this week{_d}.")
+            elif _nt["status"] == "AVOID": add("bad", "Avoid (BetSweep)", f"BetSweep note: keep him off slips{_d}. Kept out of listed parlays and quick builds.")   # owner 11/15: one-tap veto
         _rl = self.REL.get(_nn(name))
         if _rl:
             _n, _h, _b, _d = _rl
@@ -704,6 +718,10 @@ class Engine:
                 elif k / len(v) <= 0.4: add("bad", f"FD {lab} {k}/{len(v)}", f"Cleared FanDuel's main {lab} line ({ln:g}) in only {k} of {len(v)} games this season.")
         order = {"bad": 0, "watch": 1, "good": 2, "info": 3}
         out.sort(key=lambda f: order[f["k"]])
+        _ov = self.overruled(name)
+        if _ov:
+            _n0 = len(out); out = self.strip_overruled(name, out)
+            out.append({"k": "info", "tag": "Flag overruled (BetSweep)", "txt": f"BetSweep note: {_n0 - len(out)} flag(s) marked wrong and taken off this week ({', '.join(_ov)}). Listed in the Tuesday flag check."})
         self._cache[key] = out
         return out
 
