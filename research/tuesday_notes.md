@@ -21,3 +21,8 @@
   lose the star, which may be the honest answer. (Separate from the 11/16 bug where every leg wore a wrong star - fixed.)
 - **Today promo cards say "PREGAME"** as fixed text when live scores cannot load; after kickoff with no data they still say it. Small.
 - **Finished cards in the builder's fold are still tall** (full projection block each). If people open the fold, shorten them.
+- **Scheduled jobs barely ran (see RUNBOOK, 11/16).** GitHub started 3 of about 22 inactive checks on Sunday 11/15. When grading
+  Week 10, check whether any posted leg was on a player ruled out Sunday morning whose status reached the sheet late: compare
+  'AUTO - Game Day Status' write times with the 11:30 AM / 2:30 PM CT inactive lists. If the owner has run sql/github_timers.sql,
+  confirm on Tuesday that the mirror, rebuild and price-moves runs now arrive on time (Actions > each workflow > run list).
+

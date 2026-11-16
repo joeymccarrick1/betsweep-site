@@ -943,3 +943,22 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   SHEETS_SA_JSON. Told the owner where to look. Never reference a multi-line JSON secret in that job: GitHub then hides every brace
   in the job's log.
 
+## GitHub's own schedule cannot be trusted here; the database timer can (measured 11/16) - sql/github_timers.sql, the owner runs it
+
+- **Measured on Monday 11/16:** scheduled runs GitHub actually started - reprice 3 of 17 due (01:48Z, 09:55Z, 22:14Z; every other
+  rebuild that day was a hand dispatch from a session), sheet-mirror 3 of 48, price-moves 3 of 48, risk-notes 3 of 48, and on
+  Sunday 11/15 the game-day inactives job 3 of about 22. Nothing was cancelled - the runs simply never started. Meanwhile the
+  database timer (pg_cron + pg_net, push/betsweep-live-fast.sql) started feeds.yml 20 times an hour for five hours on Sunday
+  night without a miss. So "hourly auto-reprice with no session" (owner 11/10) has in practice been "a few times a day".
+- **Fix:** `sql/github_timers.sql` puts every scheduled workflow on the database timer at the times its own file names: sheet
+  mirror :05/:35, price moves :12/:42, risk notes every 30 min, reprice (publish = changed) hourly on game days and every three
+  hours otherwise, game-day inactives on Sundays and Thursday / Monday evenings, Social grading 9:40 AM Central. No secret in the
+  file: it lifts the GitHub token from the existing betsweep-feeds timer jobs inside the database and refuses to run if there is
+  none. Safe to run twice. Its last statement lists job names and times only. Stop it:
+  `select cron.unschedule(jobname) from cron.job where jobname like 'betsweep-gh-%';`
+- Tested on the throwaway Postgres with a stand-in cron / net schema: refuses without a token or with the placeholder, makes 11
+  jobs, each job's command posts the right workflow and inputs with the token, second run leaves 11. NOT run on Supabase - the
+  owner's step. Until he does, a session must dispatch by hand: gameday.yml, then sheet-mirror.yml, then reprice.yml.
+- The rebuild refuses a mirror older than 180 minutes (reprice.py --max-age); with the mirror arriving three times a day that
+  limit alone would have skipped most scheduled rebuilds even when they did start.
+
