@@ -917,6 +917,7 @@ def _team_total(tm):
         if tot is None or sp is None: return None
         return tot / 2 + (sp / 2 if gi.get("home_team") == tm else -sp / 2)
     return None
+BP_RISK_OUT = []   # legs the game-card parlay passed over on the risk check (printed at the end of the build)
 def best_parlay(a, b, players, s, wts=None, lean=None):
     """Legs come from the four script strips (top plays under each ending); each leg's chance is averaged over the model's
     script odds so the slip does not depend on one ending. Pick the combination (2-4 legs, distinct players, 2+ scripts
@@ -969,6 +970,20 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
         # owner 10/22 (Hutchinson in the HOU best parlay after his target-competition flag): a ROLE-risk flag keeps the leg out entirely -
         # same list as home.py ROLE_RISK; trail script only on rushing / TD legs. Context flags (matchup, total, hit rate) still just cost 6%.
         if any(f["k"] == "bad" and (f["tag"].startswith(ROLE_RISK) or (f["tag"] == "Trail script" and l["market"] in ("Rushing Yards", "Rush + Rec Yards", "Anytime TD"))) for f in l.get("flags", [])): continue
+        # owner 11/15 ("Why in the world would we have Germie Bernard 4+ receptions as the models best bet for this game. He has 0."): the
+        # game-card parlay now has to pass the same risk check as the Parlay Builder's tag (sweep.risk_score: bad 3, watch 1, good -1, hard
+        # tags) - Some risk or High risk = out. Bernard carried "FD rec yds 1/4" (bad) and "Fill-in fading" (watch: his 6-11-3-5 catch run
+        # came while Skowronek was out, and Skowronek was back) = 4 = High risk on the builder while this card called him the best parlay;
+        # the ROLE_RISK gate above only reads `bad` flags. Weeks 8-9 best-parlay player legs: low risk 16 hit / 6 missed, Some or High 2 / 4.
+        try:
+            import sweep as _SWP
+            if _SWP.risk_score({"pl": l["player"], "fh": [[f["k"], f["tag"]] for f in l.get("flags", [])]}, None) >= 2: BP_RISK_OUT.append((l["player"], l["market"], l.get("line"))); continue
+            # and the builder's near-zero rule for floor legs: under half the line in a third or more of his games = not a "cash often" leg
+            _nzc = {"Receiving Yards": "Rec Yds", "Receptions": "Receptions", "Passing Yards": "Pass Yds", "Rush + Rec Yards": "Rush+Rec Yds"}.get(l["market"])
+            if _nzc and _o is not None and _o <= -180 and l.get("line"):
+                _gsz = [g.get(_nzc) or 0 for g in FE.games(l["player"])]
+                if len(_gsz) >= 4 and sum(1 for x in _gsz if x < 0.5 * l["line"]) * 3 >= len(_gsz): BP_RISK_OUT.append((l["player"], l["market"], l.get("line"))); continue
+        except Exception as _e: print("warn: best-parlay risk gate skipped:", _e)
         prob = sum(w[k] * ps[k] for k in range(4))
         rows[id(l)] = {"l": l, "ps": ps, "prob": prob, "padj": prob * (1 - 0.06 * nbad), "nbad": nbad, "pmin": min(ps), "scripts": set(), "floor": floor, "tb": trend_bad}
     # game lines (moneyline / spread / total) compete for the same slip: each already carries its chance under each ending, so it mixes with
@@ -1378,4 +1393,5 @@ page = (page.replace("</body>", SWEEPCARD_JS + "</body>", 1) if "</body>" in pag
 try: json.dump({"week": int(WEEK), "js": SWEEPCARD_JS, "btn": SWEEP_BTNS}, open(os.path.join(OUT, "sweepcards.json"), "w"))   # for build_today.py: the home cards show the same Sweep says line
 except Exception as _e: print("note: sweepcards.json not written:", _e)
 out = os.path.join(OUT, "matchup-boards.html"); open(out, "w").write(page)
+print(f"best-parlay risk gate: {len(BP_RISK_OUT)} legs passed over (Some/High risk or near-zero)")
 print(f"wrote {out}: {len(cards)} games, {len(page)//1024} KB, week {WEEK}")

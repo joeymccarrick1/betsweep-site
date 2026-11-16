@@ -670,3 +670,15 @@ Code only; ships with the next rebuild that passes the publish gates. Full numbe
 has losing by 10+ as `bad` "Losing side". Weeks 6-9 floor legs on that side hit 61% against a 71% price (439 legs); receptions held up and
 are left alone. "Losing side" and "Near-zero risk" joined `sweep.HARD_RISK` (and the builder's JS list), so no good flags can clear them.
 Numbers and the slip-shape replay: `research/slip_shapes.md`.
+
+## Game-card parlay obeys the risk check (owner 11/15: "Why in the world would we have Germie Bernard 4+ receptions as the models best bet")
+
+`build_boards.best_parlay` now drops any player leg whose flags score 2+ on `sweep.risk_score` (the Parlay Builder's Some/High risk tag) and
+any floor leg (-180 or shorter) that fails the builder's near-zero rule. Before this the card only blocked `bad` role flags, so a `watch`
+like "Fill-in fading" did nothing: Bernard (PIT, 0 catches on SNF) was High risk on the builder and the best parlay on the card.
+The build prints how many legs the gate passed over. Numbers behind it (Weeks 6-9):
+- game-card parlay player legs: 45 of 77 hit (58.4%) against 67.9% priced; 12 of the 32 misses finished under half the line, 6 at zero.
+- by our own tag (Weeks 8-9): low risk 16 hit / 6 missed; Some or High risk 2 / 4.
+- the model's chances at the top are not real: legs it had at 70-80% hit 65.2% (310 legs), 80-90% hit 56.4% (55). Legs passing the card's
+  "65%+ and at or above the price" test: model 72.6%, FanDuel 66.8%, hit 67.0% (400 legs); at -200 or shorter 65.7% against 72.3% priced.
+Open question for the owner: cap the model's chance at FanDuel's no-vig chance for "cash often" picks (the model may lower a leg, never raise it).
