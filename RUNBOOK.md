@@ -801,3 +801,11 @@ with a chip - "Locked at kickoff", then "Cashed" or "Missed: <leg>" once `bp_gra
 nflverse weekly file via home._glog, game lines from the final score) - and its add buttons are hidden. A game with nothing on file
 shows no parlay block at all (the old "FanDuel has too few legs priced" line is only for games still to be played).
 `BS_NOW_MS=<ms> python3 build_boards.py` builds as if it were that moment (tests only).
+
+## Player pages lead with the last games against the line (alpha plan step 6, 11/16)
+
+build_players.py `last10_block(p)`: under the header, one bar chart per main market for his position (QB pass / rush yds; RB rush yds,
+rec yds, catches; WR and TE rec yds, catches): a bar a game, oldest to newest, up to ten (earlier-team games included), this week's
+FanDuel rung priced closest to even drawn across as a dashed line, each bar marked over / under by colour and by a tick or dash, and
+"Cleared 81+ in 3 of 9" in words. No props on the board this week = the season average is drawn and nothing is called a hit. Plain
+HTML and CSS (site variables), no script. Still to do from step 6: the same picture inside a leg's details in the builder.

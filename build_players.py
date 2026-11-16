@@ -116,7 +116,19 @@ for k, p in S.players.items():
 by_team = {}
 for k, p in pages.items(): by_team.setdefault(p["team"], []).append(k)
 
-PCSS = r"""
+PCSS = r""".l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.l10c{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 8px;min-width:0}
+.l10c figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:6px} .l10c .mk{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.l10c .ct{font-size:15px;color:var(--ink);line-height:1.3} .l10c .ct b{font-family:var(--display);font-size:19px} .l10c .ct small{color:var(--mute);font-size:12px;margin-left:4px}
+.l10c .plot{position:relative;height:190px} .l10c ol{list-style:none;margin:0;padding:0;height:100%;display:flex;gap:4px;align-items:stretch}
+.l10c li{flex:1;min-width:0;display:grid;grid-template-rows:18px 1fr 16px 18px;justify-items:center;text-align:center}
+.l10c li .v{font-size:11px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:18px}
+.l10c li .b{align-self:end;width:100%;max-width:26px;border-radius:4px 4px 0 0;background:var(--mute)}
+.l10c li.ov .b{background:var(--good)} .l10c li.un .b{background:var(--bad);opacity:.75}
+.l10c li .k{font-size:11px;font-weight:800;line-height:16px;color:var(--mute)} .l10c li.ov .k{color:var(--good)} .l10c li.un .k{color:var(--bad)}
+.l10c li .o{font-size:10px;color:var(--mute);line-height:18px;letter-spacing:.02em}
+.l10c .ln{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);pointer-events:none} .l10c .ln i{position:absolute;right:0;top:-9px;font-style:normal;font-size:10.5px;font-weight:700;background:var(--ink);color:var(--bg);border-radius:4px;padding:1px 5px;line-height:1.4}
+
 .pp{max-width:1100px;margin:16px auto 40px}
 .pp a{color:var(--ink)}
 .pp .crumb{font-size:13.5px;color:var(--mute);margin:0 0 10px;line-height:28px}.pp .crumb a{color:var(--mute);padding:4px 0}
@@ -269,6 +281,39 @@ def _leg_row(p, l, m, lab, played, ko):
             f'<td class="e {ecls}" data-l="Edge">{("+" if (e or 0) >= 0 else "")}{(e or 0) * 100:.1f}</td>'
             f'<td class="hr" data-l="Season">{("<b>" + str(hr[0]) + "</b>/" + str(hr[1])) if hr else "—"}</td>'
             f'<td class="ad"><button type="button" class="add" data-k="{E(legkey(l))}" data-ko="{ko}" aria-label="Add {E(p["name"])} {E(m)} {E(lab)} to betslip">+</button></td></tr>')
+
+# ---------- alpha plan step 6 (owner 11/16): the page leads with a picture - his last games against this week's FanDuel line ----------
+# One small bar chart per main market for his position: a bar a game (oldest to newest, up to ten), the line drawn across, each bar
+# marked over or under it by colour AND by a tick or a dash under the bar, and the count in words. The line is the FanDuel rung priced
+# closest to even money this week; with no props on the board the season average is drawn instead and nothing is called a hit.
+L10_MARKETS = {"QB": ["Passing Yards", "Rushing Yards"], "RB": ["Rushing Yards", "Receiving Yards", "Receptions"], "WR": ["Receiving Yards", "Receptions"], "TE": ["Receiving Yards", "Receptions"]}
+L10_UNIT = {"Passing Yards": "passing yards", "Rushing Yards": "rushing yards", "Receiving Yards": "receiving yards", "Receptions": "catches"}
+def _imp(o):
+    try: o = float(o); return 100 / (o + 100) if o > 0 else -o / (-o + 100)
+    except Exception: return None
+def last10_block(p):
+    gs = sorted(p["games"] + p.get("prev_games", []), key=lambda g: g["w"])[-10:]
+    if len(gs) < 2: return ""
+    charts = []
+    for m in L10_MARKETS.get(p["pos"], []):
+        f = _stat(m); vals = [float(f(g) or 0) for g in gs]
+        if max(vals) <= 0: continue
+        rungs = [l for l in p["legs"] if l["m"] == m and l.get("ln") is not None and _imp(l.get("o")) is not None]
+        main = min(rungs, key=lambda l: abs(_imp(l["o"]) - 0.5)) if rungs else None
+        line = float(jsround(main["ln"])) if main else sum(vals) / len(vals)
+        top = max(max(vals), line) * 1.12 or 1
+        hits = sum(1 for v in vals if v >= line)
+        bars = "".join(
+            f'<li class="{("ov" if v >= line else "un") if main else "na"}" title="Week {g["w"]} vs {E(g["opp"])}: {v:.0f}"><span class="v">{v:.0f}</span><span class="b" style="height:{max(2, v / top * 100):.1f}%"></span>'
+            f'<span class="k">{("✓" if v >= line else "–") if main else ""}</span><span class="o">{E(g["opp"])}</span></li>' for g, v in zip(gs, vals))
+        if main: cap = f'Cleared <b>{line:.0f}+</b> in <b>{hits} of {len(vals)}</b> <small>FanDuel {am(main["o"])}</small>'; lab = f'{line:.0f}+'
+        else: cap = f'Averaging <b>{line:.1f}</b> <small>no FanDuel line on the board this week</small>'; lab = f'avg {line:.0f}'
+        charts.append(f'<figure class="l10c"><figcaption><span class="mk">{E(L10_UNIT[m].capitalize())}</span><span class="ct">{cap}</span></figcaption>'
+                      f'<div class="plot" role="img" aria-label="{E(p["name"])} {L10_UNIT[m]}, last {len(vals)} games: {", ".join(f"{v:.0f}" for v in vals)}. {("Line " + lab + ", cleared " + str(hits) + " of " + str(len(vals))) if main else ("Average " + f"{line:.1f}")}.">'
+                      f'<ol>{bars}</ol><span class="ln" style="bottom:calc(34px + (100% - 52px) * {line / top:.4f})"><i>{lab}</i></span></div></figure>')
+    if not charts: return ""
+    return (f'<section class="l10"><h2>Last {len(gs)} games <small>oldest to newest · the line is this week\'s FanDuel number</small></h2>'
+            f'<div class="l10w">{"".join(charts)}</div></section>')
 
 def props_block(p):
     """owner 10/30: like props grouped (Touchdowns: anytime / first / 2+ / 3+; Receiving; Rushing; Passing), each group collapsible.
@@ -435,7 +480,7 @@ def page(k, p):
     body = (head(f'{p["name"]} props, stats & matchup · Week {W} · BetSweep', desc) +
             f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › <a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a> › {E(p["name"])}</p>'
             f'<header><a class="tb" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
-            + props_block(p) + record_block(p) + flags_block(p) + usage_block(k, p) + log_block(p) + mates_block(k, p) + jsonld(p, opp) +
+            + last10_block(p) + props_block(p) + record_block(p) + flags_block(p) + usage_block(k, p) + log_block(p) + mates_block(k, p) + jsonld(p, opp) +
             '</div><div class="ppbar" id="ppbar"><b></b><a href="/build/">Open betslip</a></div><script src="/player/player.js" defer></script>')
     return body, desc
 
