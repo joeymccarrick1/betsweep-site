@@ -171,7 +171,8 @@ POST_JS = r"""<script>(function(){
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
     var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });
     msg(started.length ? 'Remove the legs from games that already kicked off first.' : '', !!started.length);
-    $('sdH').textContent = '…'; A.client.rpc('feed_handle', {u: A.user.id}).then(function(r){ $('sdH').textContent = r.data ? '@' + r.data : '(assigned when you post)'; }, function(){ $('sdH').textContent = '(assigned when you post)'; });
+    $('sdH').textContent = '…'; A.client.from('feed_profiles').select('handle').eq('user_id', A.user.id).then(function(q){ var h = q && q.data && q.data[0] && q.data[0].handle;   // 11/16: the name the account chose (sql/social_v4.sql), else the assigned one
+      if(h){ $('sdH').textContent = '@' + h; return; } return A.client.rpc('feed_handle', {u: A.user.id}).then(function(r){ $('sdH').textContent = r.data ? '@' + r.data : '(assigned when you post)'; }); }, function(){ $('sdH').textContent = '(assigned when you post)'; });
     $('sdGo').disabled = !!started.length; dlg.hidden = false; $('sdT').focus();
   });
   function alertish(t){ var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = '⚠ ' + t; } }
@@ -241,6 +242,15 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .post .rx{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 14px 2px} .post .rx button{display:inline-flex;align-items:center;gap:5px;min-height:36px;min-width:44px;justify-content:center;border:1px solid var(--line);border-radius:999px;background:none;color:var(--ink);font:inherit;font-size:14px;padding:4px 10px;cursor:pointer}
 .post .rx button i{font-style:normal} .post .rx button b{font-size:12.5px;font-variant-numeric:tabular-nums} .post .rx button.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)} .post .rx .tn{margin-left:auto;font-size:12.5px;color:var(--mute);font-weight:600}
 .post .pf button.tl.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.av.em{font-size:17px;letter-spacing:0} .av.big.em{font-size:27px}
+.soc .pedit{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:12px;margin-top:2px} .soc .pedit label[for]{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.soc .pedit input#peh{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.soc .pedit .hint{margin:5px 0 10px;font-size:12.5px;color:var(--mute)} .soc .pedit fieldset{border:0;padding:0;margin:0 0 10px} .soc .pedit legend{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);padding:0;margin-bottom:6px}
+.soc .pedit .sw,.soc .pedit .em{display:flex;flex-wrap:wrap;gap:8px} .soc .pedit .sw label,.soc .pedit .em label{position:relative;cursor:pointer} .soc .pedit input[type=radio]{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.soc .pedit .sw i{display:block;width:40px;height:40px;border-radius:50%;border:3px solid transparent} .soc .pedit .sw input:checked + i{border-color:var(--ink)} .soc .pedit .sw input:focus-visible + i,.soc .pedit .em input:focus-visible + i{outline:2px solid var(--red);outline-offset:2px}
+.soc .pedit .em i{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);font-style:normal;font-size:22px;color:var(--ink)} .soc .pedit .em input:checked + i{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.soc .pedit .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)} .soc .pedit .msg{min-height:18px;margin:4px 0 8px;font-size:13.5px;color:var(--mute)} .soc .pedit .msg.err{color:var(--bad);font-weight:700}
+.soc .pedit .pbtn{display:flex;gap:8px} .soc .pedit .pbtn button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .soc .pedit .pbtn .sv{background:var(--red);border-color:var(--red);color:#fff}
 .soc a.back{display:inline-block;margin:0 0 10px;color:var(--ink);font-weight:700;font-size:14px;text-decoration:none;padding:8px 0}
 .soc .prof{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
 .soc .prof .av.big{width:52px;height:52px;font-size:19px} .soc .prof h2{margin:0;font-family:var(--display);font-size:22px;color:var(--ink);overflow-wrap:anywhere} .soc .prof .pn p{margin:2px 0 0;color:var(--mute);font-size:13px}
@@ -292,6 +302,11 @@ PAGE_JS = r"""<script>(function(){
   var RXK = [['fire', '🔥', 'Fire'], ['lock', '🔒', 'Lock'], ['fade', '👎', 'Fade'], ['rip', '🪦', 'RIP']];
   function hcol(p){ var q = PROF[p.user_id]; if(q) return q.color; var h = 0, t = String(p.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
   function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
+  // alpha 11/16 (owner: "make it so users can create their own username and avatar"): sql/social_v4.sql. V4 turns false if it has not been run.
+  var V4 = true, EDIT = false, EMOJI = ['🏈','🔥','🔒','💰','🎯','🚀','🐐','👑','💎','🍀','⚡','🧠','🎲','🦅','🐻','🦁','🐯','🐬','🐴','🏴‍☠️','🤠','😎','🥶','🤑'];
+  function av(p, big){ var q = PROF[p.user_id] || {}; return '<i class="av' + (big ? ' big' : '') + ' c' + hcol(p) + (q.emoji ? ' em' : '') + '" aria-hidden="true">' + (q.emoji ? esc(q.emoji) : esc(inits(p.handle))) + '</i>'; }
+  function profs(ids){ return A.client.from('feed_profiles').select(V4 ? 'user_id,handle,color,emoji' : 'user_id,handle,color').in('user_id', ids).then(function(r){
+      if(r.error && V4){ V4 = false; return profs(ids); } (r.data || []).forEach(function(x){ PROF[x.user_id] = x; }); }); }
   function recTxt(uid){ var r = REC[uid]; if(!r || !r.graded) return ''; var u = +r.units || 0; return r.won + '-' + r.lost + ' · ' + (u >= 0 ? '+' : '') + u.toFixed(1) + 'u'; }
   try { sort = localStorage.getItem('bs_social_sort') || 'top'; } catch(e){}
   function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = 'Could not reach the feed - check your connection and reload.'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }
@@ -358,7 +373,7 @@ PAGE_JS = r"""<script>(function(){
     var badge = x.st === 'cashed' ? '<span class="res won">Cashed' + (p.units != null ? ' · +' + (+p.units).toFixed(1) + 'u' : '') + '</span>' : x.st === 'busted' ? '<span class="res lost">Busted' + (x.graded ? '' : ' · ' + x.hits + ' of ' + x.n + ' hit') + '</span>' : x.st === 'done' ? '<span class="res">Final · ' + x.hits + ' of ' + x.n + ' graded hits</span>' : '';
     return '<article class="post' + (p.user_id === me ? ' mine' : '') + (over ? ' over ' + x.st : '') + '" id="p' + p.id + '" data-id="' + p.id + '">' +
       '<div class="ph">' + (old ? '' : '<button type="button" class="vote' + (MYV[p.id] ? ' on' : '') + '" data-v="' + p.id + '" aria-pressed="' + !!MYV[p.id] + '" aria-label="Upvote"><i>▲</i><b>' + p.score + '</b></button>') +
-      '<i class="av c' + hcol(p) + '" aria-hidden="true">' + esc(inits(p.handle)) + '</i>' +
+      av(p) +
       '<div class="who"><b' + (V3 ? ' class="h" data-u="' + esc(p.user_id) + '" role="link" tabindex="0"' : '') + '>@' + esc(p.handle) + '</b>' + (recTxt(p.user_id) ? '<span class="rec">' + esc(recTxt(p.user_id)) + '</span>' : '') + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
       '<div class="od">' + esc(am(p.fd_odds)) + '</div></div>' +
       '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
@@ -420,21 +435,38 @@ PAGE_JS = r"""<script>(function(){
     if(!d){ list.innerHTML = '<p class="lede"><span class="skel"></span><span class="skel"></span></p>';
       Promise.all([A.client.from('feed_posts').select(COLS3).eq('status', 'open').eq('user_id', u).order('created_at', {ascending: false}).limit(40),
                    A.client.from('feed_records').select('user_id,handle,graded,won,lost,units,posts').eq('user_id', u),
-                   A.client.from('feed_profiles').select('user_id,handle,color').eq('user_id', u),
+                   A.client.from('feed_profiles').select(V4 ? 'user_id,handle,color,emoji' : 'user_id,handle,color').eq('user_id', u),
                    A.client.from('feed_follows').select('follower').eq('followee', u)])
         .then(function(r){ UPOSTS = {u: u, posts: ((r[0] || {}).data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; }), rec: (((r[1] || {}).data || [])[0]) || null, prof: (((r[2] || {}).data || [])[0]) || null, fans: (((r[3] || {}).data || []).length)};
-          if(UPOSTS.prof) PROF[u] = UPOSTS.prof; if(UPOSTS.rec) REC[u] = UPOSTS.rec; if(VIEW === u) render(); })
+          if(UPOSTS.prof) PROF[u] = UPOSTS.prof; else if(PROF[u]) UPOSTS.prof = PROF[u]; if(UPOSTS.rec) REC[u] = UPOSTS.rec; if(VIEW === u) render(); })
         .catch(function(){ UPOSTS = {u: u, posts: [], rec: null, prof: null, fans: 0}; if(VIEW === u) render(); });
       return; }
     var h = (d.prof && d.prof.handle) || (d.rec && d.rec.handle) || (d.posts[0] && d.posts[0].handle) || 'user', r = d.rec || {graded: 0, won: 0, lost: 0, units: 0, posts: d.posts.length}, un = +r.units || 0;
     list.innerHTML = '<a class="back" href="#" data-go="back">← Back to the feed</a>' +
-      '<section class="prof"><i class="av big c' + hcol({user_id: u, handle: h}) + '" aria-hidden="true">' + esc(inits(h)) + '</i><div class="pn"><h2>@' + esc(h) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + ' · ' + (r.posts || d.posts.length) + ' slip' + ((r.posts || d.posts.length) === 1 ? '' : 's') + ' posted</p></div>' +
-      (u !== me ? '<button type="button" class="fol' + (FOL[u] ? ' on' : '') + '" data-fol="' + esc(u) + '" aria-pressed="' + !!FOL[u] + '">' + (FOL[u] ? 'Following ✓' : 'Follow') + '</button>' : '') +
+      '<section class="prof">' + av({user_id: u, handle: h}, true) + '<div class="pn"><h2>@' + esc(h) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + ' · ' + (r.posts || d.posts.length) + ' slip' + ((r.posts || d.posts.length) === 1 ? '' : 's') + ' posted</p></div>' +
+      (u !== me ? '<button type="button" class="fol' + (FOL[u] ? ' on' : '') + '" data-fol="' + esc(u) + '" aria-pressed="' + !!FOL[u] + '">' + (FOL[u] ? 'Following ✓' : 'Follow') + '</button>' : (V4 && !EDIT ? '<button type="button" class="fol on" data-edit="1">Edit profile</button>' : '')) +
+      (u === me && EDIT ? editForm(h) : '') +
       '<dl class="pstats"><div><dt>Record</dt><dd>' + (r.graded ? r.won + '-' + r.lost : '—') + '</dd></div><div><dt>Units</dt><dd class="' + (r.graded ? (un >= 0 ? 'up' : 'dn') : '') + '">' + (r.graded ? (un >= 0 ? '+' : '') + un.toFixed(1) : '—') + '</dd></div><div><dt>Graded</dt><dd>' + (r.graded || 0) + '</dd></div></dl>' +
       (r.graded ? '' : '<p class="pnote">No graded slips yet. A slip is graded after its last game ends; the record counts one unit a slip.</p>') + '</section>' +
       (d.posts.length ? '<h2 class="sec">Slips</h2>' + d.posts.map(function(p){ return card(p, me, null, p.week !== W); }).join('') : '<div class="empty"><b>No slips posted yet.</b></div>');
   }
-  function openUser(u){ VIEW = u; UPOSTS = null; try { history.pushState({u: u}, '', '#u=' + u); } catch(e){} render(); window.scrollTo(0, 0); }
+  function editForm(h){ var q = PROF[A.user.id] || {}, c = q.color == null ? hcol({user_id: A.user.id, handle: h}) : q.color;
+    return '<form class="pedit" id="pedit" autocomplete="off"><label for="peh">Username</label><input id="peh" name="h" value="' + esc(h) + '" maxlength="20" inputmode="text" autocapitalize="off" spellcheck="false">' +
+      '<p class="hint">3 to 20 letters, numbers or underscores. You can change it once every 30 days.</p>' +
+      '<fieldset><legend>Colour</legend><div class="sw">' + [0,1,2,3,4,5,6,7].map(function(i){ return '<label><input type="radio" name="c" value="' + i + '"' + (i === c ? ' checked' : '') + '><i class="av c' + i + '" aria-hidden="true"></i><span class="sr">Colour ' + (i + 1) + '</span></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Avatar</legend><div class="em"><label><input type="radio" name="e" value=""' + (!q.emoji ? ' checked' : '') + '><i>Aa</i><span class="sr">My initials</span></label>' + EMOJI.map(function(x){ return '<label><input type="radio" name="e" value="' + x + '"' + (q.emoji === x ? ' checked' : '') + '><i>' + x + '</i></label>'; }).join('') + '</div></fieldset>' +
+      '<p class="msg" id="pemsg" role="status"></p><div class="pbtn"><button type="submit" class="sv">Save profile</button><button type="button" data-edit="0">Cancel</button></div></form>'; }
+  list.addEventListener('submit', function(e){ if(e.target.id !== 'pedit') return; e.preventDefault();
+    var f = e.target, msg = document.getElementById('pemsg'), h = f.h.value.trim(), c = +(f.querySelector('input[name=c]:checked') || {}).value || 0, em = (f.querySelector('input[name=e]:checked') || {}).value || null, sv = f.querySelector('.sv');
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(h)){ msg.textContent = 'Usernames are 3 to 20 letters, numbers or underscores.'; msg.className = 'msg err'; return; }
+    sv.disabled = true; msg.textContent = 'Saving…'; msg.className = 'msg';
+    A.client.rpc('feed_profile_set', {p_handle: h, p_color: c, p_emoji: em}).then(function(r){ sv.disabled = false;
+      if(r.error){ msg.textContent = (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
+      var me = A.user.id; PROF[me] = r.data && r.data.user_id ? r.data : Object.assign(PROF[me] || {}, {handle: h, color: c, emoji: em});
+      POSTS.concat((UPOSTS || {}).posts || []).forEach(function(p){ if(p.user_id === me) p.handle = PROF[me].handle; });
+      if(UPOSTS && UPOSTS.u === me){ UPOSTS.prof = PROF[me]; if(UPOSTS.rec) UPOSTS.rec.handle = PROF[me].handle; }
+      EDIT = false; render(); }); });
+  function openUser(u){ EDIT = false; VIEW = u; UPOSTS = null; try { history.pushState({u: u}, '', '#u=' + u); } catch(e){} render(); window.scrollTo(0, 0); }
   function closeUser(){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} render(); }
   window.addEventListener('popstate', function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); VIEW = m ? m[1] : null; if(A) render(); });
   var LAST = null, LAST_BUSY = false;
@@ -453,14 +485,15 @@ PAGE_JS = r"""<script>(function(){
     var ids = {}; POSTS.forEach(function(p){ ids[p.user_id] = 1; }); ids = Object.keys(ids); var me = A.user ? A.user.id : null, jobs = [];
     if(!V3 || !ids.length){ done(); return; }
     jobs.push(A.client.from('feed_records').select('user_id,graded,won,lost,units').in('user_id', ids).then(function(r){ REC = {}; (r.data || []).forEach(function(x){ REC[x.user_id] = x; }); }));
-    jobs.push(A.client.from('feed_profiles').select('user_id,color').in('user_id', ids).then(function(r){ (r.data || []).forEach(function(x){ PROF[x.user_id] = x; }); }));
+    jobs.push(profs(me && ids.indexOf(me) < 0 ? ids.concat([me]) : ids));
     if(me){ var pids = POSTS.map(function(p){ return p.id; });
       jobs.push(A.client.from('feed_tails').select('post_id').eq('user_id', me).in('post_id', pids).then(function(r){ MYT = {}; (r.data || []).forEach(function(x){ MYT[x.post_id] = 1; }); }));
       jobs.push(A.client.from('feed_reactions').select('post_id,kind').eq('user_id', me).in('post_id', pids).then(function(r){ MYRX = {}; (r.data || []).forEach(function(x){ MYRX[x.post_id] = x.kind; }); }));
       jobs.push(A.client.from('feed_follows').select('followee').eq('follower', me).then(function(r){ FOL = {}; (r.data || []).forEach(function(x){ FOL[x.followee] = 1; }); }));
-      if(!PROF[me] && A.client.rpc) jobs.push(A.client.rpc('feed_profile_me').then(function(r){ if(r && r.data && r.data.user_id) PROF[r.data.user_id] = r.data; })); }
-    Promise.all(jobs.map(function(j){ return Promise.resolve(j).catch(function(){}); })).then(done, done);
+      if(A.client.rpc) jobs.push(A.client.rpc('feed_profile_me').then(function(r){ if(r && r.data && r.data.user_id) PROF[r.data.user_id] = Object.assign(PROF[r.data.user_id] || {}, r.data); })); }
+    Promise.all(jobs.map(function(j){ return Promise.resolve(j).catch(function(){}); })).then(function(){ meBtn(); done(); }, done);
   }
+  function meBtn(){ var b = document.getElementById('mebtn'); if(b) b.hidden = !(V3 && A && A.user); }
   function load(){
     A.client.from('feed_posts').select(V3 ? COLS3 : COLS).eq('status', 'open').eq('week', W)
       .order('score', {ascending: false}).order('created_at', {ascending: false}).limit(200).then(function(r){
@@ -477,6 +510,7 @@ PAGE_JS = r"""<script>(function(){
   list.addEventListener('click', function(e){
     var go = e.target.closest('[data-go]'); if(go){ e.preventDefault(); if(go.dataset.go === 'back') closeUser(); else { var tb = document.querySelector('.soc .seg button[data-s="' + go.dataset.go + '"]'); if(tb) tb.click(); } return; }
     var hu = e.target.closest('b.h[data-u]'); if(hu){ openUser(hu.dataset.u); return; }
+    var ed = e.target.closest('[data-edit]'); if(ed){ EDIT = ed.dataset.edit === '1'; render(); if(EDIT){ var i0 = document.getElementById('peh'); if(i0) i0.focus(); } return; }
     var tl = e.target.closest('[data-tail]'), rx = e.target.closest('[data-rx]'), fo = e.target.closest('[data-fol]');
     if(tl || rx || fo){ if(!A.user){ needSignIn(); return; } }
     if(tl){ var tid = +tl.dataset.tail, tp = POSTS.concat((UPOSTS || {}).posts || []).filter(function(x){ return x.id === tid; }); if(!tp.length) return; tl.disabled = true;
@@ -508,6 +542,7 @@ PAGE_JS = r"""<script>(function(){
   document.querySelectorAll('.soc .seg button').forEach(function(b){ b.classList.toggle('on', b.dataset.s === sort); b.addEventListener('click', function(){ sort = b.dataset.s; try { localStorage.setItem('bs_social_sort', sort); } catch(e){}
     document.querySelectorAll('.soc .seg button').forEach(function(x){ x.classList.toggle('on', x === b); }); if(VIEW){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} } render(); }); });
   (function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); if(m) VIEW = m[1]; })();
+  (function(){ var b = document.getElementById('mebtn'); if(b) b.addEventListener('click', function(){ if(A && A.user) openUser(A.user.id); else needSignIn(); }); })();
   // ---- live grading (same rules as the home page's promoted bets): a slip leaves the feed when a leg loses or every game is over ----
   var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
   function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
@@ -668,7 +703,7 @@ __BASE__
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="mebtn" hidden>My profile</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>

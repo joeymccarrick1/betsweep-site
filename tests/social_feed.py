@@ -25,7 +25,9 @@ function Q(rows, t){ var f = {}, q = {select: function(){ return q; }, eq: funct
   delete: function(){ window.__CALLS.push(t + ':delete'); return q; },
   then: function(cb){ var r = rows.filter(function(p){ return (f.week == null || p.week === f.week) && (f.user_id == null || p.user_id === f.user_id || t !== 'feed_posts' && t !== 'feed_records' && t !== 'feed_profiles'); }); return Promise.resolve({data: r, error: null}).then(cb); }}; return q; }
 var SIGNED = false; try { SIGNED = !!localStorage.getItem("t_user"); } catch(e){}
-window.bsAccount = {user: SIGNED ? {id: ME} : null, client: {rpc: function(n){ window.__CALLS.push('rpc:' + n); return Promise.resolve({data: {user_id: ME, handle: "MeUser", color: 4}, error: null}); },
+window.bsAccount = {user: SIGNED ? {id: ME} : null, client: {rpc: function(n, a){ window.__CALLS.push('rpc:' + n + (a ? ':' + JSON.stringify(a) : ''));
+    if(n === 'feed_profile_set'){ if(/taken/i.test(a.p_handle)) return Promise.resolve({data: null, error: {message: 'That username is taken'}}); return Promise.resolve({data: {user_id: ME, handle: a.p_handle, color: a.p_color, emoji: a.p_emoji}, error: null}); }
+    return Promise.resolve({data: {user_id: ME, handle: "MeUser", color: 4, emoji: null}, error: null}); },
   from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS.concat(window.__LASTW), t) : Q(T[t] || [], t); }}};""" % (json.dumps(POSTS), json.dumps(LASTW))
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
@@ -85,6 +87,20 @@ async def main():
             check(await ids() == ["p1"] and "1 person you follow" in await pg.inner_text("#feedinfo"), f"[{theme}] the Following tab lists the followed poster's open slip")
             m2 = await pg.evaluate("({over: document.documentElement.scrollWidth - document.documentElement.clientWidth})")
             check(m2["over"] == 0, f"[{theme}] no sideways scroll with six tabs")
+            # ---- own username and avatar (v4) ----
+            await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(300)
+            check(await pg.is_visible('#mebtn'), f"[{theme}] a signed-in account gets a My profile button")
+            await pg.click('#mebtn'); await pg.wait_for_timeout(700); await pg.click('[data-edit="1"]'); await pg.wait_for_timeout(300)
+            await pg.fill('#peh', 'bad name'); await pg.click('.pedit .sv'); await pg.wait_for_timeout(200)
+            e1 = await pg.inner_text('#pemsg')
+            await pg.fill('#peh', 'TakenName'); await pg.click('.pedit .sv'); await pg.wait_for_timeout(300); e2 = await pg.inner_text('#pemsg')
+            check("3 to 20" in e1 and e2 == "That username is taken", f"[{theme}] a bad username is refused on the page and the database's reason is shown ({e1[:30]} / {e2})")
+            await pg.fill('#peh', 'JoeyMac'); await pg.evaluate("document.querySelector('.pedit input[name=c][value=\"5\"]').click(); document.querySelector('.pedit input[name=e][value=\"🏈\"]').click()")
+            if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-edit-{theme}.png")
+            await pg.click('.pedit .sv'); await pg.wait_for_timeout(500)
+            pr2 = await pg.evaluate("(function(){ var s = document.querySelector('.prof'); return [s.querySelector('h2').textContent, s.querySelector('.av').textContent, s.querySelector('.av').className, !!document.getElementById('pedit'), window.__CALLS.filter(function(x){ return /feed_profile_set.*JoeyMac.*\"p_color\":5/.test(x); }).length]; })()")
+            check(pr2 == ["@JoeyMac", "🏈", "av big c5 em", False, 1], f"[{theme}] saving sets the username, colour and avatar ({pr2})")
+            m3 = await pg.evaluate("({over: document.documentElement.scrollWidth - document.documentElement.clientWidth})"); check(m3["over"] == 0, f"[{theme}] the edit form does not scroll sideways")
             hs = await pg.evaluate("Array.from(document.querySelectorAll('.hcard .hst')).map(x => x.className + '|' + x.textContent)")
             print(f"   [{theme}] house cards: {hs}")
             check(not errs, f"[{theme}] no script errors {errs[:2]}")

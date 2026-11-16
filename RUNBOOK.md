@@ -830,3 +830,11 @@ profile row through `feed_profile_me()`. If the database lacks the v3 columns th
 NOT built yet: the grading job that calls `feed_grade` (needs the owner's secret as a repo secret) - until it runs every record
 reads as ungraded; "this week's sharps" strip; alerts. Tested with a faked client only (tests/social_feed.py, 34 checks) - this
 workspace cannot reach Supabase, so the first real check is the owner tapping a reaction while signed in.
+
+## Own username and avatar (owner 11/16; sql/social_v4.sql - the owner runs it, no secret in it)
+
+`feed_profile_set(handle, color, emoji)`: username 3-20 letters / digits / underscores, clean, not reserved (betsweep, admin, support,
+official, moderator, staff, fanduel, draftkings), unique ignoring case, one change every 30 days; avatar = one of eight colours plus
+either initials or one of 24 fixed emoji (no uploads - nothing to moderate). Old posts take the new name; new posts carry the profile's
+name. Direct edits of feed_profiles are closed. Page: a **My profile** button on Social, **Edit profile** on your own profile.
+Until v4 is run the page hides the editor (`V4 = false`). Tested on the throwaway Postgres and with the faked client (42 checks).
