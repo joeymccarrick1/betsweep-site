@@ -622,3 +622,23 @@ receptions / receiving yards / longest reception when the model's likeliest endi
 Checked on the game log through Week 9: Metchie, Fant and Ridley come out Fringe role, Schultz One big game. Low-risk legs on the
 remaining Week 10 board went 118 -> 84. Chat-only rules (not in code): one slip per player per day, flat stakes, three legs when the
 goal is cashing more often.
+
+## Risk check, round two (owner 11/15: "Let's do all of it. Prepare 3 and 4 for the next rebuild.")
+
+Five changes after the Week 10 Sunday losses. Code only; it ships with the next rebuild that passes the publish gates.
+
+1. **Hard tags.** `sweep.HARD_RISK` = Losing zone, Fringe role, Blowout script, Target squeeze. A leg carrying any of them scores at least 2
+   ("Some risk") whatever good flags it has, in `sweep.risk_score` and the builder's JS `riskScore` (keep the two lists in step). Reason:
+   Dalton Schultz 20+ yards sat in a losing price zone and still read low-risk because three good flags cancelled it.
+2. **Price gap.** `build_builder.py` adds a `watch` flag to floor legs (-180 or shorter, overs) where the model's own chance is 8+ points
+   above FanDuel's no-vig chance. On those legs a big gap is a warning, not an edge. The build prints the count.
+3. **Target squeeze.** `flags.py`, returning-teammate block: when the returner averaged 6+ targets in his last three games before going out,
+   the receivers already playing get a `bad` flag with a number (last-four targets x 0.76). Backtest, Weeks 4-9 of 2026: 76% of baseline
+   with a 6+-target returner (21 player-games), 96% with a 3-6 target returner (56), 94% with none (400). Small sample: re-run it after
+   Week 13 before trusting 0.76. A full "share the team's targets" budget was also tested and did NOT beat a plain last-four average
+   (miss 2.2397 vs 2.2387 at best, 648 player-games), so it was not built.
+4. **Repeated players.** My BetSweep (`account.py`) shows a notice above the slip list when one player is on two or more open slips of the
+   current week: the slips he is on and the stake riding on him.
+5. **Why it lost.** Not code: the Tuesday slip-log grade adds a tag per losing slip (thin role / wrong script / bad luck).
+
+`ROLE_RISK` in `home.py` and `build_boards.py` now includes Fringe role and Target squeeze.

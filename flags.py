@@ -466,6 +466,12 @@ class Engine:
                 if tg and games_missed(tg[-1]["w"], team) >= 1 and (self.avg(tg[-3:], VOL_STAT[pos][0]) or 0) >= 4:   # his role going INTO the absence (last 3 logged), not a season average a demoted player can carry
                     if tn in self.QUEST:
                         add("info", f"{tn.split()[-1]} may return", f"Teammate may return: {tn} missed last week and is Questionable ({str(self.QUEST[tn].get('why', ''))[:60]}); if he plays, the targets/carries that flowed to others shrink.")
+                    elif pos in ("WR", "TE") and (self.avg(tg[-3:], "Targets") or 0) >= 6 and (self.avg(gs[-4:], "Targets") or 0) >= 3:
+                        # owner 11/15 ("understand ... when there's more crowded rooms and pass catchers"): the crowded room as a number.
+                        # Weeks 4-9 of 2026: the week a 6+-target teammate came back, the receivers already playing got 76% of their
+                        # last-four targets (21 player-games; 96% when the returner was a 3-6 target player, 94% with no one back).
+                        _mine = self.avg(gs[-4:], "Targets"); _rv = self.avg(tg[-3:], "Targets")
+                        add("bad", "Target squeeze", f"{tn} is back ({_rv:.1f} targets a game before he went out). This season pass catchers kept about three-quarters of their usual targets the week a teammate that busy returned (21 player-games), so his {_mine:.1f} a game looks more like {_mine * 0.76:.1f}.")
                     else:
                         add("watch", f"{tn.split()[-1]} returns", f"Teammate returning: {tn} missed last week and is back - the targets/carries that flowed to others ({self.avg(tg[-3:], VOL_STAT[pos][0]):.1f} {VOL_STAT[pos][1]}/g before he went out) shrink.")
         # --- target competition (owner, 10/21: Xavier Hutchinson rode Value/Moonshot builds while his targets slid and Tank Dell was about to return) ---

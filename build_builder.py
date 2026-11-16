@@ -614,6 +614,16 @@ _safe_best = {}
 # owner 11/15 (Kyren Williams 10+ receiving yards lost in a 34-6 Rams win the model had called "LA by 10+"): a running back catches
 # fewer passes when his team is far ahead (it runs, and starters sit), so his receiving legs are a risk in a game the model's likeliest
 # ending is his team by 10+. Rushing legs keep the player-level "Lead script" plus; for TDs the either-or pair with his backup covers it.
+# owner 11/15: on a short-priced floor leg, the model sitting far above FanDuel is a warning, not an edge - where the two have disagreed
+# FanDuel has been closer (calib.py), and the Week 10 misses were legs like this.
+_npg = 0
+for l in LEGS:
+    if l.get("gl") or l.get("o") is None or l["o"] > -180 or str(l.get("m", "")).startswith("Under"): continue
+    _rp = l.get("raw_p") if l.get("raw_p") is not None else l.get("p")
+    _imp = l.get("bk") or (-l["o"] / (-l["o"] + 100.0))  # FanDuel's chance with the vig taken out when we have it
+    if _rp is not None and _rp - _imp >= 0.08:
+        l.setdefault("fh", []).append(["watch", "Price gap", f"Model {_rp * 100:.0f}% vs FanDuel {_imp * 100:.0f}% on a floor leg: when they disagree this much FanDuel has usually been closer, so check what the price knows."]); _npg += 1
+print(f"price gap: {_npg} floor legs flagged")
 _MOST = {g["gid"]: g.get("most") for g in GAMES}
 _nbl = 0
 for l in LEGS:
@@ -1646,6 +1656,8 @@ BUILDER_JS = r"""
   // owner 11/1: per-leg risk score - model flags (bad 3, watch 1, good -1) plus the live risk list (ruled out 10, injury / weather / note 3).
   // 0-1 low (no tag), 2-3 medium, 4+ high. Shown on each betslip leg; the slip notes count the high ones.
   function riskScore(l){ var s = 0; (l.fl || []).forEach(function(f){ s += f[0] === 'bad' ? 3 : f[0] === 'watch' ? 1 : f[0] === 'good' ? -1 : 0; });
+    // owner 11/15: these four never wash out against good flags (keep in step with sweep.HARD_RISK)
+    if((l.fl || []).some(function(f){ return f[1] === 'Losing zone' || f[1] === 'Fringe role' || f[1] === 'Blowout script' || f[1] === 'Target squeeze'; })) s = Math.max(s, 2);
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v) s += v.level === 'block' ? 10 : v.level === 'warn' ? 3 : -1; return Math.max(0, s); }
   function riskTag(l){ if(isGL(l)) return ''; var s = riskScore(l); if(s < 2) return ''; var hi = s >= 4;
     return ' <span class="rsk' + (hi ? ' hi' : '') + '" title="Risk score ' + s + ': model flags plus live injury / weather / BetSweep notes">' + (hi ? 'High risk' : 'Some risk') + '</span>'; }

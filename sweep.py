@@ -126,7 +126,13 @@ def risk_score(leg, bd):
             k = f[0] if isinstance(f, (list, tuple)) and f else (f.get("k") if isinstance(f, dict) else f)
             if k in W: yield k
     s = sum(W[k] for k in kinds(leg.get("fh"))) + sum(W[k] for k in kinds(((bd or {}).get("pf") or {}).get(leg.get("pl"))))
+    # owner 11/15: these never wash out against good flags - a leg carrying one is at least "Some risk" and stays off slips and promos
+    # (Dalton Schultz 20+ yards rode four Week 10 slips from a losing price zone because three good flags cancelled the bad one)
+    tags = {f[1] for f in list(leg.get("fh") or []) + list(((bd or {}).get("pf") or {}).get(leg.get("pl")) or []) if isinstance(f, (list, tuple)) and len(f) > 1}
+    if tags & HARD_RISK: s = max(s, 2)
     return max(0, s)
+
+HARD_RISK = {"Losing zone", "Fringe role", "Blowout script", "Target squeeze"}
 
 def risk_tag(score):
     return "High risk" if score >= 4 else "Some risk" if score >= 2 else ""
