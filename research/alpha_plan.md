@@ -34,6 +34,22 @@ Read this file first when the work is picked up again.
   1,900px), chip row leads with games still to come, played chips dimmed by the clock. tests/builder_fold.py (24 checks).
 - 11/16 step 2 grading job BUILT: social_grade.py + the `social-grade` workflow (RUNBOOK). It runs dry until the owner adds the repo
   secret FEED_GRADE_SECRET. Left from step 2: the "this week's sharps" strip (needs graded records to exist first).
+- 11/16 4:06 PM CT: a game's Social link lists every slip on that game (settled too); the Today strip reads kickoff times as text.
+
+## Pick up here (written 11/16 4:10 PM CT)
+What the real database showed (workflow `social-grade`, mode probe): both Social scripts are in, 24 posts over three weeks, ONE profile,
+1 reaction, 0 tails, 0 follows. So Social has almost no audience yet - more Social features help nobody today. The pages everyone
+opens are where the alpha gap is. Order for the next stretch:
+1. **Boards (steps 9 + 11).** Same treatment the builder got: played games fold under "N games already played"; `content-visibility`
+   on game cards so a phone only lays out what is near the screen; check the first screen (slate, then the next game to kick off).
+2. **Today (step 9).** The paragraph under the promos ("The other slips we post on X and Instagram ...", seven lines of small text)
+   becomes one line with the rest behind an info button; the same pass on the other intro paragraphs.
+3. **Me hub (step 7).** Open slips, record in units, profit calendar; profile icon in the header. account.py already grades saved
+   slips from /data/box-w<W>.json - build on that.
+4. **Sharps strip** only once graded records with wins exist (needs FEED_GRADE_SECRET - the owner's step - and a winner).
+Waiting on the owner: add the repo secret FEED_GRADE_SECRET (or say "start records at Week 11" first - then add a --from-week
+option to social_grade.py before he does; today's dry run would record 24 losses, 0 wins).
+
 ## Next, in this order
 1. ~~Social - never empty, finished~~ (done 11/16, see above). Was: **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
    data/box-w<W>.json); stop hiding finished slips, sort them under Cashed / Busted; live grading on the pinned house slips so they can
