@@ -162,3 +162,13 @@ Skipped: every BAL-LAC prop (38.5-total flag, Brissett), Kittle (already in LIVE
 - **Daily Sweep: Four Corners - do not post.** "Daily Sweep: Sure Hands" is already Sunday's LIVE Sweep.
 - **LIVE alert:** Drake Maye ruled out for the rest of DET-NE (ankle) - the Maye 225+ leg in "One From Every Game" is in trouble.
 - SNF inactives not out yet (~5:50 PM CT).
+
+
+## check_mnf (Mon 11/16 ~7:50 AM CT; builder Sun 11/15 1:17 PM, ESPN mirror 07:03Z, price-moves 07:56Z: no moves)
+### MNF (LAC @ BAL, 7:15 PM CT) - still NOT drafted: no +500, no Piss Missile Monday, no Monday Sweep
+- Nothing posted for Monday (b/promos.json), no draft to check.
+- 297 BAL-LAC legs. Every player prop carries the 'O/U 38.5' bad flag: risk 2+ (Some/High, rule 1), or a bad `w` (leg filter). Only game lines are clean, and every one is negative edge (Ravens ML 64% model vs 70% FD; Under 38.5 49% vs 51%).
+- Low confidence on three counts (rule 13): Brissett's first Ravens start (rule 5), Herbert questionable (finger, no fracture), and the model total of 38.5 sits on the line. Sweep says close & low (40%); shootout 9%, so the PMM shootout script is off.
+- News since Saturday: Ladd McConkey OUT (back, did not travel). Brenen Thompson doubtful. BAL S Jaylinn Hawkins out. LAC DBs Williamson and Waxter out. Weather LOW (40F, wind 4).
+- If you build one by hand anyway (all Some risk): Herbert 175+ pass yds -240 (72%, 7 of 8), Herbert 1+ pass TD -260, Ravens ML -230, Under 44.5 -245.
+- Preview: LAC scored 13/g vs defenses like Baltimore's (ARI/BUF/LA), under its 15.1 average.

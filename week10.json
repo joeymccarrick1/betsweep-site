@@ -548,7 +548,7 @@
   "sweep_thu": "No Thursday Daily Sweep: HIGH weather (rain, gusts 33) bars every NYG-WAS passing/receiving leg, every TD leg carries a bad flag, and the model total (41.8) sits on the 41.5 line - low confidence. Only game lines left (all negative edge); 3 of them price under +130.",
   "thursday": "No clean leg at any price: weather HIGH + flags. Best game-line candidate WAS +2.5 -115 is negative edge (52% vs 53%).",
   "sweep_mon": "No Monday Daily Sweep (check_weekend 11/14): BAL-LAC props are up, but all 189 carry a bad flag (every player has 'O/U 38.5', score 2+ = Some/High risk, rule 1). Only game lines are clean, all negative edge, and a 3-leg game-line SGP prices near -140. Low confidence: Jacoby Brissett's first Ravens start (Lamar out, thumb) for an offense that just lost 33-10 (rules 5, 13). A day without a Sweep beats a forced one.",
-  "mnf": "+500 and Piss Missile Monday not drafted clean (check_weekend 11/14): no BAL-LAC player prop passes rule 1 (all carry the 38.5-total flag), shootout 9% / total 38.5 rule out the shootout build, and rule 5 bars Ravens passing/WR overs with Brissett. Least-risky building blocks if you want one anyway (all 'Some risk' on the low total): Justin Herbert 175+ pass yds -245 (72%, 7 of 8), Herbert 1+ pass TD -250 (66%), Ravens ML -225 (64%), Under 44.5 -245 (67%; Sweep says close & low 40%)."
+  "mnf": "No +500 / Piss Missile Monday (check_mnf 11/16): no BAL-LAC leg passes rule 1 + the leg filter; backup QB, Herbert Q and total on the line make it low confidence (rule 13). Least-risky blocks if you want one by hand (all Some risk): Herbert 175+ pass yds -240 (72%, 7/8), Ravens ML -230 (64% model vs 70% FD), Under 44.5 -245 (67% vs 71%)."
  },
  "assist_log": [
   {
@@ -634,6 +634,11 @@
    "run": "check_sunday",
    "at": "2026-11-15T16:35Z",
    "summary": "FLAG Chalk Talk TDs (Gibbs game started) -> James Cook ATD, +562. OK Checkdown City, Sunday Night Heist. Four Corners: do not post (Sure Hands is Sunday's LIVE Sweep). LIVE alert: Drake Maye out for rest of DET-NE (ankle) - 'One From Every Game' Maye 225+ leg."
+  },
+  {
+   "run": "check_mnf",
+   "at": "2026-11-16T13:50Z",
+   "summary": "check_mnf: no MNF promos drafted (none posted). BAL-LAC still has no low-risk prop: 297 legs, every player prop carries 'O/U 38.5' (score 2+ = Some/High risk) or a bad 'w' flag; only game lines are clean, all negative edge. Low confidence x3 (rule 13): Brissett backup QB, Herbert questionable (finger, no fracture), model total 38.5 = line. McConkey now OUT (did not travel). Shootout 9%, close & low 40%."
   }
  ]
 }
