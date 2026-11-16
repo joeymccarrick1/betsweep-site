@@ -642,3 +642,24 @@ Five changes after the Week 10 Sunday losses. Code only; it ships with the next 
 5. **Why it lost.** Not code: the Tuesday slip-log grade adds a tag per losing slip (thin role / wrong script / bad luck).
 
 `ROLE_RISK` in `home.py` and `build_boards.py` now includes Fringe role and Target squeeze.
+
+## Better legs, round three (owner 11/15: "Do all of these")
+
+Code only; ships with the next rebuild that passes the publish gates. Full numbers in `research/flag_grades.md`.
+
+1. **Flags graded** (`flag_grade.py`): grades every flag on published boards against the game log, counting each player once a week.
+   First run (Weeks 8-9): the risk score did not separate winners from losers; "Soft matchup" was the one flag clearly failing, so
+   `sweep.TAG_W = {"Soft matchup": 0}` (the builder's JS reads the same table from the data file as `D.tw`). Re-run Tuesdays; a tag gets a
+   weight only with 100+ player-weeks pointing the same way every week.
+2. **Near-zero risk** (`build_builder.py`): floor legs (-180 or shorter) on a player who finished under half the line in a third or more of
+   his games get a `bad` flag; fewer get an info line. Leg field `nz` = [games under half, games].
+3. **Line moves**: `risk.js` exposes `BSRisk.move(key)`; the builder's risk score adds one watch point when FanDuel's price has drifted 3+
+   points against a leg since the build (data/price-moves.json, live, no rebuild needed).
+4. **Reliability**: players already had it (flags.py REL). Added team-by-market (`TREL`, 15+ graded legs, 20 phantom legs): -4 pts or worse
+   = watch "Team under its prices", +4 or better = info. `data/reliability.json` lists every player and team-market score. Projection
+   error was tested and left out (it pointed the wrong way).
+5. **Legs that fail together**: the slip notes warn when 3+ legs (or most of a 3+ leg slip) need one team's passing game, and say how many
+   separate bets the slip acts like (legs squared over the sum of the correlation matrix). `sweep.dependence(legs)` is the Python twin for
+   chat-built slips.
+6. **Pre-kickoff re-check**: already built (push/slip-alerts.ts, every 10 minutes: Out / Doubtful / game-day inactives on saved slips, with a
+   swap idea; line-move pushes on saved legs). Nothing added. It only watches slips saved to an account, not slips sent in chat.

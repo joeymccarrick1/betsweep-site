@@ -616,6 +616,35 @@ _safe_best = {}
 # ending is his team by 10+. Rushing legs keep the player-level "Lead script" plus; for TDs the either-or pair with his backup covers it.
 # owner 11/15: on a short-priced floor leg, the model sitting far above FanDuel is a warning, not an edge - where the two have disagreed
 # FanDuel has been closer (calib.py), and the Week 10 misses were legs like this.
+# owner 11/15 (near-zero rate): a floor leg is judged by how often the player finishes near nothing, not by how often he clears the line.
+# Weeks 6-9, graded FanDuel legs at -180 or shorter with 4+ earlier games (1,289 legs): players who had finished under half the line in a
+# third or more of their games hit 57.6% against a price of about 66% (8.8 pts under, negative in all four weeks, 151 legs); the rest hit
+# 64-66%. "Cleared it 90%+ of the time" did not help at all (7.6 under). So the near-zero rate gets the flag and the clear rate does not.
+_NZ_STAT = {"Receiving Yards": "Rec Yds", "Receptions": "Receptions", "Rushing Yards": "Rush Yds", "Passing Yards": "Pass Yds", "Rush + Rec Yards": "Rush+Rec Yds"}
+_nnz = _ntr = 0
+for l in LEGS:
+    if l.get("gl") or l.get("o") is None or str(l.get("m", "")).startswith("Under") or not FE: continue
+    _tr = FE.TREL.get((l.get("tm"), l.get("m")))
+    if _tr:
+        _n, _h, _b, _d = _tr; l["trl"] = round(_d * 100, 1)
+        if _d <= -0.04: l.setdefault("fh", []).append(["watch", "Team under its prices", f"{l['tm']} {str(l['m']).lower()} legs have hit {_h} of {_n} ({100 * _h / _n:.0f}%) against {100 * _b / _n:.0f}% priced this season. Team-markets this far under went on to hit about 5 points under their prices (Weeks 7-9)."]); _ntr += 1
+        elif _d >= 0.04: l.setdefault("fh", []).append(["info", "Team hitting its prices", f"{l['tm']} {str(l['m']).lower()} legs have hit {_h} of {_n} ({100 * _h / _n:.0f}%) against {100 * _b / _n:.0f}% priced this season."])
+    if l["o"] > -180 or l.get("m") not in _NZ_STAT or not l.get("ln"): continue
+    _gs = [g.get(_NZ_STAT[l["m"]]) or 0 for g in FE.games(l["pl"])]
+    if len(_gs) < 4: continue
+    _z = sum(1 for x in _gs if x < 0.5 * l["ln"]); l["nz"] = [_z, len(_gs)]
+    if _z * 3 >= len(_gs):
+        l.setdefault("fh", []).append(["bad", "Near-zero risk", f"Finished under half this line ({l['ln'] / 2:g}) in {_z} of {len(_gs)} games. Floor legs on players like that hit 58% against a 66% price in Weeks 6-9 (151 legs, under in all four weeks)."]); _nnz += 1
+    elif _z:
+        l.setdefault("fh", []).append(["info", "Near-zero games", f"Finished under half this line ({l['ln'] / 2:g}) in {_z} of {len(_gs)} games."])
+print(f"near-zero: {_nnz} floor legs flagged; team under its prices: {_ntr} legs")
+try:
+    os.makedirs(os.path.join(OUT, "data"), exist_ok=True)   # owner 11/9 + 11/15: one file with every player's and team-market's record against its prices
+    json.dump({"week": WEEK, "note": "hits minus the fair rate FanDuel's price implied, shrunk toward zero (players 12 phantom legs, team-markets 20); points",
+               "players": {k: {"n": v[0], "hit": v[1], "priced": round(v[2], 1), "score": round(v[3] * 100, 1)} for k, v in sorted(FE.REL.items(), key=lambda x: -x[1][3])},
+               "teams": {f"{k[0]}|{k[1]}": {"n": v[0], "hit": v[1], "priced": round(v[2], 1), "score": round(v[3] * 100, 1)} for k, v in sorted(FE.TREL.items(), key=lambda x: -x[1][3])}},
+              open(os.path.join(OUT, "data", "reliability.json"), "w"), separators=(",", ":"))
+except Exception as _e: print("warn: reliability file skipped:", _e)
 _npg = 0
 for l in LEGS:
     if l.get("gl") or l.get("o") is None or l["o"] > -180 or str(l.get("m", "")).startswith("Under"): continue
@@ -858,7 +887,8 @@ try:
     import scenario as _SCN
     print(f"scenario explorer: {_SCN.attach(LEGS, GAMES, IN, os.path.dirname(os.path.abspath(__file__)))} player legs + {sum(1 for l in LEGS if l.get('gl') and l.get('sc'))} game lines carry per-ending chances")
 except Exception as _e: print("warn: scenario explorer skipped:", _e)
-DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
+import sweep as _SWP
+DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "tw": _SWP.TAG_W, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 # owner 11/11 8:28 AM: "Having this same best legs where you can scroll and add to parlay on the parlay builder page would be cool" - the
 # Beat the model list (sugmatch.py: near -110, model 50%+, the matchup pair) as a sideways strip above the builder's grid.
@@ -1655,7 +1685,11 @@ BUILDER_JS = r"""
   document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.changed) reloadSel(); });
   // owner 11/1: per-leg risk score - model flags (bad 3, watch 1, good -1) plus the live risk list (ruled out 10, injury / weather / note 3).
   // 0-1 low (no tag), 2-3 medium, 4+ high. Shown on each betslip leg; the slip notes count the high ones.
-  function riskScore(l){ var s = 0; (l.fl || []).forEach(function(f){ s += f[0] === 'bad' ? 3 : f[0] === 'watch' ? 1 : f[0] === 'good' ? -1 : 0; });
+  // owner 11/15: per-tag weights from the graded record (sweep.TAG_W, sent as D.tw) replace the kind's default
+  function riskScore(l){ var s = 0, TW = D.tw || {}; (l.fl || []).forEach(function(f){ s += TW[f[1]] != null ? TW[f[1]] : f[0] === 'bad' ? 3 : f[0] === 'watch' ? 1 : f[0] === 'good' ? -1 : 0; });
+    // owner 11/15 (watch the line move): FanDuel's price moved 3+ points against this leg since the build (data/price-moves.json) = one watch
+    // point. Week 9: legs that drifted hit 6 pts under their price, legs that shortened 7 over (71 and 67 legs - a lean, not proof).
+    try { var mv = !l.gl && window.BSRisk && window.BSRisk.move && window.BSRisk.move(legKey(l)); if(mv && !mv.news && mv.dir === 'DRIFTED') s += 1; } catch(e){}
     // owner 11/15: these four never wash out against good flags (keep in step with sweep.HARD_RISK)
     if((l.fl || []).some(function(f){ return f[1] === 'Losing zone' || f[1] === 'Fringe role' || f[1] === 'Blowout script' || f[1] === 'Target squeeze'; })) s = Math.max(s, 2);
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v) s += v.level === 'block' ? 10 : v.level === 'warn' ? 3 : -1; return Math.max(0, s); }
@@ -1799,6 +1833,15 @@ BUILDER_JS = r"""
     var flags = [];
     if(sgp.length) flags.push(sgp.length + ' game' + (sgp.length>1?'s':'') + ' with multiple legs (correlation priced in)');
     var pls = {}; ls.forEach(function(l){ pls[l.pl] = (pls[l.pl]||0)+1; }); var dupe = Object.keys(pls).filter(function(p){ return pls[p] > 1; }); if(dupe.length) flags.push('same player twice: ' + dupe.join(', '));
+    // owner 11/15 (legs that fail together): the quarterback's passing legs and his pass catchers' receiving legs are one bet on that
+    // passing game (keep in step with sweep.dependence), and the correlation matrix says how many separate bets the slip really is
+    var PASSM = {'Passing Yards':1, 'Receiving Yards':1, 'Receptions':1, 'Longest Reception':1, 'Passing TDs':1, 'Completions':1}, pg = {};
+    ls.forEach(function(l){ if(isGL(l) || l.u || !PASSM[l.m] || !l.tm) return; (pg[l.tm] = pg[l.tm] || []).push(l); });
+    Object.keys(pg).forEach(function(tm){ var x = pg[tm]; if(ls.length < 3 || x.length < 2 || !(x.length >= 3 || x.length * 2 > ls.length)) return;
+      var qb = legs.filter(function(q){ return q.tm === tm && q.pos === 'QB' && q.m === 'Passing Yards'; })[0];
+      flags.push(x.length + ' of ' + ls.length + ' legs need ' + tm + '\'s passing game: one bad day from ' + (qb ? qb.pl : 'the quarterback') + ' sinks them together'); });
+    if(ls.length >= 3){ var tot = 0; for(var ci = 0; ci < ls.length; ci++) for(var cj = 0; cj < ls.length; cj++) tot += ci === cj ? 1 : Math.max(0, corr(ls[ci], ls[cj]));
+      var neff = ls.length * ls.length / tot; if(neff <= ls.length - 0.8) flags.push('these ' + ls.length + ' legs move together enough to act like about ' + neff.toFixed(1) + ' separate bets, so they will tend to win or lose as a group'); }
     var hiR = ls.filter(function(l){ return !isGL(l) && riskScore(l) >= 4; }); if(hiR.length) flags.push(hiR.length + ' high-risk leg' + (hiR.length>1?'s':'') + ' (' + hiR.map(function(l){ return l.pl; }).join(', ') + ')');
     var warned = ls.filter(function(l){ return l.w; }); if(warned.length) flags.push(warned.length + ' leg' + (warned.length>1?'s':'') + ' carr' + (warned.length>1?'y':'ies') + ' a model warning');
     // owner 11/6 (parlay size): graded Weeks 6-8, legs at -130 or shorter returned about -9% each, and -8% to -23% even with a model edge -

@@ -121,16 +121,39 @@ def one_per_day(promos):
 def risk_score(leg, bd):
     """leg = a builder_data.json leg (fh = [[kind, tag], ...] or [kind, ...]); bd["pf"][player] = the player-level flags."""
     W = {"bad": 3, "watch": 1, "good": -1}
-    def kinds(fs):
+    def weights(fs):
         for f in fs or []:
             k = f[0] if isinstance(f, (list, tuple)) and f else (f.get("k") if isinstance(f, dict) else f)
-            if k in W: yield k
-    s = sum(W[k] for k in kinds(leg.get("fh"))) + sum(W[k] for k in kinds(((bd or {}).get("pf") or {}).get(leg.get("pl"))))
+            t = f[1] if isinstance(f, (list, tuple)) and len(f) > 1 else (f.get("tag") if isinstance(f, dict) else None)
+            if t in TAG_W: yield TAG_W[t]
+            elif k in W: yield W[k]
+    s = sum(weights(leg.get("fh"))) + sum(weights(((bd or {}).get("pf") or {}).get(leg.get("pl"))))
     # owner 11/15: these never wash out against good flags - a leg carrying one is at least "Some risk" and stays off slips and promos
     # (Dalton Schultz 20+ yards rode four Week 10 slips from a losing price zone because three good flags cancelled the bad one)
     tags = {f[1] for f in list(leg.get("fh") or []) + list(((bd or {}).get("pf") or {}).get(leg.get("pl")) or []) if isinstance(f, (list, tuple)) and len(f) > 1}
     if tags & HARD_RISK: s = max(s, 2)
     return max(0, s)
+
+# owner 11/15 ("grade the flags themselves"): per-tag weights that replace the kind's default when the graded record says so
+# (flag_grade.py, research/flag_grades_w8_w9.json). The builder's JS reads the same table from the data file (DATA["tw"]).
+#   Soft matchup (shown as good): legs carrying it hit 8.7 pts under their price, both weeks negative, 136 player-weeks - it no longer
+#   takes a point off the risk score.
+TAG_W = {"Soft matchup": 0}
+
+def dependence(legs, qb_of=None):
+    """Legs that fail together (owner 11/15). legs = builder legs (pl, pos, tm, m, g). Returns warnings for a slip where 3+ legs, or more
+    than half of a 3+ leg slip, need one team's passing game: the quarterback's passing legs and his pass catchers' receiving legs."""
+    PASS = ("Passing Yards", "Receiving Yards", "Receptions", "Longest Reception", "Passing TDs", "Completions")
+    by = {}
+    for l in legs:
+        if l.get("gl") or str(l.get("m", "")).startswith("Under") or l.get("m") not in PASS: continue
+        by.setdefault(l.get("tm"), []).append(l)
+    out = []
+    for tm, ls in by.items():
+        if tm and len(ls) >= 2 and (len(ls) >= 3 or len(ls) * 2 > len(legs)) and len(legs) >= 3:
+            qb = (qb_of or {}).get(tm)
+            out.append(f'{len(ls)} of {len(legs)} legs need {tm}\'s passing game ({", ".join(sorted({x["pl"] for x in ls}))}): one bad day from {qb or "the quarterback"} sinks them together')
+    return out
 
 HARD_RISK = {"Losing zone", "Fringe role", "Blowout script", "Target squeeze"}
 
@@ -171,6 +194,10 @@ def selftest():
     eq(day_label(thu), "Thu 11/12", "day_label")
     bd = {"pf": {"A": [["watch", "x"]], "B": [["bad", "x"], ["good", "y"]]}}
     eq(risk_score({"pl": "A", "fh": [["watch", "t"]]}, bd), 2, "risk A"); eq(risk_score({"pl": "B", "fh": []}, bd), 2, "risk B"); eq(risk_score({"pl": "C", "fh": [["good", "g"]]}, bd), 0, "risk floor")
+    eq(risk_score({"pl": "C", "fh": [["bad", "x"], ["good", "Soft matchup"], ["good", "g"]]}, bd), 2, "soft matchup takes nothing off")
+    eq(risk_score({"pl": "C", "fh": [["bad", "Losing zone"], ["good", "g"], ["good", "g"], ["good", "g"]]}, bd), 2, "hard tag floor")
+    eq(len(dependence([{"pl": "a", "tm": "X", "m": "Receptions"}, {"pl": "b", "tm": "X", "m": "Receiving Yards"}, {"pl": "c", "tm": "Y", "m": "Rushing Yards"}])), 1, "two of three on one passing game")
+    eq(len(dependence([{"pl": "a", "tm": "X", "m": "Receptions"}, {"pl": "b", "tm": "Z", "m": "Receiving Yards"}, {"pl": "c", "tm": "Y", "m": "Rushing Yards"}])), 0, "spread out")
     eq(risk_tag(4), "High risk", "tag 4"); eq(risk_tag(2), "Some risk", "tag 2"); eq(risk_tag(1), "", "tag 1")
     print(f"sweep selftest: {'ok' if not bad else str(bad) + ' failed'}"); return bad
 

@@ -216,10 +216,10 @@ class Engine:
         # (in/legsnaps.json, Latest Snapshot, HIT/MISS, no Longest Reception): hits minus fair implied (book / 1.045), shrunk with
         # K = 12 phantom legs. Leave-one-week-out Weeks 6-9 (3,256 legs): 'reliable' (+5 pts or better) hit 0.4 pts under fair,
         # 'volatile' (-5 or worse) 4.2 under, neutral 1.8 under. Modest but consistent pooled; Week 9 alone did not show it - re-check Tuesdays.
-        self.REL = {}
+        self.REL = {}; self.TREL = {}
         try:
             import json as _j
-            _v = _j.load(open(os.path.join(IN, "legsnaps.json")))["values"]; _H = {c: i for i, c in enumerate(_v[0])}; _S = {}
+            _v = _j.load(open(os.path.join(IN, "legsnaps.json")))["values"]; _H = {c: i for i, c in enumerate(_v[0])}; _S = {}; _T = {}
             for _r in _v[1:]:
                 _r = _r + [""] * (len(_v[0]) - len(_r))
                 if str(_r[_H["Latest Snapshot"]]).upper() != "TRUE" or _r[_H["Result"]] not in ("HIT", "MISS") or _r[_H["Market"]] == "Longest Reception": continue
@@ -228,8 +228,15 @@ class Engine:
                 if _wk >= int(WEEK): continue
                 _bk = _bk / 100 if _bk > 1 else _bk; _x = _S.setdefault(_nn(_r[_H["Player"]]), [0, 0, 0.0])
                 _x[0] += 1; _x[1] += _r[_H["Result"]] == "HIT"; _x[2] += _bk / 1.045
+                _y = _T.setdefault((_r[_H["Team"]], _r[_H["Market"]]), [0, 0, 0.0]); _y[0] += 1; _y[1] += _r[_H["Result"]] == "HIT"; _y[2] += _bk / 1.045
             for _p, (_n, _h, _b) in _S.items():
                 if _n >= 8: self.REL[_p] = (_n, _h, _b, (_h - _b) / (_n + 12))
+            # owner 11/15 (reliability for teams too): the same sum per team and market, shrunk with 20 phantom legs. Walk-forward Weeks 7-9:
+            # team-markets at -4 pts or worse went on to hit 5.2 pts under their prices (254 player-weeks), +4 or better 1.9 under,
+            # the rest 3.4 under. A lean, not proof - re-check Tuesdays. Projection error was tested too and did NOT help: players and
+            # teams whose projections landed closest hit 7 to 8 pts under their prices, so it is not part of the score.
+            for _k, (_n, _h, _b) in _T.items():
+                if _n >= 15: self.TREL[_k] = (_n, _h, _b, (_h - _b) / (_n + 20))
         except Exception as _e: print("note: reliability unavailable:", _e)
     def games(self, name): return self.GL.get(name, [])
     def qb_role(self, name, team):

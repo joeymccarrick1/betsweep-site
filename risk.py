@@ -195,7 +195,7 @@ RISK_JS = r"""(function(){
           : A.client.from('risk_feed').upsert({id: id, kind: 'note', week: W, player: name, status: st, level: (st === 'OUT' ? 'block' : (st === 'STARTING' || st === 'ROLE_UP') ? 'good' : 'warn'), detail: dt || null, by_owner: true, updated_at: new Date().toISOString()});
         q.then(function(r){ msg.textContent = r && r.error ? 'Could not save: ' + r.error.message : (st ? 'Saved - live on every page now.' : 'Cleared.'); load(); }); }); }); }
   document.addEventListener('bs-account', function(){ owner(); });
-  window.BSRisk = {blockAdd: function(pl, m){ var v = verdict(pl, m); if (v && v.level === 'block'){ toast(pl + ': ' + v.why); return true; } return false; }, verdict: verdict, avoid: function(pl, m){ var v = verdict(pl, m); return !!(v && v.level !== 'good'); }, rows: function(){ return ROWS; }, reload: load};
+  window.BSRisk = {move: function(k){ return MOVES[k] || null; }, blockAdd: function(pl, m){ var v = verdict(pl, m); if (v && v.level === 'block'){ toast(pl + ': ' + v.why); return true; } return false; }, verdict: verdict, avoid: function(pl, m){ var v = verdict(pl, m); return !!(v && v.level !== 'good'); }, rows: function(){ return ROWS; }, reload: load};
   function start(){ watch(); load(); setInterval(load, 180000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
