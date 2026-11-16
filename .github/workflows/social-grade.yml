@@ -4,7 +4,8 @@
 #   certain or nothing .. lost = one leg missed, won = every leg hit, push = every leg pushed. Anything else is left and reported.
 #   the secret .......... it writes only when the repo secret FEED_GRADE_SECRET holds the value the owner put in the database
 #                         (his copy of sql/social_v3.sql). Without it every run is a dry run. The value is never printed.
-#   Run workflow ........ grade (default), dry (read and report, write nothing) or probe (what the database has: counts only)
+#   Run workflow ........ grade (default), dry (read and report, write nothing), detail (dry, plus every leg with its numbers - legs only,
+#                         no usernames) or probe (what the database has: counts only)
 # It never touches the site's files or the Google Sheet. Turn it off: Actions > social-grade > "..." > Disable workflow.
 name: social-grade
 on:
@@ -13,10 +14,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "grade = record results (needs FEED_GRADE_SECRET); dry = read and report only; probe = what the database has"
+        description: "grade = record results (needs FEED_GRADE_SECRET); dry = read and report only; detail = dry, with every leg and its numbers; probe = what the database has"
         type: choice
         default: grade
-        options: [grade, dry, probe]
+        options: [grade, dry, detail, probe]
 permissions: {contents: read}
 concurrency: {group: social-grade, cancel-in-progress: false}
 jobs:
@@ -37,6 +38,7 @@ jobs:
           cd gen; mkdir -p in
           if [ "$MODE" = "probe" ]; then python3 social_grade.py --probe | tee ../grade.log; exit 0; fi
           if [ "$MODE" = "grade" ] && [ -n "$FEED_GRADE_SECRET" ]; then W=--write; else W=; echo "dry run (mode $MODE, secret $([ -n "$FEED_GRADE_SECRET" ] && echo set || echo not set))"; fi
+          if [ "$MODE" = "detail" ]; then W=--detail; fi
           python3 social_grade.py --fetch $W | tee ../grade.log
       - name: Summary
         if: always()
