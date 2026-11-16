@@ -921,3 +921,25 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   lists open slips only - so a card saying "3 slips on Social" led to "No open slips". With a game asked for, the feed lists every
   slip on it: open, then cashed, then lost.
 
+## 11/16 evening: Boards folds played games; the note under the promos is short (alpha plan step 9)
+
+- **Boards: "N games already played".** `sinkPlayed()` in template.html (runs on every live update) used to sink finished scorecards
+  below the rest. Now, while a game is still to come, finished cards live inside `<details class="bdone">` at the foot of `.grid`
+  (its cards in `.bdgrid`, same columns as the grid). Closed by default; the reader's open / closed choice holds through refreshes.
+  It opens by itself only when the page ARRIVES on a link to a finished game, when a link to one is tapped (chip row, slate), or
+  when a card the reader has open goes final. When nothing is left to play there is no fold: every card is in the grid in kickoff
+  order. Not used in render mode (`body.render`). Cards are moved only when out of place. Monday on a phone: 13,008px -> 1,783px.
+  (The unrendered cards had been counted at their 900px placeholder height - `content-visibility` was already on since 11/4, so
+  plan step 11's cheap half was done; the fold removes the length.)
+- **`finished` on Boards** comes from live.py: a final from the feed, a final score from the build (`data-final`), or kickoff + 4.5 h.
+- **Today, under the promos**: the seven-line note is now what a reader must see (what these slips are; the commission line - a
+  disclosure is never tucked behind a tap) plus "How tailing and sharing work", which opens the rest (`home.PNOTE_CSS`, `.pnote`).
+- **Screenshot caution:** on a short page, jumping straight to the very end makes the sticky title bar collapse and the page 60px
+  shorter in the same frame; a Playwright phone screenshot taken then shows the header 60px low and no tab bar. The DOM positions
+  are right (checked). Take end-of-page screenshots a little above the end.
+- Tests: `python3 tests/boards_fold.py` (20 checks, clock frozen like builder_fold) and the promo-note check in tests/social_elsewhere.py.
+- **Grading secret, 11/16 4:20 PM CT:** the owner said the GitHub secret was done; the workflow's `check` mode (asks the database
+  with an EMPTY list, writes nothing) saw no Actions secret named FEED_GRADE_SECRET in three runs, while it could see
+  SHEETS_SA_JSON. Told the owner where to look. Never reference a multi-line JSON secret in that job: GitHub then hides every brace
+  in the job's log.
+

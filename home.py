@@ -659,7 +659,15 @@ def promos_block(OUT, sweep_exists=False):
     cards = [promo_card(p, ("Long shot" if (p.get("fd") or 0) >= 2000 else "Side action") if side else "Promoted") for p in ps]
     tail_js = PROMO_TAIL_JS
     head = ('<h2 class="t">Side action <small class="tsub">long shots and extras · small stakes</small></h2>' if side else '<h2 class="t">Promoted bets</h2>')
-    return f'<section class="sec" id="promo">{head}<div class="promos">{"".join(cards)}</div>{tail_js}{PROMO_LIVE_JS}<p class="none" style="margin-top:8px;font-size:12.5px">{"The other slips we post on X and Instagram: long shots and extras, graded Tuesday like everything else and counted apart from the Daily Sweep." if side else "The slips we post on X and Instagram, graded Tuesday like everything else."} Share on X pre-fills the legs in plain text with @Playbook tagged, so the Playbook bot replies with a tail link for whichever sportsbook the reader uses. Sportsbook links may earn BetSweep a commission; it never changes a pick or a grade. One tap loads the whole slip on FanDuel.</p></section>'
+    return f'<section class="sec" id="promo">{head}<div class="promos">{"".join(cards)}</div>{tail_js}{PROMO_LIVE_JS}<div class="pnote"><style>{PNOTE_CSS}</style><p>{"Long shots and extras, graded Tuesday and counted apart from the Daily Sweep." if side else "The slips we post on X and Instagram, graded Tuesday like everything else."} Sportsbook links may earn BetSweep a commission; it never changes a pick or a grade.</p><details><summary>How tailing and sharing work</summary><p>Tail loads the whole slip on FanDuel in one tap. Share on X pre-fills the legs in plain text with @Playbook tagged, so the Playbook bot replies with a tail link for whichever sportsbook the reader uses.</p></details></div></section>'
+
+# 11/16 (alpha plan step 9, Today): the note under the promos was seven lines of small print. What a reader must see stays in view
+# (what these slips are, and the commission line - a disclosure is never tucked behind a tap); how tailing and sharing work opens on request.
+PNOTE_CSS = (".pnote{margin-top:8px;color:var(--mute)} .pnote p{margin:0;font-size:12.5px;line-height:1.45} .pnote summary{font-size:13px} "
+             ".pnote summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;list-style:none} "
+             ".pnote summary::-webkit-details-marker{display:none} "
+             '.pnote summary::after{content:"";width:7px;height:7px;margin-left:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-2px) rotate(45deg)} '
+             ".pnote details[open] summary::after{transform:translateY(1px) rotate(225deg)} .pnote details p{margin:0 0 6px}")
 
 # ---------- the Daily Sweep (owner 11/10) ----------
 # One house slip per game day, at the top of the page. sweep.py has the convention (a promo row whose Title starts with "Daily Sweep")

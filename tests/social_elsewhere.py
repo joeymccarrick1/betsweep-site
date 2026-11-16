@@ -42,6 +42,12 @@ async def main():
             check(st and "Herbo time | @HerbFan · 2 legs · 4 tailing" in st["rows"][1] and st["rows"][1].endswith("🏈") and all("Old slip" not in r for r in st["rows"]), f"[{theme}] tail count and the poster's chosen avatar show; Sunday's finished slip is not listed")
             check(st and st["all"] == "All 4 slips" and st["over"] == 0 and st["minH"] >= 56, f"[{theme}] the link counts the open slips, rows are tap-sized, no sideways scroll ({st and st['all']}, {st and st['minH']})")
             if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/today-social-{theme}.png")
+            # the note under the promos (11/16): the commission line stays in view, the how-to opens on a tap
+            pn = await pg.evaluate("""() => { var n = document.querySelector('#promo .pnote'); if(!n) return null; var d = n.querySelector('details'), p = n.querySelector(':scope > p'), q = d.querySelector('p');
+                var r = {vis: p.textContent, h: Math.round(p.getBoundingClientRect().height), open: d.open, sumH: Math.round(d.querySelector('summary').getBoundingClientRect().height), howH: Math.round(q.getBoundingClientRect().height)};
+                d.querySelector('summary').click(); r.opened = d.open; r.how = q.textContent; d.querySelector('summary').click(); r.closedAgain = !d.open; return r; }""")
+            if pn is None: print(f"   [{theme}] (no promo grid on Today in this build; the note check is skipped)")
+            else: check("may earn BetSweep a commission" in pn["vis"] and not pn["open"] and pn["opened"] and pn["closedAgain"] and pn["sumH"] >= 44 and pn["h"] <= 90 and "FanDuel" in pn["how"], f"[{theme}] under the promos: the commission line is in view in a few lines, the how-to opens on a tap ({pn['h']}px of text; closed until tapped)")
             # ---- Boards ----
             await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             bd = await pg.evaluate("""() => { var o = document.documentElement; function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; }

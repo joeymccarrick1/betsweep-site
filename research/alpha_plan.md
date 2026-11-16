@@ -40,9 +40,9 @@ Read this file first when the work is picked up again.
 What the real database showed (workflow `social-grade`, mode probe): both Social scripts are in, 24 posts over three weeks, ONE profile,
 1 reaction, 0 tails, 0 follows. So Social has almost no audience yet - more Social features help nobody today. The pages everyone
 opens are where the alpha gap is. Order for the next stretch:
-1. **Boards (steps 9 + 11).** Same treatment the builder got: played games fold under "N games already played"; `content-visibility`
+1. (DONE 11/16 evening - fold live; content-visibility was already on since 11/4) **Boards (steps 9 + 11).** Same treatment the builder got: played games fold under "N games already played"; `content-visibility`
    on game cards so a phone only lays out what is near the screen; check the first screen (slate, then the next game to kick off).
-2. **Today (step 9).** The paragraph under the promos ("The other slips we post on X and Instagram ...", seven lines of small text)
+2. (DONE 11/16 evening for the promo note; other intro paragraphs still to do, page by page) **Today (step 9).** The paragraph under the promos ("The other slips we post on X and Instagram ...", seven lines of small text)
    becomes one line with the rest behind an info button; the same pass on the other intro paragraphs.
 3. **Me hub (step 7).** Open slips, record in units, profit calendar; profile icon in the header. account.py already grades saved
    slips from /data/box-w<W>.json - build on that.
