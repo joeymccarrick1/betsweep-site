@@ -41,6 +41,14 @@ jobs:
           if [ "$MODE" = "grade" ] && [ -n "$FEED_GRADE_SECRET" ]; then W=--write; else W=; echo "dry run (mode $MODE, secret $([ -n "$FEED_GRADE_SECRET" ] && echo set || echo not set))"; fi
           if [ "$MODE" = "detail" ]; then W=--detail; fi
           python3 social_grade.py --fetch $W | tee ../grade.log
+      - name: Where the secret is (yes / no only - no value is ever printed)
+        if: always() && inputs.mode == 'check'
+        run: |
+          echo "Actions secret named FEED_GRADE_SECRET: ${{ secrets.FEED_GRADE_SECRET != '' }}"
+          echo "Actions VARIABLE named FEED_GRADE_SECRET (wrong tab - variables are not hidden): ${{ vars.FEED_GRADE_SECRET != '' }}"
+          echo "Actions secret named CRON_SECRET: ${{ secrets.CRON_SECRET != '' }}"
+          echo "Actions secret named FEED_GRADE: ${{ secrets.FEED_GRADE != '' }}"
+          echo "Actions secret named GRADE_SECRET: ${{ secrets.GRADE_SECRET != '' }}"
       - name: Summary
         if: always()
         run: |
