@@ -1375,3 +1375,22 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
 - Probably not the first time: on Sunday 11/15 the mirror gaps were 6.6 and 6.5 hours (7:18 PM Sat - 1:56 AM, 1:56 - 8:29 AM
   CT), so a rebuild between 7:56 and 8:29 AM that morning would have failed the same way. Not checked run by run.
 
+## 11/17, 9:40 AM CT: owner's two answers - a touchdown pick needs a role; the game-card parlay steps its bar down
+
+- **Owner on DJ Giddens +3300 in Model's Best:** "no shot dj giddens scores. I want players that are actually getting snaps, red
+  zone looks, or potential for a long touchdown." `td_role` in build_builder.py: an anytime-TD leg makes a Model's Best tier
+  (plus-money or TD) only with real snaps (40%+ projected; not counted for a quarterback, who is on the field every snap),
+  red-zone work (15%+ of his team's red-zone chances on 20%+ of snaps), or a long-score record (a 30+ yard catch in two or
+  more games this season on 25%+ of snaps). Each TD leg carries `tdr` (which one) and `rzs` (red-zone share). The build prints
+  who it kept out. Week 11 Tuesday: Giddens, Tinsley, Ty Johnson, Van Jefferson, Abdullah, Singletary, Theo Johnson, Wright,
+  Kaytron Allen, Ray Davis and Kyle McCord (a quarterback at +1200) left; Brian Thomas Jr. +650 stayed. Background: plus-tier
+  TD legs longer than +600 went 2 for 41 in Weeks 9-10.
+- **Owner on the game-card parlay** (12 of 13 cards were two game lines at about -6%): "I want there to be a best parlay but do
+  your best." `best_parlay` now retries when no slip with a player leg comes out: the edge bar steps 8 -> 4 -> 0 -> minus 3
+  points (`BP_EDGE_STEPS`); every other gate stays (nothing at -200 or shorter, the risk check, zones, role and trend gates).
+  On a stepped-down bar a leg with no script table (passing TDs, rush + rec ...) rides with the same chance in every ending.
+  The card says "best available" (title text names the bar) and the record carries `bar`.
+  Week 11 Tuesday: 3 cards have a player leg (BUF-MIA, CIN-WAS, JAX-NYG, all priced at or better than fair); 10 are still
+  game lines - five of those have no props posted yet, and in Thursday's game 7 of 92 usable legs have the model at or above
+  FanDuel's price and 6 of the 7 fail the risk check. `BP_DEBUG=1 python3 build_boards.py` prints the rows per game and bar.
+

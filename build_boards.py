@@ -935,7 +935,8 @@ def _team_total(tm):
         return tot / 2 + (sp / 2 if gi.get("home_team") == tm else -sp / 2)
     return None
 BP_RISK_OUT = []   # legs the game-card parlay passed over on the risk check (printed at the end of the build)
-def best_parlay(a, b, players, s, wts=None, lean=None):
+BP_EDGE_STEPS = (0.08, 0.04, 0.0, -0.03)   # owner 11/17: "I want there to be a best parlay but do your best" - see the retry inside best_parlay
+def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
     """Legs come from the four script strips (top plays under each ending); each leg's chance is averaged over the model's
     script odds so the slip does not depend on one ending. Pick the combination (2-4 legs, distinct players, 2+ scripts
     represented) with the highest joint hit chance whose FanDuel price lands between -110 and +500 and is not worse than the
@@ -969,7 +970,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
         # returned +5% to +14% a leg (mid 100 legs, even 124, plus 136; positive in three of four weeks, not yet proven). So: nothing at
         # -200 or shorter, and a player leg needs the model 8+ over the price (or 65%+ and at/above the price between -199 and -130).
         if _o is None or _o <= -200: continue
-        if l["market"] != "Anytime TD" and not (_rp is not None and l["book"] is not None and ((_o <= 250 and _rp - l["book"] >= 0.08) or (-199 <= _o <= -130 and l["p"] >= 0.65 and _rp >= l["book"]))): continue
+        if l["market"] != "Anytime TD" and not (_rp is not None and l["book"] is not None and ((_o <= 250 and _rp - l["book"] >= edge_min) or (-199 <= _o <= -130 and l["p"] >= 0.65 and _rp >= l["book"]))): continue
         if l["market"] == "Anytime TD" and not (_rp is not None and _rp >= l["book"] and _o <= 200): continue
         role = roles.get(l["player"], ""); p = l["p"]; ps = []
         for k in range(4):
@@ -980,7 +981,11 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
                 ps.append(min(0.99, max(0.01, 1 - (1 - p) ** (MULT[key][SC_IDX[sc]] or 1))))
             else:
                 key = f"{role}|{STAT_OF.get(l['market'], '')}"
-                if key not in PROBIT: ps = None; break
+                if key not in PROBIT:
+                    # 11/17: no script table for this role and stat (passing TDs, rush + rec, completions ...). On the usual bar the leg
+                    # is left out, as before. On a stepped-down bar it rides with the same chance in every ending rather than not at all.
+                    if edge_min < BP_EDGE_STEPS[0]: ps.append(min(0.99, max(0.01, p))); continue
+                    ps = None; break
                 ab = PROBIT[key][SC_IDX[sc]*2: SC_IDX[sc]*2+2]
                 ps.append(min(0.99, max(0.01, ncdf(ab[0] + ab[1] * nppf(min(0.99, max(0.01, p)))))))
         if ps is None: continue
@@ -1100,7 +1105,23 @@ def best_parlay(a, b, players, s, wts=None, lean=None):
         if need_back and not pool: return None   # the line's own game leg rides only when the slip with it is within 5 cents of fair
         return (max(pool, key=lambda x: (x[0], x[1])) if pool else max(priced, key=lambda x: x[1])) + (plus, near)
     allrows = list(rows.values())
+    if os.environ.get("BP_DEBUG"):
+        _pr = [r for r in allrows if not r["l"].get("gl")]
+        print(f"BPDBG {a}-{b} bar {edge_min}: player rows {len(_pr)} ({len({r['l']['player'] for r in _pr})} players), with a script {sum(1 for r in _pr if r['scripts'])}, edge>=-3 {sum(1 for r in _pr if r['scripts'] and r['prob'] - r['l']['book'] >= -0.03)}", sorted({(r['l']['player'], r['l']['market'], r['l']['line'], r['l']['odds'], round(r['prob'], 2), round(r['l']['book'], 2)) for r in _pr})[:10])
     got = free = choose(allrows)   # what this run prints when no Sweep says lean is on record (unchanged from before 11/10)
+    # owner 11/17. On the Week 11 Tuesday board 12 of 13 cards were two game lines at about -6% EV: the 11/15 bar (model 8+ points over
+    # the price) left 9 legs from 2 players on the whole slate, none in Thursday's game. He wants a real parlay on every card. When no
+    # slip with a player leg comes out, the bar steps down - 8, then 4, then "model at or above the price" - and everything else stays
+    # (nothing at -200 or shorter, the risk check, no losing zones, the role and trend gates). The card says which bar it used.
+    if (free is None or all(r["l"].get("gl") for r in free[3])) and edge_min > BP_EDGE_STEPS[-1] and any(l["team"] in (a, b) and l.get("p") is not None and l.get("odds") is not None for l in LEGS):
+        nxt = next(x for x in BP_EDGE_STEPS if x < edge_min)
+        h, rec = best_parlay(a, b, players, s, wts, lean, edge_min=nxt)
+        if rec and any(x[1] not in ("Spread", "Total", "Moneyline") for x in rec.get("legs", [])):
+            if "bpbar" not in h:
+                note = "model 4+ over the price" if nxt >= 0.04 else "model at or above the price" if nxt >= 0 else "model within 3 points of the price"
+                h = h.replace('<span class="lt">Best parlay', f'<span class="lt">Best parlay <small class="bpbar" title="No slip in this game clears the usual bar (every player leg 8+ points over FanDuel\'s price). This is the best one with the bar at: {note}.">best available</small>', 1)
+            rec.setdefault("bar", nxt)
+            return h, rec
     sw_note = ""
     if lean:
         ok_rows = [r for r in allrows if not against(r)]

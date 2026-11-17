@@ -483,7 +483,7 @@ try:
         if l.get("m") != "Anytime TD" or l.get("p") is None or "/" in l["pl"]: continue
         v = RZ.lookup(_rz["players"], l["pl"], l["tm"])
         if not v: continue
-        _old = l["p"]; l["p"] = round((1 - RZ.RZ_W) * _old + RZ.RZ_W * v["p"], 4); l["rz"] = v["p"]; _nrz += 1
+        _old = l["p"]; l["p"] = round((1 - RZ.RZ_W) * _old + RZ.RZ_W * v["p"], 4); l["rz"] = v["p"]; l["rzs"] = round(float(v.get("rz_share") or 0), 3); _nrz += 1
         # owner 11/6: the same red-zone view moves his 2+ / 3+ TD legs (Poisson mean from the anytime chance, before -> after)
         _lo, _ln = -math.log(max(1e-6, 1 - min(_old, 0.99))), -math.log(max(1e-6, 1 - min(l["p"], 0.99)))
         _P = lambda lam, k: 1 - math.exp(-lam) * (1 + lam + (lam * lam / 2 if k == 3 else 0))
@@ -713,11 +713,38 @@ try:
     json.dump({"week": WEEK, "zones": {f"{l['pl']}|{l['m']}|{int(round(float(l.get('ln') or 1)))}": l["z"] for l in LEGS if l.get("z") and l["z"][0] in ("g", "r")}}, open(os.path.join(OUT, "data", "zones.json"), "w"), separators=(",", ":"))
 except Exception as _e: print("warn: edge map skipped:", _e)
 _PLUS_MK = ("Receiving Yards", "Receptions", "Passing Yards", "Anytime TD", "Longest Reception")
+# owner 11/17 ("no shot DJ Giddens scores. I want players that are actually getting snaps, red zone looks, or potential for a long
+# touchdown"): the second plus-money pick of Week 11 was a back on 7% of snaps at +3300, model 11% against 3% priced. Plus-tier TD
+# legs longer than +600 had gone 2 for 41 in Weeks 9-10. A touchdown leg makes a Model's Best tier only with one of three things:
+# real snaps (40%+ projected), red-zone work (15%+ of his team's red-zone chances on 20%+ of snaps), or a long-score record (a
+# 30+ yard catch in two or more games this season on 25%+ of snaps).
+_LONG = {}
+try:
+    for _r in gl[1:]:
+        try:
+            if float(_r[GH["Longest Rec"]] or 0) >= 30: _LONG[_r[GH["Player"]]] = _LONG.get(_r[GH["Player"]], 0) + 1
+        except Exception: pass
+except Exception as _e: print("warn: long-catch record not read:", _e)
+try: _TDSN = json.load(open(os.path.join(OUT, "projsnaps.json")))["players"]   # projected snap shares (build_boards.py runs first)
+except Exception as _e: _TDSN = {}; print("warn: TD role rule has no snap projections (run build_boards.py first):", _e)
+def td_role(l):
+    sn = (_TDSN.get(l["pl"]) or {}).get("proj") or 0
+    if sn >= 0.40 and l.get("pos") != "QB": return "snaps"   # a quarterback is on the field every snap; for him only red-zone work counts
+    if (l.get("rzs") or 0) >= 0.15 and sn >= 0.20: return "red zone"
+    if _LONG.get(l["pl"], 0) >= 2 and sn >= 0.25: return "long score"
+    return None
+_td_out = []
+for l in LEGS:
+    if l.get("m") in ("Anytime TD", "First TD", "2+ TD", "3+ TD") and not l.get("gl") and "/" not in l["pl"] and " or " not in l["pl"]:
+        l["tdr"] = td_role(l)
+        if not l["tdr"] and l["m"] == "Anytime TD" and l.get("raw_p") is not None and l.get("bk") is not None and l["raw_p"] - l["bk"] >= 0.05: _td_out.append(f"{l['pl']} {l.get('o'):+d}")
+print(f"TD role rule: {sum(1 for l in LEGS if l.get('tdr'))} touchdown legs have snaps / red-zone work / a long-score record; kept out of the tiers for none of them: {', '.join(_td_out[:12]) or 'nobody'}")
 for l in LEGS:
     if l.get("gl") or l.get("raw_p") is None or l.get("bk") is None or l.get("status") in ("OUT", "BYE"): continue
     o = l.get("o")
     if l["m"] == "Rushing Yards" or l.get("ms") == "Rush yds": continue
     if (l.get("z") or [""])[0] == "r": continue   # 11/6 edge map: never a tier pick from a losing zone
+    if l["m"] == "Anytime TD" and not l.get("tdr"): continue   # 11/17: no role, no tier (see td_role)
     if not l.get("u") and l["m"] in _PLUS_MK and o is not None and o >= 150 and l["raw_p"] - l["bk"] >= 0.05 and "/" not in l["pl"]: l["tier"] = "plus"; continue
     if l.get("u"):
         bo = l.get("bko") if l.get("bko") is not None else 1 - l["bk"]
