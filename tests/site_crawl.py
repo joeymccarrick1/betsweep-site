@@ -59,4 +59,12 @@ async def main():
         await b.close()
     json.dump(out, open('/tmp/site_crawl.json', 'w'))
     print('pages', len(out))
+# 11/17: with no server at BASE every page fails to load, yet this still wrote 488 rows and exited 0 - a night of "pages 488" that had
+# opened nothing. Refuse to run instead (tests/local_gate.py starts a server of its own for ./site).
+import urllib.request, time as _time
+for _try in range(6):          # a server started a moment ago (the workflow gives it two seconds) gets ten more
+    try: urllib.request.urlopen(BASE + '/', timeout=8).read(200); _e = None; break
+    except Exception as _x: _e = _x; _time.sleep(2)
+if _e is not None:
+    print(f"site_crawl: nothing is answering at {BASE} ({type(_e).__name__}) - start a server for the site first (python3 -m http.server {PORT} --directory <site>), or use tests/local_gate.py"); sys.exit(2)
 asyncio.run(main())
