@@ -158,6 +158,16 @@ async def main():
                     who = t0["mb"][0]; pg, ctx, errs, _ = await page(path, who); t = await pg.evaluate(TOUT, who); await ctx.close()
                     left = len({k for k in t0["mb"]} - {who})
                     check(who not in t["mb"] and len(t["mb"]) >= min(left, len(t0["mb"]) - 1) and not errs, f"Today's Model's Best teaser with {who} ruled out: his row is gone ({t0['mb']} -> {t['mb']})")
+            if label == "Today":
+                PL = sorted({l["pl"] for l in BD["legs"] if not l.get("gl")})
+                pg, ctx, errs, _ = await page(path)
+                pp = await pg.evaluate("(PL) => { " + VIS + " var out = null; qa('div.parlay').filter(vis).some(function(c){ if(!qa('.pfoot a.fdb', c).some(vis)) return false; return qa('ul.plegs li b', c).some(function(b){ var n = b.textContent.trim(); if(PL.indexOf(n) >= 0){ out = n; return true; } return false; }); }); return out; }", PL); await ctx.close()
+                if not pp: skip("Today shows no ready-made parlay with a player leg and a FanDuel button right now")
+                else:
+                    pg, ctx, errs, _ = await page(path, pp)
+                    d = await pg.evaluate("(P) => { " + VIS + " var c = qa('div.parlay').filter(function(c){ return qa('ul.plegs li b', c).some(function(b){ return b.textContent.trim().indexOf(P) === 0; }); })[0]; if(!c) return null; c.scrollIntoView({block: 'center'}); var ban = c.querySelector('.bsrdead'); return {dead: c.classList.contains('bsr-dead'), ban: ban ? ban.textContent : '', books: qa('.pfoot a.fdb, .pfoot a.dkb, .pfoot a.hrb, .pfoot a.more[href*=\"/build/?\"]', c).filter(vis).length, board: qa('.pfoot a.more', c).filter(vis).length, over: document.documentElement.scrollWidth - document.documentElement.clientWidth}; }", pp)
+                    check(d and d["dead"] and pp in d["ban"] and d["books"] == 0 and d["board"] == 1 and d["over"] == 0 and not errs, f"Today's ready-made parlay with {pp} ruled out: a banner names him, the book and add-to-slip buttons are gone, the link to the board stays ({(d or {}).get('ban', '')[:64]!r})")
+                    await shot(pg, "inactive-parlay"); await ctx.close()
             if not t0["ud"]: skip(f"{label} shows no Under of the day right now")
             else:
                 who = t0["ud"]; pg, ctx, errs, _ = await page(path, who); t = await pg.evaluate(TOUT, who)

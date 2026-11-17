@@ -143,7 +143,7 @@ RISK_JS = r"""(function(){
   function stale(){
     var nameOf = function(el){ var t = (el.firstChild && el.firstChild.nodeType === 3) ? el.firstChild.nodeValue : el.textContent; return String(t || '').trim(); };
     var hidden = new Map();
-    document.querySelectorAll('article.play, .bestslip').forEach(function(card){
+    document.querySelectorAll('article.play, .bestslip, div.parlay').forEach(function(card){   // div.parlay (11/17): the ready-made parlays on Today and Model's Best were outside this - no banner, "Add all to FanDuel" still live
       var names = []; card.querySelectorAll('.who b, ul.plegs li b, ul.pl li b, ul.legs li b, span.nm').forEach(function(e){ var n = nameOf(e); if (n && names.indexOf(n) < 0) names.push(n); });
       card.querySelectorAll('[data-k]').forEach(function(e){ var n = String(e.getAttribute('data-k') || '').split('|')[0].trim(); if (n && names.indexOf(n) < 0) names.push(n); });
       var out = names.filter(function(n){ var v = verdict(n, null); return v && v.level === 'block'; });
@@ -216,6 +216,8 @@ RISK_CSS = r"""
 .bsrzone{margin:0 0 8px;padding:7px 10px;border-radius:8px;background:color-mix(in srgb,#c98a12 16%,transparent);border:1px solid #c98a12;font-size:12.5px} .bsrdead{margin:0 0 8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,#d7332a 18%,transparent);border:1px solid #d7332a;color:inherit;font-size:13px;font-weight:600} .bsr-dead{outline:2px solid #d7332a;outline-offset:-2px} .bsrhid{grid-column:1/-1;margin:6px 0;font-size:12.5px;color:#d7332a} .bsrc{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:0;text-transform:none;vertical-align:middle;white-space:nowrap;cursor:help}
 .bsr-block{background:#b3261e;color:#fff} .bsr-warn{background:#f6e3b4;color:#6b4a00} .bsr-good{background:#dcefdc;color:#1f5d2b}
 button.bsrblock,a.bsrblock{opacity:.35;filter:grayscale(1)}
+.parlay.bsr-dead .pfoot .fdb,.parlay.bsr-dead .pfoot .dkb,.parlay.bsr-dead .pfoot .hrb,.parlay.bsr-dead .pfoot a.more[href*="/build/?"]{display:none}
+.parlay > .bsrdead{position:relative;z-index:1;background:color-mix(in srgb,#d7332a 22%,var(--card,#fff))}
 #bsrpill{position:fixed;left:12px;right:12px;bottom:calc(var(--bs-tabs, 0px) + 74px);z-index:65;max-width:420px;margin:0 auto;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);font:14px/1.4 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;overflow:hidden}
 #bsrpill.warn{background:#fff4d6;color:#4d3600;border:1px solid #e3c477} #bsrpill.bad{background:#fde7e5;color:#5c120d;border:1px solid #e8a39d}
 #bsrpill .bsrh{padding:10px 14px;font-weight:700} #bsrpill .bsrb{display:none;padding:0 14px 12px} #bsrpill.open .bsrb{display:block}
