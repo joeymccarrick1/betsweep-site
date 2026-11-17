@@ -471,9 +471,12 @@ a{color:var(--ink)}
     HOUSE.forEach(function(h){ var c = document.getElementById('h' + h.id); if(!c) return; var x = stateOf(h);
       (h.legs || []).forEach(function(l, i){ var li = c.querySelector('li[data-i="' + i + '"]'), s = gradeLeg(l); if(li){ li.classList.toggle('hit', s === 'hit'); li.classList.toggle('dead', s === 'dead'); } });
       var st = c.querySelector('.hst'); if(!st) return;
-      st.textContent = x.st === 'cashed' ? 'Cashed' : x.st === 'busted' ? 'Busted · ' + x.hits + ' of ' + x.n + ' hit' : x.st === 'done' ? 'Final' : x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : st.getAttribute('data-pre') || '';
+      // 11/17: with no word from the score feed the clock still knows the slip has started - it kept "Tail on FanDuel" on a slip whose game was over
+      var kos = (h.legs || []).map(function(l){ return +l.ko || 0; }).filter(Boolean), f0 = kos.length ? Math.min.apply(null, kos) : 0, l0 = kos.length ? Math.max.apply(null, kos) : 0, nowH = Date.now();
+      var byClock = x.st !== 'open' ? '' : (l0 && nowH >= l0 + 4.5 * 36e5) ? 'Final · grading' : (f0 && nowH >= f0) ? 'In play' : '';
+      st.textContent = x.st === 'cashed' ? 'Cashed' : x.st === 'busted' ? 'Busted · ' + x.hits + ' of ' + x.n + ' hit' : x.st === 'done' ? 'Final' : x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : byClock || st.getAttribute('data-pre') || '';
       st.className = 'hst ' + x.st; c.classList.toggle('over', settled(x)); c.hidden = x.st === 'busted';   // owner 11/16: a busted slip comes off the page (it is under Lost on Today)
-      var t = c.querySelector('a.tail'); if(t && x.st !== 'open') t.hidden = true; });
+      var t = c.querySelector('a.tail'); if(t && (x.st !== 'open' || byClock)) t.hidden = true; });
   }
   function grade(){ if(sort === 'sharp'){ gradeHouse(); return; } if(sig() !== SIG) render(); else gradeHouse(); }
   var busy = false, DONE = {};
