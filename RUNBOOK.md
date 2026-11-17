@@ -1197,3 +1197,19 @@ Tuesday roll) and reading what a phone shows.
   after grading that Today, Season and Receipts give the same Sweep record.
 - **Test:** tests/week_end.py (16: First TD before / during / after the week in light and dark, the parlay block on Today and on
   Model's Best, Today's wording, the record line). Add it to the pre-publish set.
+
+## 11/17, ~3 AM CT: the local page crawl had been opening nothing - use tests/local_gate.py
+
+- `SITE=./site python3 tests/site_crawl.py` only picks the list of pages from SITE; it loads them from a server on port 8801. With
+  nothing answering there it still wrote one row per page, printed "pages 488" and exited 0. Every local "488-page crawl ok" on
+  11/16 and 11/17 before 3 AM was that: no page had been opened. What did hold: the publish workflow runs the same crawl and
+  `gate.py` against the site clone with its own server before it pushes, and every publish passed that.
+- Now: `site_crawl.py` stops (exit 2) when nothing answers at its address, after a few retries. **`python3 tests/local_gate.py`**
+  serves ./site on a free port, borrows /data/price-moves.json from the clone (the price job writes that file straight to the live
+  site, so a fresh build lacks it and every page would report it missing), runs the crawl and the gate, and exits with the gate's
+  verdict. `SITE=<clone> python3 tests/local_gate.py` checks a published copy. It takes about three minutes for every page; a regex
+  argument limits it (`'^/(live|firsttd)/$'`).
+- First real local run (3 AM, the build that went out as main 23853f97): 488 pages, 0 problems; the published copy: 514 pages, 0.
+- **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
+  social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, and tests/local_gate.py.
