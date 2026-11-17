@@ -796,7 +796,7 @@ def sweep_block(IN, OUT, games):
         c = promo_card(p, f'The Daily Sweep · {lab.get(p.get("day"), "")}'.rstrip(" ·"), hero=True)
         if p.get("status") == "HIDDEN": c = c.replace('<article class="promo sweep"', '<article class="promo sweep" data-arch="1"', 1)   # archived by the owner: never the current card, still the "last" line
         cards.append(c.replace('<article class="promo sweep"', '<article class="promo sweep" hidden', 1))   # the script un-hides the right one; without JavaScript the teaser shows
-    rec = (f'Record <b>{R["w"]}–{R["l"]}</b> · {SW.fmt_u(R["u"])}' if R["n"] else "Record starts Tuesday" if R["pending"] else "Record starts with the first one")
+    rec = (f'Record <b>{R["w"]}–{R["l"]}</b> · {SW.fmt_u(R["u"])}' + (f' · {R["pending"]} to grade Tuesday' if R["pending"] else "") if R["n"] else "Record starts Tuesday" if R["pending"] else "Record starts with the first one")   # 11/17: the ones not graded yet are named beside the record
     first = "One house slip every game day: about four favorites, priced near +300. It posts here before kickoff and is graded in public, win or miss."
     html_ = (f'<section class="sec swhero" id="sweep" data-days="{E(json.dumps(days, separators=(",", ":")))}"><style>{SWEEP_CSS}</style>'
              f'<div class="swtop"><h2 class="t">The Daily Sweep <small class="tsub">one house slip every game day</small></h2><span class="swrec">{rec}</span></div>'
@@ -1021,6 +1021,9 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .pmini{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--ink)}
 .pmini:hover{border-color:var(--red)} .pmini b{font-family:var(--display);font-weight:700;font-size:17px} .pmini span{grid-column:2;grid-row:1/3;align-self:center;font-family:var(--display);font-weight:700;font-size:16px;text-align:right} .pmini em{font-style:normal;color:var(--mute);font-size:12.5px}
 .pmini.started,.parlay.started{opacity:.55}
+/* 11/17: a kicked-off game's parlay kept its "Add all to FanDuel" button (the book no longer takes it); once every game had kicked off the section was a list of bets nobody could place */
+.parlay.started .pfoot .fdb,.parlay.started .pfoot .dkb,.parlay.started .pfoot .hrb{display:none} .parlay.started .phd small::after{content:" · kicked off"}
+#parlay.alldone .ptwo,#parlay.alldone .seeall{display:none}
 .slate{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
 .game{display:grid;grid-template-columns:1fr auto;gap:1px 8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--ink);font-size:12.5px}
 .game:hover{border-color:var(--red)} .game .gk{color:var(--mute)} .game .gm{grid-column:1;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.01em} .game .gp{grid-column:1;color:var(--ink)} .game .gs{grid-column:1;color:var(--mute)}
@@ -1080,6 +1083,11 @@ def home_js(games):
     ['.play','.pmini','.parlay','.mbrow'].forEach(function(sel){ document.querySelectorAll(sel).forEach(function(el){ var g = el.getAttribute('data-gid'); if(g && started[g]) el.classList.add('started'); }); });
     document.querySelectorAll('.plays').forEach(function(grid){ var left = grid.querySelectorAll('.play:not(.started)').length; var note = grid.nextElementSibling;
       if(note && note.classList.contains('allstarted')) note.hidden = left > 0; });
+    // 11/17: every game's parlay has kicked off - on Today the section goes (the page already says the week is done); on Model's Best it says so in one line
+    var ps = document.getElementById('parlay');
+    if(ps && ps.querySelector('.parlay,.pmini') && !ps.querySelector('.parlay:not(.started),.pmini:not(.started)')){
+      if(document.getElementById('tdtitle')) ps.hidden = true;
+      else if(!ps.classList.contains('alldone')){ ps.classList.add('alldone'); var pn = document.createElement('p'); pn.className = 'none pdone'; pn.innerHTML = 'Every game on this week\'s board has kicked off, so none of its parlays can still be bet. Next week\'s post Tuesday. <a href="/receipts/" style="color:var(--ink)">How the week graded</a>'; ps.appendChild(pn); } }
   }
   if(window.BSLive) window.BSLive.start(GAMES, apply);
 })();

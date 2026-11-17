@@ -412,7 +412,7 @@ TODAY_JS = r"""<script>
   var shown = pick ? byDay[pick] : [];
   if(pick === today){ title.textContent = 'Today'; sub.textContent = 'Week ' + T.week + ' · ' + shortDay(pick) + ' · ' + shown.length + (shown.length === 1 ? ' game' : ' games'); }
   else if(pick){ title.textContent = 'Next up: ' + dayName(pick); sub.textContent = 'Week ' + T.week + ' · ' + shortDay(pick) + ' · ' + shown.length + (shown.length === 1 ? ' game' : ' games') + ' · nothing kicks off today'; }
-  else { title.textContent = 'Week ' + T.week + ' is in the books'; sub.textContent = 'Receipts grade Tuesday · the next slate lands Thursday morning'; }
+  else { title.textContent = 'Week ' + T.week + ' is in the books'; sub.textContent = 'Graded on Tuesday · next week\'s board posts the same day'; }   // 11/17: said "Thursday morning" while the short page said Tuesday; the roll is Tuesday
   var showG = {}; shown.forEach(function(g){ showG[g.gid] = 1; });
   document.querySelectorAll('.tdgame').forEach(function(el){ el.classList.toggle('show', !!showG[el.getAttribute('data-gid')]); });
   // 11/10 evening: on a day with three or more games every card folds to its head, the three numbers and the take ("More on this
@@ -421,13 +421,16 @@ TODAY_JS = r"""<script>
     var plays = [].slice.call(document.querySelectorAll('.tdgame.show .play[data-gap]')).sort(function(a, b){ return (+b.getAttribute('data-gap')) - (+a.getAttribute('data-gap')); }).slice(0, 3);
     if(plays.length){ var grid = document.getElementById('tdlooksgrid'); plays.forEach(function(p, i){ var c = p.cloneNode(true); c.classList.toggle('lead', i === 0); grid.appendChild(c); }); document.getElementById('tdlooks').hidden = false; } }
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.tdtog'); if(!b) return; var card = b.closest('.tdgame'); card.classList.toggle('open'); b.setAttribute('aria-expanded', card.classList.contains('open')); });
-  if(!shown.length){ none.hidden = false; none.innerHTML = '<div class="tdempty"><b>No games on the board.</b> The week is graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> page; Thursday morning\'s rebuild brings the next slate. Your <a href="/team/" style="color:var(--ink)">fantasy team</a> and the <a href="/trade/" style="color:var(--ink)">trade calculator</a> work all week.</div>'; }
+  if(!shown.length){ none.hidden = false; none.innerHTML = '<div class="tdempty"><b>No games on the board.</b> The week is graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> page; next week\'s board posts Tuesday and its prop prices fill in by Thursday. Your <a href="/team/" style="color:var(--ink)">fantasy team</a> and the <a href="/trade/" style="color:var(--ink)">trade calculator</a> work all week.</div>'; }
   // the rest of the week
   var wk = document.getElementById('tdweeklist') || {}; var html = '';
   dates.forEach(function(d){ if(d === pick) return; html += '<div class="tdwd"><b>' + esc(shortDay(d)) + (d < today ? ' · final' : '') + '</b><div class="g">' + byDay[d].map(function(g){ return '<a href="/boards/#g-' + esc(g.gid) + '" class="' + (d < today ? 'post' : '') + '">' + esc(g.away) + ' @ ' + esc(g.home) + '<small>' + esc((g.kick || '').replace(/^\w{3}\s*/, '')) + '</small></a>'; }).join('') + '</div></div>'; });
   if(html) wk.innerHTML = html; else if(document.getElementById('tdweek')) document.getElementById('tdweek').hidden = true;
   // kickoff countdown on each card (the live score chip takes over at kickoff)
-  function cd(){ var t = Date.now(); document.querySelectorAll('.tdcd[data-ko]').forEach(function(el){ var d = (+el.getAttribute('data-ko')) - t; if(!(d > 0)){ el.textContent = ''; return; }
+  function cd(){ var t = Date.now();
+    // 11/17: the lead parlay of a game that has kicked off can no longer be bet as built - it leaves Today (it sat here with its "Add all to FanDuel" button after the week was over)
+    var psx = document.getElementById('parlay'), plx = psx && psx.querySelector('.parlay[data-ko]'); if(plx && +plx.getAttribute('data-ko') && t >= +plx.getAttribute('data-ko')) psx.hidden = true;
+    document.querySelectorAll('.tdcd[data-ko]').forEach(function(el){ var d = (+el.getAttribute('data-ko')) - t; if(!(d > 0)){ el.textContent = ''; return; }
     var m = Math.floor(d / 60000), h = Math.floor(m / 60), dd = Math.floor(h / 24);
     el.textContent = dd >= 1 ? 'in ' + dd + 'd ' + (h % 24) + 'h' : h >= 1 ? 'in ' + h + 'h ' + (m % 60) + 'm' : 'in ' + m + 'm'; }); }
   cd(); setInterval(cd, 30000);

@@ -1171,3 +1171,29 @@ Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on
   leg as a miss for a past week. Fixing that means a touchdown column for returns in the game log tab - the owner's sheet.
 - Tests: social_grade 28 (a punt-return scorer), finals_build 17, live_finals 31 (a return touchdown from the build and from an
   ESPN-shaped box), live_regrade 23.
+
+## 11/17, ~3 AM CT: a finished week no longer offers bets on games that are over (end-of-week sweep of every page)
+
+Done by opening every main page on a finished week with the score feed cut off (the state the site is in from Monday night to the
+Tuesday roll) and reading what a phone shows.
+
+- **First TD** had no idea of time at all: "Most likely to score first" and "Best edges vs FanDuel" listed finished games' players
+  all week, and 31 "add to slip" FanDuel links were live on a week with every game over. Each game section and list row now carries
+  its kickoff time; by the clock a kicked-off game is marked "Kicked off", loses its FanDuel buttons and has its chip dimmed, its
+  players leave the two lists and the next ones move up (60 rows are built, 12 shown), and when nothing is left the lists say so.
+- **Best parlay** (Today and Model's Best): a kicked-off game's parlay only dimmed and kept "Add all to FanDuel". It now loses its
+  bet buttons and says "kicked off"; Today drops its lead parlay once that game has kicked off; Model's Best, once every game has,
+  shows one line ("...none of its parlays can still be bet. Next week's post Tuesday.") instead of the cards.
+- **The Daily Sweep record** on Today read "Record 1-0 · +3.0u" above a slip marked Missed: the two Sweeps that had lost were not
+  graded yet (grading is Tuesday's). The line now names them: "Record 1-0 · +3.0u · 2 to grade Tuesday".
+- **When does next week arrive?** Today said "the next slate lands Thursday morning" (twice), the short page "Next week's picks
+  land Tuesday". The roll is Tuesday; Today now says "Graded on Tuesday · next week's board posts the same day" and "...posts
+  Tuesday and its prop prices fill in by Thursday".
+- **Social's house slips** kept "Tail on FanDuel" on a slip whose game was over whenever the score feed did not answer. By the
+  clock the slip now reads "In play" / "Final · grading" and the tail link goes at kickoff.
+- **Left as they are (looked at, fine or minor):** Line shop's opening sentence counts legs "right now" beside "Every listed game
+  has kicked off"; Usage still links two FanDuel prices for "best-priced leg this week"; Missed by one and Usage are a week behind
+  until the roll (they are weekly pages); the Season page's Daily Sweep line is last Tuesday's and is rebuilt at the roll - check
+  after grading that Today, Season and Receipts give the same Sweep record.
+- **Test:** tests/week_end.py (16: First TD before / during / after the week in light and dark, the parlay block on Today and on
+  Model's Best, Today's wording, the record line). Add it to the pre-publish set.

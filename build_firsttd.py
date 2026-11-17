@@ -87,7 +87,9 @@ def kick_of(g):
 GINFO = {}
 for g in GAMES:
     k = frozenset([g["away_team"], g["home_team"]]); kick, sortk = kick_of(g)
-    GINFO[k] = {"away": g["away_team"], "home": g["home_team"], "kick": kick, "sort": sortk, "stadium": g.get("stadium", "")}
+    try: ko_ms = int(datetime.datetime.fromisoformat(g["gameday"] + "T" + g["gametime"]).replace(tzinfo=__import__("zoneinfo").ZoneInfo("America/New_York")).timestamp() * 1000)   # the schedule is in Eastern time
+    except Exception: ko_ms = 0
+    GINFO[k] = {"away": g["away_team"], "home": g["home_team"], "kick": kick, "sort": sortk, "stadium": g.get("stadium", ""), "ko": ko_ms}
 
 # ---- FanDuel first-TD prices and betslip IDs ----
 FD = {}   # normname -> {odds, link, mid, sid, upd}
@@ -122,7 +124,7 @@ for gk, ps in bygame.items():
         fd = FD.get(normname(q["n"]), {})
         imp = am2p(fd.get("odds")); edge = (pr - imp) if imp is not None else None
         verdict = ("VALUE" if edge >= 0.03 else "FAIR" if edge >= 0 else "PASS") if edge is not None else ""
-        rows.append({**q, "game": f"{a} @ {b}", "gid": f"{a}-{b}", "a": a, "b": b, "kick": gi["kick"] if gi else "", "sort": gi["sort"] if gi else "9",
+        rows.append({**q, "game": f"{a} @ {b}", "gid": f"{a}-{b}", "a": a, "b": b, "kick": gi["kick"] if gi else "", "sort": gi["sort"] if gi else "9", "ko": gi["ko"] if gi else 0,
                      "tshare": team_tot[q["t"]] / tot, "pr": pr, "fair": fair_odds(pr), "fd": fd.get("odds"), "imp": imp, "edge": edge, "verdict": verdict,
                      "mid": fd.get("mid", ""), "sid": fd.get("sid", ""), "link": fd.get("link", "")})
 rows.sort(key=lambda r: (r["sort"], r["gid"], -r["pr"]))
@@ -159,14 +161,14 @@ def edge_cell(r):
 cards, nav = [], []
 for gid in dict.fromkeys(r["gid"] for r in rows):
     rs = [r for r in rows if r["gid"] == gid]; a, b = rs[0]["a"], rs[0]["b"]
-    nav.append(f'<a href="#ftd-{gid}">{a}·{b}</a>')
+    nav.append(f'<a href="#ftd-{gid}">{a}·{b}</a>'); ko = rs[0].get("ko") or 0
     ta = sum(r["lam"] for r in rs if r["t"] == a); tb = sum(r["lam"] for r in rs if r["t"] == b); tot = ta + tb
     trs = "".join(
         f'<tr class="{"lead" if i < 3 else ""}"><td class="rk">{i+1}</td><td class="plc"><span class="plw">{badge(r["t"])}<span>{E(r["n"])}</span>{pos_b(r["p"])}</span></td>'
         f'<td class="lam" title="projected rushing + receiving TD">{r["lam"]:.2f}</td><td class="pr"><b>{r["pr"]*100:.1f}%</b></td><td class="fair">{r["fair"]}</td>'
         f'<td class="fdp">{odds_str(r["fd"]) or "—"}</td>{edge_cell(r)}<td class="go">{fdlink(r, "Add to slip")}</td></tr>'
         for i, r in enumerate(rs))
-    cards.append(f'''<section class="ftd" id="ftd-{gid}">
+    cards.append(f'''<section class="ftd" id="ftd-{gid}" data-ko="{ko or ""}">
  <div class="fhd" style="--ca:{TEAMCOL.get(a, ("#333","#333"))[0]};--cb:{TEAMCOL.get(b, ("#333","#333"))[0]}">
   <h2>{badge(a)} {E(NAMES.get(a, a))} <small>@</small> {badge(b)} {E(NAMES.get(b, b))}</h2>
   <p>{E(rs[0]["kick"])}{" · " if rs[0]["kick"] else ""}model: {a} {ta:.2f} TD, {b} {tb:.2f} TD ({tot:.2f} total) · {a} scores first {ta/tot*SCALE*100:.0f}%, {b} {tb/tot*SCALE*100:.0f}%, D/ST or no TD {(1-SCALE)*100:.1f}%</p>
@@ -174,14 +176,15 @@ for gid in dict.fromkeys(r["gid"] for r in rows):
  <div class="tw"><table><thead><tr><th></th><th>Player</th><th title="projected rushing + receiving TD">Proj TD</th><th>First TD</th><th>Fair</th><th>FanDuel</th><th>Book %</th><th>Edge</th><th></th></tr></thead><tbody>{trs}</tbody></table></div>
 </section>''')
 
-likely = sorted(rows, key=lambda r: -r["pr"])[:12]
-edges = sorted([r for r in rows if r["edge"] is not None], key=lambda r: -r["edge"])[:12]
+TOPN = 12
+likely = sorted(rows, key=lambda r: -r["pr"])[:60]            # 11/17: the page shows the first 12 whose game has not kicked off (it listed finished games' players all week)
+edges = sorted([r for r in rows if r["edge"] is not None], key=lambda r: -r["edge"])[:60]
 def strip(rs, kind):
     if not rs: return '<li class="none">FanDuel first-TD prices load into the sheet when the odds refresh runs (usually Thursday); edges appear here then.</li>'
     out = []
-    for r in rs:
+    for i, r in enumerate(rs):
         price = f'<small>FD {odds_str(r["fd"])} · {r["edge"]*100:+.1f}</small>' if r["edge"] is not None else f'<small>fair {r["fair"]}</small>'
-        out.append(f'<li><a href="#ftd-{r["gid"]}">{badge(r["t"])}<span class="n">{E(r["n"])}</span>{pos_b(r["p"])}<b>{r["pr"]*100:.1f}%</b>{price}</a>{fdlink(r, "+ slip") if kind == "edge" else ""}</li>')
+        out.append(f'<li data-ko="{r.get("ko") or ""}"{" hidden" if i >= TOPN else ""}><a href="#ftd-{r["gid"]}">{badge(r["t"])}<span class="n">{E(r["n"])}</span>{pos_b(r["p"])}<b>{r["pr"]*100:.1f}%</b>{price}</a>{fdlink(r, "+ slip") if kind == "edge" else ""}</li>')
     return "".join(out)
 
 CSS = """
@@ -234,8 +237,29 @@ CSS = """
 .ftdwrap .how dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:6px 0 0}
 .ftdwrap .how dt{font-weight:700}.ftdwrap .how dd{margin:0}
 .ftd .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* 11/17: a game that has kicked off says so and loses its FanDuel buttons (the page offered "add to slip" on finished games) */
+.ftd.started .fhd h2::after{content:"Kicked off";margin-left:10px;font:700 11px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:4px 9px;vertical-align:middle;white-space:nowrap}
+.ftd.started td.go a,.ftd.started .fdgo{display:none} .ftdwrap .strips li[hidden]{display:none}
 @media(max-width:700px){.ftd th:nth-child(5),.ftd th:nth-child(7),.ftd td.fair,.ftd td.imp{display:none}.ftd th:nth-child(3),.ftd td.lam,.ftd th:nth-child(1),.ftd td.rk{display:none}.ftd table{font-size:13px}.ftd td,.ftd th{padding:6px 5px}.ftd td.edge.none small{font-size:10px}.ftd .fhd h2{font-size:19px}}
 """
+FTD_JS = r"""<script>
+(function(){
+  // 11/17: by the clock - players whose game has kicked off leave the two lists at the top (the next ones move up), a kicked-off game is
+  // marked and loses its FanDuel buttons, its chip is dimmed. When nothing is left the lists say so.
+  var TOPN = __TOPN__;
+  function on(el){ var k = +el.getAttribute('data-ko'); return !!k && Date.now() >= k; }
+  function run(){
+    [].forEach.call(document.querySelectorAll('.ftd[data-ko]'), function(s){ s.classList.toggle('started', on(s)); });
+    [].forEach.call(document.querySelectorAll('.ftdwrap .strips ul'), function(ul){ var n = 0, rows = ul.querySelectorAll('li[data-ko]');
+      [].forEach.call(rows, function(li){ var show = !on(li) && n < TOPN; li.hidden = !show; if(show) n++; });
+      var note = ul.querySelector('li.alldone');
+      if(rows.length && !n){ if(!note){ note = document.createElement('li'); note.className = 'none alldone'; note.textContent = "Every game has kicked off. Next week's first-touchdown prices usually land by Thursday."; ul.appendChild(note); } }
+      else if(note) note.parentNode.removeChild(note); });
+    [].forEach.call(document.querySelectorAll('nav.nav a[href^="#ftd-"]'), function(a){ var s = document.getElementById(a.getAttribute('href').slice(1)); a.classList.toggle('played', !!(s && s.classList.contains('started'))); });
+  }
+  run(); setInterval(run, 60000);
+})();
+</script>""".replace("__TOPN__", str(TOPN))
 body = f'''<div class="ftdwrap">
  <div class="strips">
   <div><h3>Most likely to score first<small>whole slate</small></h3><ul>{strip(likely, "likely")}</ul></div>
@@ -247,7 +271,8 @@ body = f'''<div class="ftdwrap">
   <p style="margin-top:8px;color:var(--mute);font-size:13px">First TD is a high-variance market by nature: the best number on the slate is usually under 20%. Treat these as single legs or small plays, and shop the price. Built {stamp} CT from the live sheet. Information only, not a guarantee; 21+, please bet responsibly.</p>
  </div>
  {"".join(cards)}
-</div>'''
+</div>
+{FTD_JS}'''
 
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep First TD</title>")
