@@ -1104,7 +1104,34 @@ Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on
 - **Tests:** tests/live_finals.py (29 checks, made-up final and box score for one game of whatever week is built: finals in the
   build with ESPN cut off; score only; nothing at all; ESPN answering; a real loss; a void; in play; end of regulation; no feed)
   and tests/finals_build.py (16 checks, no network). Both are in the pre-publish set from now on.
-- **Known, next:** a game total in a slip ("Over 38.5") is matched by its number alone, and most games carry that number as an
-  alternate line - so the Live page can track another game's total (the builder fixed this on 11/10 with a game map the Live page
-  does not read yet). Touchdowns on returns are not counted as anytime touchdowns (same as before, and as the Social grader).
-  Weeks already rolled keep whatever was last saved for them; they can be re-graded from /data/box-w<W>.json.
+- **Known, next:** touchdowns on returns are not counted as anytime touchdowns (same as before, and as the Social grader).
+  Weeks already rolled keep whatever was last saved for them; they can be re-graded from /data/box-w<W>.json. My BetSweep grades a
+  past week's did-not-play leg as a loss (the weekly box file has no did-not-play list).
+
+## 11/17, ~2:30 AM CT: Live follows a slip's total in the right game; the first screen is the game
+
+- **A game total was matched by its number alone.** "Over 38.5|Total|39" is the main or an alternate total of most games, and the
+  Live page took the first game that had it: Monday's Daily Sweep total (BAL-LAC over 38.5, -125) was being tracked against ARI-LA's
+  over 38.5 (-108, final 40) - it read "hit" before Monday's game kicked off - and My week counted it once per game. The builder
+  has kept a game map for such keys since 11/10 (a saved slip's `g = {key: [gid, ...]}`, the builder slip's `bs_slipg_w<W>`); the
+  Live page now reads it (`resolveSlip()`), and with nothing on record uses the one game the slip's other legs are in (a same-game
+  slip), else the first game as before. It also WRITES the map: adding a leg with + from a game card, pasting a slip (the team
+  named with the total decides the game) and removing a leg with × all keep the record in step, for saved slips and the builder
+  slip. "In a slip" marks, My week and pins go by the leg in its game (`legSlips()`, `isStar()`), not the bare key. The builder
+  slip's keys are kept as a list (they were de-duplicated on every save from this page).
+- **A game with nothing in the picks hid its other legs** ("Nothing tracked for this game in the picks yet." and no "Other legs").
+  The list is there now.
+- **First screen** (same treatment the other pages got): the tools are one line (status, "Import a slip", ↻; 44px buttons) instead
+  of a card; the hub box is not drawn when its only tab would be "What changed - nothing new" (it is back the moment there is
+  something new, a slip, or a pinned leg); the status line gives one time ("Live scores as of ..." while a game is on, else
+  "Updated ..."); the chips under the title dim finished games, mark the game in play and bring it into view; a jump lands the card
+  just under the header and the chip row (the title above the chips scrolls away, so the spot is measured after the move). A game
+  in play now starts 228px from the top of a phone screen (was 375).
+- **An open card of a game in play or finished** leads with the field / box-score button and the leg lists; its pregame notes
+  (home, field, rest, coaches, tested spots, forecast) come last under "Pregame notes", folded. Before kickoff nothing changed.
+- **Tests:** tests/live_gamemap.py (13: on record, same-game fallback, My week counts once, the builder slip, + from a card, × in a
+  slip, a pasted total) and tests/live_first_screen.py (35: the three states in light and dark, chips, jumps, tools, notes).
+- **The full set to run before a publish is now:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py,
+  social_feed.py, social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, and the crawl (`SITE=./site python3 tests/site_crawl.py`).
+  The live tests take `SITE=<a published copy>` to check what went out.

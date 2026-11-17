@@ -6,14 +6,15 @@ were written into the reader's saved season record.
 
 Everything here is made up from the built page's own data, so it runs in any week: one game is kept, given a kickoff, a final score and
 a box score invented so that chosen legs win, and the page clock is set around that kickoff. ESPN is faked or cut off per case.
-  python3 tests/live_finals.py [shots_dir]"""
+  python3 tests/live_finals.py [shots_dir]        (SITE=/path/to/a/published/copy to check that instead of ./site)"""
 import asyncio, functools, glob, http.server, json, math, os, re, sys, threading
 from playwright.async_api import async_playwright
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
+ROOT = os.environ.get("SITE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 PORT = 8861; ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 
-SRC = open(glob.glob(os.path.join(ROOT, "live", "data-*.js"))[0]).read(); _m = re.match(r"\s*window\.__LV\s*=\s*", SRC); D0 = json.loads(SRC[_m.end():].rstrip().rstrip(";"))
+_ref = re.search(r"/live/(data-[0-9a-f]+\.js)", open(os.path.join(ROOT, "live", "index.html")).read())      # the copy the page loads (a published folder keeps older ones too)
+SRC = open(os.path.join(ROOT, "live", _ref.group(1)) if _ref else glob.glob(os.path.join(ROOT, "live", "data-*.js"))[0]).read(); _m = re.match(r"\s*window\.__LV\s*=\s*", SRC); D0 = json.loads(SRC[_m.end():].rstrip().rstrip(";"))
 WEEK = D0["week"]; ALL = D0["legs"] + D0.get("extra", [])
 def key(l): return f"{l['pl']}|{l['m']}|{int(math.floor((l.get('ln') or 1) + 0.5))}"
 FIRSTKEY = {}

@@ -242,9 +242,14 @@ table.lvt .chip.slip{background:var(--ink);border-color:var(--ink);color:var(--b
 table.lvt .chip.wt{border-style:dashed} .sc2 .scp.wait b{font-size:20px;color:var(--mute)} .sc2 .scp.wait small{white-space:normal}
 .lvnote{margin:0;padding:8px 14px 2px;font-size:12px;line-height:1.45;color:var(--mute)}
 .lvbar a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
-.lvbar.lvdone{display:block;font-size:13.5px;line-height:1.5} .lvbar.lvdone > span{display:block}
-.lvbar .lvgo{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px} .lvbar .lvgo a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1.5px solid var(--red);border-radius:99px;color:var(--red);font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+.lvbar.lvdone{display:block;font-size:13.5px;line-height:1.5} .lvbar.lvdone > span:first-child{display:block}
+.lvbar.lvdone > .lvgo{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px} .lvbar .lvgo a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1.5px solid var(--red);border-radius:99px;color:var(--red);font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
 .lvbar .lvgo a:first-child{background:var(--red);color:#fff}
+/* 11/17: the tools (import, refresh, "updated") were a card of their own above the games; they are one quiet line now */
+.lvbar.lvtools{background:none;border:0;padding:0 2px;margin-bottom:10px;gap:8px;flex-wrap:nowrap;align-items:center;justify-content:flex-start}
+.lvbar.lvtools .upd{order:-1;flex:1 1 auto;min-width:0;font-size:11.5px;line-height:1.35}
+.lvbar.lvtools .rfr{flex:none;min-height:40px;padding:0 14px;border-radius:99px;background:var(--card)} .lvbar.lvtools #lvrefresh{min-width:40px;padding:0 10px;font-size:16px}
+nav.nav a.livenow{border-color:var(--red)} nav.nav a.livenow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:6px;flex:none}
 .lg2.jumped{box-shadow:0 0 0 2px var(--red)} @media (prefers-reduced-motion:no-preference){ .lg2{transition:box-shadow .5s} }
 table.lvt td.st{width:30px} table.lvt td.st .add{display:block;font:inherit;font-size:15px;font-weight:700;line-height:1;background:none;border:1.5px solid var(--line);border-radius:5px;color:var(--mute);cursor:pointer;padding:1px 5px;margin:4px auto 0} table.lvt td.st .add.in{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 table.lvt td.st .rm{font:inherit;font-size:14px;line-height:1;background:none;border:0;color:var(--mute);cursor:pointer;padding:4px 6px} table.lvt td.st .rm:hover{color:var(--bad)}
@@ -409,7 +414,7 @@ JS = r"""
   // was graded against 0-0 and an empty box score - five winning legs read "0 hit · 5 dead" and were saved into My week / My season as losses.
   // HAVE[gid] = 'espn' once ESPN's box score for that game is in BOX. FB = the finals the build holds (finals.py): score, each leg
   // player's stat line, who did not play (VOID). A finished game with neither is "not graded yet" - shown as waiting, never as a loss.
-  var HAVE = {}, FB = D.fb || {}, VOID = {}, NEEDSUM = {}, BOXTRY = {};
+  var HAVE = {}, FB = D.fb || {}, VOID = {}, NEEDSUM = {}, BOXTRY = {}, CHIPSEEN = false;
   Object.keys(FB).forEach(function(gid){ var fb = FB[gid]; if(!fb || !fb.box) return;
     Object.keys(fb.box).forEach(function(n){ var r = fb.box[n]; BOX[norm(n)] = {pass: r[0], ptd: r[1], int: r[2], rush: r[3], rec: r[5], recy: r[6], td: r[4] + r[7], long: null, cmp: r[8], patt: r[9], ratt: r[10], tgt: r[11], name: n, fb: 1}; });
     (fb.dnp || []).forEach(function(n){ VOID[norm(n)] = gid; }); });
@@ -422,18 +427,38 @@ JS = r"""
   var SKEY = 'bs_livestar_w' + D.week, STARS = {}; try { (JSON.parse(localStorage.getItem(SKEY) || '[]')).forEach(function(k){ STARS[k] = true; }); } catch(e){}
   function saveStars(){ try { localStorage.setItem(SKEY, JSON.stringify(Object.keys(STARS))); } catch(e){} }
   function legKey(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
-  var SLIP = {}; function loadSlip(){ SLIP = {}; try { (JSON.parse(localStorage.getItem('bs_slipk_w' + D.week) || '[]')).forEach(function(k){ SLIP[k] = true; }); } catch(e){} }
-  function saveBuilderSlip(){ try { localStorage.setItem('bs_slipk_w' + D.week, JSON.stringify(Object.keys(SLIP))); } catch(e){} }
+  var SLIP = {}, BKEYS = []; function loadSlip(){ SLIP = {}; BKEYS = []; try { (JSON.parse(localStorage.getItem('bs_slipk_w' + D.week) || '[]')).forEach(function(k){ SLIP[k] = true; BKEYS.push(k); }); } catch(e){} }
+  function saveBuilderSlip(){ try { localStorage.setItem('bs_slipk_w' + D.week, JSON.stringify(BKEYS)); } catch(e){} }
   // ---- slips: the builder slip (shared with the boards / builder) plus any number of slips built or imported here; each is tracked live as one parlay ----
-  var SLKEY = 'bs_slips_w' + D.week, SLIPS = [], INSLIP = {}, LEGIDX = {};
-  legs.concat(D.extra || []).forEach(function(l){ var k = legKey(l); if(!(k in LEGIDX)) LEGIDX[k] = l; });
+  var SLKEY = 'bs_slips_w' + D.week, SLIPS = [], INSLIP = {}, INLEG = {}, LEGIDX = {}, KEYG = {};
+  legs.concat(D.extra || []).forEach(function(l){ var k = legKey(l); if(!(k in LEGIDX)) LEGIDX[k] = l; var m = KEYG[k] = KEYG[k] || {}; if(!(l.g in m)) m[l.g] = l; });
+  // 11/17: a game total's key ("Over 38.5|Total|39") is the main or an alternate total of most games, and the key alone went to the FIRST
+  // game with that number - Monday's Daily Sweep total (BAL-LAC, over 38.5) was tracked here against ARI-LA's. The builder has kept a
+  // game map for such keys since 11/10 (a saved slip's g = {key: [gid, ...]} in slip order; the builder slip's bs_slipg_w<W>); this page
+  // now reads and writes it. With no game on record: the one game the slip's other legs are in, else the first game as before.
+  function shared(k){ var m = KEYG[k]; return !!m && Object.keys(m).length > 1; }
+  function builderG(){ try { var g = JSON.parse(localStorage.getItem('bs_slipg_w' + D.week) || '{}'); return g && typeof g === 'object' && !Array.isArray(g) ? g : {}; } catch(e){ return {}; } }
+  function saveBuilderG(g){ try { localStorage.setItem('bs_slipg_w' + D.week, JSON.stringify(g)); } catch(e){} }
+  function resolveSlip(sl){   // one entry per key, in slip order: the leg it stands for, or null when this week's page does not carry it
+    var gmap = sl.builder ? builderG() : (sl.g || {}), seen = {}, used = [], homes = {};
+    sl.keys.forEach(function(k){ var m = KEYG[k]; if(m){ var gs = Object.keys(m); if(gs.length === 1) homes[gs[0]] = 1; } });
+    var hs = Object.keys(homes), home = hs.length === 1 ? hs[0] : null;
+    return sl.keys.map(function(k){ var m = KEYG[k]; if(!m) return null; var gs = Object.keys(m), n = seen[k] = (seen[k] || 0) + 1, want = (gmap[k] || [])[n - 1], l = null;
+      if(want != null && m[want] && used.indexOf(m[want]) < 0) l = m[want];
+      else if(gs.length > 1 && home && m[home] && used.indexOf(m[home]) < 0) l = m[home];
+      else { for(var x = 0; x < gs.length; x++){ if(used.indexOf(m[gs[x]]) < 0){ l = m[gs[x]]; break; } } }
+      if(l) used.push(l); return l; }); }
+  function legSlips(l){ var k = legKey(l); return (shared(k) ? INLEG[k + '@' + l.g] : INSLIP[k]) || null; }   // the slips THIS leg is in (for a shared key: in this game)
+  function starKey(l){ var k = legKey(l); return shared(k) ? k + '@' + l.g : k; }
+  function isStar(l){ return !!STARS[starKey(l)]; }
   function loadSlips(){ loadSlip(); SLIPS = []; try { SLIPS = JSON.parse(localStorage.getItem(SLKEY) || '[]'); if(!Array.isArray(SLIPS)) SLIPS = []; } catch(e){ SLIPS = []; }
     SLIPS = SLIPS.filter(function(s){ return s && s.id && Array.isArray(s.keys); });
-    INSLIP = {}; Object.keys(SLIP).forEach(function(k){ (INSLIP[k] = INSLIP[k] || []).push('builder'); }); SLIPS.forEach(function(s){ s.keys.forEach(function(k){ (INSLIP[k] = INSLIP[k] || []).push(s.id); }); }); }
+    INSLIP = {}; INLEG = {};
+    allSlips().forEach(function(sl){ var ls = resolveSlip(sl); sl.keys.forEach(function(k, i){ if((INSLIP[k] = INSLIP[k] || []).indexOf(sl.id) < 0) INSLIP[k].push(sl.id); if(ls[i]){ var a = k + '@' + ls[i].g; (INLEG[a] = INLEG[a] || []).push(sl.id); } }); }); }
   function saveSlips(){ try { localStorage.setItem(SLKEY, JSON.stringify(SLIPS)); } catch(e){} }
   var BMETA = {}; try { BMETA = JSON.parse(localStorage.getItem('bs_slipmeta_w' + D.week) || '{}') || {}; } catch(e){}
   function saveBMeta(){ try { localStorage.setItem('bs_slipmeta_w' + D.week, JSON.stringify(BMETA)); } catch(e){} }
-  function allSlips(){ var out = []; var bk = Object.keys(SLIP); if(bk.length) out.push({id: 'builder', name: BMETA.name || 'Builder slip', keys: bk, odds: BMETA.odds, stake: BMETA.stake, co: BMETA.co, cot: BMETA.cot, ho: BMETA.ho, builder: true}); return out.concat(SLIPS); }
+  function allSlips(){ var out = []; var bk = BKEYS.slice(); if(bk.length) out.push({id: 'builder', name: BMETA.name || 'Builder slip', keys: bk, odds: BMETA.odds, stake: BMETA.stake, co: BMETA.co, cot: BMETA.cot, ho: BMETA.ho, builder: true}); return out.concat(SLIPS); }
   function slipById(id){ return id === 'builder' ? allSlips()[0] : SLIPS.filter(function(s){ return s.id === id; })[0]; }
   // owner 11/10 (deep dive, "win cards to share when a slip hits"): a cashed slip gets "Share the win" - a 1080x1350 picture drawn on a
   // canvas (no library): CASHED, the ticket price, the legs with their ticks, the stake and return when the visitor typed them, and
@@ -472,15 +497,26 @@ JS = r"""
   }
   window.__bsWin = function(keys, name, odds, stake){ winCard({id: 'demo', name: name, keys: keys, odds: odds, stake: stake}, document.createElement('button')); return window.__bsWinCard; };   // tests/deepdive_pages.py
   window.__bsWinKeys = function(n){ return Object.keys(LEGIDX).slice(0, n || 4); };
-  function toggleIn(id, k){
-    if(id === 'builder'){ if(SLIP[k]) delete SLIP[k]; else SLIP[k] = true; saveBuilderSlip(); }
-    else { var s = slipById(id); if(!s) return; var i = s.keys.indexOf(k); if(i >= 0) s.keys.splice(i, 1); else s.keys.push(k); saveSlips(); }
+  function toggleIn(id, k, gid){   // gid: the game of the leg that was tapped (matters only for a key more than one game uses)
+    var s = id === 'builder' ? {builder: true, keys: BKEYS} : slipById(id); if(!s) return;
+    var sh = !!gid && shared(k), ls = resolveSlip(s), g = s.builder ? builderG() : (s.g || {}), i = -1;
+    s.keys.forEach(function(kk, n){ if(i < 0 && kk === k && (!sh || (ls[n] && ls[n].g === gid))) i = n; });
+    var at = []; s.keys.forEach(function(kk, n){ if(kk === k) at.push(n); });   // where this key sits in the slip, in order
+    if(sh || g[k]){ var arr = at.map(function(n, j){ return (g[k] || [])[j] || (ls[n] ? ls[n].g : null); });   // put the game of every copy on record before changing anything
+      if(i >= 0) arr.splice(at.indexOf(i), 1); else arr.push(gid || null);
+      if(arr.length && arr.some(Boolean)) g[k] = arr; else delete g[k]; }
+    if(i >= 0) s.keys.splice(i, 1); else s.keys.push(k);
+    if(s.builder){ SLIP = {}; BKEYS.forEach(function(kk){ SLIP[kk] = true; }); saveBuilderSlip(); saveBuilderG(g); }
+    else { if(Object.keys(g).length) s.g = g; else delete s.g; saveSlips(); }
     loadSlips(); render(); }
-  function newSlip(name, keys, odds, stake){ var px = {}; (keys || []).forEach(function(k){ var l = LEGIDX[k]; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });
-    var s = {id: 's' + Date.now().toString(36), name: name || ('Slip ' + (SLIPS.length + 1)), keys: keys || [], odds: odds || null, stake: stake || null, px: px, made: Date.now()}; SLIPS.push(s); saveSlips(); loadSlips(); return s; }
+  function gmapOf(ls){ var g = {}; ls.forEach(function(l){ var k = legKey(l); if(shared(k)) (g[k] = g[k] || []).push(l.g); }); return g; }
+  function newSlip(name, keys, odds, stake, g){ var s = {id: 's' + Date.now().toString(36), name: name || ('Slip ' + (SLIPS.length + 1)), keys: keys || [], odds: odds || null, stake: stake || null, px: {}, made: Date.now()};
+    if(g && Object.keys(g).length) s.g = g;
+    resolveSlip(s).forEach(function(l, i){ if(l && l.o != null) s.px[s.keys[i]] = {o: l.o, p: l.p}; });
+    SLIPS.push(s); saveSlips(); loadSlips(); return s; }
   function dec(o){ return o > 0 ? 1 + o/100 : 1 + 100/(-o); } function amer(d){ return d >= 2 ? Math.round((d - 1)*100) : -Math.round(100/(d - 1)); }
   function parseOdds(v){ var m = String(v == null ? '' : v).trim().match(/^([+-])?\s*(\d{3,5})$/); return m ? (m[1] === '-' ? -1 : 1) * (+m[2]) : null; }
-  function slipLegs(sl){ return sl.keys.map(function(k){ return LEGIDX[k]; }).filter(Boolean); }
+  function slipLegs(sl){ return resolveSlip(sl).filter(Boolean); }
   // owner 11/6 (cash-out advisor + hedge): what riding the ticket is worth right now (our live chance x payout) against FanDuel's cash-out offer,
   // and on the last open leg the hedge that locks the same profit either way. Live prices for the other side are not in our data, so the user types
   // FanDuel's; until then the math runs at the fair price from our live chance.
@@ -546,7 +582,7 @@ JS = r"""
     var fdUrl = fdOk.length ? 'https://sportsbook.fanduel.com/addToBetslip?' + fdOk.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&') : '';
     var done = nd ? 'DEAD' : (no === 0 && nh ? 'CASHED' : no === 0 && nv ? 'VOID' : nw ? 'Grading' : pc(pj));
     var sub = nd ? nh + ' hit · ' + nd + ' dead' : (no === 0 && nh ? 'all ' + nh + ' hit' : nh + ' hit · ' + no + ' open · chance from here' + (ls.length ? ' (pregame ' + pc(pre) + ')' : ''));
-    var rows = sr.map(function(x){ var l = x.l, r = x.r, st = x.s; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st"><button type="button" class="rm" data-sid="' + esc(sl.id) + '" data-k="' + esc(legKey(l)) + '" title="Remove from this slip">×</button></td><td class="who"><b>' + esc(legText(l)) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'dead' ? '<span class="chip">Dead</span>' : r.status === 'void' ? '<span class="chip">Void</span>' : r.wait ? '<span class="chip wt">Not graded yet</span>' : '') + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + ' · FD ' + am(l.o) + ' · ' + (st.st === 'in' ? esc(st.det || 'live') : st.st === 'post' ? 'final' : esc(games[l.g].kick)) + '</small></td><td class="now"><b>' + esc(r.now || '') + '</b></td><td class="pr">' + (r.status === 'void' || r.wait ? '<b>–</b><small>' + (r.status === 'void' ? 'void' : 'final') + '</small>' : '<b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + pc(r.p) + '</b><small>' + (st.st === 'pre' ? 'pregame' : 'from here') + '</small>') + '</td></tr>'; }).join('');
+    var rows = sr.map(function(x){ var l = x.l, r = x.r, st = x.s; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st"><button type="button" class="rm" data-sid="' + esc(sl.id) + '" data-k="' + esc(legKey(l)) + '" data-gm="' + esc(l.g) + '" title="Remove from this slip">×</button></td><td class="who"><b>' + esc(legText(l)) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'dead' ? '<span class="chip">Dead</span>' : r.status === 'void' ? '<span class="chip">Void</span>' : r.wait ? '<span class="chip wt">Not graded yet</span>' : '') + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + ' · FD ' + am(l.o) + ' · ' + (st.st === 'in' ? esc(st.det || 'live') : st.st === 'post' ? 'final' : esc(games[l.g].kick)) + '</small></td><td class="now"><b>' + esc(r.now || '') + '</b></td><td class="pr">' + (r.status === 'void' || r.wait ? '<b>–</b><small>' + (r.status === 'void' ? 'void' : 'final') + '</small>' : '<b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + pc(r.p) + '</b><small>' + (st.st === 'pre' ? 'pregame' : 'from here') + '</small>') + '</td></tr>'; }).join('');
     if(nv) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + nv + ' leg' + (nv > 1 ? 's' : '') + ' did not play. FanDuel voids a leg like that and pays the rest of the slip at a shorter price.</small></td></tr>';
     if(nw && !nd) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>The game is over but the final numbers for ' + (nw > 1 ? nw + ' legs are' : '1 leg is') + ' not in yet. Nothing is marked won or lost until they are.</small></td></tr>';
     if(missing) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + missing + ' leg' + (missing > 1 ? 's' : '') + ' from an older board are not on this week\'s page and cannot be tracked.</small></td></tr>';
@@ -661,7 +697,7 @@ JS = r"""
   }
   function legText(l){ if(l.gl) return l.pl; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : l.m === 'Anytime TD' ? 'anytime TD' : (l.m === '2+ TD' || l.m === '3+ TD') ? l.m : String(l.ms || l.m || '').toLowerCase() + ' ' + ((l.u || /^Under /.test(l.m || '')) ? 'under ' + l.ln : Math.round(l.ln) + '+')); }
   function liked(l){ return l.bp || (l.e >= 0.05 && !l.w) || (l.m === 'Anytime TD' && l.e >= 0.03 && !l.w); }
-  function pickScore(l){ var k = legKey(l); return (INSLIP[k] ? 400 : 0) + (STARS[k] ? 300 : 0) + (l.bp ? 200 : 0) + (l.e || 0) * 100; }
+  function pickScore(l){ return (legSlips(l) ? 400 : 0) + (isStar(l) ? 300 : 0) + (l.bp ? 200 : 0) + (l.e || 0) * 100; }
   // ---- DOM diff: replace only the cards whose HTML changed, keep the rest (and the scroll position) in place ----
   var LASTSCROLL = 0, RENDER_WAIT = null, LASTHTML = {};
   ['scroll', 'touchmove', 'touchstart', 'wheel'].forEach(function(ev){ window.addEventListener(ev, function(){ LASTSCROLL = Date.now(); }, {passive: true}); });
@@ -757,14 +793,14 @@ JS = r"""
       parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + overlapNote(ALLS) + cards.join('') + '</div>' : '') + '</section>']);
     }
     // week log: the legs you pinned or carried in your slip, as they resolve - copy or download it after the games
-    var mine = legs.concat(D.extra || []).filter(function(l){ var k = legKey(l); return STARS[k] || INSLIP[k]; });
+    var mine = legs.concat(D.extra || []).filter(function(l){ return isStar(l) || legSlips(l); });
     if(mine.length){
       var mr = mine.map(function(l){ var g = games[l.g], s = STATE[l.g] || {st:'pre'}; return {l: l, r: live(l, g, s), s: s}; });
       var w = mr.filter(function(x){ return x.r.status === 'hit'; }).length, lz = mr.filter(function(x){ return x.r.status === 'dead'; }).length;
       var nvd = mr.filter(function(x){ return x.r.status === 'void'; }).length, nwt = mr.filter(function(x){ return x.r.wait; }).length, op = mr.length - w - lz - nvd - nwt;   // 11/17: void and not-graded-yet legs are neither open nor lost
       mr.forEach(function(x){ if(x.r.wait && x.s.st === 'post') NEEDSUM[x.l.g] = 1; });
       var units = mr.reduce(function(a, x){ return a + (x.r.status === 'hit' ? (x.l.o > 0 ? x.l.o / 100 : 100 / -x.l.o) : x.r.status === 'dead' ? -1 : 0); }, 0);
-      var lrow = function(x){ var l = x.l, r = x.r; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st">' + (r.status === 'hit' ? '✓' : r.status === 'dead' ? '✗' : '·') + '</td><td class="who"><b>' + esc(legText(l)) + '</b> ' + verdictChip(l, r) + '<small>' + esc(matchup(l.g)) + ' · FD ' + am(l.o) + ' · model ' + pc(l.p) + (INSLIP[legKey(l)] ? ' · ' + INSLIP[legKey(l)].map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join(', ') : '') + '</small></td><td class="now"><b>' + esc(r.now || (x.s.st === 'pre' ? 'not started' : '')) + '</b></td><td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + (r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : r.status === 'void' ? 'VOID' : r.wait ? '–' : pc(r.p)) + '</b></td></tr>'; };
+      var lrow = function(x){ var l = x.l, r = x.r; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st">' + (r.status === 'hit' ? '✓' : r.status === 'dead' ? '✗' : '·') + '</td><td class="who"><b>' + esc(legText(l)) + '</b> ' + verdictChip(l, r) + '<small>' + esc(matchup(l.g)) + ' · FD ' + am(l.o) + ' · model ' + pc(l.p) + (legSlips(l) ? ' · ' + legSlips(l).map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join(', ') : '') + '</small></td><td class="now"><b>' + esc(r.now || (x.s.st === 'pre' ? 'not started' : '')) + '</b></td><td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + (r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : r.status === 'void' ? 'VOID' : r.wait ? '–' : pc(r.p)) + '</b></td></tr>'; };
       // owner 11/5: separate folders for live, not started, won and lost legs; My week itself starts folded
       var srt = function(a, b){ return (a.l.g > b.l.g ? 1 : a.l.g < b.l.g ? -1 : 0) || (b.r.p - a.r.p); };
       var FOLD = [['live', 'Live', function(x){ return x.r.status !== 'hit' && x.r.status !== 'dead' && x.r.status !== 'void' && x.s.st === 'in'; }, true],
@@ -788,7 +824,7 @@ JS = r"""
         var chg = false; mr.forEach(function(x){ var l = x.l; if(l.gl || /^Under /.test(l.m) || l.o == null) return; var k = (l.pl + '|' + l.m + '|' + (Math.round(l.ln || 1) === +l.ln ? Math.round(l.ln || 1) : l.ln)).toLowerCase(); if(!(k in cv)){ cv[k] = +l.o; chg = true; } });
         if(chg) localStorage.setItem(ck, JSON.stringify(cv)); } catch(e){}
       window.__BSLOGT = mr.map(function(x){ return legText(x.l); });
-      window.__BSLOG = mr.map(function(x){ var l = x.l, r = x.r; return [D.week, l.g, l.pl, l.m, l.ln, l.o, Math.round(l.p * 1000) / 10, r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : r.status === 'void' ? 'VOID' : r.wait ? 'NOT GRADED' : 'OPEN', r.now || '', (INSLIP[legKey(l)] || []).map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join('; ')]; });
+      window.__BSLOG = mr.map(function(x){ var l = x.l, r = x.r; return [D.week, l.g, l.pl, l.m, l.ln, l.o, Math.round(l.p * 1000) / 10, r.status === 'hit' ? 'WIN' : r.status === 'dead' ? 'LOSS' : r.status === 'void' ? 'VOID' : r.wait ? 'NOT GRADED' : 'OPEN', r.now || '', (legSlips(l) || []).map(function(id){ var sx = slipById(id); return sx ? sx.name : id; }).join('; ')]; });
     }
     // ---- My season (owner 11/5): every saved week's settled legs (bs_log_w*), 1u each ----
     try {
@@ -811,6 +847,8 @@ JS = r"""
     } catch(e){}
     try {
       var hp = parts.filter(function(p){ return HUBK.indexOf(p[0]) >= 0; });
+      // 11/17: with no slips, no pinned legs and nothing new the hub was a box holding one tab that said "nothing new" - it pushed the game down the screen
+      if(hp.length === 1 && hp[0][0] === '__chg' && !/class="chgn"/.test(hp[0][1]) && HUB !== '__chg'){ parts = parts.filter(function(p){ return p[0] !== '__chg'; }); hp = []; }
       if(hp.length){
         var hsum = function(k, h){ var m;
           if(k === '__chg'){ m = h.match(/class="chgn">(\d+)</); return m ? m[1] + ' new' : 'nothing new'; }
@@ -837,7 +875,7 @@ JS = r"""
       var g = games[gid], s = STATE[gid] || {st:'pre'}; var f = remainingFrac(s);
       var gl = legs.filter(function(l){ return l.g === gid; });
       if(mode !== 'all'){   // picks view: your slip + pinned + best-parlay legs, then the clearest clean edges up to 8 rows, one line per player-market
-        var keep = gl.filter(function(l){ var k = legKey(l); return INSLIP[k] || STARS[k] || l.bp; });
+        var keep = gl.filter(function(l){ return legSlips(l) || isStar(l) || l.bp; });
         var rest = gl.filter(function(l){ return keep.indexOf(l) < 0 && !l.w && (l.e || 0) > 0; }).sort(function(a, b){ return (liked(b) ? 1 : 0) - (liked(a) ? 1 : 0) || (b.e - a.e); });
         var seenPM = {}; keep.forEach(function(l){ seenPM[l.pl + '|' + l.m] = true; });
         rest.forEach(function(l){ var pm = l.pl + '|' + l.m; if(keep.length < 8 && !seenPM[pm]){ keep.push(l); seenPM[pm] = true; } });
@@ -847,30 +885,33 @@ JS = r"""
       var TFv = null;   // owner 11/8: team buttons removed from game cards (box score keeps its own); every list shows both teams
       if(TFv){ var byT = function(l){ return l.tm === TFv || (l.gl && l.m === 'Total'); }; gl = gl.filter(byT); OTHER = OTHER.filter(byT); }
       var rows = gl.map(function(l){ var r = live(l, g, s); return {l: l, r: r}; });
-      var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = STARS[legKey(a.l)] ? 1 : 0, sb_ = STARS[legKey(b.l)] ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
+      var open = rows.filter(function(x){ return x.r.status === 'open' || x.r.status === 'pre'; }).sort(function(a, b){ var sa_ = isStar(a.l) ? 1 : 0, sb_ = isStar(b.l) ? 1 : 0; return (sb_ - sa_) || (b.r.p - a.r.p); });
       var hit = rows.filter(function(x){ return x.r.status === 'hit'; }), dead = rows.filter(function(x){ return x.r.status === 'dead'; }), voided = rows.filter(function(x){ return x.r.status === 'void'; });
       var isOpen = (gid in OPEN) ? OPEN[gid] : false;   // owner 11/8: every game starts collapsed, live ones too
       if(isOpen && s.st === 'post' && open.length) NEEDSUM[gid] = 1;   // an open card of a final with legs it cannot grade: ask ESPN for that one box score
       var head = '<button type="button" class="ghd2" data-g="' + gid + '" aria-expanded="' + isOpen + '"><span class="t">' + badge(g.a, g.ca) + g.a + '<small>' + esc(g.na) + '</small></span><span class="mid"><b' + (s.st === 'pre' ? ' class="vs"' : '') + '>' + (s.st === 'pre' ? '<i>vs</i>' : (s.sa != null ? s.sa : '–') + '<i>–</i>' + (s.sb != null ? s.sb : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick)) + '</small></span><span class="t r"><small>' + esc(g.nb) + '</small>' + g.b + badge(g.b, g.cb) + '</span><span class="mdl">' + modelLine(g, s.st) + '</span>' +
         '<span class="tog">' + (s.st === 'in' ? open.length + ' open · ' + hit.length + ' hit' : s.st === 'pre' ? open.length + ' on the watch list' : hit.length + ' hit · ' + dead.length + ' gone' + (open.length ? ' · ' + open.length + ' not graded yet' : '')) + '<i class="car">' + (isOpen ? '▴' : '▾') + '</i></span></button>';
       var sit = s.st === 'in' ? '<div class="sit">' + (s.poss ? '<b>' + esc(s.poss) + ' ball</b>' + (s.dd ? ', ' + esc(s.dd) : '') + ' · ' : '') + Math.round(f*100) + '% of regulation left' + (s.last ? ' · last: ' + esc(s.last) : '') + (BOX && Object.keys(BOX).length ? '' : ' · box score loading…') + '</div>' : '';
-      var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[k] ? ' starred' : '');
-        var chips = verdictChip(l, r) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'void' ? '<span class="chip">Void</span>' : '') + (INSLIP[k] ? '<span class="chip slip">' + (INSLIP[k].length > 1 ? INSLIP[k].length + ' slips' : esc((slipById(INSLIP[k][0]) || {name: 'slip'}).name)) + '</span>' : '') + (l.bp ? '<span class="chip bp">Best parlay</span>' : '') + (r.rz ? '<span class="chip rz">Red zone</span>' : '') + (l.w ? '<span class="chip warn" title="' + esc(l.w) + '">⚠</span>' : '') + pace(l, r, s) + (l.gl ? '' : swChip(k));
+      var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l), sk = starKey(l), ins = legSlips(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[sk] ? ' starred' : '');
+        var chips = verdictChip(l, r) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'void' ? '<span class="chip">Void</span>' : '') + (ins ? '<span class="chip slip">' + (ins.length > 1 ? ins.length + ' slips' : esc((slipById(ins[0]) || {name: 'slip'}).name)) + '</span>' : '') + (l.bp ? '<span class="chip bp">Best parlay</span>' : '') + (r.rz ? '<span class="chip rz">Red zone</span>' : '') + (l.w ? '<span class="chip warn" title="' + esc(l.w) + '">⚠</span>' : '') + pace(l, r, s) + (l.gl ? '' : swChip(k));
         var prog = (!l.gl && r.status === 'open' && /\//.test(r.now)) ? '<div class="bar' + (r.p >= 0.5 ? ' ok' : '') + '"><i style="width:' + Math.min(100, Math.round(100*(+r.now.split(' / ')[0].replace(/[^\d.]/g,'') || 0)/l.ln)) + '%"></i></div>' : '';
-        return '<tr class="' + cls + '" data-k="' + esc(k) + '"><td class="st"><button type="button" class="star" data-k="' + esc(k) + '" title="' + (STARS[k] ? 'Unpin' : 'Pin to the top') + '">' + (STARS[k] ? '★' : '☆') + '</button><button type="button" class="add' + (INSLIP[k] ? ' in' : '') + '" data-k="' + esc(k) + '" title="Add to a slip">+</button></td><td class="who"><b>' + esc(legText(l)) + chips + '</b><small>' + esc(l.tm) + ' · ' + (l.src === 'cons' ? 'mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + '</small></td>' +
+        return '<tr class="' + cls + '" data-k="' + esc(k) + '"><td class="st"><button type="button" class="star" data-k="' + esc(sk) + '" title="' + (STARS[sk] ? 'Unpin' : 'Pin to the top') + '">' + (STARS[sk] ? '★' : '☆') + '</button><button type="button" class="add' + (ins ? ' in' : '') + '" data-k="' + esc(k) + '" data-gm="' + esc(l.g) + '" title="Add to a slip">+</button></td><td class="who"><b>' + esc(legText(l)) + chips + '</b><small>' + esc(l.tm) + ' · ' + (l.src === 'cons' ? 'mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + '</small></td>' +
           '<td class="now"><b>' + esc(r.now || (s.st === 'pre' ? '' : '—')) + '</b>' + prog + '</td>' +
           (r.status === 'void' || r.wait ? '<td class="pr"><b>–</b><small>' + (r.status === 'void' ? 'void' : 'not graded') + '</small></td></tr>' : '<td class="pr"><b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : (d >= 0 ? 'up' : '')) + '">' + (s.st === 'pre' ? pc(l.p) : pc(r.p)) + '</b><small>' + (s.st === 'pre' ? 'pregame' : r.status === 'hit' ? 'cashed' : r.status === 'dead' ? 'gone' : (Math.round(d*100) ? (d >= 0 ? '▲' : '▼') + Math.abs(Math.round(d*100)) + ' since kickoff' : 'from here')) + '</small>' + (s.st === 'in' && r.status === 'open' && r.p > 0.02 && r.p < 0.98 ? '<i class="fair" title="Our fair live price for this leg from here. If FanDuel\'s live price pays more than this, the live bet has value by our numbers.">fair ' + fairAm(r.p) + '</i>' : '') + '</td></tr>'); };
       var body = '';
-      if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' in the picks yet' : '') + '.</div>';
+      var subOpen = function(k, def){ return (k in OPEN) ? OPEN[k] : def; };
+      var otherBlock = function(){ if(!OTHER.length) return ''; var otv = subOpen(gid + '|other', false);   // owner 11/5: "Make an other legs folder under already hit"
+        var h = '<h4 class="subtog" data-g="' + gid + '|other" aria-expanded="' + otv + '">Other legs · ' + OTHER.length + '<i>' + (otv ? '▴' : '▾') + '</i></h4>';
+        if(otv){ var orows = OTHER.map(function(l){ return {l: l, r: live(l, g, s)}; }).sort(function(a, b){ var ra = a.r.status === 'hit' ? 0 : a.r.status === 'dead' ? 2 : 1, rb = b.r.status === 'hit' ? 0 : b.r.status === 'dead' ? 2 : 1; return (ra - rb) || (b.r.p - a.r.p); });
+          h += '<table class="lvt">' + orows.map(tr).join('') + '</table>'; }
+        return h; };
+      // 11/17: a game with nothing in the picks said so and stopped - its other legs (every game line, at least) could not be reached
+      if(!rows.length) body = '<div class="empty">Nothing tracked for this game' + (mode === 'likes' ? ' in the picks yet' : '') + '.</div>' + otherBlock();
       else {
         var oo = (gid + '|open') in OPEN ? OPEN[gid + '|open'] : false;   // owner 11/5: start folded   // owner 11/5: "Make it so I can collapse the still open legs"
         body += '<h4 class="subtog' + (s.st === 'in' ? ' hot' : '') + '" data-g="' + gid + '|open" aria-expanded="' + oo + '">' + (s.st === 'in' ? 'Still open · ' + open.length : s.st === 'pre' ? 'Watch list · ' + open.length : 'Not graded yet · ' + open.length) + '<i>' + (oo ? '▴' : '▾') + '</i></h4>' + (oo ? (s.st === 'post' && open.length ? '<p class="lvnote">The game is over, but the final numbers for these are not in yet. Nothing is marked won or lost until they are.</p>' : '') + '<table class="lvt">' + open.map(tr).join('') + '</table>' : '');
-        var subOpen = function(k, def){ return (k in OPEN) ? OPEN[k] : def; };
         if(hit.length){ var ho = subOpen(gid + '|hit', false); body += '<h4 class="subtog" data-g="' + gid + '|hit" aria-expanded="' + ho + '">Already hit · ' + hit.length + '<i>' + (ho ? '▴' : '▾') + '</i></h4>' + (ho ? '<table class="lvt">' + hit.map(tr).join('') + '</table>' : ''); }
-        if(OTHER.length){ var otv = subOpen(gid + '|other', false);   // owner 11/5: "Make an other legs folder under already hit"
-          body += '<h4 class="subtog" data-g="' + gid + '|other" aria-expanded="' + otv + '">Other legs · ' + OTHER.length + '<i>' + (otv ? '▴' : '▾') + '</i></h4>';
-          if(otv){ var orows = OTHER.map(function(l){ return {l: l, r: live(l, g, s)}; }).sort(function(a, b){ var ra = a.r.status === 'hit' ? 0 : a.r.status === 'dead' ? 2 : 1, rb = b.r.status === 'hit' ? 0 : b.r.status === 'dead' ? 2 : 1; return (ra - rb) || (b.r.p - a.r.p); });
-            body += '<table class="lvt">' + orows.map(tr).join('') + '</table>'; } }
+        body += otherBlock();
         if(voided.length){ var vov = subOpen(gid + '|void', false); body += '<h4 class="subtog" data-g="' + gid + '|void" aria-expanded="' + vov + '">Did not play · ' + voided.length + '<i>' + (vov ? '▴' : '▾') + '</i></h4>' + (vov ? '<p class="lvnote">FanDuel voids a leg on a player who did not play.</p><table class="lvt">' + voided.map(tr).join('') + '</table>' : ''); }
         if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
       }
@@ -878,7 +919,11 @@ JS = r"""
       var teamBar = '';
       var drill = (s.st === 'in' || s.st === 'post') && s.eid ? '<div class="drillbar"><button type="button" class="drill" data-g="' + gid + '">Box score &amp; plays</button>' + (s.st === 'in' ? '<span>scoring plays highlighted · your legs marked</span>' : '') + '</div>' : '';
       if(s.st === 'in' && SUMM[gid]){ try { sit = gamecast(gid); } catch(gcErr){ sit = ''; try { console.error('BetSweep gamecast ' + gid, gcErr); } catch(e){} } }
-      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? details(g, s) + sit + drill + teamBar + body : '') + '</section>';
+      // 11/17: once a game has kicked off its pregame notes (home, field, rest, coaches, tested spots, forecast) sat above the field and the legs;
+      // they now come last, folded. Before kickoff they stay where they were - that is when they are read.
+      var notes = '';
+      if(isOpen && s.st !== 'pre'){ var nov = (gid + '|notes') in OPEN ? OPEN[gid + '|notes'] : false; notes = '<h4 class="subtog" data-g="' + gid + '|notes" aria-expanded="' + nov + '">Pregame notes<i>' + (nov ? '▴' : '▾') + '</i></h4>' + (nov ? details(g, s) : ''); }
+      var sec = '<section class="lg2 ' + (s.st === 'in' ? 'live' : s.st) + (isOpen ? ' open' : '') + '" id="lv-' + gid + '">' + head + (isOpen ? (s.st === 'pre' ? details(g, s) : '') + sit + drill + teamBar + body + notes : '') + '</section>';
       if(s.st === 'post') FIN.push([gid, sec, hit.length, dead.length, open.length]); else if(s.st === 'pre' && liveG.length) UP.push([gid, sec, g]); else parts.push([gid, sec]);
     });
     if(UP.length){   // owner 11/5: "more collapsible" - while a game is live, the rest of the week folds into one group
@@ -891,9 +936,13 @@ JS = r"""
     FLASH = {}; legs.forEach(function(l){ var s = STATE[l.g]; if(!s || s.st !== 'in') return; var r = live(l, games[l.g], s); var k = legKey(l); if(PREV[k] && PREV[k] !== r.status) FLASH[k] = true; PREV[k] = r.status; });
     if(Object.keys(FLASH).length){ parts = parts.map(function(p){ return [p[0], p[1].replace(/<tr class="([^"]*)" data-k="([^"]*)"/g, function(m0, c, k){ return FLASH[k.replace(/&amp;/g,'&').replace(/&#39;/g, "'").replace(/&quot;/g,'"')] ? '<tr class="' + c + ' flash" data-k="' + k + '"' : m0; })]; }); }
     applyParts(wrap, parts);
+    try { [].forEach.call(document.querySelectorAll('nav.nav a[href^="#lv-"]'), function(a){ var st = (STATE[a.getAttribute('href').slice(4)] || {}).st; a.classList.toggle('played', st === 'post'); a.classList.toggle('livenow', st === 'in'); });
+      var lc = document.querySelector('nav.nav a.livenow'); if(lc && !CHIPSEEN){ CHIPSEEN = true; var nv = lc.parentNode; if(nv.scrollWidth > nv.clientWidth) nv.scrollLeft = Math.max(0, lc.offsetLeft - nv.offsetLeft - 130); } } catch(e){}   // bring the game that is on into view in the chip row, once
     var nLiveOpen = 0; order.forEach(function(gid){ var s = STATE[gid]; if(s && s.st === 'in') nLiveOpen++; }); document.title = (nLiveOpen ? '● ' : '') + 'BetSweep Live';
     var fs = (window.BSLive.status && window.BSLive.status()) || {}; var ft = fs.at ? new Date(fs.at).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', second: '2-digit'}) : '';
-    $('#upd').textContent = 'updated ' + new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', second: '2-digit'}) + (fs.ok === true ? ' · scores ' + ft + (fs.src === 'cdn' ? ' (backup feed)' : '') : fs.ok === false ? ' · live scores delayed, retrying' : '');
+    // 11/17: one time, not two - while a game is on the score feed's own time is the one that matters ("updated" and "scores" were seconds apart and wrapped on a phone)
+    var nowT = new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', second: '2-digit'});
+    $('#upd').textContent = nLiveOpen && fs.ok === true ? 'Live scores as of ' + ft + (fs.src === 'cdn' ? ' (backup feed)' : '') : fs.ok === false && nLiveOpen ? 'Live scores delayed, retrying · ' + nowT : 'Updated ' + nowT;
     // owner 11/1: a live slip notification opens /live/?slip=<id> - jump to that slip card (its legs already show hit / open / gone) and flash it
     if(FOCUS && !FOCUSED){ var fe = FOCUS === 'all' ? wrap.querySelector('.slipcard') : [].slice.call(wrap.querySelectorAll('.slipcard')).filter(function(x){ return x.getAttribute('data-sid') === FOCUS; })[0];
       if(fe){ FOCUSED = true; HLID = fe.getAttribute('data-sid'); HLT = Date.now() + 5000; setTimeout(function(){ fe.scrollIntoView({block: 'start', behavior: 'smooth'}); }, 60); setTimeout(render, 5100); } }
@@ -905,12 +954,18 @@ JS = r"""
   function jumpTo(gid){ if(!games[gid]) return false; var s = STATE[gid] || {st: 'pre'};
     if(s.st === 'post') OPEN.__fin = true; else if(s.st === 'pre' && order.some(function(x){ return STATE[x] && STATE[x].st === 'in'; })) OPEN.__up = true;
     OPEN[gid] = true; render(true);
-    setTimeout(function(){ var el = document.getElementById('lv-' + gid); if(!el) return; var top = el.getBoundingClientRect().top + (window.scrollY || 0) - 76; window.scrollTo({top: Math.max(0, top), behavior: 'smooth'}); el.classList.add('jumped'); setTimeout(function(){ el.classList.remove('jumped'); }, 1600); }, 80);
+    // land the card just under the bars that stay on screen (the site header and this chip row). The title above the chips scrolls away, so
+    // where "just under" is only settles once the page has moved: move, measure again, correct.
+    setTimeout(function(){ var el = document.getElementById('lv-' + gid); if(!el) return;
+      var land = function(){ var nv = document.querySelector('nav.nav'), hd = document.getElementById('sitenav'), nb = nv ? nv.getBoundingClientRect().bottom : 0, hb = hd ? hd.getBoundingClientRect().bottom : 0;
+        var d = el.getBoundingClientRect().top - (Math.max(nb, hb, 0) + 10); if(Math.abs(d) > 3) window.scrollBy(0, d); };
+      land(); land(); requestAnimationFrame(land);
+      el.classList.add('jumped'); setTimeout(function(){ el.classList.remove('jumped'); }, 1600); }, 80);
     return true; }
   document.addEventListener('click', function(ev){ var a = ev.target.closest && ev.target.closest('a[href^="#lv-"]'); if(!a) return; var gid = a.getAttribute('href').slice(4); if(jumpTo(gid)){ ev.preventDefault(); try { history.replaceState(null, '', '#lv-' + gid); } catch(e){} } });
   window.addEventListener('hashchange', function(){ var m = (location.hash || '').match(/^#lv-([A-Z]{2,3}-[A-Z]{2,3})$/); if(m) jumpTo(m[1]); });
   // ---- game drill-down (owner 11/1 Tuesday list): box score, play-by-play with scoring plays highlighted, your legs marked ----
-  function myLegsFor(gid){ var out = {}; legs.concat(D.extra || []).forEach(function(l){ if(l.g !== gid || l.gl) return; var k = legKey(l); if(INSLIP[k] || STARS[k]) (out[norm(l.pl)] = out[norm(l.pl)] || []).push(l); }); return out; }
+  function myLegsFor(gid){ var out = {}; legs.concat(D.extra || []).forEach(function(l){ if(l.g !== gid || l.gl) return; if(legSlips(l) || isStar(l)) (out[norm(l.pl)] = out[norm(l.pl)] || []).push(l); }); return out; }
   function legMark(l){ var g = games[l.g], s = STATE[l.g] || {st: 'in'}; var r = live(l, g, s); var cls = r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : 'open'; return '<span class="lm ' + cls + '">' + (r.status === 'hit' ? '✓ ' : r.status === 'dead' ? '✗ ' : '') + esc(legText(l).replace(l.pl, '').trim()) + (r.now ? ' · ' + esc(r.now) : '') + '</span>'; }
   function drillBox(js, gid){
     var mine = myLegsFor(gid), html = '';
@@ -998,7 +1053,7 @@ JS = r"""
   try { CHG_SEEN = localStorage.getItem('bs_chg_seen'); } catch(e){}
   function pullChanges(){
     try {
-      var mp = {}; legs.concat(D.extra || []).forEach(function(l){ var k = legKey(l); if(STARS[k] || INSLIP[k]) mp[String(l.pl).toLowerCase()] = 1; }); MYPL = mp;
+      var mp = {}; legs.concat(D.extra || []).forEach(function(l){ if(isStar(l) || legSlips(l)) mp[String(l.pl).toLowerCase()] = 1; }); MYPL = mp;
       var known = {}; legs.forEach(function(l){ if(!l.gl) known[String(l.pl).toLowerCase()] = 1; }); (D.sk || []).forEach(function(n){ known[String(n).toLowerCase()] = 1; });
       var a = fetch('https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/changes.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
       var b = fetch('/data/price-moves.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
@@ -1135,10 +1190,10 @@ JS = r"""
       if(ev.target.id === 'logcsv'){ var csv = [hdr].concat(rows).map(function(r){ return r.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n'); var a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'betsweep-week' + D.week + '-log.csv'; document.body.appendChild(a); a.click(); a.remove(); }
       else { var txt = 'BetSweep week ' + D.week + ' log\n' + rows.map(function(r){ return r[7] + ' · ' + r[2] + ' ' + r[3] + ' ' + r[4] + '+ (' + am(r[5]) + ', model ' + r[6] + '%)' + (r[8] ? ' · ' + r[8] : ''); }).join('\n'); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function(){ ev.target.textContent = 'Copied'; setTimeout(function(){ ev.target.textContent = 'Copy as text'; }, 1500); }).catch(function(){ prompt('Copy your log:', txt); }); }
       return; }
-    var ad = ev.target.closest('.add'); if(ad){ openAddMenu(ad, ad.dataset.k); return; }
-    var rm = ev.target.closest('.rm'); if(rm){ toggleIn(rm.dataset.sid, rm.dataset.k); return; }
+    var ad = ev.target.closest('.add'); if(ad){ openAddMenu(ad, ad.dataset.k, ad.dataset.gm); return; }
+    var rm = ev.target.closest('.rm'); if(rm){ toggleIn(rm.dataset.sid, rm.dataset.k, rm.dataset.gm); return; }
     var wsb = ev.target.closest('.winshare'); if(wsb){ var wsl = slipById(wsb.dataset.sid); if(wsl) winCard(wsl, wsb); return; }
-    var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; saveBuilderSlip(); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
+    var dl = ev.target.closest('.slipdel'); if(dl){ var sx = slipById(dl.dataset.sid); if(!sx) return; if(!confirm((sx.builder ? 'Clear' : 'Delete') + ' "' + sx.name + '"?')) return; if(sx.builder){ SLIP = {}; BKEYS = []; saveBuilderSlip(); saveBuilderG({}); } else { SLIPS = SLIPS.filter(function(x){ return x.id !== sx.id; }); saveSlips(); } loadSlips(); render(); return; }
     var st = ev.target.closest('.star'); if(st){ var k = st.dataset.k; if(STARS[k]) delete STARS[k]; else STARS[k] = true; saveStars(); render(); return; }
     var stg = ev.target.closest('.sliptog'); if(stg){ var sk2 = 'slip|' + stg.dataset.sid; OPEN[sk2] = stg.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_open', JSON.stringify(Object.keys(OPEN).filter(function(k){ return /^slip\|/.test(k) && OPEN[k] === true; }))); } catch(e){} render(); return; }
     var tfb = ev.target.closest('.tfb'); if(tfb){ var tg = tfb.dataset.g, tt = tfb.dataset.t; TF[tg] = TF[tg] === tt ? null : tt; render(); return; }
@@ -1158,17 +1213,17 @@ JS = r"""
   $('#lv').addEventListener('keydown', function(ev){ if(ev.key === 'Enter' && ev.target.dataset && ev.target.dataset.sid){ ev.target.blur(); } });
   // + menu: which slip to put the leg in
   var MENU = null; function closeMenu(){ if(MENU){ MENU.remove(); MENU = null; } }
-  function openAddMenu(btn, k){
-    closeMenu(); var l = LEGIDX[k]; var m = document.createElement('div'); m.className = 'addmenu';
-    var h = '<small>' + esc(l ? legText(l) : k) + '</small>';
-    h += '<button type="button" data-sid="builder" class="' + (SLIP[k] ? 'in' : '') + '">' + esc(BMETA.name || 'Builder slip') + '</button>';
-    SLIPS.forEach(function(sx){ h += '<button type="button" data-sid="' + esc(sx.id) + '" class="' + (sx.keys.indexOf(k) >= 0 ? 'in' : '') + '">' + esc(sx.name) + '</button>'; });
+  function openAddMenu(btn, k, gid){
+    closeMenu(); var l = (gid && KEYG[k] && KEYG[k][gid]) || LEGIDX[k], inx = (l && legSlips(l)) || []; var m = document.createElement('div'); m.className = 'addmenu';
+    var h = '<small>' + esc(l ? legText(l) + (shared(k) ? ' (' + matchup(l.g) + ')' : '') : k) + '</small>';
+    h += '<button type="button" data-sid="builder" class="' + (inx.indexOf('builder') >= 0 ? 'in' : '') + '">' + esc(BMETA.name || 'Builder slip') + '</button>';
+    SLIPS.forEach(function(sx){ h += '<button type="button" data-sid="' + esc(sx.id) + '" class="' + (inx.indexOf(sx.id) >= 0 ? 'in' : '') + '">' + esc(sx.name) + '</button>'; });
     h += '<button type="button" data-sid="__new" class="new">+ New slip…</button>';
     m.innerHTML = h; document.body.appendChild(m); MENU = m;
     var r = btn.getBoundingClientRect(); var left = Math.min(r.left + window.scrollX, window.scrollX + window.innerWidth - m.offsetWidth - 8); m.style.left = Math.max(8, left) + 'px'; m.style.top = (r.bottom + window.scrollY + 4) + 'px';
     m.addEventListener('click', function(ev){ var b = ev.target.closest('button'); if(!b) return; var id = b.dataset.sid; closeMenu();
-      if(id === '__new'){ var nm = prompt('Name this slip', 'Slip ' + (SLIPS.length + 1)); if(nm === null) return; var ns = newSlip(nm.trim(), [k]); render(); return; }
-      toggleIn(id, k); }); }
+      if(id === '__new'){ var nm = prompt('Name this slip', 'Slip ' + (SLIPS.length + 1)); if(nm === null) return; var ns = newSlip(nm.trim(), [k], null, null, l ? gmapOf([l]) : null); render(); return; }
+      toggleIn(id, k, gid); }); }
   document.addEventListener('click', function(ev){ if(MENU && !ev.target.closest('.addmenu') && !ev.target.closest('.add')) closeMenu(); }, true);
   // ---- import: paste a slip (one leg per line) and match it to this week's legs ----
   var PLAYERS = {}; legs.concat(D.extra || []).forEach(function(l){ if(l.gl) return; var n = norm(l.pl); if(!PLAYERS[n]) PLAYERS[n] = {name: l.pl, tm: l.tm, g: l.g, legs: []}; PLAYERS[n].legs.push(l); });
@@ -1222,22 +1277,22 @@ JS = r"""
   $('#impopen').addEventListener('click', function(){ var w = $('#impwrap'); w.hidden = !w.hidden; if(!w.hidden) $('#imptxt').focus(); });
   if($('#impnew')) $('#impnew').addEventListener('click', function(){ var nm = prompt('Name this slip', 'Slip ' + (SLIPS.length + 1)); if(nm === null) return; newSlip(nm.trim(), []); render(); window.scrollTo({top: 0, behavior: 'smooth'}); });
   $('#impmatch').addEventListener('click', runImport); $('#imptxt').addEventListener('input', function(){ clearTimeout(window.__impT); window.__impT = setTimeout(runImport, 400); });
-  $('#impgo').addEventListener('click', function(){ var ok = IMPM.filter(function(x){ return x.leg; }); if(!ok.length) return; var keys = []; ok.forEach(function(x){ var k = legKey(x.leg); if(keys.indexOf(k) < 0) keys.push(k); });
+  $('#impgo').addEventListener('click', function(){ var ok = IMPM.filter(function(x){ return x.leg; }); if(!ok.length) return; var keys = [], kept = [], seenI = {}; ok.forEach(function(x){ var k = legKey(x.leg), id = k + '@' + x.leg.g; if(seenI[id]) return; seenI[id] = 1; keys.push(k); kept.push(x.leg); });
     var stake = parseFloat(String($('#impstake').value).replace(/[^\d.]/g, ''));
-    newSlip(($('#impname').value || '').trim() || ('Imported slip ' + (SLIPS.length + 1)), keys, parseOdds($('#impodds').value), stake > 0 ? stake : null);
+    newSlip(($('#impname').value || '').trim() || ('Imported slip ' + (SLIPS.length + 1)), keys, parseOdds($('#impodds').value), stake > 0 ? stake : null, gmapOf(kept));
     $('#imptxt').value = ''; $('#impname').value = ''; $('#impodds').value = ''; $('#impstake').value = ''; $('#implist').innerHTML = ''; $('#impgo').disabled = true; $('#impwrap').hidden = true; render(); window.scrollTo({top: 0, behavior: 'smooth'}); });
   $('#lvrefresh').addEventListener('click', function(){ lastBox = {}; window.BSLive.refresh && window.BSLive.refresh(); order.forEach(function(gid){ var s = STATE[gid]; if(s && s.st !== 'pre') pullBox(gid); }); render(); });
   window.addEventListener('pageshow', function(e){ if(e.persisted){ loadSlips(); render(); } });   // owner 10/28: same slip on every page
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible'){ loadSlips(); render(); } });
   document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.changed){ loadSlips(); render(); } });
-  window.addEventListener('storage', function(e){ if(e.key === 'bs_slipk_w' + D.week || e.key === SLKEY || e.key === SKEY){ if(e.key === SKEY){ STARS = {}; try { (JSON.parse(e.newValue || '[]')).forEach(function(k){ STARS[k] = true; }); } catch(x){} } render(); } });
+  window.addEventListener('storage', function(e){ if(e.key === 'bs_slipk_w' + D.week || e.key === 'bs_slipg_w' + D.week || e.key === SLKEY || e.key === SKEY){ if(e.key === SKEY){ STARS = {}; try { (JSON.parse(e.newValue || '[]')).forEach(function(k){ STARS[k] = true; }); } catch(x){} } render(); } });
   [].forEach.call(document.querySelectorAll('#lvmode button'), function(){}); document.querySelectorAll('#lvmode button').forEach(function(b){ b.addEventListener('click', function(){ document.querySelectorAll('#lvmode button').forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); mode = b.dataset.v; render(); }); });
   render();
 })();
 """
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
 body = f'''<div class="lv">
- <div class="lvbar lvtools"><button type="button" class="rfr" id="impopen">Import</button><button type="button" class="rfr" id="lvrefresh" title="Pull the scores and box scores again now">↻</button><span class="upd" id="upd"></span></div>
+ <div class="lvbar lvtools"><button type="button" class="rfr" id="impopen">Import a slip</button><button type="button" class="rfr" id="lvrefresh" title="Pull the scores and box scores again now">↻</button><span class="upd" id="upd"></span></div>
  <div class="imp" id="impwrap" hidden><h3>Import a slip</h3><p>One leg per line, the way you'd say it or the way FanDuel shows it: <em>Bijan Robinson 60+ rushing yards</em> · <em>Drake London anytime TD</em> · <em>Commanders -3.5</em> · <em>Over 48.5 SF/WAS</em> · <em>Kittle 4+ receptions</em>. Lines are matched to this week's board; a leg at a line the board doesn't carry is matched to the closest one and marked ≈.</p>
   <textarea id="imptxt" placeholder="Paste or type your legs here…"></textarea>
   <div class="row"><input type="text" class="nm" id="impname" placeholder="Slip name (optional)"><input type="text" class="od" id="impodds" inputmode="numeric" placeholder="+593"><input type="text" class="od" id="impstake" inputmode="decimal" placeholder="stake $"><button type="button" class="rfr" id="impmatch">Match</button><button type="button" class="rfr go" id="impgo" disabled>Nothing matched yet</button></div>

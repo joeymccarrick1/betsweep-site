@@ -84,3 +84,6 @@ Later, owner's call: automatic bet sync (paid outside service).
   the season record). Fixed with finals from the build (finals.py) and a rule that nothing is settled without real numbers; chips,
   score display, fold labels and the finished-week line fixed on the way (RUNBOOK). Next on Live: totals follow the slip's game map;
   the first screen (tools box and an empty "What changed" push the game down); pregame notes sit above the legs in a live card.
+- 11/17 ~2:30 AM CT: step 9, Live page, second half DONE - totals follow the slip's game map; first screen is the game (tools
+  line, no empty hub box, chips show state and work, exact jump landing); pregame notes after the legs once a game has kicked off
+  (RUNBOOK). Next in step 9: Player pages, Model's Best, News.
