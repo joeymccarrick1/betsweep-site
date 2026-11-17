@@ -766,7 +766,9 @@ class Engine:
             elif dtr is not None and dfr is not None and dtr >= 0.08 and dfr >= 0.15: fl.append({"k": "good", "tag": "Coverage edge", "txt": txt})
             elif dtr is not None and dfr is not None and dtr <= -0.08 and dfr <= -0.15: fl.append({"k": "watch", "tag": "Tough coverage", "txt": txt})
             elif c.get("flag") == "DIFFICULT": fl.append({"k": "watch", "tag": "Coverage", "txt": txt + " Defense ranks tough for his alignment."})
-            else: fl.append({"k": "info", "tag": "Coverage", "txt": txt})
+            # 11/17: the sheet's flag was upside down in the Weeks 8-10 blocks (rank 1 = the defense that allows the MOST, so a low
+            # alignment rank is the easy draw); fixed on the tab, and the easy side now gets its sentence too (information only).
+            else: fl.append({"k": "info", "tag": "Coverage", "txt": txt + (" Defense ranks soft for his alignment." if c.get("flag") == "FAVORABLE" else "")})
         h = self.leg_hist(l)
         if h and h[1] >= 3:
             k, n = h; ln = l.get("line"); m = l["market"]

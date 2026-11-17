@@ -712,7 +712,7 @@ try:
     os.makedirs(os.path.join(OUT, "data"), exist_ok=True)   # risk.js flags listed-parlay legs in losing zones on every page (data/zones.json)
     json.dump({"week": WEEK, "zones": {f"{l['pl']}|{l['m']}|{int(round(float(l.get('ln') or 1)))}": l["z"] for l in LEGS if l.get("z") and l["z"][0] in ("g", "r")}}, open(os.path.join(OUT, "data", "zones.json"), "w"), separators=(",", ":"))
 except Exception as _e: print("warn: edge map skipped:", _e)
-_PLUS_MK = ("Receiving Yards", "Receptions", "Passing Yards", "Anytime TD", "Longest Reception")
+_PLUS_MK = ("Receiving Yards", "Receptions", "Passing Yards", "Anytime TD")   # 11/17: Longest Reception out here too (owner 11/1: the model's weakest market; the page never listed it)
 # owner 11/17 ("no shot DJ Giddens scores. I want players that are actually getting snaps, red zone looks, or potential for a long
 # touchdown"): the second plus-money pick of Week 11 was a back on 7% of snaps at +3300, model 11% against 3% priced. Plus-tier TD
 # legs longer than +600 had gone 2 for 41 in Weeks 9-10. A touchdown leg makes a Model's Best tier only with one of three things:
@@ -745,7 +745,9 @@ for l in LEGS:
     if l["m"] == "Rushing Yards" or l.get("ms") == "Rush yds": continue
     if (l.get("z") or [""])[0] == "r": continue   # 11/6 edge map: never a tier pick from a losing zone
     if l["m"] == "Anytime TD" and not l.get("tdr"): continue   # 11/17: no role, no tier (see td_role)
-    if not l.get("u") and l["m"] in _PLUS_MK and o is not None and o >= 150 and l["raw_p"] - l["bk"] >= 0.05 and "/" not in l["pl"]: l["tier"] = "plus"; continue
+    # 11/17: the number the card SHOWS must agree - Schultz 20+ longest reception sat in this tier at "model 25%, book 29%, edge -4"
+    # (raw model 38%, pulled under the price by the market's own calibration)
+    if not l.get("u") and l["m"] in _PLUS_MK and o is not None and o >= 150 and l["raw_p"] - l["bk"] >= 0.05 and (l.get("e") or 0) > 0 and "/" not in l["pl"]: l["tier"] = "plus"; continue
     if l.get("u"):
         bo = l.get("bko") if l.get("bko") is not None else 1 - l["bk"]
         if o is not None and -135 <= o <= 115 and bo - (1 - l["raw_p"]) >= 0.08: l["tier"] = "even"
@@ -1528,18 +1530,18 @@ BUILDER_JS = r"""
   }
   // ---- FanDuel's price for the slip (owner 11/17: the same-game discount) ----
   // One leg per game: the legs multiplied. Two or more legs in one game: FanDuel prices them together, so the estimate is
-  // exp(-c (n-1)^2) / (FanDuel's implied chances joined with the same correlations the slip uses); c comes from FanDuel's own quotes
+  // exp(-c (n-1)^p) / (FanDuel's implied chances joined with the same correlations the slip uses); c and p come from FanDuel's own quotes
   // on the same-game slips we posted (D.sgp, research/sgp_discount.py, refit on Tuesdays). Always shown as "≈": the quote is the price.
   var _spK = null, _spV = null;
   function slipPrice(ls){
     var bl = bookLegs(ls), key = bl.map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(',');
     if(key === _spK) return _spV;
-    var by = {}, order = [], mult = 1, d = 1, same = false, c = (D.sgp && D.sgp.c) || 0.0104;
+    var by = {}, order = [], mult = 1, d = 1, same = false, c = D.sgp && D.sgp.c != null ? D.sgp.c : 0.00146, pw = (D.sgp && D.sgp.p) || (D.sgp ? 2 : 3);
     bl.forEach(function(l){ if(!by[l.g]){ by[l.g] = []; order.push(l.g); } by[l.g].push(l); mult *= dec(l.o); });
     order.forEach(function(g){ var v = by[g]; if(v.length < 2){ d *= dec(v[0].o); return; }
       var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); x._sc = 0; return x; }));
       if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
-      same = true; d *= Math.max(1.01, Math.exp(-c * (v.length - 1) * (v.length - 1)) / pb); });
+      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
     _spK = key; _spV = {d: same ? d : mult, mult: mult, same: same}; return _spV; }
   function sgWhy(){ return (D.sgp && D.sgp.note) || 'FanDuel prices same-game legs together, so it pays less than the legs multiplied.'; }
   // ---- list ----
@@ -1782,7 +1784,8 @@ BUILDER_JS = r"""
     var up = gorder.filter(function(gid){ return !finished(gid); }), dn = gorder.filter(function(gid){ return finished(gid); });
     function one(gid){
       var g = games[gid], gl = gameLegs(gid), off = started(gid), open = !!openG[gid] && !off;
-      var best = null; gl.forEach(function(l){ if(!best || l.e > best.e) best = l; });
+      // 11/17: the game's "best edge" names a leg worth opening - not a touchdown long shot with no role (owner on Giddens +3300: "no shot") and not a high-risk leg
+      var best = null; gl.forEach(function(l){ if(isTD(l) && !l.tdr) return; try { if(riskScore(l) >= 4) return; } catch(e){} if(!best || l.e > best.e) best = l; });
       var nAll = legs.filter(function(l){ return l.g === gid; }).length;
       var fav = g.pa >= g.pb ? g.a : g.b, mar = Math.abs(g.pa - g.pb);
       var head = '<button type="button" class="ghd" data-g="' + gid + '" aria-expanded="' + open + '"' + (off ? ' disabled' : '') + '>' +

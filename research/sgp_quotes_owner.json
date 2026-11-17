@@ -1,0 +1,646 @@
+{
+ "source": "FanDuel betslip prices from the owner's screenshots, Sat 11/14 about 10 AM CT ('ASSIST - Slip Log' rows 14-23 and their notes); leg prices from the site build of 10:22 AM that morning (commit b07b9083)",
+ "quotes": [
+  {
+   "week": 10,
+   "title": "Test sweep: DET-NE",
+   "fanduel": 270,
+   "legs": [
+    {
+     "pl": "Drake Maye",
+     "m": "Passing Yards",
+     "ln": 225.0,
+     "o": -280,
+     "tm": "NE",
+     "g": "DET-NE",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Jahmyr Gibbs",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -260,
+     "tm": "DET",
+     "g": "DET-NE",
+     "c": "RB_TD"
+    },
+    {
+     "pl": "DET +2.5",
+     "m": "Spread",
+     "ln": 2.5,
+     "o": -194,
+     "tm": "DET",
+     "g": "DET-NE",
+     "c": "",
+     "gl": {
+      "k": "M",
+      "side": "DET"
+     }
+    },
+    {
+     "pl": "Over 47.5",
+     "m": "Total",
+     "ln": 47.5,
+     "o": -148,
+     "tm": "DET",
+     "g": "DET-NE",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "OVER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DET-NE (Over 44.5)",
+   "fanduel": 238,
+   "legs": [
+    {
+     "pl": "Drake Maye",
+     "m": "Passing Yards",
+     "ln": 225.0,
+     "o": -280,
+     "tm": "NE",
+     "g": "DET-NE",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Jahmyr Gibbs",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -260,
+     "tm": "DET",
+     "g": "DET-NE",
+     "c": "RB_TD"
+    },
+    {
+     "pl": "DET +2.5",
+     "m": "Spread",
+     "ln": 2.5,
+     "o": -194,
+     "tm": "DET",
+     "g": "DET-NE",
+     "c": "",
+     "gl": {
+      "k": "M",
+      "side": "DET"
+     }
+    },
+    {
+     "pl": "Over 44.5",
+     "m": "Total",
+     "ln": 44.5,
+     "o": -215,
+     "tm": "DET",
+     "g": "DET-NE",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "OVER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: ATL-KC",
+   "fanduel": 266,
+   "legs": [
+    {
+     "pl": "Khalil Herbert",
+     "m": "Receptions",
+     "ln": 1.0,
+     "o": -205,
+     "tm": "ATL",
+     "g": "ATL-KC",
+     "c": "RB_REC"
+    },
+    {
+     "pl": "Rashee Rice",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "o": -260,
+     "tm": "KC",
+     "g": "ATL-KC",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Patrick Mahomes",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -310,
+     "tm": "KC",
+     "g": "ATL-KC",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Michael Penix Jr.",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -172,
+     "tm": "ATL",
+     "g": "ATL-KC",
+     "c": "QB_PASS"
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: ATL-KC (Penix 175+)",
+   "fanduel": 216,
+   "legs": [
+    {
+     "pl": "Khalil Herbert",
+     "m": "Receptions",
+     "ln": 1.0,
+     "o": -205,
+     "tm": "ATL",
+     "g": "ATL-KC",
+     "c": "RB_REC"
+    },
+    {
+     "pl": "Rashee Rice",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "o": -260,
+     "tm": "KC",
+     "g": "ATL-KC",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Patrick Mahomes",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -310,
+     "tm": "KC",
+     "g": "ATL-KC",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Michael Penix Jr.",
+     "m": "Passing Yards",
+     "ln": 175.0,
+     "o": -320,
+     "tm": "ATL",
+     "g": "ATL-KC",
+     "c": "QB_PASS"
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: BUF-NYJ",
+   "fanduel": 393,
+   "legs": [
+    {
+     "pl": "Ty Johnson",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "o": -220,
+     "tm": "BUF",
+     "g": "BUF-NYJ",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "James Cook",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -165,
+     "tm": "BUF",
+     "g": "BUF-NYJ",
+     "c": "RB_TD"
+    },
+    {
+     "pl": "Mason Taylor",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "o": -235,
+     "tm": "NYJ",
+     "g": "BUF-NYJ",
+     "c": "TE_RECYDS"
+    },
+    {
+     "pl": "NYJ +15.5",
+     "m": "Spread",
+     "ln": 15.5,
+     "o": -295,
+     "tm": "NYJ",
+     "g": "BUF-NYJ",
+     "c": "",
+     "gl": {
+      "k": "M",
+      "side": "NYJ"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CAR-NO",
+   "fanduel": 280,
+   "legs": [
+    {
+     "pl": "John Metchie III",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "o": -172,
+     "tm": "CAR",
+     "g": "CAR-NO",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Chuba Hubbard",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "o": -290,
+     "tm": "CAR",
+     "g": "CAR-NO",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "Bryce Young",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -350,
+     "tm": "CAR",
+     "g": "CAR-NO",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Noah Fant",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "o": -186,
+     "tm": "NO",
+     "g": "CAR-NO",
+     "c": "TE_RECYDS"
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CLE-HOU",
+   "fanduel": 321,
+   "legs": [
+    {
+     "pl": "Dalton Schultz",
+     "m": "Receiving Yards",
+     "ln": 20.0,
+     "o": -260,
+     "tm": "HOU",
+     "g": "CLE-HOU",
+     "c": "TE_RECYDS"
+    },
+    {
+     "pl": "Dylan Sampson",
+     "m": "Receiving Yards",
+     "ln": 15.0,
+     "o": -250,
+     "tm": "CLE",
+     "g": "CLE-HOU",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "KC Concepcion",
+     "m": "Receptions",
+     "ln": 4.0,
+     "o": -235,
+     "tm": "CLE",
+     "g": "CLE-HOU",
+     "c": "WR_REC"
+    },
+    {
+     "pl": "Under 46.5",
+     "m": "Total",
+     "ln": 46.5,
+     "o": -260,
+     "tm": "CLE",
+     "g": "CLE-HOU",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "UNDER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: JAX-TEN",
+   "fanduel": 289,
+   "legs": [
+    {
+     "pl": "Nate Boerkircher",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "o": -250,
+     "tm": "JAX",
+     "g": "JAX-TEN",
+     "c": "TE_RECYDS"
+    },
+    {
+     "pl": "Calvin Ridley",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "o": -182,
+     "tm": "TEN",
+     "g": "JAX-TEN",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "TEN +19.5",
+     "m": "Spread",
+     "ln": 19.5,
+     "o": -340,
+     "tm": "TEN",
+     "g": "JAX-TEN",
+     "c": "",
+     "gl": {
+      "k": "M",
+      "side": "TEN"
+     }
+    },
+    {
+     "pl": "Over 40.5",
+     "m": "Total",
+     "ln": 40.5,
+     "o": -225,
+     "tm": "JAX",
+     "g": "JAX-TEN",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "OVER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: ARI-LA",
+   "fanduel": 172,
+   "legs": [
+    {
+     "pl": "Kyren Williams",
+     "m": "Receiving Yards",
+     "ln": 10.0,
+     "o": -330,
+     "tm": "LA",
+     "g": "ARI-LA",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "ARI +15.5",
+     "m": "Spread",
+     "ln": 15.5,
+     "o": -235,
+     "tm": "ARI",
+     "g": "ARI-LA",
+     "c": "",
+     "gl": {
+      "k": "M",
+      "side": "ARI"
+     }
+    },
+    {
+     "pl": "Over 34.5",
+     "m": "Total",
+     "ln": 34.5,
+     "o": -230,
+     "tm": "ARI",
+     "g": "ARI-LA",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "OVER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: LV-SEA",
+   "fanduel": 274,
+   "legs": [
+    {
+     "pl": "Michael Mayer",
+     "m": "Receiving Yards",
+     "ln": 15.0,
+     "o": -225,
+     "tm": "LV",
+     "g": "LV-SEA",
+     "c": "TE_RECYDS"
+    },
+    {
+     "pl": "Jadarian Price",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "o": -290,
+     "tm": "SEA",
+     "g": "LV-SEA",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "Jaxon Smith-Njigba",
+     "m": "Receptions",
+     "ln": 6.0,
+     "o": -320,
+     "tm": "SEA",
+     "g": "LV-SEA",
+     "c": "WR_REC"
+    },
+    {
+     "pl": "Brock Bowers",
+     "m": "Receptions",
+     "ln": 5.0,
+     "o": -205,
+     "tm": "LV",
+     "g": "LV-SEA",
+     "c": "TE_REC"
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DAL-SF",
+   "fanduel": 262,
+   "legs": [
+    {
+     "pl": "Christian McCaffrey",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -270,
+     "tm": "SF",
+     "g": "DAL-SF",
+     "c": "RB_TD"
+    },
+    {
+     "pl": "George Kittle",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "o": -210,
+     "tm": "SF",
+     "g": "DAL-SF",
+     "c": "TE_RECYDS"
+    },
+    {
+     "pl": "Dak Prescott",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -200,
+     "tm": "DAL",
+     "g": "DAL-SF",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Over 51.5",
+     "m": "Total",
+     "ln": 51.5,
+     "o": -200,
+     "tm": "DAL",
+     "g": "DAL-SF",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "OVER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DAL-SF (Over 47.5)",
+   "fanduel": 233,
+   "legs": [
+    {
+     "pl": "Christian McCaffrey",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -270,
+     "tm": "SF",
+     "g": "DAL-SF",
+     "c": "RB_TD"
+    },
+    {
+     "pl": "George Kittle",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "o": -210,
+     "tm": "SF",
+     "g": "DAL-SF",
+     "c": "TE_RECYDS"
+    },
+    {
+     "pl": "Dak Prescott",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -200,
+     "tm": "DAL",
+     "g": "DAL-SF",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Over 47.5",
+     "m": "Total",
+     "ln": 47.5,
+     "o": -340,
+     "tm": "DAL",
+     "g": "DAL-SF",
+     "c": "",
+     "gl": {
+      "k": "T",
+      "side": "OVER"
+     }
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CIN-PIT",
+   "fanduel": 308,
+   "legs": [
+    {
+     "pl": "Joe Burrow",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -320,
+     "tm": "CIN",
+     "g": "CIN-PIT",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Ja'Marr Chase",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "o": -270,
+     "tm": "CIN",
+     "g": "CIN-PIT",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Jaylen Warren",
+     "m": "Receiving Yards",
+     "ln": 25.0,
+     "o": -125,
+     "tm": "PIT",
+     "g": "CIN-PIT",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "Rico Dowdle",
+     "m": "Receptions",
+     "ln": 2.0,
+     "o": -250,
+     "tm": "PIT",
+     "g": "CIN-PIT",
+     "c": "RB_REC"
+    }
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CIN-PIT (Warren 20+)",
+   "fanduel": 255,
+   "legs": [
+    {
+     "pl": "Joe Burrow",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -320,
+     "tm": "CIN",
+     "g": "CIN-PIT",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Ja'Marr Chase",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "o": -270,
+     "tm": "CIN",
+     "g": "CIN-PIT",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Jaylen Warren",
+     "m": "Receiving Yards",
+     "ln": 20.0,
+     "o": -188,
+     "tm": "PIT",
+     "g": "CIN-PIT",
+     "c": "RB_RECYDS"
+    },
+    {
+     "pl": "Rico Dowdle",
+     "m": "Receptions",
+     "ln": 2.0,
+     "o": -250,
+     "tm": "PIT",
+     "g": "CIN-PIT",
+     "c": "RB_REC"
+    }
+   ]
+  }
+ ]
+}

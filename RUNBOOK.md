@@ -1428,13 +1428,17 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
   more on long slips, so the builder's "FanDuel price", its EV, the game-card best parlay and Today's same-game card all overstated the
   payout. Worst case on the Week 11 Tuesday board: JAX-NYG McCarthy 218+ pass yds + Over 46.5 showed +258 and EV +20%; FanDuel's
   price is about +188 and the slip is 3.5 cents under fair.
-- **The measurement** (`research/sgp_discount.py`, `.json`, `.md`): the 16 same-game slips we posted with FanDuel's own price on the
-  promo tab (Weeks 7-10; the two Week 6 slips are the legs multiplied and are left out). FanDuel's payout against the legs multiplied:
-  4 legs 58-118% (median 87%), 5-6 legs 59-82% (68%), 7+ legs 6-61% (28%); one 3-leg quote (80%), no 2-leg quote yet.
-- **The estimate** (`sgp.py`): price for n legs in one game = exp(-c (n-1)^2) / joint, where joint = FanDuel's implied leg chances joined
-  with the builder's own same-game correlations, and c = 0.0104 from the fit (one number; n = 1 gives the leg's own price). Median miss
-  with each slip left out of its own fit: 12% of the price, against 15% for the old constant (0.85 / joint + 0.15, fitted on four
-  quotes) and 57% for the legs multiplied. Long slips still miss by a lot both ways; it is always shown with "≈".
+- **The measurement** (`research/sgp_discount.py`, `.json`, `.md`): 30 same-game slips with FanDuel's own price, Weeks 7-10 - the 16
+  we posted (promo tab column E; the two Week 6 slips are the legs multiplied and are left out) and the 14 prices the owner read off
+  his betslip on 11/14 for the every-game test sweeps (`research/sgp_quotes_owner.json`: 'ASSIST - Slip Log' rows 14-23 and the
+  variants in their notes, with that morning's leg prices from the 10:22 AM site build). FanDuel's payout against the legs multiplied:
+  4 legs 58-118% (median 87%, 18 slips), 5-6 legs 59-82% (68%, 4), 7+ legs 6-61% (28%, 6); two 3-leg quotes (80%, 103%), no 2-leg quote.
+- **The estimate** (`sgp.py`): price for n legs in one game = exp(-c (n-1)^p) / joint, where joint = FanDuel's implied leg chances joined
+  with the builder's own same-game correlations (n = 1 gives the leg's own price). The script fits c for p = 2, 2.5 and 3 and keeps the
+  p that misses least when each slip is priced by a fit that never saw it: p = 3, c = 0.00146 (multiplier 99% at 3 legs, 96% at 4,
+  91% at 5, 73% at 7, 47% at 9). Median miss: 6% of the price (3% on the twenty 2-4 leg slips, 15% on the ten longer ones), against
+  10% for the old constant (0.85 / joint + 0.15) and 19% for the legs multiplied. Long slips still miss by a lot both ways; it is
+  always shown with "≈".
 - **Where it shows.** Builder: the slip panel's FanDuel price ("≈ +196 · same-game estimate · legs multiply to +252"), EV, edge, payout,
   suggested stake, the slip bar, Sweep this slip, swap / drop previews, "Build me a +N", saved slips (the saved price is the estimate)
   and the share text; a line under the price says why, with the measured numbers (`D.sgp.note`). The target slider keeps working on the
@@ -1449,4 +1453,40 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
 - Tests: `tests/sgp_price.py` (29: one leg per game is the legs multiplied; two legs in one game carry the mark, match the Python
   fit and sit under the legs multiplied for a quarterback with his receiver; light and dark). Added to the pre-publish set.
 - Also fixed on the way: the builder's "Same slip at each book" row ran off the right edge of a phone (a column flex that wrapped).
+
+## 11/17, 12:30 PM CT: Week 11 WR-CB chart loaded; the chart's alignment flag was upside down for Weeks 8-10; Sweep says rewritten
+
+- **Loaded** (owner upload NFL26_CS_WRCB_Week_11.pdf, 2 pages): 'AUTO - WR CB Matchups' rows 425-502, 78 receivers, 26 offenses
+  (ATL, CLV, GB, LAR, NE, SEA on bye), no shadows. Read back through the mirror: 0 mismatched cells. Clay coverage edges: Pickens,
+  Lamb, St. Brown, Dell, Tyson, Nabers, DeVonta Smith, Evans. Tough coverage: Duvernay, Fehoko, Ja'Kobi Lane, Legette, Iosivas,
+  Quentin Johnston, Jennings, Felton, Malachi Fields, Mooney, Brandon X. Smith.
+- **The loader is a script now**: `python3 -I wrcb_load.py <pdf> <week> <first empty row>` writes out/wrcb_load.json (the four value
+  blocks and the first-row array formulas, each with its range); after the mirror refresh `python3 -I wrcb_load.py <pdf> <week>
+  --check in/wrcb.json` must print 0 mismatched cells. It reproduces the Week 10 block exactly.
+- **THE MIRROR STOPS AT ROW 600** ('AUTO - WR CB Matchups'!A1:AT600 in .github/sheets_pull.py on main and in call C above). Week 12
+  ends near row 586; Week 13 will not fit. Widen both to AT1200 before then (the script file is on main - a session does not push
+  there unasked, so tell the owner or do it in a session that may).
+- **Sign bug, fixed.** Clay's page-2 ranks: 1 = the defense that allows the MOST (the easy matchup) - checked against the cell colours
+  (TEN's 1s are green, KC's 32s red) and against WR points actually allowed (correlation 0.99 with our own "allows most" order). The
+  Alignment Def Score must be (16.5 - rank) / 15.5. The Week 5, 8, 9 and 10 blocks had (rank - 16.5) / 15.5, so for Weeks 8-10 the
+  sheet's CB Matchup Flag was reversed: FAVORABLE meant the tough draw. What that touched: the builder's "Coverage ... Defense ranks
+  tough for his alignment" watch sat on receivers with the EASY draw, and Under of the day skipped unders on the wrong receivers.
+  Clay's own deltas (the ▲ ▼ arrows, Coverage edge, Tough coverage) were never affected. All four blocks are now one array formula
+  each with the right sign (AK2, AK167, AK251, AK341); Week 7 was already right.
+- **Regraded with one sign, Weeks 7-10** (`research/wrcb_regrade.py`, `.txt`; 297 receiver-weeks): FAVORABLE went over the receiving
+  line 43.5% (46), NEUTRAL 53.2% (190), DIFFICULT 48.7% (39); thirds by alignment rank 51.6 / 48.4 / 52.7%. So the alignment read does
+  not beat FanDuel's lines (easy draws do gain about 8 yards on tough ones against season averages - the line already has it). The
+  11/11 note that the sheet's flag "graded with signal" (FAVORABLE 56%, DIFFICULT 39%) was the mixed signs. Nothing was demoted:
+  the owner keeps the coverage sentences and arrows (11/11); the easy side now gets "Defense ranks soft for his alignment" as
+  information. Under of the day keeps its coverage skip (owner: "I'd skip it if coverage disagrees").
+- **Sweep says with the chart** (`voice/voice-w11.json`): a session that rewrites lines between rebuilds commits them to the bundle;
+  `reprice.ensure_voice` uses that file only while its "built" stamp is newer than both out/voice.json and the published
+  /b/voice.json (tests/reprice_live.py, 10 checks). Rewritten: HOU-IND (Dell has the softest matchup), BUF-MIA (Miami stingy in the
+  slot; pick Cook anytime TD -185), CIN-WAS (Diggs lives in the slot, Cincinnati allows the 3rd-most to it; pick Diggs 5+ catches
+  +110), DAL-TEN (Lamb and Pickens), DET-TB (St. Brown), JAX-NYG (Nabers soft, Fields and Mooney tough), MIN-SF (Minnesota stingy
+  by rank, Evans the softest matchup). Two picks ride; the others describe.
+- **The share card's risk gate matches the builder's** (`build_boards._risk`): graded tag weights and the hard-risk tags count. Until
+  now it added kinds only, so a Losing side or Blowout script leg with three good flags counted as low risk: the morning's picks for
+  CIN-WAS (Diggs 43+ yards), JAX-NYG (McCarthy 218+) and MIN-SF (McCaffrey 40+ receiving) all carried one. Board picks must be board
+  markets (no Rush + Rec Yards, no Passing TDs).
 

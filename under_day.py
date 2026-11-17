@@ -46,7 +46,7 @@ def soft_draws(in_dir, week):
             if str(r[H["Week"]]).strip() != str(week): continue
             a, b = num(r[H["Clay Matchup T/R delta"]]), num(r[H["Clay Matchup F/R delta"]])
             if a is not None and abs(a) > 1: a /= 100
-            flag = str(r[H["CB Matchup Flag"]]).strip().upper() if "CB Matchup Flag" in H else ""      # the sheet's own read - the one that graded with signal
+            flag = str(r[H["CB Matchup Flag"]]).strip().upper() if "CB Matchup Flag" in H else ""      # the sheet's own read of the defense by alignment (11/17: its sign was upside down in the Weeks 8-10 blocks and is fixed; regraded with one sign for Weeks 7-10 it does not beat the lines either - kept because the owner skips an under when coverage disagrees)
             if (a is not None and b is not None and a >= 0.08 and b >= 0.15) or flag == "FAVORABLE": out.add(str(r[H["WR"]]).strip().lower())
     except Exception as e: print("note: WR-CB chart not read for Under of the day:", e)
     return out

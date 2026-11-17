@@ -31,7 +31,7 @@ check(other is not None, "a second game with a priced leg")
 key = lambda l: f'{l["pl"]}|{l["m"]}|{round(l["ln"] or 1)}'
 joint = sgp_discount.make_joint(D)
 pb = joint([dict(x) for x in pair]) if pair else None
-want = sgp.price(2, pb, S["c"]) if pair else None
+want = sgp.price(2, pb, S) if pair else None
 mult2 = dec(pair[0]["o"]) * dec(pair[1]["o"]) if pair else None
 
 READ = """() => { var p = document.querySelector('#price'), d = p ? p.querySelector('div') : null, o = document.documentElement;

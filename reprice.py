@@ -148,15 +148,21 @@ def leg_prices(bd):
 def ensure_voice(clone, W):
     """out/voice.json for week W: keep a session's own file, else the copy the last build published, else the lines on the home page."""
     p = os.path.join(OUT, "voice.json")
-    try:
-        v = json.load(open(p))
-        if int(v.get("week") or 0) == W and v.get("games"): return f"out/voice.json as it is ({len(v['games'])} game lines)"
-    except Exception: pass
-    try:
-        v = json.load(open(os.path.join(clone, "b", "voice.json")))
-        if int(v.get("week") or 0) == W and v.get("games"):
-            json.dump(v, open(p, "w"), ensure_ascii=False); return f"the published /b/voice.json ({len(v['games'])} game lines, written {v.get('built')})"
-    except Exception: pass
+    # 11/17: a session that rewrites lines between scheduled rebuilds (the WR-CB chart arriving on a Tuesday) commits them to the bundle
+    # as voice/voice-w<W>.json. It wins over out/ and over the published copy only when its "built" stamp is the newest of the three,
+    # so a later rebuild session's own lines still replace it.
+    def _load(path):
+        try:
+            v = json.load(open(path))
+            return v if int(v.get("week") or 0) == W and v.get("games") else None
+        except Exception: return None
+    mine, pub, bun = _load(p), _load(os.path.join(clone, "b", "voice.json")), _load(os.path.join(HERE, "voice", f"voice-w{W}.json"))
+    stamp = lambda v: str((v or {}).get("built") or "")
+    if bun and stamp(bun) > max(stamp(mine), stamp(pub)):
+        json.dump(bun, open(p, "w"), ensure_ascii=False); return f"the bundle's voice/voice-w{W}.json ({len(bun['games'])} game lines, written {bun.get('built')})"
+    if mine: return f"out/voice.json as it is ({len(mine['games'])} game lines)"
+    if pub:
+        json.dump(pub, open(p, "w"), ensure_ascii=False); return f"the published /b/voice.json ({len(pub['games'])} game lines, written {pub.get('built')})"
     # last resort: read the lines back off the home page the clone serves (same week only)
     try:
         bd = live_data(clone); page = open(os.path.join(clone, "index.html"), encoding="utf-8").read()

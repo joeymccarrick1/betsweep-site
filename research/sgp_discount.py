@@ -10,8 +10,9 @@ For each such slip:
     joint      = FanDuel's implied chance of every leg hitting, the legs tied together with the builder's own same-game correlations
                  (same Gaussian copula as joint() in build_builder.py; unders flip the sign)
     actual     = FanDuel's quote
-and the fit is one number c:   FanDuel's price for n legs in one game ~= exp(-c * (n - 1)^2) / joint
-(n = 1 gives exactly the leg's own price; a slip over several games multiplies its games).
+and the fit is:   FanDuel's price for n legs in one game ~= exp(-c * (n - 1)^p) / joint
+(n = 1 gives exactly the leg's own price; a slip over several games multiplies its games). c is least squares through the origin for
+each p in (2, 2.5, 3); p is the one whose prices miss least when every slip is priced by a fit that never saw it.
 
 Usage:  python3 research/sgp_discount.py [in-dir]         (default ./in; needs out/builder_data.json for the correlation tables)
 Writes: research/sgp_discount.json (read by build_builder.py / build_boards.py at build time) and research/sgp_discount.md.
@@ -25,7 +26,7 @@ sys.path.insert(0, GP)
 import slipgrade
 
 C_OLD = None            # the estimate the builder used until 11/17: 0.85 / joint + 0.15
-C_DEFAULT = 0.0098      # used by the generators when research/sgp_discount.json is missing (the 11/17 fit)
+C_DEFAULT, P_DEFAULT = 0.00146, 3.0      # used by the generators when research/sgp_discount.json is missing (the 11/17 fit, 30 quotes)
 
 def dec(o):
     try: o = float(str(o).replace("+", "").replace(",", "").replace("−", "-"))
@@ -128,13 +129,22 @@ def make_joint(bd):
         return max(float(np.mean(np.all(g <= z, axis=1))), 1e-7)
     return joint
 
-def k_of(c, n): return math.exp(-c * (n - 1) ** 2)
-def estimate(c, groups, joint):
+P_GRID = (2.0, 2.5, 3.0)
+def k_of(c, n, p=2.0): return math.exp(-c * (n - 1) ** p)
+def estimate(c, groups, joint, p=2.0):
     """groups: the slip's legs by game -> the estimated FanDuel decimal price"""
     d = 1.0
     for ls in groups:
-        d *= (1 / ls[0]["bk"]) if len(ls) == 1 else max(1.01, k_of(c, len(ls)) / joint(ls))
+        d *= (1 / ls[0]["bk"]) if len(ls) == 1 else max(1.01, k_of(c, len(ls), p) / joint(ls))
     return d
+
+def record(base, D, legs, gs, joint, src):
+    groups = list(gs.values()); x = None; mult = math.prod(l["d"] for l in legs)
+    base_d = 1.0
+    for v in groups: base_d *= (1 / v[0]["bk"]) if len(v) == 1 else 1 / joint(v)
+    return {**base, "src": src, "games": len(groups), "max_n": max(len(v) for v in groups), "ns": [len(v) for v in groups if len(v) > 1], "actual": D, "mult": mult, "base": base_d,
+            "y": math.log(D / base_d), "old": math.prod((1 / v[0]["bk"]) if len(v) == 1 else max(1.01, 0.85 * (1 / joint(v)) + 0.15) for v in groups),
+            "legs": [l["txt"] for l in legs]}
 
 def run(IN):
     bd = json.load(open(os.path.join(GP, "out", "builder_data.json")))
@@ -164,48 +174,66 @@ def run(IN):
         mult = math.prod(l["d"] for l in legs)
         if abs(D / mult - 1) < 0.004:
             multiplied.append({**base, "price": am(D)}); continue      # the legs multiplied, not FanDuel's quote
-        groups = list(gs.values()); x = sum((len(v) - 1) ** 2 for v in groups)
-        base_d = 1.0
-        for v in groups: base_d *= (1 / v[0]["bk"]) if len(v) == 1 else 1 / joint(v)
-        quotes.append({**base, "games": len(groups), "max_n": max(len(v) for v in groups), "x": x, "actual": D, "mult": mult, "base": base_d,
-                       "y": math.log(D / base_d), "old": math.prod((1 / v[0]["bk"]) if len(v) == 1 else max(1.01, 0.85 * (1 / joint(v)) + 0.15) for v in groups),
-                       "legs": [l["txt"] for l in legs]})
+        quotes.append(record(base, D, legs, gs, joint, "posted"))
+    # FanDuel prices the owner read off his own betslip (screenshots) for slips that were never posted: research/sgp_quotes_owner.json holds
+    # each slip's legs with that morning's leg prices from the site build of the hour (see the file's "source" line)
+    try: extra = json.load(open(os.path.join(HERE, "sgp_quotes_owner.json")))
+    except Exception: extra = {"quotes": []}
+    for k, q in enumerate(extra.get("quotes", [])):
+        legs = []
+        for l in q["legs"]:
+            x = dict(l); x["d"] = dec(l["o"]); x["bk"] = 1 / x["d"]; x["pl"] = slipgrade.norm(l["pl"]) if not l.get("gl") else l["pl"]
+            x["txt"] = f'{l["pl"]} {"" if l.get("gl") else l["m"] + " " + format(l["ln"], "g") + "+ "}({am(x["d"])})'; legs.append(x)
+        gs = {}
+        for l in legs: gs.setdefault(l["g"], []).append(l)
+        if not any(len(v) > 1 for v in gs.values()): continue
+        quotes.append(record({"row": f"owner-{k + 1}", "week": int(q["week"]), "title": q["title"], "n": len(legs)}, dec(q["fanduel"]), legs, gs, joint, "owner's betslip"))
     if not quotes: return None
-    fit = lambda qs: max(0.0, -sum(q["x"] * q["y"] for q in qs) / sum(q["x"] ** 2 for q in qs))
-    c = fit(quotes)
-    for k, q in enumerate(quotes):
-        q["new"] = q["base"] * math.exp(-c * q["x"])
-        c1 = fit(quotes[:k] + quotes[k + 1:]) if len(quotes) > 2 else c
-        q["loo"] = q["base"] * math.exp(-c1 * q["x"])                  # priced by a fit that never saw this slip
+    X = lambda q, p: sum((n - 1) ** p for n in q["ns"])
+    fit = lambda qs, p: max(0.0, -sum(X(q, p) * q["y"] for q in qs) / sum(X(q, p) ** 2 for q in qs))
+    def loo(p):
+        out = []
+        for k, q in enumerate(quotes):
+            c1 = fit(quotes[:k] + quotes[k + 1:], p) if len(quotes) > 2 else fit(quotes, p)
+            out.append(q["base"] * math.exp(-c1 * X(q, p)))                # priced by a fit that never saw this slip
+        return out
+    tries = {p: loo(p) for p in P_GRID}
+    miss = {p: statistics.median(abs(math.log(e / q["actual"])) for e, q in zip(v, quotes)) for p, v in tries.items()}
+    p = min(P_GRID, key=lambda x: (round(miss[x], 4), x)); c = fit(quotes, p)
+    for q, e in zip(quotes, tries[p]):
+        q["new"] = q["base"] * math.exp(-c * X(q, p)); q["loo"] = e
         q["pct_mult"] = (q["actual"] - 1) / (q["mult"] - 1)
-    err = lambda key: statistics.median(abs(math.log(q[key] / q["actual"])) for q in quotes)
+    err = lambda key, qs=None: statistics.median(abs(math.log(q[key] / q["actual"])) for q in (qs or quotes))
+    short = [q for q in quotes if max(q["ns"]) <= 4]; long_ = [q for q in quotes if max(q["ns"]) >= 5]
     bands = []
     for lab, lo, hi in (("2-3 legs", 2, 3), ("4 legs", 4, 4), ("5-6 legs", 5, 6), ("7+ legs", 7, 99)):
         qs = [q for q in quotes if q["games"] == 1 and lo <= q["n"] <= hi]
         v = sorted(q["pct_mult"] for q in qs)
         bands.append({"legs": lab, "quotes": len(qs), "low": round(v[0], 3) if v else None, "median": round(statistics.median(v), 3) if v else None, "high": round(v[-1], 3) if v else None,
-                      "k": round(k_of(c, statistics.median([lo, min(hi, 9)])), 3)})
-    out = {"c": round(c, 5), "quotes": len(quotes), "weeks": sorted({q["week"] for q in quotes}),
+                      "k": round(k_of(c, statistics.median([lo, min(hi, 9)]), p), 3)})
+    out = {"c": round(c, 6), "p": p, "p_tried": {str(k): round(v, 3) for k, v in miss.items()}, "quotes": len(quotes), "posted": sum(1 for q in quotes if q["src"] == "posted"), "weeks": sorted({q["week"] for q in quotes}),
            "err_median": {"legs multiplied": round(err("mult"), 3), "old estimate (0.85 / joint + 0.15)": round(err("old"), 3), "new estimate, each slip left out of its own fit": round(err("loo"), 3)},
-           "k": {str(n): round(k_of(c, n), 3) for n in range(2, 11)}, "bands": bands,
-           "rows": [{"week": q["week"], "title": q["title"], "legs": q["n"], "fanduel": am(q["actual"]), "multiplied": am(q["mult"]), "pct_of_multiplied_payout": round(q["pct_mult"], 3),
+           "err_new_by_length": {"2-4 legs": [len(short), round(err("loo", short), 3) if short else None], "5+ legs": [len(long_), round(err("loo", long_), 3) if long_ else None]},
+           "k": {str(n): round(k_of(c, n, p), 3) for n in range(2, 11)}, "bands": bands,
+           "rows": [{"week": q["week"], "title": q["title"], "source": q["src"], "legs": q["n"], "fanduel": am(q["actual"]), "multiplied": am(q["mult"]), "pct_of_multiplied_payout": round(q["pct_mult"], 3),
                      "old_estimate": am(q["old"]), "new_estimate": am(q["loo"]), "leg_list": q["legs"]} for q in quotes],
            "not_quotes": multiplied, "skipped": skipped}
     return out
 
 def md(o):
     L = ["# FanDuel's same-game discount (measured)", "",
-         f"{o['quotes']} same-game slips we posted with FanDuel's own price on the tab, Weeks {o['weeks'][0]}-{o['weeks'][-1]}. \"Share of the multiplied payout\" = FanDuel's",
+         f"{o['quotes']} same-game slips with FanDuel's own price, Weeks {o['weeks'][0]}-{o['weeks'][-1]}: {o['posted']} we posted (the promo tab) and {o['quotes'] - o['posted']} the owner priced on his",
+         "betslip without posting (screenshots of 11/14). \"Share of the multiplied payout\" = FanDuel's",
          "payout on $1 divided by what the legs multiplied would pay.", "",
          "| Legs in one game | Quotes | Share of the multiplied payout (low - median - high) |", "|---|---|---|"]
     for b in o["bands"]:
         L.append(f"| {b['legs']} | {b['quotes']} | " + (f"{b['low']:.0%} - {b['median']:.0%} - {b['high']:.0%}" if b["quotes"] else "no quotes yet") + " |")
-    L += ["", f"Fit: FanDuel's price for n legs in one game = exp(-{o['c']} x (n-1)^2) / (FanDuel's implied chances joined with our same-game correlations).",
+    L += ["", f"Fit: FanDuel's price for n legs in one game = exp(-{o['c']} x (n-1)^{o['p']:g}) / (FanDuel's implied chances joined with our same-game correlations).",
           "That multiplier by leg count: " + ", ".join(f"{n} legs {v:.0%}" for n, v in o["k"].items()) + ".",
-          "Median miss (log price): " + "; ".join(f"{k} {v:.2f}" for k, v in o["err_median"].items()) + ".", "",
-          "| Wk | Slip | Legs | FanDuel | Legs multiplied | Share | Old estimate | New estimate (left out of its own fit) |", "|---|---|---|---|---|---|---|---|"]
+          "Median miss (log price): " + "; ".join(f"{k} {v:.2f}" for k, v in o["err_median"].items()) + ". By length, new estimate: " + "; ".join(f"{k} {v[1]:.2f} ({v[0]} slips)" for k, v in o["err_new_by_length"].items() if v[1] is not None) + ".", "",
+          "| Wk | Slip | From | Legs | FanDuel | Legs multiplied | Share | Old estimate | New estimate (left out of its own fit) |", "|---|---|---|---|---|---|---|---|---|"]
     for r in o["rows"]:
-        L.append(f"| {r['week']} | {r['title']} | {r['legs']} | {r['fanduel']} | {r['multiplied']} | {r['pct_of_multiplied_payout']:.0%} | {r['old_estimate']} | {r['new_estimate']} |")
+        L.append(f"| {r['week']} | {r['title']} | {r['source']} | {r['legs']} | {r['fanduel']} | {r['multiplied']} | {r['pct_of_multiplied_payout']:.0%} | {r['old_estimate']} | {r['new_estimate']} |")
     if o["not_quotes"]: L += ["", "Same-game slips whose tab price is just the legs multiplied (not a quote, left out): " + "; ".join(f"Wk {x['week']} {x['title']}" for x in o["not_quotes"]) + "."]
     if o["skipped"]: L += ["", "Skipped: " + "; ".join(f"Wk {x['week']} {x['title']} - {x['why']}" for x in o["skipped"]) + "."]
     return "\n".join(L) + "\n"
@@ -216,5 +244,5 @@ if __name__ == "__main__":
     if not o: print("no same-game quotes on the promo tab yet"); sys.exit(0)
     json.dump(o, open(os.path.join(HERE, "sgp_discount.json"), "w"), indent=1)
     open(os.path.join(HERE, "sgp_discount.md"), "w", encoding="utf-8").write(md(o))
-    print(f"wrote research/sgp_discount.json + .md: {o['quotes']} quotes, c = {o['c']}, median miss {o['err_median']}")
+    print(f"wrote research/sgp_discount.json + .md: {o['quotes']} quotes, c = {o['c']}, p = {o['p']} (tried {o['p_tried']}), median miss {o['err_median']}, by length {o['err_new_by_length']}")
     for b in o["bands"]: print("  ", b)

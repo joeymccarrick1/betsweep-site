@@ -58,7 +58,7 @@ def sgp_section():
     if not rows: return base
     wk = o.get("weeks") or []
     return (base + '<table><tr><th>Legs in one game</th><th>FanDuel paid, against the legs multiplied</th><th>Slips</th></tr>' + rows + '</table>'
-            + f'<p class="small">Measured on the {o.get("quotes")} same-game slips we posted with FanDuel\'s own price' + (f', Weeks {wk[0]}-{wk[-1]}' if wk else '') + '; refreshed every Tuesday. '
+            + f'<p class="small">Measured on {o.get("quotes")} same-game slips with FanDuel\'s own price ({o.get("posted", o.get("quotes"))} we posted, the rest priced on the betslip)' + (f', Weeks {wk[0]}-{wk[-1]}' if wk else '') + '; refreshed every Tuesday. '
             'Read it as: a four-leg same-game slip whose legs multiply to +1000 usually shows about +870 in the app. Legs that fight each other (an underdog covering and the under) can pay a little more than the legs multiplied. '
             'One leg per game is still simply the legs multiplied.</p>')
 SGP_HTML = sgp_section()

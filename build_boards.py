@@ -200,7 +200,14 @@ def sweep_lean(gid, a, b):
 def lean_text(lean): return " and ".join(x for x in (("the " + lean["total"].lower()) if lean.get("total") else "", lean.get("side") or "") if x)
 LEAN_LOG = []   # one entry per game with a lean: what it was, the slip built under it and the slip the same run would have printed without it
 _RISKW = {"bad": 3, "watch": 1, "good": -1}
-def _risk(l): return max(0, sum(_RISKW.get(f.get("k"), 0) for f in (l.get("flags") or [])))
+def _risk(l):
+    """the share card's risk gate, in step with sweep.risk_score since 11/17: graded tag weights replace the kind's default, and the
+    hard-risk tags (Losing side, Blowout script, Losing zone ...) never wash out against good flags (owner 11/15). Until then a Losing
+    side leg with three good flags counted as low risk here and rode on the card."""
+    fs = l.get("flags") or []
+    s = sum(_SWPB.TAG_W[f.get("tag")] if f.get("tag") in _SWPB.TAG_W else _RISKW.get(f.get("k"), 0) for f in fs)
+    if {f.get("tag") for f in fs} & _SWPB.HARD_RISK: s = max(s, 2)
+    return max(0, s)
 SWEEP_NOTES = []   # (gid, why) for every game line whose card shares the line alone - printed after the build so the run can fix line or pick
 _PLAY_RE = re.compile(r"\b(?:play|take|bet|back|ride|tail|hammer|grab)\s+((?:[A-Z][A-Za-z.'\-]+\s?){1,3})")
 def _last(n): return re.sub(r"\s+(Jr\.?|Sr\.?|II|III|IV|V)$", "", str(n).strip()).split(" ")[-1]
@@ -571,6 +578,14 @@ try:
     if len(_cols) == 7:
         for _r in _v[1:]:
             if _r and _r[0]: TMULT[_r[0]] = {k: (num(_r[i]) if i < len(_r) and num(_r[i]) else 1.0) for k, i in _cols.items()}
+except Exception: pass
+# 11/17: FanDuel's own main spread and total per team (same tab). The card's kickoff strip printed the schedule feed's line, which sat a
+# point off FanDuel's on two Week 11 cards (HOU -12.5 above a Sweep says line and a "Market's read" that both said -11.5).
+FDMAIN = {}
+try:
+    _is, _it = _h.index("FD spread (main)"), _h.index("FD total (main)")
+    for _r in _v[1:]:
+        if _r and _r[0] and len(_r) > max(_is, _it) and num(_r[_is]) is not None and num(_r[_it]): FDMAIN[_r[0]] = (num(_r[_is]), num(_r[_it]))
 except Exception: pass
 # 2026-10-29 (owner 10/27 "do the others"): strength-of-schedule multipliers per player (build_sos.py -> out/sos_values.json ->
 # 'AUTO - SOS Adjust'; the Leg Board applies them in Model proj as z_s), so the yards / receptions chips match the legs again.
@@ -1100,9 +1115,9 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
                 for j in range(i+1, n): C[i][j] = C[j][i] = corr_between(combo[i]["l"], codes[id(combo[i])], combo[j]["l"], codes[id(combo[j])])
             pj = sum(w[k] * joint_prob([r["ps"][k] for r in combo], C, n=3000) for k in range(4) if w[k] > 0)
             # owner 11/17 (the same-game discount): every slip here is one game, and FanDuel does not pay the legs multiplied on those.
-            # The price is the estimate from its own quotes (sgp.py): exp(-c (n-1)^2) / its implied chances joined with these correlations.
+            # The price is the estimate from its own quotes (sgp.py): exp(-c (n-1)^p) / its implied chances joined with these correlations.
             pb = joint_prob([r["l"]["book"] for r in combo], C, n=3000)
-            de = _SGPB.price(n, pb, _SGPC["c"]) if pb > 0 else d
+            de = _SGPB.price(n, pb, _SGPC) if pb > 0 else d
             priced.append((pj, pj * de - 1, de, combo, C))
         plus = [x for x in priced if x[1] >= 0]
         near = [x for x in priced if x[1] >= -0.05]
@@ -1146,7 +1161,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
     pj, ev, d, combo, C, plus, near = got
     d_mult = math.prod(dec_odds(r["l"]["odds"]) for r in combo)
     _pb = joint_prob([r["l"]["book"] for r in combo], C, n=30000)
-    if _pb > 0: d = _SGPB.price(len(combo), _pb, _SGPC["c"])          # the same estimate, with more draws for the number on the card
+    if _pb > 0: d = _SGPB.price(len(combo), _pb, _SGPC)          # the same estimate, with more draws for the number on the card
     by_k = [joint_prob([r["ps"][k] for r in combo], C, n=12000) if w[k] > 0 else 0.0 for k in range(4)]
     pj = sum(w[k] * by_k[k] for k in range(4)); ev = pj * d - 1
     # the honest version of the same slip: each leg's chance under each ending scaled by (honest chance / model chance)
@@ -1316,13 +1331,17 @@ for a, b, pl_all in blocks:
         hh, mm = gi["gametime"].split(":"); ct = (int(hh) - 1) % 24; ampm = "PM" if ct >= 12 else "AM"; ct12 = ct - 12 if ct > 12 else (12 if ct == 0 else ct)
         dt = datetime.date.fromisoformat(gi["gameday"]); kick = f"{dt.strftime('%a %-m/%-d')} {ct12}:{mm} {ampm} CT"
         roof = {"dome": "dome", "outdoors": "outdoors", "closed": "roof closed", "open": "roof open"}.get(gi["roof"] or "", "retractable roof")
-        sp = num(gi["spread_line"]) or 0; tot = num(gi["total_line"])
-        mkt_fav = gi["home_team"] if sp > 0 else gi["away_team"]; mkt = f"{mkt_fav} -{abs(sp):g}" if sp else "pick"
+        sp = num(gi["spread_line"]) or 0; tot = num(gi["total_line"]); _msrc = "closing-line market from the schedule feed"
+        mkt_fav = gi["home_team"] if sp > 0 else gi["away_team"]
+        _fd = FDMAIN.get(a)
+        if _fd is not None:   # FanDuel's main line when the market tab has it
+            sp = abs(_fd[0]); tot = _fd[1]; mkt_fav = a if _fd[0] < 0 else b; _msrc = "FanDuel's main line"
+        mkt = f"{mkt_fav} -{abs(sp):g}" if sp else "pick"
         diff = abs(abs(sp) - margin) if mkt_fav == fav else abs(sp) + margin
         agree = "agree" if diff <= 3 else "differ"
         if agree == "differ": summary_rows["mkt"].append((diff, f"{gi['away_team']} @ {gi['home_team']}", f"market {mkt}, model {fav} by {margin:.1f}"))
         info = (f'<div class="ginfo"><span class="gk">{kick}</span><i>·</i><span title="{roof} · {E(gi["surface"])}">{E(gi["stadium"])}</span><i>·</i>{wx_block(a, b, ct)}<i>·</i>'
-                f'<span class="mkt {agree}" title="closing-line market from the schedule feed; model {fav} by {margin:.1f}, {s[4]:.1f} total">{mkt} · O/U {tot:g}</span>'
+                f'<span class="mkt {agree}" title="{_msrc}; model {fav} by {margin:.1f}, {s[4]:.1f} total">{mkt} · O/U {tot:g}</span>'
                 f'</div><div class="vbtns"><button type="button" class="vbtn" data-view="script">Game Script</button><button type="button" class="vbtn" data-view="proj">Projections</button></div>')
     w = WX.get(frozenset([a, b]))
     if w and w["risk"] in ("HIGH", "MED"): summary_rows["wx"].append((w["risk"], f"{a}/{b}", f"wind {w['wind']:.0f} mph" + (f", gusts {w['gust']:.0f}" if w["gust"] else "") + (f", {w['ptype']}" if w["ptype"] not in ("none", "") else "")))

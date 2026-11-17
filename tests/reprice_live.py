@@ -28,4 +28,23 @@ c = clone({"data-4ed8b65dfdb7.js": 10}, "data-02f30c0e92f3.js")
 check((reprice.live_data(c) or {}).get("week") == 10, "the page links a file that is not there: the file that is")
 c = clone({}, None)
 check(reprice.live_data(c) is None, "no data file at all: None")
+# ---- 11/17: the Sweep says lines - a session's rewrite committed to the bundle (voice/voice-w<W>.json) wins only while it is the newest ----
+import shutil
+def voice_case(out_built, pub_built, bun_built, W=77):
+    out = tempfile.mkdtemp(); c = tempfile.mkdtemp(); os.makedirs(os.path.join(c, "b")); here = tempfile.mkdtemp(); os.makedirs(os.path.join(here, "voice"))
+    mk = lambda who, built: {"week": W, "built": built, "games": {"AAA-BBB": who}}
+    if out_built: json.dump(mk("out", out_built), open(os.path.join(out, "voice.json"), "w"))
+    if pub_built: json.dump(mk("pub", pub_built), open(os.path.join(c, "b", "voice.json"), "w"))
+    if bun_built: json.dump(mk("bundle", bun_built), open(os.path.join(here, "voice", f"voice-w{W}.json"), "w"))
+    keep = (reprice.OUT, reprice.HERE); reprice.OUT, reprice.HERE = out, here
+    try:
+        msg = reprice.ensure_voice(c, W); got = json.load(open(os.path.join(out, "voice.json")))["games"]["AAA-BBB"]
+    finally: reprice.OUT, reprice.HERE = keep
+    for d in (out, c, here): shutil.rmtree(d, ignore_errors=True)
+    return got, msg
+check(voice_case(None, "2026-11-17T14:00:00Z", "2026-11-17T17:00:00Z")[0] == "bundle", "Sweep says: the bundle's lines win over an older published copy")
+check(voice_case(None, "2026-11-17T21:00:00Z", "2026-11-17T17:00:00Z")[0] == "pub", "Sweep says: a later published copy wins over the bundle's lines")
+check(voice_case("2026-11-17T22:00:00Z", "2026-11-17T21:00:00Z", "2026-11-17T17:00:00Z")[0] == "out", "Sweep says: a session's own newer file stays")
+check(voice_case("2026-11-17T14:00:00Z", None, "2026-11-17T17:00:00Z")[0] == "bundle", "Sweep says: the bundle's lines replace an older local file")
+check(voice_case(None, "2026-11-17T14:00:00Z", None)[0] == "pub", "Sweep says: no bundle file - the published copy, as before")
 print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

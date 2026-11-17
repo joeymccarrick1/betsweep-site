@@ -1,6 +1,13 @@
 {
- "c": 0.01043,
- "quotes": 16,
+ "c": 0.001457,
+ "p": 3.0,
+ "p_tried": {
+  "2.0": 0.07,
+  "2.5": 0.061,
+  "3.0": 0.056
+ },
+ "quotes": 30,
+ "posted": 16,
  "weeks": [
   7,
   8,
@@ -8,37 +15,47 @@
   10
  ],
  "err_median": {
-  "legs multiplied": 0.449,
-  "old estimate (0.85 / joint + 0.15)": 0.149,
-  "new estimate, each slip left out of its own fit": 0.115
+  "legs multiplied": 0.191,
+  "old estimate (0.85 / joint + 0.15)": 0.103,
+  "new estimate, each slip left out of its own fit": 0.056
+ },
+ "err_new_by_length": {
+  "2-4 legs": [
+   20,
+   0.026
+  ],
+  "5+ legs": [
+   10,
+   0.149
+  ]
  },
  "k": {
-  "2": 0.99,
-  "3": 0.959,
-  "4": 0.91,
-  "5": 0.846,
-  "6": 0.77,
-  "7": 0.687,
-  "8": 0.6,
-  "9": 0.513,
-  "10": 0.429
+  "2": 0.999,
+  "3": 0.988,
+  "4": 0.961,
+  "5": 0.911,
+  "6": 0.833,
+  "7": 0.73,
+  "8": 0.607,
+  "9": 0.474,
+  "10": 0.346
  },
  "bands": [
   {
    "legs": "2-3 legs",
-   "quotes": 1,
+   "quotes": 2,
    "low": 0.805,
-   "median": 0.805,
-   "high": 0.805,
-   "k": 0.977
+   "median": 0.919,
+   "high": 1.033,
+   "k": 0.995
   },
   {
    "legs": "4 legs",
-   "quotes": 5,
+   "quotes": 18,
    "low": 0.58,
-   "median": 0.873,
+   "median": 0.872,
    "high": 1.182,
-   "k": 0.91
+   "k": 0.961
   },
   {
    "legs": "5-6 legs",
@@ -46,7 +63,7 @@
    "low": 0.594,
    "median": 0.682,
    "high": 0.824,
-   "k": 0.81
+   "k": 0.876
   },
   {
    "legs": "7+ legs",
@@ -54,19 +71,20 @@
    "low": 0.063,
    "median": 0.283,
    "high": 0.607,
-   "k": 0.6
+   "k": 0.607
   }
  ],
  "rows": [
   {
    "week": 7,
    "title": "TNF SGP",
+   "source": "posted",
    "legs": 4,
    "fanduel": "+595",
    "multiplied": "+679",
    "pct_of_multiplied_payout": 0.876,
    "old_estimate": "+506",
-   "new_estimate": "+532",
+   "new_estimate": "+568",
    "leg_list": [
     "NE +3.5 Spread (-140)",
     "Efton Chism III Receiving Yards 15+ (-158)",
@@ -77,12 +95,13 @@
   {
    "week": 7,
    "title": "Thursday Night Lotto",
+   "source": "posted",
    "legs": 4,
    "fanduel": "+5337",
    "multiplied": "+8850",
    "pct_of_multiplied_payout": 0.603,
    "old_estimate": "+4831",
-   "new_estimate": "+5164",
+   "new_estimate": "+5461",
    "leg_list": [
     "Caleb Williams Anytime TD (+350)",
     "TreVeyon Henderson Anytime TD (+340)",
@@ -93,12 +112,13 @@
   {
    "week": 7,
    "title": "Sunday Night Lotto",
+   "source": "posted",
    "legs": 7,
    "fanduel": "+7352",
    "multiplied": "+25155",
    "pct_of_multiplied_payout": 0.292,
    "old_estimate": "+12997",
-   "new_estimate": "+10818",
+   "new_estimate": "+11450",
    "leg_list": [
     "KC -3.5 Spread (+200)",
     "Kenneth Walker III Rushing Yards 80+ (-136)",
@@ -112,12 +132,13 @@
   {
    "week": 7,
    "title": "MNF Piss Missile",
+   "source": "posted",
    "legs": 8,
    "fanduel": "+11825",
    "multiplied": "+188249",
    "pct_of_multiplied_payout": 0.063,
    "old_estimate": "+23510",
-   "new_estimate": "+17611",
+   "new_estimate": "+17877",
    "leg_list": [
     "Dak Prescott Passing Yards 300+ (+182)",
     "CeeDee Lamb Receiving Yards 100+ (+194)",
@@ -132,12 +153,13 @@
   {
    "week": 7,
    "title": "MNF SGP",
+   "source": "posted",
    "legs": 5,
    "fanduel": "+492",
    "multiplied": "+828",
    "pct_of_multiplied_payout": 0.594,
    "old_estimate": "+486",
-   "new_estimate": "+468",
+   "new_estimate": "+512",
    "leg_list": [
     "Dak Prescott Passing Yards 250+ (-188)",
     "George Pickens Receiving Yards 50+ (-235)",
@@ -149,12 +171,13 @@
   {
    "week": 8,
    "title": "Thursday's Little Geemer",
+   "source": "posted",
    "legs": 8,
    "fanduel": "+21954",
    "multiplied": "+36182",
    "pct_of_multiplied_payout": 0.607,
    "old_estimate": "+16941",
-   "new_estimate": "+10632",
+   "new_estimate": "+10751",
    "leg_list": [
     "Josh Jacobs Anytime TD (-135)",
     "Matthew Golden Anytime TD (+160)",
@@ -169,12 +192,13 @@
   {
    "week": 8,
    "title": "SNF Prime Time",
+   "source": "posted",
    "legs": 4,
    "fanduel": "+777",
    "multiplied": "+890",
    "pct_of_multiplied_payout": 0.873,
    "old_estimate": "+757",
-   "new_estimate": "+802",
+   "new_estimate": "+852",
    "leg_list": [
     "Stefon Diggs Receptions 4+ (-166)",
     "Treylon Burks Receiving Yards 15+ (-188)",
@@ -185,12 +209,13 @@
   {
    "week": 8,
    "title": "Commander-in-Diggs",
+   "source": "posted",
    "legs": 5,
    "fanduel": "+4147",
    "multiplied": "+5647",
    "pct_of_multiplied_payout": 0.734,
    "old_estimate": "+3511",
-   "new_estimate": "+3470",
+   "new_estimate": "+3752",
    "leg_list": [
     "Stefon Diggs Receptions 5+ (+132)",
     "Stefon Diggs Anytime TD (+195)",
@@ -202,12 +227,13 @@
   {
    "week": 8,
    "title": "Piss Missile Monday",
+   "source": "posted",
    "legs": 9,
    "fanduel": "+6168",
    "multiplied": "+22480",
    "pct_of_multiplied_payout": 0.274,
    "old_estimate": "+9862",
-   "new_estimate": "+5808",
+   "new_estimate": "+5089",
    "leg_list": [
     "Caleb Williams Passing Yards 225+ (-125)",
     "Sam Darnold Passing Yards 225+ (-166)",
@@ -223,12 +249,13 @@
   {
    "week": 9,
    "title": "Crossfire",
+   "source": "posted",
    "legs": 3,
    "fanduel": "+690",
    "multiplied": "+857",
    "pct_of_multiplied_payout": 0.805,
    "old_estimate": "+728",
-   "new_estimate": "+818",
+   "new_estimate": "+846",
    "leg_list": [
     "Brian Thomas Jr. Receptions 2+ (+144)",
     "Zay Flowers Receiving Yards 60+ (+148)",
@@ -238,12 +265,13 @@
   {
    "week": 9,
    "title": "Run It, Chase It",
+   "source": "posted",
    "legs": 5,
    "fanduel": "+4700",
    "multiplied": "+5702",
    "pct_of_multiplied_payout": 0.824,
    "old_estimate": "+4847",
-   "new_estimate": "+4812",
+   "new_estimate": "+5189",
    "leg_list": [
     "Bhayshul Tuten Anytime TD (-105)",
     "Brian Thomas Jr. Receptions 2+ (+144)",
@@ -255,12 +283,13 @@
   {
    "week": 9,
    "title": "Piss Missile Monday",
+   "source": "posted",
    "legs": 7,
    "fanduel": "+4613",
    "multiplied": "+11325",
    "pct_of_multiplied_payout": 0.407,
    "old_estimate": "+7082",
-   "new_estimate": "+5803",
+   "new_estimate": "+6166",
    "leg_list": [
     "Carson Wentz Passing Yards 200+ (-146)",
     "Aaron Jones Receptions 3+ (+205)",
@@ -274,12 +303,13 @@
   {
    "week": 10,
    "title": "Daily Sweep: Wet Work",
+   "source": "posted",
    "legs": 4,
    "fanduel": "+302",
    "multiplied": "+256",
    "pct_of_multiplied_payout": 1.182,
    "old_estimate": "+243",
-   "new_estimate": "+251",
+   "new_estimate": "+271",
    "leg_list": [
     "Stefon Diggs Receiving Yards 25+ (-330)",
     "NYG +5.5 Spread (-320)",
@@ -290,12 +320,13 @@
   {
    "week": 10,
    "title": "Thursday Night Thievery",
+   "source": "posted",
    "legs": 5,
    "fanduel": "+2467",
    "multiplied": "+3916",
    "pct_of_multiplied_payout": 0.63,
    "old_estimate": "+2583",
-   "new_estimate": "+2557",
+   "new_estimate": "+2761",
    "leg_list": [
     "Malik Nabers Anytime TD (+165)",
     "Stefon Diggs Anytime TD (+240)",
@@ -307,12 +338,13 @@
   {
    "week": 10,
    "title": "Daily Sweep: Herbo Fully Loaded",
+   "source": "posted",
    "legs": 4,
    "fanduel": "+259",
    "multiplied": "+447",
    "pct_of_multiplied_payout": 0.58,
    "old_estimate": "+312",
-   "new_estimate": "+326",
+   "new_estimate": "+350",
    "leg_list": [
     "Justin Herbert Passing Yards 175+ (-225)",
     "Over 38.5 (BAL-LAC) Total (-115)",
@@ -323,12 +355,13 @@
   {
    "week": 10,
    "title": "Piss Missile Monday",
+   "source": "posted",
    "legs": 8,
    "fanduel": "+4174",
    "multiplied": "+17313",
    "pct_of_multiplied_payout": 0.241,
    "old_estimate": "+5808",
-   "new_estimate": "+4036",
+   "new_estimate": "+4092",
    "leg_list": [
     "LAC +7.5 Spread (-196)",
     "Over 40.5 (BAL-LAC) Total (+110)",
@@ -338,6 +371,243 @@
     "Zay Flowers Receiving Yards 50+ (-290)",
     "Derrick Henry Anytime TD (-140)",
     "Omarion Hampton Anytime TD (+310)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DET-NE",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+270",
+   "multiplied": "+377",
+   "pct_of_multiplied_payout": 0.716,
+   "old_estimate": "+251",
+   "new_estimate": "+280",
+   "leg_list": [
+    "Drake Maye Passing Yards 225+ (-280)",
+    "Jahmyr Gibbs Anytime TD 1+ (-260)",
+    "DET +2.5 (-194)",
+    "Over 47.5 (-148)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DET-NE (Over 44.5)",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+238",
+   "multiplied": "+317",
+   "pct_of_multiplied_payout": 0.75,
+   "old_estimate": "+218",
+   "new_estimate": "+243",
+   "leg_list": [
+    "Drake Maye Passing Yards 225+ (-280)",
+    "Jahmyr Gibbs Anytime TD 1+ (-260)",
+    "DET +2.5 (-194)",
+    "Over 44.5 (-215)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: ATL-KC",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+266",
+   "multiplied": "+331",
+   "pct_of_multiplied_payout": 0.804,
+   "old_estimate": "+244",
+   "new_estimate": "+272",
+   "leg_list": [
+    "Khalil Herbert Receptions 1+ (-205)",
+    "Rashee Rice Receiving Yards 40+ (-260)",
+    "Patrick Mahomes Passing Yards 200+ (-310)",
+    "Michael Penix Jr. Passing Yards 200+ (-172)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: ATL-KC (Penix 175+)",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+216",
+   "multiplied": "+258",
+   "pct_of_multiplied_payout": 0.839,
+   "old_estimate": "+192",
+   "new_estimate": "+213",
+   "leg_list": [
+    "Khalil Herbert Receptions 1+ (-205)",
+    "Rashee Rice Receiving Yards 40+ (-260)",
+    "Patrick Mahomes Passing Yards 200+ (-310)",
+    "Michael Penix Jr. Passing Yards 175+ (-320)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: BUF-NYJ",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+393",
+   "multiplied": "+346",
+   "pct_of_multiplied_payout": 1.136,
+   "old_estimate": "+307",
+   "new_estimate": "+343",
+   "leg_list": [
+    "Ty Johnson Receiving Yards 10+ (-220)",
+    "James Cook Anytime TD 1+ (-165)",
+    "Mason Taylor Receiving Yards 10+ (-235)",
+    "NYJ +15.5 (-295)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CAR-NO",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+280",
+   "multiplied": "+320",
+   "pct_of_multiplied_payout": 0.874,
+   "old_estimate": "+243",
+   "new_estimate": "+271",
+   "leg_list": [
+    "John Metchie III Receiving Yards 5+ (-172)",
+    "Chuba Hubbard Receiving Yards 10+ (-290)",
+    "Bryce Young Passing Yards 200+ (-350)",
+    "Noah Fant Receiving Yards 5+ (-186)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CLE-HOU",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+321",
+   "multiplied": "+283",
+   "pct_of_multiplied_payout": 1.136,
+   "old_estimate": "+265",
+   "new_estimate": "+296",
+   "leg_list": [
+    "Dalton Schultz Receiving Yards 20+ (-260)",
+    "Dylan Sampson Receiving Yards 15+ (-250)",
+    "KC Concepcion Receptions 4+ (-235)",
+    "Under 46.5 (-260)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: JAX-TEN",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+289",
+   "multiplied": "+305",
+   "pct_of_multiplied_payout": 0.946,
+   "old_estimate": "+227",
+   "new_estimate": "+253",
+   "leg_list": [
+    "Nate Boerkircher Receiving Yards 5+ (-250)",
+    "Calvin Ridley Receiving Yards 10+ (-182)",
+    "TEN +19.5 (-340)",
+    "Over 40.5 (-225)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: ARI-LA",
+   "source": "owner's betslip",
+   "legs": 3,
+   "fanduel": "+172",
+   "multiplied": "+167",
+   "pct_of_multiplied_payout": 1.033,
+   "old_estimate": "+138",
+   "new_estimate": "+159",
+   "leg_list": [
+    "Kyren Williams Receiving Yards 10+ (-330)",
+    "ARI +15.5 (-235)",
+    "Over 34.5 (-230)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: LV-SEA",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+274",
+   "multiplied": "+279",
+   "pct_of_multiplied_payout": 0.981,
+   "old_estimate": "+237",
+   "new_estimate": "+265",
+   "leg_list": [
+    "Michael Mayer Receiving Yards 15+ (-225)",
+    "Jadarian Price Receiving Yards 5+ (-290)",
+    "Jaxon Smith-Njigba Receptions 6+ (-320)",
+    "Brock Bowers Receptions 5+ (-205)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DAL-SF",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+262",
+   "multiplied": "+355",
+   "pct_of_multiplied_payout": 0.738,
+   "old_estimate": "+234",
+   "new_estimate": "+261",
+   "leg_list": [
+    "Christian McCaffrey Anytime TD 1+ (-270)",
+    "George Kittle Receiving Yards 50+ (-210)",
+    "Dak Prescott Passing Yards 250+ (-200)",
+    "Over 51.5 (-200)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: DAL-SF (Over 47.5)",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+233",
+   "multiplied": "+293",
+   "pct_of_multiplied_payout": 0.796,
+   "old_estimate": "+206",
+   "new_estimate": "+229",
+   "leg_list": [
+    "Christian McCaffrey Anytime TD 1+ (-270)",
+    "George Kittle Receiving Yards 50+ (-210)",
+    "Dak Prescott Passing Yards 250+ (-200)",
+    "Over 47.5 (-340)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CIN-PIT",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+308",
+   "multiplied": "+353",
+   "pct_of_multiplied_payout": 0.872,
+   "old_estimate": "+278",
+   "new_estimate": "+311",
+   "leg_list": [
+    "Joe Burrow Passing Yards 250+ (-320)",
+    "Ja'Marr Chase Receiving Yards 70+ (-270)",
+    "Jaylen Warren Receiving Yards 25+ (-125)",
+    "Rico Dowdle Receptions 2+ (-250)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Test sweep: CIN-PIT (Warren 20+)",
+   "source": "owner's betslip",
+   "legs": 4,
+   "fanduel": "+255",
+   "multiplied": "+286",
+   "pct_of_multiplied_payout": 0.892,
+   "old_estimate": "+224",
+   "new_estimate": "+249",
+   "leg_list": [
+    "Joe Burrow Passing Yards 250+ (-320)",
+    "Ja'Marr Chase Receiving Yards 70+ (-270)",
+    "Jaylen Warren Receiving Yards 20+ (-188)",
+    "Rico Dowdle Receptions 2+ (-250)"
    ]
   }
  ],
