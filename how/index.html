@@ -73,16 +73,16 @@ a{color:var(--ink)}
 <p class="lead">BetSweep is a projection model that prices every FanDuel prop. Everything on the site is graded every Tuesday against the box scores, in public, at the odds we showed. This page is what the grades say and how we pick.</p>
 
 <h2>Where the numbers come from</h2>
-<p>Every player gets a projection for the week: yards, catches, touchdowns, fantasy points. It starts from his own season and recent games, then adjusts for the literal matchup — how his offense ranks in that stat against how the opponent's defense ranks at allowing it — the game's expected script (FanDuel's spread and total, which beat our own formula at predicting endings), injuries and who fills in, weather at kickoff, and red-zone and snap usage. The model's chance for a line (say, 60+ receiving yards) is then blended with what FanDuel's price implies, because on the graded legs the raw model ran overconfident when it disagreed with the market. How much weight the model gets depends on the market: the most on touchdowns (about two thirds), where it has added the most; about a quarter to a third on receptions and receiving yards; and very little on passing and rushing yards, where FanDuel's number alone graded better. The weights are re-tested every Tuesday on the newly graded legs.</p>
+<p>Every player gets a projection for the week: yards, catches, touchdowns, fantasy points. It starts from his own season and recent games, then adjusts for the literal matchup — how his offense ranks in that stat against how the opponent's defense ranks at allowing it — the game's expected script (FanDuel's spread and total, which beat our own formula at predicting endings), injuries and who fills in, weather at kickoff, and red-zone and snap usage. The model's chance for a line (say, 60+ receiving yards) is then blended with what FanDuel's price implies, because on the graded legs the raw model ran overconfident when it disagreed with the market (legs it had at 70% or better hit 63%). How much weight the model gets depends on the market: about half on touchdowns and receptions, about a quarter on receiving yards, and very little on passing yards and rushing yards, where FanDuel's number alone graded better. The weights are re-tested every Tuesday on the newly graded legs.</p>
 
-<h2>What three graded weeks taught us</h2>
+<h2>What five graded weeks taught us</h2>
 <div class="num">
-<div><b class="b">−8%</b><small>return on every priced leg at FanDuel's price (4,929 legs, Weeks 6–8)</small></div>
-<div><b class="b">−9 to −12%</b><small>"floor" legs priced −130 to −400 — they hit 5–9 points under their price</small></div>
-<div><b class="b">−19%</b><small>rushing-yard overs, at every line, both sides</small></div>
-<div><b class="g">+31%</b><small>plus-money legs (+150 or longer) where the model is 5+ points over the price: 41% hit vs 32% implied</small></div>
+<div><b class="b">−9%</b><small>return on every priced leg at FanDuel's price (8,094 legs, Weeks&nbsp;6–&#8288;10)</small></div>
+<div><b class="b">−10%</b><small>"floor" legs priced −130 to −400: they hit 60% against a 67% price (3,434 legs)</small></div>
+<div><b class="b">−17%</b><small>rushing-yard overs, losing at every price (1,199 legs)</small></div>
+<div><b class="g">+23%</b><small>plus-money legs (+150 or longer) where the model is 5+ points over the price: 39% hit vs 31% implied (240 legs, ahead in all five weeks)</small></div>
 </div>
-<p>The whole board loses at FanDuel's prices because FanDuel shades its favorites: a short-priced leg taken only because it looks safe is the most expensive thing on the menu. That is the bar a favorite has to clear before it goes in one of our slips. The model's edge shows up at plus money — receptions, receiving yards, passing yards and touchdowns where the book's number is lower than the model's. Longer-priced touchdown scorers paid; touchdown favorites did not. Passing-yard lines <em>above</em> the projection hit 63%; passing floors lost.</p>
+<p>The whole board loses at FanDuel's prices because FanDuel shades its favorites: a short-priced leg taken only because it looks safe is the most expensive thing on the menu. That is the bar a favorite has to clear before it goes in one of our slips. The model's edge shows up at plus money, where the book's number is lower than the model's: receiving yards (56% hit against a 36% price, 25 legs), receptions (42% against 33%, 78) and touchdowns (30% against 25%, 69). Touchdown scorers at +151 or longer returned −3% as a group (497 legs) and touchdown favorites −7%: a touchdown price pays only where the model sits well above it. Passing-yard lines <em>above</em> the projection hit 58% (200 legs); passing legs at −200 or shorter lost 7%.</p>
 
 <h2>So this is how we pick</h2>
 <ul>
@@ -91,7 +91,7 @@ a{color:var(--ink)}
 <li><b>Touchdowns in the right spots.</b> A running back in a good matchup, or an either-or leg on a team's top two targets when we already like them for yards and catches.</li>
 <li><b>Model's Best is the plus-money list.</b> +150 or longer, model 5+ points over the price, in the markets that have paid. Even-money lines are shown but tracked, not pushed.</li>
 <li><b>Long shots are labeled long shots.</b> A long-odds slip like the Monday lottery slip hits rarely, and we say so.</li>
-<li><b>Rushing yards.</b> Rushing-yard overs returned −19% in Weeks 6–8. The model's rushing number has since been re-fit on those results and now leans almost entirely on FanDuel's price; a rushing leg has to clear the same checks as everything else.</li>
+<li><b>Rushing yards.</b> Rushing-yard overs returned −17% over Weeks&nbsp;6–&#8288;10. The model's rushing number was re-fit on the first of those results and now leans almost entirely on FanDuel's price; a rushing leg has to clear the same checks as everything else.</li>
 <li><b>Every pick is frozen before kickoff and graded Tuesday</b> at the price we showed. The <a href="/receipts/">receipts</a> and the <a href="/season/">season page</a> are the whole record — the misses too.</li>
 </ul>
 <div class="box">If someone asks "where do the numbers come from?": our own projection model, checked against FanDuel's prices, graded every week in public.</div>
