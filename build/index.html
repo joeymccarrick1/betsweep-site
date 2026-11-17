@@ -423,7 +423,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Tue 11/17 10:50 AM CT.</p>
+    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Tue 11/17 11:48 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-HOU-IND">HOU·IND</a> <a href="#g-ARI-KC">ARI·KC</a> <a href="#g-BAL-CAR">BAL·CAR</a> <a href="#g-BUF-MIA">BUF·MIA</a> <a href="#g-CHI-NO">CHI·NO</a> <a href="#g-DAL-TEN">DAL·TEN</a> <a href="#g-DET-TB">DET·TB</a> <a href="#g-JAX-NYG">JAX·NYG</a> <a href="#g-LAC-NYJ">LAC·NYJ</a> <a href="#g-DEN-LV">DEN·LV</a> <a href="#g-PHI-PIT">PHI·PIT</a> <a href="#g-MIN-SF">MIN·SF</a> <a href="#g-CIN-WAS">CIN·WAS</a></nav>
   
@@ -498,7 +498,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Tue 11/17 10:50 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Tue 11/17 11:48 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -523,7 +523,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-89d3dc123dad.js"></script>
+<script src="/build/data-59597aecd399.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -775,18 +775,18 @@ window.BSBooks = { attach: function(btn, panel, getText){
   }
   // ---- FanDuel's price for the slip (owner 11/17: the same-game discount) ----
   // One leg per game: the legs multiplied. Two or more legs in one game: FanDuel prices them together, so the estimate is
-  // exp(-c (n-1)^2) / (FanDuel's implied chances joined with the same correlations the slip uses); c comes from FanDuel's own quotes
+  // exp(-c (n-1)^p) / (FanDuel's implied chances joined with the same correlations the slip uses); c and p come from FanDuel's own quotes
   // on the same-game slips we posted (D.sgp, research/sgp_discount.py, refit on Tuesdays). Always shown as "≈": the quote is the price.
   var _spK = null, _spV = null;
   function slipPrice(ls){
     var bl = bookLegs(ls), key = bl.map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(',');
     if(key === _spK) return _spV;
-    var by = {}, order = [], mult = 1, d = 1, same = false, c = (D.sgp && D.sgp.c) || 0.0104;
+    var by = {}, order = [], mult = 1, d = 1, same = false, c = D.sgp && D.sgp.c != null ? D.sgp.c : 0.00146, pw = (D.sgp && D.sgp.p) || (D.sgp ? 2 : 3);
     bl.forEach(function(l){ if(!by[l.g]){ by[l.g] = []; order.push(l.g); } by[l.g].push(l); mult *= dec(l.o); });
     order.forEach(function(g){ var v = by[g]; if(v.length < 2){ d *= dec(v[0].o); return; }
       var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); x._sc = 0; return x; }));
       if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
-      same = true; d *= Math.max(1.01, Math.exp(-c * (v.length - 1) * (v.length - 1)) / pb); });
+      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
     _spK = key; _spV = {d: same ? d : mult, mult: mult, same: same}; return _spV; }
   function sgWhy(){ return (D.sgp && D.sgp.note) || 'FanDuel prices same-game legs together, so it pays less than the legs multiplied.'; }
   // ---- list ----
@@ -1029,7 +1029,8 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var up = gorder.filter(function(gid){ return !finished(gid); }), dn = gorder.filter(function(gid){ return finished(gid); });
     function one(gid){
       var g = games[gid], gl = gameLegs(gid), off = started(gid), open = !!openG[gid] && !off;
-      var best = null; gl.forEach(function(l){ if(!best || l.e > best.e) best = l; });
+      // 11/17: the game's "best edge" names a leg worth opening - not a touchdown long shot with no role (owner on Giddens +3300: "no shot") and not a high-risk leg
+      var best = null; gl.forEach(function(l){ if(isTD(l) && !l.tdr) return; try { if(riskScore(l) >= 4) return; } catch(e){} if(!best || l.e > best.e) best = l; });
       var nAll = legs.filter(function(l){ return l.g === gid; }).length;
       var fav = g.pa >= g.pb ? g.a : g.b, mar = Math.abs(g.pa - g.pb);
       var head = '<button type="button" class="ghd" data-g="' + gid + '" aria-expanded="' + open + '"' + (off ? ' disabled' : '') + '>' +
