@@ -1167,12 +1167,14 @@ os.makedirs(os.path.join(SITE, "api"), exist_ok=True); open(os.path.join(SITE, "
 _how_src_path = os.path.join(HERE, "how_body.html")
 if os.path.exists(_how_src_path):
     try:
-        _how_src = open(_how_src_path).read(); _how_m = re.match(r"\s*<style>(.*?)</style>\s*", _how_src, re.S)
+        _how_src = open(_how_src_path).read()
+        import how_stats as _HS; _how_src = _HS.fill(_how_src, os.path.join(HERE, "in"))   # 11/17: the page's numbers are counted from the graded legs on every build
+        _how_m = re.match(r"\s*<style>(.*?)</style>\s*", _how_src, re.S)
         _how_link, _how_base = ACCT._base_css()
         _how_desc = "How the BetSweep model prices FanDuel props, what the graded weeks showed, and how we build the slips we post."
         _how_page = wrap(f"<title>How BetSweep picks</title>\n{_how_link}\n<style>{_how_base}\n{_how_m.group(1) if _how_m else ''}</style>\n" + (_how_src[_how_m.end():] if _how_m else _how_src), "How BetSweep picks", _how_desc, "/how/", "/og.png")
         os.makedirs(os.path.join(SITE, "how"), exist_ok=True)   # written only once wrap() has succeeded: a failure leaves the repo's copy alone
-        open(os.path.join(SITE, "how", "index.html"), "w").write(_how_page); shutil.copy(_how_src_path, os.path.join(SITE, "how", "body.html"))
+        open(os.path.join(SITE, "how", "index.html"), "w").write(_how_page); open(os.path.join(SITE, "how", "body.html"), "w").write(_how_src)
         made.append("How BetSweep picks")
     except Exception as _e: print("WARN /how/ not rebuilt (the repo copy stays):", _e)
 # ---- owner 10/30: sitemap.xml + robots.txt so search engines find every page (the 375-odd player pages above all). Every index.html

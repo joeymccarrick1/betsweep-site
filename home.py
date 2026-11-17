@@ -121,6 +121,7 @@ def top_plays(D, n=8):
 
 import booklinks as BL   # DraftKings / Hard Rock links (exact rung or the book's nearest line), owner 10/22
 import sweep as SW      # owner 11/10: the Daily Sweep (a promo row whose Title starts with "Daily Sweep")
+import how_stats as _HOWS   # 11/17: the plus tier's record is counted from the graded legs, not typed (it said Weeks 6-8 for two weeks)
 def leg_line(m, ln):
     if m in ("Anytime TD", "First TD", "2+ TD", "3+ TD"): return m
     if str(m).startswith("Under "): return f"under {float(ln):g} {m[6:].lower()}"   # FanDuel main-line unders (owner 10/27)
@@ -1148,7 +1149,7 @@ def sections(IN, OUT, latest_week=None):
     B["best_teaser"] = best_teaser(D, list(mbe) + list(mbt) + list(mbs), len(mbe) + len(mbt) + len(mbs))
     if mbe or mbt or mbs:
         out.append('<section class="sec" id="best"><h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>'
-                   + (f'<div class="subt">Plus-money edges · +150 or longer where the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) · Weeks 6–8: 41% hit at about +200, +31% at a unit each (150 legs)</div><div class="plays">{"".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))}</div>' if mbe else "")
+                   + (f'<div class="subt">Plus-money edges · +150 or longer where the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) · {_HOWS.plus_phrase(values=D.get("legsnaps"))}</div><div class="plays">{"".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))}</div>' if mbe else "")
                    + (f'<div class="subt">Touchdowns the model likes at +200 or shorter · longer-priced scorers have paid (+8% at +151 and up, 246 legs); favorites have not</div><div class="plays">{"".join(play_card(x) for x in mbt)}</div>' if mbt else "")
                    + (f'<div class="subt">Near even money, model 8+ points off FanDuel · 59% in Weeks 6–7, 45% in Week 8 — tracked, not a lead; rushing yards removed</div><div class="plays">{"".join(play_card(x, "floor") for x in mbs)}</div>' if mbs else "")
                    + '<p class="none allstarted" hidden>All kicked off.</p><p class="none" style="margin-top:10px;font-size:12.5px">Graded every week on the season page. The whole priced pool loses about 8% at FanDuel\'s prices — the edge lives in the few hundred plus-money legs a week the model sees differently, not in heavy favorites. <a href="/build/?best=1" style="color:var(--ink)">All Model\'s Best legs in the builder →</a></p></section>')
