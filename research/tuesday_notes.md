@@ -35,4 +35,14 @@
   pages) before trusting them as a publish check.
 - **My BetSweep hub:** after Week 10's box file is written, open /me/ with real saved slips and check that the Week 10 bar and the
   record match the slips list underneath.
+- **BEFORE THURSDAY'S GAME: put the Today filing test back to work.** tests/home_filing.py now skips (its two Week 10 slips are
+  graded), so the page script that files busted / cashed slips live (home.PROMO_LIVE_JS) has no running end-to-end check - only
+  tests/promo_clock.py (labels) while a slip is ungraded. Rebuild it on made-up slips: tests/fixtures/promos_w10_mnf.json holds the
+  two built records (the Sweep and the Missile with its +7.5 leg) and the game; render with home.sweep_block / home.promos_block
+  into a small page with shifted kickoffs, fake the score feed for BAL / LAC, keep the bust / cash / cover / nocover cases, and
+  block service workers in the browser context. Same for tests/social_feed.py (week and game hard-coded).
+- **Slip log, Week 10 Monday:** row 57 Daily Sweep "Herbo Fully Loaded" +259 LOST (Herbert 129 passing yards vs 175+, 0 passing
+  TDs vs 1+); row 60 Piss Missile Monday +4174 LOST, 6 of 8 (Herbert 225+ and 1+ passing TD missed). Tag: wrong script (a Chargers
+  ground-game win - Hampton 105, Herbert 51 rushing and the rushing TD) with a late scratch on top (McConkey out at 5:52 PM CT,
+  flagged to the owner at 6:17 PM). Every leg in both slips that did not need Herbert's arm hit.
 

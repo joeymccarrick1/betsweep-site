@@ -1,0 +1,366 @@
+{
+ "note": "Two built promo records as build_promo.py wrote them on Mon 11/16 (Week 10, BAL-LAC, kickoff 1794878100000): slot 8 is the Daily Sweep 'Herbo Fully Loaded' (+259), slot 9 the side slip 'Piss Missile Monday' (+4174, with a +7.5 spread leg). Saved so the Today filing test can be rebuilt on made-up slips after the week rolls: render them with home.sweep_block / home.promos_block into a small page, shift the kickoff times to suit, fake the score feed (teams BAL / LAC) and run the bust / cash / cover / nocover cases from tests/home_filing.py. The 'result' fields are as they were before grading.",
+ "promos": [
+  {
+   "week": 10,
+   "slot": 8,
+   "title": "Daily Sweep: Herbo Fully Loaded",
+   "legs": [
+    {
+     "p": 0.7051,
+     "bk": 0.692,
+     "gid": "BAL-LAC",
+     "tm": "LAC",
+     "opp": "BAL",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Justin Herbert 175+ passing yards",
+     "rank": null,
+     "key": "Justin Herbert|Passing Yards|175",
+     "hp": 0.68,
+     "br": 0.68,
+     "risk": 2,
+     "pos": "QB",
+     "hist": "7/8 this season",
+     "who": "Justin Herbert",
+     "market": "Passing Yards 175+",
+     "o": -225.0
+    },
+    {
+     "p": 0.5282,
+     "bk": 0.5556,
+     "gid": "BAL-LAC",
+     "tm": "",
+     "opp": "",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Over 38.5 (Total)",
+     "rank": null,
+     "key": "Over 38.5|Total|39",
+     "hp": null,
+     "br": null,
+     "risk": 0,
+     "pos": "TOT",
+     "hist": "",
+     "glx": {
+      "k": "T",
+      "side": "OVER",
+      "ln": 38.5,
+      "m": "Total"
+     },
+     "who": "Over 38.5 (BAL-LAC)",
+     "market": "Total",
+     "o": -115.0
+    },
+    {
+     "p": 0.6635,
+     "bk": 0.7143,
+     "gid": "BAL-LAC",
+     "tm": "LAC",
+     "opp": "BAL",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Justin Herbert 1+ passing tds",
+     "rank": null,
+     "key": "Justin Herbert|Passing TDs|1",
+     "hp": 0.6658,
+     "br": 0.6835,
+     "risk": 3,
+     "pos": "QB",
+     "hist": "",
+     "who": "Justin Herbert",
+     "market": "Passing TDs 1+",
+     "o": -255.0
+    },
+    {
+     "p": 0.5712,
+     "bk": 0.677,
+     "gid": "BAL-LAC",
+     "tm": "LAC",
+     "opp": "BAL",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Justin Herbert 15+ rushing yards",
+     "rank": null,
+     "key": "Justin Herbert|Rushing Yards|15",
+     "hp": 0.6041,
+     "br": 0.6041,
+     "risk": 4,
+     "pos": "QB",
+     "hist": "6/8 this season",
+     "who": "Justin Herbert",
+     "market": "Rushing Yards 15+",
+     "o": -220.0
+    }
+   ],
+   "fd": 259.0,
+   "fd_dec": 3.59,
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624642664&selectionId[0]=73403498&marketId[1]=42.622280967&selectionId[1]=7017916&marketId[2]=42.624642238&selectionId[2]=36175559&marketId[3]=42.624642671&selectionId[3]=73880771",
+   "status": "LIVE",
+   "caption": "Daily Sweep: Herbo Fully Loaded\nNo side tonight, just four things that work whoever wins:\nJustin Herbert 175+ passing yards\nOver 38.5 points\nJustin Herbert 1+ passing TD\nJustin Herbert 15+ rushing yards\nWhy: Herbert has 175+ in 7 of 8 and a TD pass in 6 of 8; Baltimore has allowed 35, 36 and 33 the last three and is 24th in sacks; 14 of these two teams' 17 games went over 38.5; Herbert has run for 15+ in 6 of 8.",
+   "result": "",
+   "posted": "2026-11-16",
+   "hp": 0.16760598715405764,
+   "hfair": "+497",
+   "p": 0.16376,
+   "p_indep": 0.141149140362384,
+   "fair": "+511",
+   "checks": {
+    "block": [],
+    "warn": []
+   },
+   "ev": -0.41210160000000007,
+   "same_game": true,
+   "first_ko": 1794878100000,
+   "last_ko": 1794878100000,
+   "books": {
+    "dk": {
+     "url": "https://sportsbook.draftkings.com/?outcomes=0QA387705657%232358407682_13L88808Q1-1394528295Q20+0OU87200396O3850_1+0QA387706020%232358408299_13L88808Q11250436440Q20+0QA387706541%232358410657_13L88808Q11708874668Q20",
+     "subs": [
+      "Justin Herbert 170+ for Justin Herbert 175+"
+     ]
+    },
+    "hr": {
+     "url": "hardrock://betslip/5087527107708453283,5873667202269446559,3839371699009225112,5989566709128888717",
+     "subs": [
+      "Justin Herbert 21+ for Justin Herbert 15+"
+     ]
+    }
+   },
+   "img": {
+    "feed": "/promo/10-8-feed.png",
+    "square": "/promo/10-8-square.png",
+    "story": "/promo/10-8-story.png"
+   },
+   "sweep": true,
+   "name": "Herbo Fully Loaded",
+   "day": "2026-11-16"
+  },
+  {
+   "week": 10,
+   "slot": 9,
+   "title": "Piss Missile Monday",
+   "legs": [
+    {
+     "p": 0.6009,
+     "bk": 0.6667,
+     "gid": "BAL-LAC",
+     "tm": "",
+     "opp": "",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "LAC +7.5 (Spread)",
+     "rank": null,
+     "key": "LAC +7.5|Spread|8",
+     "hp": null,
+     "br": null,
+     "risk": 0,
+     "pos": "SPR",
+     "hist": "",
+     "glx": {
+      "k": "M",
+      "side": "LAC",
+      "ln": 7.5,
+      "m": "Spread"
+     },
+     "who": "LAC +7.5",
+     "market": "Spread",
+     "o": -196.0
+    },
+    {
+     "p": 0.4621,
+     "bk": 0.4808,
+     "gid": "BAL-LAC",
+     "tm": "",
+     "opp": "",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Over 40.5 (Total)",
+     "rank": null,
+     "key": "Over 40.5|Total|41",
+     "hp": null,
+     "br": null,
+     "risk": 0,
+     "pos": "TOT",
+     "hist": "",
+     "glx": {
+      "k": "T",
+      "side": "OVER",
+      "ln": 40.5,
+      "m": "Total"
+     },
+     "who": "Over 40.5 (BAL-LAC)",
+     "market": "Total",
+     "o": 110.0
+    },
+    {
+     "p": 0.4121,
+     "bk": 0.388,
+     "gid": "BAL-LAC",
+     "tm": "LAC",
+     "opp": "BAL",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Justin Herbert 225+ passing yards",
+     "rank": null,
+     "key": "Justin Herbert|Passing Yards|225",
+     "hp": 0.424,
+     "br": 0.4063,
+     "risk": 5,
+     "pos": "QB",
+     "hist": "2/8 this season",
+     "who": "Justin Herbert",
+     "market": "Passing Yards 225+",
+     "o": 158.0
+    },
+    {
+     "p": 0.6635,
+     "bk": 0.7143,
+     "gid": "BAL-LAC",
+     "tm": "LAC",
+     "opp": "BAL",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Justin Herbert 1+ passing tds",
+     "rank": null,
+     "key": "Justin Herbert|Passing TDs|1",
+     "hp": 0.6658,
+     "br": 0.6835,
+     "risk": 3,
+     "pos": "QB",
+     "hist": "",
+     "who": "Justin Herbert",
+     "market": "Passing TDs 1+",
+     "o": -255.0
+    },
+    {
+     "p": 0.5614,
+     "bk": 0.594,
+     "gid": "BAL-LAC",
+     "tm": "BAL",
+     "opp": "LAC",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Jacoby Brissett 200+ passing yards",
+     "rank": null,
+     "key": "Jacoby Brissett|Passing Yards|200",
+     "hp": 0.4684,
+     "br": 0.5352,
+     "risk": 8,
+     "pos": "QB",
+     "hist": "5/8 this season",
+     "who": "Jacoby Brissett",
+     "market": "Passing Yards 200+",
+     "o": -162.0
+    },
+    {
+     "p": 0.7159,
+     "bk": 0.756,
+     "gid": "BAL-LAC",
+     "tm": "BAL",
+     "opp": "LAC",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Zay Flowers 50+ receiving yards",
+     "rank": null,
+     "key": "Zay Flowers|Receiving Yards|50",
+     "hp": 0.6708,
+     "br": 0.68,
+     "risk": 13,
+     "pos": "WR",
+     "hist": "6/8 this season",
+     "who": "Zay Flowers",
+     "market": "Receiving Yards 50+",
+     "o": -290.0
+    },
+    {
+     "p": 0.5404,
+     "bk": 0.592,
+     "gid": "BAL-LAC",
+     "tm": "BAL",
+     "opp": "LAC",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Derrick Henry anytime TD",
+     "rank": [
+      4,
+      6
+     ],
+     "key": "Derrick Henry|Anytime TD|1",
+     "hp": 0.5048,
+     "br": 0.5101,
+     "risk": 12,
+     "pos": "RB",
+     "hist": "6/9 this season",
+     "who": "Derrick Henry",
+     "market": "Anytime TD",
+     "o": -140.0
+    },
+    {
+     "p": 0.2965,
+     "bk": 0.25,
+     "gid": "BAL-LAC",
+     "tm": "LAC",
+     "opp": "BAL",
+     "kick": "Mon 7:15 PM",
+     "ko": 1794878100000,
+     "disp": "Omarion Hampton anytime TD",
+     "rank": [
+      4,
+      3
+     ],
+     "key": "Omarion Hampton|Anytime TD|1",
+     "hp": 0.2461,
+     "br": 0.2218,
+     "risk": 11,
+     "pos": "RB",
+     "hist": "3/8 this season",
+     "who": "Omarion Hampton",
+     "market": "Anytime TD",
+     "o": 310.0
+    }
+   ],
+   "fd": 4174.0,
+   "fd_dec": 42.74,
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.624065878&selectionId[0]=14785607&marketId[1]=42.624065881&selectionId[1]=12194320&marketId[2]=42.624642664&selectionId[2]=40906082&marketId[3]=42.624642238&selectionId[3]=36175559&marketId[4]=42.624642663&selectionId[4]=41093811&marketId[5]=42.624642679&selectionId[5]=49181556&marketId[6]=42.624642127&selectionId[6]=8776315&marketId[7]=42.624642127&selectionId[7]=48700658",
+   "status": "LIVE",
+   "caption": "LOTTERY: Piss Missile Monday\nNobody plays defense, and the 0-8 Chargers hang around all night:\nChargers +7.5\nOver 40.5 points\nJustin Herbert 225+ passing yards\nJustin Herbert 1+ passing TD\nJacoby Brissett 200+ passing yards\nZay Flowers 50+ receiving yards\nDerrick Henry anytime TD\nOmarion Hampton anytime TD\nNeeds: a semi shootout the Chargers stay in. Baltimore has allowed 33+ three straight; Brissett threw for 277 on this defense in Week 1; Henry is the best TD bet on the board.",
+   "result": "",
+   "posted": "2026-11-16",
+   "hp": 0.008054169110626822,
+   "hfair": "+12316",
+   "p": 0.01287,
+   "p_indep": 0.0048892981682545685,
+   "fair": "+7670",
+   "checks": {
+    "block": [],
+    "warn": []
+   },
+   "ev": -0.4499362,
+   "same_game": true,
+   "first_ko": 1794878100000,
+   "last_ko": 1794878100000,
+   "books": {
+    "dk": {
+     "url": "https://sportsbook.draftkings.com/?outcomes=0HC87200396P750_3+0OU87200396O4050_1+0QA387705657%232358408124_13L88808Q11941056665Q20+0QA387706020%232358408299_13L88808Q11250436440Q20+0QA387706511%232358409719_13L88808Q11625228795Q20+0QA387705403%232358406704_13L88808Q11993669656Q20+0QA387706576%232358410915_13L88808Q1-660534674Q20+0QA387706576%232358411012_13L88808Q1218070662Q20",
+     "subs": [
+      "Justin Herbert 220+ for Justin Herbert 225+"
+     ]
+    },
+    "hr": {
+     "url": "hardrock://betslip/3653080509357097357,6928916889957695903,3137468469057028494,3839371699009225112,7886856503408329112,929618944042598819,6674256959994200489,5068470805162230156",
+     "subs": []
+    }
+   },
+   "img": {
+    "feed": "/promo/10-9-feed.png",
+    "square": "/promo/10-9-square.png",
+    "story": "/promo/10-9-story.png"
+   },
+   "sweep": false,
+   "name": "",
+   "day": "2026-11-16"
+  }
+ ],
+ "today_game": null
+}
