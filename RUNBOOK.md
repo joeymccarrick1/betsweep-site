@@ -1227,7 +1227,7 @@ Tuesday roll) and reading what a phone shows.
 - First real local run (3 AM, the build that went out as main 23853f97): 488 pages, 0 problems; the published copy: 514 pages, 0.
 - **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
   social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
-  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py, sgp_price.py (11/17 noon), how_stats.py (11/17 1:30 PM), flag_stats.py (11/17 2:45 PM) (both added
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py, sgp_price.py (11/17 noon), how_stats.py (11/17 1:30 PM), flag_stats.py (11/17 2:45 PM), trade_outlook.py (11/17 3 PM) (both added
   11/17 morning), `python3 availfix.py selftest`, `python3 news_desk.py --selftest`, and tests/local_gate.py.
 
 ## 11/17, ~3:15 AM CT: a leg on an inactive player is void on the Live page from the inactives list
@@ -1617,3 +1617,29 @@ rest; "Volatile" players -3.2, THE SAME AS THE REST - that flag does not separat
 now says so; weigh that next Tuesday). tests/flag_stats.py (14): Weeks 6-9 returns the 11/11 grade (312 lines, 57.1%).
 Still typed, on purpose: role_rising.py's two "Week 6-8 check" notes (they need weekly snap shares, which are not frozen) and
 build_teams.py's "tested on Weeks 6-8" (it describes a test, not a running number). Today's plus-money line on Today reads the count.
+
+## 11/17, 3 PM CT: buy, hold or sell on the fantasy pages (owner: "suggest whether to tank or buy ... who to trade for ... get rid of vets to get better draft position")
+Where: the trade calculator's league view (/trade/#league, card #slOutlook above "Trade ideas for you"), reached from a new
+"Buy or sell?" card on the Fantasy page (/team/). With a Sleeper username already on the device the link imports by itself.
+Code: fantasy_outlook.py (CSS + JS, window.bsOutlook) included by build_trade.py; nothing is computed at build time.
+- Odds: each team's weekly score ~ Normal(mean, 19% of the league's average score; floor 14). Mean = league average + half of (its own
+  points per game - average) + half of (its best lineup by the model's adjusted points per game - the average lineup). The weeks left
+  (games played + 1 .. playoff_week_start - 1) are read from league/<id>/matchups/<week> and played 3,000 times, wins then points,
+  playoff_teams spots, plus the median game when league_average_match is on. Seeded by league id + games played: same standings,
+  same odds. Kickers, defenses and IDP slots are ignored (both teams have them; the model does not value them).
+- Verdict from the reader's odds: 70%+ Buy; 35-70% Hold ("buy small, sell nothing"); 12-35% long shot; under 12% out. Sell is only
+  offered in dynasty (settings.type 2) and keeper (1) leagues; a redraft team that is out is told nothing carries over.
+- Who to trade for (Buy / Hold): players on teams at 25% or less who add 1+ point a week to the reader's best lineup, top five by
+  gain, each with an offer: one bench player within 20% of his value, else two that add up to it, else the rookie pick nearest his
+  value (dynasty values only). Who to sell (dynasty / keeper, long shot or out): the reader's veterans (QB 31+, RB 26+, WR 28+, TE 29+,
+  or 70%+ of their value in this season) worth 400+, each matched to the contender (50%+) whose lineup he lifts most, with a player 25
+  or younger off that bench at 60-120% of his value to ask for, else the nearest pick. The draft slot the team is tracking for
+  (teams expected to finish below it + 1) is stated with "in a reverse-standings rookie draft" - it is advice to SELL POINTS, never to
+  bench starters. Load puts the deal on the calculator (data-ol="give;give|get").
+- NOT read: which picks each team owns (league/<id>/traded_picks), FAAB, the trade deadline date. A pick suggestion is a price, not
+  a claim that the other team has that pick.
+- Test: tests/trade_outlook.py (35 checks) mocks Sleeper with a ten-team league drafted from the page's own players: contender in a
+  dynasty league (Buy; targets only from teams that are out; odds add up to the spots; same odds twice), the same roster at 1-9
+  (Sell; buyers are contenders; draft slot stated), 1-9 in redraft (nothing to sell), and the one-tap arrival. The sandbox cannot
+  reach Sleeper, so the real API has NOT been exercised end to end by a session - the calls are the same ones the page already made
+  (rosters, users) plus matchups/<week>.

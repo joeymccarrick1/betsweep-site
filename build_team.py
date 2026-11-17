@@ -742,6 +742,7 @@ TEAM_JS = r"""
 
 body = f'''<div class="tm-wrap">
  <a class="sscta" href="/team/compare/"><b>Who should I start?</b><span>Stuck on your flex? Compare two or more players - projection, matchup, recent games, risks - and get the model's pick with the reasons.</span><i>Open</i></a>
+ <a class="sscta" href="/trade/#league"><b>Buy or sell?</b><span>Your record and your odds of making the playoffs decide it. Import a Sleeper league and see who to trade for if you are in the hunt, and which veterans to sell - and to whom - if you are not.</span><i>Open</i></a>
  <section class="panel">
   <div class="mode"><button type="button" class="on" data-m="sleeper">From Sleeper</button><button type="button" data-m="manual">Build it by hand</button></div>
   <div id="sleeperBox">

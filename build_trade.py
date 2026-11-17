@@ -199,6 +199,7 @@ n_age = sum(1 for r in rows if r["age"]); n_prior = sum(1 for r in rows if r["a2
 DATA = {"week": WEEK, "last": LAST_WEEK, "built": stamp, "players": rows, "dyn": DYN, "mkt_w": 0.3 if MKT else 0.0, "pickmkt": PICKMKT}
 json.dump(DATA, open(os.path.join(OUT, "trade_values.json"), "w"), separators=(",", ":"))
 
+import fantasy_outlook as _FO   # owner 11/17: buy, hold or sell from the league's standings (playoff odds, who to trade for)
 CSS = r"""
 .tc{max-width:1180px;margin:0 auto}
 .tc .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
@@ -447,6 +448,7 @@ JS = r"""
     var S = {user:null, leagues:[], league:null, season:null, rosters:null, users:null, pm:null};
     $('#slGo').addEventListener('click', connect); $('#slUser').addEventListener('keydown', function(e){ if(e.key==='Enter') connect(); });
     try{ var su = localStorage.getItem('bs_sleeper_user'); if(su) $('#slUser').value = su; }catch(e){}
+    if(location.hash === '#league' && $('#slUser').value) setTimeout(connect, 0);   // arriving from the Fantasy page's "Buy or sell?" card with a username already on this device
     function connect(){ var u = $('#slUser').value.trim().replace(/^@/,''); if(!u) return; $('#slGo').disabled = true; say('Looking up '+u+' on Sleeper…'); $('#slOut').hidden = true; $('#slLeagues').innerHTML = '';
       get('state/nfl').then(function(x){ S.season = String(x.season || new Date().getFullYear()); return get('user/'+encodeURIComponent(u)); })
       .then(function(user){ if(!user || !user.user_id) throw new Error('no user'); S.user = user; try{ localStorage.setItem('bs_sleeper_user', u); }catch(e){} return get('user/'+user.user_id+'/leagues/nfl/'+S.season); })
@@ -463,7 +465,14 @@ JS = r"""
       st.sf = rp.indexOf('SUPER_FLEX') >= 0; st.tep = (sc.bonus_rec_te || 0) >= 0.75 ? 1 : (sc.bonus_rec_te || 0) > 0 ? 0.5 : 0; st.ppr = (sc.rec||0) >= 0.75 ? 1 : (sc.rec||0) > 0 ? 0.5 : 0;
       st.dyn = !!(l.settings && l.settings.type === 2); st.teams = [10,12,14].reduce(function(b,x){ return Math.abs(x-(l.total_rosters||12)) < Math.abs(b-(l.total_rosters||12)) ? x : b; }, 12);
       $('#sf').checked = st.sf; $('#dyn').checked = st.dyn; $('#tep').value = String(st.tep); $('#ppr').value = String(st.ppr); $('#teams').value = String(st.teams);
-      Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users')]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; render(); say(''); })
+      Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users')]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; S.sched = undefined; say('');
+        // owner 11/17 (buy or sell): the weeks left on the league's own schedule, for the playoff odds. Rosters and values show at once; the outlook waits for the schedule.
+        var gp = Math.max.apply(null, S.rosters.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
+        if(!ws.length){ S.sched = {}; render(); return; }
+        render();
+        Promise.all(ws.map(function(w){ return get('league/'+l.league_id+'/matchups/'+w).catch(function(){ return []; }); })).then(function(ms){ var sc = {};
+          ms.forEach(function(m, i){ var by = {}; (m||[]).forEach(function(x){ if(x.matchup_id == null) return; (by[x.matchup_id] = by[x.matchup_id] || []).push(x.roster_id); }); sc[ws[i]] = Object.keys(by).map(function(k){ return by[k]; }).filter(function(p){ return p.length === 2; }); });
+          if(S.league === l){ S.sched = sc; render(); } }); })
       .catch(function(e){ say('Sleeper did not answer for that league. Try again in a moment.', true); console.error(e); }); }
     var OPEN = {me: true, opp: false};   // my roster open, opponents collapsed by default; a single card's own toggle overrides the group
     document.addEventListener('click', function(e){ var tg = e.target.closest('[data-tg]'); if (tg){ var k = tg.dataset.tg; OPEN[k] = !OPEN[k]; if (k==='opp') Object.keys(OPEN).forEach(function(x){ if (x!=='me' && x!=='opp') delete OPEN[x]; }); render(); return; }
@@ -475,6 +484,7 @@ JS = r"""
       teams.sort(function(a,b){ return b.tot-a.tot; });
       $('#slFmt').textContent = l.name+': '+(st.dyn?'dynasty':'redraft')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+l.total_rosters+' teams. Toggles above were set from the league settings; change them if your league scores differently.';
       $('#slTeams').innerHTML = '<div class="tgl"><button type="button" class="addbtn" data-tg="me">'+(OPEN.me?'Collapse':'Expand')+' my team</button><button type="button" class="addbtn" data-tg="opp">'+(OPEN.opp?'Collapse':'Expand')+' all opponents</button></div>' + teams.map(function(t, i){ var open = t.me ? OPEN.me : (OPEN[t.r.roster_id] != null ? OPEN[t.r.roster_id] : OPEN.opp); return '<div class="team'+(t.me?' me':'')+(open?'':' shut')+'" data-rid="'+t.r.roster_id+'" data-me="'+(t.me?1:0)+'"><h3 role="button" tabindex="0"><span><i class="cv">'+(open?'▾':'▸')+'</i> '+(i+1)+'. '+esc(t.name)+(t.me?' <small>(you)</small>':'')+' <small>'+esc(t.rec)+'</small></span><b>'+t.tot.toLocaleString()+'</b></h3><div class="pb">'+['QB','RB','WR','TE'].map(function(k){ return '<span>'+k+' <b>'+t.byp[k].toLocaleString()+'</b> ('+t.cnt[k]+')</span>'; }).join('')+'</div><ul>'+t.ps.map(function(x){ var mp = x.mp; return '<li><span class="pos '+(mp?mp.pos:(x.sp.p||''))+'">'+(mp?mp.pos:x.sp.p)+'</span><span class="nm">'+esc(mp?mp.n:x.sp.n)+(mp?'':' <small>not valued</small>')+'</span>'+(mp? '<button class="addbtn" data-n="'+esc(mp.n)+'" data-side="'+(t.me?'A':'B')+'">'+(t.me?'+A':'+B')+'</button>' : '')+'<span class="vv">'+(mp? mp.v.toLocaleString() : '—')+'</span></li>'; }).join('')+'</ul></div>'; }).join('');
+      $('#slOutlook').innerHTML = S.sched === undefined ? '<div class="olk"><p class="none">Reading your league\'s schedule for the playoff odds...</p></div>' : bsOutlook.html(l, teams, S.sched, PICKS);
       // trade ideas: my surplus position (most value above the league average at that position) for their need, 1-for-1 within 12%
       var mine = teams.filter(function(t){ return t.me; })[0]; var ideas = [];
       if (mine){ var avg = {}; ['QB','RB','WR','TE'].forEach(function(k){ avg[k] = teams.reduce(function(s,t){ return s+t.byp[k]; },0)/teams.length; });
@@ -490,6 +500,7 @@ JS = r"""
       $('#slIdeas').innerHTML = ideas.length ? ideas.map(function(i){ return '<li><b class="t">'+esc(i.give.n)+'</b> <small>('+i.give.pos+', '+i.give.v.toLocaleString()+')</small> for <b class="t">'+esc(i.get.n)+'</b> <small>('+i.get.pos+', '+i.get.v.toLocaleString()+') with '+esc(i.team)+' · '+(i.gain>=0?'+':'')+i.gain.toLocaleString()+' for you</small><button class="addbtn" data-idea="'+esc(i.give.n)+'|'+esc(i.get.n)+'">Load</button></li>'; }).join('') : '<li><small>'+(mine? 'No balanced 1-for-1 swaps from a surplus position right now - use the +A / +B buttons on the rosters to build one by hand.' : 'You are not on a roster in this league.')+'</small></li>';
       $('#slOut').hidden = false; }
     document.addEventListener('click', function(e){ var b = e.target.closest('[data-idea]'); if(!b) return; var k = b.dataset.idea.split('|'); st.A = [k[0]]; st.B = [k[1]]; window.__bsRender(); window.scrollTo({top:0,behavior:'smooth'}); });
+    document.addEventListener('click', function(e){ var b = e.target.closest('[data-ol]'); if(!b) return; var k = b.dataset.ol.split('|'); st.A = k[0] ? k[0].split(';') : []; st.B = k[1] ? k[1].split(';') : []; window.__bsRender(); window.scrollTo({top:0,behavior:'smooth'}); });
     window.__bsLeague = render;
   })();
   window.__bsRender = render;
@@ -516,12 +527,13 @@ body = f'''<div class="tc">
   <section class="panel side"><h2>Side B <small>gives</small></h2><div class="add"><input id="inB" placeholder="Add a player…" autocomplete="off"><div class="sug" id="sugB" hidden></div></div><ul class="legs" id="sideB"></ul></section>
  </div>
  <section class="panel lg" id="league">
-  <h2 style="margin:0 0 6px;font-family:var(--display);font-size:20px">Your league <small style="color:var(--mute);font-size:12px;font-weight:500">Sleeper import · every roster valued · trade ideas</small></h2>
+  <h2 style="margin:0 0 6px;font-family:var(--display);font-size:20px">Your league <small style="color:var(--mute);font-size:12px;font-weight:500">Sleeper import · playoff odds · buy or sell · trade ideas</small></h2>
   <div class="row"><input id="slUser" placeholder="Sleeper username" autocomplete="off"><button type="button" class="go" id="slGo">Import</button><span class="meth">Reads only public league data; nothing is posted to Sleeper.</span></div>
   <div class="msg" id="slMsg" hidden></div>
   <div class="leagues" id="slLeagues"></div>
   <div id="slOut" hidden>
    <p class="meth" id="slFmt"></p>
+   <div id="slOutlook"></div>
    <h3 style="margin:12px 0 4px;font-family:var(--display);font-size:16px">Trade ideas for you</h3>
    <p class="meth" style="margin:0 0 4px">Swaps where you give from a position you are deep at and get back a position you are thin at, priced within 12% either way by the calculator - so the other manager can say yes. Tap one to load it above and adjust.</p>
    <ul class="ideas" id="slIdeas"></ul>
@@ -541,12 +553,13 @@ body = f'''<div class="tc">
  </section>
 </div>
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
+<script>{_FO.JS}</script>
 <script>{JS}</script>'''
 
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep Trade Calculator</title>")
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>Trade Calculator</b></h1>")
-        .replace("</style>", CSS + "\n</style>", 1)
+        .replace("</style>", CSS + _FO.CSS + "\n</style>", 1)
         .replace("{{DESC}}", f"Trade values built from the model's own game data, not a vote: {len(rows)} players, rest-of-season or dynasty (age curves + rookie picks), superflex and TE-premium toggles, every value recomputed on the page; import a Sleeper league to see every roster valued and trade ideas.")
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv">← This week\'s boards</a>').replace("{{CARDS}}", body)
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ""))
