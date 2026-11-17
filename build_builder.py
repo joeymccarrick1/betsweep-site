@@ -28,6 +28,18 @@ boards = vals("boards.json"); WEEK = int(float(boards[1][1]))
 scripts_raw = vals("scripts.json"); legs_raw = vals("legboard.json")
 try: CORR = {r[0]: num(r[1]) for r in vals("corr.json")[1:] if r and "|" in str(r[0])}
 except Exception: CORR = {}
+# 11/17: the four markets added 11/5 (Passing TDs, Completions, Interceptions, Rush Attempts) had no correlation code, so a
+# quarterback's 2+ passing TDs and his 225+ yards were priced as unrelated legs - the model's chance for the pair too low, the same-game
+# price estimate too high. research/newmkt_corr.py measures them on 2024-25 (checked against real joint hit rates) and writes
+# research/newmkt_corr.json; a row in the sheet's own table always wins.
+try:
+    import flag_stats as _FLS; _FS = _FLS.text(globals().get("IN", "in"))   # 11/17: the graded numbers quoted in flags, counted on every build
+except Exception as _e: import flag_stats as _FLS; _FS = dict(_FLS.DEFAULT); print("warn: flag numbers not counted, the 11/17 ones stay:", _e)
+NEW_CODE = {"Passing TDs": "PTD", "Completions": "CMP", "Interceptions": "INT", "Rush Attempts": "ATT"}
+try:
+    _NMC = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "research", "newmkt_corr.json")))
+    for _k, _rho, _ev in _NMC.get("rows", []): CORR.setdefault(_k, _rho)
+except Exception as _e: _NMC = {}; print("warn: new-market correlations not read (those legs price as unrelated):", _e)
 def normname(x):
     x = re.sub(r"\.", "", str(x)).strip(); x = re.sub(r"\s+(jr|sr|ii|iii|iv|v)$", "", x, flags=re.I); return re.sub(r"\s+", " ", x).lower().strip()
 LINKS = {}
@@ -368,7 +380,7 @@ try:
         fl = list(fl) + [["info", "New market", f"Projection {mean:.1f} ({avg:.1f} per game over {ng} games, shrunk toward the league and adjusted for {opp}); tested 2023-26, calibrated."]]
         LEGS.append({"i": len(LEGS), "pl": name, "pos": pos, "tm": tm, "opp": opp, "g": gid, "m": mk, "ms": SHORT.get(mk, mk), "ln": ln, "o": int(odds),
                      "p": round(pm, 4), "bk": round(bk, 4), "e": round(pm - bk, 4), "w": "; ".join(f[2] for f in fl if f[0] == "bad"), "fh": line_flags(fl, name),
-                     "proj": round(mean, 2), "avg": round(avg, 2), "n": ng, "c": "", "gd": GAMEDAY.get(name.lower(), ""), "fd": LINKS.get(r[0]), "sk": "nm"})
+                     "proj": round(mean, 2), "avg": round(avg, 2), "n": ng, "c": (f"{pos}_{NEW_CODE[mk]}" if pos and mk in NEW_CODE else ""), "gd": GAMEDAY.get(name.lower(), ""), "fd": LINKS.get(r[0]), "sk": "nm"})
         NNM += 1
     print(f"new markets: {NNM} legs (passing TDs / INTs / completions / rush attempts)")
 except Exception as e: print("warn: new markets skipped:", e)
@@ -561,7 +573,7 @@ try:
     def _under_now(r, gid):
         m = re.search(r"(\d{1,2})/(\d{1,2})", str(r[7]) if len(r) > 7 else ""); k = _kday.get(gid)
         return bool(m and k and (int(m.group(1)), int(m.group(2))) == (k.month, k.day))
-    NSTALE = 0; RUSH_UNDER_RATE = 0.57
+    NSTALE = 0; RUSH_UNDER_RATE = _FS["rush_under_rate"]   # 11/17: counted from the graded main lines on every build (flag_stats.py); was a typed 0.57
     for r in vals("unders.json")[1:]:
         if len(r) < 10: continue
         mk, pt, uo = r[2], num(r[3]), num(r[4])
@@ -581,7 +593,7 @@ try:
         LEGS.append({"i": len(LEGS), "pl": base["pl"], "pos": base["pos"], "tm": base["tm"], "opp": base["opp"], "g": base["g"], "m": "Under " + mk, "ms": SHORT.get(mk, mk),
                      "ln": pt, "o": int(uo), "raw_p": raw_u, "p": round(_shown, 4), "bk": round(bku, 4), "e": round(_shown - bku, 4), "u": 1, **({"flat": 1} if _flat is not None else {}),
                      "bko": round(bko, 4) if bko is not None else None, "w": "",
-                     "fh": [["info", "Under", (f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Shown at {RUSH_UNDER_RATE * 100:.0f}%: the rate main-line rushing unders have hit in Weeks 6-9 (312 lines). The model's own number for this one ({(1 - base['raw_p']) * 100:.0f}%) has not sorted rushing unders, so it is not used." if _flat is not None else f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Model projects {base.get('proj')} - {(1 - base['raw_p']) * 100:.0f}% that he stays under {pt:g}.")]],
+                     "fh": [["info", "Under", (f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Shown at {RUSH_UNDER_RATE * 100:.0f}%: {_FS['rush_under']}. The model's own number for this one ({(1 - base['raw_p']) * 100:.0f}%) has not sorted rushing unders, so it is not used." if _flat is not None else f"FanDuel main line {pt:g}: under {('+' if uo > 0 else '')}{int(uo)}. Model projects {base.get('proj')} - {(1 - base['raw_p']) * 100:.0f}% that he stays under {pt:g}.")]],
                      "proj": base.get("proj"), "avg": base.get("avg"), "n": base.get("n"), "c": base.get("c", ""), "gd": base.get("gd", ""),
                      "fd": _ufd(r), "dr": base.get("dr"), "sk": base.get("sk", "")})
         NUND += 1
@@ -632,14 +644,14 @@ for l in LEGS:
     _tr = FE.TREL.get((l.get("tm"), l.get("m")))
     if _tr:
         _n, _h, _b, _d = _tr; l["trl"] = round(_d * 100, 1)
-        if _d <= -0.04: l.setdefault("fh", []).append(["watch", "Team under its prices", f"{l['tm']} {str(l['m']).lower()} legs have hit {_h} of {_n} ({100 * _h / _n:.0f}%) against {100 * _b / _n:.0f}% priced this season. Team-markets this far under went on to hit about 5 points under their prices (Weeks 7-9)."]); _ntr += 1
+        if _d <= -0.04: l.setdefault("fh", []).append(["watch", "Team under its prices", f"{l['tm']} {str(l['m']).lower()} legs have hit {_h} of {_n} ({100 * _h / _n:.0f}%) against {100 * _b / _n:.0f}% priced this season. {_FS['team']}"]); _ntr += 1
         elif _d >= 0.04: l.setdefault("fh", []).append(["info", "Team hitting its prices", f"{l['tm']} {str(l['m']).lower()} legs have hit {_h} of {_n} ({100 * _h / _n:.0f}%) against {100 * _b / _n:.0f}% priced this season."])
     if l["o"] > -180 or l.get("m") not in _NZ_STAT or not l.get("ln"): continue
     _gs = [g.get(_NZ_STAT[l["m"]]) or 0 for g in FE.games(l["pl"])]
     if len(_gs) < 4: continue
     _z = sum(1 for x in _gs if x < 0.5 * l["ln"]); l["nz"] = [_z, len(_gs)]
     if _z * 3 >= len(_gs):
-        l.setdefault("fh", []).append(["bad", "Near-zero risk", f"Finished under half this line ({l['ln'] / 2:g}) in {_z} of {len(_gs)} games. Floor legs on players like that hit 58% against a 66% price in Weeks 6-9 (151 legs, under in all four weeks)."]); _nnz += 1
+        l.setdefault("fh", []).append(["bad", "Near-zero risk", f"Finished under half this line ({l['ln'] / 2:g}) in {_z} of {len(_gs)} games. {_FS['near_zero']}"]); _nnz += 1
     elif _z:
         l.setdefault("fh", []).append(["info", "Near-zero games", f"Finished under half this line ({l['ln'] / 2:g}) in {_z} of {len(_gs)} games."])
 print(f"near-zero: {_nnz} floor legs flagged; team under its prices: {_ntr} legs")
@@ -652,7 +664,7 @@ try:
     for l in LEGS:
         if l.get("gl") or str(l.get("m", "")).startswith("Under") or l.get("m") not in ("Rushing Yards", "Receiving Yards", "Passing Yards", "Rush + Rec Yards", "Longest Reception"): continue
         if l.get("opp") and _MOSTG.get(l.get("g")) == f'{l["opp"]} by 10+':
-            l.setdefault("fh", []).append(["bad", "Losing side", f"The model's most likely ending is {l['opp']} by 10+. Yardage floors on the team projected to lose big hit 61% against a 71% price in Weeks 6-9 (439 legs); the projected winner's hit 68%."]); _nls += 1
+            l.setdefault("fh", []).append(["bad", "Losing side", f"The model's most likely ending is {l['opp']} by 10+. {_FS['losing']}"]); _nls += 1
     print(f"losing side: {_nls} yardage legs flagged")
 except Exception as _e: print("warn: losing-side flag skipped:", _e)
 # owner 11/15 ("Yes build all of that"): the honest chance on every leg - what graded FanDuel legs at this price in this market have
@@ -839,6 +851,7 @@ for l in LEGS:
 print(f"projected snaps: {sum(1 for l in LEGS if l['sn'] is not None)} of {len(LEGS)} legs carry a snap projection")
 OPPS = {l["opp"] for l in LEGS}
 GLCORR = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "glcorr.json")))["rho"]
+for _c, _v in (_NMC.get("gl") or {}).items(): GLCORR.setdefault(_c, _v)   # the new markets against the team's margin and the game total
 # owner 10/29: the player's OWN offense rank in the same stat sits next to every defense rank (offranks.py, mirror of the defense tab:
 # rank 1 = the team's position group PRODUCES the most per game; season + last 3 weeks). l["or"] = [season, L3]; OSR = card header.
 try:
@@ -870,7 +883,7 @@ for _l in LEGS:
     if _l.get("gl"): continue
     try:
         if _l.get("p") is not None and _l.get("bk") is not None and _l["p"] - _l["bk"] >= 0.10:
-            _l.setdefault("fh", []).append(["watch", "Market disagrees", f"The model says {_l['p']*100:.0f}% but FanDuel's price implies {_l['bk']*100:.0f}%. When we disagree with the book by 10+ points the book has usually been closer (Weeks 6-7: model ~65%, hit ~50%) - treat the edge as smaller than it looks."])
+            _l.setdefault("fh", []).append(["watch", "Market disagrees", f"The model says {_l['p']*100:.0f}% but FanDuel's price implies {_l['bk']*100:.0f}%. {_FS['disagree']} - treat the edge as smaller than it looks."])
         _fd = _imp(_l.get("o")); _ot = [(k, _imp(v.get("o"))) for k, v in (_l.get("bks") or {}).items() if isinstance(v, dict) and v.get("o") is not None]
         _ot = [(k, x) for k, x in _ot if x is not None]
         if _fd is not None and _ot:
@@ -2045,7 +2058,7 @@ BUILDER_JS = r"""
     var bxt = {}; ls.forEach(function(l){ var g = games[l.g]; if(!g || !l.sc || !g.probs || (isGL(l) && l.m === 'Total')) return; var sw = g.probs.reduce(function(x, y){ return x + (+y || 0); }, 0) || 1;
       var kt = l.tm === g.a ? 3 : l.tm === g.b ? 0 : -1; if(kt < 0) return; if((+g.probs[kt] || 0) / sw >= 0.35 && l.sc[kt] <= l.p - 0.10){ var key = l.tm + '|' + l.g; (bxt[key] = bxt[key] || {tm: l.tm, opp: kt === 3 ? g.b : g.a, pr: (+g.probs[kt] || 0) / sw, n: 0}).n++; } });
     Object.keys(bxt).forEach(function(k){ var x = bxt[k]; if(x.n >= 2) flags.push(x.n + ' legs need ' + x.tm + '\'s offense to show up, and ' + x.opp + ' wins by 10+ ' + Math.round(x.pr * 100) + '% of the time - in that game they all lose together (see "What does this slip need?")'); });
-    var fav = ls.filter(function(l){ return !isGL(l) && l.o != null && l.o <= -130; }); if(fav.length >= 2) flags.push(fav.length + ' legs at -130 or shorter: graded Weeks 6-8, favorites returned about -9% per leg (-8% to -23% even with a model edge). Keep the ones where matchup, projection and game script all agree');
+    var fav = ls.filter(function(l){ return !isGL(l) && l.o != null && l.o <= -130; }); if(fav.length >= 2) flags.push(fav.length + ' legs at -130 or shorter: __FAV_TXT__. Keep the ones where matchup, projection and game script all agree');
     var neg = ls.filter(function(l){ return l.e < 0; }); if(neg.length) flags.push(neg.length + ' leg' + (neg.length>1?'s':'') + ' priced worse than the model');
     var mixG = {}; ls.forEach(function(l){ mixG[l.g] = mixG[l.g] || {gl:0, pr:0}; mixG[l.g][isGL(l) ? 'gl' : 'pr']++; });
     if(Object.keys(mixG).some(function(g){ return mixG[g].gl && mixG[g].pr; })) flags.push('game lines and player legs from the same game are priced together: the model uses how each stat moves with the margin and the total (e.g. QB passing yards rise with the total, RB rushing yards with a lead)');
@@ -2568,7 +2581,7 @@ body = f'''<div class="bld">
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
 <script>{LIVE.LIVE_JS}</script>
 <script>{BOOKS.BOOKS_JS}</script>
-<script>{BUILDER_JS.replace('__PLUS_TXT__', _PLUS_TXT).replace('__EVEN_TXT__', _TIER_TXT['even']).replace('__TD_TXT__', _TIER_TXT['td']).replace('__SAFE_TXT__', _TIER_TXT['safe'])}</script>'''
+<script>{BUILDER_JS.replace('__PLUS_TXT__', _PLUS_TXT).replace('__EVEN_TXT__', _TIER_TXT['even']).replace('__TD_TXT__', _TIER_TXT['td']).replace('__SAFE_TXT__', _TIER_TXT['safe']).replace('__FAV_TXT__', _FS['fav'])}</script>'''
 
 _NOW_MS = __import__("time").time() * 1000   # 11/16: games still to be played lead the chip row; a played game's chip is dimmed (template: nav a.played)
 page = (open(os.path.join(HERE, "template.html")).read()

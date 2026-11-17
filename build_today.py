@@ -295,6 +295,9 @@ def sections(IN_, OUT_):
     except Exception as _e: print("note: Social strip skipped:", _e); social_strip = ""
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
+    try:
+        import how_stats as _HOWS; _PLUS_TXT = _HOWS.plus_phrase(IN)   # 11/17: counted from the graded legs (it quoted Weeks 6-8)
+    except Exception: _PLUS_TXT = "Weeks 6–10: 40% hit against a 30% price, +30% at a unit each (175 legs)"
     body = f'''<title>Today · BetSweep</title>
 <meta name="description" content="Today on BetSweep: what kicks off, the model's plus-money looks for today's games, the news that moved the numbers, your slips and your Sleeper team.">
 <style>{TODAY_CSS}</style>
@@ -306,7 +309,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <!--bs:promos-->
 {under_html}
 {stale_html}
-<section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
+<section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. {_PLUS_TXT}. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p>
  <p class="tdall"><a href="/boards/">All {len(games)} games this week</a></p></section>
 {social_strip}

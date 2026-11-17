@@ -1227,7 +1227,7 @@ Tuesday roll) and reading what a phone shows.
 - First real local run (3 AM, the build that went out as main 23853f97): 488 pages, 0 problems; the published copy: 514 pages, 0.
 - **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
   social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
-  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py, sgp_price.py (11/17 noon), how_stats.py (11/17 1:30 PM) (both added
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py, sgp_price.py (11/17 noon), how_stats.py (11/17 1:30 PM), flag_stats.py (11/17 2:45 PM) (both added
   11/17 morning), `python3 availfix.py selftest`, `python3 news_desk.py --selftest`, and tests/local_gate.py.
 
 ## 11/17, ~3:15 AM CT: a leg on an inactive player is void on the Live page from the inactives list
@@ -1592,3 +1592,28 @@ who are OUT this week ON THE SAME TEAM, so nobody inherited a target. FanDuel ha
   ROUND(N($AU)*N($AK)*N($AL),1); now ROUND(N($AU)*N($AK)*IF(N($G)*N($D)<15,MIN(N($AL),<tab average>),N($AL)),1). One repeatCell.
   Through the mirror, all 230 receiver rows before and after: six moved - Dulin 32.1 -> 24.1, five others by under a yard (Virgil,
   T. Burks, Z. Jones, C. Allen, Bryant). On the site Dulin is now within four points of FanDuel at every line and in no tier.
+
+## 11/17, 2:45 PM CT: owner "Fix the 2 open things" - new-market correlations, and the flag numbers count themselves
+(1) PASSING TDs HAD NO CORRELATION CODE. The four markets added 11/5 (Passing TDs, Completions, Interceptions, Rush Attempts) were
+built with "c": "" - a quarterback's 2+ TDs and his 225+ yards priced as strangers (model chance for the pair too low, same-game
+estimate too high). research/newmkt_corr.py measures 37 pairs on nflverse 2024-25 (latent correlation = 2 sin(pi/6 x Spearman);
+tetrachoric where one side is a touchdown) and writes research/newmkt_corr.json; build_builder.py gives the legs codes QB_PTD /
+QB_CMP / QB_INT / <pos>_ATT and merges the rows into CORR (a row in the sheet's own tab always wins) and the stat-vs-margin / total
+rows into GLCORR. Checked two ways: the method returns the sheet's own passing-yard rows (0.37/0.41 vs its 0.43/0.40; 0.13/0.14 vs
+0.13/0.18), and the new numbers reproduce real joint hit rates at typical lines - QB 2+ TDs with 225+ yards: real 30.9%,
+independent 22.1%, rho 0.50 gives 30.4%; QB 2+ TDs with a receiver's TD: real 22.2%, rho 0.55 gives 22.1%; back 15+ carries with
+60+ yards: 33.3% vs 32.9%. Same player: no shrink. Teammates / opponents: x 0.9 (the sheet's older rows use x 0.75; here the
+unshrunk number already matches the joint rates). NOTE the sheet's two touchdown rows (QB_PASS-WR_TD 0.14, QB_RUSH-QB_TD 0.25) are
+about half what this method gives (0.32, 0.48) - they look like plain correlations of a yes/no, which understate; not changed today.
+On the page: Jayden Daniels 2+ pass TDs with 226+ yards = about +169 (legs multiply to +247). tests/sgp_price.py: 49 checks.
+Re-run `python3 research/newmkt_corr.py --write` when a season is added to in/.
+(2) FLAG NUMBERS. flag_stats.py recounts on every build what the flags quote: the main-rushing-line under rate (now ALSO the flat
+chance on a rushing under: RUSH_UNDER_RATE = the counted rate, guarded 0.50-0.62; 389 lines, 56.8% -> still 0.57), near-zero floor
+legs (247: 61% vs 70% priced, under in all 5 weeks), yardage floors by closing spread (underdogs of 5.5+: 299 legs, 60% vs 70%;
+favorites: 68%) - the "Losing side" sentence now says "underdogs of 5.5 or more" because past endings are not archived -, favorites
+(-10% a leg; -6% even with a model edge), the model 10+ over the book (said 66%, hit 51%), and walk-forward what the reliability
+flags went on to do: team-markets 4+ under their prices -3.7 points vs -2.9 for the rest; "Reliable" players -2.3 vs -3.4 for the
+rest; "Volatile" players -3.2, THE SAME AS THE REST - that flag does not separate anything yet (kept as a watch flag; its sentence
+now says so; weigh that next Tuesday). tests/flag_stats.py (14): Weeks 6-9 returns the 11/11 grade (312 lines, 57.1%).
+Still typed, on purpose: role_rising.py's two "Week 6-8 check" notes (they need weekly snap shares, which are not frozen) and
+build_teams.py's "tested on Weeks 6-8" (it describes a test, not a running number). Today's plus-money line on Today reads the count.

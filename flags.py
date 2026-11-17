@@ -221,6 +221,9 @@ class Engine:
         # 'volatile' (-5 or worse) 4.2 under, neutral 1.8 under. Modest but consistent pooled; Week 9 alone did not show it - re-check Tuesdays.
         self.REL = {}; self.TREL = {}
         try:
+            import flag_stats as _FLS; self.FS = _FLS.text(IN)   # 11/17: what Reliable / Volatile players went on to do, counted walk-forward on every build
+        except Exception: self.FS = {"reliable": "", "volatile": ""}
+        try:
             import json as _j
             _v = _j.load(open(os.path.join(IN, "legsnaps.json")))["values"]; _H = {c: i for i, c in enumerate(_v[0])}; _S = {}; _T = {}
             for _r in _v[1:]:
@@ -375,8 +378,8 @@ class Engine:
         _rl = self.REL.get(_nn(name))
         if _rl:
             _n, _h, _b, _d = _rl
-            if _d >= 0.05: add("good", "Reliable", f"Predictable for us: his graded FanDuel lines hit {_h} of {_n} ({100*_h/_n:.0f}%) vs {100*_b/_n:.0f}% priced. Reliable players have held up against their prices better than the rest (Weeks 6-9).")
-            elif _d <= -0.05: add("watch", "Volatile", f"Hard to read: his graded FanDuel lines hit {_h} of {_n} ({100*_h/_n:.0f}%) vs {100*_b/_n:.0f}% priced. Volatile players have hit about 4 points under their prices (Weeks 6-9).")
+            if _d >= 0.05: add("good", "Reliable", f"Predictable for us: his graded FanDuel lines hit {_h} of {_n} ({100*_h/_n:.0f}%) vs {100*_b/_n:.0f}% priced. {self.FS['reliable']}")
+            elif _d <= -0.05: add("watch", "Volatile", f"Hard to read: his graded FanDuel lines hit {_h} of {_n} ({100*_h/_n:.0f}%) vs {100*_b/_n:.0f}% priced. {self.FS['volatile']}")
         # context desk notes (news, depth chart, role rising, consensus, trending) - one flag each, in the order the files were read
         for _c in self.CTX.get(_nn(name), []):
             if _c.get("k") in ("good", "bad", "watch", "info"): add(_c["k"], _c.get("tag") or "Context", _c["txt"])

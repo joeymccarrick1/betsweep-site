@@ -65,6 +65,17 @@ async def main():
             s = await pg.evaluate(READ); got = am_to_dec(s["price"])
             check(s["price"].startswith("≈") and "same-game estimate" in s["sub"] and "legs multiply to" in s["sub"], f"{theme}: two legs in one game - the price is marked as an estimate ({s['price']}; {s['sub'][:60]})")
             check(got is not None and abs(got / want - 1) < 0.05, f"{theme}: the estimate matches the Python fit ({s['price']} vs {want:.3f}; legs multiply to {mult2:.3f})")
+            # 11/17: a quarterback's passing TDs and his passing yards are one bet on the same arm - priced together, not as strangers
+            allv = [l for l in D["legs"] if not l.get("gl") and l.get("o") is not None and l.get("fd") and not l.get("u")]
+            ptd = next((l for l in allv if l["m"] == "Passing TDs" and -250 <= l["o"] <= 200 and any(x["pl"] == l["pl"] and x["m"] == "Passing Yards" for x in allv)), None)
+            check(ptd is not None, f"{theme}: a quarterback with passing TDs and passing yards both priced at FanDuel")
+            if ptd:
+                py = min((x for x in allv if x["pl"] == ptd["pl"] and x["m"] == "Passing Yards"), key=lambda x: abs((x.get("bk") or 0.5) - 0.5))
+                check(ptd.get("c") == "QB_PTD" and (D["corr"].get("SP|QB_PASS|QB_PTD") or 0) >= 0.4, f"{theme}: passing TDs carry a correlation code and a measured tie to passing yards ({ptd.get('c')}, {D['corr'].get('SP|QB_PASS|QB_PTD')})")
+                await pg.goto("http://127.0.0.1:8861/build/" + q([ptd, py]), wait_until="domcontentloaded"); await pg.wait_for_timeout(1800); t = await pg.evaluate(READ)
+                mm = re.search(r"legs multiply to ([+\-−]\d+)", t["sub"]); e2, m2 = am_to_dec(t["price"]), (am_to_dec(mm.group(1)) if mm else None)
+                check(t["price"].startswith("≈") and e2 and m2 and e2 < m2 * 0.93, f"{theme}: {ptd['pl']} {int(ptd['ln'])}+ pass TDs with {int(py['ln'])}+ yards is estimated well under the legs multiplied ({t['price']} vs {mm.group(1) if mm else None})")
+                await pg.goto("http://127.0.0.1:8861/build/" + q(list(pair)), wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
             # 11/17: the reader types FanDuel's own price for this exact slip - every number then uses it, and "Back to the estimate" undoes it
             await pg.evaluate("document.querySelector('.slipwrap') && document.querySelector('.slipwrap').classList.add('open')")
             await pg.evaluate("document.querySelector('#sgq') && document.querySelector('#sgq').scrollIntoView({block: 'center'})"); await pg.wait_for_timeout(250)
