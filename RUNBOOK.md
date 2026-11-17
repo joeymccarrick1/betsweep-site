@@ -1018,4 +1018,11 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   post to the database (the test's database is a fake whose insert answers like the real one).
 - Caught by the test before it shipped: an apostrophe inside a single-quoted string in SHOT_JS ("this week's board") broke the whole
   script. When a JS block is written through a Python patch string, `\'` is eaten - use double quotes for text with apostrophes.
+- **The weather step no longer stops every publish between Monday night's final and Tuesday's roll (11/16 late).** The moment the
+  last game went final the feed moved to week 11; weather_feed.py answered "week 11 != 10" and, being a `flag` step, failed the
+  whole rebuild (exit 6: built, not copied) - reprice 44018775763 at 04:40Z, and it would have failed every hourly rebuild until
+  the roll. Weather only flags games still to be played, so: feed exactly one week ahead AND every game of the build's week has
+  kicked off (schedule in in/games.csv, Eastern kickoff times; a final score also counts) -> the sheet's weather stays, the step
+  says so and passes. Any other mismatch, or a week whose schedule cannot be read, still fails as before. `python3
+  tests/weather_gate.py` (7 checks).
 
