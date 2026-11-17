@@ -47,7 +47,7 @@ opens are where the alpha gap is. Order for the next stretch:
 3. **Me hub (step 7).** Open slips, record in units, profit calendar; profile icon in the header. account.py already grades saved
    slips from /data/box-w<W>.json - build on that.
 4. **Sharps strip** only once graded records with wins exist (needs FEED_GRADE_SECRET - the owner's step - and a winner).
-Waiting on the owner: add the repo secret FEED_GRADE_SECRET (or say "start records at Week 11" first - then add a --from-week
+(DONE 11/16 8:05 PM CT: secret in and accepted; database timer running - RUNBOOK. Check the first graded run Tuesday.) Was waiting on the owner: add the repo secret FEED_GRADE_SECRET (or say "start records at Week 11" first - then add a --from-week
 option to social_grade.py before he does; today's dry run would record 24 losses, 0 wins).
 
 ## Next, in this order

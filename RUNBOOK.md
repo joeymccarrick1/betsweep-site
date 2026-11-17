@@ -962,3 +962,18 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
 - The rebuild refuses a mirror older than 180 minutes (reprice.py --max-age); with the mirror arriving three times a day that
   limit alone would have skipped most scheduled rebuilds even when they did start.
 
+## 11/16, 8:05 PM CT: the grading secret and the database timer are both in (owner's steps, verified)
+
+- **Secret.** GitHub now has the Actions secret FEED_GRADE_SECRET. The first `check` was REFUSED by the database (HTTP 400 "Not
+  allowed"): the pasted value carried a stray space or line break. social_grade.py now trims the value (`secret_env()`), and
+  `--check` prints its shape only - length, whether stray space was trimmed, and the first six characters of its SHA-256 - so a
+  copy can be compared with another without showing either. After the trim: accepted, length 43, same fingerprint as the value in
+  the owner's file from the morning. Nothing was written (the check sends an empty list).
+- **Timer.** The owner ran sql/github_timers.sql. Seen on GitHub right on the slots, started by dispatch (not by GitHub's schedule
+  and not by a session): risk-notes 02:00:01Z, sheet-mirror 02:05:01Z. From here the mirror, the rebuild, price moves, risk notes,
+  game-day inactives and Social grading run from the database timer. If runs stop arriving: Supabase > Database > Cron jobs
+  (names `betsweep-gh-*`), and check that the GitHub token stored with them has not expired (1 year from 11/5).
+- **First graded run:** the timer starts `social-grade` (mode grade) at 9:40 AM Central on 11/17. Expected from tonight's dry
+  runs: 24 posts recorded as lost, 0 won; tonight's game adds whatever was posted on it. The owner was told this three times and
+  did not ask to start records at Week 11.
+

@@ -25,4 +25,9 @@
   Week 10, check whether any posted leg was on a player ruled out Sunday morning whose status reached the sheet late: compare
   'AUTO - Game Day Status' write times with the 11:30 AM / 2:30 PM CT inactive lists. If the owner has run sql/github_timers.sql,
   confirm on Tuesday that the mirror, rebuild and price-moves runs now arrive on time (Actions > each workflow > run list).
+- **First Social grading run (Tue 9:40 AM CT, started by the database timer).** Check Actions > social-grade: it should say
+  "wrote N of N result(s)" with about 24 lost. Then open Social: profiles should show a record. If it did not run, dispatch it by
+  hand (mode grade). Then build the "this week's sharps" strip only if a graded win exists.
+- **Timer check.** Confirm the run lists show the mirror at :05/:35, price moves at :12/:42 and the rebuild at :20 arriving by
+  dispatch since Monday 8 PM CT.
 
