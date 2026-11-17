@@ -416,7 +416,7 @@ JS = r"""
   // player's stat line, who did not play (VOID). A finished game with neither is "not graded yet" - shown as waiting, never as a loss.
   var HAVE = {}, FB = D.fb || {}, VOID = {}, NEEDSUM = {}, BOXTRY = {}, CHIPSEEN = false;
   Object.keys(FB).forEach(function(gid){ var fb = FB[gid]; if(!fb || !fb.box) return;
-    Object.keys(fb.box).forEach(function(n){ var r = fb.box[n]; BOX[norm(n)] = {pass: r[0], ptd: r[1], int: r[2], rush: r[3], rec: r[5], recy: r[6], td: r[4] + r[7], long: null, cmp: r[8], patt: r[9], ratt: r[10], tgt: r[11], name: n, fb: 1}; });
+    Object.keys(fb.box).forEach(function(n){ var r = fb.box[n]; BOX[norm(n)] = {pass: r[0], ptd: r[1], int: r[2], rush: r[3], rec: r[5], recy: r[6], td: r[4] + r[7] + (r[12] || 0), long: null, cmp: r[8], patt: r[9], ratt: r[10], tgt: r[11], name: n, fb: 1}; });   // td: rushing + receiving + (11/17) returns and recovered fumbles
     (fb.dnp || []).forEach(function(n){ VOID[norm(n)] = gid; }); });
   // the final score the build holds for a game: used when the score feed has none
   function finScore(gid){ var g = games[gid]; if(!g) return null; var fb = FB[gid];
@@ -628,6 +628,7 @@ JS = r"""
             if(cat.name === 'passing'){ row.pass = num(S.passingYards != null ? S.passingYards : S.YDS); row.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); row.int = num(S.interceptions != null ? S.interceptions : S.INT); row.cmp = num(String(S['completions/passingAttempts'] != null ? S['completions/passingAttempts'] : (S['C/ATT'] || '0')).split('/')[0]); row.patt = num(String(S['completions/passingAttempts'] != null ? S['completions/passingAttempts'] : (S['C/ATT'] || '0/0')).split('/')[1]); }
             if(cat.name === 'rushing'){ row.ratt = num(S.rushingAttempts != null ? S.rushingAttempts : S.CAR); row.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); row.td += num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
             if(cat.name === 'receiving'){ row.tgt = num(S.receivingTargets != null ? S.receivingTargets : S.TGTS); row.rec = num(S.receptions != null ? S.receptions : S.REC); row.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); row.long = Math.max(row.long, num(S.longReception != null ? S.longReception : S.LONG)); row.td += num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
+            if(cat.name === 'kickReturns' || cat.name === 'puntReturns'){ var tk = Object.keys(S).filter(function(k){ return /touchdown/i.test(k) || k === 'TD'; })[0]; if(tk) row.td += num(S[tk]); }   // 11/17: a return touchdown pays an anytime-TD leg too
           });
         });
       });
@@ -972,7 +973,8 @@ JS = r"""
     var under = /^Under /.test(m), base = under ? m.slice(6) : m, b = d.box[who] || d.__n[norm(who)]; if(!b) return null;
     var td = base === 'Anytime TD' || base === '2+ TD' || base === '3+ TD', val = td ? (+b[4] || 0) + (+b[7] || 0) : (S[base] != null ? +b[S[base]] : null); if(val == null || isNaN(val)) return null;
     var need = base === 'Anytime TD' ? 1 : base === '2+ TD' ? 2 : base === '3+ TD' ? 3 : under ? Math.floor(ln) + 1 : ln; if(isNaN(need)) return null;
-    var hit = val >= need; return (under ? !hit : hit) ? 1 : 0; }
+    var hit = val >= need; if(td && !hit) return null;   // the weekly file has rushing and receiving touchdowns only - a return touchdown is not in it, so it can confirm a TD leg but never take one away
+    return (under ? !hit : hit) ? 1 : 0; }
   function logSig(t){ var h = 5381; for(var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t.length + ':' + h; }
   function fixSavedWeeks(){ var wk = +D.week, todo = [], chk = {}; try { chk = JSON.parse(localStorage.getItem('bs_logchk') || '{}') || {}; } catch(e){ chk = {}; }
     try { for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i), m = /^bs_log_w(\d+)$/.exec(k || ''); if(m && +m[1] < wk && chk[m[1]] !== logSig(localStorage.getItem(k) || '')) todo.push(+m[1]); } } catch(e){}

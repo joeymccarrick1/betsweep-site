@@ -39,16 +39,17 @@ SA, SB = (int(OV["ln"]) + 1 if OV else 30), 7            # the made-up final: A 
 KO = (int(__import__("time").time()) // 60 * 60 + 48 * 3600) * 1000
 
 def row(**kw):
-    r = [0] * 12
-    for k, v in kw.items(): r[{"pass": 0, "ptd": 1, "int": 2, "rush": 3, "rtd": 4, "rec": 5, "recy": 6, "ctd": 7, "cmp": 8, "patt": 9, "ratt": 10, "tgt": 11}[k]] = v
+    r = [0] * 13
+    for k, v in kw.items(): r[{"pass": 0, "ptd": 1, "int": 2, "rush": 3, "rtd": 4, "rec": 5, "recy": 6, "ctd": 7, "cmp": 8, "patt": 9, "ratt": 10, "tgt": 11, "xtd": 12}[k]] = v
     return r
 SLOT = {0: "pass", 3: "rush", 5: "rec", 6: "recy"}
+RETURN_TD = {"on": False}                                   # when on, the scorer's touchdown is a kick return (the last number of his row), not a rush
 def winbox(lose=()):
     """stat lines that make every chosen leg win (a leg named in `lose` falls short instead)"""
     box = {}
     for l in (Y1, Y2):
         box[l["pl"]] = row(**{SLOT[STAT[l["m"]]]: (max(0, int(l["ln"]) - 3) if l in lose else int(l["ln"]) + 5)})
-    box[TD["pl"]] = row(rtd=0 if TD in lose else 1, rush=12)
+    box[TD["pl"]] = row(rush=12, **({"xtd": 1} if RETURN_TD["on"] else {"rtd": 0 if TD in lose else 1}))
     if UN: box[UN["pl"]] = row(**{SLOT[STAT[UN["m"][6:]]]: max(0, int(math.floor(UN["ln"])) - 2)})
     return box
 def data(final=True, fb="box", dnp=False, fin=True, lose=()):
@@ -72,12 +73,14 @@ def summary(lose=()):
     def ath(n, st): return {"athlete": {"displayName": n}, "stats": [str(x) for x in st]}
     cats = {"passing": (["completions/passingAttempts", "passingYards", "passingTouchdowns", "interceptions"], []), "rushing": (["rushingAttempts", "rushingYards", "rushingTouchdowns"], []),
             "receiving": (["receptions", "receivingYards", "receivingTouchdowns", "longReception", "receivingTargets"], [])}
+    cats["kickReturns"] = (["kickReturns", "kickReturnYards", "yardsPerKickReturn", "longKickReturn", "kickReturnTouchdowns"], [])     # ESPN's shape as far as known; not checked against a live answer
     for n, r in winbox(lose).items():
         if r[0]: cats["passing"][1].append(ath(n, ["20/30", r[0], r[1], r[2]]))
         if r[3] or r[4]: cats["rushing"][1].append(ath(n, [12, r[3], r[4]]))
         if r[5] or r[6]: cats["receiving"][1].append(ath(n, [r[5] or 4, r[6], r[7], 18, 7]))
+        if r[12]: cats["kickReturns"][1].append(ath(n, [1, 98, "98.0", 98, r[12]]))
     return {"boxscore": {"players": [{"team": {"abbreviation": A}, "statistics": [{"name": k, "keys": v[0], "athletes": v[1]} for k, v in cats.items()]}]},
-            "scoringPlays": [{"type": {"text": "Rushing Touchdown"}, "text": f"{TD['pl']} 3 Yd Run (kick)"}] if TD not in lose else []}
+            "scoringPlays": [{"type": {"text": "Rushing Touchdown"}, "text": f"{TD['pl']} 3 Yd Run (kick)"}] if TD not in lose and not RETURN_TD["on"] else []}
 
 CLOCK = "(function(){var T=+(localStorage.getItem('t_now')||0);if(!T)return;var R=Date.now,S=R();Date.now=function(){return T+(R()-S)};var D0=Date;function ND(){if(arguments.length===0)return new D0(D0.now());return new (Function.prototype.bind.apply(D0,[null].concat([].slice.call(arguments))))()}ND.now=D0.now;ND.parse=D0.parse;ND.UTC=D0.UTC;ND.prototype=D0.prototype;window.Date=ND;})();"
 READ = """(gid) => { var q = function(s, r){ return (r || document).querySelector(s); }, qa = function(s, r){ return Array.from((r || document).querySelectorAll(s)); };
@@ -144,6 +147,10 @@ async def main():
         s, asked, errs, pg, ctx = await run("real-loss", lose=(Y1,)); await ctx.close()
         check(s["slip"] == "DEAD" and len(losses(s)) == 1 and losses(s)[0][0] == Y1["pl"] and len(wins(s)) == NW - 1, f"a leg that fell short is dead, the slip is DEAD, and that one loss is saved ({s['slip']}, {s['facts']})")
 
+        # a touchdown on a return pays an anytime-TD leg
+        RETURN_TD["on"] = True; s, asked, errs, pg, ctx = await run("return-td"); await ctx.close(); RETURN_TD["on"] = False
+        check(s["slip"] == "CASHED" and f"{NW} hit" in s["facts"], f"an anytime-TD leg is paid on a return touchdown, not only a rush or a catch ({s['slip']}: {s['facts']})")
+
         # ---- 2. the build has the score but no stat lines; ESPN cannot be reached ----
         s, asked, errs, pg, ctx = await run("score-only", fb="score", hash_="#lv-" + GID); await ctx.close()
         print("   score only, no ESPN:", json.dumps({k: s[k] for k in ("slip", "slipSub", "facts", "week", "tog", "subs")})[:520])
@@ -162,6 +169,9 @@ async def main():
         check(nsb >= 1 and nsm == 1, f"the page asked ESPN for the scores and for the one box score it needed ({nsb} + {nsm} calls)")
         check(s["slip"] == "Grading" and s["dead"] == 0 and f"{NW} hit" in s["facts"] and "1 not graded yet" in s["facts"], f"ESPN's box score grades the {NW} winners; the man with no stat line waits instead of losing ({s['slip']}: {s['facts']})")
         check(len(wins(s)) == NW and not losses(s), "and he is not saved as a loss")
+        RETURN_TD["on"] = True; sm_ret = summary(); RETURN_TD["on"] = False
+        s, asked, errs, pg, ctx = await run("espn-return-td", fb=None, fin=False, espn="on", sb=scoreboard("post", SA, SB), sm=sm_ret, keys=[TD, ML], wait=3600); await ctx.close()
+        check(s["slip"] == "CASHED" and "2 hit" in s["facts"], f"from ESPN's box score too, a kick-return touchdown pays the anytime-TD leg ({s['slip']}: {s['facts']}) - against ESPN's layout as far as it is known")
         # ---- 5. a leg on a player who did not play is void, not lost ----
         s, asked, errs, pg, ctx = await run("void", dnp=True, keys=[Y1, Y2, DNP], hash_="#lv-" + GID); await ctx.close()
         print("   did not play:", json.dumps({k: s[k] for k in ("slip", "facts", "money", "share", "subs")})[:420], "|", [r for r in s["rows"] if "did not play" in r][:2])

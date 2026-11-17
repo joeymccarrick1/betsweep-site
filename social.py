@@ -570,6 +570,7 @@ PAGE_JS = r"""<script>(function(){
         if(cat.name === 'passing'){ r.pass = num(S.passingYards != null ? S.passingYards : S.YDS); r.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); }
         if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
         if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = num(S.longReception != null ? S.longReception : S.LONG); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
+        if(cat.name === 'kickReturns' || cat.name === 'puntReturns'){ var tk = Object.keys(S).filter(function(k){ return /touchdown/i.test(k) || k === 'TD'; })[0]; if(tk) r[cat.name === 'kickReturns' ? 'krtd' : 'prtd'] = num(S[tk]); }   // 11/17: a return touchdown pays an anytime-TD leg too
       }); }); });
     var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
     if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
@@ -587,8 +588,8 @@ PAGE_JS = r"""<script>(function(){
     if(l.m === 'First TD'){ var f = C.FIRST[l.g]; if(!f) return (fin && !sure && SUMOK[l.g]) ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }   // 11/17: "no first TD" only once that game's box score has been read - a final whose box did not load used to bust the leg
     if(l.m === 'Passing TDs'){ if(r && (r.ptd || 0) >= Math.round(l.ln)) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
     if(l.m === 'Either TD'){ var rs = String(l.pl).split(/\s+or\s+/).map(function(n){ return C.BOX[norm(n)]; });
-      if(rs.some(function(q){ return q && (q.rtd || 0) + (q.ctd || 0) >= 1; })) return 'hit'; return fin && (sure || rs.every(Boolean)) ? 'dead' : 'open'; }
-    if(/TD$/.test(l.m)){ var needT = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : 1; if(r && (r.rtd || 0) + (r.ctd || 0) >= needT) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
+      if(rs.some(function(q){ return q && (q.rtd || 0) + (q.ctd || 0) + (q.krtd || 0) + (q.prtd || 0) >= 1; })) return 'hit'; return fin && (sure || rs.every(Boolean)) ? 'dead' : 'open'; }
+    if(/TD$/.test(l.m)){ var needT = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : 1; if(r && (r.rtd || 0) + (r.ctd || 0) + (r.krtd || 0) + (r.prtd || 0) >= needT) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
     var v = !r ? (fin && sure ? 0 : null) : l.m === 'Passing Yards' ? r.pass : l.m === 'Rushing Yards' ? r.rush : l.m === 'Receiving Yards' ? r.recy : l.m === 'Receptions' ? r.rec : l.m === 'Longest Reception' ? r.long : l.m === 'Rush + Rec Yards' ? r.rush + r.recy : null;
     if(['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'].indexOf(l.m) < 0) return 'open';   // a market this page cannot grade stays open
     if(v == null) return 'open'; return v >= Math.round(l.ln) ? 'hit' : (fin ? 'dead' : 'open');

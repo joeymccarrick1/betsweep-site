@@ -58,7 +58,9 @@ class Finals:
                     self.stats[(w, pkey(r["player_display_name"]), t)] = {"pass": num(r.get("passing_yards")), "ptd": num(r.get("passing_tds")), "rush": num(r.get("rushing_yards")), "rtd": num(r.get("rushing_tds")),
                                                                          "rec": num(r.get("receptions")), "recy": num(r.get("receiving_yards")), "ctd": num(r.get("receiving_tds")),
                                                                          # 11/17: the Live page's other markets and its usual-volume chips (finals.py)
-                                                                         "int": num(r.get("passing_interceptions")), "cmp": num(r.get("completions")), "patt": num(r.get("attempts")), "ratt": num(r.get("carries")), "tgt": num(r.get("targets"))}
+                                                                         "int": num(r.get("passing_interceptions")), "cmp": num(r.get("completions")), "patt": num(r.get("attempts")), "ratt": num(r.get("carries")), "tgt": num(r.get("targets")),
+                                                                         # 11/17: a touchdown on a return or a recovered fumble pays an anytime-TD leg too (15 or so offensive players a season)
+                                                                         "xtd": num(r.get("special_teams_tds")) + num(r.get("def_tds")) + num(r.get("fumble_recovery_tds"))}
                     # every way a team scores that the file credits to a player: finals.py checks the sum against the final score before it trusts a box
                     self.points[(w, t)] = self.points.get((w, t), 0.0) + 6 * (num(r.get("rushing_tds")) + num(r.get("receiving_tds")) + num(r.get("def_tds")) + num(r.get("special_teams_tds")) + num(r.get("fumble_recovery_tds"))) \
                         + 3 * num(r.get("fg_made")) + num(r.get("pat_made")) + 2 * (num(r.get("rushing_2pt_conversions")) + num(r.get("receiving_2pt_conversions"))) + 2 * num(r.get("def_safeties"))
@@ -83,7 +85,7 @@ class Finals:
         if len(have) == 1: return self.stats[(week, k, have[0])]
         if any((week, t) not in self.statteams for t in both): return ("unknown", "stats not published yet")
         played = [t for t in both if self.snaps.get((week, k, t), 0) > 0]
-        if played: return {"pass": 0.0, "ptd": 0.0, "rush": 0.0, "rtd": 0.0, "rec": 0.0, "recy": 0.0, "ctd": 0.0, "int": 0.0, "cmp": 0.0, "patt": 0.0, "ratt": 0.0, "tgt": 0.0}     # on the field, nothing in the box
+        if played: return {"pass": 0.0, "ptd": 0.0, "rush": 0.0, "rtd": 0.0, "rec": 0.0, "recy": 0.0, "ctd": 0.0, "int": 0.0, "cmp": 0.0, "patt": 0.0, "ratt": 0.0, "tgt": 0.0, "xtd": 0.0}     # on the field, nothing in the box
         if any((week, t) not in self.snapteams for t in both): return ("unknown", "snap counts not published yet")
         return "dnp"
 
@@ -109,7 +111,7 @@ def grade_leg(l, week, F):
     if m == "Longest Reception": return ("unknown", "longest-reception legs are not graded by this job")
     names = [n.strip() for n in re.split(r"\s+or\s+", str(l.get("pl") or "")) if n.strip()] if m == "Either TD" else [str(l.get("pl") or "")]
     rows = [F.player(n, l, week, g) for n in names]
-    tds = lambda r: r["rtd"] + r["ctd"]
+    tds = lambda r: r["rtd"] + r["ctd"] + r.get("xtd", 0.0)     # rushing, receiving, and (11/17) returns / recovered fumbles: the book pays an anytime-TD leg on all of them
     if m == "Either TD":
         if any(isinstance(r, dict) and tds(r) >= 1 for r in rows): return "hit"
         bad = [r for r in rows if not isinstance(r, dict)]

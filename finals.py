@@ -11,7 +11,8 @@ all won, and those losses were saved into the reader's season record. The page n
   in/snap_counts_<season>.csv        who was on the field (a man with no stat line either played and did nothing, or did not play)
 
 build() returns {gid: {"sc": {TEAM: points, TEAM: points}, "box": {leg player name: [pass yds, pass TD, INT, rush yds, rush TD, receptions,
-rec yds, rec TD, completions, pass attempts, carries, targets]}, "dnp": [leg player names who did not play]}} for the games that are final.
+rec yds, rec TD, completions, pass attempts, carries, targets, other TDs (returns, recovered fumbles)]}, "dnp": [leg player names who did not
+play]}} for the games that are final.
 "box" and "dnp" are only given when the stat file can be trusted for that game: both teams have rows AND the points the file credits to
 each team's players add up to that team's final score (touchdowns, field goals, extra points, two-point tries, safeties). A game that
 fails the check gets its score only, and the page falls back to ESPN for the box score. Never guessed: a player the files cannot place
@@ -29,7 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import social_grade as SG
 
-FIELDS = ("pass", "ptd", "int", "rush", "rtd", "rec", "recy", "ctd", "cmp", "patt", "ratt", "tgt")
+FIELDS = ("pass", "ptd", "int", "rush", "rtd", "rec", "recy", "ctd", "cmp", "patt", "ratt", "tgt", "xtd")
 NFLVERSE = "https://github.com/nflverse/nflverse-data/releases/download/"
 
 

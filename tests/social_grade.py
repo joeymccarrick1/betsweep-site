@@ -12,8 +12,9 @@ def w(name, cols, rows):
 w("games.csv", ["season", "game_type", "week", "away_team", "away_score", "home_team", "home_score"],
   [[2026, "REG", 10, "LAC", 24, "BAL", 27], [2026, "REG", 10, "PIT", 18, "CIN", 38], [2026, "REG", 10, "NE", 20, "DET", 20], [2026, "REG", 10, "LAR", 30, "SF", 13],
    [2026, "REG", 10, "DAL", "", "PHI", ""], [2026, "REG", 10, "JAC", 10, "TEN", 17], [2025, "REG", 10, "LAC", 3, "BAL", 40]])
-SC = ["player_display_name", "season_type", "week", "team", "passing_yards", "passing_tds", "rushing_yards", "rushing_tds", "receptions", "receiving_yards", "receiving_tds"]
+SC = ["player_display_name", "season_type", "week", "team", "passing_yards", "passing_tds", "rushing_yards", "rushing_tds", "receptions", "receiving_yards", "receiving_tds", "special_teams_tds"]
 w("stats_player_week_2026.csv", SC, [
+  ["Kalif Raymond", "REG", 10, "DET", 0, 0, 0, 0, 1, 9, 0, 1],
   ["Justin Herbert", "REG", 10, "LAC", 250, 2, 15, 0, 0, 0, 0], ["Derrick Henry", "REG", 10, "BAL", 0, 0, 88, 1, 1, 6, 0], ["Zay Flowers", "REG", 10, "BAL", 0, 0, 0, 0, 3, 49, 0],
   ["Omarion Hampton", "REG", 10, "LAC", 0, 0, 61, 0, 2, 20, 0], ["Ja'Marr Chase", "REG", 10, "CIN", 0, 0, 0, 0, 7, 110, 2], ["Marvin Harrison Jr.", "REG", 10, "SF", 0, 0, 0, 0, 4, 44, 1],
   ["Josh Allen", "REG", 10, "JAX", 0, 0, 0, 0, 0, 0, 0], ["Josh Allen", "REG", 10, "BUF", 301, 3, 20, 1, 0, 0, 0], ["Jared Goff", "REG", 10, "DET", 222, 1, 0, 0, 0, 0, 0],
@@ -29,6 +30,7 @@ check(F.season == 2026 and len(F.games[10]) == 5, f"reads the newest season with
 check(G(leg("Justin Herbert", "Passing Yards", 249.5, "BAL-LAC")) == "hit" and G(leg("Justin Herbert", "Passing Yards", 250, "BAL-LAC")) == "hit" and G(leg("Justin Herbert", "Passing Yards", 250.5, "BAL-LAC")) == "miss", "yards against the line: 250 yards clears 249.5 and 250+, and misses 250.5")
 check(SG.jsround(0.5) == 1 and SG.jsround(2.5) == 3 and SG.jsround(49.5) == 50, "half lines round up the way the page does (Python's round() would say 0, 2, 50)")
 check(G(leg("Derrick Henry", "Anytime TD", 1, "BAL-LAC")) == "hit" and G(leg("Derrick Henry", "2+ TD", 2, "BAL-LAC")) == "miss" and G(leg("Ja'Marr Chase", "2+ TD", 2, "CIN-PIT")) == "hit", "touchdown legs count rushing and receiving scores")
+check(G(leg("Kalif Raymond", "Anytime TD", 1, "DET-NE")) == "hit" and G(leg("Kalif Raymond", "2+ TD", 2, "DET-NE")) == "miss", "a punt-return touchdown pays an anytime-TD leg (it used to be graded a miss)")
 check(G(leg("Justin Herbert", "Passing TDs", 1.5, "BAL-LAC")) == "hit" and G(leg("Justin Herbert", "Passing TDs", 3, "BAL-LAC")) == "miss", "passing touchdowns")
 check(G(leg("Omarion Hampton", "Rush + Rec Yards", 80.5, "BAL-LAC")) == "hit" and G(leg("Zay Flowers", "Receiving Yards", 50, "BAL-LAC")) == "miss" and G(leg("Zay Flowers", "Receptions", 3, "BAL-LAC")) == "hit", "combined yards, receiving yards (49 misses 50+), receptions")
 check(G(leg("Zay Flowers", "Under Receptions", 3.5, "BAL-LAC")) == "hit" and G(leg("Zay Flowers", "Under Receptions", 2.5, "BAL-LAC")) == "miss", "unders are the other side of the next whole number")

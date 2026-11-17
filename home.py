@@ -413,8 +413,9 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
         var num = function(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; };
         // 11/16: TDs are set per category and summed, not added on every read (the box is re-read each minute and '+=' doubled them)
         if(cat.name === 'passing'){ r.pass = num(S.passingYards != null ? S.passingYards : S.YDS); r.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); }
-        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); r.td = r.rtd + r.ctd; }
-        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = Math.max(r.long, num(S.longReception != null ? S.longReception : S.LONG)); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); r.td = r.rtd + r.ctd; }
+        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); r.td = r.rtd + r.ctd + (r.krtd || 0) + (r.prtd || 0); }
+        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = Math.max(r.long, num(S.longReception != null ? S.longReception : S.LONG)); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); r.td = r.rtd + r.ctd + (r.krtd || 0) + (r.prtd || 0); }
+        if(cat.name === 'kickReturns' || cat.name === 'puntReturns'){ var tk = Object.keys(S).filter(function(k){ return /touchdown/i.test(k) || k === 'TD'; })[0]; if(tk){ r[cat.name === 'kickReturns' ? 'krtd' : 'prtd'] = num(S[tk]); r.td = r.rtd + r.ctd + (r.krtd || 0) + (r.prtd || 0); } }   // 11/17: a return touchdown pays an anytime-TD leg too
       }); }); });
       var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
       if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
@@ -517,7 +518,7 @@ PROMO_TAIL_JS = r"""<script>(function(){ function go(){ if(window.__bsPromoCpy) 
 # game log (the sheet's box scores, final games only): 'L' + the leg that killed it, 'W' when every leg is in the log and hit, else
 # None (a leg whose player has no row that week is unknown, never a miss). Display only - the record is still the sheet's Result.
 _GSTAT = {"Passing Yards": ("Pass Yds",), "Rushing Yards": ("Rush Yds",), "Receiving Yards": ("Rec Yds",), "Receptions": ("Receptions",), "Longest Reception": ("Longest Rec",),
-          "Rush + Rec Yards": ("Rush Yds", "Rec Yds"), "Passing TDs": ("Pass TD",), "Anytime TD": ("Rush TD", "Rec TD"), "2+ TD": ("Rush TD", "Rec TD"), "Either TD": ("Rush TD", "Rec TD")}
+          "Rush + Rec Yards": ("Rush Yds", "Rec Yds"), "Passing TDs": ("Pass TD",), "Anytime TD": ("Rush TD", "Rec TD", "Other TD"), "2+ TD": ("Rush TD", "Rec TD", "Other TD"), "Either TD": ("Rush TD", "Rec TD", "Other TD")}   # 11/17: "Other TD" = returns and recovered fumbles (the weekly file has them; the sheet's game log does not)
 _GLOG_CACHE = {}
 def _glog(IN):
     if IN not in _GLOG_CACHE:
@@ -543,7 +544,8 @@ def _glog(IN):
                     for r in _csv.DictReader(f):
                         if r.get("season_type", "REG") != "REG" or r.get("week") in have or not r.get("player_display_name"): continue
                         d[(str(r["week"]), _pkey(r["player_display_name"]))] = {"Pass Yds": nf(r.get("passing_yards")), "Pass TD": nf(r.get("passing_tds")), "Rush Yds": nf(r.get("rushing_yards")), "Rush TD": nf(r.get("rushing_tds")),
-                                                                              "Receptions": nf(r.get("receptions")), "Rec Yds": nf(r.get("receiving_yards")), "Rec TD": nf(r.get("receiving_tds")), "_nolong": 1}
+                                                                              "Receptions": nf(r.get("receptions")), "Rec Yds": nf(r.get("receiving_yards")), "Rec TD": nf(r.get("receiving_tds")), "_nolong": 1,
+                                                                              "Other TD": nf(r.get("special_teams_tds")) + nf(r.get("def_tds")) + nf(r.get("fumble_recovery_tds"))}
         except Exception as _e: print("note: weekly stats file not read for promo grading:", _e)
         _GLOG_CACHE[IN] = d
     return _GLOG_CACHE[IN]

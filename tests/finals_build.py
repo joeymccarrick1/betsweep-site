@@ -20,7 +20,7 @@ def snap(week, name, team, n=30): return {"season": 2026, "game_type": "REG", "w
 # week 5: AAA 24 at BBB 17 (complete), CCC 20 at DDD 10 (the file's points for CCC are short), EEE 13 at FFF 9 (no stat lines yet), GGG at HHH not played
 def season(aaa_snaps=True):
     st = [srow("Quinn Passer", 5, "AAA", completions=20, attempts=30, passing_yards=250, passing_tds=2, passing_interceptions=1, carries=3, rushing_yards=12),
-          srow("Rory Runner", 5, "AAA", carries=18, rushing_yards=88, rushing_tds=1, receptions=2, targets=3, receiving_yards=9),
+          srow("Rory Runner", 5, "AAA", carries=18, rushing_yards=88, rushing_tds=0, receptions=2, targets=3, receiving_yards=9, special_teams_tds=1),   # his touchdown was a kick return
           srow("Wes Catcher", 5, "AAA", receptions=6, targets=9, receiving_yards=74, receiving_tds=2),
           srow("Kai Kicker", 5, "AAA", fg_made=1, pat_made=3),                                     # 3 TD x 6 + 3 + 3 = 24
           srow("Bo Back", 5, "BBB", carries=15, rushing_yards=61, rushing_tds=2), srow("Ben Boot", 5, "BBB", fg_made=1, pat_made=2),   # 12 + 3 + 2 = 17
@@ -37,8 +37,9 @@ with tempfile.TemporaryDirectory() as IN:
     a = fb.get("AAA-BBB", {})
     check(set(fb) == {"AAA-BBB", "CCC-DDD", "EEE-FFF"}, f"only games with a final score are handed over ({sorted(fb)})")
     check(a.get("sc") == {"AAA": 24, "BBB": 17}, f"the final score is keyed by team ({a.get('sc')})")
-    check(a.get("box", {}).get("Quinn Passer") == [250, 2, 1, 12, 0, 0, 0, 0, 20, 30, 3, 0] and a["box"].get("Wes Catcher") == [0, 0, 0, 0, 0, 6, 74, 2, 0, 0, 0, 9], f"a stat line is the twelve numbers the page reads ({a.get('box', {}).get('Quinn Passer')})")
-    check(a["box"].get("Otto Bench") == [0] * 12, "a man who was on the field with nothing in the box score gets a row of zeros (his overs lose)")
+    check(a.get("box", {}).get("Quinn Passer") == [250, 2, 1, 12, 0, 0, 0, 0, 20, 30, 3, 0, 0] and a["box"].get("Wes Catcher") == [0, 0, 0, 0, 0, 6, 74, 2, 0, 0, 0, 9, 0], f"a stat line is the thirteen numbers the page reads ({a.get('box', {}).get('Quinn Passer')})")
+    check(a["box"].get("Rory Runner") == [0, 0, 0, 88, 0, 2, 9, 0, 0, 0, 18, 3, 1], f"a return touchdown is carried in the last number, so the page can pay an anytime-TD leg on it ({a['box'].get('Rory Runner')})")
+    check(a["box"].get("Otto Bench") == [0] * 13, "a man who was on the field with nothing in the box score gets a row of zeros (his overs lose)")
     check(a.get("dnp") == ["Sam Scratch"], f"a man with no stat line and no snaps, known from another week, did not play ({a.get('dnp')})")
     check("Typo Nmae" not in a["box"] and "Typo Nmae" not in a.get("dnp", []), "a name the files have never seen is left out - not voided, not zeroed")
     check("AAA ML" not in a["box"], "game-line legs are not players")

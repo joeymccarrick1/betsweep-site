@@ -1153,3 +1153,21 @@ Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on
   Both now need that game's box score to have been read (`SUMOK[gid]`) before saying no one on the slip scored first.
 - **Tests:** tests/live_regrade.py (22, rows built from the real file of the week before the one the site is on).
   Add it to the pre-publish set.
+
+## 11/17, ~2:30 AM CT: a return touchdown pays an anytime-TD leg in every grader
+
+- Every grader counted rushing and receiving touchdowns only. The book pays an anytime-TD (and 2+ / 3+ TD, either-or) leg on a kick
+  or punt return and on a recovered fumble too; in the nflverse files that is about 15 offensive players a season (24 player-games
+  over 2025 and 2026 so far - returners such as Parker Washington, Kalif Raymond, Ray Davis). Each was a win we would have graded lost.
+- **From the nflverse files** (checked against real rows): `social_grade.Finals` rows carry `xtd` = special-teams + defensive +
+  fumble-recovery touchdowns, the Social grading job adds it (`tds()`), and `finals.py` hands it to the Live page as the thirteenth
+  number of a stat row (`td = rush TD + rec TD + other`).
+- **From ESPN's box score in the browser** (Live, Today's promo cards, Social): the `kickReturns` and `puntReturns` tables are read
+  for a touchdown column (any key with "touchdown" in it). **Not checked against a live ESPN answer** - the workspace cannot reach
+  ESPN and the feed snapshots on the `feeds` branch keep only processed numbers. If ESPN names those tables differently nothing
+  changes (the old behaviour); check it on the first return touchdown, or from a phone's network log on a game day.
+- **The weekly box files** (/data/box-w<W>.json, from the sheet's game log) still hold rushing and receiving touchdowns only. So
+  the re-grade of earlier weeks may confirm a TD leg but never takes one away, and My BetSweep can still show a return-touchdown
+  leg as a miss for a past week. Fixing that means a touchdown column for returns in the game log tab - the owner's sheet.
+- Tests: social_grade 28 (a punt-return scorer), finals_build 17, live_finals 31 (a return touchdown from the build and from an
+  ESPN-shaped box), live_regrade 23.
