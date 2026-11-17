@@ -74,7 +74,7 @@ def build(out_dir=OUT):
     except Exception: BP = []
     legs = pool(BD)
     games = {g["gid"]: {"at": at(g), "ko": g.get("ko") or 0, "kick": g.get("kick", "")} for g in BD["games"]}
-    sgp = [{"g": b["gid"], "pj": round(b["pj"], 4), "dec": round(b["dec"], 3), "legs": [x[0] if x[1] in ("Total", "Spread", "Moneyline") else f"{x[0]} {x[1].lower()} {x[2]:g}+" if x[1] != "Anytime TD" else f"{x[0]} to score" for x in b["legs"]]}
+    sgp = [{"g": b["gid"], "pj": round(b["pj"], 4), "dec": round(b["dec"], 3), "mult": round(b.get("dec_mult") or b["dec"], 3), "legs": [x[0] if x[1] in ("Total", "Spread", "Moneyline") else f"{x[0]} {x[1].lower()} {x[2]:g}+" if x[1] != "Anytime TD" else f"{x[0]} to score" for x in b["legs"]]}
            for b in BP if b.get("pj") and b.get("gid") in games]
     data = {"week": BD.get("week"), "built": BD.get("built"), "legs": legs, "games": games, "sgp": sgp}
     json.dump(data, open(os.path.join(out_dir, "boost.json"), "w"), separators=(",", ":"), ensure_ascii=False)
@@ -213,7 +213,8 @@ JS = r"""
   function sgp(){
     var g = $('bzg').value, s = null; (D.sgp || []).forEach(function(x){ if(x.g === g) s = x; });
     if(s && !$('bzp').dataset.typed) $('bzp').value = Math.round(s.pj * 100);
-    $('bzglegs').textContent = s ? s.legs.join(' + ') + ' (legs multiplied: ' + am(s.dec) + ')' : '';
+    $('bzglegs').textContent = s ? s.legs.join(' + ') + '. FanDuel should show about ' + am(s.dec) + (s.mult && Math.abs(s.mult - s.dec) > 0.01 ? ' (the legs multiply to ' + am(s.mult) + '; it prices same-game legs together)' : '') + '. Type what it shows.' : '';
+    $('bzq').placeholder = s ? am(s.dec) : '+450';
     var q = $('bzq').value.replace(/−/g, '-').replace(/[^0-9+\-]/g, ''), o = parseInt(q, 10), p = (+$('bzp').value) / 100, b = (+$('bzb2').value) / 100, v = $('bzv2');
     if(!q || isNaN(o) || Math.abs(o) < 100 || !(p > 0 && p < 1)){ v.hidden = true; return; }
     var d = dec(o), bd = boosted(d, b);

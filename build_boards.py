@@ -354,6 +354,7 @@ FE = FLAGS.Engine(IN, WEEK)
 import honest as HONEST
 HON = HONEST.load(IN)
 import sweep as _SWPB
+import sgp as _SGPB; _SGPC = _SGPB.load()   # FanDuel's same-game price, estimated from its own quotes on our posted slips (owner 11/17)
 _FAILED_TAGS = {t for t, _w in _SWPB.TAG_W.items() if _w == 0}   # flags that failed the Tuesday grade: off the boards, still on the player page
 import faceoff as FACEOFF   # receiver face-off on each game card (owner 10/22: Burden over Odunze was visible in usage + corner data)
 try: FO = FACEOFF.load(IN, WEEK)
@@ -1098,7 +1099,11 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
             for i in range(n):
                 for j in range(i+1, n): C[i][j] = C[j][i] = corr_between(combo[i]["l"], codes[id(combo[i])], combo[j]["l"], codes[id(combo[j])])
             pj = sum(w[k] * joint_prob([r["ps"][k] for r in combo], C, n=3000) for k in range(4) if w[k] > 0)
-            priced.append((pj, pj * d - 1, d, combo, C))
+            # owner 11/17 (the same-game discount): every slip here is one game, and FanDuel does not pay the legs multiplied on those.
+            # The price is the estimate from its own quotes (sgp.py): exp(-c (n-1)^2) / its implied chances joined with these correlations.
+            pb = joint_prob([r["l"]["book"] for r in combo], C, n=3000)
+            de = _SGPB.price(n, pb, _SGPC["c"]) if pb > 0 else d
+            priced.append((pj, pj * de - 1, de, combo, C))
         plus = [x for x in priced if x[1] >= 0]
         near = [x for x in priced if x[1] >= -0.05]
         pool = plus or near
@@ -1139,6 +1144,9 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
                    f'{"Rebuilt to agree" if not _same and free else "Agrees"} with <b>Sweep says</b> ({E(lean_text(lean))})</span>')
     if got is None: return "", None
     pj, ev, d, combo, C, plus, near = got
+    d_mult = math.prod(dec_odds(r["l"]["odds"]) for r in combo)
+    _pb = joint_prob([r["l"]["book"] for r in combo], C, n=30000)
+    if _pb > 0: d = _SGPB.price(len(combo), _pb, _SGPC["c"])          # the same estimate, with more draws for the number on the card
     by_k = [joint_prob([r["ps"][k] for r in combo], C, n=12000) if w[k] > 0 else 0.0 for k in range(4)]
     pj = sum(w[k] * by_k[k] for k in range(4)); ev = pj * d - 1
     # the honest version of the same slip: each leg's chance under each ending scaled by (honest chance / model chance)
@@ -1169,9 +1177,9 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
     work_html = f'<span class="bpwork" style="display:block;flex-basis:100%;font-size:12px;line-height:1.4;opacity:.85;margin-top:6px"><b>Show the work</b><br>{_work}</span>' if _work else ""
     note = "" if plus else ('<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this one is within 5 cents of fair</span>' if near else '<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this is the closest</span>')
     note += sw_note
-    html_ = (f'<div class="bestslip"><span class="lt">Best parlay <small>{len(combo)} legs</small></span><span class="bpodds" title="FanDuel price for the {len(combo)}-leg slip">{am_from_dec(d)}</span>{legs_html}{work_html}'
+    html_ = (f'<div class="bestslip"><span class="lt">Best parlay <small>{len(combo)} legs</small></span><span class="bpodds" title="About what FanDuel pays on this same-game slip. The legs multiply to {am_from_dec(d_mult)}; FanDuel prices same-game legs together, so check the quote.">≈ {am_from_dec(d)}</span>{legs_html}{work_html}'
              f'<span class="bpnum">about <b>{pjh*100:.0f}%</b> to hit <small title="What legs at these prices have actually hit this season, nudged by our model. The model alone says {pj*100:.0f}%.">graded</small> · fair {fair_odds(pjh)} · EV <b class="{"up" if evh>=0 else "dn"}">{"+" if evh>=0 else ""}${evh:.2f}</b> per $1 · does best if <b title="if the game ends {E(lab[fit_k])}, this slip hits {by_k[fit_k]*100:.0f}% of the time">{E(lab[fit_k])}</b> <span title="the model&#39;s chance of that ending">({w[fit_k]*100:.0f}% likely)</span></span>{note}{fd_button([r["l"] for r in combo], "best parlay")}</div>')
-    rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "pjh": pjh, "ev": ev, "dec": d, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"], "lean": (dict(lean, changed=LEAN_LOG[-1]["changed"], backed=LEAN_LOG[-1]["backed"]) if lean else None)}
+    rec = {"gid": f"{a}-{b}", "a": a, "b": b, "pj": pj, "pjh": pjh, "ev": ev, "dec": d, "dec_mult": d_mult, "fit": lab[fit_k], "by_k": by_k, "legs": [(r["l"]["player"], r["l"]["market"], r["l"]["line"], r["l"]["odds"], r["prob"], r["prob"] - r["l"]["book"]) for r in combo], "best": best["l"]["player"], "lean": (dict(lean, changed=LEAN_LOG[-1]["changed"], backed=LEAN_LOG[-1]["backed"]) if lean else None)}
     return html_, rec
 BEST_PARLAYS = []
 # ---- the pre-kickoff best parlay stays on the card (alpha plan 1b) ----

@@ -41,6 +41,28 @@ CSS = """
 .gd .small{font-size:12.5px;color:var(--mute)}
 """
 
+# ---- the same-game discount, measured (owner 11/17; research/sgp_discount.py refits it on Tuesdays) ----
+def sgp_section():
+    import json
+    base = ("<p>FanDuel does not pay the legs multiplied on a same-game parlay. It prices the legs together - a quarterback and his receiver tend to hit on the same nights - "
+            "and it keeps more for itself the longer the slip gets. So wherever BetSweep shows a same-game price it carries an <b>≈</b>: our estimate of FanDuel's quote, "
+            "not the legs multiplied. The quote in the FanDuel app is the price.</p>")
+    try: o = json.load(open(os.path.join(HERE, "research", "sgp_discount.json")))
+    except Exception: return base
+    rows = ""
+    for b in o.get("bands", []):
+        if not b.get("quotes"): continue
+        n = b["quotes"]
+        rows += (f'<tr><td><b>{E(b["legs"])}</b></td><td>' + (f'about <b>{b["median"]*100:.0f}%</b> <span class="small">({b["low"]*100:.0f}% to {b["high"]*100:.0f}%)</span>' if n >= 3 else f'{b["median"]*100:.0f}% <span class="small">(too few to call)</span>')
+                 + f'</td><td>{n}</td></tr>')
+    if not rows: return base
+    wk = o.get("weeks") or []
+    return (base + '<table><tr><th>Legs in one game</th><th>FanDuel paid, against the legs multiplied</th><th>Slips</th></tr>' + rows + '</table>'
+            + f'<p class="small">Measured on the {o.get("quotes")} same-game slips we posted with FanDuel\'s own price' + (f', Weeks {wk[0]}-{wk[-1]}' if wk else '') + '; refreshed every Tuesday. '
+            'Read it as: a four-leg same-game slip whose legs multiply to +1000 usually shows about +870 in the app. Legs that fight each other (an underdog covering and the under) can pay a little more than the legs multiplied. '
+            'One leg per game is still simply the legs multiplied.</p>')
+SGP_HTML = sgp_section()
+
 SECTIONS = [
 ("start", "Start here", f"""
 <p>BetSweep projects every NFL skill player from usage, matchups, game script and injuries, then prices every FanDuel prop against that projection. The price is never an input to the projection - it is only what we compare against.</p>
@@ -65,6 +87,7 @@ SECTIONS = [
 <tr><td><b>Edge</b></td><td>Model % minus book %, in points. Positive means the model thinks the price is too long. Because of the blend, a +2.5 edge on the site is a +5 gap between the raw model and the book.</td></tr>
 <tr><td><b>This season</b></td><td>On player pages: how many of his games this season cleared that exact line.</td></tr></table>
 <p>Nothing is called a lock. A 60% leg loses 4 times in 10.</p>"""),
+("sgp", "Same-game parlays: what FanDuel pays", SGP_HTML),
 ("flags", "Flags and chips", """
 <div class="ex"><span class="chip good">Soft matchup</span><span class="chip bad">Trending down</span><span class="chip watch">Love returns</span></div>
 <ul><li><span class="chip good">Green</span> chips help the over: a soft matchup, a growing role, a high game total.</li>

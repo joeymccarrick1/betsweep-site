@@ -102,6 +102,7 @@ The run after the week's games: build the weekly receipt and refresh the season 
 - c) Append one row to 'AUTO - Boards Archive' (Week | Page | URL | Built (CT) | Note): ["<W-1>", "Week <W-1> receipt", "https://betsweep.co/receipts/week<W-1>/", "<YYYY-MM-DD HH:MM CT>", "auto"] - the receipts index lists every week in this tab, so the row matters; the URL is the site's own page (11/5; older rows still carry claude.ai links and build_site.py maps those). One row per week: if that week already has a row, update its URL instead.
 - d) Re-read 'AUTO - Boards Archive'!A1:F60 with get_values, overwrite in/archive.json with {"values": rows}, (no boards re-run needed since 11/5 - the site strips the boards' archive nav and the receipts index reads this tab in Step 6), then python3 build_season.py (its calibration card - hit rate vs model % by edge bucket, line depth, warning and matchup (tough / middle / soft, rebuilt leak-free from in/gamelog.json weeks before the leg's week), plus the Brier line: raw model vs FanDuel price vs the number the site shows (calib.py blend) vs the best blend - fills from the graded legsnaps rows; its "Game calls vs the closing line" table (model ML vs FanDuel favourites, where we disagreed, spread, total, margin error and win Brier next to the market, per week + season) fills from in/calls.json + in/games.csv; its summary carries the promoted-bets record (W-L and units at posted odds, by week) from in/promos.json; if a bucket shows the recommended legs hitting 10+ points under the model for a second straight week, say so in the summary and the log row rather than changing formulas mid-run) and python3 render_images.py out/season-receipt.html out/img-season img, and publish out/season-receipt.html to the season artifact URL with its two PNGs as files.
 - e) Grade the promoted bets (run as step 0b, before the receipt - listed here for the details): python3 grade_promos.py (prints "week W-1: slot N <title>: Cashed|Missed|PENDING (h/n)" per promo and writes out/promo_grades.json). Write each item in its "updates" back with mcp__Google_Sheets__update_values (Result in column I, the leg-by-leg note in column M; the script only touches rows whose Result is empty). A PENDING slip (a player with no stat row, or a First TD leg) stays empty for the owner to settle; say which in the summary. Re-run step 3c's build_promo.py afterwards (it happens in 6b anyway) so the home page shows Cashed / Missed.
+- e2) (11/17) Refit FanDuel's same-game discount once the new week's builder has been built: `python3 research/sgp_discount.py` ("wrote research/sgp_discount.json + .md: N quotes, c = ..."). Commit both files with the research files. It reads in/promos.json (every same-game promo whose column E is FanDuel's own price and whose legs each carry a price) and out/builder_data.json (the correlation tables). The generators read the json at build time (sgp.py); if c moves by more than a third week to week, say so in the dev-log row.
 On non-Tuesday runs skip this step entirely (no receipt, no season rebuild).
 
 Unders check (11/4, Tuesdays, after grading): `python3 unders_check.py <GRADED WEEK>` -> the printed block (both sides of every frozen main line at real prices, by market / price band / the two cuts) goes in the dev-log row; nothing changes on the site until a cut is positive two graded weeks running with 60+ legs each. Red-zone TD check (11/3, Tuesdays, after grading): `python3 rz_check.py <GRADED WEEK>` -> one line ("rz check week W: n legs - log loss raw / rz / shown avg / FanDuel") for the summary and the dev-log row; if it prints REVERT, set RZ_W = 0 in rztd.py on gen-overrides and log it. Live 'from here' grade (11/4, Tuesdays, after grading, from Week 9): `python3 live_grade.py` -> research/live_grade_w<W>.txt and a DEVLOG line (Brier from-here vs pregame; anytime-TD live calls hit vs from-here). Inputs are the public `feeds` branch (livelog.json = in-game box scores every 10 min; livelegs_w<W>.json = the live page's tracked legs pinned on the first in-game run) and in/results.json; the sandbox cannot reach raw.githubusercontent.com so it falls back to `git fetch origin feeds` in /home/claude/betsweep-site. If it prints "no pinned legs" the feeds workflow never saw a live game that week - check the Actions log. Three weeks of Q3-Q4 TD calls landing near their from-here chance is the bar before anything is shown as a product (next step then: log FanDuel live TD prices in feeds.py). Calibration scoreboard (added 11/1, Tuesdays, after grading): `python3 calib_market.py <GRADED WEEK>` -> out/calib_market.md / .json and one line ("calib week W: ... drifting: ..."). Put the line in the dev-log row and the run summary, and the DRIFTING list on the receipt. When closing prices exist it also grades line movement (price moved our way / flat / away). Never change a projection from it without the owner.
@@ -1226,7 +1227,7 @@ Tuesday roll) and reading what a phone shows.
 - First real local run (3 AM, the build that went out as main 23853f97): 488 pages, 0 problems; the published copy: 514 pages, 0.
 - **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
   social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
-  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py (both added
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py, sgp_price.py (11/17 noon) (both added
   11/17 morning), `python3 availfix.py selftest`, `python3 news_desk.py --selftest`, and tests/local_gate.py.
 
 ## 11/17, ~3:15 AM CT: a leg on an inactive player is void on the Live page from the inactives list
@@ -1420,4 +1421,32 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
 - **Flag check gaps worth a look each Tuesday** (data/flag-audit.json): every one of this week's 20 biggest gaps is the model UNDER
   FanDuel, most on receptions floors (Jefferson 6+ 37% vs 76%, Kittle 5+ 37% vs 69%) - the model treats a 5.0 catch average as a coin flip
   at 6+ and FanDuel does not; the honest-chance layer already discounts the model there.
+
+## 11/17, noon CT: FanDuel's same-game discount, measured and used (owner: "get to the FanDuel same game discount")
+
+- **What was wrong.** Every same-game price the site printed was the legs multiplied. FanDuel prices same-game legs together and keeps
+  more on long slips, so the builder's "FanDuel price", its EV, the game-card best parlay and Today's same-game card all overstated the
+  payout. Worst case on the Week 11 Tuesday board: JAX-NYG McCarthy 218+ pass yds + Over 46.5 showed +258 and EV +20%; FanDuel's
+  price is about +188 and the slip is 3.5 cents under fair.
+- **The measurement** (`research/sgp_discount.py`, `.json`, `.md`): the 16 same-game slips we posted with FanDuel's own price on the
+  promo tab (Weeks 7-10; the two Week 6 slips are the legs multiplied and are left out). FanDuel's payout against the legs multiplied:
+  4 legs 58-118% (median 87%), 5-6 legs 59-82% (68%), 7+ legs 6-61% (28%); one 3-leg quote (80%), no 2-leg quote yet.
+- **The estimate** (`sgp.py`): price for n legs in one game = exp(-c (n-1)^2) / joint, where joint = FanDuel's implied leg chances joined
+  with the builder's own same-game correlations, and c = 0.0104 from the fit (one number; n = 1 gives the leg's own price). Median miss
+  with each slip left out of its own fit: 12% of the price, against 15% for the old constant (0.85 / joint + 0.15, fitted on four
+  quotes) and 57% for the legs multiplied. Long slips still miss by a lot both ways; it is always shown with "≈".
+- **Where it shows.** Builder: the slip panel's FanDuel price ("≈ +196 · same-game estimate · legs multiply to +252"), EV, edge, payout,
+  suggested stake, the slip bar, Sweep this slip, swap / drop previews, "Build me a +N", saved slips (the saved price is the estimate)
+  and the share text; a line under the price says why, with the measured numbers (`D.sgp.note`). The target slider keeps working on the
+  legs multiplied and says so. Boards: the game-card best parlay is priced and ranked with the estimate (`rec["dec"]`; the legs
+  multiplied stay in `rec["dec_mult"]`), so the calls archive, Today's same-game card, the simple view and the Boost checker all carry
+  it. Guide: a section with the table. One leg per game is unchanged everywhere.
+- **Not covered.** Passing TDs have no correlation code, so a quarterback's passing TDs next to his yards or the over is priced as if
+  unrelated (Herbo Fully Loaded: +259 quoted, +326 estimated). Either-or TD legs take the first player's code. Promo cards still need
+  FanDuel's own price typed in column E.
+- **To sharpen it:** two- and three-leg quotes. Any same-game promo adds one; a handful of price checks from the owner (open the link,
+  read the price) would settle the short end.
+- Tests: `tests/sgp_price.py` (29: one leg per game is the legs multiplied; two legs in one game carry the mark, match the Python
+  fit and sit under the legs multiplied for a quarterback with his receiver; light and dark). Added to the pre-publish set.
+- Also fixed on the way: the builder's "Same slip at each book" row ran off the right edge of a phone (a column flex that wrapped).
 

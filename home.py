@@ -332,9 +332,9 @@ def parlay_block(ps, compact=False):
     if not ps: return ""
     top = ps[0]
     legs = "".join(f'<li><b>{E(l["pl"])}</b><span>{E(leg_line(l["m"], l["ln"]))} <small>{E(odds_str(l["o"]))}</small></span><em>{l["p"]*100:.0f}%</em></li>' for l in top["legs"])
-    others = "".join(f'<a class="pmini" href="/boards/#g-{E(p["gid"])}" data-gid="{E(p["gid"])}" data-ko="{p.get("ko") or ""}"><b>{at_gid(p["gid"])}</b><span>{len(p["legs"])} legs · {E(dec_to_us(p["dec"]))}</span><em>model {p["pj"]*100:.0f}% · EV {p["ev"]*100:+.0f}%</em></a>' for p in ps[1:5])
+    others = "".join(f'<a class="pmini" href="/boards/#g-{E(p["gid"])}" data-gid="{E(p["gid"])}" data-ko="{p.get("ko") or ""}"><b>{at_gid(p["gid"])}</b><span>{len(p["legs"])} legs · ≈ {E(dec_to_us(p["dec"]))}</span><em>model {p["pj"]*100:.0f}% · EV {p["ev"]*100:+.0f}%</em></a>' for p in ps[1:5])
     return (f'<div class="parlay" data-gid="{E(top["gid"])}" data-ko="{top.get("ko") or ""}"><div class="phd"><small>Best same-game parlay</small><h3>{at_gid(top["gid"])} <span>{E(top.get("kick",""))}</span></h3>'
-            f'<p>Built for the game\'s most likely script ({E(top["fit"])}); the model gives the full slip <b>{top["pj"]*100:.0f}%</b> against a FanDuel-equivalent price of <b>{E(dec_to_us(top["dec"]))}</b> (EV {top["ev"]*100:+.0f}%).</p></div>'
+            f'<p>Built for the game\'s most likely script ({E(top["fit"])}); the model gives the full slip <b>{top["pj"]*100:.0f}%</b> against about <b>{E(dec_to_us(top["dec"]))}</b> on FanDuel (EV {top["ev"]*100:+.0f}%). <span class="sgest" title="FanDuel prices same-game legs together, so this is our estimate of its quote, not the legs multiplied.">Same-game price, estimated.</span></p></div>'
             f'<ul class="plegs">{legs}</ul><div class="pfoot">' + (f'<a class="fdb" href="{E(top["fd"])}" target="_blank" rel="noopener">Add all to FanDuel</a>' if top.get("fd") else "") + BL.buttons(top.get("bl") or [], single=False).replace(">Bet it on ", ">") + f'<a class="more" href="/boards/#g-{E(top["gid"])}">Open the board</a><a class="more" href="{E(build_href(top["gid"], [(l["pl"], l["m"], l["ln"]) for l in top["legs"]]))}">Edit in the builder</a></div></div>'
             + (f'<div class="pothers">{others}</div>' if (others and not compact) else ""))
 

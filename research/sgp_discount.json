@@ -1,0 +1,411 @@
+{
+ "c": 0.01043,
+ "quotes": 16,
+ "weeks": [
+  7,
+  8,
+  9,
+  10
+ ],
+ "err_median": {
+  "legs multiplied": 0.449,
+  "old estimate (0.85 / joint + 0.15)": 0.149,
+  "new estimate, each slip left out of its own fit": 0.115
+ },
+ "k": {
+  "2": 0.99,
+  "3": 0.959,
+  "4": 0.91,
+  "5": 0.846,
+  "6": 0.77,
+  "7": 0.687,
+  "8": 0.6,
+  "9": 0.513,
+  "10": 0.429
+ },
+ "bands": [
+  {
+   "legs": "2-3 legs",
+   "quotes": 1,
+   "low": 0.805,
+   "median": 0.805,
+   "high": 0.805,
+   "k": 0.977
+  },
+  {
+   "legs": "4 legs",
+   "quotes": 5,
+   "low": 0.58,
+   "median": 0.873,
+   "high": 1.182,
+   "k": 0.91
+  },
+  {
+   "legs": "5-6 legs",
+   "quotes": 4,
+   "low": 0.594,
+   "median": 0.682,
+   "high": 0.824,
+   "k": 0.81
+  },
+  {
+   "legs": "7+ legs",
+   "quotes": 6,
+   "low": 0.063,
+   "median": 0.283,
+   "high": 0.607,
+   "k": 0.6
+  }
+ ],
+ "rows": [
+  {
+   "week": 7,
+   "title": "TNF SGP",
+   "legs": 4,
+   "fanduel": "+595",
+   "multiplied": "+679",
+   "pct_of_multiplied_payout": 0.876,
+   "old_estimate": "+506",
+   "new_estimate": "+532",
+   "leg_list": [
+    "NE +3.5 Spread (-140)",
+    "Efton Chism III Receiving Yards 15+ (-158)",
+    "DeMario Douglas Receptions 4+ (+112)",
+    "Hunter Henry Receiving Yards 20+ (-320)"
+   ]
+  },
+  {
+   "week": 7,
+   "title": "Thursday Night Lotto",
+   "legs": 4,
+   "fanduel": "+5337",
+   "multiplied": "+8850",
+   "pct_of_multiplied_payout": 0.603,
+   "old_estimate": "+4831",
+   "new_estimate": "+5164",
+   "leg_list": [
+    "Caleb Williams Anytime TD (+350)",
+    "TreVeyon Henderson Anytime TD (+340)",
+    "TreVeyon Henderson Rushing Yards 30+ (+126)",
+    "Efton Chism III Receiving Yards 20+ (+100)"
+   ]
+  },
+  {
+   "week": 7,
+   "title": "Sunday Night Lotto",
+   "legs": 7,
+   "fanduel": "+7352",
+   "multiplied": "+25155",
+   "pct_of_multiplied_payout": 0.292,
+   "old_estimate": "+12997",
+   "new_estimate": "+10818",
+   "leg_list": [
+    "KC -3.5 Spread (+200)",
+    "Kenneth Walker III Rushing Yards 80+ (-136)",
+    "Kenneth Walker III Anytime TD (-130)",
+    "Patrick Mahomes Rushing Yards 15+ (-114)",
+    "Jaxon Smith-Njigba Receiving Yards 90+ (-130)",
+    "Sam Darnold Passing Yards 250+ (+158)",
+    "Travis Kelce Anytime TD (+220)"
+   ]
+  },
+  {
+   "week": 7,
+   "title": "MNF Piss Missile",
+   "legs": 8,
+   "fanduel": "+11825",
+   "multiplied": "+188249",
+   "pct_of_multiplied_payout": 0.063,
+   "old_estimate": "+23510",
+   "new_estimate": "+17611",
+   "leg_list": [
+    "Dak Prescott Passing Yards 300+ (+182)",
+    "CeeDee Lamb Receiving Yards 100+ (+194)",
+    "George Pickens Receiving Yards 80+ (+164)",
+    "Javonte Williams Receptions 3+ (+106)",
+    "Tanner McKee Passing Yards 200+ (-104)",
+    "Over 47.5 (DAL-PHI) Total (+142)",
+    "CeeDee Lamb Anytime TD (+120)",
+    "Makai Lemon Anytime TD (+300)"
+   ]
+  },
+  {
+   "week": 7,
+   "title": "MNF SGP",
+   "legs": 5,
+   "fanduel": "+492",
+   "multiplied": "+828",
+   "pct_of_multiplied_payout": 0.594,
+   "old_estimate": "+486",
+   "new_estimate": "+468",
+   "leg_list": [
+    "Dak Prescott Passing Yards 250+ (-188)",
+    "George Pickens Receiving Yards 50+ (-235)",
+    "Over 38.5 (DAL-PHI) Total (-240)",
+    "CeeDee Lamb Anytime TD (+120)",
+    "Javonte Williams Receptions 2+ (-275)"
+   ]
+  },
+  {
+   "week": 8,
+   "title": "Thursday's Little Geemer",
+   "legs": 8,
+   "fanduel": "+21954",
+   "multiplied": "+36182",
+   "pct_of_multiplied_payout": 0.607,
+   "old_estimate": "+16941",
+   "new_estimate": "+10632",
+   "leg_list": [
+    "Josh Jacobs Anytime TD (-135)",
+    "Matthew Golden Anytime TD (+160)",
+    "Tetairoa McMillan Anytime TD (+175)",
+    "Chuba Hubbard Anytime TD (-115)",
+    "Tetairoa McMillan Receiving Yards 80+ (+108)",
+    "Christian Watson Receiving Yards 80+ (+120)",
+    "John Metchie III Receptions 2+ (-130)",
+    "Josh Jacobs Rushing Yards 60+ (-108)"
+   ]
+  },
+  {
+   "week": 8,
+   "title": "SNF Prime Time",
+   "legs": 4,
+   "fanduel": "+777",
+   "multiplied": "+890",
+   "pct_of_multiplied_payout": 0.873,
+   "old_estimate": "+757",
+   "new_estimate": "+802",
+   "leg_list": [
+    "Stefon Diggs Receptions 4+ (-166)",
+    "Treylon Burks Receiving Yards 15+ (-188)",
+    "Jeremy McNichols Rushing Yards 20+ (-113)",
+    "Tanner McKee Rushing Yards 2+ (+114)"
+   ]
+  },
+  {
+   "week": 8,
+   "title": "Commander-in-Diggs",
+   "legs": 5,
+   "fanduel": "+4147",
+   "multiplied": "+5647",
+   "pct_of_multiplied_payout": 0.734,
+   "old_estimate": "+3511",
+   "new_estimate": "+3470",
+   "leg_list": [
+    "Stefon Diggs Receptions 5+ (+132)",
+    "Stefon Diggs Anytime TD (+195)",
+    "Treylon Burks Receiving Yards 25+ (+104)",
+    "Dyami Brown Receiving Yards 5+ (-250)",
+    "Jayden Daniels Rushing Yards 50+ (+194)"
+   ]
+  },
+  {
+   "week": 8,
+   "title": "Piss Missile Monday",
+   "legs": 9,
+   "fanduel": "+6168",
+   "multiplied": "+22480",
+   "pct_of_multiplied_payout": 0.274,
+   "old_estimate": "+9862",
+   "new_estimate": "+5808",
+   "leg_list": [
+    "Caleb Williams Passing Yards 225+ (-125)",
+    "Sam Darnold Passing Yards 225+ (-166)",
+    "Jaxon Smith-Njigba Receiving Yards 90+ (-166)",
+    "Caleb Williams Rushing Yards 20+ (-158)",
+    "D'Andre Swift Anytime TD (-115)",
+    "Jaxon Smith-Njigba Anytime TD (-110)",
+    "Luther Burden III Receiving Yards 50+ (-130)",
+    "D'Andre Swift Receiving Yards 20+ (+106)",
+    "Zach Charbonnet Anytime TD (+130)"
+   ]
+  },
+  {
+   "week": 9,
+   "title": "Crossfire",
+   "legs": 3,
+   "fanduel": "+690",
+   "multiplied": "+857",
+   "pct_of_multiplied_payout": 0.805,
+   "old_estimate": "+728",
+   "new_estimate": "+818",
+   "leg_list": [
+    "Brian Thomas Jr. Receptions 2+ (+144)",
+    "Zay Flowers Receiving Yards 60+ (+148)",
+    "Rashod Bateman Receiving Yards 10+ (-172)"
+   ]
+  },
+  {
+   "week": 9,
+   "title": "Run It, Chase It",
+   "legs": 5,
+   "fanduel": "+4700",
+   "multiplied": "+5702",
+   "pct_of_multiplied_payout": 0.824,
+   "old_estimate": "+4847",
+   "new_estimate": "+4812",
+   "leg_list": [
+    "Bhayshul Tuten Anytime TD (-105)",
+    "Brian Thomas Jr. Receptions 2+ (+144)",
+    "Nate Boerkircher Receiving Yards 10+ (-102)",
+    "Zay Flowers Receiving Yards 60+ (+148)",
+    "Rashod Bateman Receiving Yards 20+ (+148)"
+   ]
+  },
+  {
+   "week": 9,
+   "title": "Piss Missile Monday",
+   "legs": 7,
+   "fanduel": "+4613",
+   "multiplied": "+11325",
+   "pct_of_multiplied_payout": 0.407,
+   "old_estimate": "+7082",
+   "new_estimate": "+5803",
+   "leg_list": [
+    "Carson Wentz Passing Yards 200+ (-146)",
+    "Aaron Jones Receptions 3+ (+205)",
+    "James Cook Rushing Yards 70+ (-210)",
+    "Buffalo Bills Moneyline (-174)",
+    "Josh Allen Passing TDs 2+ (+148)",
+    "James Cook Anytime TD (-110)",
+    "Carson Wentz Passing TDs 2+ (+102)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Daily Sweep: Wet Work",
+   "legs": 4,
+   "fanduel": "+302",
+   "multiplied": "+256",
+   "pct_of_multiplied_payout": 1.182,
+   "old_estimate": "+243",
+   "new_estimate": "+251",
+   "leg_list": [
+    "Stefon Diggs Receiving Yards 25+ (-330)",
+    "NYG +5.5 Spread (-320)",
+    "Under 47.5 (NYG-WAS) Total (-280)",
+    "Cam Skattebo Receiving Yards 5+ (-188)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Thursday Night Thievery",
+   "legs": 5,
+   "fanduel": "+2467",
+   "multiplied": "+3916",
+   "pct_of_multiplied_payout": 0.63,
+   "old_estimate": "+2583",
+   "new_estimate": "+2557",
+   "leg_list": [
+    "Malik Nabers Anytime TD (+165)",
+    "Stefon Diggs Anytime TD (+240)",
+    "Isaiah Likely Receiving Yards 40+ (-198)",
+    "J.J. McCarthy Passing Yards 200+ (-146)",
+    "Giants ML Moneyline (-132)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Daily Sweep: Herbo Fully Loaded",
+   "legs": 4,
+   "fanduel": "+259",
+   "multiplied": "+447",
+   "pct_of_multiplied_payout": 0.58,
+   "old_estimate": "+312",
+   "new_estimate": "+326",
+   "leg_list": [
+    "Justin Herbert Passing Yards 175+ (-225)",
+    "Over 38.5 (BAL-LAC) Total (-115)",
+    "Justin Herbert Passing TDs 1+ (-255)",
+    "Justin Herbert Rushing Yards 15+ (-220)"
+   ]
+  },
+  {
+   "week": 10,
+   "title": "Piss Missile Monday",
+   "legs": 8,
+   "fanduel": "+4174",
+   "multiplied": "+17313",
+   "pct_of_multiplied_payout": 0.241,
+   "old_estimate": "+5808",
+   "new_estimate": "+4036",
+   "leg_list": [
+    "LAC +7.5 Spread (-196)",
+    "Over 40.5 (BAL-LAC) Total (+110)",
+    "Justin Herbert Passing Yards 225+ (+158)",
+    "Justin Herbert Passing TDs 1+ (-255)",
+    "Jacoby Brissett Passing Yards 200+ (-162)",
+    "Zay Flowers Receiving Yards 50+ (-290)",
+    "Derrick Henry Anytime TD (-140)",
+    "Omarion Hampton Anytime TD (+310)"
+   ]
+  }
+ ],
+ "not_quotes": [
+  {
+   "row": 7,
+   "week": 6,
+   "title": "MNF Floor 6",
+   "n": 6,
+   "price": "+494"
+  },
+  {
+   "row": 8,
+   "week": 6,
+   "title": "Piss Missile Monday",
+   "n": 5,
+   "price": "+4131"
+  }
+ ],
+ "skipped": [
+  {
+   "row": 6,
+   "week": 6,
+   "title": "SNF Same Game 7",
+   "n": 1,
+   "why": "a leg has no price (MarShawn Lloyd)"
+  },
+  {
+   "row": 12,
+   "week": 7,
+   "title": "Thursday's Little Geemer",
+   "n": 5,
+   "why": "a leg has no price (D'Andre Swift or A.J. Brown)"
+  },
+  {
+   "row": 16,
+   "week": 7,
+   "title": "Sunday Night +500",
+   "n": 3,
+   "why": "a leg has no price (Kenneth Walker III or Travis K)"
+  },
+  {
+   "row": 19,
+   "week": 8,
+   "title": "777s",
+   "n": 1,
+   "why": "a leg has no price (Chuba Hubbard or Tetairoa McMi)"
+  },
+  {
+   "row": 27,
+   "week": 8,
+   "title": "Piss Missile Monday",
+   "n": 7,
+   "why": "a leg has no price (D'Andre Swift or Colston Lovel)"
+  },
+  {
+   "row": 28,
+   "week": 8,
+   "title": "Bear Down",
+   "n": 1,
+   "why": "a leg has no price (Jaxon Smith-Njigba)"
+  },
+  {
+   "row": 37,
+   "week": 9,
+   "title": "Buffalo Wings",
+   "n": 3,
+   "why": "a leg has no price (James Cook)"
+  }
+ ]
+}

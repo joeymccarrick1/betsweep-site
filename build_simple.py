@@ -196,7 +196,7 @@ def build(out_dir=OUT):
         if bp:
             legs = [BYK.get(_k(g["gid"], x[0], x[1], x[2])) for x in bp["legs"]]; bp_link = fd_link(legs)
             bp_html = ('<div class="bp"><small>Best parlay</small><span>' + " + ".join(E(leg_txt(l) if l else str(x[0])) for l, x in zip(legs, bp["legs"])) + '</span>'
-                       + (f'<a class="bsbtn" href="{E(bp_link)}" target="_blank" rel="noopener">Bet {amd(bp["dec"])}</a>' if bp_link else f'<em>{amd(bp["dec"])}</em>') + '</div>')
+                       + (f'<a class="bsbtn" href="{E(bp_link)}" target="_blank" rel="noopener">Bet ≈ {amd(bp["dec"])}</a>' if bp_link else f'<em>≈ {amd(bp["dec"])}</em>') + '</div>')
         say = SAY.get(g["gid"]); day = (g.get("kick") or "").split(" ")[0]
         days.setdefault(day, []).append(
             f'<details class="gm" data-g="{E(g["gid"])}" data-ko="{g.get("ko") or 0}"><summary><span class="mt">{E(at(g))}<small>{E(g.get("kick", ""))} CT</small></span><span class="pk">{pick}</span></summary>'

@@ -994,7 +994,8 @@ try:
     print(f"shadow list: {len(_lp.get('singles', []))} singles, {len(_lp.get('pairs', []))} pairs" + (f" ({_lp['note']})" if _lp.get("note") else ""), [(r["pl"], r["m"], r["ln"], r["o"], r["edge"]) for r in _lp.get("singles", [])[:3]])
 except Exception as _e: print("warn: shadow list skipped:", _e)
 import sweep as _SWP
-DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "tw": _SWP.TAG_W, "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
+import sgp as _sgp; _SGP = _sgp.load()   # FanDuel same-game price estimate (research/sgp_discount.py, owner 11/17)
+DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "tw": _SWP.TAG_W, "sgp": dict(_SGP, note=_sgp.note(_SGP)), "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 # owner 11/11 8:28 AM: "Having this same best legs where you can scroll and add to parlay on the parlay builder page would be cool" - the
 # Beat the model list (sugmatch.py: near -110, model 50%+, the matchup pair) as a sideways strip above the builder's grid.
@@ -1212,6 +1213,7 @@ details.gdone>.gcard{margin:0 10px 10px}
 .price small{color:var(--mute);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
 .price b{font-family:var(--display);font-size:22px;font-weight:700;line-height:1.1}
 .price .wide{grid-column:1/-1}
+.price .sgwhy{border-left:3px solid var(--line);padding-left:9px} .price .sgwhy span{font-size:12px;line-height:1.4;color:var(--mute)}
 .take{padding:10px 14px;background:var(--chalk);font-size:13px;border-bottom:1px solid var(--line)}
 .tgt{padding:10px 14px 12px;border-bottom:1px solid var(--line)}
 .tgt .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;color:var(--mute)}
@@ -1241,7 +1243,7 @@ details.gdone>.gcard{margin:0 10px 10px}
 .acts button:hover{border-color:var(--red)}
 .lg > .mk small.bks{display:block;font-size:10.5px;color:var(--mute)} .bks span{margin-right:6px} .bks span.best{color:var(--good);font-weight:700} .bks em{font-style:normal;color:var(--good)}
 .acts a.fd.dk,.saved .ops a.fd.dk{background:#53d337;border-color:#53d337;color:#0b1a07} .acts a.fd.hr,.saved .ops a.fd.hr{background:#5b2d8e;border-color:#5b2d8e;color:#fff} .acts a.fd[aria-disabled=true]{opacity:.5;pointer-events:none}
-.price .books3{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline} .price .books3 small{flex-basis:100%} .price .books3 span{font-size:13px} .price .books3 span b{font-size:15px} .price .books3 span.best b{color:var(--good)} .price .books3 i{font-style:normal;font-size:11px;color:var(--mute);flex-basis:100%}
+.price .books3{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px 14px;align-items:baseline} .price .books3 small{flex-basis:100%} .price .books3 span{font-size:13px} .price .books3 span b{font-size:15px} .price .books3 span.best b{color:var(--good)} .price .books3 i{font-style:normal;font-size:11px;color:var(--mute);flex-basis:100%}
 .saved{padding:10px 14px;border-top:1px solid var(--line)}
 .saved h3{margin:0 0 6px;font-family:var(--display);font-size:15px;letter-spacing:.04em;text-transform:uppercase}.saved h3 small{font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;color:var(--mute);font-size:12px;margin-left:6px}
 .saved .none{font-size:12.5px;color:var(--mute)}
@@ -1524,6 +1526,22 @@ BUILDER_JS = r"""
     }
     return hits / N;
   }
+  // ---- FanDuel's price for the slip (owner 11/17: the same-game discount) ----
+  // One leg per game: the legs multiplied. Two or more legs in one game: FanDuel prices them together, so the estimate is
+  // exp(-c (n-1)^2) / (FanDuel's implied chances joined with the same correlations the slip uses); c comes from FanDuel's own quotes
+  // on the same-game slips we posted (D.sgp, research/sgp_discount.py, refit on Tuesdays). Always shown as "≈": the quote is the price.
+  var _spK = null, _spV = null;
+  function slipPrice(ls){
+    var bl = bookLegs(ls), key = bl.map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(',');
+    if(key === _spK) return _spV;
+    var by = {}, order = [], mult = 1, d = 1, same = false, c = (D.sgp && D.sgp.c) || 0.0104;
+    bl.forEach(function(l){ if(!by[l.g]){ by[l.g] = []; order.push(l.g); } by[l.g].push(l); mult *= dec(l.o); });
+    order.forEach(function(g){ var v = by[g]; if(v.length < 2){ d *= dec(v[0].o); return; }
+      var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); x._sc = 0; return x; }));
+      if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
+      same = true; d *= Math.max(1.01, Math.exp(-c * (v.length - 1) * (v.length - 1)) / pb); });
+    _spK = key; _spV = {d: same ? d : mult, mult: mult, same: same}; return _spV; }
+  function sgWhy(){ return (D.sgp && D.sgp.note) || 'FanDuel prices same-game legs together, so it pays less than the legs multiplied.'; }
   // ---- list ----
   function oddsOk(o){ if(st.odds==='all') return true; if(st.odds==='anchor') return o <= -200; if(st.odds==='mid') return o > -200 && o < 200; return o >= 200; }
   function filtered(){
@@ -1852,7 +1870,7 @@ BUILDER_JS = r"""
   function swWhy(l){ var b = (l.fl || []).filter(function(f){ return f[0] === 'bad'; }).map(function(f){ return f[1]; }), w = (l.fl || []).filter(function(f){ return f[0] === 'watch'; }).map(function(f){ return f[1]; });
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v && v.level !== 'good') b.unshift(v.label); return b.concat(w).slice(0, 3); }
   function swName(l){ return l.pl + ' ' + (isGL(l) ? '' : l.m === 'First TD' ? 'first TD' : isTD(l) ? (l.m === 'Anytime TD' ? 'anytime TD' : l.m) : lnTxt(l) + ' ' + l.ms.toLowerCase()); }
-  function swPrice(ls){ return bookLegs(ls).reduce(function(a, l){ return a * dec(l.o); }, 1); }
+  function swPrice(ls){ return slipPrice(ls).d; }
   function sweepBlock(ls, fair, bookDec, flags){
     var box = $('#sweepv'), btn = $('#sweepbtn'); if(!box) return;
     if(btn) btn.textContent = sweepOn ? 'Hide the verdict' : 'Sweep this slip';
@@ -1881,7 +1899,7 @@ BUILDER_JS = r"""
     var sg = {}; ls.forEach(function(l){ sg[l.g] = (sg[l.g] || 0) + 1; }); var same = Object.keys(sg).some(function(k){ return sg[k] > 1; });
     var h = '<div class="vh"><small>Sweep says</small><b class="' + (level === 'ok' ? 'ok' : level === 'mid' ? 'mid' : 'bad') + '">' + head + '</b></div>';
     h += '<p>Chance to cash: <b>' + pc(fair) + '</b>. At ' + decToAm(priceDec) + (posted ? ' (the price on your slip)' : '') + ' it has to hit <b>' + pc(need) + '</b> of the time to break even.'
-       + (!posted && same ? ' <small>That price is the legs multiplied; FanDuel’s same-game price is usually lower, so check it.</small>' : '') + '</p>';
+       + (!posted && same ? ' <small>That price is our estimate of FanDuel’s same-game price (the legs multiply to ' + decToAm(slipPrice(ls).mult) + '), so check the quote.</small>' : '') + '</p>';
     h += '<p>' + low + ' of ' + rs.length + ' leg' + (rs.length === 1 ? ' is' : 's are') + ' low risk' + (hi.length ? ', ' + hi.length + ' high risk' : '') + (some.length ? ', ' + some.length + ' some risk' : '') + '.'
        + (gone.length ? ' ' + gone.length + ' leg' + (gone.length === 1 ? ' is' : 's are') + ' in a game that already kicked off.' : '') + '</p>';
     if(dead) h += '<p>' + esc(flags.filter(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; })[0]) + '</p>';
@@ -1964,16 +1982,17 @@ BUILDER_JS = r"""
     if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; try { sweepBlock([], 0, 1, []); } catch(e){} $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
     ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
     var bls = bookLegs(ls), implied = ls.length - bls.length;
-    var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1), bookP = 1/bookDec;
+    var sp = slipPrice(ls), bookDec = sp.d, bookP = 1/bookDec;
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls);
     var ev = fair*bookDec - 1;
     var sameGame = {}; ls.forEach(function(l){ sameGame[l.g] = (sameGame[l.g]||0) + 1; }); var sgp = Object.keys(sameGame).filter(function(g){ return sameGame[g] > 1; });
     $('#price').innerHTML =
-      '<div><small>FanDuel price</small><b>' + decToAm(bookDec) + '</b><span>legs multiplied' + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
+      '<div><small>FanDuel price</small><b>' + (sp.same ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.same ? 'same-game estimate · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="e ' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="e ' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+$':'−$') + Math.abs(ev).toFixed(2) + '</b></div>' +
-      '<div class="wide"><small>Payout on $10 at the FanDuel price</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>' + stakeRow(fair, bookDec, ls.length) + bookRow(ls, bookDec);
+      '<div class="wide"><small>Payout on $10 at ' + (sp.same ? 'about that price' : 'the FanDuel price') + '</small><b>' + (sp.same ? '≈ ' : '') + '$' + (10*bookDec).toFixed(2) + '</b></div>' +
+      (sp.same ? '<div class="wide sgwhy"><small>Why not the legs multiplied</small><span>' + esc(sgWhy()) + ' Check the quote on FanDuel before you bet.</span></div>' : '') + stakeRow(fair, bookDec, ls.length) + bookRow(ls, sp.mult);
     $('#take').style.display = ''; $('#take').innerHTML = 'Take it at <b>' + toAm(fair*0.95) + '</b> or better' + (sgp.length ? ' — it has same-game legs, so compare that number to FanDuel\'s same-game quote, not the multiplied price.' : '.');
     var flags = [];
     if(sgp.length) flags.push(sgp.length + ' game' + (sgp.length>1?'s':'') + ' with multiple legs (correlation priced in)');
@@ -2020,8 +2039,8 @@ BUILDER_JS = r"""
     if(flags.some(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; })){ $('#take').innerHTML = '<b>This slip cannot win as built</b> - see the warning below.'; }
     $('#flags').innerHTML = flags.map(function(f){ return '⚠ ' + esc(f); }).join('<br>');
     try { sweepBlock(ls, fair, bookDec, flags); } catch(e){ var _sv = $('#sweepv'); if(_sv) _sv.hidden = true; }
-    $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + decToAm(bookDec) + ' · fair ' + toAm(fair);
-    fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); syncTarget(ls, bookDec);
+    $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + (sp.same ? '≈' : '') + decToAm(bookDec) + ' · fair ' + toAm(fair);
+    fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); syncTarget(ls, sp.mult, sp.same);
     save(); if (typeof renderSaved === 'function') renderSaved();
   }
   function bookRow(ls, fdDec){ var dk = bookParlay(ls, 'dk'), hr = bookParlay(ls, 'hr'); if (dk == null && hr == null) return '';
@@ -2076,8 +2095,9 @@ BUILDER_JS = r"""
     sel = {}; best.chosen.forEach(function(l){ sel[l.i] = true; var g = ladderOf(l); if(g && g.length > 1) pick[l.pl + '|' + l.m] = g.indexOf(l); });
     TGT.busy = true; renderList(); renderSlip(); TGT.busy = false;
   }
-  function syncTarget(ls, bookDec){
+  function syncTarget(ls, bookDec, same){
     var box = $('#tgt'); if(!box) return;
+    var lab = box.querySelector('.row span'); if(lab) lab.textContent = same ? 'Target price (legs multiplied)' : 'Target FanDuel price';
     var fadeable = ls.some(function(l){ var g = ladderOf(l); return g && g.length > 1 && l.m !== 'Anytime TD'; });
     if(!ls.length || !fadeable){ box.hidden = true; return; }
     box.hidden = false; var r = priceRange(); TGT.min = r[0]; TGT.max = r[1];
@@ -2189,8 +2209,8 @@ BUILDER_JS = r"""
     }
     if(!fin.length){ out.innerHTML = '<p class="note">Nothing lands near ' + decToAm(T) + ' with these settings - try more legs or a different price.</p>'; return; }
     fin.sort(function(a, b){ return b.p - a.p; }); fin = fin.slice(0, 40);
-    var scored = fin.map(function(f){ var pm = joint(f.ls), pb = joint(withP(f.ls, 'bk')); var same = f.ls.some(function(l, i){ return f.ls.some(function(m, j){ return j !== i && m.g === l.g; }); });
-      var est = same ? Math.max(1.01, 0.85 / Math.max(pb, 1e-6) + 0.15) : f.d; /* ~15% SGP hold, from the owner's 10/25-26 FanDuel quotes */ return {ls: f.ls, pm: pm, est: est, same: same}; })
+    var scored = fin.map(function(f){ var pm = joint(f.ls); var same = f.ls.some(function(l, i){ return f.ls.some(function(m, j){ return j !== i && m.g === l.g; }); });
+      var est = same ? slipPrice(f.ls).d : f.d; /* same-game: the measured discount (D.sgp) */ return {ls: f.ls, pm: pm, est: est, same: same}; })
       .filter(function(x){ return x.est >= T * 0.8 && x.est <= T * 1.3; });
     scored.sort(function(a, b){ return b.pm - a.pm; });
     var pickd = [], used = {};
@@ -2357,7 +2377,7 @@ BUILDER_JS = r"""
   function savedSlips(){ try{ var a = JSON.parse(localStorage.getItem(SLKEY)||'[]'); return Array.isArray(a) ? a.filter(function(s){ return s && s.id && Array.isArray(s.keys); }) : []; }catch(e){ return []; } }
   function writeSlips(a){ try{ localStorage.setItem(SLKEY, JSON.stringify(a)); }catch(e){} }
   function legsForKeys(ks, g){ return resolveKeys(ks, g).map(function(i){ return i != null ? legs[i] : null; }); }
-  function priceKeys(ks, g){ var ls = legsForKeys(ks, g).filter(Boolean); if (!ls.length) return null; var bls = bookLegs(ls); var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1); return {ls: ls, n: ks.length, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
+  function priceKeys(ks, g){ var ls = legsForKeys(ks, g).filter(Boolean); if (!ls.length) return null; var sp = slipPrice(ls); return {ls: ls, n: ks.length, missing: ks.length - ls.length, bookDec: sp.d, same: sp.same, fair: joint(ls), fd: fdUrl(ls)}; }
   function curKeys(){ return Object.keys(sel).map(function(i){ return legKey(legs[+i]); }).concat(extraKeys); }
   function sameSet(a, b){ if (a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
   // saved slips: legs fold into a drop-down under each row (owner 10/23: one long line was unreadable on a phone)
@@ -2389,8 +2409,8 @@ BUILDER_JS = r"""
   document.addEventListener('bs-account', renderSaved);
   function slipText(){
     var ls = slipLegs(); if(!ls.length) return '';
-    var bookDec = bookLegs(ls).reduce(function(a,l){ return a*dec(l.o); }, 1), fair = joint(ls);
-    return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + decToAm(bookDec) + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co';
+    var sp = slipPrice(ls), bookDec = sp.d, fair = joint(ls);
+    return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (sp.same ? 'about ' : '') + decToAm(bookDec) + (sp.same ? ' (same-game estimate)' : '') + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co';
   }
 
   $('#copy').addEventListener('click', function(){
