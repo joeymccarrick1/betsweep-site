@@ -1,0 +1,88 @@
+weeks [8, 9, 10] all overs {'n': 4688, 'players': 636, 'hit': 0.4759, 'fair': 0.5006, 'diff': -0.0262, 't': -2.0, 'units': -0.0836}
+score buckets:
+   0 (low) {'n': 1175, 'players': 226, 'hit': 0.5089, 'fair': 0.5504, 'diff': -0.032, 't': -1.23, 'units': -0.1116}
+   1 (low) {'n': 399, 'players': 148, 'hit': 0.5288, 'fair': 0.5191, 'diff': 0.0107, 't': 0.31, 'units': -0.0108}
+   2-3 (some) {'n': 871, 'players': 268, 'hit': 0.4156, 'fair': 0.493, 'diff': -0.0659, 't': -2.76, 'units': -0.1921}
+   4+ (high) {'n': 2243, 'players': 420, 'hit': 0.4726, 'fair': 0.4742, 'diff': -0.0126, 't': -0.74, 'units': -0.0397}
+floor legs (-180 or shorter):
+   low {'n': 510, 'players': 264, 'hit': 0.6431, 'fair': 0.6738, 'diff': -0.0279, 't': -1.07, 'units': -0.0852}
+   some {'n': 231, 'players': 139, 'hit': 0.5714, 'fair': 0.6794, 'diff': -0.1071, 't': -2.74, 'units': -0.1908}
+   high {'n': 458, 'players': 225, 'hit': 0.7009, 'fair': 0.6726, 'diff': 0.0302, 't': 1.14, 'units': -0.0016}
+   model 8+ pts above FanDuel {'n': 12, 'players': 12, 'hit': 0.75, 'fair': 0.662, 'diff': 0.088, 't': 0.7, 'units': 0.0886}
+   rest {'n': 1187, 'players': 540, 'hit': 0.6504, 'fair': 0.6745, 'diff': -0.0219, 't': -1.25, 'units': -0.0752}
+tags (overs, 25+ player-weeks):
+  Fill-in volume|good                        legs=  960 player-weeks= 134 hit=0.469 fair=0.501 diff=-0.026 t=-0.9 units=-0.099 wk={8: -0.0529, 9: -0.0263, 10: 0.0067}
+  Tough matchup|bad                          legs=  908 player-weeks= 188 hit=0.481 fair=0.493 diff=-0.040 t=-1.5 units=-0.057 wk={8: -0.0085, 9: -0.0756, 10: -0.0292}
+  Boom/bust|bad                              legs=  904 player-weeks= 110 hit=0.478 fair=0.506 diff=-0.023 t=-0.7 units=-0.083 wk={8: 0.0294, 9: -0.0608, 10: -0.0281}
+  Coverage|info                              legs=  899 player-weeks= 113 hit=0.523 fair=0.513 diff=+0.005 t=+0.1 units=-0.023 wk={8: 0.0308, 9: -0.0121, 10: -0.0072}
+  Hot L3|good                                legs=  888 player-weeks= 112 hit=0.482 fair=0.509 diff=-0.026 t=-0.8 units=-0.103 wk={8: -0.0002, 9: -0.0013, 10: -0.0941}
+  Soft matchup|good                          legs=  822 player-weeks= 195 hit=0.428 fair=0.484 diff=-0.063 t=-2.3 units=-0.162 wk={8: -0.0423, 9: -0.146, 10: -0.0063}
+  Matchup shifting|info                      legs=  817 player-weeks= 198 hit=0.360 fair=0.478 diff=-0.077 t=-2.9 units=-0.289 wk={8: -0.0091, 9: -0.1059, 10: -0.1006}
+  Cold L3|bad                                legs=  643 player-weeks=  76 hit=0.566 fair=0.516 diff=+0.060 t=+1.6 units=+0.048 wk={8: 0.116, 9: 0.022, 10: 0.0704}
+  Role Up|good                               legs=  591 player-weeks=  74 hit=0.508 fair=0.507 diff=-0.001 t=-0.0 units=-0.038 wk={8: -0.0595, 9: 0.0373, 10: 0.0316}
+  Volatile|watch                             legs=  516 player-weeks=  62 hit=0.457 fair=0.512 diff=-0.044 t=-1.0 units=-0.140 wk={10: -0.0436}
+  Steady floor|good                          legs=  483 player-weeks=  62 hit=0.462 fair=0.522 diff=-0.057 t=-1.4 units=-0.112 wk={8: -0.0395, 9: -0.0379, 10: -0.1028}
+  Reliable|good                              legs=  467 player-weeks=  57 hit=0.514 fair=0.505 diff=-0.007 t=-0.2 units=-0.048 wk={10: -0.0073}
+  O/U 38.5|bad                               legs=  441 player-weeks=  59 hit=0.465 fair=0.499 diff=-0.014 t=-0.3 units=-0.087 wk={8: -0.0586, 9: -0.0386, 10: 0.021}
+  Questionable|watch                         legs=  419 player-weeks=  55 hit=0.482 fair=0.509 diff=-0.015 t=-0.3 units=-0.121 wk={8: -0.0109, 9: -0.0134, 10: -0.0192}
+  Red-zone model|info                        legs=  375 player-weeks= 375 hit=0.237 fair=0.265 diff=-0.028 t=-1.4 units=-0.164 wk={9: -0.0445, 10: -0.0097}
+  Snaps up|good                              legs=  362 player-weeks=  46 hit=0.528 fair=0.493 diff=+0.024 t=+0.5 units=-0.021 wk={8: 0.0372, 9: 0.0176, 10: 0.0232}
+  Fill-in fading|watch                       legs=  361 player-weeks=  61 hit=0.476 fair=0.479 diff=-0.024 t=-0.6 units=-0.056 wk={8: 0.1341, 9: -0.1468, 10: -0.0385}
+  O/U 50.5|good                              legs=  351 player-weeks=  50 hit=0.328 fair=0.510 diff=-0.158 t=-3.2 units=-0.419 wk={9: -0.2995, 10: -0.0976}
+  Model disagrees with consensus|watch       legs=  345 player-weeks=  37 hit=0.464 fair=0.527 diff=-0.056 t=-0.9 units=-0.162 wk={9: -0.0476, 10: -0.064}
+  Room thinned|good                          legs=  336 player-weeks=  47 hit=0.491 fair=0.499 diff=-0.037 t=-0.8 units=-0.067 wk={8: -0.0991, 9: -0.0034, 10: -0.0141}
+  4/7 this season|info                       legs=  310 player-weeks= 126 hit=0.484 fair=0.560 diff=-0.047 t=-1.2 units=-0.177 wk={8: -0.0572, 9: -0.0011, 10: -0.1482}
+  3/7 this season|info                       legs=  293 player-weeks= 130 hit=0.474 fair=0.493 diff=+0.012 t=+0.3 units=-0.062 wk={8: 0.0197, 9: 0.0397, 10: -0.0884}
+  Carries up|good                            legs=  283 player-weeks=  35 hit=0.473 fair=0.498 diff=-0.011 t=-0.2 units=-0.112 wk={8: -0.0849, 9: -0.0176, 10: 0.0514}
+  First game back|watch                      legs=  281 player-weeks=  37 hit=0.502 fair=0.510 diff=-0.021 t=-0.4 units=-0.083 wk={8: -0.0414, 9: -0.0515, 10: 0.0179}
+  Back from absence|watch                    legs=  281 player-weeks=  56 hit=0.409 fair=0.459 diff=-0.027 t=-0.6 units=-0.115 wk={8: -0.1458, 9: -0.0652, 10: 0.0645}
+  O/U 54.5|good                              legs=  267 player-weeks=  35 hit=0.431 fair=0.507 diff=-0.081 t=-1.3 units=-0.184 wk={8: -0.0806}
+  Lead script|info                           legs=  263 player-weeks=  38 hit=0.547 fair=0.495 diff=+0.062 t=+1.1 units=+0.131 wk={8: 0.1271, 9: -0.0043, 10: 0.0688}
+  QB still out|info                          legs=  252 player-weeks=  31 hit=0.532 fair=0.499 diff=+0.024 t=+0.5 units=+0.006 wk={8: 0.0272, 9: -0.1322, 10: 0.0804}
+  Trail script|good                          legs=  248 player-weeks=  32 hit=0.468 fair=0.488 diff=-0.012 t=-0.2 units=-0.011 wk={8: 0.0199, 9: -0.0458, 10: -0.0139}
+  Coverage edge|good                         legs=  245 player-weeks=  29 hit=0.555 fair=0.539 diff=+0.016 t=+0.2 units=-0.020 wk={8: -0.0334, 9: 0.1007, 10: 0.0065}
+  4/8 this season|info                       legs=  235 player-weeks= 106 hit=0.540 fair=0.529 diff=+0.034 t=+0.8 units=-0.000 wk={9: 0.0853, 10: -0.0103}
+  2/7 this season|bad                        legs=  232 player-weeks= 109 hit=0.414 fair=0.451 diff=-0.039 t=-0.9 units=-0.103 wk={8: -0.0504, 9: 0.0223, 10: -0.1492}
+  Soft vs RB targets|good                    legs=  232 player-weeks=  27 hit=0.487 fair=0.500 diff=-0.046 t=-0.9 units=-0.084 wk={8: -0.0161, 9: -0.0047, 10: -0.1152}
+  Room thinned|info                          legs=  222 player-weeks=  43 hit=0.469 fair=0.448 diff=+0.024 t=+0.5 units=+0.049 wk={8: -0.0852, 9: -0.0392, 10: 0.1847}
+  5/8 this season|info                       legs=  220 player-weeks=  94 hit=0.614 fair=0.582 diff=+0.026 t=+0.6 units=+0.001 wk={9: 0.0365, 10: 0.0191}
+  5/7 this season|info                       legs=  218 player-weeks= 101 hit=0.505 fair=0.593 diff=-0.093 t=-2.1 units=-0.187 wk={8: -0.1352, 9: -0.02, 10: -0.2821}
+  Targets up|good                            legs=  216 player-weeks=  30 hit=0.407 fair=0.515 diff=-0.117 t=-2.1 units=-0.273 wk={8: -0.1392, 9: -0.089, 10: -0.118}
+  3/6 this season|info                       legs=  209 player-weeks=  79 hit=0.407 fair=0.519 diff=-0.086 t=-1.7 units=-0.245 wk={8: -0.0006, 9: -0.2943, 10: -0.0063}
+  O/U 51.5|good                              legs=  208 player-weeks=  30 hit=0.490 fair=0.511 diff=-0.000 t=-0.0 units=-0.023 wk={9: -0.0002}
+  Price|info                                 legs=  202 player-weeks= 184 hit=0.099 fair=0.132 diff=-0.018 t=-0.9 units=-0.072 wk={8: -0.0214, 9: -0.0123, 10: -0.022}
+  Model above consensus|info                 legs=  200 player-weeks=  27 hit=0.500 fair=0.506 diff=+0.007 t=+0.1 units=-0.029 wk={9: 0.0059, 10: 0.0078}
+  Targets down|bad                           legs=  199 player-weeks=  25 hit=0.593 fair=0.511 diff=+0.084 t=+1.4 units=+0.159 wk={8: 0.1815, 9: 0.0134, 10: 0.1034}
+  QB out|watch                               legs=  198 player-weeks=  30 hit=0.450 fair=0.492 diff=-0.075 t=-1.4 units=-0.167 wk={9: -0.0798, 10: -0.0633}
+  News: limited / questionable|watch         legs=  197 player-weeks=  27 hit=0.431 fair=0.508 diff=-0.039 t=-0.6 units=-0.212 wk={9: -0.0678, 10: -0.0123}
+  3/8 this season|bad                        legs=  186 player-weeks=  95 hit=0.500 fair=0.479 diff=+0.013 t=+0.3 units=-0.039 wk={9: 0.024, 10: 0.0044}
+  4/6 this season|info                       legs=  185 player-weeks=  74 hit=0.540 fair=0.581 diff=-0.053 t=-1.0 units=-0.086 wk={8: -0.0588, 9: -0.1024, 10: 0.2175}
+  Proven zone|good                           legs=  175 player-weeks=  82 hit=0.520 fair=0.434 diff=+0.061 t=+1.2 units=+0.141 wk={9: 0.021, 10: 0.0987}
+  Tough coverage|watch                       legs=  167 player-weeks=  25 hit=0.449 fair=0.467 diff=-0.017 t=-0.3 units=-0.137 wk={8: -0.2329, 9: -0.026, 10: 0.1582}
+  Backup QB|bad                              legs=  165 player-weeks=  26 hit=0.551 fair=0.488 diff=+0.046 t=+0.6 units=+0.073 wk={10: 0.0457}
+  1/7 this season|bad                        legs=  150 player-weeks=  99 hit=0.313 fair=0.329 diff=-0.047 t=-1.2 units=-0.114 wk={8: -0.0283, 9: -0.0178, 10: -0.1596}
+  Losing zone|bad                            legs=  143 player-weeks=  75 hit=0.524 fair=0.556 diff=-0.013 t=-0.2 units=-0.101 wk={9: 0.0298, 10: -0.0539}
+  Better price elsewhere|info                legs=  142 player-weeks=  92 hit=0.549 fair=0.572 diff=-0.014 t=-0.3 units=-0.091 wk={9: -0.0504, 10: 0.04}
+  2/6 this season|bad                        legs=  141 player-weeks=  71 hit=0.440 fair=0.469 diff=-0.045 t=-0.9 units=-0.112 wk={8: 0.0245, 9: -0.1485, 10: -0.1642}
+  2/5 this season|bad                        legs=  134 player-weeks=  47 hit=0.463 fair=0.511 diff=-0.052 t=-0.9 units=-0.150 wk={8: -0.0585, 9: -0.0424, 10: -0.0472}
+  3/5 this season|info                       legs=  133 player-weeks=  44 hit=0.556 fair=0.565 diff=+0.003 t=+0.1 units=-0.066 wk={8: 0.0347, 9: -0.1076, 10: 0.0557}
+  6/8 this season|info                       legs=  130 player-weeks=  73 hit=0.631 fair=0.617 diff=-0.000 t=-0.0 units=-0.026 wk={9: 0.0083, 10: -0.0044}
+  2/8 this season|bad                        legs=  126 player-weeks=  72 hit=0.429 fair=0.417 diff=+0.023 t=+0.4 units=-0.036 wk={9: 0.0069, 10: 0.0345}
+  Limited|bad                                legs=  120 player-weeks=  25 hit=0.408 fair=0.449 diff=-0.047 t=-0.9 units=-0.225 wk={8: -0.0244, 9: -0.078, 10: 0.0229}
+  Combined|info                              legs=  115 player-weeks= 115 hit=0.504 fair=0.508 diff=-0.004 t=-0.1 units=-0.050 wk={8: -0.0219, 9: -0.0203, 10: 0.0302}
+  6/7 this season|good                       legs=  102 player-weeks=  58 hit=0.588 fair=0.621 diff=-0.023 t=-0.4 units=-0.102 wk={8: -0.0289, 9: 0.0532, 10: -0.3693}
+  5/9 this season|info                       legs=   86 player-weeks=  37 hit=0.360 fair=0.540 diff=-0.160 t=-2.2 units=-0.369 wk={10: -0.1599}
+  5/6 this season|good                       legs=   86 player-weeks=  42 hit=0.674 fair=0.618 diff=+0.056 t=+0.8 units=+0.037 wk={8: 0.0659, 9: 0.0178, 10: 0.0533}
+  2/4 this season|info                       legs=   85 player-weeks=  28 hit=0.494 fair=0.529 diff=-0.039 t=-0.5 units=-0.099 wk={8: -0.074, 9: -0.0249, 10: 0.0037}
+  7/8 this season|good                       legs=   80 player-weeks=  45 hit=0.512 fair=0.638 diff=-0.067 t=-0.9 units=-0.235 wk={9: -0.0755, 10: -0.0604}
+  1/6 this season|bad                        legs=   80 player-weeks=  55 hit=0.300 fair=0.342 diff=-0.041 t=-0.8 units=-0.247 wk={8: 0.0333, 9: -0.2129, 10: 0.0617}
+  1/8 this season|bad                        legs=   78 player-weeks=  59 hit=0.385 fair=0.310 diff=+0.059 t=+1.1 units=+0.314 wk={9: -0.0269, 10: 0.1274}
+  1/5 this season|bad                        legs=   72 player-weeks=  39 hit=0.292 fair=0.379 diff=-0.069 t=-1.1 units=-0.123 wk={8: -0.0048, 9: -0.1085, 10: -0.2143}
+  4/9 this season|info                       legs=   62 player-weeks=  29 hit=0.387 fair=0.517 diff=-0.119 t=-1.4 units=-0.275 wk={10: -0.1193}
+  6/9 this season|info                       legs=   61 player-weeks=  29 hit=0.590 fair=0.598 diff=-0.008 t=-0.1 units=-0.018 wk={10: -0.0083}
+  3/9 this season|bad                        legs=   60 player-weeks=  31 hit=0.300 fair=0.433 diff=-0.206 t=-3.3 units=-0.401 wk={10: -0.2062}
+  Best price: FanDuel|info                   legs=   59 player-weeks=  43 hit=0.373 fair=0.519 diff=-0.073 t=-1.0 units=-0.281 wk={9: 0.0263, 10: -0.1118}
+  0/7 this season|bad                        legs=   55 player-weeks=  48 hit=0.164 fair=0.208 diff=-0.039 t=-0.7 units=+0.198 wk={8: 0.0063, 9: -0.0549, 10: -0.0943}
+  0/5 this season|bad                        legs=   47 player-weeks=  31 hit=0.192 fair=0.245 diff=-0.074 t=-1.5 units=-0.436 wk={8: -0.0659, 9: -0.1711, 10: -0.025}
+  0/6 this season|bad                        legs=   39 player-weeks=  35 hit=0.179 fair=0.205 diff=-0.010 t=-0.1 units=-0.036 wk={8: 0.0201, 9: 0.0071, 10: -0.2015}
+  0/8 this season|bad                        legs=   30 player-weeks=  25 hit=0.433 fair=0.248 diff=+0.165 t=+1.8 units=+0.727 wk={9: 0.2034, 10: 0.1385}

@@ -1394,3 +1394,30 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
   game lines - five of those have no props posted yet, and in Thursday's game 7 of 92 usable legs have the model at or above
   FanDuel's price and 6 of the 7 fail the risk check. `BP_DEBUG=1 python3 build_boards.py` prints the rows per game and bar.
 
+## 11/17, 11 AM CT: Tuesday grades with Week 10 in - one flag gets a weight, a traded starter is no longer a fill-in, promo grader reads passing TDs
+
+- **Flag grade, Weeks 8-10** (`research/flag_grades_w8_w10.txt` / `.json`; boards = the last build before Sunday's first kickoff, pulled
+  from a blobless clone of the site repo because the working clone is shallow): 4,688 over legs, 636 player-weeks, all overs 2.6 points
+  under their prices. By the standing rule (same direction every week, 100+ player-weeks):
+  - **Matchup shifting** (info): 7.7 under, under in all three weeks, 198 player-weeks, t -2.9 -> `sweep.TAG_W["Matchup shifting"] = 1`
+    (one watch point; still shown).
+  - **Soft matchup** held (6.3 under, under each week). Stays at 0.
+  - Not changed: Cold L3 (bad) is OVER its prices all three weeks (+6.0) but on 76 player-weeks - FanDuel seems to price the slump already;
+    revisit at 100. Hot L3 (good) is no better than the average leg (0 / 0 / -9). The risk score still does not sort legs: score 0 -3.2,
+    score 1 +1.1, 2-3 -6.6, 4+ -1.3; among floor legs "some risk" is the bad group (-10.7, 231 legs).
+- **honest.py / learned.py with Week 10** (8,094 graded legs, Weeks 6-10): forecast error model 0.2419, FanDuel no-vig 0.2352, honest
+  chance 0.2345, learned 0.2342. Legs the model had at 70%+: model said 75.7%, they hit 62.7% (honest chance said 62.9%). The shadow list
+  had no real Week 10 test (first written Sunday night, three singles); Week 11 is its first full week.
+- **Sheet fix - a traded starter is not a fill-in.** 'AUTO - QB Projections'!AK ("Fill-in Starter") said YES for any QB1 who had started
+  under half of his CURRENT team's games, and the fill-in path projects from that team's attempts per game. Jacoby Brissett (8 starts for
+  ARI at 258 yards a game, traded, 340 for BAL in Week 10) was projected 176.8 - the flag check's biggest gap two weeks running. AK2 is
+  now one spilled MAP formula (AK3:AK109 cleared - nothing may be typed there): fill-in only if he ALSO has fewer 20+ attempt games this
+  season on any team than half his team's games. Brissett 176.8 -> 241.4, Kirk Cousins (MIN) 196.5 -> 218.3; Beck, Lock, Mendoza,
+  McCarthy, Milton, McCord and DeVito stay fill-ins. Old per-row formula:
+  `=IF(A2="","",IF(AND(AE2="QB1",N(AJ2)>0,N(AI2)<'AUTO - Settings'!$B$161*N(AJ2)),"YES","NO"))`.
+- **grade_promos.py** reads Passing TDs, Completions and Rushing Attempts / Carries (both Monday slips had "Passing TDs 1+ - not gradable
+  here"). Re-graded Week 10 in a scratch copy: same nine results.
+- **Flag check gaps worth a look each Tuesday** (data/flag-audit.json): every one of this week's 20 biggest gaps is the model UNDER
+  FanDuel, most on receptions floors (Jefferson 6+ 37% vs 76%, Kittle 5+ 37% vs 69%) - the model treats a 5.0 catch average as a coin flip
+  at 6+ and FanDuel does not; the honest-chance layer already discounts the model there.
+

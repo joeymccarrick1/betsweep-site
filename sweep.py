@@ -138,7 +138,10 @@ def risk_score(leg, bd):
 # (flag_grade.py, research/flag_grades_w8_w9.json). The builder's JS reads the same table from the data file (DATA["tw"]).
 #   Soft matchup (shown as good): legs carrying it hit 8.7 pts under their price, both weeks negative, 136 player-weeks - it no longer
 #   takes a point off the risk score.
-TAG_W = {"Soft matchup": 0}
+#   Matchup shifting (shown as info, weight 0 by kind): 11/17 grade of Weeks 8-10 (research/flag_grades_w8_w10.json) - legs carrying it
+#   hit 7.7 pts under their price, under in all three weeks (-0.9 / -10.6 / -10.1), 198 player-weeks, t -2.9. It now adds one watch point.
+#   Soft matchup held: 6.3 under over the three weeks, under in each (195 player-weeks).
+TAG_W = {"Soft matchup": 0, "Matchup shifting": 1}
 
 def dependence(legs, qb_of=None):
     """Legs that fail together (owner 11/15). legs = builder legs (pl, pos, tm, m, g). Returns warnings for a slip where 3+ legs, or more

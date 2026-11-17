@@ -98,9 +98,12 @@ def grade_leg(who, market):
         if any(v for _, v in found if v): return "HIT", ", ".join(f"{n} {int(v) if v is not None else '—'} TD" for n, v in found)
         if any(v is None for _, v in found): return "PENDING", ", ".join(f"{n}: no stat row" for n, v in found if v is None)
         return "MISS", ", ".join(f"{n} 0 TD" for n, _ in found)
-    m = re.match(r"(receiving yards|rushing yards|passing yards|receptions|longest reception|rush \+ rec yards|rush\+rec yards|rushing \+ receiving yards)\s+(\d+(?:\.\d+)?)\+?", ml)
+    m = re.match(r"(receiving yards|rushing yards|passing yards|passing tds|passing touchdowns|pass tds|completions|pass completions|rushing attempts|rush attempts|carries|receptions|longest reception|rush \+ rec yards|rush\+rec yards|rushing \+ receiving yards)\s+(\d+(?:\.\d+)?)\+?", ml)
     if not m: return "PENDING", f"{who}: market '{mk}' not gradable here"
-    col = {"receiving yards": "Rec Yds", "rushing yards": "Rush Yds", "passing yards": "Pass Yds", "receptions": "Receptions", "longest reception": "Longest Rec"}.get(m.group(1), "Rush + Rec")
+    col = {"receiving yards": "Rec Yds", "rushing yards": "Rush Yds", "passing yards": "Pass Yds", "receptions": "Receptions", "longest reception": "Longest Rec",
+           "passing tds": "Pass TD", "passing touchdowns": "Pass TD", "pass tds": "Pass TD", "completions": "Completions", "pass completions": "Completions",
+           "rushing attempts": "Rush Att", "rush attempts": "Rush Att", "carries": "Rush Att"}.get(m.group(1), "Rush + Rec")   # 11/17: "Passing TDs 1+" came back "not gradable here"
+    if col not in ("Rush + Rec",) and col not in GH: return "PENDING", f"{who}: the game log has no '{col}' column"
     need = float(m.group(2)); rs = player_rows(names[0])
     if rs is None: return "PENDING", f"{who}: no stat row"
     if col == "Rush + Rec": got = sum(stat(r, "Rush Yds") + stat(r, "Rec Yds") for r in rs)
