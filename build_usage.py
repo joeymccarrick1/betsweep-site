@@ -85,6 +85,16 @@ CSS = """
 .uw .none{padding:12px 14px;color:var(--mute);font-size:13px;margin:0;line-height:1.5}
 .uw .vac{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;font-size:13px;color:var(--mute);border-bottom:1px solid var(--line)} .uw .vac b{color:var(--ink)}
 .uw tr[hidden]{display:none}
+@media (max-width:640px){
+  .uw .tw{overflow:visible} .uw table,.uw tbody{display:block} .uw thead{display:none}
+  .uw tbody tr{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:2px 6px;padding:11px 12px;border-bottom:1px solid var(--line)} .uw tbody tr[hidden]{display:none} .uw tbody tr:last-child{border-bottom:0}
+  .uw tbody td{display:block;border:0;padding:0;text-align:left;white-space:normal;font-size:13.5px;min-width:0}
+  .uw tbody td.nm{grid-column:1/-1;min-width:0;margin-bottom:7px;font-size:15px}
+  .uw tbody td[data-l]::before{content:attr(data-l);display:block;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);white-space:nowrap}
+  .uw tbody td[data-l] em{display:block;margin-left:0;font-size:11.5px}
+  .uw tbody td.lg{grid-column:1/-1;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)} .uw tbody td.lg:empty{display:none}
+  .uw .leg{font-size:13px} .uw .leg a.fd{margin-left:6px}
+}
 .uw .pos{font-size:11px;color:var(--mute);margin-left:4px}
 """
 def head(title, desc):
@@ -121,8 +131,8 @@ def trow(r, kind):
     p, a, b = r["p"], r["a"], r["b"]
     tg = "".join(f'<span class="tag {c}">{E(t)}</span>' for c, t in r["tags"])
     return (f'<tr data-pos="{p["pos"]}" data-kind="{kind}"><td class="nm"><b>{plink(p["name"])}</b><span class="pos">{p["pos"]} · {E(p["team"])}</span>{status(p)}{tg}</td>'
-            f'<td>{P(b["snap"])}{dpp(a["snap"], b["snap"])}</td><td>{P(b["ts"])}{dpp(a["ts"], b["ts"])}</td><td>{N(b["tgt"])}{dn(a["tgt"], b["tgt"])}</td>'
-            f'<td>{N(b["car"])}{dn(a["car"], b["car"])}</td><td>{N(b["ppr"])}{dn(a["ppr"], b["ppr"])}</td><td>{best_leg(p)}</td></tr>')
+            f'<td data-l="Snaps L3">{P(b["snap"])}{dpp(a["snap"], b["snap"])}</td><td data-l="Tgt% L3">{P(b["ts"])}{dpp(a["ts"], b["ts"])}</td><td data-l="Tgt / g">{N(b["tgt"])}{dn(a["tgt"], b["tgt"])}</td>'
+            f'<td data-l="Car / g">{N(b["car"])}{dn(a["car"], b["car"])}</td><td data-l="PPR / g">{N(b["ppr"])}{dn(a["ppr"], b["ppr"])}</td><td class="lg">{best_leg(p)}</td></tr>')
 up = [r for r in rows if r["score"] >= 4][:60]; down = [r for r in reversed(rows) if r["score"] <= -4][:60]
 thead = '<thead><tr><th>Player</th><th>Snaps L3</th><th>Tgt share L3</th><th>Tgt / g</th><th>Car / g</th><th>PPR / g</th><th>Best-priced leg this week</th></tr></thead>'
 lastw = max((w for t in S.team_weeks.values() for w in t if w < W), default=W - 1)
@@ -192,8 +202,8 @@ for k, p, u, tw, g in outs:
             gained = a is None or delta > 0.25 or ((b["snap"] or 0) - (a["snap"] or 0)) > 0.03 or (b["ppr"] - a["ppr"]) > 0.5
             q = S.players[kk]
             trs.append((-delta + (0 if gained else 100), f'<tr><td class="nm"><b>{plink(q["name"])}</b><span class="pos">{q["pos"]}</span>{status(q)}</td>'
-                               f'<td>{P(b["snap"])}{dpp(a["snap"] if a else None, b["snap"])}</td><td>{N(b["tgt"])}{dn(a["tgt"] if a else None, b["tgt"])}</td>'
-                               f'<td>{N(b["car"])}{dn(a["car"] if a else None, b["car"])}</td><td>{N(b["ppr"])}{dn(a["ppr"] if a else None, b["ppr"])}</td><td>{best_leg(q)}</td></tr>'))
+                               f'<td data-l="Snaps">{P(b["snap"])}{dpp(a["snap"] if a else None, b["snap"])}</td><td data-l="Tgt / g">{N(b["tgt"])}{dn(a["tgt"] if a else None, b["tgt"])}</td>'
+                               f'<td data-l="Car / g">{N(b["car"])}{dn(a["car"] if a else None, b["car"])}</td><td data-l="PPR / g">{N(b["ppr"])}{dn(a["ppr"] if a else None, b["ppr"])}</td><td class="lg">{best_leg(q)}</td></tr>'))
         trs.sort(key=lambda x: x[0])
         note = f'In the {len(without)} game{"s" if len(without) > 1 else ""} he missed this season (Week {", ".join(map(str, without))}) vs the {len(withw)} he played in full. Big number = without him, small = the change.'
         if len(without) == 1: note += " One game is a small sample - read it as who got the work, not a rate."
@@ -207,7 +217,7 @@ for k, p, u, tw, g in outs:
             b = S.usage(kk, l3)
             if not b or ((b["snap"] or 0) < 0.1 and (b["tgt"] + b["car"]) < 1.5): continue
             q = S.players[kk]
-            trs.append((-((b["snap"] or 0) + 0.02 * (b["tgt"] + b["car"])), f'<tr><td class="nm"><b>{plink(q["name"])}</b><span class="pos">{q["pos"]}</span>{status(q)}</td><td>{P(b["snap"])}</td><td>{N(b["tgt"])}</td><td>{N(b["car"])}</td><td>{N(b["ppr"])}</td><td>{best_leg(q)}</td></tr>'))
+            trs.append((-((b["snap"] or 0) + 0.02 * (b["tgt"] + b["car"])), f'<tr><td class="nm"><b>{plink(q["name"])}</b><span class="pos">{q["pos"]}</span>{status(q)}</td><td data-l="Snaps L3">{P(b["snap"])}</td><td data-l="Tgt / g">{N(b["tgt"])}</td><td data-l="Car / g">{N(b["car"])}</td><td data-l="PPR / g">{N(b["ppr"])}</td><td class="lg">{best_leg(q)}</td></tr>'))
         trs.sort(key=lambda x: x[0])
         body = (vac + '<p class="none" style="padding-bottom:0">He has not missed a game this season, so there is no "without him" split yet. These are his teammates\' roles over the last 3 games - the volume he leaves goes to some of them; the model\'s projections already move it by role.</p>'
                 '<div class="tw"><table><thead><tr><th>Teammate</th><th>Snaps L3</th><th>Targets / g</th><th>Carries / g</th><th>PPR / g</th><th>Best-priced leg this week</th></tr></thead><tbody>' + "".join(h for _, h in trs[:8]) + '</tbody></table></div>')

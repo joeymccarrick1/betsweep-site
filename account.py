@@ -180,7 +180,7 @@ ME_CSS = """
 .me li small{color:var(--mute,#6b655c)}
 .me li .legs{flex-basis:100%;font-size:12.5px;color:var(--mute,#6b655c);line-height:1.5}
 .me .cta{display:inline-block;font-weight:700;padding:10px 16px;border-radius:10px;background:#d7332a;color:#fff;text-decoration:none}
-.me .none{color:var(--mute,#6b655c);font-size:13.5px}
+.me .none{color:var(--mute,#6b655c);font-size:13.5px} .me .none .meact{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px} .me .none .meact a{flex:1 1 140px}
 .me .res{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:#e4ddcc;color:#5d574d}
 .me .res.hit{background:#2b6b3a;color:#fff}.me .res.miss{background:#b3261e;color:#fff}
 .me details.brk{margin:8px 0 10px}.me details.brk summary{cursor:pointer;font-weight:700;font-size:14px}
@@ -288,7 +288,7 @@ ME_JS = r"""
     var sl = [], ks = keys(/^bs_slips_w\d+$/); ks.forEach(function(k){ var w = k.replace('bs_slips_w',''); try{ (JSON.parse(g(k))||[]).forEach(function(s){ sl.push({w: +w, s: s}); }); }catch(e){} });
     sl.sort(function(a,b){ return b.w - a.w; });
     var el = document.getElementById('slips');
-    if (!sl.length){ bankRender([]); hubRender(null); el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
+    if (!sl.length){ bankRender([]); hubRender(null); el.innerHTML = '<li class="none">No saved slips yet. Save one and it is graded here from the box scores after the games.<span class="meact"><a class="bsbtn" href="/build/">Build a slip</a><a class="bsbtn sec" href="/social/">Tail a posted slip</a></span></li>'; document.getElementById('record').textContent = ''; }
     else { el.innerHTML = '<li class="none">Grading…</li>';
       Promise.all(sl.map(function(x){ return getBox(x.w); }).concat(sl.map(function(x){ return getClose(x.w); }))).then(function(all){ var ds = all.slice(0, sl.length), cs = all.slice(sl.length); var W = 0, L = 0, U = 0, P = 0, OPEN = [], BK = [], BRK = {m:{}, n:{}, o:{}}, html = '', lastW = null, topW = sl.length ? sl[0].w : 0, CB = 0, CN = 0, CP = 0;
         sl.forEach(function(x, i){ var s = x.s, d = ds[i], c = cs[i], seen = {}, gs = (s.keys||[]).map(function(k){ var n = seen[k] = (seen[k] || 0) + 1, gid = s.g && s.g[k] ? s.g[k][n - 1] : (/\|Total\|/.test(k) ? onlyGame(k) : null); return {k:k, g: gradeKey(k, d, gid), clv: clvOf(s, k, c)}; });

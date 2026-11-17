@@ -44,7 +44,11 @@ def odds(o):
 def line(b):
     return f'{b["pl"]} {int(b["ln"])}+ {UNIT[b["m"]]}'
 rows = "".join(f'<li><b>{E(line(b))}</b><span class="o">{E(odds(b["o"]))}</span><small>{E(b["tm"])} vs {E(b["opp"])} · finished with <b>{b["ac"]:g}</b> - {b["short"]:g} short · FanDuel had it at {round(b["bk"]*100)}%</small></li>' for b in top)
-prow = "".join(f'<li><b>{E(p["title"])}</b><span class="o">+{E(p["odds"])}</span><small>{E(p["note"])}</small></li>' for p in promos)
+def _odds(o):
+    """'+450' from 450 / '+450' / '-120'; nothing when the promo tab has no price (the card showed a lone '+', 11/17)."""
+    o = str(o or "").strip()
+    return "" if not o else (o if o[0] in "+-" else "+" + o)
+prow = "".join(f'<li><b>{E(p["title"])}</b>' + (f'<span class="o">{E(_odds(p["odds"]))}</span>' if _odds(p["odds"]) else "") + f'<small>{E(p["note"])}</small></li>' for p in promos)
 share = "Missed by one, Week " + W + ":\n" + "\n".join(f"{line(b)} ({odds(b['o'])}) - finished with {b['ac']:g}" for b in top[:5]) + "\nbetsweep.co/badbeats/"
 # audit 11/10: plain-source format (title, description, font link, <style>, then the body), the same as build_beat.py / build_teasers.py -
 # build_site.py's wrap() adds the site head, header and tabs and splits at the first </style>. The first version wrote a whole

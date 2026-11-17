@@ -156,6 +156,7 @@ PCSS = r""".l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(
 .pp .e.up{color:var(--good);font-weight:700} .pp .e.dn{color:var(--bad)}
 .pp .hr{color:var(--mute)} .pp .hr b{color:var(--ink)}
 .pp .bk a{display:inline-block;font-size:12px;font-weight:700;text-decoration:none;padding:4px 9px;border-radius:6px;margin-left:4px;color:#fff;background:#1493ff}
+@media (pointer:coarse){ .pp .bk a{padding:9px 11px;margin:2px 0 2px 5px} }
 .pp .bk a.dkb{background:#53d337;color:#0b1a07} .pp .bk a.hrb{background:#5b2d8e} .pp .bk a.best{outline:2px solid var(--good);outline-offset:1px}
 .pp .add{font:inherit;font-size:16px;font-weight:700;width:28px;height:28px;border-radius:8px;border:1.5px solid var(--red);background:none;color:var(--ink);cursor:pointer;line-height:1;position:relative} .pp .add::after{content:"";position:absolute;inset:-7px} .pp .add:active{background:var(--red);color:#fff}
 .pp .add.in{background:var(--red);color:#fff} .pp .add:disabled{opacity:.35;cursor:not-allowed}

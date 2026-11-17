@@ -317,7 +317,7 @@ PAGE_JS = r"""<script>(function(){
       if(r.error && V4){ V4 = false; return profs(ids); } (r.data || []).forEach(function(x){ PROF[x.user_id] = x; }); }); }
   function recTxt(uid){ var r = REC[uid]; if(!r || !r.graded) return ''; var u = +r.units || 0; return r.won + '-' + r.lost + ' · ' + (u >= 0 ? '+' : '') + u.toFixed(1) + 'u'; }
   try { sort = localStorage.getItem('bs_social_sort') || 'top'; } catch(e){}
-  function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = 'Could not reach the feed - check your connection and reload.'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }
+  function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = ''; list.innerHTML = '<div class="empty"><b>The feed did not load.</b>Check your connection and try again.<a class="act" href="/social/">Reload</a></div>'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }   // same box as a failed read (11/17): the old one-line text had no button
   // owner 11/14 ("Can this show the games? How do we tell what under it's taking?"): every leg names its game
   function gameTxt(l){ return l.g ? ' · ' + esc(String(l.g).replace('-', ' vs ')) : ''; }
   function legText(l){ return legText0(l).replace(/<\/small>$/, gameTxt(l) + '</small>'); }
@@ -750,6 +750,7 @@ STRIP_JS = r"""(function(){
         '<span class="w"><b>' + esc(p.title || leg(ls[0]) + (ls.length > 1 ? ' + ' + (ls.length - 1) + ' more' : '')) + '</b><small>@' + esc(p.handle) + ' · ' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + (p.tails ? ' · ' + p.tails + ' tailing' : '') + (pre ? '' : ' · live') + '</small></span>' +
         '<span class="od">' + esc(am(p.fd_odds)) + '<small>▲ ' + (p.score || 0) + '</small></span></a>'; }).join('');
   }
+  setTimeout(function(){ if(list.querySelector('.sk')) box.hidden = true; }, 9000);   // a read that never answers: no placeholders left pulsing on Today (11/17)
   wait(function(sb){
     function read(cols){ return sb.from('feed_posts').select(cols).eq('status', 'open').eq('week', W).order('score', {ascending: false}).order('created_at', {ascending: false}).limit(60); }
     read('id,user_id,handle,title,legs,fd_odds,first_ko,last_ko,score,tails').then(function(r){

@@ -360,6 +360,7 @@ CALLS_CSS = """
 .tile b{font-family:var(--display);font-weight:800;font-size:32px;line-height:1;letter-spacing:-.01em} .tile.pos b{color:var(--good)} .tile.neg b{color:var(--bad)}
 .tile span{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)} .tile small{color:var(--mute);font-size:12px;line-height:1.4}
 table.sc{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px} table.sc th{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)} table.sc td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums} table.sc td.pos{color:var(--good)} table.sc td.neg{color:var(--bad)}
+@media (max-width:480px){ table.sc th,table.sc td{padding:6px 5px} table.sc th{letter-spacing:.06em} }   /* six columns fit a phone without a sideways nudge (11/17) */
 table.sc a{color:var(--ink)} table.sc td.cc i{font-style:normal;font-weight:800;margin-right:8px} table.sc i.ok{color:var(--good)} table.sc i.no{color:var(--bad)} table.sc i.na{color:var(--mute)}
 body.compact .card.scorecard{grid-column:1/-1} body.compact .card.scorecard > *{display:revert} body.compact .card.scorecard > .hd{display:grid}
 .card .vbtns .vbtn{flex:1} body.compact .card:not(.expanded) > .vbtns{display:flex;padding:8px 12px}

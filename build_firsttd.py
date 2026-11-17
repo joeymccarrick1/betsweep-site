@@ -128,6 +128,20 @@ for gk, ps in bygame.items():
                      "tshare": team_tot[q["t"]] / tot, "pr": pr, "fair": fair_odds(pr), "fd": fd.get("odds"), "imp": imp, "edge": edge, "verdict": verdict,
                      "mid": fd.get("mid", ""), "sid": fd.get("sid", ""), "link": fd.get("link", "")})
 rows.sort(key=lambda r: (r["sort"], r["gid"], -r["pr"]))
+# owner 11/17 ("no shot dj giddens scores. I want players that are actually getting snaps, red zone looks, or potential for a long
+# touchdown"): DJ Giddens led "Best edges vs FanDuel" here at +10000 on a 7% snap share. A first-TD edge needs a role: a quarterback, or
+# a quarter of the snaps projected (projsnaps; a player it does not know is left alone). No role: out of the edges strip, and the
+# table says "thin role" where it said VALUE.
+try:
+    import projsnaps as _PS
+    _SN = _PS.build(IN, OUT, WEEK) or {}
+except Exception as _e:
+    _SN = {}; print("note: no snap projections for the first-TD role check:", _e)
+for r in rows:
+    _sn = (_SN.get(r["n"]) or {}).get("proj")
+    r["role"] = r["p"] == "QB" or _sn is None or _sn >= 0.25
+    if not r["role"] and r["verdict"] == "VALUE": r["verdict"] = "THIN ROLE"
+print("first-TD role check: " + (", ".join(f'{r["n"]} {r["edge"]*100:+.1f}' for r in sorted(rows, key=lambda r: -(r["edge"] or -9)) if not r["role"] and (r["edge"] or 0) >= 0.03)[:300] or "nobody") + " kept out of the edges strip (under a quarter of the snaps)")
 npriced = sum(1 for r in rows if r["imp"] is not None)
 
 # cross-check with the Sheet tab when its snapshot is present
@@ -155,7 +169,7 @@ def fdlink(r, label="Add to FanDuel slip"):
 def pos_b(p): return f'<b class="pos {p}">{p}</b>'
 def edge_cell(r):
     if r["edge"] is None: return '<td class="imp"></td><td class="edge none" title="no FanDuel price yet">—</td>'
-    cls = "val" if r["verdict"] == "VALUE" else "fair" if r["verdict"] == "FAIR" else "pass"
+    cls = "val" if r["verdict"] == "VALUE" else "fair" if r["verdict"] in ("FAIR", "THIN ROLE") else "pass"
     return f'<td class="imp">{r["imp"]*100:.1f}%</td><td class="edge {cls}">{r["edge"]*100:+.1f} <small>{r["verdict"]}</small></td>'
 
 cards, nav = [], []
@@ -178,7 +192,7 @@ for gid in dict.fromkeys(r["gid"] for r in rows):
 
 TOPN = 12
 likely = sorted(rows, key=lambda r: -r["pr"])[:60]            # 11/17: the page shows the first 12 whose game has not kicked off (it listed finished games' players all week)
-edges = sorted([r for r in rows if r["edge"] is not None], key=lambda r: -r["edge"])[:60]
+edges = sorted([r for r in rows if r["edge"] is not None and r.get("role", True)], key=lambda r: -r["edge"])[:60]
 def strip(rs, kind):
     if not rs: return '<li class="none">FanDuel first-TD prices load into the sheet when the odds refresh runs (usually Thursday); edges appear here then.</li>'
     out = []

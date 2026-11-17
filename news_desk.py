@@ -28,6 +28,15 @@ HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in")
 SITE = "/home/claude/betsweep-site"
 RAW = "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/"
 
+def _clip(t, n=220):
+    """A note's body, at most n characters, ending on a whole sentence when one ends after the first 100 and otherwise on a whole word
+    (11/17: a flat [:220] left notes ending 'Nicki Jhabvala of The Athlet')."""
+    if len(t) <= n: return t
+    cut = t[:n]; m = None
+    for m in re.finditer(r"[.!?][\"')\]]?(?=\s)", cut): pass
+    if m and m.end() >= 100: return cut[:m.end()]
+    return cut[:cut.rfind(" ")].rstrip(" ,;:-") + "..." if " " in cut else cut
+
 def fetch(name):
     try: return json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "30", RAW + name], stderr=subprocess.DEVNULL))
     except Exception: pass
@@ -296,7 +305,7 @@ def main(week):
             sev = {"OUT": 6, "PROTOCOL": 5, "QUEST": 4, "ROLE_DOWN": 4, "EXIT": 3, "ROLE_UP": 3, "RETURN": 2, "TRADE": 2}[sb]
             if k in notes and notes[k]["sev"] >= sev: continue
             src = {"espn": "ESPN", "espn-inj": "ESPN team report", "rotowire": "RotoWire", "cbs": "CBS Sports", "yahoo": "Yahoo Sports", "espn-rss": "ESPN", "pft": "PFT", "nfl": "NFL.com"}.get(it.get("src"), it.get("src") or "news"); when = ts.astimezone(dt.timezone(dt.timedelta(hours=-6))).strftime("%a %m/%d %I:%M %p").replace(" 0", " ") if ts else ""
-            head = (it.get("title") or "").strip(); body = re.sub(r"\s*Visit RotoWire.*$", "", (it.get("text") or "").strip(), flags=re.S)[:220]
+            head = (it.get("title") or "").strip(); body = _clip(re.sub(r"\s*Visit RotoWire.*$", "", (it.get("text") or "").strip(), flags=re.S))
             kind, tag = {"OUT": ("bad", "News: out"), "PROTOCOL": ("watch", "News: concussion protocol"), "QUEST": ("watch", "News: limited / questionable"), "ROLE_DOWN": ("watch", "News: role down"), "EXIT": ("watch", "News: left last game"),
                          "ROLE_UP": ("good", "News: role up"), "RETURN": ("info", "News: back / practising"), "TRADE": ("info", "News: trade / signing")}[sb]
             if sb == "OUT" and re.search(r"\bdoubtful\b", sent.lower()) and not re.search(r"ruled out|out for|injured reserve|season[- ]ending", sent.lower()): kind, tag = "watch", "News: doubtful"

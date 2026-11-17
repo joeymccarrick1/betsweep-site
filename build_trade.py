@@ -251,6 +251,8 @@ CSS = r"""
 .tc table.rk td.v b{font-size:15px}
 .tc table.rk td.ab{white-space:nowrap;text-align:right;width:76px}.tc table.rk td.ab .addbtn{padding:3px 7px;margin:0 0 0 3px;min-width:32px;min-height:32px}
 @media(max-width:640px){.tc table.rk th.ol,.tc table.rk td.ol{display:none}.tc table.rk td,.tc table.rk th{padding:7px 4px}.tc table.rk td.pl b{font-size:13.5px}}
+.tc table.rk td.pl em.st{display:inline-block;white-space:normal;line-height:1.35;background:none;gap:0}
+@media(max-width:640px){.tc table.rk td.pl em.st{margin:2px 0 0 0}.tc table.rk td.pl b{margin-right:6px}}
 .tc .chip{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--mute);margin-left:4px}
 .tc .chip.up{color:var(--good);border-color:var(--good)}.tc .chip.dn{color:var(--bad);border-color:var(--bad)}.tc .chip.q{color:var(--warn);border-color:var(--warn)}
 .tc .rkopts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center}

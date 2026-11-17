@@ -114,6 +114,9 @@ class Engine:
                 for _cb, _st in (_d.get("cbs") or {}).items(): self.CTX_CB[_nn(_cb)] = _st   # def_inj.py: corner -> {"status", "why", "team"}
             except Exception as _e: print("ctx skipped", _f, _e)
         # availability
+        try:
+            import departed as _DEP; self.GONE = _DEP.load(IN, WEEK)   # 11/17: key targets that left with a traded player, by old team
+        except Exception: self.GONE = {}
         self.OUT, self.QUEST, self.OUT_BY_TEAM = {}, {}, {}
         for r in vals("avail.json")[1:]:
             if len(r) < 5 or str(r[0]) != str(self.WEEK): continue
@@ -429,10 +432,14 @@ class Engine:
                 if len(my_w) >= 2 and not shared: continue
                 v = self.avg(shared, vc) if len(shared) >= 2 else self.avg(tg, vc)
                 if v and v >= (8 if info["pos"] == "RB" else 5): vac.append((tn, info["pos"], v, vlab))
-            if vac:
-                vac.sort(key=lambda x: -x[2])
-                txt = ", ".join(f"{tn} ({p}, {v:.1f} {lab}/g)" for tn, p, v, lab in vac)
-                add("good", "Fill-in volume", f"Steps into vacated work: out this week - {txt}. The model moves that volume to the players left in the room.")
+            # 11/17: a traded-away teammate vacates work too (departed.py). Nobody is "out", so the loop above never sees him: the Colts
+            # lost Keenan Allen and Josh Downs (12.8 targets a game) before Week 10 and not one flag on the site said the room had emptied.
+            gone = [] if pos == "QB" else [(d["pl"], d["pos"], d["tg"] / max(1, d["g"]), d["now"]) for d in (self.GONE.get(team) or []) if d["pos"] in same and d["pl"] != name and d["tg"] / max(1, d["g"]) >= 5]
+            if vac or gone:
+                vac.sort(key=lambda x: -x[2]); gone.sort(key=lambda x: -x[2]); parts = []
+                if vac: parts.append("out this week - " + ", ".join(f"{tn} ({p}, {v:.1f} {lab}/g)" for tn, p, v, lab in vac))
+                if gone: parts.append("traded away - " + ", ".join(f"{tn} ({p}, {v:.1f} tgt/g, now {nw})" for tn, p, v, nw in gone))
+                add("good", "Fill-in volume", f"Steps into vacated work: {'; '.join(parts)}. The model moves that volume to the players left in the room.")
             # --- thinned room: several small absences at his position add up (Josh Cuevas, BAL TE, Week 6: Hibner + Smythe out = 89% of the
             # TE snaps and only 2.5 targets/g between them, so neither tripped the fill-in rule above; FanDuel priced his receptions on
             # a 1.0 target/g history and he caught 4). Uses snap shares, so a body with snaps but no catches still counts. ---

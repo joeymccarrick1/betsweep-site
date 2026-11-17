@@ -1490,3 +1490,54 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
   CIN-WAS (Diggs 43+ yards), JAX-NYG (McCarthy 218+) and MIN-SF (McCaffrey 40+ receiving) all carried one. Board picks must be board
   markets (no Rush + Rec Yards, no Passing TDs).
 
+
+## 11/17, 1 PM CT: every-page pass (owner: "look over every single page ... optimize it, make it look better") + departed targets
+What changed on every page (phones, build_site.py): the title block now scrolls away and only the chip row sticks under the site bar
+(`.top{display:contents}`, `.top .nav{position:sticky}`); the old hide-on-the-way-down / show-on-the-way-up title changed the page's
+height each time and moved the content ~50px on browsers without scroll anchoring. A chip row with ONE link (a back link: /trade/,
+/season/) is not pinned (`.top .nav:not(:has(a + a))`). `landOnHash` adds the pinned row's height.
+Page by page (all measured at 390x844, light and dark, /tmp-style audit of 43 page types: no sideways scroll, no script errors):
+- /dfs/: the salary instructions fold behind one row ("Load a salary list", opens itself on a message or a dragged file) so the
+  player pool is on the first screen. EVERY chip on the page sat 26px low: the page template has its own `.tag` (a section heading)
+  and `.dfs .tag` only overrode part of it. Reset there. Same family: /trade/ statuses used the template's `.st` (one-line chip), so
+  "IR through Week 10" forced the player column to 218px and pushed the A / B add buttons off a phone for the whole table. They wrap now.
+  CLASS NAMES ON TEMPLATE-BUILT PAGES (dfs, trade, season, team) COLLIDE WITH template.html (.tag, .st, .bl ...): reset what you reuse.
+- /usage/ and /benefits/: the tables were 725px in a 344px box (three of seven columns showed; the FanDuel leg was two swipes right).
+  On phones each player is a block: name, five labelled numbers (td[data-l]), the leg under them (td.lg). No thead on phones.
+- /survivor/: pick first, then "Win chances from" (kept visible - owner 11/10), the teams grid (6 across on phones), "Pool settings"
+  (plan through / rename / clear / remove) folded, tables last. render() writes the call into #svpick. "drops the whole run from 15%
+  to 15%" now shows the decimal or says "about the same". tests/survivor_plan.py passes unchanged.
+- /teasers/: REBUILT ON REAL HISTORY. The model's margin IS FanDuel's line, so the smooth curve said 68% for every 6-point leg and
+  47% / -9.9 for every pair. build_teasers.history() now grades every teased leg, regular season since 2015, at the closing line in
+  in/games.csv, by kind of move (through 3 and 7 / through one / past zero / neither / totals); a leg's chance = its kind's rate,
+  shifted by the model's distance from the line. Since 2015 at 6 points: through 3 and 7 74.1% (1,157-405), one key number 70.8%,
+  totals 68.2%, past zero 67.9%, neither 66.2%. At -130 a leg needs 75.2%: the page says so in one sentence ("Nothing clears this
+  price; ... need about -120 or better") and the sentence follows the price box. A bare number in the box is a minus price (phone
+  number pads have no minus key).
+- /build/: the slip has a box for FanDuel's own same-game price (#sgq, sign button, Use it / Back to the estimate). SGQ is keyed by the
+  exact legs + prices and kept for the visit; slipPrice() returns {quoted, est}. tests/sgp_price.py: 43 checks. Bankroll field styled.
+- /beat/: the suggested-legs scroller fades at the bottom instead of slicing a row. /targets/: "wr37" -> "WR37" (str.capitalize()).
+- /badbeats/: a promo with no price showed a lone "+". /season/: receipt links were the browser's default blue. /receipts/weekN/:
+  six-column tables fit a phone. News desk notes end on a sentence or a word (was a flat [:220]). First TD: no-role players are out of
+  the edges strip (projsnaps role check). Game previews: news line cleaned, "FanDuel line: HOU -11.5, total 44.5", weather sentence.
+  /me/: empty slips state has two buttons. Today link chips and player-page book buttons are full touch size.
+- NOT a bug: the local gate says "MISSING FILE /receipts/week10/ ['404 /s/tpl-<old>.css']" after any template.html change, because the
+  kept receipt links the stylesheet it was published with and gp/site only has the new one. The clone keeps it (reprice prunes s/ only
+  when no page links a file), so the published site is whole. Check the published copy with SITE=/home/claude/betsweep-site.
+- STILL STALE: /how/ quotes "three graded weeks" (Weeks 6-8). Five are graded now; the numbers need a recount before the text changes.
+
+DEPARTED TARGETS (sheet, 11/17 1 PM). Tuesday flag check, 20 biggest model-vs-FanDuel gaps: seven were Colts pass catchers. The Colts
+traded Keenan Allen (SF) and Josh Downs (KC) before Week 10 - 115 targets in nine games - and the absence bump only counted teammates
+who are OUT this week ON THE SAME TEAM, so nobody inherited a target. FanDuel had Treadwell 3+ catches at -130; the sheet had him at 1.25.
+- New tab 'AUTO - Departed Targets' (one formula in A1): every (player, old team) in the game log whose team on the projection tabs is
+  now different, with 2+ games and 3.3+ targets a game for the old team (Settings B201, the same "key absentee" bar). Column G =
+  his targets for the old team / that team's games so far = the same quantity "Vacated Targets If OUT" produces.
+- 'AUTO - WR Projections'!AU2:AU300, 'AUTO - TE Projections'!AQ2:AQ250, 'AUTO - RB Projections'!BB2:BB300 (Absence Target Bump):
+  z_vw / z_vt / z_vr each add SUMIFS('AUTO - Departed Targets'!$G$2:$G$100, ...$A = team, ...$B = "WR" / "TE" / "RB"). Written with one
+  repeatCell per tab (the row references step by themselves). Nothing else in the formulas moved; the shares are still Settings
+  B197:B200. To undo: delete the three "+SUMIFS('AUTO - Departed Targets'...)" terms (repeatCell again) - the tab can stay.
+- Checked through the mirror, every row of the three tabs before and after: only Colts changed. Treadwell 14.5 -> 27.8 rec yds and
+  1.25 -> 2.39 catches (FanDuel 30.5 / 3+ at -130), Dulin 13.2 -> 32.1, Burks 8.2 -> 18.7 (16.5), Warren 39.2 -> 41.8 (41.5),
+  Taylor 2.71 -> 3.05 catches. "Reception Audit Flag: ERROR: RECEPTIONS > TARGETS" on Burks / McGowan is the audit comparing bumped
+  catches with un-bumped targets - nine other rows already carried it, nothing on the site reads it.
+- The receiving side is NOT done: Allen's row (SF) and Downs's (KC) still carry Colts volume. Watch their first two games.

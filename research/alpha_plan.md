@@ -91,4 +91,10 @@ Later, owner's call: automatic bet sync (paid outside service).
   layout was fine; seven of twenty "Out or doubtful" notes were wrong - news desk fixed). Every betting page checked with a
   player ruled out (tests/inactive_block.py). Next in step 9: Game previews, Line shop, Boost finder, Either-or TDs, Teasers,
   Sweep my slip, Beat the model, Survivor, the Fantasy pages, Usage, Benefits, Results / Receipts / Season.
+- 11/17 midday: step 9 finished for the pages not yet seen (owner: "look over every single page ... make it look better"). All 43 page
+  types screenshotted at phone size in both themes. Shared: the title scrolls away and only the chip row sticks. Rebuilt for phones:
+  Usage trends and Who benefits (one block per player instead of a sideways table), Survivor (pick first, settings folded), DFS
+  (player pool first; chips no longer 26px low), Trade calculator (add buttons were off-screen). Teaser finder now answers its own
+  question from real history since 2015. Builder: a box to type FanDuel's own same-game price. Details: RUNBOOK "11/17, 1 PM".
+  Left: /how/ still quotes Weeks 6-8 (recount first); archived receipts keep the stylesheet they were published with.
 

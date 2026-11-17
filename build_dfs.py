@@ -62,6 +62,10 @@ CSS = r"""
 .dfs .seg button{font:inherit;font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:12px;background:var(--card);color:var(--ink);border:0;border-right:1px solid var(--line);padding:7px 12px;cursor:pointer}
 .dfs .seg button:last-child{border-right:0} .dfs .seg button.on{background:var(--ink);color:var(--bg)}
 .dfs .src{padding:12px 14px;display:grid;gap:10px}
+/* 11/17 (page pass): the first two phone screens were instructions for loading a salary file; they fold behind one row and the player pool comes first */
+.dfs .srcbox > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;min-height:48px;border-top:1px solid var(--line)}
+.dfs .srcbox > summary::-webkit-details-marker{display:none} .dfs .srcbox > summary b{display:block;font-family:var(--display);font-size:15px;letter-spacing:.03em} .dfs .srcbox > summary small{display:block;color:var(--mute);font-size:12px;line-height:1.35}
+.dfs .srcbox > summary i{font-style:normal;color:var(--mute);transition:transform .15s} .dfs .srcbox[open] > summary i{transform:rotate(180deg)}
 .dfs .src.drop{outline:2px dashed var(--ink);outline-offset:-6px;background:color-mix(in srgb,var(--ink) 6%,var(--card))}
 .dfs .src .how.ph{font-size:12.5px}
 .dfs .src .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -94,7 +98,7 @@ CSS = r"""
 .dfs td.act button.add{background:var(--ink);color:var(--bg);border-color:var(--ink)} .dfs td.act button.rm{background:var(--red);color:#fff;border-color:var(--red)}
 .dfs td.act button.x.on{background:var(--bad);color:var(--bg);border-color:var(--bad)}
 @media (pointer:coarse){ .dfs td.act button{min-height:36px;min-width:40px;padding:6px 10px;font-size:13px;margin:2px 0 2px 4px} }
-.dfs .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;background:var(--chalk);color:var(--mute)}
+.dfs .tag{display:inline-block;max-width:none;gap:0;font-family:var(--body);text-transform:none;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:4px;padding:1px 5px;margin:0 0 0 4px;vertical-align:middle;background:var(--chalk);color:var(--mute)}
 .dfs .tag.out{background:var(--bad);color:#fff} .dfs .tag.q{background:var(--warn);color:#000} .dfs .tag.sd{background:#fde7c8;color:#7a4b00} .dfs .tag.ftd{background:#e8f0ff;color:#1a3f8a}
 .dfs .more{display:block;width:100%;text-align:left;font:inherit;font-size:13px;color:var(--red);background:none;border:0;padding:10px 14px;cursor:pointer}
 .dfs .lu{position:sticky;top:120px}
@@ -126,8 +130,8 @@ CSS = r"""
  .dfs .mbar{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:20;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;justify-content:space-between;align-items:center;font-size:13px;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
  .dfs .mbar b{font-family:var(--display);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
  .dfs{padding-bottom:60px}}
-@media(max-width:700px){.dfs table{font-size:12.5px}.dfs td,.dfs th{padding:5px 4px}.dfs td.sal input{width:50px;font-size:12.5px}.dfs td.act button{padding:3px 6px;font-size:11.5px}.dfs td .mt{font-size:10.5px}.dfs th:nth-child(4),.dfs td.val{display:none}.dfs td .pos{margin-left:4px}.dfs .tag{font-size:9px;padding:1px 4px}}
-.dfs #fmtSeg{margin-left:6px}
+@media(max-width:700px){.dfs table{font-size:12.5px}.dfs td,.dfs th{padding:5px 4px}.dfs td.sal input{width:50px;font-size:12.5px}.dfs td.act button{padding:3px 6px;font-size:11.5px}.dfs td .mt{font-size:11px}.dfs th:nth-child(4),.dfs td.val{display:none}.dfs td .pos{margin-left:4px}.dfs .tag{font-size:10px;padding:1px 4px;margin-left:3px}.dfs h2 .r.segs{display:flex;flex-wrap:wrap;gap:8px;margin-left:0;width:100%}}
+.dfs #fmtSeg{margin-left:6px} @media(max-width:700px){.dfs #fmtSeg{margin-left:0}}
 .dfs ul.slots li.mvp{background:color-mix(in srgb,var(--warn) 18%,transparent)}
 .dfs ul.slots li.mvp .sl{color:var(--ink)} .dfs ul.slots li .sl em{font-style:normal;color:var(--red);font-size:11px}
 .dfs ul.slots li .ops button.mv{color:#b07800;font-size:12px}
@@ -429,6 +433,9 @@ JS = r"""
     m.className = 'msg ok'; m.textContent = 'Loaded ' + r.n + ' salaries.' + (r.unmatched.length ? ' Not in the model (' + r.unmatched.length + '): ' + r.unmatched.slice(0, 12).join(', ') + (r.unmatched.length > 12 ? '…' : '') : ''); $('#csv').value = ''; save(); alts = []; renderAll(); });
   $('#csvFile').addEventListener('change', function(){ var f = this.files[0]; if(!f) return; var rd = new FileReader(); rd.onload = function(){ $('#csv').value = rd.result; $('#csvBtn').click(); }; rd.readAsText(f); });
   // drag a player-list CSV straight onto the salaries box (or anywhere on the page)
+  // the salary box is folded (11/17): open it whenever it has something to say, and when a file is dragged over the page
+  (function(){ var m = $('#srcMsg'), sb = $('#srcBox'); if(!m || !sb) return; if(window.MutationObserver) new MutationObserver(function(){ if(!m.hidden) sb.open = true; }).observe(m, {attributes: true, attributeFilter: ['hidden']});
+    document.addEventListener('dragenter', function(ev){ if(ev.dataTransfer && Array.prototype.indexOf.call(ev.dataTransfer.types || [], 'Files') >= 0) sb.open = true; }); })();
   (function(){ var box = $('.dfs .src'), n = 0; function has(ev){ return ev.dataTransfer && Array.prototype.indexOf.call(ev.dataTransfer.types || [], 'Files') >= 0; }
     document.addEventListener('dragenter', function(ev){ if(!has(ev)) return; ev.preventDefault(); n++; box.classList.add('drop'); });
     document.addEventListener('dragover', function(ev){ if(!has(ev)) return; ev.preventDefault(); ev.dataTransfer.dropEffect = 'copy'; });
@@ -518,7 +525,8 @@ JS = r"""
 DK_LINE = "<b>DraftKings salaries load automatically</b> for the main Sunday slate - nothing to do. <b>FanDuel</b> main-slate salaries load automatically too once BetSweep posts them for the week."
 body = f'''<div class="dfs">
  <section class="panel">
-  <h2>DFS lineup builder <b id="siteName">DraftKings</b><span class="r"><span class="seg" id="siteSeg"><button type="button" data-v="dk">DraftKings</button><button type="button" data-v="fd">FanDuel</button></span> <span class="seg" id="fmtSeg"><button type="button" data-v="classic">Classic</button><button type="button" data-v="sg">Single game (MVP)</button></span></span></h2>
+  <h2>DFS lineup builder <b id="siteName">DraftKings</b><span class="r segs"><span class="seg" id="siteSeg"><button type="button" data-v="dk">DraftKings</button><button type="button" data-v="fd">FanDuel</button></span> <span class="seg" id="fmtSeg"><button type="button" data-v="classic">Classic</button><button type="button" data-v="sg">Single game (MVP)</button></span></span></h2>
+  <details class="srcbox" id="srcBox"><summary><span><b>Load a salary list</b><small>FanDuel, showdowns and other slates. DraftKings' main slate loads by itself.</small></span><i aria-hidden="true">▾</i></summary>
   <div class="src">
    <p class="how">{DK_LINE} For <b>FanDuel</b> (or a DraftKings showdown / other slate), load the site's own player list: on FanDuel open a contest and use <b>Download players list</b> above the player pool; on DraftKings use <b>Export to CSV</b> on the draft screen. <b>Drop the file on this box</b>, choose it, or paste its contents. It stays in your browser - nothing is uploaded anywhere. Salaries change during the week, so reload before you enter.</p>
    <p class="how ph"><b>On a phone:</b> the FanDuel and DraftKings apps have no download button. Open fanduel.com (or draftkings.com) in Safari or Chrome, switch to the desktop site (Safari: tap <b>aA</b> &rarr; <b>Request Desktop Website</b>; Chrome: <b>&#8942;</b> &rarr; <b>Desktop site</b>), log in, open the contest and tap <b>Download players list</b>. The file lands in Files &rarr; Downloads (iPhone) or Downloads (Android); come back here and tap <b>Choose file</b>.</p>
@@ -526,6 +534,7 @@ body = f'''<div class="dfs">
    <div class="row"><button type="button" class="btn" id="csvBtn">Load salaries</button><input type="file" id="csvFile" accept=".csv,text/csv" aria-label="Salary CSV file"><button type="button" class="btn sec" id="clearSal">Clear salaries</button><button type="button" class="btn" id="shareSal" hidden>Share these salaries with everyone</button><span class="how" style="flex-basis:auto">No file? You can type a salary into any row below and build with the ones you fill in.</span></div>
    <div class="msg" id="srcMsg" hidden></div>
   </div>
+  </details>
   <div class="status"><span id="srcStat"></span><span>Week {WEEK} model · {n_act} active players · built {stamp} CT</span></div>
  </section>
  <div class="grid2">

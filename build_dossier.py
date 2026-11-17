@@ -17,7 +17,7 @@ Per game, for each offense against the other defense:
 Reads: out/builder_data.json, in/stats_team_week_2026.csv, in/stats_player_week_2026.csv, in/games.csv, in/weather.json, in/ctx_definj.json,
 in/ctx_news.json, research/situational_spots.json. Writes out/dossier/<gid>.html, out/dossier/index.html, out/dossier.json (served at /b/dossier.json).
 """
-import os, csv, json, math, html, collections, urllib.request
+import os, re, csv, json, math, html, collections, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 E = html.escape; SEASON = 2026; NV = "https://github.com/nflverse/nflverse-data/releases/download"
 FIX = {"LAR": "LA", "JAC": "JAX", "WSH": "WAS", "OAK": "LV", "SD": "LAC", "STL": "LA"}
@@ -180,7 +180,27 @@ def wx_line(a, b):
     H = {c: i for i, c in enumerate(wx[0])}; g = lambda c: r[H[c]] if len(r) > H[c] else ""
     if "dome" in str(g("Roof Status")).lower(): return ("info", f'Dome ({g("Venue")}).')
     risk = str(g("Weather Risk")); k = "bad" if risk.upper().startswith("HIGH") else ("watch" if risk.upper().startswith("MOD") else "info")
-    return (k, f'{g("Temperature F")}F, wind {g("Wind MPH")} (gusts {g("Gust MPH") or "-"}), {g("Precipitation Type") or "no precipitation"} {g("Precipitation Chance %") and str(g("Precipitation Chance %")) + "%"} - risk {risk}.')
+    # 11/17 (page pass): with no forecast in yet the line read "F, wind (gusts -), no precipitation - risk UNKNOWN (forecast unavailable)"
+    if str(g("Temperature F")).strip() == "" and str(g("Wind MPH")).strip() == "": return ("info", f'the forecast for {g("Venue") or "this game"} is not in yet (it loads within about a week of kickoff).')
+    _pt, _pc = str(g("Precipitation Type")).strip(), str(g("Precipitation Chance %")).strip()
+    _ptxt = "no rain or snow expected" if _pt.lower() in ("", "none") or _pc in ("", "0") else f"{_pt.lower()} {_pc}%"
+    return (k, f'{g("Temperature F")}F, wind {g("Wind MPH")} mph' + (f' (gusts {g("Gust MPH")})' if str(g("Gust MPH")).strip() else "") + f', {_ptxt} - risk {risk.lower() if risk.isupper() else risk}.')
+def news_line(p):
+    """one readable line per news item (11/17: they read "Woody Marks (HOU): News: doubtful - Woody Marks: Doubtful (Concussion). Marks ..."
+    and stopped mid-word at 180 characters)"""
+    tag = re.sub(r"^\s*news\s*:\s*", "", str(p.get("tag", "")), flags=re.I).strip(); txt = str(p.get("txt", "")).strip()
+    nm = str(p.get("player", "")); txt = re.sub(r"^" + re.escape(nm) + r"\s*:\s*", "", txt)
+    if len(txt) > 230:
+        cut = txt[:230]; stop = max(cut.rfind(". "), cut.rfind("). "))
+        txt = cut[:stop + 1] if stop > 80 else cut[:cut.rfind(" ")] + " ..."
+    return f'{nm} ({p.get("team", "")})' + (f', {tag}' if tag else "") + f': {txt}'
+# FanDuel's own main spread and total (the market tab); the schedule feed's line sat a point off it on two Week 11 games
+FDMAIN = {}
+try:
+    _mv = json.load(open(os.path.join(IN, "teammkt.json")))["values"]; _mh = _mv[0]; _is, _it = _mh.index("FD spread (main)"), _mh.index("FD total (main)")
+    for _r in _mv[1:]:
+        if _r and _r[0] and len(_r) > max(_is, _it) and f(_r[_is]) is not None and f(_r[_it]): FDMAIN[_r[0]] = (f(_r[_is]), f(_r[_it]))
+except Exception: pass
 DEFINJ = jload(os.path.join(IN, "ctx_definj.json"), {}) or {}
 NEWS = jload(os.path.join(IN, "ctx_news.json"), {}) or {}
 
@@ -265,13 +285,15 @@ for g in B.get("games", []):
     home = sch["home_team"] if sch else b
     away = a if home == b else b
     spr = f(sch["spread_line"]) if sch and sch.get("spread_line") not in ("", "NA", None) else None
+    tot_line = sch["total_line"] if sch and sch.get("total_line") not in ("", "NA") else None; mk_src = ""
+    if home in FDMAIN: spr = -FDMAIN[home][0]; tot_line = f"{FDMAIN[home][1]:g}"; mk_src = "FanDuel "
     line = {home: -spr, (a if home == b else b): spr} if spr is not None else {a: None, b: None}
     flags = []
     w1 = wx_line(a, b)
     if w1: flags.append((w1[0], "Weather: " + w1[1]))
     for x in (DEFINJ.get("games", {}) or {}).get(gid, []): flags.append((x.get("k", "info"), f'{x.get("tag", "")}: {x.get("txt", "")}'))
     news = [p for p in (NEWS.get("players") or []) if p.get("team") in (a, b) and p.get("sev", 0) >= 3][:6]
-    for p in news: flags.append((p.get("k", "info"), f'{p["player"]} ({p["team"]}): {p.get("tag", "")} - {p.get("txt", "")[:180]}'))
+    for p in news: flags.append((p.get("k", "info"), news_line(p)))
     spot = spots_for(a, b, line.get(a), home == a) + spots_for(b, a, line.get(b), home == b)
     sims, leaks = {}, {}
     sides = ""
@@ -283,7 +305,7 @@ for g in B.get("games", []):
     script = ""
     if probs and len(probs) == 4:
         script = (f'<p class="lede">Model: {E(a)} {g.get("pa", 0):.1f} - {E(b)} {g.get("pb", 0):.1f}. {E(a)} by 10+ {probs[0]:.0f}% · close, low scoring {probs[1]:.0f}% · shootout {probs[2]:.0f}% · {E(b)} by 10+ {probs[3]:.0f}%. Most likely: {E(g.get("most", ""))}.'
-                  + (f' Market: {E(home)} {-spr:+g}' if spr is not None else "") + (f', total {sch["total_line"]}' if sch and sch.get("total_line") not in ("", "NA") else "") + '.</p>')
+                  + (f' {mk_src}line: {E(home if spr >= 0 else away)} {-abs(spr):g}' if spr is not None else "") + (f', total {tot_line}' if tot_line else "") + '.</p>')
     fl = "".join(f'<li class="{k}">{E(t)}</li>' for k, t in flags) or '<li>No weather, defensive-injury or news flags in this build.</li>'
     sp = "".join(f'<li class="{"good" if k == "lean" else ""}">{E(t)}</li>' for k, t in spot) or '<li>No tested spot applies to this game.</li>'
     desc = f'{away} at {home}, Week {W}: how each offense has done against defenses like this one, where each defense leaks by position, game script, weather, injuries, news and the situational spots that actually hold up.'

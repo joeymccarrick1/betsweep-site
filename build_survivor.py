@@ -180,6 +180,12 @@ CSS = """
 .sv .teams button{font:inherit;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.04em;min-height:44px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;border-left:6px solid var(--tc,var(--line))}
 .sv .teams button.used{background:none;color:var(--mute);text-decoration:line-through;opacity:.62;border-style:dashed;border-left-style:solid}
 .sv .hint{color:var(--mute);font-size:13px;margin:6px 0 0;line-height:1.45}
+.sv details.svset{margin:14px 0 4px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.sv details.svset > summary{cursor:pointer;list-style:none;min-height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13.5px;color:var(--ink)}
+.sv details.svset > summary::-webkit-details-marker{display:none} .sv details.svset > summary::after{content:"▾";color:var(--mute);font-size:15px} .sv details.svset[open] > summary::after{content:"▴"}
+.sv details.svset .row{padding:0 14px 12px;margin:0}
+.sv #svpick:empty{display:none} .sv #svpick{margin:0 0 6px}
+@media (max-width:560px){ .sv .teams{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px} .sv .teams button{font-size:13.5px;border-left-width:4px;letter-spacing:0;padding:0} .sv td.n small{white-space:normal} .sv tr.opt td:first-child{white-space:nowrap} }
 .sv .call{margin:14px 0 6px;padding:14px 16px;border:2px solid var(--red);border-radius:14px;background:var(--card)}
 .sv .call small{display:block;font-family:var(--display);font-weight:800;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
 .sv .call b.pick{font-family:var(--brand);font-style:italic;font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.01em;display:block}
@@ -206,7 +212,7 @@ JS = r"""
 (function(){
   var D = window.__SV, T = D.teams, ALL = Object.keys(T).sort(), KEY = 'bs_survivor', $ = function(s){ return document.querySelector(s); };
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-  function pct(p){ return p >= 0.995 ? '99%+' : p < 0.0005 ? '<0.1%' : p < 0.1 ? (p * 100).toFixed(1) + '%' : Math.round(p * 100) + '%'; }
+  function pct(p){ return p >= 0.995 ? '99%+' : p < 0.0005 ? '<0.1%' : p < 0.0995 ? (p * 100).toFixed(1) + '%' : Math.round(p * 100) + '%'; }
   // ---- saved state: several pools, each with its own used teams and its last week ----
   var S; try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){ S = null; }
   if(!S || !Array.isArray(S.pools) || !S.pools.length) S = {cur: 0, pools: [{name: 'My pool', used: [], to: D.last, pick: {}}]};
@@ -250,7 +256,7 @@ JS = r"""
     $('#svteams').innerHTML = ALL.map(function(t){ return '<button type="button" data-t="' + t + '" class="' + (usedSet[t] ? 'used' : '') + '" style="--tc:' + esc(T[t].c[0]) + '" title="' + esc(T[t].n) + '" aria-pressed="' + (usedSet[t] ? 'true' : 'false') + '">' + t + '</button>'; }).join('');
     $('#svused').textContent = p.used.length ? p.used.length + ' used: ' + p.used.slice().sort().join(', ') : 'None marked yet. Tap every team you have already picked in this pool.';
     var toSel = $('#svto'), o = ''; for(var w = (from || D.week); w <= D.last; w++) o += '<option value="' + w + '"' + (w === p.to ? ' selected' : '') + '>Week ' + w + (w === D.last ? ' (end of the regular season)' : '') + '</option>'; toSel.innerHTML = o;
-    var out = $('#svout');
+    var out = $('#svout'), pk = $('#svpick'); if(pk) pk.innerHTML = '';   // 11/17: the pick sits above the teams grid, the tables below it
     if(from === null){ out.innerHTML = '<p class="none">The regular season is over - nothing left to plan.</p>'; return; }
     var to = Math.max(from, Math.min(p.to, D.last)), weeks = []; for(w = from; w <= to; w++) weeks.push(w);
     var M = table(from, to), rest = weeks.slice(1), cands = [];
@@ -271,10 +277,13 @@ JS = r"""
     document.querySelectorAll('#svbasis button').forEach(function(bb){ var on = bb.dataset.basis === basis; bb.classList.toggle('on', on); bb.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     var planned = {}; Object.keys(top.picks).forEach(function(w){ planned[top.picks[w]] = +w; }); planned[top.t] = from;
     var one = weeks.length === 1, h = '';
+    // "drops the whole run from 15% to 15%" (11/17): show the decimal when the rounded numbers match, and say so when even that is the same
+    function drop(x, y){ var a = pct(x), b = pct(y); if(a !== b) return 'drops the whole run from ' + a + ' to ' + b; a = (x * 100).toFixed(1) + '%'; b = (y * 100).toFixed(1) + '%'; return a !== b ? 'drops the whole run from ' + a + ' to ' + b : 'leaves the whole run about the same (' + pct(x) + ')'; }
     h += '<div class="call"><small>Week ' + from + ' · ' + esc(p.name) + '</small><b class="pick">' + esc(T[top.t].n) + ' <span style="font-size:.6em;font-style:normal;opacity:.7">' + top.t + ' ' + esc(vs(top.t, top.x)) + '</span></b>'
        + '<p>' + pct(top.x.p) + ' to win this week' + why(top.x) + (one ? '.' : '. Taking them now leaves the best road through Week ' + to + ': <b>' + pct(Math.exp(top.lp)) + '</b> to survive every week' + (top.ok ? '' : ' - but some later week has no team left') + '.') + '</p>'
-       + ((safest.t !== top.t && !one) ? '<p>The safest pick this week is ' + esc(T[safest.t].n) + ' (' + pct(safest.x.p) + '), but ' + (planned[safest.t] && planned[safest.t] !== from ? 'the plan wants them in Week ' + planned[safest.t] + ': ' : '') + 'taking them now drops the whole run from ' + pct(Math.exp(top.lp)) + ' to ' + pct(Math.exp(safest.lp)) + '.</p>' : '')
+       + ((safest.t !== top.t && !one) ? '<p>The safest pick this week is ' + esc(T[safest.t].n) + ' (' + pct(safest.x.p) + '), but ' + (planned[safest.t] && planned[safest.t] !== from ? 'the plan wants them in Week ' + planned[safest.t] + ': ' : '') + 'taking them now ' + drop(Math.exp(top.lp), Math.exp(safest.lp)) + '.</p>' : '')
        + '</div>';
+    var hCall = h; h = '';
     h += '<h2>Week ' + from + ' options</h2><div class="tw"><table><thead><tr><th>Team</th><th>Win this week</th>' + (one ? '' : '<th>Survive to Wk ' + to + '</th><th class="hidem">Plan wants them</th>') + '</tr></thead><tbody>';
     cands.slice(0, 14).forEach(function(c, i){ h += '<tr class="opt' + (c.t === cur.t ? ' sel' : '') + '" data-pick="' + c.t + '"><td><b class="t">' + c.t + '</b> ' + esc(vs(c.t, c.x)) + (i === 0 ? '<span class="tag best">Best</span>' : '') + (c.t === safest.t && i !== 0 ? '<span class="tag">Safest</span>' : '') + '<small>' + esc(c.x.k) + '</small></td><td class="n">' + pct(c.x.p) + src(c.x) + split(c.x) + '</td>'
         + (one ? '' : '<td class="n">' + (c.ok ? pct(Math.exp(c.lp)) : 'no team left later') + '</td><td class="n hidem">' + (planned[c.t] ? (planned[c.t] === from ? 'now' : 'Week ' + planned[c.t]) : '—') + '</td>') + '</tr>'; });
@@ -285,7 +294,7 @@ JS = r"""
       rest.forEach(function(w){ var t = cur.picks[w]; if(!t){ h += '<tr><td class="n">' + w + '</td><td colspan="3" class="est">no team left</td></tr>'; return; } var x = M[w][t]; cum *= x.p;
         h += '<tr><td class="n">' + w + '</td><td><b class="t">' + t + '</b> ' + esc(vs(t, x)) + '<small>' + esc(x.k) + '</small></td><td class="n">' + pct(x.p) + src(x) + '</td><td class="n">' + pct(cum) + '</td></tr>'; });
       h += '</tbody></table></div>'; }
-    out.innerHTML = h;
+    if(pk){ pk.innerHTML = hCall; out.innerHTML = h; } else out.innerHTML = hCall + h;
   }
   document.addEventListener('click', function(e){
     var b = e.target.closest && e.target.closest('button, tr.opt'); if(!b || !b.closest('.sv')) return;
@@ -319,11 +328,15 @@ page = f"""<title>Survivor planner · BetSweep</title>
 <h1>Survivor planner</h1>
 <p class="lead">For elimination pools where you pick one team to win each week and can never use a team twice. Mark the teams you have already used. You get the best pick this week and the best team for every week left, so you do not burn one you will need later.</p>
 <div class="pools" id="svpools"></div>
-<div class="row"><span>Plan through</span><select id="svto" aria-label="Last week of the pool"></select><button type="button" id="svrename">Rename</button><button type="button" id="svclear">Clear used teams</button><button type="button" id="svdel">Remove pool</button></div>
+<div id="svpick"></div>
 <div class="row"><span>Win chances from</span><div class="seg" id="svbasis" role="group" aria-label="Whose win chances"><button type="button" data-basis="both">Both</button><button type="button" data-basis="model">Model</button><button type="button" data-basis="line">FanDuel lines</button></div></div>
 <h2>Teams you have used</h2>
 <div class="teams" id="svteams"></div>
 <p class="hint" id="svused"></p>
+<details class="svset"><summary>Pool settings</summary>
+<div class="row"><span>Plan through</span><select id="svto" aria-label="Last week of the pool"></select></div>
+<div class="row"><button type="button" id="svrename">Rename</button><button type="button" id="svclear">Clear used teams</button><button type="button" id="svdel">Remove pool</button></div>
+</details>
 <div id="svout"></div>
 <details style="margin-top:22px"><summary style="cursor:pointer;color:var(--mute);font-size:13.5px">Team ratings behind the later weeks</summary>
 <div class="tw"><table style="max-width:420px"><thead><tr><th>#</th><th>Team</th><th>Points vs average</th></tr></thead><tbody>{rate_rows}</tbody></table></div>

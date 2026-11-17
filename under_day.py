@@ -69,12 +69,18 @@ def role_against(l, pf):
     return sorted({str(f[1]) for f in fl if isinstance(f, (list, tuple)) and len(f) > 1 and f[0] == "good" and str(f[1]).startswith(AGAINST[k])})
 
 
-def candidates(bd, soft=()):
-    out = []; pf = bd.get("pf") or {}
+# Owner 11/13, after Austin Ekeler under 1.5 catches lost badly: "Need to be more cognizant about legs like that" - unders on players
+# likely to see plenty of work. 11/17: the clearest case is a team whose targets are up for grabs. When key pass catchers have been
+# traded away (departed.py: 6+ targets a game gone), no catch or receiving-yard under is offered on anyone left on that team - the
+# Thursday card was Jonathan Taylor under 3.5 catches for a Colts team that had just lost its two top targets.
+GONE_MIN = 6.0
+def candidates(bd, soft=(), gone=None):
+    out = []; pf = bd.get("pf") or {}; gone = gone or {}
     for l in bd.get("legs") or []:
         if l.get("m") not in STAT or l.get("o") is None or l.get("p") is None: continue
         if l.get("m") in ("Under Receptions", "Under Receiving Yards") and str(l.get("pl", "")).strip().lower() in soft: continue   # coverage disagrees with the under
         if role_against(l, pf): continue   # his role or matchup argues for the over
+        if l.get("m") in ("Under Receptions", "Under Receiving Yards") and gone.get(l.get("tm"), 0) >= GONE_MIN: continue   # targets up for grabs on his team
         fd = l.get("fd") or {}
         if not (fd.get("m") and fd.get("s")): continue
         if any(isinstance(f, (list, tuple)) and len(f) > 1 and str(f[1]).startswith(("Q ", "Q·", "Questionable", "Doubtful", "OUT")) for f in l.get("fh") or []): continue
@@ -92,10 +98,10 @@ def candidates(bd, soft=()):
     return [l for _, _, l in out]
 
 
-def choose(bd, now_ms, soft=()):
+def choose(bd, now_ms, soft=(), gone=None):
     """{date: entry} - the best under for every game day that still has the pick's game ahead of it."""
     G = {g["gid"]: g for g in bd.get("games") or []}; picks = {}
-    for l in candidates(bd, soft):
+    for l in candidates(bd, soft, gone):
         g = G.get(l["g"]) or {}; ko = g.get("ko") or 0
         if not ko or ko <= now_ms: continue
         d = day_of(ko)
@@ -131,7 +137,10 @@ def build(in_dir="in", out_dir="out", clone=None, now_ms=None):
             log = json.load(open(p)); log = log if isinstance(log, list) else []
             if log: break
         except Exception: pass
-    soft = soft_draws(in_dir, bd.get("week")); picks = choose(bd, now_ms, soft); keep = [e for e in log if (e.get("ko") or 0) <= now_ms]      # kicked off = frozen
+    try:
+        import departed as _DEP; gone = _DEP.per_team(_DEP.load(in_dir, bd.get("week")))
+    except Exception: gone = {}
+    soft = soft_draws(in_dir, bd.get("week")); picks = choose(bd, now_ms, soft, gone); keep = [e for e in log if (e.get("ko") or 0) <= now_ms]      # kicked off = frozen
     frozen_days = {e["date"] for e in keep}
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for d, e in sorted(picks.items()):

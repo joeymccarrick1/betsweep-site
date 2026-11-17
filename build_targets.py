@@ -16,6 +16,10 @@ import json, os, csv, statistics, datetime as dt
 
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 TV = json.load(open(os.path.join(OUT, "trade_values.json"))); W = int(TV["week"])
+def _cap(t):
+    """First letter up, the rest left alone (WR7 stays WR7)."""
+    return t[:1].upper() + t[1:]
+
 def ppr(a): return 0.04 * a["py"] + 4 * a["ptd"] - 2 * a["int"] + 0.1 * a["ry"] + 6 * a["rtd"] + a["rec"] + 0.1 * a["recy"] + 6 * a["rectd"]
 # ---- remaining schedule ease per team and position: mean defensive rank of the opponents left (rank 1 = allows the most = easiest) ----
 RK = {}
@@ -75,7 +79,7 @@ for r in rows:
         elif r.get("snap"): why.append("on " + snap_txt(r) + " - the role is intact")
         if g >= 6: why.append(f"the market has him {r['pos']}{r['krank']}, the model {r['pos']}{r['mrank']}")
         if abs(r["ease"]) >= 2: why.append(sched_txt(r))
-        buy.append({**{k: r[k] for k in ("n", "pos", "tm", "S", "l3", "snap", "sig", "ease", "mrank")}, "krank": r.get("krank"), "score": round(sc, 2), "why": "; ".join(why).capitalize() + "."})
+        buy.append({**{k: r[k] for k in ("n", "pos", "tm", "S", "l3", "snap", "sig", "ease", "mrank")}, "krank": r.get("krank"), "score": round(sc, 2), "why": _cap("; ".join(why)) + "."})
     # sell high: hot stretch on a flat or shrinking role, into a hard schedule, or the market has him too high
     if not role_up and (hot >= 3.5 or g <= -6 or (role_dn and hot >= 1.5)):
         sc = min(hot, 12) / 3 + (1.2 if role_dn else 0) - r["ease"] / 6 - g / 5
@@ -85,7 +89,7 @@ for r in rows:
         elif r.get("snap"): why.append("on " + snap_txt(r) + " - nothing in the role explains the jump")
         if g <= -6: why.append(f"the market has him {r['pos']}{r['krank']}, the model {r['pos']}{r['mrank']}")
         if abs(r["ease"]) >= 2: why.append(sched_txt(r))
-        sell.append({**{k: r[k] for k in ("n", "pos", "tm", "S", "l3", "snap", "sig", "ease", "mrank")}, "krank": r.get("krank"), "score": round(sc, 2), "why": "; ".join(why).capitalize() + "."})
+        sell.append({**{k: r[k] for k in ("n", "pos", "tm", "S", "l3", "snap", "sig", "ease", "mrank")}, "krank": r.get("krank"), "score": round(sc, 2), "why": _cap("; ".join(why)) + "."})
 def spread(lst, n=8, per_pos=3):
     lst.sort(key=lambda r: -r["score"]); out = []; cnt = {}
     for r in lst:

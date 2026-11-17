@@ -211,7 +211,14 @@ NAV_CSS = """<style>""" + ACCT.ACCOUNT_CSS + BIGGER_CSS + """
 @media (max-width:760px){
   .top .mast{padding-block:8px 4px;gap:8px} .top .mast img{display:none} .top .mast h1{font-size:22px;gap:2px} .top .mast h1 small{font-size:10.5px;letter-spacing:.14em} .top .mast p{display:none} .top .nav{padding-block:0 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch} .top .nav::-webkit-scrollbar{display:none}
   .top .nav a{white-space:nowrap;flex:none}
-  body.bs-scrolled .top .mast{display:none} body.bs-scrolled .top{margin-bottom:10px}
+  /* 11/17 (page pass): the title now scrolls away with the page and only the chip row sticks. Until now the title was hidden on the way
+     down and shown again on the way up, which changed the page's height each time; browsers that do not anchor scroll (iOS Safari)
+     moved the content about 50px under the reader's thumb whenever the direction changed. */
+  .top{display:contents}
+  .top .mast{background:var(--bg)}
+  .top .nav{position:sticky;top:calc((53px + env(safe-area-inset-top,0px)) / 1.1);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:18px;padding-top:6px}
+  .top .nav:empty{display:none}
+  .top .nav:not(:has(a + a)){position:static;border-bottom:0;margin-bottom:10px}   /* a lone back link is not worth pinning (trade page) */
 }
 @media (min-width:761px){
   /* desktop: the sticky page header is up to 197px tall (logo, title, paragraph, slate chips); scrolling down keeps title + chips only */
@@ -409,7 +416,9 @@ APP_JS = r"""<script>
       // land just below the sticky chrome as it will look once scrolled (the header compacts on scroll), whatever the page's own margins
       document.body.classList.add('bs-scrolled');
       var nav = document.querySelector('.sitenav'), top = document.querySelector('.top');
-      var chrome = (nav ? nav.getBoundingClientRect().height : 0) + (top && getComputedStyle(top).position === 'sticky' ? top.getBoundingClientRect().height : 0) + 8;
+      var chips = document.querySelector('.top .nav');   // phones: the chip row sticks on its own (the title scrolls away)
+      var chrome = (nav ? nav.getBoundingClientRect().height : 0) + (top && getComputedStyle(top).position === 'sticky' ? top.getBoundingClientRect().height : 0)
+                 + (chips && getComputedStyle(chips).position === 'sticky' && !(top && top.getBoundingClientRect().height) ? chips.getBoundingClientRect().height : 0) + 8;
       var y = el.getBoundingClientRect().top + (window.scrollY || 0) - chrome; window.scrollTo(0, Math.max(0, y)); lastY = y; }, 60); }
   window.addEventListener('load', landOnHash); window.addEventListener('hashchange', landOnHash);
   // 1b. 11/10 evening: on a phone the first screen of many pages was the title and eight lines of explanation. An introduction longer

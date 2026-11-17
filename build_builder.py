@@ -1216,6 +1216,12 @@ details.gdone>.gcard{margin:0 10px 10px}
 .price b{font-family:var(--display);font-size:22px;font-weight:700;line-height:1.1}
 .price .wide{grid-column:1/-1}
 .price .sgwhy{border-left:3px solid var(--line);padding-left:9px} .price .sgwhy span{font-size:12px;line-height:1.4;color:var(--mute)}
+.price .sgq .sgqr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px}
+.price input.bkin{font:inherit;font-size:16px;width:104px;min-height:38px;padding:0 9px;margin-left:5px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}   /* was the browser's bare white box */
+.price .sgq input{font:inherit;font-size:16px;font-weight:700;width:92px;min-height:42px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+.price .sgq input.bad{border-color:var(--bad)} .price .sgq input:focus{outline:none;border-color:var(--ink)}
+.price .sgq button{font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:42px;padding:0 13px;border-radius:8px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.price .sgq #sgqSign{min-width:42px;padding:0;font-size:19px;font-family:var(--body)} .price .sgq #sgqGo{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .take{padding:10px 14px;background:var(--chalk);font-size:13px;border-bottom:1px solid var(--line)}
 .tgt{padding:10px 14px 12px;border-bottom:1px solid var(--line)}
 .tgt .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;color:var(--mute)}
@@ -1532,7 +1538,10 @@ BUILDER_JS = r"""
   // One leg per game: the legs multiplied. Two or more legs in one game: FanDuel prices them together, so the estimate is
   // exp(-c (n-1)^p) / (FanDuel's implied chances joined with the same correlations the slip uses); c and p come from FanDuel's own quotes
   // on the same-game slips we posted (D.sgp, research/sgp_discount.py, refit on Tuesdays). Always shown as "≈": the quote is the price.
-  var _spK = null, _spV = null;
+  // 11/17: the reader can type FanDuel's own price for the exact slip (SGQ, kept for this visit, keyed by the legs and their prices); every
+  // number on the slip then uses it and the "≈" goes away. Change a leg and the key changes, so a stale quote can never price a new slip.
+  var _spK = null, _spV = null, SGQ = {};
+  function slipKey(ls){ return bookLegs(ls).map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(','); }
   function slipPrice(ls){
     var bl = bookLegs(ls), key = bl.map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(',');
     if(key === _spK) return _spV;
@@ -1542,7 +1551,16 @@ BUILDER_JS = r"""
       var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); x._sc = 0; return x; }));
       if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
       same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
-    _spK = key; _spV = {d: same ? d : mult, mult: mult, same: same}; return _spV; }
+    var est = same ? d : mult, q = same ? SGQ[key] : null;
+    _spK = key; _spV = q ? {d: dec(q), mult: mult, same: true, quoted: q, est: est} : {d: est, mult: mult, same: same}; return _spV; }
+  function sgqSet(){ var inp = $('#sgq'), sg = $('#sgqSign'); if(!inp) return; var n = parseInt(String(inp.value).replace(/[^0-9]/g, ''), 10), neg = /^\s*[-\u2212]/.test(inp.value) || !!(sg && sg.getAttribute('data-s') === '-');
+    if(!(n >= 100 && n <= 200000)){ inp.classList.add('bad'); inp.focus(); return; }
+    SGQ[slipKey(slipLegs())] = neg ? -n : n; _spK = null; renderSlip(); }
+  document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return; var b = t.closest('#sgqSign');
+    if(b){ var neg = b.getAttribute('data-s') !== '-'; b.setAttribute('data-s', neg ? '-' : '+'); b.textContent = neg ? '\u2212' : '+'; b.setAttribute('aria-label', neg ? 'Minus price - tap for plus' : 'Plus price - tap for minus'); return; }
+    if(t.closest('#sgqGo')){ sgqSet(); return; }
+    if(t.closest('#sgqClr')){ delete SGQ[slipKey(slipLegs())]; _spK = null; renderSlip(); } });
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Enter' && ev.target && ev.target.id === 'sgq'){ ev.preventDefault(); sgqSet(); } });
   function sgWhy(){ return (D.sgp && D.sgp.note) || 'FanDuel prices same-game legs together, so it pays less than the legs multiplied.'; }
   // ---- list ----
   function oddsOk(o){ if(st.odds==='all') return true; if(st.odds==='anchor') return o <= -200; if(st.odds==='mid') return o > -200 && o < 200; return o >= 200; }
@@ -1937,7 +1955,7 @@ BUILDER_JS = r"""
     var f = (p * decO - 1) / (decO - 1), cap = n >= 3 ? 1 : n === 2 ? 2 : 3, u = Math.max(0, Math.min(cap, f / 4 * 100));
     var txt = f <= 0 ? 'No bet by the model (negative EV) - fun money only' : (u < 0.1 ? 'Tiny edge - 0.1u at most' : (Math.round(u * 10) / 10) + 'u' + (u >= cap ? ' (capped)' : '') + (bkr ? ' = $' + (bkr * u * upc / 100).toFixed(2) : ''));
     return '<div class="wide stake"><small>Suggested stake · quarter Kelly · 1u = ' + upc + '% of bankroll</small><b style="color:' + (f > 0 ? 'var(--good)' : 'var(--mute)') + '">' + txt + '</b>' +
-      '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" style="width:90px"></span></div>'; }
+      '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" class="bkin"></span></div>'; }
   document.addEventListener('change', function(ev){ if(ev.target && ev.target.id === 'bkroll'){ try { localStorage.setItem('bs_bankroll', String(Math.max(0, +ev.target.value || 0))); } catch(e){} renderSlip(); } });
   // ---- owner 11/6 scenario explorer ("pick a game ending -> legs and slip reprice"): l.sc = the leg's chance under each of its game's four
   // endings [a by 10+, close & low, shootout, b by 10+] (build_builder.py: the boards' tested script tables, mixed back to the shown %).
@@ -1990,12 +2008,13 @@ BUILDER_JS = r"""
     var ev = fair*bookDec - 1;
     var sameGame = {}; ls.forEach(function(l){ sameGame[l.g] = (sameGame[l.g]||0) + 1; }); var sgp = Object.keys(sameGame).filter(function(g){ return sameGame[g] > 1; });
     $('#price').innerHTML =
-      '<div><small>FanDuel price</small><b>' + (sp.same ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.same ? 'same-game estimate · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
+      '<div><small>FanDuel price</small><b>' + (sp.same && !sp.quoted ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.quoted ? 'the price you typed · our estimate was ≈ ' + decToAm(sp.est) : sp.same ? 'same-game estimate · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="e ' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="e ' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+$':'−$') + Math.abs(ev).toFixed(2) + '</b></div>' +
-      '<div class="wide"><small>Payout on $10 at ' + (sp.same ? 'about that price' : 'the FanDuel price') + '</small><b>' + (sp.same ? '≈ ' : '') + '$' + (10*bookDec).toFixed(2) + '</b></div>' +
-      (sp.same ? '<div class="wide sgwhy"><small>Why not the legs multiplied</small><span>' + esc(sgWhy()) + ' Check the quote on FanDuel before you bet.</span></div>' : '') + stakeRow(fair, bookDec, ls.length) + bookRow(ls, sp.mult);
+      '<div class="wide"><small>Payout on $10 at ' + (sp.same && !sp.quoted ? 'about that price' : 'the FanDuel price') + '</small><b>' + (sp.same && !sp.quoted ? '≈ ' : '') + '$' + (10*bookDec).toFixed(2) + '</b></div>' +
+      (sp.same && !sp.quoted ? '<div class="wide sgwhy"><small>Why not the legs multiplied</small><span>' + esc(sgWhy()) + ' Check the quote on FanDuel before you bet.</span></div>' : '') +
+      (sp.same ? '<div class="wide sgq"><small>' + (sp.quoted ? 'Using FanDuel\'s price for this slip' : 'Type FanDuel\'s price for this slip') + '</small><span class="sgqr"><button type="button" id="sgqSign" data-s="' + (sp.quoted < 0 ? '-' : '+') + '" aria-label="' + (sp.quoted < 0 ? 'Minus price - tap for plus' : 'Plus price - tap for minus') + '">' + (sp.quoted < 0 ? '\u2212' : '+') + '</button><input id="sgq" type="text" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="' + String(decToAm(sp.quoted ? sp.est : bookDec)).replace(/^[+-]/, '') + '" value="' + (sp.quoted ? Math.abs(sp.quoted) : '') + '" aria-label="FanDuel\'s price for this exact slip"><button type="button" id="sgqGo">' + (sp.quoted ? 'Update' : 'Use it') + '</button>' + (sp.quoted ? '<button type="button" id="sgqClr">Back to the estimate</button>' : '') + '</span></div>' : '') + stakeRow(fair, bookDec, ls.length) + bookRow(ls, sp.mult);
     $('#take').style.display = ''; $('#take').innerHTML = 'Take it at <b>' + toAm(fair*0.95) + '</b> or better' + (sgp.length ? ' — it has same-game legs, so compare that number to FanDuel\'s same-game quote, not the multiplied price.' : '.');
     var flags = [];
     if(sgp.length) flags.push(sgp.length + ' game' + (sgp.length>1?'s':'') + ' with multiple legs (correlation priced in)');
@@ -2042,7 +2061,7 @@ BUILDER_JS = r"""
     if(flags.some(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; })){ $('#take').innerHTML = '<b>This slip cannot win as built</b> - see the warning below.'; }
     $('#flags').innerHTML = flags.map(function(f){ return '⚠ ' + esc(f); }).join('<br>');
     try { sweepBlock(ls, fair, bookDec, flags); } catch(e){ var _sv = $('#sweepv'); if(_sv) _sv.hidden = true; }
-    $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + (sp.same ? '≈' : '') + decToAm(bookDec) + ' · fair ' + toAm(fair);
+    $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + (sp.same && !sp.quoted ? '≈' : '') + decToAm(bookDec) + ' · fair ' + toAm(fair);
     fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); syncTarget(ls, sp.mult, sp.same);
     save(); if (typeof renderSaved === 'function') renderSaved();
   }
@@ -2413,7 +2432,7 @@ BUILDER_JS = r"""
   function slipText(){
     var ls = slipLegs(); if(!ls.length) return '';
     var sp = slipPrice(ls), bookDec = sp.d, fair = joint(ls);
-    return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (sp.same ? 'about ' : '') + decToAm(bookDec) + (sp.same ? ' (same-game estimate)' : '') + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co';
+    return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (sp.same && !sp.quoted ? 'about ' : '') + decToAm(bookDec) + (sp.quoted ? ' (FanDuel\'s same-game price)' : sp.same ? ' (same-game estimate)' : '') + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co';
   }
 
   $('#copy').addEventListener('click', function(){
