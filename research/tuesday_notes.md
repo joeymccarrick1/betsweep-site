@@ -102,3 +102,17 @@
   card, context grade and live grade - research/*_w10.txt); the 10 flags that moved the most players; closing-price share for
   Week 10; the FanDuel same-game discount table; tap targets on /benefits and /usage.
 
+## 11/17 late morning (after the owner's answers; RUNBOOK has each item)
+- DONE and live: touchdown role rule; game-card parlay steps its bar down ("best available", 3 of 13 cards with a player leg on
+  Tuesday's thin board); feeds timer confirmed every 10 minutes; first real Social grading run wrote 24 of 24 (all lost).
+- DONE: flag grade Weeks 8-10 (Matchup shifting now one watch point), honest / learned re-run with Week 10, promo grader reads
+  passing TDs, the fill-in quarterback rule on the sheet (Brissett 176.8 -> 241.4, Cousins 196.5 -> 218.3).
+- **Closing price, Week 10** (frozen legs vs FanDuel's last price before kickoff): of 220 legs whose price moved a point or more,
+  137 (62%) moved toward the model (Week 9: 178 of 356, 50%). Legs the model liked by 5+ points closed 0.7 points shorter on
+  average (94 legs); legs it faded closed 0.4 longer (383). Only 677 frozen legs matched a closing price (1,359 in Week 9) -
+  check why the closing capture got half as many.
+- Tap targets on /benefits and /usage: player names and FanDuel buttons are now 36px+ tall on touch screens (was 19 and 31).
+  Not yet published on its own - it rides the next rebuild.
+- Still open: FanDuel same-game discount table; the page pass (step 9); gameday.yml fetch retry; why Week 10's closing capture is
+  half of Week 9's; Cold L3 at 100 player-weeks; Thursday checks (availfix after the IND / HOU final report, inactive Void on Live).
+
