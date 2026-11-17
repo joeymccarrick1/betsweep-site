@@ -1283,6 +1283,9 @@ Tuesday roll) and reading what a phone shows.
   - Model's Best teaser on Today: his row stayed, with "+ Builder".
   - Boost finder: he could be one of the three legs, FanDuel link and all (the page never asked the list).
   - Line shop: his rows stayed, with the other book's button.
+  - The ready-made parlays on Today and Model's Best (`div.parlay`: Best same-game parlay, the Floor slip): no banner, and
+    "Add all to FanDuel" still carried his leg. They get the Boards parlay's red banner now; the three book buttons and
+    "Add all to slip" are hidden while it shows and "Open the board" stays.
 - **How it works now.** A row can name its player: `data-rk="Player|Market"` on the row and, where the name is not the row's
   `.n`, `data-rkn` on the name element. risk.js then marks the row `bsr-out`, puts the chip after the name and refuses every
   sportsbook link inside it (`a.fdgo`, `a.bsbtn`, FanDuel / DraftKings / Hard Rock addresses - the click handler now stops
@@ -1294,12 +1297,42 @@ Tuesday roll) and reading what a phone shows.
   the link is read). A posted promo holding him is the promo watch's job (a push to the owner).
 - **The list is only as fresh as the ESPN mirror.** In game windows that is three minutes. Outside them see the timers section
   (11/17): until the owner runs the timers SQL again the mirror can be hours old on a weekday afternoon.
-- **Tests.** tests/inactive_block.py, 15 checks, any week (clock a day before the first kickoff, finals stripped): Boards control
+- **Tests.** tests/inactive_block.py, 16 checks, any week (clock a day before the first kickoff, finals stripped): Boards control
   and blocked, a tap adds nothing, builder, player page, First TD rows / lists / tap, Today pick card / teaser / Under of the day,
-  Short view, Model's Best, Boost finder, Line shop. Add it to the pre-publish set.
+  Short view, the ready-made parlay, Model's Best, Boost finder, Line shop. It is in the pre-publish set.
 - **Found by building Week 11 before the roll went out** (reprice.py --allow-week-change --publish none on the first Week 11
   mirror, 7:20 AM): the build and the page gate were clean (536 pages, 0 problems). Two tests assumed a mid-week build:
   social_elsewhere expected house slips to exist (a Tuesday build has none - fixed in the test), builder_fold expected the chip
   row to lead with games still to come, which was only true for a page built after the earlier games. That one was the page's
   fault: the builder's chip ORDER now follows the clock like its dimming (`chipState`), as Boards already did.
+
+## 11/17, 8:10 AM CT: the news desk read other men's injuries as the player's own (and in-game exits as next week's status)
+
+Found by reading the first screen of the News page on the Week 11 build: the second card under "Out or doubtful" was Carson Beck,
+Arizona's STARTING quarterback. All 20 notes in that list were then read one by one; 7 were wrong.
+
+- **Someone else's injury** (`strip_others`, `strip_subject_injury`, the "who ..." rule in `my_clauses`):
+  - "Gardner Minshew's season-ending injury opens the door for Beck" made Carson Beck "News: out" (red flag on his legs, a proposed
+    OUT row) through Week 10 and into Week 11. "<Other man>'s <injury words>" is the other man's.
+  - "Lions star Aidan Hutchinson feared to have suffered season-ending knee injury celebrating sack of Drake Maye" was the source
+    shown for Drake Maye's OUT. (Maye IS out - "out indefinitely with potential ankle fracture", Monday - and the note and the
+    proposed row now cite that item.) Who suffered it is the last man named before the verb; only verbs whose subject is the injured
+    man are read this way (suffered, sustained, underwent, tore, needs surgery), never "ruled out / placed / released".
+  - "X replaces Y, who is out for the season": a "who ..." clause belongs to the last man named before it.
+- **A status published while the team was on the field is an exit from that game** (`in_game_window`: kickoff to 4.5 hours later),
+  whatever its wording, unless it is lasting (injured reserve, surgery, multi-week). "Geno Smith ruled out with ankle injury. Geno
+  Smith's day is over", "A.J. Brown ruled out of Lions game", "Brock Bowers was ruled out of Sunday's matchup ... in the opening
+  quarter" all stood as "News: out" for Week 11 because no in-game phrase the desk knew was in the clause about the player - and,
+  being the most severe note, they hid Monday's real reports (Bowers "day-to-day ... not as bad as we thought", Smith "tests did
+  not reveal any major injuries"). Those two now read "limited / questionable" from the Monday report; Brown reads "left last game".
+- **Hopeful about this week in other words** (HOPE): ESPN "Out" + "eyeing a return to action Sunday" (Monangai), + "expect him to
+  make progress ahead of Sunday's game" (Hockenson) are questionable, as the 11/10 rule intended. A hopeful line about the week
+  after a bye stays OUT ("coming out of the Week 11 bye").
+- On the Week 11 feed: "Out or doubtful" 20 -> 14; proposed availability rows 23 -> 18 (dropped: OUT for Beck, Brown, Bowers,
+  Smith, Monangai, Hockenson; added: Smith QUESTIONABLE). Nothing else changed.
+- `python3 news_desk.py --selftest` 54/54 (was 28).
+- A session still reads every quoted headline before it writes a row (Step 2a-ii). The flags and the News page have no reader in
+  between - that is where these showed.
+- Not touched: role proposals read from passing mentions ("former Raiders starting quarterback Kirk Cousins", "could be without
+  starting quarterback Baker Mayfield" both propose QB1 - true, for the wrong reason).
 

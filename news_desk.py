@@ -75,6 +75,34 @@ SAFE_CAPS = set("Sunday Monday Tuesday Wednesday Thursday Friday Saturday Januar
 def last_of(name):
     p = [x for x in str(name).split(" ") if x and not re.fullmatch(r"(jr|sr|ii|iii|iv|v)\.?", x, flags=re.I)]
     return p[-1] if p else str(name)
+# 11/17: absence wording that belongs to ANOTHER man, in a clause that also names this player. The desk carried Carson Beck - Arizona's
+# starting quarterback - as "News: out" through Week 10 and into Week 11 (red flag on his legs, first card under "Out or doubtful" on
+# the News page) from "Gardner Minshew's season-ending injury opens the door for Beck". "<Other man>'s <injury words>" is the other
+# man's, and so is a "who ..." clause that hangs off a clause ending on another man's name ("Allgeier replaces Bijan Robinson, who is
+# out for the season").
+_ABS = (r"(?:season[- ]ending |long[- ]term |serious |significant |latest |recent )?(?:injury|injuries|surgery|absence|suspension|ailment|setback|release|departure|exit|rehab|"
+        r"(?:torn|broken|fractured|sprained|strained|dislocated|ruptured) [a-z ]{2,24}|"
+        r"(?:knee|ankle|elbow|shoulder|hamstring|calf|foot|back|hand|finger|thumb|wrist|ribs?|hip|groin|quad|concussion|achilles|acl|mcl)(?: (?:injury|issue|surgery|sprain|strain|tear))?)")
+def strip_others(c, last):
+    def rep(m):
+        owner = [w for w in re.findall(r"[A-Za-z][\w.\-]*", m.group(1)) if not re.fullmatch(r"(?i)(jr|sr|ii|iii|iv|v)\.?", w)]
+        if not owner or owner[-1].lower() == last.lower() or owner[-1] in SAFE_CAPS: return m.group(0)
+        return " a teammate's news "
+    return re.sub(r"\b((?:[A-Z][\w.\-]+ ){0,3}[A-Z][\w.\-]+)['’]s? ((?:[\w\-]+ ){0,2}?" + _ABS + r")\b", rep, c)
+# 11/17, same morning: "Lions star Aidan Hutchinson feared to have suffered season-ending knee injury celebrating sack of Drake Maye"
+# made the Patriots' quarterback "News: out" with a proposed OUT row. Who suffered it is the last man named BEFORE the verb. Only
+# verbs whose subject is the injured man are read this way (suffered, sustained, underwent, tore, needs surgery) - never "ruled out",
+# "placed", "released", where the man named before the verb can be the coach or the team.
+_SUBJ_V = r"\b(suffer(?:s|ed|ing)?|sustain(?:s|ed|ing)?|undergo(?:es|ing)?|underwent|tore|ruptured|(?:needs?|needing|requires?|had|has|having) (?:\w+ ){0,2}surgery)\b"
+_PERSON = r"[A-Z][a-z][A-Za-z'’\-]+"
+def strip_subject_injury(c, last):
+    out = c
+    for m in list(re.finditer(_SUBJ_V, c, flags=re.I))[::-1]:
+        before = [w for w in re.findall(_PERSON, c[:m.start()]) if w not in SAFE_CAPS]
+        if not before or before[-1].lower() == last.lower(): continue
+        tail = re.match(r"(?:\W+[\w'’\-]+){0,8}?\W+(?:injury|injuries|surgery|tear|sprain|strain|fracture|concussion|acl|mcl|ucl|achilles)\b", c[m.end():], flags=re.I)
+        out = out[:m.start()] + " a teammate's news " + out[m.end() + (tail.end() if tail else 0):]
+    return out
 def my_clauses(blob, last):
     """the clauses of an item that are about this player. audit 11/10: sentence by sentence (no split after "vs." / "Jr." / an initial), and a
     tail that names nobody else stays with him - "Josh Jacobs to have surgery on fractured finger, out indefinitely" lost "out indefinitely",
@@ -85,12 +113,24 @@ def my_clauses(blob, last):
         else: sents.append(x)
     out = []
     for sn in sents:
-        prev = False
+        prev = False; tail = None      # tail: the last man named in the clause just kept
         for c in [c for c in re.split(r",\s*|;\s*|\s+(?:but|while|whereas|after|because|since|following|behind|in place of|with|alongside|and)\s+", sn) if c.strip()]:
-            if re.search(r"\b" + re.escape(last) + r"\b", c): out.append(c); prev = True
-            elif prev and not [w for w in re.findall(r"\b[A-Z][A-Za-z]+", c) if w not in SAFE_CAPS]: out.append(c)
+            if re.search(r"\b" + re.escape(last) + r"\b", c):
+                out.append(strip_subject_injury(strip_others(c, last), last)); prev = True
+                nm = [w for w in re.findall(r"\b[A-Z][A-Za-z]+", c) if w not in SAFE_CAPS]; tail = nm[-1] if nm else None
+            elif prev and not [w for w in re.findall(r"\b[A-Z][A-Za-z]+", c) if w not in SAFE_CAPS]:
+                if re.match(r"\s*(who|whose|whom)\b", c, flags=re.I) and tail and tail.lower() != last.lower(): prev = False   # "..., who is out": about the other man
+                else: out.append(c)
             else: prev = False
     return out
+GAME_HOURS = 4.5
+def in_game_window(ts, lk):
+    """11/17: was the item published while the player's team was on the field (kickoff to GAME_HOURS later)? "Drake Maye ruled out early
+    in Week 10 after injuring ankle", "Geno Smith ruled out with ankle injury. Geno Smith's day is over.", "A.J. Brown ruled out of Lions
+    game", "Brock Bowers was ruled out of Sunday's matchup ... in the opening quarter" all came out mid-game and all four stood as
+    "News: out" for the NEXT week - no in-game phrase the desk knew was in the clause about the player. A status from inside the game
+    window is an exit from that game whatever its wording, unless it is lasting (injured reserve, surgery, multi-week)."""
+    return bool(ts and lk and lk <= ts <= lk + dt.timedelta(hours=GAME_HOURS))
 def bucket(txt):
     t = tidy(txt.lower()); hits = [(sev, name) for name, sev, rx in B if re.search(rx, t)]
     return max(hits)[1] if hits else None
@@ -117,9 +157,9 @@ def parse_ts(s):
 # When the reporter's own line is hopeful ABOUT THIS WEEK it is a questionable, not an out (the 11/10 morning run made that call by hand
 # for Brown and Montgomery). A hopeful line that points past this week ("hopeful to return after the bye", "could return in Week 12")
 # stays OUT, and so does anything ESPN lists as injured reserve / suspended / PUP / NFI.
-HOPE = r"full participant|full practice|participated fully|no (injury )?(game )?designation|off the (final )?injury report|spotted on the field|back at practice|returned to practice|practic(ed|es|ing) (in full|fully|on a limited|in a limited)|limited (participant|in practice)|hopeful|trending toward|could return|expected to (practice|return|play)|day[- ]to[- ]day|resum(e|es|ed|ing) practic"
+HOPE = r"full participant|full practice|participated fully|no (injury )?(game )?designation|off the (final )?injury report|spotted on the field|back at practice|returned to practice|practic(ed|es|ing) (in full|fully|on a limited|in a limited)|limited (participant|in practice)|hopeful|trending toward|could return|expected to (practice|return|play)|day[- ]to[- ]day|resum(e|es|ed|ing) practic|eyeing a return|targeting a return|spotted (working|running|at practice)|working out|(make|makes|making|made) progress|optimistic|on track to (play|return|practice)|chance to play|plans? to play|aims? to (play|return)"   # 11/17: Monangai "eyeing a return to action Sunday", Hockenson "expect him to make progress ahead of Sunday's game" stood as OUT
 def later_return(txt, week):
-    if re.search(r"after the bye|next week|in (two|three|four|five|six|several|a few|a couple( of)?|multiple|\d+) (weeks|games)|later this (season|month|year)|this season|down the stretch|late in the season", txt): return True
+    if re.search(r"after the bye|coming out of|(out of|following|past) the[\w' ]{0,24}bye|next week|in (two|three|four|five|six|several|a few|a couple( of)?|multiple|\d+) (weeks|games)|later this (season|month|year)|this season|down the stretch|late in the season", txt): return True
     try: wk = int(week)
     except Exception: return False
     return any(int(m) > wk for m in re.findall(r"week (\d{1,2})", txt))
@@ -243,7 +283,7 @@ def main(week):
             head_l = (it.get("title") or "").lower()
             lasting = bool(re.search(LASTING, tidy(low + (" " + head_l if last_of(name).lower() in head_l else "")))) or (it.get("src") == "espn-inj" and (it.get("title") or "").split(":", 1)[-1].strip().lower().startswith(("injured reserve", "suspend", "physically unable", "non-football", "reserve")))
             exit_ = False
-            if sb in ("OUT", "QUEST", "PROTOCOL") and re.search(INGAME, low) and not lasting:
+            if sb in ("OUT", "QUEST", "PROTOCOL") and (re.search(INGAME, low) or in_game_window(ts, lk)) and not lasting:
                 # an in-game exit: not a status for the next game. Before 11/10 these were skipped (two phrasings only) and the rest came out
                 # as "News: out" for the new week (Jaylen Waddle "ruled out of the rest of the Panthers game", Rhamondre Stevenson "ruled out
                 # of Packers game ... in the third quarter"). From the game just played it is worth a watch flag; an older one is nothing.
@@ -320,6 +360,21 @@ def selftest():
      ("Breece Hall", "Jets wide receiver Garrett Wilson is in the concussion protocol, but Breece Hall is trending toward a return.", "RETURN"),
      ("Dyami Brown", "Dyami Brown placed on injured reserve. Dyami Brown to miss at least four games", "OUT"),
      ("Luther Burden III", "Luther Burden III: Questionable (Concussion). Burden has a concussion, head coach Ben Johnson revealed.", "QUEST"),
+     # 11/17: someone else's absence is not his
+     ("Carson Beck", "Cardinals name Carson Beck starting QB: Rookie faces Aaron Donald, Myles Garrett in NFL debut. Gardner Minshew's season-ending injury opens the door for Beck, whose first assignment comes against one of the NFL's most accomplished pass-rushing duos", "ROLE_UP"),
+     ("Gardner Minshew", "Cardinals name Carson Beck starting QB: Rookie faces Aaron Donald, Myles Garrett in NFL debut. Gardner Minshew's season-ending injury opens the door for Beck, whose first assignment comes against one of the NFL's most accomplished pass-rushing duos", "OUT"),
+     ("Tyler Allgeier", "Allgeier replaces Bijan Robinson, who is out for the season.", None),
+     ("Bijan Robinson", "Allgeier replaces Bijan Robinson, who is out for the season.", "OUT"),
+     ("Jordan Love", "Malik Willis will start Sunday in place of Jordan Love, who is out for the season with a thumb injury.", "OUT"),
+     ("Malik Willis", "Malik Willis will start Sunday in place of Jordan Love, who is out for the season with a thumb injury.", "ROLE_UP"),
+     ("Josh Jacobs", "Josh Jacobs, who is out indefinitely, will not travel with the team.", "OUT"),
+     ("Emanuel Wilson", "Jacobs' finger surgery means more work for Emanuel Wilson.", None),
+     ("Puka Nacua", "Nacua's knee injury means he will not play Sunday.", "OUT"),   # his own possessive stays his
+     ("Drake Maye", "Lions star Aidan Hutchinson feared to have suffered season-ending knee injury celebrating sack of Drake Maye. Aidan Hutchinson leapt into the air after a sack and came down hard.", None),
+     ("Drake Maye", "Drake Maye suffered a season-ending ankle injury on a sack by Aidan Hutchinson.", "OUT"),
+     ("Jacory Croskey-Merritt", "Head coach Dan Quinn said Croskey-Merritt suffered a season-ending groin injury.", "OUT"),
+     ("Gardner Minshew", "Adam Schefter reports Minshew underwent season-ending surgery on his elbow.", "OUT"),
+     ("Josh Jacobs", "Packers coach Matt LaFleur ruled out Jacobs for Sunday.", "OUT"),   # "ruled out" is never read by who comes before it
     ]
     bad = 0
     for name, text, want in cases:
@@ -338,11 +393,22 @@ def selftest():
      ("Injured Reserve (Knee)", "He is hopeful to return to practice this week.", 10, "OUT"),
      ("Out (Calf)", "Smith did not practice Wednesday.", 10, "OUT"),
      ("Questionable (Concussion)", "Burden has a concussion, head coach Ben Johnson revealed.", 10, "QUEST"),
+     # 11/17: hopeful about THIS week in other words
+     ("Out (Toe)", "Monangai (toe/thumb) was spotted working out during Monday's unofficial practice and is eyeing a return to action Sunday against the Saints.", 11, "QUEST"),
+     ("Out (Wrist)", "Coach Kevin O'Connell said Monday that the Vikings expect Hockenson (wrist/chest) to make progress ahead of Sunday's game against the 49ers.", 11, "QUEST"),
+     ("Out (Quadriceps)", "Head coach Mike Macdonald said Monday that he's really optimistic Darnold will be able to get a full week's worth of practice coming out of the Seahawks' Week 11 bye.", 11, "OUT"),
+     ("Out (Hamstring)", "Mallory (hamstring) did not participate in Monday's walkthrough practice.", 11, "OUT"),
+     ("Out (Knee)", "The team is optimistic he can return in Week 13.", 11, "OUT"),
     ]
     for st, text, wk, want in espn:
         got = espn_bucket(st, text, bucket(text.lower()), wk)
         if got != want: bad += 1; print(f"FAIL espn {st}: got {got}, want {want} | {text[:90]}")
-    n = len(cases) + len(espn)
+    ko = dt.datetime(2026, 11, 15, 18, 0, tzinfo=dt.timezone.utc); H = lambda h: ko + dt.timedelta(hours=h)
+    win = [(H(0.5), True), (H(4.4), True), (H(-1.5), False), (H(5), False), (H(26), False), (None, False)]   # in-game / pregame inactives / postgame / Monday / no time
+    for t, want in win:
+        if in_game_window(t, ko) != want: bad += 1; print(f"FAIL game window {t}: want {want}")
+    if in_game_window(H(1), None): bad += 1; print("FAIL game window with no kickoff on record")
+    n = len(cases) + len(espn) + len(win) + 1
     print(f"news desk selftest: {n - bad}/{n} ok"); return bad
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--selftest": sys.exit(1 if selftest() else 0)
