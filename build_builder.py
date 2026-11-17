@@ -1761,8 +1761,14 @@ BUILDER_JS = r"""
     wrap.innerHTML = up.map(one).join('') + (dn.length ? '<details class="gdone"' + (doneOpen || !up.length ? ' open' : '') + '><summary><b>' + dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played</b> <small>finals and what the model projected</small></summary>' + dn.map(one).join('') + '</details>' : '');
     chipState();
   }
-  // the chip row is ordered when the page is built; which chips are dimmed follows the clock, so a page opened after kickoff is right too
-  function chipState(){ gorder.forEach(function(gid){ var a = document.querySelector('nav.nav a[href="#g-' + gid + '"]'); if(a) a.classList.toggle('played', started(gid)); }); }
+  // Which chips are dimmed follows the clock, and since 11/17 so does their order (it was set once, when the page was built: a page
+  // built on Tuesday and opened on Sunday afternoon led with thirteen played games). Games still to come lead, in kickoff order.
+  function chipState(){ var nav = document.querySelector('nav.nav'), links = [];
+    gorder.forEach(function(gid, i){ var a = document.querySelector('nav.nav a[href="#g-' + gid + '"]'); if(a){ a.classList.toggle('played', started(gid)); a.dataset.ord = i; links.push(a); } });
+    if(!nav || links.length < 2) return;
+    var want = links.slice().sort(function(x, y){ return (x.classList.contains('played') ? 1000 : 0) + (+x.dataset.ord) - ((y.classList.contains('played') ? 1000 : 0) + (+y.dataset.ord)); });
+    var cur = [].slice.call(nav.querySelectorAll('a[href^="#g-"]'));
+    if(cur.some(function(a, i){ return a !== want[i]; })) want.forEach(function(a){ nav.appendChild(a); }); }
   var doneOpen = false;
   document.addEventListener('toggle', function(e){ if(e.target && e.target.classList && e.target.classList.contains('gdone')) doneOpen = e.target.open; }, true);
   // a chip (or any link) to a finished game opens the fold first, so the jump lands on something

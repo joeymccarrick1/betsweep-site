@@ -126,6 +126,14 @@ RISK_JS = r"""(function(){
         var mv = MOVES[b.getAttribute('data-k')]; var host = b.closest('tr, .pb, .lg, .gdp, .sp, li') || b.parentNode; if (!host) return; var cur = host.querySelector(':scope .bsrmv');
         var html = mv && mv.news ? '<span class="bsrmv up" title="' + esc(mv.detail) + '">⚡ ' + esc(String(mv.out).split(' ').slice(-1)[0]) + ' out · price hasn\'t moved</span>' : mv ? '<span class="bsrmv ' + (mv.value ? 'up' : mv.dir === 'SHORTENED' ? 'up' : 'dn') + '" title="' + esc(mv.detail) + '">' + (mv.value ? '💰 better price now ' + (mv.now > 0 ? '+' : '') + Math.round(mv.now) : (mv.dir === 'SHORTENED' ? '📈 market moving our way ' : '📉 market drifted ') + (mv.pts > 0 ? '+' : '') + mv.pts) + '</span>' : '';
         if (cur && cur.outerHTML === html) return; if (cur) cur.remove(); if (mv) { var anchor = host.querySelector('.who b, .pbn, b') || b; anchor.insertAdjacentHTML('afterend', ' ' + html); } });
+      // 11/17: any row that names its player with data-rk="Player|Market" (the First TD tables and lists were outside every selector
+      // above: a ruled-out player kept a live "Add to slip" link). Ruled out = a chip by his name, the row marked bsr-out, and its
+      // FanDuel link refuses the tap.
+      document.querySelectorAll('[data-rk]').forEach(function(el){ var q = el.getAttribute('data-rk').split('|'), v = verdict(q[0], q[1]), blk = !!(v && v.level === 'block');
+        var nm = el.querySelector('[data-rkn]') || el.querySelector('.n'); if (nm){ var cur = nm.parentNode.querySelector(':scope > .bsrc'), html = blk ? chip(v) : '';
+          if (!(cur && cur.outerHTML === html)){ if (cur) cur.remove(); if (blk) nm.insertAdjacentHTML('afterend', ' ' + html); } }
+        if (el.classList.contains('bsr-out') !== blk) el.classList.toggle('bsr-out', blk);
+        el.querySelectorAll('a.fdgo, a.bsbtn, a[href*="fanduel.com"], a[href*="draftkings.com"], a[href*="hardrock.bet"]').forEach(function(a){ if (a.classList.contains('bsrblock') !== blk) a.classList.toggle('bsrblock', blk); if (blk) a.title = q[0] + ': ' + v.why; }); });
       pill(); stale();
     } catch(e){} busy = false; }
   // owner 11/5 "lists that don't go stale on Sunday morning": a ruled-out player (injury report, game-day inactive, owner OUT note) drops off
@@ -172,7 +180,7 @@ RISK_JS = r"""(function(){
       '<div class="bsrb"><ul>' + rs.map(function(r){ return '<li><b>' + esc(r.pl) + '</b> ' + esc(r.m || '') + '<small>' + esc(r.v.why) + '</small></li>'; }).join('') + '</ul>' +
       (nb ? '<button type="button" data-act="rm">Remove ruled-out legs</button>' : '') + '<button type="button" data-act="x" class="sec">Close</button></div>'; }
   // ---- block adds of ruled-out players ----
-  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('button.bsrblock'); if (!b) return;
+  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('button.bsrblock, a.bsrblock'); if (!b) return;
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); toast(b.title || 'Ruled out'); }, true);
   function toast(t){ var d = document.createElement('div'); d.className = 'bsrtoast'; d.textContent = '⛔ ' + t + ' - not added'; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 3200); }
   // ---- fetch ----
@@ -207,7 +215,7 @@ RISK_CSS = r"""
 .bsrmv{display:inline-flex;align-items:center;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;border:1px solid #2a8a4a;color:#2a8a4a;white-space:nowrap} .bsrmv.dn{border-color:#b7791f;color:#b7791f}
 .bsrzone{margin:0 0 8px;padding:7px 10px;border-radius:8px;background:color-mix(in srgb,#c98a12 16%,transparent);border:1px solid #c98a12;font-size:12.5px} .bsrdead{margin:0 0 8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,#d7332a 18%,transparent);border:1px solid #d7332a;color:inherit;font-size:13px;font-weight:600} .bsr-dead{outline:2px solid #d7332a;outline-offset:-2px} .bsrhid{grid-column:1/-1;margin:6px 0;font-size:12.5px;color:#d7332a} .bsrc{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font:600 11px/1.5 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:0;text-transform:none;vertical-align:middle;white-space:nowrap;cursor:help}
 .bsr-block{background:#b3261e;color:#fff} .bsr-warn{background:#f6e3b4;color:#6b4a00} .bsr-good{background:#dcefdc;color:#1f5d2b}
-button.bsrblock{opacity:.35;filter:grayscale(1)}
+button.bsrblock,a.bsrblock{opacity:.35;filter:grayscale(1)}
 #bsrpill{position:fixed;left:12px;right:12px;bottom:calc(var(--bs-tabs, 0px) + 74px);z-index:65;max-width:420px;margin:0 auto;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);font:14px/1.4 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;overflow:hidden}
 #bsrpill.warn{background:#fff4d6;color:#4d3600;border:1px solid #e3c477} #bsrpill.bad{background:#fde7e5;color:#5c120d;border:1px solid #e8a39d}
 #bsrpill .bsrh{padding:10px 14px;font-weight:700} #bsrpill .bsrb{display:none;padding:0 14px 12px} #bsrpill.open .bsrb{display:block}

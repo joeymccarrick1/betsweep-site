@@ -1215,8 +1215,11 @@ HOME_SLIP_JS = r"""<script>(function(){
 /* home page, Model's Best teaser: the first three candidates that are not already on screen in today's game card and have not kicked off */
 (function(){ var t = document.querySelector('.mbl.teaser'); if(!t) return; var cap = +t.getAttribute('data-cap') || 3, sec = t.closest('section'), note = sec && sec.querySelector('.tznote');
   function run(){ var up = {}; document.querySelectorAll('.tdgame.show .play[data-k], #tdlooksgrid .play[data-k]').forEach(function(p){ if(p.offsetParent !== null) up[p.getAttribute('data-k')] = 1; });
-    var n = 0; [].slice.call(t.children).forEach(function(p){ var on = !up[p.getAttribute('data-k')] && !p.classList.contains('started') && n < cap; p.hidden = !on; if(on) n++; });
+    var n = 0; [].slice.call(t.children).forEach(function(p){ var on = !up[p.getAttribute('data-k')] && !p.classList.contains('started') && !out(p) && n < cap; p.hidden = !on; if(on) n++; });
     t.hidden = n === 0; if(note) note.hidden = n > 0; }
+  // 11/17: a player the live injury list has ruled out (an inactive, about 90 minutes before kickoff) leaves the teaser; the next row moves up
+  function out(p){ try { var q = String(p.getAttribute('data-k') || '').split('|'), v = window.BSRisk && window.BSRisk.verdict(q[0], q[1]); return !!(v && v.level === 'block'); } catch(e){ return false; } }
+  document.addEventListener('bs-risk', run);
   run(); setTimeout(run, 600); setTimeout(run, 2500);
   document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('.tdtog')) setTimeout(run, 40); });
 })();</script>"""

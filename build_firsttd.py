@@ -164,7 +164,7 @@ for gid in dict.fromkeys(r["gid"] for r in rows):
     nav.append(f'<a href="#ftd-{gid}">{a}·{b}</a>'); ko = rs[0].get("ko") or 0
     ta = sum(r["lam"] for r in rs if r["t"] == a); tb = sum(r["lam"] for r in rs if r["t"] == b); tot = ta + tb
     trs = "".join(
-        f'<tr class="{"lead" if i < 3 else ""}"><td class="rk">{i+1}</td><td class="plc"><span class="plw">{badge(r["t"])}<span>{E(r["n"])}</span>{pos_b(r["p"])}</span></td>'
+        f'<tr class="{"lead" if i < 3 else ""}" data-rk="{E(r["n"])}|First TD"><td class="rk">{i+1}</td><td class="plc"><span class="plw">{badge(r["t"])}<span data-rkn>{E(r["n"])}</span>{pos_b(r["p"])}</span></td>'
         f'<td class="lam" title="projected rushing + receiving TD">{r["lam"]:.2f}</td><td class="pr"><b>{r["pr"]*100:.1f}%</b></td><td class="fair">{r["fair"]}</td>'
         f'<td class="fdp">{odds_str(r["fd"]) or "—"}</td>{edge_cell(r)}<td class="go">{fdlink(r, "Add to slip")}</td></tr>'
         for i, r in enumerate(rs))
@@ -184,7 +184,7 @@ def strip(rs, kind):
     out = []
     for i, r in enumerate(rs):
         price = f'<small>FD {odds_str(r["fd"])} · {r["edge"]*100:+.1f}</small>' if r["edge"] is not None else f'<small>fair {r["fair"]}</small>'
-        out.append(f'<li data-ko="{r.get("ko") or ""}"{" hidden" if i >= TOPN else ""}><a href="#ftd-{r["gid"]}">{badge(r["t"])}<span class="n">{E(r["n"])}</span>{pos_b(r["p"])}<b>{r["pr"]*100:.1f}%</b>{price}</a>{fdlink(r, "+ slip") if kind == "edge" else ""}</li>')
+        out.append(f'<li data-ko="{r.get("ko") or ""}" data-rk="{E(r["n"])}|First TD"{" hidden" if i >= TOPN else ""}><a href="#ftd-{r["gid"]}">{badge(r["t"])}<span class="n">{E(r["n"])}</span>{pos_b(r["p"])}<b>{r["pr"]*100:.1f}%</b>{price}</a>{fdlink(r, "+ slip") if kind == "edge" else ""}</li>')
     return "".join(out)
 
 CSS = """
@@ -251,13 +251,14 @@ FTD_JS = r"""<script>
   function run(){
     [].forEach.call(document.querySelectorAll('.ftd[data-ko]'), function(s){ s.classList.toggle('started', on(s)); });
     [].forEach.call(document.querySelectorAll('.ftdwrap .strips ul'), function(ul){ var n = 0, rows = ul.querySelectorAll('li[data-ko]');
-      [].forEach.call(rows, function(li){ var show = !on(li) && n < TOPN; li.hidden = !show; if(show) n++; });
+      [].forEach.call(rows, function(li){ var show = !on(li) && !li.classList.contains('bsr-out') && n < TOPN; li.hidden = !show; if(show) n++; });   // bsr-out: ruled out (risk.js)
       var note = ul.querySelector('li.alldone');
       if(rows.length && !n){ if(!note){ note = document.createElement('li'); note.className = 'none alldone'; note.textContent = "Every game has kicked off. Next week's first-touchdown prices usually land by Thursday."; ul.appendChild(note); } }
       else if(note) note.parentNode.removeChild(note); });
     [].forEach.call(document.querySelectorAll('nav.nav a[href^="#ftd-"]'), function(a){ var s = document.getElementById(a.getAttribute('href').slice(1)); a.classList.toggle('played', !!(s && s.classList.contains('started'))); });
   }
   run(); setInterval(run, 60000);
+  document.addEventListener('bs-risk', run);   // the live injury list arrived or changed: a ruled-out player leaves the two lists
 })();
 </script>""".replace("__TOPN__", str(TOPN))
 body = f'''<div class="ftdwrap">

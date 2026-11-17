@@ -44,7 +44,7 @@ def rows(BD):
         url = x.get("u") or (BL.url([x["s"]], b) if x.get("s") else None)
         if not url: continue
         k = (l["pl"], l["m"]) if not l.get("gl") else (l["g"], l["m"], (l.get("gl") or {}).get("side"))
-        r = {"t": leg_txt(l), "g": l["g"], "at": at(G[l["g"]]), "ko": G[l["g"]].get("ko") or 0, "fd": int(l["o"]), "b": b, "o": int(x["o"]), "gap": round(gap, 4),
+        r = {"t": leg_txt(l), "pl": "" if l.get("gl") else l["pl"], "m": l["m"], "g": l["g"], "at": at(G[l["g"]]), "ko": G[l["g"]].get("ko") or 0, "fd": int(l["o"]), "b": b, "o": int(x["o"]), "gap": round(gap, 4),
              "p": round(l["p"], 4) if l.get("p") is not None else None, "u": url, "more": round((dec(x["o"]) - 1) / (dec(l["o"]) - 1) - 1, 4)}
         if k not in best or r["gap"] > best[k]["gap"]: best[k] = r
     out = sorted(best.values(), key=lambda r: (-r["gap"], r["t"]))
@@ -58,7 +58,7 @@ def build(out_dir=OUT):
         import account as ACCT; _link, _base = ACCT._base_css()
     except Exception: _link, _base = "", ""
     items = "".join(
-        f'<li data-ko="{r["ko"]}"><div class="lg"><b>{E(r["t"])}</b><small>{E(r["at"])}' + (f' · model {r["p"] * 100:.0f}%' if r["p"] is not None else "") + '</small></div>'
+        f'<li data-ko="{r["ko"]}"' + (f' data-rk="{E(r["pl"])}|{E(r["m"])}"' if r.get("pl") else "") + f'><div class="lg"><b data-rkn>{E(r["t"])}</b><small>{E(r["at"])}' + (f' · model {r["p"] * 100:.0f}%' if r["p"] is not None else "") + '</small></div>'
         f'<div class="px"><span>FanDuel <b>{am(r["fd"])}</b></span><span class="best">{NAMES[r["b"]]} <b>{am(r["o"])}</b></span><em>pays {r["more"] * 100:.0f}% more</em></div>'
         f'<a class="bsbtn" href="{E(r["u"])}" target="_blank" rel="noopener">Bet at {NAMES[r["b"]]}</a></li>' for r in R[:60])
     lead = (f"Another book pays more than FanDuel on <b>{better} of the {priced}</b> legs that have a second price right now." if priced else "No second prices on the board yet.")
@@ -73,8 +73,10 @@ def build(out_dir=OUT):
 <p class="none" id="shnone" hidden>Every listed game has kicked off.</p>
 <p class="foot">Exact lines only: a book's nearest line is a different bet and is not compared. Prices as of {E(str(BD.get("built", "")))} CT and they move, so check the number before you bet. 21+ | Gamble responsibly.</p>
 </div>
-<script>(function(){{ function t(){{ var n = Date.now(), left = 0; document.querySelectorAll('.shl li').forEach(function(e){{ var k = +e.getAttribute('data-ko'); if(k && n >= k) e.hidden = true; else left++; }});
-  var no = document.getElementById('shnone'); if(no && document.getElementById('shl')) no.hidden = !!left; }} t(); setInterval(t, 60000); }})();</script>
+<script>(function(){{ function t(){{ var n = Date.now(), left = 0; document.querySelectorAll('.shl li').forEach(function(e){{ var k = +e.getAttribute('data-ko');
+    /* bsr-out (11/17): risk.js marks a row whose player the live injury list has ruled out - a better price on a bet the book will void is no use */
+    if((k && n >= k) || e.classList.contains('bsr-out')) e.hidden = true; else {{ e.hidden = false; left++; }} }});
+  var no = document.getElementById('shnone'); if(no && document.getElementById('shl')) no.hidden = !!left; }} t(); setInterval(t, 60000); document.addEventListener('bs-risk', t); }})();</script>
 """
     open(os.path.join(out_dir, "shop.html"), "w").write(page)
     top = f'; widest: {R[0]["t"]} FanDuel {am(R[0]["fd"])} vs {NAMES[R[0]["b"]]} {am(R[0]["o"])}' if R else ""

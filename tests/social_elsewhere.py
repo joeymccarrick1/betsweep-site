@@ -74,8 +74,10 @@ async def main():
             check(so["ids"] == ["p2", "p1", "p3", "p4"] and J("BAL vs LAC") in so["bar"] and not so["house"], f"[{theme}] Social opened from a game card shows that game's slips only, says so, and the house slips step aside ({so})")
             if SHOTS: await pg.evaluate("window.scrollTo(0, Math.max(0, document.querySelector('#feed .gfbar').getBoundingClientRect().top + scrollY - 190))"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/social-onegame-{theme}.png")
             await pg.click('#feed .gfbar a'); await pg.wait_for_timeout(400)
-            so2 = await pg.evaluate("""() => ({bar: !!document.querySelector('#feed .gfbar'), house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden), hash: location.hash})""")
-            check(so2 == {"bar": False, "house": True, "hash": ""}, f"[{theme}] 'Show every game' clears the filter ({so2})")
+            so2 = await pg.evaluate("""() => ({bar: !!document.querySelector('#feed .gfbar'), house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden), hash: location.hash, any: !!document.querySelector('.soc .house')})""")
+            # the house slips come back when the build has any (a Tuesday build has none until the week's first promo is posted)
+            any_house = so2.pop("any")
+            check(so2 == {"bar": False, "house": any_house, "hash": ""}, f"[{theme}] 'Show every game' clears the filter" + ("" if any_house else " (no house slips in this build)") + f" ({so2})")
             # a finished game: the card said "1 slip on Social", so that slip is what the link shows, though it lost
             await pg.goto("http://127.0.0.1:8851/social/?y=1#g=CIN-PIT", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
             sf = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), info: (document.getElementById('feedinfo') || {}).textContent || '', empty: !!document.querySelector('#feed .empty')})""")

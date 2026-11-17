@@ -175,9 +175,13 @@ CSS_HOME = """
 .udcard a.bsbtn{text-decoration:none;justify-self:end;white-space:nowrap}
 @media (max-width:560px){ .udcard{grid-template-columns:1fr} .udrec{justify-self:start} .udcard a.bsbtn{justify-self:stretch;text-align:center;justify-content:center;min-height:46px} }
 """
-JS = ("(function(){var c=[].slice.call(document.querySelectorAll('.udcard[data-ko]')),s=false;function t(){var n=Date.now();s=false;c.forEach(function(e){"
-      "var live=+e.getAttribute('data-ko')>n;e.hidden=!(live&&!s);if(live&&!s)s=true;});var w=document.getElementById('bsunder');if(w)w.hidden=!s;}"
-      "t();setInterval(t,60000);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')t();});})();")
+# 11/17: a card whose player the live injury list has ruled out is skipped (the next day's card shows, or the section goes) - the
+# book voids an under on an inactive player, and the page was still offering it with a FanDuel button.
+JS = ("(function(){var c=[].slice.call(document.querySelectorAll('.udcard[data-ko]')),s=false;"
+      "function out(e){try{var v=window.BSRisk&&window.BSRisk.verdict(e.getAttribute('data-pl'),e.getAttribute('data-m'));return !!(v&&v.level==='block');}catch(x){return false;}}"
+      "function t(){var n=Date.now();s=false;c.forEach(function(e){"
+      "var live=+e.getAttribute('data-ko')>n&&!out(e);e.hidden=!(live&&!s);if(live&&!s)s=true;});var w=document.getElementById('bsunder');if(w)w.hidden=!s;}"
+      "t();setInterval(t,60000);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')t();});document.addEventListener('bs-risk',t);})();")
 
 
 def _cards(picks, rec):

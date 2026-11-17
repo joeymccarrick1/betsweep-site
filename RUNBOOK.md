@@ -1074,7 +1074,7 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
 - **tests/social_feed.py** reads the week from the built Social page (was hard-coded to 10 / 9).
 - **The full set to run before a publish** (all week-independent now): reprice.py --publish none, then tests/home_filing.py,
   promo_clock.py, social_feed.py, social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py,
-  social_grade.py, weather_gate.py, and the crawl (`SITE=./site python3 tests/site_crawl.py`).
+  social_grade.py, weather_gate.py, and the crawl - since 3 AM on 11/17 that is `python3 tests/local_gate.py` (the bare site_crawl.py call opened nothing; see that section).
 
 
 ## 11/17, ~2 AM CT: the Live page graded finished games it had no numbers for - winners shown dead, losses saved (fixed)
@@ -1147,7 +1147,7 @@ Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on
   slip, a pasted total) and tests/live_first_screen.py (35: the three states in light and dark, chips, jumps, tools, notes).
 - **The full set to run before a publish is now:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py,
   social_feed.py, social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
-  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, and the crawl (`SITE=./site python3 tests/site_crawl.py`).
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, and the crawl - since 3 AM on 11/17 that is `python3 tests/local_gate.py` (the bare site_crawl.py call opened nothing; see that section).
   The live tests take `SITE=<a published copy>` to check what went out.
 
 ## 11/17, ~3 AM CT: earlier weeks' saved results are re-graded once; a First TD leg is not busted by a box score that did not load
@@ -1226,7 +1226,8 @@ Tuesday roll) and reading what a phone shows.
 - First real local run (3 AM, the build that went out as main 23853f97): 488 pages, 0 problems; the published copy: 514 pages, 0.
 - **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
   social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
-  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, and tests/local_gate.py.
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py (added
+  11/17 morning), `python3 availfix.py selftest`, and tests/local_gate.py.
 
 ## 11/17, ~3:15 AM CT: a leg on an inactive player is void on the Live page from the inactives list
 
@@ -1238,8 +1239,9 @@ Tuesday roll) and reading what a phone shows.
   "did not play": the slip can still cash, the payout line and the win card are left out, nothing is saved as a win or a loss.
   If he shows up in the box score after all, the note is ignored (a wrong note cannot void a man who is playing).
 - A void leg is left out of a slip's "pregame" chance as well as its chance from here.
-- The builder, Today and the boards do not use this yet: a leg on an inactive player can still be picked there until FanDuel pulls
-  it. Worth doing next with the same feed.
+- ~~The builder, Today and the boards do not use this yet: a leg on an inactive player can still be picked there until FanDuel pulls
+  it.~~ **Wrong - corrected 11/17 7:45 AM (section below).** Those pages have refused a ruled-out player since 11/1 through the
+  live injury list (risk.js), which gets the inactives too. What was really open is listed in that section.
 - Tests: live_finals.py 35 (inactive before kickoff, in play, a wrong note, a note for another team or another week).
 
 
@@ -1266,4 +1268,38 @@ Tuesday roll) and reading what a phone shows.
   same result from a cold start with both nflverse files missing.
 - **Not covered.** Rows the injury refresh wrote ("did not practice, no game designation yet") are the refresh's to update. A desk
   OUT is never softened here. The sheet's own tab keeps the old row until a session writes the fix.
+
+## 11/17, 7:45 AM CT: a ruled-out player cannot be bet from any page (tests/inactive_block.py) - with a correction
+
+- **Correction of the 3:15 AM section.** It said the builder, Today and the boards could still offer a leg on an inactive player.
+  Not so: since 11/1 every page reads the live injury list (/risk.js <- Supabase risk_feed; the slip-alerts function writes a
+  game-day inactive there as OUT, detail "Inactive", for games within three hours). Checked this morning in a browser with that
+  list answered by the test: Boards and player pages refuse every add button of his and put a "Ruled out" chip by his name; the
+  builder refuses the tap ("... not added") and leaves him out of quick builds; his single-pick cards leave Today and Model's
+  Best with a note ("Hidden since the build: ..."); a listed parlay that holds him gets a red banner.
+- **What really was open** (found by ruling out, page by page, a player that page offers):
+  - First TD: his row kept a live "Add to slip" FanDuel link and he stayed in "Most likely to score first" / "Best edges".
+  - Under of the day (Today and the Short view): his under stayed on offer with its FanDuel button. The book voids it.
+  - Model's Best teaser on Today: his row stayed, with "+ Builder".
+  - Boost finder: he could be one of the three legs, FanDuel link and all (the page never asked the list).
+  - Line shop: his rows stayed, with the other book's button.
+- **How it works now.** A row can name its player: `data-rk="Player|Market"` on the row and, where the name is not the row's
+  `.n`, `data-rkn` on the name element. risk.js then marks the row `bsr-out`, puts the chip after the name and refuses every
+  sportsbook link inside it (`a.fdgo`, `a.bsbtn`, FanDuel / DraftKings / Hard Rock addresses - the click handler now stops
+  `a.bsrblock` as well as `button.bsrblock`). Page scripts that keep a list listen for the `bs-risk` event the list fires when
+  it arrives or changes: First TD re-fills its two lists, Line shop hides the row, the Boost finder searches again without him,
+  the Under of the day shows the next day's card (or goes), the teaser moves the next row up.
+- **Left as it was.** A leg handed to the builder by link (`?add=`) lands in the slip and is flagged - "High risk" tag, the
+  "N legs in your betslip are at risk" pill with "Remove ruled-out legs" - rather than refused (the list is not loaded yet when
+  the link is read). A posted promo holding him is the promo watch's job (a push to the owner).
+- **The list is only as fresh as the ESPN mirror.** In game windows that is three minutes. Outside them see the timers section
+  (11/17): until the owner runs the timers SQL again the mirror can be hours old on a weekday afternoon.
+- **Tests.** tests/inactive_block.py, 15 checks, any week (clock a day before the first kickoff, finals stripped): Boards control
+  and blocked, a tap adds nothing, builder, player page, First TD rows / lists / tap, Today pick card / teaser / Under of the day,
+  Short view, Model's Best, Boost finder, Line shop. Add it to the pre-publish set.
+- **Found by building Week 11 before the roll went out** (reprice.py --allow-week-change --publish none on the first Week 11
+  mirror, 7:20 AM): the build and the page gate were clean (536 pages, 0 problems). Two tests assumed a mid-week build:
+  social_elsewhere expected house slips to exist (a Tuesday build has none - fixed in the test), builder_fold expected the chip
+  row to lead with games still to come, which was only true for a page built after the earlier games. That one was the page's
+  fault: the builder's chip ORDER now follows the clock like its dimming (`chipState`), as Boards already did.
 

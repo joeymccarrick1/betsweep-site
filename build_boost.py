@@ -162,7 +162,7 @@ JS = r"""
   // every combination of n games, one leg from each: keep the best value after the boost and the most likely that still clears the rules
   function find(o){
     var now = Date.now(), by = {};
-    D.legs.forEach(function(l){ var g = D.games[l.g]; if(!g || (g.ko && g.ko <= now)) return; if(o.safe && l.r >= 2) return; if(!o.gl && l.gl) return;
+    D.legs.forEach(function(l){ var g = D.games[l.g]; if(!g || (g.ko && g.ko <= now)) return; if(o.safe && l.r >= 2) return; if(!o.gl && l.gl) return; if(ruled(l)) return;
       var d = dec(l.o); if(o.minLeg != null && d < dec(o.minLeg) - 1e-9) return; var pe = Math.min(l.p, FEE / d); (by[l.g] = by[l.g] || []).push({l: l, d: d, pe: pe, v: pe * d}); });
     var gs = Object.keys(by), per = o.n >= 5 ? 3 : o.n === 4 ? 6 : 99;      // three legs or fewer: every leg of the pool is tried, so the answer is exact
     gs.forEach(function(g){ var a = by[g].slice().sort(function(x, y){ return (y.v - x.v) || (y.pe - x.pe); }).slice(0, per), b = by[g].slice().sort(function(x, y){ return y.pe - x.pe; }).slice(0, 2);
@@ -183,6 +183,10 @@ JS = r"""
     rec(0, o.n, 1, 1);
     return {best: best, safe: safe, tried: tried, games: gs.length};
   }
+  // 11/17: the live injury list (risk.js). A player it has ruled out - an inactive, about 90 minutes before kickoff - is left out of
+  // every slip; the page searches again when the list arrives or changes.
+  function ruled(l){ try { if(l.gl) return false; var v = window.BSRisk && window.BSRisk.verdict(l.pl, null); return !!(v && v.level === 'block'); } catch(e){ return false; } }
+  document.addEventListener('bs-risk', function(){ try { run(); } catch(e){} });
   function fd(legs){ return 'https://sportsbook.fanduel.com/addToBetslip?' + legs.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fm) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fs); }).join('&'); }
   function verdict(ev0, ev1){
     var a = 'Per $10 staked, over time: <b class="' + (ev0 >= 0 ? 'up' : 'dn') + '">' + money(ev0 * 10) + '</b> without the boost, <b class="' + (ev1 >= 0 ? 'up' : 'dn') + '">' + money(ev1 * 10) + '</b> with it (the boost is worth ' + money((ev1 - ev0) * 10) + '). ';
