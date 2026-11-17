@@ -21,7 +21,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
 <link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><meta charset="utf-8">
 <title>BetSweep Parlay Builder</title>
-<link rel="stylesheet" href="/s/tpl-5427811184.css">
+<link rel="stylesheet" href="/s/tpl-a76810447a.css">
 <style>/*LIVECSS*/
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
@@ -244,6 +244,12 @@ details.gdone>.gcard{margin:0 10px 10px}
 .price b{font-family:var(--display);font-size:22px;font-weight:700;line-height:1.1}
 .price .wide{grid-column:1/-1}
 .price .sgwhy{border-left:3px solid var(--line);padding-left:9px} .price .sgwhy span{font-size:12px;line-height:1.4;color:var(--mute)}
+.price .sgq .sgqr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px}
+.price input.bkin{font:inherit;font-size:16px;width:104px;min-height:38px;padding:0 9px;margin-left:5px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}   /* was the browser's bare white box */
+.price .sgq input{font:inherit;font-size:16px;font-weight:700;width:92px;min-height:42px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+.price .sgq input.bad{border-color:var(--bad)} .price .sgq input:focus{outline:none;border-color:var(--ink)}
+.price .sgq button{font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:42px;padding:0 13px;border-radius:8px;border:1.5px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.price .sgq #sgqSign{min-width:42px;padding:0;font-size:19px;font-family:var(--body)} .price .sgq #sgqGo{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .take{padding:10px 14px;background:var(--chalk);font-size:13px;border-bottom:1px solid var(--line)}
 .tgt{padding:10px 14px 12px;border-bottom:1px solid var(--line)}
 .tgt .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;color:var(--mute)}
@@ -414,7 +420,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 
 </style>
 
-<link rel="stylesheet" href="/s/site-34e4789b01.css"></head>
+<link rel="stylesheet" href="/s/site-3217789327.css"></head>
 <body>
 <nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><div class="navask" id="navask" data-eg="Stefon Diggs 43+ rec yds" data-team="Commanders"><form id="navaskf" role="search" action="/build/" method="get"><label for="navaskq">Ask BetSweep</label><div class="navaskr"><input type="search" id="navaskq" name="ask" maxlength="400" placeholder="Ask BetSweep" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"><button type="submit">Ask</button></div><p class="navaskh">Try <b>Stefon Diggs 43+ rec yds</b>, <b>Commanders</b> or <b>best td</b>.</p></form><div class="navaskout" id="navaskout" hidden aria-live="polite"></div></div><a href="/" class="">Today</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Games <i aria-hidden="true">▾</i></button><span class="ddh">Games</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/dossier/" class="">Game previews<small>The read before the bet</small></a><a href="/news/" class="">News desk<small>Who is out, limited or back</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd on"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/best/" class="">Model's Best<small>The week's edges in one list</small></a><a href="/build/" class="on">Parlay Builder<small>Every prop, priced</small></a><a href="/sweep/" class="">Sweep my slip<small>A verdict from a screenshot</small></a><a href="/pairs/" class="">Either-or TDs<small>Two names, one leg</small></a><a href="/shop/" class="">Line shop<small>Same leg, better price</small></a><a href="/boost/" class="">Boost finder<small>The best slip for a boost</small></a><a href="/teasers/" class="">Teaser finder<small>6, 6.5 and 7 points, priced</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Play <i aria-hidden="true">▾</i></button><span class="ddh">Play</span><div class="ddm"><a href="/beat/" class="">Beat the model<small>Your five vs its five</small></a><a href="/survivor/" class="">Survivor planner<small>Your pick, and who to save</small></a><a href="/social/" class="">Social<small>Slips people posted this week</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/teams/" class="">Teams<small>Stats, results, box scores</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/targets/" class="">Trade desk<small>Buy low, sell high</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/badbeats/" class="">Missed by one<small>The week's bad beats</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/all/" class="">Every page<small>The whole site on one screen</small></a></div></div></div></div></nav>
 <script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
@@ -423,7 +429,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Tue 11/17 11:48 AM CT.</p>
+    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Tue 11/17 12:59 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-HOU-IND">HOU·IND</a> <a href="#g-ARI-KC">ARI·KC</a> <a href="#g-BAL-CAR">BAL·CAR</a> <a href="#g-BUF-MIA">BUF·MIA</a> <a href="#g-CHI-NO">CHI·NO</a> <a href="#g-DAL-TEN">DAL·TEN</a> <a href="#g-DET-TB">DET·TB</a> <a href="#g-JAX-NYG">JAX·NYG</a> <a href="#g-LAC-NYJ">LAC·NYJ</a> <a href="#g-DEN-LV">DEN·LV</a> <a href="#g-PHI-PIT">PHI·PIT</a> <a href="#g-MIN-SF">MIN·SF</a> <a href="#g-CIN-WAS">CIN·WAS</a></nav>
   
@@ -498,7 +504,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Tue 11/17 11:48 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Tue 11/17 12:59 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -523,7 +529,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-59597aecd399.js"></script>
+<script src="/build/data-70aa401fbfad.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -777,7 +783,10 @@ window.BSBooks = { attach: function(btn, panel, getText){
   // One leg per game: the legs multiplied. Two or more legs in one game: FanDuel prices them together, so the estimate is
   // exp(-c (n-1)^p) / (FanDuel's implied chances joined with the same correlations the slip uses); c and p come from FanDuel's own quotes
   // on the same-game slips we posted (D.sgp, research/sgp_discount.py, refit on Tuesdays). Always shown as "≈": the quote is the price.
-  var _spK = null, _spV = null;
+  // 11/17: the reader can type FanDuel's own price for the exact slip (SGQ, kept for this visit, keyed by the legs and their prices); every
+  // number on the slip then uses it and the "≈" goes away. Change a leg and the key changes, so a stale quote can never price a new slip.
+  var _spK = null, _spV = null, SGQ = {};
+  function slipKey(ls){ return bookLegs(ls).map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(','); }
   function slipPrice(ls){
     var bl = bookLegs(ls), key = bl.map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(',');
     if(key === _spK) return _spV;
@@ -787,7 +796,16 @@ window.BSBooks = { attach: function(btn, panel, getText){
       var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); x._sc = 0; return x; }));
       if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
       same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
-    _spK = key; _spV = {d: same ? d : mult, mult: mult, same: same}; return _spV; }
+    var est = same ? d : mult, q = same ? SGQ[key] : null;
+    _spK = key; _spV = q ? {d: dec(q), mult: mult, same: true, quoted: q, est: est} : {d: est, mult: mult, same: same}; return _spV; }
+  function sgqSet(){ var inp = $('#sgq'), sg = $('#sgqSign'); if(!inp) return; var n = parseInt(String(inp.value).replace(/[^0-9]/g, ''), 10), neg = /^\s*[-\u2212]/.test(inp.value) || !!(sg && sg.getAttribute('data-s') === '-');
+    if(!(n >= 100 && n <= 200000)){ inp.classList.add('bad'); inp.focus(); return; }
+    SGQ[slipKey(slipLegs())] = neg ? -n : n; _spK = null; renderSlip(); }
+  document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return; var b = t.closest('#sgqSign');
+    if(b){ var neg = b.getAttribute('data-s') !== '-'; b.setAttribute('data-s', neg ? '-' : '+'); b.textContent = neg ? '\u2212' : '+'; b.setAttribute('aria-label', neg ? 'Minus price - tap for plus' : 'Plus price - tap for minus'); return; }
+    if(t.closest('#sgqGo')){ sgqSet(); return; }
+    if(t.closest('#sgqClr')){ delete SGQ[slipKey(slipLegs())]; _spK = null; renderSlip(); } });
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Enter' && ev.target && ev.target.id === 'sgq'){ ev.preventDefault(); sgqSet(); } });
   function sgWhy(){ return (D.sgp && D.sgp.note) || 'FanDuel prices same-game legs together, so it pays less than the legs multiplied.'; }
   // ---- list ----
   function oddsOk(o){ if(st.odds==='all') return true; if(st.odds==='anchor') return o <= -200; if(st.odds==='mid') return o > -200 && o < 200; return o >= 200; }
@@ -1182,7 +1200,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var f = (p * decO - 1) / (decO - 1), cap = n >= 3 ? 1 : n === 2 ? 2 : 3, u = Math.max(0, Math.min(cap, f / 4 * 100));
     var txt = f <= 0 ? 'No bet by the model (negative EV) - fun money only' : (u < 0.1 ? 'Tiny edge - 0.1u at most' : (Math.round(u * 10) / 10) + 'u' + (u >= cap ? ' (capped)' : '') + (bkr ? ' = $' + (bkr * u * upc / 100).toFixed(2) : ''));
     return '<div class="wide stake"><small>Suggested stake · quarter Kelly · 1u = ' + upc + '% of bankroll</small><b style="color:' + (f > 0 ? 'var(--good)' : 'var(--mute)') + '">' + txt + '</b>' +
-      '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" style="width:90px"></span></div>'; }
+      '<span>Bankroll $<input type="number" inputmode="decimal" min="0" step="50" id="bkroll" value="' + (bkr || '') + '" placeholder="optional" class="bkin"></span></div>'; }
   document.addEventListener('change', function(ev){ if(ev.target && ev.target.id === 'bkroll'){ try { localStorage.setItem('bs_bankroll', String(Math.max(0, +ev.target.value || 0))); } catch(e){} renderSlip(); } });
   // ---- owner 11/6 scenario explorer ("pick a game ending -> legs and slip reprice"): l.sc = the leg's chance under each of its game's four
   // endings [a by 10+, close & low, shootout, b by 10+] (build_builder.py: the boards' tested script tables, mixed back to the shown %).
@@ -1235,12 +1253,13 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var ev = fair*bookDec - 1;
     var sameGame = {}; ls.forEach(function(l){ sameGame[l.g] = (sameGame[l.g]||0) + 1; }); var sgp = Object.keys(sameGame).filter(function(g){ return sameGame[g] > 1; });
     $('#price').innerHTML =
-      '<div><small>FanDuel price</small><b>' + (sp.same ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.same ? 'same-game estimate · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
+      '<div><small>FanDuel price</small><b>' + (sp.same && !sp.quoted ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.quoted ? 'the price you typed · our estimate was ≈ ' + decToAm(sp.est) : sp.same ? 'same-game estimate · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="e ' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="e ' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+$':'−$') + Math.abs(ev).toFixed(2) + '</b></div>' +
-      '<div class="wide"><small>Payout on $10 at ' + (sp.same ? 'about that price' : 'the FanDuel price') + '</small><b>' + (sp.same ? '≈ ' : '') + '$' + (10*bookDec).toFixed(2) + '</b></div>' +
-      (sp.same ? '<div class="wide sgwhy"><small>Why not the legs multiplied</small><span>' + esc(sgWhy()) + ' Check the quote on FanDuel before you bet.</span></div>' : '') + stakeRow(fair, bookDec, ls.length) + bookRow(ls, sp.mult);
+      '<div class="wide"><small>Payout on $10 at ' + (sp.same && !sp.quoted ? 'about that price' : 'the FanDuel price') + '</small><b>' + (sp.same && !sp.quoted ? '≈ ' : '') + '$' + (10*bookDec).toFixed(2) + '</b></div>' +
+      (sp.same && !sp.quoted ? '<div class="wide sgwhy"><small>Why not the legs multiplied</small><span>' + esc(sgWhy()) + ' Check the quote on FanDuel before you bet.</span></div>' : '') +
+      (sp.same ? '<div class="wide sgq"><small>' + (sp.quoted ? 'Using FanDuel\'s price for this slip' : 'Type FanDuel\'s price for this slip') + '</small><span class="sgqr"><button type="button" id="sgqSign" data-s="' + (sp.quoted < 0 ? '-' : '+') + '" aria-label="' + (sp.quoted < 0 ? 'Minus price - tap for plus' : 'Plus price - tap for minus') + '">' + (sp.quoted < 0 ? '\u2212' : '+') + '</button><input id="sgq" type="text" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="' + String(decToAm(sp.quoted ? sp.est : bookDec)).replace(/^[+-]/, '') + '" value="' + (sp.quoted ? Math.abs(sp.quoted) : '') + '" aria-label="FanDuel\'s price for this exact slip"><button type="button" id="sgqGo">' + (sp.quoted ? 'Update' : 'Use it') + '</button>' + (sp.quoted ? '<button type="button" id="sgqClr">Back to the estimate</button>' : '') + '</span></div>' : '') + stakeRow(fair, bookDec, ls.length) + bookRow(ls, sp.mult);
     $('#take').style.display = ''; $('#take').innerHTML = 'Take it at <b>' + toAm(fair*0.95) + '</b> or better' + (sgp.length ? ' — it has same-game legs, so compare that number to FanDuel\'s same-game quote, not the multiplied price.' : '.');
     var flags = [];
     if(sgp.length) flags.push(sgp.length + ' game' + (sgp.length>1?'s':'') + ' with multiple legs (correlation priced in)');
@@ -1287,7 +1306,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     if(flags.some(function(f){ return f.indexOf('never both') >= 0 || f.indexOf('slip is dead') >= 0; })){ $('#take').innerHTML = '<b>This slip cannot win as built</b> - see the warning below.'; }
     $('#flags').innerHTML = flags.map(function(f){ return '⚠ ' + esc(f); }).join('<br>');
     try { sweepBlock(ls, fair, bookDec, flags); } catch(e){ var _sv = $('#sweepv'); if(_sv) _sv.hidden = true; }
-    $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + (sp.same ? '≈' : '') + decToAm(bookDec) + ' · fair ' + toAm(fair);
+    $('.slipbar b').textContent = ls.length + ' leg' + (ls.length>1?'s':'') + ' · FD ' + (sp.same && !sp.quoted ? '≈' : '') + decToAm(bookDec) + ' · fair ' + toAm(fair);
     fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); syncTarget(ls, sp.mult, sp.same);
     save(); if (typeof renderSaved === 'function') renderSaved();
   }
@@ -1658,7 +1677,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function slipText(){
     var ls = slipLegs(); if(!ls.length) return '';
     var sp = slipPrice(ls), bookDec = sp.d, fair = joint(ls);
-    return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (sp.same ? 'about ' : '') + decToAm(bookDec) + (sp.same ? ' (same-game estimate)' : '') + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co';
+    return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (sp.same && !sp.quoted ? 'about ' : '') + decToAm(bookDec) + (sp.quoted ? ' (FanDuel\'s same-game price)' : sp.same ? ' (same-game estimate)' : '') + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co';
   }
 
   $('#copy').addEventListener('click', function(){
@@ -2313,6 +2332,6 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   });
 })();</script><nav class="nx" aria-label="Where to next"><h2>Where to next</h2><div class="nxl"><a href="/sweep/"><b>Sweep my slip</b><small>A verdict before you place it</small></a><a href="/shop/"><b>Line shop</b><small>The same leg at a better price</small></a><a href="/live/"><b>Live</b><small>Track it once it kicks off</small></a></div></nav>
 <p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/" class=""><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Today</span></a><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class="on"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Builder</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a></nav>
-<script src="/s/app-e345411b28.js" defer></script>
+<script src="/s/app-2375c1f296.js" defer></script>
 </body>
 </html>
