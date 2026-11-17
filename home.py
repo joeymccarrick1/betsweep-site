@@ -491,7 +491,13 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
       return Promise.all(live.map(function(gid){ return fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + G[gid].eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(s){ if(s) parseBox(s, gid); }).catch(function(){}); }));
     }).then(function(){ busy = false; paint(); }).catch(function(){ busy = false; });
   }
-  poll(); setInterval(poll, 60000);
+  // 11/16 late: the label follows the clock even when live scores never load (blocked, offline): Pregame -> In play at the first
+  // kickoff -> "Final - grading" 4.5 hours after the last one. A card already called Busted or Cashed is left alone.
+  function clock(){ var t = Date.now(); cards.forEach(function(card){ var st = card.querySelector('[data-role=pst]'); if(!st || card.classList.contains('busted') || card.dataset.live === 'L' || card.dataset.live === 'W' || /^(Cashed|Busted)/.test(st.textContent)) return;
+      var f = +card.dataset.firstKo || 0, l = +card.dataset.lastKo || f;
+      if(l && t >= l + 4.5 * 36e5){ st.textContent = 'Final \u00b7 grading'; st.className = 'st'; }
+      else if(f && t >= f){ if(!/ in$/.test(st.textContent)) st.textContent = 'In play'; st.className = 'st live'; } }); }
+  clock(); poll(); setInterval(function(){ clock(); poll(); }, 60000);
 } if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start(); })();</script>"""
 
 
@@ -579,7 +585,7 @@ def promo_card(p, kicker="Promoted", hero=False):
         _gx = f' data-glx="{E(json.dumps(l["glx"]))}"' if l.get("glx") else ""
         legs += f'<li data-g="{E(l.get("gid") or "")}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
     res = (p.get("result") or "").upper()
-    st = '<span class="st win">Cashed</span>' if res in ("W", "WIN", "HIT") else ('<span class="st loss">Missed</span>' if res in ("L", "LOSS", "MISS") else '<span class="st" data-role="pst">Pregame</span>')
+    st = '<span class="st win">Cashed</span>' if res in ("W", "WIN", "HIT") else ('<span class="st loss">Missed</span>' if res in ("L", "LOSS", "MISS") else _pst(p))
     # audit 10/26: a +11825 lotto showing "Model 0.1% to hit · fair +181169" read like the site arguing against its own post -
     # longshots (model under 3%) are labelled as such and the fair price is dropped
     if p.get("p") and p["p"] < 0.03: model = f'<b>Longshot</b> · model {"under 1" if p["p"] < 0.01 else format(p["p"]*100, ".0f")}% to hit - a small-stake swing, not a value bet'
@@ -609,7 +615,7 @@ def promo_card(p, kicker="Promoted", hero=False):
     bk = "".join(f'<a class="{b}" href="{E(v["url"])}" target="_blank" rel="noopener" title="{E((BL.NAMES[b] + " uses its nearest line: " + "; ".join(v["subs"]) + ". Prices and model % shown are FanDuel's.") if v["subs"] else "Opens " + BL.NAMES[b] + " with these legs on the betslip")}">Bet it on {BL.NAMES[b]}{"≈" if v["subs"] else ""}</a>' for b, v in (p.get("books") or {}).items())
     btns = (f'<a class="fd" href="{E(p["link"])}" target="_blank" rel="noopener">Bet it on FanDuel</a>' if p.get("link") else "") + bk + tail + edit + f'<a href="{E(share)}" target="_blank" rel="noopener">Share on X</a><a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>Post 4:5</a><a href="{E(p["img"]["square"])}" download>Square</a><a href="{E(p["img"]["story"])}" download>Story</a>'
     _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
-    cap = (f'<p class="cap">{E(p["caption"])}</p>' if p.get("caption") else "") + f'<p class="slink">Short link <code>{E(_su.replace("https://", ""))}</code><button type="button" class="cpy" data-copy="{E(_su)}">Copy</button> <a href="/b/w{p["week"]}-{p["slot"]}/">open →</a></p>'
+    cap = _site_cap(p.get("caption")) + f'<p class="slink">Short link <code>{E(_su.replace("https://", ""))}</code><button type="button" class="cpy" data-copy="{E(_su)}">Copy</button> <a href="/b/w{p["week"]}-{p["slot"]}/">open →</a></p>'
     subs = [f'{BL.NAMES[b]}: ' + "; ".join(v["subs"]) for b, v in (p.get("books") or {}).items() if v["subs"]]
     if subs: cap += f'<p class="bknote">Nearest line at the other books - {E(" · ".join(subs))}. Prices and model % shown are FanDuel\'s.</p>'
     if hero:
@@ -622,7 +628,7 @@ def promo_card(p, kicker="Promoted", hero=False):
         gl_ = " · ".join(_h.unescape(at_gid(g)) for g in gids[:2]) + (f" +{len(gids) - 2}" if len(gids) > 2 else "")
         title = p.get("name") or (_h.unescape(at_gid(gids[0])) if len(gids) == 1 else f"{len(gids)} games, one slip" if gids else "Today's slip")
         kres = SW.res_kind(p.get("result")) or ((p.get("_built") or (None,))[0] if (p.get("_built") or (None,))[0] == "L" else None)   # 11/16: a Sweep the game log shows lost a leg reads Missed, not "graded Tuesday"
-        st = '<span class="st win">Cashed</span>' if kres == "W" else ('<span class="st loss">Missed</span>' if kres == "L" else '<span class="st" data-role="pst">Pregame</span>')
+        st = '<span class="st win">Cashed</span>' if kres == "W" else ('<span class="st loss">Missed</span>' if kres == "L" else _pst(p))
         _su = f"https://betsweep.co/b/w{p['week']}-{p['slot']}"
         import re as _re2
         cap = _re2.sub(r'<p class="slink">.*?</p>', "", cap, count=1, flags=_re2.S)   # the Share button carries the short link; one row less on a phone
@@ -660,6 +666,32 @@ def promos_block(OUT, sweep_exists=False):
     tail_js = PROMO_TAIL_JS
     head = ('<h2 class="t">Side action <small class="tsub">long shots and extras · small stakes</small></h2>' if side else '<h2 class="t">Promoted bets</h2>')
     return f'<section class="sec" id="promo">{head}<div class="promos">{"".join(cards)}</div>{tail_js}{PROMO_LIVE_JS}<div class="pnote"><style>{PNOTE_CSS}</style><p>{"Long shots and extras, graded Tuesday and counted apart from the Daily Sweep." if side else "The slips we post on X and Instagram, graded Tuesday like everything else."} Sportsbook links may earn BetSweep a commission; it never changes a pick or a grade.</p><details><summary>How tailing and sharing work</summary><p>Tail loads the whole slip on FanDuel in one tap. Share on X pre-fills the legs in plain text with @Playbook tagged, so the Playbook bot replies with a tail link for whichever sportsbook the reader uses.</p></details></div></section>'
+
+# 11/16 late: the caption on a card. A caption is written for X / Instagram - title, an angle line, every leg on its own line, then
+# "Why: ..." (or "Needs: ..."). On the card the title and the legs are already printed, and the line breaks were lost, so it read as one
+# long paragraph repeating the legs. The card now shows the angle and the reason; a caption without that shape is printed whole, with
+# its line breaks. The full caption is still what Share / the graphics / the X post use.
+def _site_cap(cap):
+    import re as _re
+    if not cap: return ""
+    lines = [x.strip() for x in str(cap).splitlines() if x.strip()]
+    why = [x for x in lines if _re.match(r"^(why|needs)\s*:", x, _re.I)]
+    if not why or len(lines) < 3: return f'<p class="cap whole">{E(str(cap).strip())}</p>'
+    angle = lines[1] if not _re.match(r"^(why|needs)\s*:", lines[1], _re.I) else ""
+    angle = _re.sub(r"\s*:\s*$", ".", angle)
+    lab, _, rest = why[0].partition(":")
+    return ('<div class="cap">' + (f'<p class="ang">{E(angle)}</p>' if angle else "") + f'<p class="why"><b>{E(lab.strip().capitalize())}:</b> {E(rest.strip())}</p></div>')
+
+# 11/16 late: an ungraded slip's label follows the clock. A page built (or opened without live scores) hours after the game still said
+# "Pregame". Before the first kickoff: Pregame. From it: In play. 4.5 hours after the last kickoff: Final - grading (the box score has not
+# been graded yet; nothing is claimed about the result). The page script (PROMO_LIVE_JS clock()) applies the same rule as time passes.
+def _pst(p, now_ms=None):
+    import time as _t
+    now_ms = now_ms or float(os.environ.get("BS_NOW_MS") or 0) or _t.time() * 1000
+    fk = p.get("first_ko") or 0; lk = p.get("last_ko") or fk
+    if lk and now_ms >= lk + 4.5 * 3600e3: return '<span class="st" data-role="pst">Final \u00b7 grading</span>'
+    if fk and now_ms >= fk: return '<span class="st live" data-role="pst">In play</span>'
+    return '<span class="st" data-role="pst">Pregame</span>'
 
 # 11/16 (alpha plan step 9, Today): the note under the promos was seven lines of small print. What a reader must see stays in view
 # (what these slips are, and the commission line - a disclosure is never tucked behind a tap); how tailing and sharing work opens on request.
@@ -941,7 +973,8 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .promo .pa{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px 14px;margin-top:auto}
 .promo .pa a,.promo .pa .tail{text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 11px}.promo .pa .tail{cursor:pointer;background:none;color:var(--ink)}.promo .pa .tail.on{background:var(--good);color:#fff;border-color:var(--good)}
 .promo .pa a.fd{background:#1493ff;border-color:#1493ff;color:#0b0f15} .promo .pa a:hover{border-color:var(--red)}
-.promo .cap{margin:0 16px 10px;color:var(--mute);font-size:13px;line-height:1.5}
+.promo .cap{margin:0 16px 10px;color:var(--mute);font-size:13px;line-height:1.5} .promo p.cap.whole{white-space:pre-line}
+.promo div.cap p{margin:0 0 6px} .promo div.cap .ang{color:var(--ink);font-size:14.5px;line-height:1.4} .promo div.cap .why b{color:var(--ink)}
 .promo .slink{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 16px 10px;font-size:12px;color:var(--mute)} .promo .slink code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink);background:var(--chalk);padding:2px 7px;border-radius:6px} .promo .slink button{font:inherit;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .promo .slink a{color:var(--ink)}
 .promo .cap[hidden]{display:none}
 

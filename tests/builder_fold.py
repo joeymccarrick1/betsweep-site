@@ -25,6 +25,17 @@ async def main():
             await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}" + FREEZE)
             await ctx.route("**/site.api.espn.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body='{"events":[]}'))
             await ctx.route("**/*supabase*/**", lambda r: r.abort())
+            # 11/16 late: a build made after the week's last game already carries that game's final score, and a final beats the clock - so
+            # "an hour before the last kickoff" would still show every game as played. While `strip` is on, the page is served its own data
+            # with the last game's final taken out (nothing else is changed); the "everything is played" case below gets the data as built.
+            strip = {"on": True}
+            async def data(route, request, strip=strip):
+                import glob, re as _re
+                f = os.path.join(ROOT, "build", request.url.split("/build/")[-1].split("?")[0]); src = open(f).read()
+                if strip["on"]:
+                    i, j = src.index("{"), src.rindex("}") + 1; d = json.loads(src[i:j]); g = max(d["games"], key=lambda x: x.get("ko") or 0); g.pop("fin", None); src = src[:i] + json.dumps(d, separators=(",", ":")) + src[j:]
+                await route.fulfill(status=200, content_type="application/javascript", body=src)
+            await ctx.route("**/build/data-*.js", data)
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto("http://127.0.0.1:8853/build/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)
             kos = await pg.evaluate("() => Object.keys(window.__BS.games || {}).map(function(k){ return window.__BS.games[k].ko || 0; }).concat((window.__BS.gorder || []).map(function(){ return 0; })).filter(Boolean)")
@@ -70,6 +81,7 @@ async def main():
                 check(l.get("over") == 0 and l.get("w", 0) <= 390, f"[{theme}] the picture fits the phone ({l.get('w')}px wide)")
                 if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/builder-l10-{theme}.png")
             # ---- five hours after the last kickoff: everything is played, so the fold is simply open ----
+            strip["on"] = False
             await pg.evaluate(f"localStorage.setItem('t_now', '{int(last + 5 * 3600e3)}')"); await pg.goto("http://127.0.0.1:8853/build/?t=3", wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
             e = await pg.evaluate(STATE)
             check(e["fold"] and e["open"] and e["outside"] == 0 and e["inside"] == e["cards"] and e["chips"].strip("p") == "", f"[{theme}] once every game is played the fold is open on its own, so the page is never empty ({e['sum']})")

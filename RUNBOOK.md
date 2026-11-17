@@ -1026,3 +1026,21 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   says so and passes. Any other mismatch, or a week whose schedule cannot be read, still fails as before. `python3
   tests/weather_gate.py` (7 checks).
 
+## 11/16, near midnight: a posted slip's label follows the clock; a card shows the angle and the reason, not the whole caption
+
+- **Label by the clock** (`home._pst()` at build time, `clock()` in PROMO_LIVE_JS on the page). An ungraded slip said "Pregame"
+  for as long as live scores did not load - hours after the game on a page built late or with the score feed blocked. Now: Pregame
+  before the first kickoff, In play from it, "Final - grading" 4.5 hours after the last one. Nothing is claimed about the result;
+  Busted / Cashed still come only from the box score. `python3 tests/promo_clock.py` (4 checks, score feed blocked; skips itself
+  when the build carries no ungraded slip).
+- **Caption on a card** (`home._site_cap()`): a caption is written for X / Instagram - title, an angle line, each leg on its own
+  line, then "Why: ..." or "Needs: ...". The card already prints the title and the legs and had lost the line breaks, so it read
+  as one long paragraph repeating the legs. A caption of that shape now shows as the angle line and the reason; any other caption
+  is printed whole with its line breaks (`p.cap.whole`). Share, the graphics, the short-link page and the X post still use the full
+  caption.
+- **Tests on a build made after the week's last game.** Such a build carries every game's final, and a final beats the clock, so
+  the fold tests' "an hour before the last kickoff" saw 14 played games. They now serve the page its own data with the last game's
+  final taken out for that phase (builder: `/build/data-*.js`; boards: the page itself, `data-final` on the last card).
+  **The site has a service worker that answers page loads itself after the first visit** - a test that patches a page must open
+  its browser context with `service_workers="block"` (tests/boards_fold.py does), or the second load is the unpatched page.
+

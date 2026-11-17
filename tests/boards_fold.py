@@ -24,10 +24,24 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         for theme in ("light", "dark"):
-            ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+            # service workers off: the site's worker answers page loads itself after the first visit, which would bypass the patched page below
+            ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True, service_workers="block")
             await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}" + FREEZE)
             await ctx.route("**/*espn.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body='{"events":[]}'))
             await ctx.route("**/*supabase*/**", lambda r: r.abort())
+            # 11/16 late: a build made after the week's last game carries that game's final on its card, and a final beats the clock. While
+            # `strip` is on, the page is served as built except that the last game's card has no final (so "an hour before its kickoff" is
+            # what the page sees); the "everything is played" case below gets the page as built.
+            strip = {"on": True}
+            async def doc(route, request, strip=strip):
+                if request.resource_type != "document": return await route.continue_()
+                import re as _re
+                html = open(os.path.join(ROOT, "boards", "index.html")).read()
+                if strip["on"]:
+                    tags = [(int(m.group(2)), m) for m in _re.finditer(r'<section class="card[^"]*" id="([A-Z]+-[A-Z]+)"[^>]*data-ko="(\d+)"[^>]*>', html)]
+                    m = max(tags, key=lambda t: t[0])[1]; html = html[:m.start()] + _re.sub(r'\sdata-final="[^"]*"', "", m.group(0)) + html[m.end():]
+                await route.fulfill(status=200, content_type="text/html; charset=utf-8", body=html)
+            await ctx.route("**/boards/**", doc)
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto(U, wait_until="domcontentloaded"); await pg.wait_for_timeout(1200)
             kos = await pg.evaluate("() => Array.from(document.querySelectorAll('.card[data-ko]')).map(function(c){ return +c.dataset.ko; })")
@@ -55,6 +69,7 @@ async def main():
                 a = await pg.evaluate("""(h) => { var d = document.querySelector('details.bdone'), t = document.getElementById(h.slice(1)), r = t.getBoundingClientRect(); return {fold: !!d, open: !!(d && d.open), inFold: !!t.closest('details.bdone'), top: Math.round(r.top), exp: t.classList.contains('expanded')}; }""", href)
                 check(a["fold"] and a["open"] and a["inFold"] and a["exp"] and -5 <= a["top"] <= 400, f"[{theme}] a link straight to a played game arrives with the fold open on that card ({a})")
             # ---- five hours after the last kickoff: nothing left to play, so no fold ----
+            strip["on"] = False
             await pg.evaluate(f"localStorage.setItem('t_now', '{int(last + 5 * 3600e3)}')"); await pg.goto(U + "?t=3", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             e = await pg.evaluate(STATE)
             check(not e["fold"] and e["outside"] == e["cards"] and e["doneOutside"] == e["cards"] and asc(e["order"]) and e["chips"].strip("p") == "", f"[{theme}] once every game is played there is no fold: every scorecard is on the page in kickoff order ({e['outside']} cards)")
