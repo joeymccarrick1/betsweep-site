@@ -653,6 +653,9 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   btn.addEventListener('click', function(){
     var A = window.bsAccount; var ls = legsNow();
     if(!ls.length){ alertish('Add some legs first.'); return; }
+    // a slip read from a screenshot on Social (bs_postnow): the price on the picture is offered only while the slip is exactly those legs
+    try{ var pn = JSON.parse(sessionStorage.getItem('bs_postnow') || 'null'), ks = ls.map(function(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }).sort();
+      if(pn && pn.odds && Date.now() - (+pn.t || 0) < 30 * 60e3 && !$('sdO').value && pn.keys && pn.keys.length === ks.length && pn.keys.every(function(k, i){ return k === ks[i]; })) $('sdO').value = (pn.odds > 0 ? '+' : '') + pn.odds; }catch(e){}
     if(!A || !A.client){ alertish('Accounts are not available right now.'); return; }
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
     var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });

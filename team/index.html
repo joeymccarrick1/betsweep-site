@@ -166,7 +166,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 306 players projected for Week 10. Built Mon 11/16 8:53 PM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 306 players projected for Week 10. Built Mon 11/16 10:48 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -246,7 +246,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   </section>
  </div>
 </div>
-<script src="/team/data-e65e8fd03753.js"></script>
+<script src="/team/data-4f4b7dbaacca.js"></script>
 <script>
 (function(){
   var D = window.__BS, P = D.players, WEEK = D.week;
@@ -1246,6 +1246,9 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   btn.addEventListener('click', function(){
     var A = window.bsAccount; var ls = legsNow();
     if(!ls.length){ alertish('Add some legs first.'); return; }
+    // a slip read from a screenshot on Social (bs_postnow): the price on the picture is offered only while the slip is exactly those legs
+    try{ var pn = JSON.parse(sessionStorage.getItem('bs_postnow') || 'null'), ks = ls.map(function(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }).sort();
+      if(pn && pn.odds && Date.now() - (+pn.t || 0) < 30 * 60e3 && !$('sdO').value && pn.keys && pn.keys.length === ks.length && pn.keys.every(function(k, i){ return k === ks[i]; })) $('sdO').value = (pn.odds > 0 ? '+' : '') + pn.odds; }catch(e){}
     if(!A || !A.client){ alertish('Accounts are not available right now.'); return; }
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
     var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });

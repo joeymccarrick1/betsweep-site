@@ -126,7 +126,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 10</small><b>DFS Lineup Builder</b></h1>
-    <p>Build DraftKings and FanDuel lineups against the BetSweep model - classic, or single game with an MVP / Captain at 1.5x: load the site's player list, see every player's projection in that site's scoring and his points per $1K, tap players in or let the optimizer fill the lineup under the cap, then download the upload file. Built Mon 11/16 8:53 PM CT.</p>
+    <p>Build DraftKings and FanDuel lineups against the BetSweep model - classic, or single game with an MVP / Captain at 1.5x: load the site's player list, see every player's projection in that site's scoring and his points per $1K, tap players in or let the optimizer fill the lineup under the cap, then download the upload file. Built Mon 11/16 10:48 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"></nav>
   
@@ -144,7 +144,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
    <div class="row"><button type="button" class="btn" id="csvBtn">Load salaries</button><input type="file" id="csvFile" accept=".csv,text/csv" aria-label="Salary CSV file"><button type="button" class="btn sec" id="clearSal">Clear salaries</button><button type="button" class="btn" id="shareSal" hidden>Share these salaries with everyone</button><span class="how" style="flex-basis:auto">No file? You can type a salary into any row below and build with the ones you fill in.</span></div>
    <div class="msg" id="srcMsg" hidden></div>
   </div>
-  <div class="status"><span id="srcStat"></span><span>Week 10 model · 306 active players · built Mon 11/16 8:53 PM CT</span></div>
+  <div class="status"><span id="srcStat"></span><span>Week 10 model · 306 active players · built Mon 11/16 10:48 PM CT</span></div>
  </section>
  <div class="grid2">
   <section class="panel">
@@ -194,7 +194,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <dl><dt>Proj</dt><dd>projected fantasy points in the site's rules</dd><dt>Pts / $1K</dt><dd>projected points per $1,000 of salary - the value column; sort by it to find the cheap plays the model likes</dd><dt>Lock</dt><dd>keep this player when you re-optimize</dd><dt>✕</dt><dd>exclude from the optimizer (he stays in the list)</dd><dt>Single game (MVP)</dt><dd>for Showdown / single-game contests: pick the game, and the lineup is one MVP (Captain on DraftKings) plus FLEX slots, any position including K and D/ST. The MVP scores 1.5x and costs 1.5x salary on both sites (read straight from the player list when it has the MVP / Captain salary). The optimizer tries every realistic MVP, fills the rest exactly under the cap, and keeps at least one player from each team. A DraftKings Showdown file switches this on by itself. ★ on a FLEX row makes that player the MVP.</dd><dt>Upload file</dt><dd>a one-lineup CSV in the site's import format, built from the IDs in the list you loaded - import it on the contest's upload page instead of clicking nine players</dd></dl>
  </div></section>
 </div>
-<script src="/dfs/data-28835848ca4d.js"></script>
+<script src="/dfs/data-b56b2daae451.js"></script>
 <script>
 (function(){
   var D = window.__BS, P = D.players, $ = function(s){ return document.querySelector(s); }, $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -1132,6 +1132,9 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   btn.addEventListener('click', function(){
     var A = window.bsAccount; var ls = legsNow();
     if(!ls.length){ alertish('Add some legs first.'); return; }
+    // a slip read from a screenshot on Social (bs_postnow): the price on the picture is offered only while the slip is exactly those legs
+    try{ var pn = JSON.parse(sessionStorage.getItem('bs_postnow') || 'null'), ks = ls.map(function(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }).sort();
+      if(pn && pn.odds && Date.now() - (+pn.t || 0) < 30 * 60e3 && !$('sdO').value && pn.keys && pn.keys.length === ks.length && pn.keys.every(function(k, i){ return k === ks[i]; })) $('sdO').value = (pn.odds > 0 ? '+' : '') + pn.odds; }catch(e){}
     if(!A || !A.client){ alertish('Accounts are not available right now.'); return; }
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
     var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });
