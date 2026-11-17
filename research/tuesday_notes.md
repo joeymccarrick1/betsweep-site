@@ -87,3 +87,18 @@
 - The health check's "ARI QB0" all of Week 10: Minshew was OUT and Carson Beck, a rookie with no game log, never got the
   replacement-starter row Step 2a asks for. He is on the QB tab now (one game). Check Week 11's health check for ARI.
 
+## State at 8:50 AM CT, 11/17 (after the roll)
+- Roll out and checked: main 782668e3 (the morning run, 8:16 AM), then 43dad045 (my publish, 8:32 AM, gen 1c0428ee). The whole
+  test set passes on the published copy; page gate 525 pages, 0 problems. Daily Sweep 1-2, +1.0u on Today, Season and the
+  Week 10 receipt. Promos Week 10: 1 hit, 8 missed. data/box-w10.json in.
+- reprice.live_data fixed (it would have skipped every scheduled rebuild after the roll) - **check the 9:20 AM CT run did not
+  end with exit 3** (Actions > reprice > the 15:20Z run; "skipped (exit 3)" in the Build step would mean it did).
+- **9:40 AM CT: first real Social grading run** - Actions > social-grade: "wrote 24 of 24" expected (24 lost).
+- Slip log Week 10 done (rows 9-60): 7 won, 45 lost. Why-it-lost tags are in a new column K: wrong script 20, thin role 14,
+  bad luck 11. Six rows the grader left open were hand-graded LOST (19, 35, 37, 43, 49, 59).
+- grade_promos.py cannot grade "Passing TDs 1+" ("not gradable here" on both Monday slips; they were Missed on other legs
+  anyway). Add the market to slipgrade.py before it decides a grade.
+- Still to do from the 11/15 check-in list: flag_grade / honest / learned with Week 10 (the morning run did the flag report
+  card, context grade and live grade - research/*_w10.txt); the 10 flags that moved the most players; closing-price share for
+  Week 10; the FanDuel same-game discount table; tap targets on /benefits and /usage.
+
