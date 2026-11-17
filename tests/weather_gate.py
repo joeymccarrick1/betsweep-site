@@ -17,4 +17,8 @@ check(WF.week_done(os.path.join(T, "nowhere"), 10) is None, "no schedule file: c
 check(WF.decide(11, 10, True)[0] == 0 and "nothing left to flag" in WF.decide(11, 10, True)[1], "feed on next week + this week all kicked off: the build is not failed, and the message says why")
 check(WF.decide(11, 10, False)[0] == 1 and WF.decide(11, 10, None)[0] == 1, "feed on next week while a game is still to come, or when that cannot be told: still fails")
 check(WF.decide(12, 10, True)[0] == 1 and WF.decide(9, 10, True)[0] == 1 and WF.decide(None, 10, True)[0] == 1 and WF.decide("x", 10, True)[0] == 1, "any other mismatch (two weeks ahead, a week behind, no week) still fails")
+# 11/17: how old the feed may be. Six hours was a hard stop for the whole publish; the mirror behind it skips for hours off game days.
+check([WF.staleness(h) for h in (0.1, 5.9, 6.0)] == ["fresh"] * 3, "up to six hours old: used as before")
+check([WF.staleness(h) for h in (6.3, 12, 24)] == ["late"] * 3, "six hours to a day old: still used (and the line says it is late)")
+check([WF.staleness(h) for h in (24.1, 48, 500)] == ["dead"] * 3, "more than a day old: the step fails, the sheet's weather stays")
 print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

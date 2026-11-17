@@ -1360,3 +1360,18 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
   in the pre-publish set. Found while checking the 8:16 AM publish, before the first scheduled run of the new week (9:20 AM).
 - tests/inactive_block.py read the builder data the same wrong way; it reads the linked file too.
 
+## 11/17, 8:55 AM CT: a late ESPN mirror stopped every publish through the weather step (fixed; the mirror still needs the owner's timer)
+
+- `weather_feed.py` refused a feed more than 6 hours old and returned failure; reprice.py treats that step as a flag step, so
+  the run ended with exit 6 ("a flag step failed (weather feed); not copied") and NOTHING was published - prices included. The
+  feed comes from the ESPN mirror, which outside game windows runs only when GitHub's own schedule fires (see the timers
+  section): today the last mirror was 2:35 AM CT, so every rebuild from 8:36 AM on would have failed. A hand-dispatched
+  "changed" run at 8:48 AM did (run 44107059103). The nearest kickoff was 58 hours away.
+- Now (`staleness`): up to 6 hours old = used as before; 6 to 24 hours = still used, and the line says "LATE, used anyway";
+  more than 24 hours, or the wrong week = the step fails as before. tests/weather_gate.py 10.
+- This is the second thing in one morning that rides on that mirror (the first: injury statuses). **Until the owner runs
+  sql/github_timers.sql again, a session that finds the mirror old should start it by hand:**
+  `gh api repos/joeymccarrick1/betsweep-site/actions/workflows/feeds.yml/dispatches -X POST -f ref=main`.
+- Probably not the first time: on Sunday 11/15 the mirror gaps were 6.6 and 6.5 hours (7:18 PM Sat - 1:56 AM, 1:56 - 8:29 AM
+  CT), so a rebuild between 7:56 and 8:29 AM that morning would have failed the same way. Not checked run by run.
+
