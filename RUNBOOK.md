@@ -1213,3 +1213,17 @@ Tuesday roll) and reading what a phone shows.
 - **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
   social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
   finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, and tests/local_gate.py.
+
+## 11/17, ~3:15 AM CT: a leg on an inactive player is void on the Live page from the inactives list
+
+- The change feed the Live page already reads ("What changed") carries an "inactive" note for every player on a game's inactives
+  list, about 90 minutes before kickoff. Ladd McConkey's went out at 5:00 PM CT on Monday, 2 h 15 before kickoff; on the Live page
+  his legs still read as open, sat at "0 / line" all game and then (old code) went dead - while the book had voided them.
+- Now (`inactive()` in build_live.py): a player with an inactive note for THIS game (his team, noted between 36 hours before and
+  6 hours after kickoff) and no stat line has his legs shown as **void** before, during and after the game - same treatment as
+  "did not play": the slip can still cash, the payout line and the win card are left out, nothing is saved as a win or a loss.
+  If he shows up in the box score after all, the note is ignored (a wrong note cannot void a man who is playing).
+- A void leg is left out of a slip's "pregame" chance as well as its chance from here.
+- The builder, Today and the boards do not use this yet: a leg on an inactive player can still be picked there until FanDuel pulls
+  it. Worth doing next with the same feed.
+- Tests: live_finals.py 35 (inactive before kickoff, in play, a wrong note, a note for another team or another week).

@@ -415,6 +415,13 @@ JS = r"""
   // HAVE[gid] = 'espn' once ESPN's box score for that game is in BOX. FB = the finals the build holds (finals.py): score, each leg
   // player's stat line, who did not play (VOID). A finished game with neither is "not graded yet" - shown as waiting, never as a loss.
   var HAVE = {}, FB = D.fb || {}, VOID = {}, NEEDSUM = {}, BOXTRY = {}, CHIPSEEN = false;
+  // 11/17: the inactives list (out about 90 minutes before kickoff) says who will not play, and the book voids a leg on him. Such a leg
+  // used to sit at "0 / 50 - open" all game (Ladd McConkey, Monday 11/16: listed inactive at 5:00 PM CT, 2 h 15 before kickoff).
+  // INACT[name] = {tm, ts} from the change feed's "inactive" notes. A man who then shows up in the box score played: the note is ignored.
+  var INACT = {};
+  function inactive(l, g){ if(l.gl) return false; var x = INACT[norm(l.pl)]; if(!x || (x.tm && l.tm && x.tm !== l.tm)) return false;
+    var ko = g && g.ko ? +g.ko : 0; if(ko && (x.ts < ko - 36 * 36e5 || x.ts > ko + 6 * 36e5)) return false;   // a note from this game's own inactives list, not an older one
+    var b = BOX[norm(l.pl)]; return !(b && ((b.pass || 0) + (b.rush || 0) + (b.rec || 0) + (b.recy || 0) + (b.td || 0) + (b.ratt || 0) + (b.tgt || 0) + (b.patt || 0) > 0)); }
   Object.keys(FB).forEach(function(gid){ var fb = FB[gid]; if(!fb || !fb.box) return;
     Object.keys(fb.box).forEach(function(n){ var r = fb.box[n]; BOX[norm(n)] = {pass: r[0], ptd: r[1], int: r[2], rush: r[3], rec: r[5], recy: r[6], td: r[4] + r[7] + (r[12] || 0), long: null, cmp: r[8], patt: r[9], ratt: r[10], tgt: r[11], name: n, fb: 1}; });   // td: rushing + receiving + (11/17) returns and recovered fumbles
     (fb.dnp || []).forEach(function(n){ VOID[norm(n)] = gid; }); });
@@ -574,7 +581,7 @@ JS = r"""
     var nh = sr.filter(function(x){ return x.r.status === 'hit'; }).length, nd = sr.filter(function(x){ return x.r.status === 'dead'; }).length;
     var nv = sr.filter(function(x){ return x.r.status === 'void'; }).length, nw = sr.filter(function(x){ return x.r.wait; }).length, no = sr.length - nh - nd - nv;   // 11/17: void = he did not play; wait = final, not graded yet
     var pj = sr.reduce(function(a, x){ return a * (x.r.status === 'hit' || x.r.status === 'void' ? 1 : x.r.status === 'dead' ? 0 : x.r.p); }, 1);
-    var pre = sr.reduce(function(a, x){ return a * x.l.p; }, 1);
+    var pre = sr.reduce(function(a, x){ return a * (x.r.status === 'void' ? 1 : x.l.p); }, 1);   // a void leg is out of the slip: it is not part of the pregame chance either
     var legsDec = ls.reduce(function(a, l){ return a * dec(l.o); }, 1); var price = sl.odds || (ls.length ? amer(legsDec) : null);
     var toWin = (sl.stake && price) ? sl.stake * (dec(price) - 1) : null;
     var pay = (sl.stake && price) ? sl.stake * dec(price) : null, alive = !nd && !nw && no > 0 && pj > 0 && pj < 1 && !missing;   // owner 11/6 cash-out advisor: gross return if it cashes
@@ -583,7 +590,7 @@ JS = r"""
     var done = nd ? 'DEAD' : (no === 0 && nh ? 'CASHED' : no === 0 && nv ? 'VOID' : nw ? 'Grading' : pc(pj));
     var sub = nd ? nh + ' hit · ' + nd + ' dead' : (no === 0 && nh ? 'all ' + nh + ' hit' : nh + ' hit · ' + no + ' open · chance from here' + (ls.length ? ' (pregame ' + pc(pre) + ')' : ''));
     var rows = sr.map(function(x){ var l = x.l, r = x.r, st = x.s; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st"><button type="button" class="rm" data-sid="' + esc(sl.id) + '" data-k="' + esc(legKey(l)) + '" data-gm="' + esc(l.g) + '" title="Remove from this slip">×</button></td><td class="who"><b>' + esc(legText(l)) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'dead' ? '<span class="chip">Dead</span>' : r.status === 'void' ? '<span class="chip">Void</span>' : r.wait ? '<span class="chip wt">Not graded yet</span>' : '') + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + ' · FD ' + am(l.o) + ' · ' + (st.st === 'in' ? esc(st.det || 'live') : st.st === 'post' ? 'final' : esc(games[l.g].kick)) + '</small></td><td class="now"><b>' + esc(r.now || '') + '</b></td><td class="pr">' + (r.status === 'void' || r.wait ? '<b>–</b><small>' + (r.status === 'void' ? 'void' : 'final') + '</small>' : '<b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + pc(r.p) + '</b><small>' + (st.st === 'pre' ? 'pregame' : 'from here') + '</small>') + '</td></tr>'; }).join('');
-    if(nv) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + nv + ' leg' + (nv > 1 ? 's' : '') + ' did not play. FanDuel voids a leg like that and pays the rest of the slip at a shorter price.</small></td></tr>';
+    if(nv) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + (nv > 1 ? nv + ' legs are' : '1 leg is') + ' on a player who is inactive or did not play. FanDuel voids a leg like that and pays the rest of the slip at a shorter price.</small></td></tr>';
     if(nw && !nd) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>The game is over but the final numbers for ' + (nw > 1 ? nw + ' legs are' : '1 leg is') + ' not in yet. Nothing is marked won or lost until they are.</small></td></tr>';
     if(missing) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + missing + ' leg' + (missing > 1 ? 's' : '') + ' from an older board are not on this week\'s page and cannot be tracked.</small></td></tr>';
     if(!ls.length && !missing) rows = '<tr><td class="who" colspan="4"><small>Empty - tap + on any leg below to add it here.</small></td></tr>';
@@ -649,6 +656,7 @@ JS = r"""
     if(l.u || /^Under /.test(l.m || '')){ var o2 = Object.assign({}, l, {m: l.m.replace(/^Under /, ''), u: 0, p: 1 - l.p, ln: Math.floor(l.ln) + 1}); var r2 = live(o2, g, s);   // under = the other side of the (X+1)+ over
       return {p: 1 - r2.p, status: r2.status === 'hit' ? 'dead' : r2.status === 'dead' ? 'hit' : r2.status, now: r2.now, wait: r2.wait}; }
     var f = remainingFrac(s);
+    if(inactive(l, g)) return {p: l.p, status: 'void', now: 'inactive'};
     if(!s || s.st === 'pre') return {p: l.p, status: 'pre', now: ''};
     // 11/17: a leg is settled only when the game is FINAL and the page holds real numbers for it. The end of regulation is not final
     // (overtime), a final with no score or no stat line is "not graded yet" (wait), and a man who did not play is void - never a loss.
@@ -809,7 +817,7 @@ JS = r"""
                   ['wait', 'Final, not graded yet', function(x){ return !!x.r.wait; }, true],
                   ['won', 'Won', function(x){ return x.r.status === 'hit'; }, false],
                   ['lost', 'Lost', function(x){ return x.r.status === 'dead'; }, false],
-                  ['void', 'Void (did not play)', function(x){ return x.r.status === 'void'; }, false]];
+                  ['void', 'Void (inactive or did not play)', function(x){ return x.r.status === 'void'; }, false]];
       var lrows = FOLD.map(function(f){ var xs = mr.filter(f[2]).sort(srt); if(!xs.length) return ''; var key = '__log|' + f[0], ov = (key in OPEN) ? OPEN[key] : f[3];
         return '<h4 class="subtog' + (f[0] === 'live' ? ' hot' : '') + '" data-g="' + key + '" aria-expanded="' + ov + '">' + f[1] + ' · ' + xs.length + '<i>' + (ov ? '▴' : '▾') + '</i></h4>' + (ov ? '<table class="lvt">' + xs.map(lrow).join('') + '</table>' : ''); }).join('');
       parts.push(['log', '<section class="lg2 logcard' + (OPEN.__log === true ? ' open' : '') + '"><button type="button" class="ghd2" data-g="__log" aria-expanded="' + (OPEN.__log === true) + '"><span class="t">My week<small>' + mine.length + ' legs you pinned or slipped</small></span><span class="mid"><b>' + w + '–' + lz + '</b><small>' + (op ? op + ' still open · ' : '') + (nwt ? nwt + ' not graded yet · ' : '') + (units >= 0 ? '+' : '') + units.toFixed(2) + 'u at 1u each</small></span><span class="tog"><i class="car">' + (OPEN.__log === true ? '▴' : '▾') + '</i></span></button>' +
@@ -913,7 +921,7 @@ JS = r"""
         body += '<h4 class="subtog' + (s.st === 'in' ? ' hot' : '') + '" data-g="' + gid + '|open" aria-expanded="' + oo + '">' + (s.st === 'in' ? 'Still open · ' + open.length : s.st === 'pre' ? 'Watch list · ' + open.length : 'Not graded yet · ' + open.length) + '<i>' + (oo ? '▴' : '▾') + '</i></h4>' + (oo ? (s.st === 'post' && open.length ? '<p class="lvnote">The game is over, but the final numbers for these are not in yet. Nothing is marked won or lost until they are.</p>' : '') + '<table class="lvt">' + open.map(tr).join('') + '</table>' : '');
         if(hit.length){ var ho = subOpen(gid + '|hit', false); body += '<h4 class="subtog" data-g="' + gid + '|hit" aria-expanded="' + ho + '">Already hit · ' + hit.length + '<i>' + (ho ? '▴' : '▾') + '</i></h4>' + (ho ? '<table class="lvt">' + hit.map(tr).join('') + '</table>' : ''); }
         body += otherBlock();
-        if(voided.length){ var vov = subOpen(gid + '|void', false); body += '<h4 class="subtog" data-g="' + gid + '|void" aria-expanded="' + vov + '">Did not play · ' + voided.length + '<i>' + (vov ? '▴' : '▾') + '</i></h4>' + (vov ? '<p class="lvnote">FanDuel voids a leg on a player who did not play.</p><table class="lvt">' + voided.map(tr).join('') + '</table>' : ''); }
+        if(voided.length){ var vov = subOpen(gid + '|void', false); body += '<h4 class="subtog" data-g="' + gid + '|void" aria-expanded="' + vov + '">' + (s.st === 'post' ? 'Did not play' : 'Inactive') + ' · ' + voided.length + '<i>' + (vov ? '▴' : '▾') + '</i></h4>' + (vov ? '<p class="lvnote">FanDuel voids a leg on a player who is inactive or did not play.</p><table class="lvt">' + voided.map(tr).join('') + '</table>' : ''); }
         if(dead.length){ var dov = subOpen(gid + '|dead', false); body += '<h4 class="subtog" data-g="' + gid + '|dead" aria-expanded="' + dov + '">Gone · ' + dead.length + '<i>' + (dov ? '▴' : '▾') + '</i></h4>' + (dov ? '<table class="lvt">' + dead.map(tr).join('') + '</table>' : ''); }
       }
       var tbtn = function(t, nm, c){ return '<button type="button" class="tfb' + (TFv === t ? ' on' : '') + '" data-g="' + gid + '" data-t="' + t + '">' + badge(t, c) + '<span>' + esc(nm || t) + '</span></button>'; };
@@ -1097,6 +1105,8 @@ JS = r"""
       var a = fetch('https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/changes.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
       var b = fetch('/data/price-moves.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
       Promise.all([a, b]).then(function(x){
+        var ina = {}; ((x[0] || {}).events || []).forEach(function(e){ if(e.k !== 'inactive' || !e.pl) return; var t = Date.parse(e.ts); if(isNaN(t)) return; var n = norm(e.pl); if(!ina[n] || t > ina[n].ts) ina[n] = {tm: e.tm || '', ts: t}; });
+        if(x[0]) INACT = ina;   // a feed that did not load leaves the last list in place
         var ev = ((x[0] || {}).events || []).filter(function(e){ return e.k === 'weather' || !e.pl || known[String(e.pl).toLowerCase()]; });
         var pm = x[1] || {};
         if(String(pm.week) === String(D.week)) (pm.moves || []).forEach(function(m){ var my = MYPL[String(m.pl).toLowerCase()];

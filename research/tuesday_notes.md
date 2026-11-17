@@ -55,3 +55,13 @@
 - tests/deepdive_pages.py (older, needs a server on 8802): its "boost 25% x3: a slip is shown" check fails on a finished week
   (nothing left to boost) - 31 of 32 on 11/17 2:30 AM; make it week-independent like the others. The Social page's own grader calls
   a First TD leg dead when a finished game's box score did not load - require the box before settling it.
+
+## Added 11/17 ~3:15 AM CT
+- Live: an inactive player's leg is void from the inactives list (RUNBOOK). Thursday night: about 75 minutes before kickoff, open
+  /live/ with a slip that holds a leg on someone from the inactives list and confirm it reads Void; confirm ESPN's kick/punt return
+  tables carry a touchdown key the page reads (phone network log, or the first return touchdown).
+- After Tuesday's grading: Today, Season and Receipts must show the same Daily Sweep record (Season still shows last Tuesday's
+  "1-1 · Wk 9 1-1"; the tab says 1-0 with Sunday's and Monday's Sweeps ungraded - both lost).
+- The pre-publish set is longer now (RUNBOOK "the local page crawl had been opening nothing"): run tests/local_gate.py, not
+  site_crawl.py on its own.
+- Next with the inactives feed: the builder / Today / boards should not offer a leg on a player who is on the inactives list.

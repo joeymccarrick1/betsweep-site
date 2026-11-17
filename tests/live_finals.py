@@ -103,7 +103,7 @@ async def main():
     print(f"   game {GID} (home {A}), made-up final {A} {SA} - {B} {SB}; legs: " + "; ".join(f"{l['pl']} {l['m']} {l['ln']}" for l in WIN) + f"; no stat line: {ABS['pl']}; did not play: {DNP['pl']}")
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        async def run(name, theme="dark", t=None, espn="off", sb=None, sm=None, keys=None, oldlog=None, hash_=None, wait=2600, **dk):
+        async def run(name, theme="dark", t=None, espn="off", sb=None, sm=None, keys=None, oldlog=None, hash_=None, wait=2600, events=(), **dk):
             """one visit: returns (what the page shows, the ESPN addresses it asked for, page errors, the page)"""
             ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True, service_workers="block")
             ls = {"bs_theme": theme, "t_now": str(int(t if t is not None else KO + 6 * 3600e3)), "bs_live_hub": "__slips", "bs_live_slipsopen": "1", "bs_live_open": json.dumps(["slip|s1"]),
@@ -115,6 +115,8 @@ async def main():
                 asked.append(request.url)
                 if espn == "off": await route.abort(); return
                 await route.fulfill(status=200, content_type="application/json", body=json.dumps((sm if sm is not None else {}) if "summary" in request.url else (sb if sb is not None else {"events": []})))
+            async def on_feed(route, request): await route.fulfill(status=200, content_type="application/json", body=json.dumps({"events": list(events)} if "changes.json" in request.url else {}))
+            await ctx.route("**/raw.githubusercontent.com/**", on_feed)
             await ctx.route("**/*espn.com/**", on_espn); await ctx.route("**/*supabase*/**", lambda r: r.abort())
             body = data(**dk)
             async def on_data(route, request): await route.fulfill(status=200, content_type="application/javascript", body=body)
@@ -190,6 +192,19 @@ async def main():
         # ---- 7. kickoff has passed and the score feed cannot be reached ----
         s, asked, errs, pg, ctx = await run("no-feed", t=KO + 75 * 60e3, fb=None, fin=False, keys=[ML, OV, Y1]); await ctx.close()
         check(s["dead"] == 0 and not s["log"] and sum("score delayed" in r for r in s["rows"]) == 2, f"with the game on and no score feed the game-line legs say the score is delayed instead of being worked out on 0-0 ({[r[-40:] for r in s['rows'][:2]]})")
+        # ---- 8. the inactives list: a leg on a player ruled out before kickoff is void from that moment ----
+        iso = lambda ms: __import__("datetime").datetime.fromtimestamp(ms / 1000, __import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        note = lambda l, ts, tm=None: {"ts": iso(ts), "k": "inactive", "pl": l["pl"], "tm": tm or l["tm"], "t": f"{l['pl']} ({tm or l['tm']}) INACTIVE"}
+        rowof = lambda s, l: next((r for r in s["rows"] if l["pl"] in r), "")
+        s, asked, errs, pg, ctx = await run("inactive-pregame", t=KO - 80 * 60e3, fb=None, fin=False, keys=[Y1, ABS], events=[note(ABS, KO - 95 * 60e3)], wait=3600); await ctx.close()
+        print("   inactive, before kickoff:", json.dumps({k: s[k] for k in ("slip", "facts")}), "|", rowof(s, ABS)[:120])
+        check("1 void" in s["facts"] and "Void" in rowof(s, ABS) and "inactive" in rowof(s, ABS) and s["dead"] == 0 and not errs, f"a player on the inactives list before kickoff: his leg is void at once and the slip says so ({s['facts']})")
+        s, asked, errs, pg, ctx = await run("inactive-in-play", t=KO + 75 * 60e3, fb=None, fin=False, espn="on", sb=scoreboard("in", 13, 17), sm=summary(lose=(Y1,)), keys=[Y1, ABS], events=[note(ABS, KO - 95 * 60e3)], wait=3800); await ctx.close()
+        check("Void" in rowof(s, ABS) and "0 /" not in rowof(s, ABS) and "1 void" in s["facts"], f"with the game on he stays void instead of sitting at 0 ({rowof(s, ABS)[:70]!r})")
+        s, asked, errs, pg, ctx = await run("inactive-but-played", t=KO + 75 * 60e3, fb=None, fin=False, espn="on", sb=scoreboard("in", 13, 17), sm=summary(), keys=[Y1, ABS], events=[note(Y1, KO - 95 * 60e3)], wait=3800); await ctx.close()
+        check("Void" not in rowof(s, Y1) and "Hit" in rowof(s, Y1), f"a note that turns out wrong does not void a man who is in the box score ({rowof(s, Y1)[:70]!r})")
+        s, asked, errs, pg, ctx = await run("inactive-other", t=KO - 80 * 60e3, fb=None, fin=False, keys=[Y1, ABS], events=[note(ABS, KO - 95 * 60e3, tm="ZZZ"), note(Y1, KO - 6 * 86400e3)], wait=3600); await ctx.close()
+        check("void" not in s["facts"] and "Void" not in rowof(s, ABS) and "Void" not in rowof(s, Y1), f"a note for another team's player of the same name, or one from last week, voids nothing ({s['facts']})")
         await b.close()
     srv.shutdown()
     print(f"{ok[0]} passed, {ok[1]} failed")
