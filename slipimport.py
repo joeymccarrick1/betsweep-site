@@ -198,7 +198,7 @@ IMPORT_JS = r"""(function(){
     if (location.hash === '#import') card.scrollIntoView({block: 'start'});
   }
   // owner 11/10 "Sweep my slip" (/sweep/): the same reader for another page - picture in, {R: parsed legs, BS: this week's board} out
-  window.BSImport = {parse: parse, data: builderData, read: function(file){
+  window.BSImport = {parse: parse, data: builderData, gmap: gmapOf, read: function(file){
     return Promise.all([builderData(), loadTess().then(function(T){ return prep(file).then(function(c){ return T.recognize(c, 'eng', {tessedit_pageseg_mode: '4'}); }); })])
       .then(function(r){ return {R: parse(r[1].data.text || '', r[0]), BS: r[0]}; }); }};
   if (typeof document !== 'undefined') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup(); }

@@ -1000,3 +1000,22 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   for a page built before the last kickoff. STILL TIED TO WEEK 10: tests/social_feed.py and tests/home_filing.py (hard-coded
   BAL-LAC / week 10) - rework them the same way after Tuesday's roll.
 
+## 11/16 late: post a slip to Social from a FanDuel screenshot (alpha plan step 3)
+
+- **Social > "From a screenshot"** (`social.SHOT_CSS` / `SHOT_JS`, panel `#shot`). The picture is read on the phone by the reader
+  My BetSweep already uses (`/import.js`, slipimport.py - tesseract.js from jsdelivr, loaded only then; the picture never leaves
+  the device). The panel lists every leg it found: postable ones, and for the rest the reason - "that game has already kicked
+  off", "not on this week's board at that exact line", or not a market we price. "Post these N legs" loads exactly those legs
+  into the Parlay Builder (`BSLoadSlip`, the 11/1 path) and leaves a single-use note in the tab (`sessionStorage.bs_postnow`:
+  the leg keys, the time, and the slip price from the picture - the price only when every leg came along, since a price for seven
+  legs is wrong for five).
+- **Builder:** arriving on `#slip` with a note less than two minutes old AND with exactly those legs in the slip, it opens its own
+  post form by itself. The form (`POST_JS`) fills "FanDuel price you got" from the note only while the slip is exactly those legs
+  (up to 30 minutes). Nothing is posted until the reader presses Post; signed out, the usual sign-in opens first.
+- `window.BSImport.gmap` is now exported for it (which game a "total" leg belongs to).
+- **Tests:** `python3 tests/social_shot.py` (30 checks, light + dark). The picture reader is stubbed there - it cannot load in the
+  workspace; its parser has its own checks from 11/1. NOT tested: a real screenshot through the real reader on a phone, and a real
+  post to the database (the test's database is a fake whose insert answers like the real one).
+- Caught by the test before it shipped: an apostrophe inside a single-quoted string in SHOT_JS ("this week's board") broke the whole
+  script. When a JS block is written through a Python patch string, `\'` is eaten - use double quotes for text with apostrophes.
+

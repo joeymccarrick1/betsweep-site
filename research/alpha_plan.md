@@ -50,6 +50,8 @@ opens are where the alpha gap is. Order for the next stretch:
 (DONE 11/16 8:05 PM CT: secret in and accepted; database timer running - RUNBOOK. Check the first graded run Tuesday.) Was waiting on the owner: add the repo secret FEED_GRADE_SECRET (or say "start records at Week 11" first - then add a --from-week
 option to social_grade.py before he does; today's dry run would record 24 losses, 0 wins).
 
+- 11/16 late: step 3 DONE - post from a screenshot (Social > "From a screenshot" -> builder post form, price from the picture).
+  Still to check on a real phone with a real screenshot.
 ## Next, in this order
 1. ~~Social - never empty, finished~~ (done 11/16, see above). Was: **Social - never empty, finished.** Cashed tab (finished slips where every leg hit, this week from ESPN finals, earlier weeks from
    data/box-w<W>.json); stop hiding finished slips, sort them under Cashed / Busted; live grading on the pinned house slips so they can

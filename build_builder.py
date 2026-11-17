@@ -2378,6 +2378,12 @@ BUILDER_JS = r"""
   // owner 11/1: a FanDuel slip loaded from My BetSweep lands here (#slip) - open the slip and say which legs could not come along
   try{ var imn = sessionStorage.getItem('bs_impnote'); if (imn){ sessionStorage.removeItem('bs_impnote'); setTimeout(function(){ var fn = $('#fdnote'); if (fn) fn.textContent = imn; }, 900); } }catch(e){}
   if (location.hash === '#slip') $('.slipwrap').classList.add('open');
+  // 11/16 (alpha plan step 3): a slip read from a screenshot on Social arrives to be posted - open the post form once the slip is in.
+  // Only for a flag set in the last two minutes, and only when the slip on the page is exactly the legs that were read.
+  try{ var pnow = JSON.parse(sessionStorage.getItem('bs_postnow') || 'null');
+    if (pnow && Date.now() - (+pnow.t || 0) < 120e3 && location.hash === '#slip') setTimeout(function(){
+      var ks = slipLegs().map(legKey).sort(), b = document.getElementById('postsl');
+      if (b && ks.length && pnow.keys && pnow.keys.length === ks.length && pnow.keys.every(function(k, i){ return k === ks[i]; })) b.click(); }, 1200); }catch(e){}
   function toggleHelp(force){ var h = $('#help'); h.hidden = force === true ? false : !h.hidden; if(!h.hidden) h.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
   $('#helpbtn').addEventListener('click', function(){ toggleHelp(); });
   $('#legs').addEventListener('click', function(ev){ if(ev.target.closest('.edgel')) toggleHelp(true); }); $('#games').addEventListener('click', function(ev){ if(ev.target.closest('.edgel')) toggleHelp(true); });

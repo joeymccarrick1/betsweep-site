@@ -167,6 +167,9 @@ POST_JS = r"""<script>(function(){
   btn.addEventListener('click', function(){
     var A = window.bsAccount; var ls = legsNow();
     if(!ls.length){ alertish('Add some legs first.'); return; }
+    // a slip read from a screenshot on Social (bs_postnow): the price on the picture is offered only while the slip is exactly those legs
+    try{ var pn = JSON.parse(sessionStorage.getItem('bs_postnow') || 'null'), ks = ls.map(function(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }).sort();
+      if(pn && pn.odds && Date.now() - (+pn.t || 0) < 30 * 60e3 && !$('sdO').value && pn.keys && pn.keys.length === ks.length && pn.keys.every(function(k, i){ return k === ks[i]; })) $('sdO').value = (pn.odds > 0 ? '+' : '') + pn.odds; }catch(e){}
     if(!A || !A.client){ alertish('Accounts are not available right now.'); return; }
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
     var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });
@@ -781,19 +784,68 @@ def cards_js(week):
     return "<style>" + CARDS_CSS + "</style><script>" + CARDS_JS.replace("__WEEK__", str(int(week))) + "</script>"
 
 
+# 11/16 (alpha plan step 3): post a slip from a FanDuel screenshot. The picture is read on the phone by the same reader My BetSweep uses
+# (/import.js, slipimport.py); the legs that are on this week's board and have not kicked off are loaded into the Parlay Builder, which
+# opens its own post form with the price from the picture filled in. Nothing is posted until the reader presses Post there.
+SHOT_CSS = """.soc .bar #shotbtn{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.soc .shot{margin:0 0 14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)} .soc .shot h2{margin:0 0 4px;font-family:var(--display);font-size:20px;color:var(--ink)}
+.soc .shot p{margin:0 0 10px;color:var(--mute);font-size:14px;line-height:1.45} .soc .shot .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.soc .shot .pick,.soc .shot .go{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:10px;border:0;background:var(--red);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.soc .shot #shotx{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.soc .shot #shotout{margin-top:10px} .soc .shot #shotout .st{margin:0 0 8px;font-size:14px;color:var(--ink)} .soc .shot #shotout .st.err{color:var(--bad)}
+.soc .shot ul{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px} .soc .shot li{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.35;color:var(--ink)}
+.soc .shot li b{font-variant-numeric:tabular-nums;margin-left:4px} .soc .shot li small{display:block;color:var(--mute);font-size:12.5px} .soc .shot li.no{color:var(--mute)} .soc .shot li.no small{color:var(--bad)}"""
+SHOT_JS = r"""<script>(function(){
+  var $ = function(id){ return document.getElementById(id); }, btn = $('shotbtn'), box = $('shot'), f = $('shotf'), out = $('shotout'); if(!btn || !box) return;
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function am(o){ o = +o; return isNaN(o) || !o ? '' : (o > 0 ? '+' + o : String(o)); }
+  function say(t, err){ out.innerHTML = '<p class="st' + (err ? ' err' : '') + '">' + t + '</p>'; }
+  function open(on){ box.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(on) box.scrollIntoView({block: 'nearest'}); }
+  btn.addEventListener('click', function(){ open(box.hidden); }); $('shotx').addEventListener('click', function(){ open(false); out.innerHTML = ''; });
+  function show(R, BS){
+    var now = Date.now(), G = BS.games || {}, rows = (R.legs || []).map(function(l){
+      if(!l.ok) return {no: 1, text: l.raw, why: l.why || 'not a market BetSweep prices'};
+      var g = l.leg && l.leg.g, ko = g && G[g] && G[g].ko;
+      if(l.unpriced || !l.leg) return {no: 1, text: l.label, why: "not on this week's board at that exact line, so it cannot be posted"};
+      if(ko && now >= ko) return {no: 1, text: l.label, why: 'that game has already kicked off'};
+      return {l: l, text: l.label}; });
+    var good = rows.filter(function(r){ return !r.no; });
+    if(!rows.length){ say('No FanDuel legs found in that picture. Use a screenshot of the betslip, or of the bet under My Bets, with the leg names showing.', 1); return; }
+    var h = '<p class="st">' + (good.length ? good.length + ' of ' + rows.length + ' legs can be posted' : 'None of these legs can be posted') + (R.odds ? ' · FanDuel ' + am(R.odds) : '') + '</p><ul>' + rows.map(function(r){
+      return r.no ? '<li class="no">✗ ' + esc(r.text) + '<small>' + esc(r.why) + '</small></li>' : '<li>✓ ' + esc(r.text) + (r.l.odds ? '<b>' + am(r.l.odds) + '</b>' : '') + '</li>'; }).join('') + '</ul>';
+    if(!good.length){ out.innerHTML = h; return; }
+    var part = good.length < rows.length;
+    out.innerHTML = h + (part && R.odds ? '<p class="st">The ' + am(R.odds) + ' on the picture is for the whole slip, so it is left off a post with fewer legs.</p>' : '') + '<div class="row"><button type="button" class="go" id="shotgo">Post ' + (good.length === 1 ? 'this leg' : 'these ' + good.length + ' legs') + '</button></div>';
+    $('shotgo').addEventListener('click', function(){ var ls = good.map(function(r){ return r.l; }), keys = ls.map(function(x){ return x.key; });
+      // the builder opens its post form for exactly these legs (single use, two minutes); the price is only carried when every leg came along
+      try{ sessionStorage.setItem('bs_postnow', JSON.stringify({odds: part ? null : (R.odds || null), keys: keys.slice().sort(), t: Date.now()})); }catch(e){}
+      say('Opening the Parlay Builder with your slip…'); window.BSLoadSlip(keys, window.BSImport.gmap ? window.BSImport.gmap(BS, ls) : {}); }); }
+  f.addEventListener('change', function(){ var file = f.files && f.files[0]; f.value = ''; if(!file) return;
+    if(!window.BSImport){ say('The reader did not load. Check your connection and try again.', 1); return; }
+    say('Reading your slip… the first time takes a few seconds.');
+    window.BSImport.read(file).then(function(r){ show(r.R, r.BS); }, function(e){ say('Could not read that picture. Try a full, uncropped screenshot of the slip.', 1); }); });
+})();</script>"""
+
 def page(week, house=""):
     return (f"""<title>BetSweep Social</title>
 <script>window.__BS_FDMAP = {json.dumps(fdmap(), separators=(",", ":"))};</script>
 <meta name="description" content="Betslips posted by BetSweep users - tail them on FanDuel, upvote the best ones, and see which ones cashed. Graded live from the box score.">
 __BASE__
-<style>__BASECSS__{PAGE_CSS}</style>
+<style>__BASECSS__{PAGE_CSS}{SHOT_CSS}</style>
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="mebtn" hidden>My profile</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="mebtn" hidden>My profile</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <section class="shot" id="shot" hidden aria-label="Post a slip from a screenshot">
+  <h2>Post from a screenshot</h2>
+  <p>Screenshot your FanDuel betslip and choose the picture. Your phone reads it; the picture never leaves this device.</p>
+  <div class="row"><label class="pick">Choose screenshot<input type="file" accept="image/*" id="shotf" hidden></label><button type="button" id="shotx">Close</button></div>
+  <div id="shotout" aria-live="polite"></div>
+ </section>
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>
  <p class="rules">How it works: the most-upvoted slips sit on top. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg moves to Lost right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
 </div>
-""" + PAGE_JS.replace("__WEEK__", json.dumps(int(week))))
+<script defer src="/import.js"></script>
+""" + PAGE_JS.replace("__WEEK__", json.dumps(int(week))) + SHOT_JS)
