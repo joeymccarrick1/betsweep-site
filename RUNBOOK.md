@@ -1043,4 +1043,10 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   final taken out for that phase (builder: `/build/data-*.js`; boards: the page itself, `data-final` on the last card).
   **The site has a service worker that answers page loads itself after the first visit** - a test that patches a page must open
   its browser context with `service_workers="block"` (tests/boards_fold.py does), or the second load is the unpatched page.
+- **How the service worker serves a returning visitor (read 11/16):** pages and `/data/` are network-first (always this build's,
+  the cached copy only when offline); every other same-site file - `/import.js`, `/account.js`, the hashed data files - is
+  cache-first inside a cache named after the build. A new build ships a new `sw.js`, which replaces the cache, but on the ONE visit
+  where it is installing the old worker can still hand out the previous build's shared script next to the new page. So new page
+  code must tolerate the previous build's shared scripts: guard anything newly exported (the screenshot posting checks
+  `BSImport.gmap` before calling it).
 
