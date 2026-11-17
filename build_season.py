@@ -410,6 +410,29 @@ try:
     arch = "".join(f'<li><span class="bl-p"><a href="{E(r[2])}">Week {E(r[0])} receipt</a></span><span class="bl-m">{E(r[3] if len(r)>3 else "")}</span></li>' for r in sorted(a, key=lambda r: -(num(r[0]) or 0)))
 except Exception: pass
 legs_line = f'{tot[1]}–{tot[0]-tot[1]} ({tot[1]/tot[0]*100:.0f}%) · {tot[2]:+.2f}u · clean {cl[1]}–{cl[0]-cl[1]}' if tot[0] else "no legs graded yet"
+def promo_legs(rows, first_week=6):
+    """Cumulative leg record of the promoted slips (Brand Roadmap Stage 1 number). rows = 'PROMO - Promoted Bets' values incl. header.
+    Returns {n, hit, imp (mean FanDuel implied of the posted legs, 0-1), w0, w1, skipped (graded slips with no leg count in Notes)}."""
+    import re as _re
+    n = hit = 0; imp = []; w0 = w1 = None; skipped = 0
+    for r in rows[1:]:
+        r = list(r) + [""] * (13 - len(r)); w = num(r[0]); res = str(r[8]).strip().upper()
+        if w is None or w < first_week or res not in ("HIT", "WON", "WIN", "MISSED", "MISS", "LOST", "LOSS"): continue
+        m = (_re.search(r"GRADED[^:\n]*:\s*(\d+)\s*/\s*(\d+)", r[12]) or _re.search(r"[Aa]uto-graded\s+(\d+)\s*/\s*(\d+)", r[12])
+             or _re.search(r"(\d+)\s*/\s*(\d+)\s*legs? hit", r[12]))
+        legs_txt = [L for L in str(r[3]).split("\n") if L.count("|") == 2]
+        if m: h, t = int(m.group(1)), int(m.group(2))
+        elif res in ("HIT", "WON", "WIN") and legs_txt: h = t = len(legs_txt)   # a cashed slip = every leg hit
+        else: skipped += 1; continue
+        if t <= 0 or h > t: skipped += 1; continue
+        n += t; hit += h; w0 = int(w) if w0 is None else min(w0, int(w)); w1 = int(w) if w1 is None else max(w1, int(w))
+        for L in str(r[3]).split("\n"):
+            p = [x.strip() for x in L.split("|")]
+            if len(p) == 3:
+                o = num(p[2])
+                if o: imp.append(100 / (o + 100) if o > 0 else -o / (-o + 100))
+    return {"n": n, "hit": hit, "imp": (sum(imp) / len(imp)) if imp else 0.0, "w0": w0, "w1": w1, "skipped": skipped}
+
 # promoted bets, season to date (the slips we actually posted, at posted FanDuel odds) - the honest headline next to the leg pool
 promo_line = ""
 try:
@@ -422,6 +445,15 @@ try:
     if PRW:
         n_ = sum(d[0] for d in PRW.values()); h_ = sum(d[1] for d in PRW.values()); u_ = sum(d[2] for d in PRW.values())
         promo_line = f'<span class="k">Promoted bets</span><span>{h_}–{n_-h_} · {u_:+.1f}u at posted odds · ' + ", ".join(f"Wk {w} {d[1]}–{d[0]-d[1]}" for w, d in sorted(PRW.items())) + '</span>'
+    # Brand Roadmap, Stage 1 (owner 11/17): "promoted-slip leg hit rate against FanDuel's implied percentage, cumulative from Week 6 ...
+    # lives on the season page". Leg by leg from the grader's Notes ("GRADED ...: x/y", "Auto-graded x/y legs hit", "x/y legs hit") and
+    # the implied % of each posted leg's odds (col D, "who | market | odds"). Weeks before 6 and rows without a leg count are left out.
+    try:
+        PL = promo_legs(vals("promos.json"))
+        if PL["n"]:
+            promo_line += (f'<span class="k">Promo legs</span><span>{PL["hit"]}–{PL["n"]-PL["hit"]} · {PL["hit"]/PL["n"]*100:.0f}% hit vs FanDuel\'s prices {PL["imp"]*100:.0f}% · Weeks {PL["w0"]}–{PL["w1"]}'
+                           + (f' · {PL["skipped"]} slip{"s" if PL["skipped"] != 1 else ""} without a leg grade' if PL["skipped"] else '') + '</span>')
+    except Exception as _e: print("warn: promo legs line skipped:", _e)
     # owner 11/10: the Daily Sweep (one house slip per game day; sweep.py) on its own line - it is also counted inside "Promoted bets"
     try:
         import sweep as SW

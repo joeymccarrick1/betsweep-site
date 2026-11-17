@@ -215,14 +215,44 @@ Every recipe below is subject to the Market mix rule above (11/4): where a recip
   leg filter applies, rungs 10-25% under projection, likeliest TD scorers. Name it, label LOTTERY, give the script in one line and the model's
   chance (product of BetSweep % = the independent floor; same-game correlation makes it higher).
 - **tuesday** (receipt): no bets. Read `site/receipts/` (newest week page) and the promo grades it shows, plus `site/b/promos.json`; write
-  the receipt post (core record vs lottery record, best hit, toughest miss with its "why it lost" line if the receipt shows one) and a
-  60-second video script. If last week is not graded yet, say so and stop.
+  the receipt as the QUOTE THREAD of the Stage 2 section below (head post = core record vs lottery record, best hit, toughest miss with its
+  "why it lost" line if the receipt shows one, the season line from `site/season/`; then one reply per promo, newest first) and the
+  30-second receipt video script. If last week is not graded yet, say so and stop.
 
 ## Output (final message)
 For each promo: `NAME - price (chance %)`, the legs (player, line, odds, BetSweep %), one-line why per leg, the FanDuel link, then an X
 post and an Instagram caption from the templates in the playbook (end with "21+ | gamble responsibly"). Thursday / Sunday main / prime-time
-runs add a 4-line Reel/TikTok script (hook, the slip, the one stat, the call to action). Finish with "Assumed:" (one line) and
+runs add a 4-line Reel/TikTok script (hook, the slip, the one stat, the call to action). Every X post ends with the @Playbook line and
+every core slip gets the 30-second script of the Stage 2 section below. Finish with "Assumed:" (one line) and
 "Skipped:" (legs dropped for injury / weather / flags, one line).
+
+## Stage 2 format tests (owner 11/17: "Get to testing all") - Brand Roadmap, Weeks 11-14
+The Stage 1 gate check on 11/17 found Weeks 6-10 all graded (promoted slips 1-45; promo legs 150-135, 53% hit vs 62% FanDuel implied, two slips without a leg grade) and the owner
+started Stage 2 of the Brand Roadmap (https://claude.ai/artifact/JECB42X5JPUsGRG3LNXLNX): one post a day on @bet_sweep, and the three
+formats below tested together from Week 11. Each draft includes all three where they apply; the owner measures them in the sheet tab
+'STAGE2 - Format Tests' (one row per week: followers, link taps, @Playbook tails per post, Live visits, sign-ups) and after two weeks
+keeps the ones whose numbers move. These are post formats only - no slip rule above changes.
+
+1. **@Playbook line on every X post.** The last line of every X post, before "21+ | gamble responsibly", is exactly:
+   `Comment @Playbook to tail this on your book` - the Action Network bot answers a comment with the slip on the reader's sportsbook,
+   so a tail no longer needs FanDuel. The site's slip-page Share -> X link carries the same line (gen shortlinks.py). Instagram captions
+   get "Tail on FanDuel: link in bio" as before (no bot there). Count the @Playbook comments per post for the tracker.
+2. **30-second vertical video per core slip** (the Daily Sweep and every +500-shape slip; lottery slips get none). Four lines, the owner
+   on camera with the slip's /b/ page or the builder on screen, timed to read in 30 seconds:
+   - HOOK (0-3 s): one sentence with the price and the day - "Thursday's Sweep. Four legs, +310, here's why."
+   - LEGS (3-15 s): each leg in six words or fewer, the number first - "Herbert 175 plus. McBride six catches."
+   - WHY (15-25 s): the one stat or matchup that ties the slip together, from the dossier - one number, one opponent.
+   - CALL (25-30 s): "Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   Write it as four lines labelled HOOK / LEGS / WHY / CALL, nothing else; the owner reads it off the phone. One script per core slip.
+3. **Tuesday quote thread.** The Tuesday receipt is a thread: the HEAD post is the receipt template from the playbook plus one line
+   with the season number from `site/season/` ("Season: promoted slips x-y, promo legs z% vs implied w%"). Then ONE REPLY PER PROMO of
+   the graded week, newest first, each written to be posted as a quote of that promo's original post (the owner picks the post; write
+   `[quote: <promo name> post]` where it goes): `<name> <price> - CASHED +x.xu` or `<name> <price> - missed by <leg that lost, with the
+   number> (<why-it-lost tag from the slip log: thin role / wrong script / bad luck>)`. Wins first inside the thread, every miss owned,
+   no excuses. End the last reply with "Every slip graded at betsweep.co/receipts" and the @Playbook line is NOT used on the receipt.
+
+How the week reads once all three run: Tue thread (quote replies) -> Wed coverage edge -> Thu TNF slip + 30-s video + @Playbook line ->
+Fri floor slip + Next Man Up -> Sat boards graphic -> Sun Live screenshots + Sweep + @Playbook line -> Mon Piss Missile Monday + video.
 
 
 ## Similar defenses (owner 11/6)
