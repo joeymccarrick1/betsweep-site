@@ -961,6 +961,19 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   owner's step. Until he does, a session must dispatch by hand: gameday.yml, then sheet-mirror.yml, then reprice.yml.
 - The rebuild refuses a mirror older than 180 minutes (reprice.py --max-age); with the mirror arriving three times a day that
   limit alone would have skipped most scheduled rebuilds even when they did start.
+- **11/17, one job was left out: the ESPN mirror (feeds.yml).** The database starts it every three minutes in game windows
+  (betsweep-feeds-*: Sun 10 AM - midnight, Mon / Thu 5 PM - midnight Central), and everywhere else it was still on GitHub's
+  schedule. Measured over 11/13 - 11/17: 38 scheduled runs where about 600 were due; gaps of 6 to 7 hours on Saturday, Sunday
+  morning and Monday (Mon 11/16: nothing between 10:57 AM and 5:00 PM Central - Ladd McConkey's scratch reached the site with the
+  first game-window run at 5:00 PM). What rides on that mirror: the injury list behind the risk chips, the refused adds and the
+  "X is OUT" pushes (ESPN blocks the database, so slip-alerts reads the mirror), the Questionable translator, the news desk,
+  kickoff weather, the Live page's "What changed".
+  `sql/github_timers.sql` now has a twelfth job, `betsweep-gh-feeds` (every ten minutes, all week). Tested on the throwaway
+  database (stand-in cron / net schemas): 12 jobs, the three older betsweep-feeds / alerts jobs untouched, a second run leaves
+  12, the job's command runs and posts feeds.yml. **The owner has to run the file again** - until he does, the mirror is only
+  as fresh as GitHub's schedule outside game windows. (A workflow-file route - risk-notes and price-moves asking for a mirror run
+  when the feeds branch is over eight minutes old - was written and not pushed: a session may not push workflow changes to main
+  on its own. The patch is in the owner_send folder of the 11/17 session if he prefers that.)
 
 ## 11/16, 8:05 PM CT: the grading secret and the database timer are both in (owner's steps, verified)
 

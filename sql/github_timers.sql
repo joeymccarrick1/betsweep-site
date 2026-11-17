@@ -27,6 +27,10 @@ begin
       ('betsweep-gh-mirror',          '5,35 * * * *',            'sheet-mirror.yml', null),
       ('betsweep-gh-moves',           '12,42 * * * *',           'price-moves.yml',  null),
       ('betsweep-gh-notes',           '*/30 * * * *',            'risk-notes.yml',   null),
+      -- the ESPN mirror (injury report, news, weather, inactives) every ten minutes, all week. Added 11/17: outside game windows it
+      -- was left to GitHub's schedule, which started it 38 times in four days where about 600 were due - on Monday 11/16 not once
+      -- between 10:57 AM and 5:00 PM Central. The three-minute game-window jobs (betsweep-feeds-*) are not touched.
+      ('betsweep-gh-feeds',           '*/10 * * * *',            'feeds.yml',        null),
       -- the rebuild: hourly on game days (Thu / Sun / Mon, 6:20 AM - 11:20 PM Central), every three hours otherwise
       ('betsweep-gh-reprice-day',     '20 12-23 * * 0,1,4',      'reprice.yml',      '{"publish":"changed"}'),
       ('betsweep-gh-reprice-night',   '20 0-5 * * 1,2,5',        'reprice.yml',      '{"publish":"changed"}'),
