@@ -1,0 +1,30 @@
+LIVE 'FROM HERE' GRADE - Week 10  (2480 snapshot x leg observations, 1 games, 1446 snapshots)
+built 2026-11-17 14:13; pregame legs pinned 2026-11-17T01:18:10.863750+00:00
+
+CALIBRATION (mean from-here chance vs actual hit rate; Brier lower is better, pregame chance as the baseline)
+  chance 0-20%                     n= 1537  from-here   7.0%  hit   6.2%  Brier 0.053 (pregame 0.080)
+  chance 20-40%                    n=  550  from-here  29.2%  hit  42.0%  Brier 0.262 (pregame 0.277)
+  chance 40-60%                    n=  308  from-here  50.7%  hit  64.6%  Brier 0.255 (pregame 0.371)
+  chance 60-80%                    n=   73  from-here  67.3%  hit 100.0%  Brier 0.109 (pregame 0.546)
+  chance 80-100%                   n=   12  from-here  94.4%  hit 100.0%  Brier 0.004 (pregame 0.575)
+
+  quarter 1                        n=  586  from-here  28.0%  hit  36.2%  Brier 0.197 (pregame 0.227)
+  quarter 2                        n=  880  from-here  23.4%  hit  30.5%  Brier 0.140 (pregame 0.204)
+  quarter 3                        n=  422  from-here  17.0%  hit  19.4%  Brier 0.092 (pregame 0.155)
+  quarter 4                        n=  592  from-here   7.3%  hit   8.1%  Brier 0.059 (pregame 0.099)
+
+  Anytime TD                       n=  807  from-here   9.4%  hit   4.6%  Brier 0.033 (pregame 0.051)
+  Receiving Yards                  n=  621  from-here  22.1%  hit  38.0%  Brier 0.195 (pregame 0.249)
+  Receptions                       n=  636  from-here  31.5%  hit  39.5%  Brier 0.204 (pregame 0.264)
+  Rushing Yards                    n=  319  from-here  14.6%  hit  13.8%  Brier 0.024 (pregame 0.117)
+  Passing Yards                    n=   97  from-here  25.7%  hit  43.3%  Brier 0.286 (pregame 0.370)
+
+LIVE CALLS - open legs in Q2-Q4 where from-here beats the PREGAME book implied chance by >= 5 pts (upper bound: FanDuel's live price moves too)
+  all markets                      n=  303  from-here  50.5%  hit  63.7%  Brier 0.223 (pregame 0.430)
+  anytime TD                       -
+  anytime TD, plus-money pregame   -
+  yards / receptions               n=  303  from-here  50.5%  hit  63.7%  Brier 0.223 (pregame 0.430)
+  (first call per leg per quarter) n=   38  from-here  49.2%  hit  63.2%  Brier 0.238 (pregame 0.402)
+
+READ: a product needs the from-here hit rate to clear the book's LIVE price, which this log does not have. If the Q3-Q4 anytime TD
+calls land near their from-here chance for 3+ weeks, the next step is logging FanDuel's live TD prices in the same feeds run and re-grading.
