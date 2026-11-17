@@ -301,6 +301,14 @@ def main():
         log("[weekgate] " + _WG.report(_wg).split(": ", 1)[-1])
     except Exception as e:
         warns.append(f"weekgate did not run ({e}): next week's prices may be on the board"); log("[weekgate] FAILED: " + str(e))
+    # 11/17: the team's official injury report outranks the news desk's own "Questionable" (availfix.py). Week 10 ended with five desk
+    # rows the final reports had contradicted (Justin Herbert was never on the Chargers' report and wore a Questionable flag on Monday
+    # night). in/avail.json is corrected here, before any step reads it; the sheet row itself is a session's to fix (RUNBOOK Step 2a-ii).
+    try:
+        import availfix as _AF
+        _af = _AF.clean(IN, W, log=log); S["avail_fixed"] = sum(1 for c in _af if c.get("to")); S["avail_held"] = sum(1 for c in _af if not c.get("to"))
+    except Exception as e:
+        warns.append(f"availfix did not run ({e})"); log("[availfix] FAILED: " + str(e))
     steps = ([] if a.skip_desk else DESK) + BUILD
     if not a.skip_desk:      # the desk reads the public feeds branch; raw.githubusercontent.com first, this fetch is the fall-back they use
         r = subprocess.run(["git", "-C", clone, "fetch", "-q", "--depth", "1", "origin", "+feeds:refs/remotes/origin/feeds"], capture_output=True, text=True)

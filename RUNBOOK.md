@@ -48,6 +48,7 @@ Applying the proposed rows (news_rows.json, depth_rows.json) to 'AUTO - Weekly A
 - Forced Role rows from depth_check: append when he has no Forced Role and no OUT this week. Never set OUT from a depth chart (the owner's role-loss call is his - 11/4 Wilson is the precedent: healthy but zero role -> OUT with "role loss, not an injury" in J).
 - QB1 proposals: confirm the team's current QB1 row is not contradicting it (two QB1s for one team = read the news again; the later-dated item wins).
 - Every row you append cites the script's source text (J = "NEWS DESK: <headline>" / "DEPTH CHART: ..."; K = source + link). Count the rows in the summary ("context desk: N news rows, M depth rows, trending top: ...").
+- (11/17) The official report beats a desk row. After the rows above are applied and the tab is re-read into in/avail.json, run `python3 availfix.py`. For every "NEWS DESK:" row that still says QUESTIONABLE it reads the team's official report (nflverse injuries) and prints `[availfix] <player> (<team>) QUESTIONABLE -> CLEARED: ...` (no game status on the final report, or not on the report at all) or `-> OUT: ...` (Out / Doubtful on the final report). It corrects in/avail.json itself and writes out/avail_fixes.json: write each item of its "updates" to the sheet with update_values (the range is E:L of that row; the nulls leave F:I and K as they are), re-read the tab, and run it again - it should end "0 corrected". A `held:` line is a player who is off the report but may be on injured reserve (the roster or ESPN says so, or neither could be read): read the news for him and set OUT, or leave the row. It never touches an OWNER row, a row the injury refresh wrote, or an OUT. Put "availfix: N corrected (names), M held" in the summary. The hourly rebuild runs the same correction on its own copy every time, so the site is right even before a session fixes the sheet.
 Then re-read 'AUTO - Weekly Availability'!A1:M440 -> prep.py (avail.json) so the builds see the new rows. The summary's Step 2 line gets: "context desk: news X notes / Y rows applied; depth Z rows; corners affected N; consensus below/above a/b".
 Tuesday (after grading, with the other Step 5 checks): `python3 context_grade.py <GRADED WEEK>` -> research/context_grade_w<W>.txt: (1) consensus disagreements - who was closer, by side and stat; (2) trending top-20 fade test (hit vs implied). Put the block in the dev-log row. Rules: "Trending" becomes a watch flag + under-side nudge only after two graded weeks of trending legs 3+ pts under implied; "below consensus" losing two weeks running means our under-projections are stale inputs -> look at what the news desk missed, do not change the projection formulas from this.
 
@@ -1240,3 +1241,29 @@ Tuesday roll) and reading what a phone shows.
 - The builder, Today and the boards do not use this yet: a leg on an inactive player can still be picked there until FanDuel pulls
   it. Worth doing next with the same feed.
 - Tests: live_finals.py 35 (inactive before kickoff, in play, a wrong note, a note for another team or another week).
+
+
+## 11/17, 7 AM CT: a desk "Questionable" no longer outlives the official injury report (availfix.py)
+
+- **What was wrong.** The news desk enters a player as QUESTIONABLE from ESPN's team page early in the week. Nothing took the row
+  back when the team's own report came out without him. Justin Herbert ("Questionable (Finger) - avoided a fracture", Mon 11/09)
+  was never on the Chargers' Week 10 report; the row said QUESTIONABLE through Monday night, which put a "Questionable" flag on
+  every Herbert leg (a point toward "Some risk") and "LAC QB questionable" into the game card's Low confidence.
+- **How common.** Week 10 ended with 7 desk Questionable rows. The final reports contradicted 5 (Herbert not listed; Chig Okonkwo,
+  Darnell Mooney, Hunter Henry, Keaton Mitchell listed with no game status - the three with snap counts in played 56-71% of
+  snaps), agreed with 1 (Amon-Ra St. Brown, officially Questionable), and 1 was on a bye team (Luther Burden).
+- **The rule** (`availfix.decide`, only for rows whose reason starts with "NEWS DESK:" and whose status is QUESTIONABLE):
+  final report in (someone on his team has a game status) -> Out / Doubtful there = OUT; Questionable there = stays; listed with
+  no status = CLEARED; not listed = CLEARED. Practice reports only -> not listed and the note is 3+ days old = CLEARED; else stays.
+- **Not listed could mean injured reserve** (reserve players are not on the weekly report), so "not listed" clears only with two
+  proofs: the nflverse roster has him ACT (file under 60 hours old) and ESPN's injury page (feeds mirror) lists him as nothing
+  worse than Questionable. If either is missing the row stays and the log says `held:` with the reason.
+- **Where it runs.** reprice.py, right after weekgate and before the desk (summary fields `avail_fixed`, `avail_held`); a session
+  by hand in Step 2a-ii, which also writes the sheet cells from out/avail_fixes.json. It fetches injuries_<season>.csv (older than
+  3 h) and roster_<season>.csv (older than 20 h) itself: it runs before the steps that download them, and the first rebuild of a
+  UTC day starts with no csv at all.
+- **Checks.** `python3 availfix.py selftest` (38). On the real Week 10 rows: 5 corrected, 0 held, St. Brown and Burden untouched;
+  same result from a cold start with both nflverse files missing.
+- **Not covered.** Rows the injury refresh wrote ("did not practice, no game designation yet") are the refresh's to update. A desk
+  OUT is never softened here. The sheet's own tab keeps the old row until a session writes the fix.
+
