@@ -65,3 +65,25 @@
 - The pre-publish set is longer now (RUNBOOK "the local page crawl had been opening nothing"): run tests/local_gate.py, not
   site_crawl.py on its own.
 - Next with the inactives feed: the builder / Today / boards should not offer a leg on a player who is on the inactives list.
+
+## Added 11/17, 7-8:30 AM CT (before the roll went out; RUNBOOK has each item)
+- DONE: availfix.py (the official report outranks a desk Questionable); the ruled-out-player pass over every page
+  (tests/inactive_block.py, with a correction of the 3:15 AM note); the news desk's other-man / mid-game misreads; the Model's
+  Best first screen; the builder's chip order follows the clock.
+- **Waiting on the owner - the ESPN mirror timer.** `sql/github_timers.sql` has a twelfth job (feeds.yml every ten minutes); he
+  has to run the file again. Until then the mirror is hours old outside game windows (Mon 11/16: nothing 10:57 AM - 5:00 PM CT).
+  A workflow-file route was written and not pushed (the session may not push workflow changes to main unasked).
+- **Waiting on the owner - the game-card "Best parlay".** Week 11 Tuesday: 12 of 13 cards are two game lines at about -6% EV;
+  only BUF-MIA has a player leg. The 11/15 rule (model 8+ over the price, nothing at -200 or shorter) leaves 9 legs from 2
+  players on the whole board (Thursday's game: 0 of 181 priced legs; 13 more legs from 6 players sit 4-8 points over).
+  Proposed: when no slip with a player leg clears the bar the card says so instead of showing a losing pair of game lines.
+- **Waiting on the owner - long-shot touchdowns in Model's Best.** The plus-money tier's second pick on Week 11 is DJ Giddens
+  anytime TD +3300 (model 11%, price 3%; he plays 7% of snaps). Graded from the picks archive, Weeks 9-10: plus-tier TD legs
+  longer than +600 went 2 for 41 where the model said about 1 in 6; other plus-money legs at +150 to +300 hit 36% against 33%
+  priced (111 legs). Another 50 of 259 archived plus-tier legs had no stat line at all. Proposed: touchdowns longer than +600
+  leave the tier unless the player has a real role (25%+ of snaps).
+- gameday.yml failed once Monday 6:10 PM CT on a read timeout (the next run, 36 minutes later, was fine): give its fetch a retry.
+- Thursday: watch the first availfix corrections (IND / HOU final report is Wednesday); the session's Step 2a-ii now runs it.
+- The health check's "ARI QB0" all of Week 10: Minshew was OUT and Carson Beck, a rookie with no game log, never got the
+  replacement-starter row Step 2a asks for. He is on the QB tab now (one game). Check Week 11's health check for ARI.
+

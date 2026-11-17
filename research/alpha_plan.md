@@ -87,3 +87,8 @@ Later, owner's call: automatic bet sync (paid outside service).
 - 11/17 ~2:30 AM CT: step 9, Live page, second half DONE - totals follow the slip's game map; first screen is the game (tools
   line, no empty hub box, chips show state and work, exact jump landing); pregame notes after the legs once a game has kicked off
   (RUNBOOK). Next in step 9: Player pages, Model's Best, News.
+- 11/17 morning: step 9 continued - Player pages (fine as they are), Model's Best (first pick on the first screen), News (the
+  layout was fine; seven of twenty "Out or doubtful" notes were wrong - news desk fixed). Every betting page checked with a
+  player ruled out (tests/inactive_block.py). Next in step 9: Game previews, Line shop, Boost finder, Either-or TDs, Teasers,
+  Sweep my slip, Beat the model, Survivor, the Fantasy pages, Usage, Benefits, Results / Receipts / Season.
+
