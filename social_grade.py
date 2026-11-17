@@ -180,6 +180,17 @@ def probe():
         out["open_posts_by_week"] = {str(k): by[k] for k in sorted(by, key=lambda v: (v is None, v))}
     return out
 
+def secret_env():
+    """the secret from the environment, without the space or line break a paste on a phone leaves behind"""
+    return (os.environ.get("FEED_GRADE_SECRET") or "").strip()
+
+def secret_shape(raw):
+    """what can be said about the value without saying the value: its length, whether the paste carried stray space, and the first six
+    characters of its SHA-256 - enough to tell whether two copies are the same value, useless for recovering it"""
+    import hashlib
+    v = (raw or "").strip()
+    return {"length": len(v), "stray_space_or_line_break": v != (raw or ""), "fingerprint": hashlib.sha256(v.encode()).hexdigest()[:6] if v else None}
+
 def check_secret(secret):
     """does the database accept this secret? An empty list of results is sent, so nothing can be written either way."""
     if not secret: return (False, "FEED_GRADE_SECRET is not set in this run")
@@ -207,8 +218,8 @@ def main():
     ap.add_argument("--detail", action="store_true", help="print every leg with its grade and the numbers behind it (legs only - no usernames, titles or ids of people)")
     a = ap.parse_args(); S = {"started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     if a.check:
-        ok, msg = check_secret(os.environ.get("FEED_GRADE_SECRET") or ""); S["secret_ok"] = ok; S["result"] = msg
-        print(msg); print("SOCIALGRADE " + json.dumps(S, separators=(",", ":"))); return 0 if ok else 1
+        ok, msg = check_secret(secret_env()); S["secret_ok"] = ok; S["result"] = msg; S["secret_shape"] = secret_shape(os.environ.get("FEED_GRADE_SECRET") or "")
+        print(msg); print("the value GitHub holds:", json.dumps(S["secret_shape"])); print("SOCIALGRADE " + json.dumps(S, separators=(",", ":"))); return 0 if ok else 1
     if a.probe:
         S["probe"] = probe(); print("SOCIALGRADE " + json.dumps(S, separators=(",", ":"))); return 0 if S["probe"].get("reachable") else 1
     if a.fetch:
@@ -250,7 +261,7 @@ def main():
              left=sum(len(v) for v in left.values()), left_why={k: len(v) for k, v in sorted(left.items())})
     print(f"{len(posts)} ungraded post(s) read; graded {len(rows)}: {S['won']} won, {S['lost']} lost, {S['push']} push; left {S['left']}")
     for k, v in sorted(left.items()): print(f"  left ({len(v)}): {k}  [post ids {', '.join(str(i) for i in v[:12])}{' ...' if len(v) > 12 else ''}]")
-    secret = os.environ.get("FEED_GRADE_SECRET") or ""
+    secret = secret_env()
     if a.posts: S["result"] = "graded from a file; nothing written"; S["rows"] = rows
     elif not a.write or not secret:
         S["result"] = "dry run: nothing written" + ("" if a.write is False else " (FEED_GRADE_SECRET is not set)")

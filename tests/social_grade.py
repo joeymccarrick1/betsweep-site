@@ -76,4 +76,10 @@ good, bad, none = SG.check_secret("right"), SG.check_secret("wrong-value"), SG.c
 SG.rest = real
 check(good[0] and "accepted" in good[1] and not bad[0] and "REFUSED" in bad[1] and not none[0] and "not set" in none[1] and len(calls) == 2 and all(c[0] == "rpc/feed_grade" and c[1]["p_rows"] == [] for c in calls)
       and "right" not in good[1] and "wrong-value" not in bad[1], "--check sends an empty list (nothing can be written), tells accepted from refused from not set, and never repeats the secret")
+# 11/16 evening: a secret pasted on a phone can carry a trailing line break; it is trimmed, and its shape can be reported without the value
+os.environ["FEED_GRADE_SECRET"] = "  abc123XYZ\n"
+sh = SG.secret_shape(os.environ["FEED_GRADE_SECRET"])
+check(SG.secret_env() == "abc123XYZ" and sh == {"length": 9, "stray_space_or_line_break": True, "fingerprint": __import__("hashlib").sha256(b"abc123XYZ").hexdigest()[:6]} and "abc123XYZ" not in json.dumps(sh)
+      and SG.secret_shape("abc123XYZ")["stray_space_or_line_break"] is False and SG.secret_shape("")["fingerprint"] is None, "a pasted secret is trimmed; its length and a six-character fingerprint can be shown without showing the value")
+del os.environ["FEED_GRADE_SECRET"]
 print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
