@@ -298,7 +298,7 @@ PAGE_JS = r"""<script>(function(){
   var W = __WEEK__, list = document.getElementById('feed'), info = document.getElementById('feedinfo');
   var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
   var am = function(o){ return o == null ? '' : (o > 0 ? '+' + o : '' + o); };
-  var sort = 'top', POSTS = [], MYV = {}, A = null, G = {}, BOX = {}, FIRST = {};
+  var sort = 'top', POSTS = [], MYV = {}, A = null, G = {}, BOX = {}, FIRST = {}, SUMOK = {};
   // alpha step 2 (11/16, after the owner ran sql/social_v3.sql): people. V3 turns false if the database does not have the new columns,
   // and the page then behaves exactly as before.
   var V3 = true, PROF = {}, REC = {}, MYT = {}, MYRX = {}, FOL = {}, VIEW = null, UPOSTS = null;
@@ -573,6 +573,7 @@ PAGE_JS = r"""<script>(function(){
       }); }); });
     var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
     if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
+    if((js.boxscore.players || []).length) SUMOK[gid] = 1;   // 11/17: this game's box score really was read
   } catch(e){} }
   var CUR = {G: G, BOX: BOX, FIRST: FIRST};
   function gradeLeg(l, C){
@@ -583,7 +584,7 @@ PAGE_JS = r"""<script>(function(){
       if(x.k !== 'M'){ var over = String(x.side).toUpperCase() === 'OVER'; return over ? (tot > ln ? 'hit' : fin ? 'dead' : 'open') : (tot > ln ? 'dead' : fin ? 'hit' : 'open'); }
       if(!fin) return 'open'; var me = x.side === g.a ? sa : sb, them = x.side === g.a ? sb : sa; return (me - them + (l.m === 'Moneyline' ? 0 : ln)) > 0 ? 'hit' : 'dead'; }
     var r = C.BOX[norm(l.pl)], sure = C !== CUR;   // live box: a player we cannot find is left open, never called a miss (a name mismatch must not bust a slip); a graded week's file is complete
-    if(l.m === 'First TD'){ var f = C.FIRST[l.g]; if(!f) return (fin && !sure) ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }
+    if(l.m === 'First TD'){ var f = C.FIRST[l.g]; if(!f) return (fin && !sure && SUMOK[l.g]) ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }   // 11/17: "no first TD" only once that game's box score has been read - a final whose box did not load used to bust the leg
     if(l.m === 'Passing TDs'){ if(r && (r.ptd || 0) >= Math.round(l.ln)) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
     if(l.m === 'Either TD'){ var rs = String(l.pl).split(/\s+or\s+/).map(function(n){ return C.BOX[norm(n)]; });
       if(rs.some(function(q){ return q && (q.rtd || 0) + (q.ctd || 0) >= 1; })) return 'hit'; return fin && (sure || rs.every(Boolean)) ? 'dead' : 'open'; }

@@ -155,7 +155,7 @@ try:
         _r = min(_nx, key=lambda r: (r["gameday"], r["gametime"])); _hh, _mm = _r["gametime"].split(":"); _ct = (int(_hh) - 1) % 24   # the schedule is in Eastern time; the site shows Central
         NEXT = {"kick": f"{datetime.date.fromisoformat(_r['gameday']).strftime('%a')} {_ct - 12 if _ct > 12 else (12 if _ct == 0 else _ct)}:{_mm} {'PM' if _ct >= 12 else 'AM'}", "a": _r["away_team"], "h": _r["home_team"], "week": WEEK + 1}
 except Exception as _e: print("note: next week's first kickoff unavailable on the live page:", _e)
-LD = {"week": WEEK, "games": games, "legs": slim, "extra": extra, "built": D["built"], "sk": sorted(SKILL), "vol": VOL, "fb": FB, "next": NEXT}
+LD = {"week": WEEK, "games": games, "legs": slim, "extra": extra, "built": D["built"], "sk": sorted(SKILL), "vol": VOL, "fb": FB, "next": NEXT, "nick": {v: k for k, v in NAMES.items()}}
 # 11/4 (owner: grade the live page's "from here" numbers): the tracked legs with their pregame chance go to out/live_legs.json; build_site publishes it
 # as /b/live-legs.json and the feeds workflow pins the first in-game copy of each week on the `feeds` branch, so live_grade.py can replay every
 # snapshot against the pregame numbers the page actually showed.
@@ -840,7 +840,7 @@ JS = r"""
         var so = OPEN.__season === true;
         var clvTxt = ''; try { var cl = clvSummary(); if(cl && cl.n) clvTxt = '<div class="logbar"><span><b>Closing-line value:</b> ' + cl.beat + ' of ' + cl.n + ' legs you tracked got a better price than FanDuel\'s last pre-kickoff price (avg ' + (cl.avg >= 0 ? '+' : '') + cl.avg.toFixed(1) + ' implied pts). Beating the close more often than not is the clearest sign of real edge.</span></div>'; } catch(e){}
         parts.push(['season', '<section class="lg2 logcard seasoncard' + (so ? ' open' : '') + '"><button type="button" class="ghd2" data-g="__season" aria-expanded="' + so + '"><span class="t">My season<small>' + Object.keys(wks).length + ' week' + (Object.keys(wks).length === 1 ? '' : 's') + ' · ' + tot.n + ' settled legs</small></span><span class="mid"><b>' + tot.w + '–' + (tot.n - tot.w) + '</b><small>' + (tot.u >= 0 ? '+' : '') + tot.u.toFixed(2) + 'u · ROI ' + (tot.roi >= 0 ? '+' : '') + Math.round(tot.roi * 100) + '%</small></span><span class="tog"><i class="car">' + (so ? '▴' : '▾') + '</i></span></button>' +
-          (so ? clvTxt + '<div class="logbar"><span>Every leg you pinned or slipped, once it settled, at 1 unit each at the price when it was tracked. Saved per week and synced to your account when signed in.</span></div>' +
+          (so ? clvTxt + (FIXED ? '<div class="logbar"><span><b>' + FIXED + ' saved result' + (FIXED === 1 ? ' was' : 's were') + ' corrected</b> from the final box scores of earlier weeks. This page used to mark a leg lost when it had no numbers for it.</span></div>' : '') + '<div class="logbar"><span>Every leg you pinned or slipped, once it settled, at 1 unit each at the price when it was tracked. Saved per week and synced to your account when signed in.</span></div>' +
             tbl('By week', (function(){ var o = {}; Object.keys(wks).sort(function(a, b){ return b - a; }).forEach(function(k){ o['Week ' + k] = wks[k]; }); return o; })(), Object.keys(wks).sort(function(a, b){ return b - a; }).map(function(k){ return 'Week ' + k; })) +
             tbl('By market', mks) + tbl('By price', bands, ['-200 or shorter', '-199 to -111', '-110 to +110', '+111 to +250', '+251 and longer']) : '') + '</section>']);
       }
@@ -949,6 +949,43 @@ JS = r"""
     [].slice.call(wrap.querySelectorAll('.slipcard')).forEach(function(x){ x.classList.toggle('hl', !!HLID && Date.now() < HLT && x.getAttribute('data-sid') === HLID); });
   }
   var FOCUS = (function(){ try { return new URLSearchParams(location.search).get('slip'); } catch(e){ return null; } })(), FOCUSED = false, HLID = null, HLT = 0;
+  // ---- 11/17: put right the weeks this page already saved ----
+  // Until 11/17 the page could save losses for legs it had no numbers for (see "never settle a leg without real numbers"). The week it is on
+  // heals itself; a week that has rolled cannot, so each saved earlier week is checked against that week's graded file
+  // (/data/box-w<W>.json: final stat lines and scores). Only what the file settles is touched: a player with a stat line, a moneyline
+  // or spread whose team played, a game total when that week's saved slips put one game on record for it. Any other total (the row does not
+  // say which game), a first touchdown, a push and a player the file does not list are left exactly as saved; no row is added or removed. A week is looked at again only when its saved text changes.
+  var FIXED = 0;
+  function regradeRow(r, d){ var who = String(r[0]), m = String(r[1]), ln = +r[2], S = {'Passing Yards': 0, 'Passing TDs': 1, 'Interceptions': 2, 'Rushing Yards': 3, 'Receptions': 5, 'Receiving Yards': 6, 'Longest Reception': 8};
+    if(m === 'Moneyline' || m === 'Spread'){ var nk = D.nick || {}, t = null; Object.keys(nk).forEach(function(n){ if(who.indexOf(n) >= 0) t = nk[n]; });
+      if(!t){ var ab = who.match(/^([A-Z]{2,3})\b/); t = ab ? ab[1] : null; } if(!t) return null;
+      var mg = null; Object.keys(d.games || {}).forEach(function(g){ var q = g.split('-'), sc = d.games[g]; if(q[0] === t) mg = sc[0] - sc[1]; else if(q[1] === t) mg = sc[1] - sc[0]; });   // "AWAY-HOME": [away, home]
+      if(mg == null || isNaN(mg) || (m === 'Spread' && isNaN(ln))) return null; var v = mg + (m === 'Spread' ? ln : 0); return v === 0 ? null : (v > 0 ? 1 : 0); }
+    if(m === 'Total'){   // which game? only when that week's saved slips put exactly one game on record for this total (the builder has done so since 11/10)
+      var gk = who + '|Total|' + Math.round(ln || 1), gs = {}; (d.__slips || []).forEach(function(sx){ (((sx && sx.g) || {})[gk] || []).forEach(function(g){ if(g) gs[String(g).split('-').sort().join('-')] = 1; }); });
+      var one = Object.keys(gs), sum = null; if(one.length !== 1) return null;
+      Object.keys(d.games || {}).forEach(function(g){ if(g.split('-').sort().join('-') === one[0]) sum = (+d.games[g][0]) + (+d.games[g][1]); });
+      var side = /^under/i.test(who) ? 'U' : /^over/i.test(who) ? 'O' : null; if(sum == null || isNaN(sum) || isNaN(ln) || !side || sum === ln) return null;
+      return ((sum > ln) === (side === 'O')) ? 1 : 0; }
+    if(m === 'First TD' || !d.box) return null;
+    if(!d.__n){ d.__n = {}; Object.keys(d.box).forEach(function(n){ d.__n[norm(n)] = d.box[n]; }); }
+    var under = /^Under /.test(m), base = under ? m.slice(6) : m, b = d.box[who] || d.__n[norm(who)]; if(!b) return null;
+    var td = base === 'Anytime TD' || base === '2+ TD' || base === '3+ TD', val = td ? (+b[4] || 0) + (+b[7] || 0) : (S[base] != null ? +b[S[base]] : null); if(val == null || isNaN(val)) return null;
+    var need = base === 'Anytime TD' ? 1 : base === '2+ TD' ? 2 : base === '3+ TD' ? 3 : under ? Math.floor(ln) + 1 : ln; if(isNaN(need)) return null;
+    var hit = val >= need; return (under ? !hit : hit) ? 1 : 0; }
+  function logSig(t){ var h = 5381; for(var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t.length + ':' + h; }
+  function fixSavedWeeks(){ var wk = +D.week, todo = [], chk = {}; try { chk = JSON.parse(localStorage.getItem('bs_logchk') || '{}') || {}; } catch(e){ chk = {}; }
+    try { for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i), m = /^bs_log_w(\d+)$/.exec(k || ''); if(m && +m[1] < wk && chk[m[1]] !== logSig(localStorage.getItem(k) || '')) todo.push(+m[1]); } } catch(e){}
+    var next = function(){ var w = todo.shift(); if(w == null) return;
+      fetch('/data/box-w' + w + '.json').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+        if(d && d.box && d.final !== false){ var key = 'bs_log_w' + w, raw = localStorage.getItem(key) || '[]', rows = []; try { rows = JSON.parse(raw) || []; } catch(e){ rows = []; }
+          try { d.__slips = JSON.parse(localStorage.getItem('bs_slips_w' + w) || '[]') || []; } catch(e){ d.__slips = []; }
+          var n = 0; rows.forEach(function(r){ if(!r || r.length < 5) return; var h = regradeRow(r, d); if(h != null && h !== +r[4]){ r[4] = h; n++; } });
+          var out = n ? JSON.stringify(rows) : raw; if(n){ localStorage.setItem(key, out); FIXED += n; }
+          chk[w] = logSig(out); try { localStorage.setItem('bs_logchk', JSON.stringify(chk)); } catch(e){} if(n) render(true); }
+        next(); }).catch(function(){ next(); }); };
+    next(); }
+  setTimeout(fixSavedWeeks, 3500);
   // 11/17: the game chips under the title (and "Live" links from search) point at #lv-GID, but a finished game sits inside the closed
   // "Final" fold and is not on the page until that opens - so the chip did nothing. Open the fold, open the card, then scroll.
   function jumpTo(gid){ if(!games[gid]) return false; var s = STATE[gid] || {st: 'pre'};

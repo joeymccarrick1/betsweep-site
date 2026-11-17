@@ -405,7 +405,7 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
   var settled = false;
   function active(){ var t = Date.now(); return kos.some(function(k){ return k[0] && t >= k[0] - 9e5 && t <= (k[1] || k[0]) + (k[2] ? 6 * 864e5 : 6 * 36e5); }); }
   function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
-  var G = {}, BOX = {}, FIRST = {};
+  var G = {}, BOX = {}, FIRST = {}, SUMOK = {};
   function parseBox(js, gid){
     try { (js.boxscore.players || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || cat.labels || [];
       (cat.athletes || []).forEach(function(a){ var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
@@ -418,6 +418,7 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
       }); }); });
       var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
       if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
+      if((js.boxscore.players || []).length) SUMOK[gid] = 1;   // 11/17: this game's box score really was read
     } catch(e){}
   }
   var STAT = /^(Passing Yards|Rushing Yards|Receiving Yards|Receptions|Longest Reception|Rush \+ Rec Yards)\s+(\d+(?:\.\d+)?)\+?/i;
@@ -428,7 +429,7 @@ PROMO_LIVE_JS = r"""<script>(function(){ function start(){
       if(!fin) return 'open'; var me = x.side === g.a ? sa : sb, them = x.side === g.a ? sb : sa; return (me - them + (+x.ln || 0)) > 0 ? 'hit' : 'dead'; }
     var names = /^either/i.test(mk) ? L.who.split(/\s+or\s+|\s*\/\s*/) : [L.who];
     var rows = names.map(function(n){ return BOX[norm(n)]; });
-    if(/^first/i.test(mk)){ var f = FIRST[L.g]; if(!f) return fin ? 'dead' : 'open'; return f === norm(L.who) ? 'hit' : 'dead'; }
+    if(/^first/i.test(mk)){ var f = FIRST[L.g]; if(!f) return fin && SUMOK[L.g] ? 'dead' : 'open'; return f === norm(L.who) ? 'hit' : 'dead'; }   // 11/17: "no first TD" only once that game's box score has been read
     if(/^(anytime|either)/i.test(mk)){ if(rows.some(function(r){ return r && r.td >= 1; })) return 'hit'; return fin ? (rows.some(function(r){ return r; }) ? 'dead' : 'open') : 'open'; }
     var pt = mk.match(/^Passing TDs\s+(\d+)\+?/i); if(pt){ var q = rows[0]; if(q && (q.ptd || 0) >= +pt[1]) return 'hit'; return fin && q ? 'dead' : 'open'; }   // 11/16: the Sweep's passing-TD leg could never grade
     var m = mk.match(STAT); if(!m) return 'open'; var need = +m[2], r = rows[0];

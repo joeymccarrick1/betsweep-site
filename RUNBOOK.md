@@ -1104,9 +1104,9 @@ Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on
 - **Tests:** tests/live_finals.py (29 checks, made-up final and box score for one game of whatever week is built: finals in the
   build with ESPN cut off; score only; nothing at all; ESPN answering; a real loss; a void; in play; end of regulation; no feed)
   and tests/finals_build.py (16 checks, no network). Both are in the pre-publish set from now on.
-- **Known, next:** touchdowns on returns are not counted as anytime touchdowns (same as before, and as the Social grader).
-  Weeks already rolled keep whatever was last saved for them; they can be re-graded from /data/box-w<W>.json. My BetSweep grades a
-  past week's did-not-play leg as a loss (the weekly box file has no did-not-play list).
+- **Known:** touchdowns on returns are not counted as anytime touchdowns (same as before, and as the Social grader).
+  (Correction to the 1:10 AM log row: My BetSweep does NOT grade a did-not-play leg as a loss - `gradeKey()` leaves a player who is
+  not in the weekly file ungraded, "no box score (did not play?)".)
 
 ## 11/17, ~2:30 AM CT: Live follows a slip's total in the right game; the first screen is the game
 
@@ -1135,3 +1135,21 @@ Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on
   social_feed.py, social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
   finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, and the crawl (`SITE=./site python3 tests/site_crawl.py`).
   The live tests take `SITE=<a published copy>` to check what went out.
+
+## 11/17, ~3 AM CT: earlier weeks' saved results are re-graded once; a First TD leg is not busted by a box score that did not load
+
+- **Earlier weeks (`fixSavedWeeks()` in build_live.py).** The week the Live page is on heals itself (above); a week that has rolled
+  cannot, and its saved record (`bs_log_w<W>`, what My season adds up) may hold what the bug wrote on a Monday night or a Tuesday
+  morning: player legs as losses, UNDERS as wins, game lines graded on 0-0. 3.5 seconds after the page loads, each saved earlier
+  week is checked against that week's graded file (/data/box-w<W>.json - the file My BetSweep grades from). Only what the file
+  settles is changed, in either direction: a player with a stat line, a moneyline or spread whose team played, a game total when
+  that week's saved slips put exactly one game on record for it. Left exactly as saved: any other total (the row does not say which
+  game), a first touchdown, a push, a player the file does not list, markets the file has no number for. No row is added or removed.
+  My season says how many saved results were corrected on that visit. A week is read again only when its saved text changes
+  (`bs_logchk`, kept on the device, not synced), so a stale copy coming back from another device is put right again; a corrected
+  week is written once and syncs to the account like any other save.
+- **First TD on Today and Social.** Both pages called a First TD leg dead when the game was final and they held no first scorer -
+  which is also what a box score that failed to load looks like. A promo card would have shown Busted and left the Today page.
+  Both now need that game's box score to have been read (`SUMOK[gid]`) before saying no one on the slip scored first.
+- **Tests:** tests/live_regrade.py (22, rows built from the real file of the week before the one the site is on).
+  Add it to the pre-publish set.

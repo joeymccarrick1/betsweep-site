@@ -47,8 +47,9 @@
 - Friday morning (the first window the old bug would have hit): open /live/ with Thursday's game final and confirm the score shows,
   slips grade, and the page made one scoreboard call and no box score call (the build's finals carry it).
 - Done 2:30 AM: totals in slips follow the slip's game map on the Live page (RUNBOOK).
-- Still to do: (2) past weeks' saved records (bs_log_w<W>) may hold losses the bug wrote on a Monday night or a
-  Tuesday morning - re-grade them once from /data/box-w<W>.json; (3) count return touchdowns for anytime-TD legs in both graders;
+- Done 3 AM: earlier weeks' saved records are re-graded once from /data/box-w<W>.json (RUNBOOK). After the Week 11 roll, check
+  that /data/box-w10.json exists and that a Week 10 record saved by the bug is corrected on the first visit to Live.
+- Still to do: (3) count return touchdowns for anytime-TD legs in both graders;
   (4) show an inactive player's legs as void as soon as the inactives are out (the "What changed" feed has them), not only after
   the snap counts publish.
 - tests/deepdive_pages.py (older, needs a server on 8802): its "boost 25% x3: a slip is shown" check fails on a finished week
