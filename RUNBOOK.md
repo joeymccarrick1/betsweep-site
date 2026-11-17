@@ -1541,3 +1541,15 @@ who are OUT this week ON THE SAME TEAM, so nobody inherited a target. FanDuel ha
   Taylor 2.71 -> 3.05 catches. "Reception Audit Flag: ERROR: RECEPTIONS > TARGETS" on Burks / McGowan is the audit comparing bumped
   catches with un-bumped targets - nine other rows already carried it, nothing on the site reads it.
 - The receiving side is NOT done: Allen's row (SF) and Downs's (KC) still carry Colts volume. Watch their first two games.
+- TUESDAY FLAG CHECK, the 20 biggest gaps after the fix (data/flag-audit.json built 12:59 PM) - how to read each when writing Sweep says:
+  input lag, not an edge: Emari Demercado TD -120 (HOU's RB2 by ESPN's chart, 7 carries last week; the model has 0.2 TD), George
+  Kittle 5+ catches (Keenan Allen arrived at SF carrying 7.2 Colts targets a game - the arrival side of the trade is not modelled),
+  Justin Jefferson 6+ catches -310 (13 targets / 9 catches last week; the model is on his 5.0 season average), Kirk Cousins 5+ rush
+  yards (a 1.1-yard projection is read as "never" - low-mean rushing lines are not a market this model prices), Ashton Dulin (the
+  bump now OVERshoots FanDuel: 28 yards vs a 16.5 line, two long catches in a six-game log).
+  the model's lean, and the owner's own rule agrees - avoid the overs, do not bet the unders: Miami with Kyle McCord (McCord 150+
+  pass yards, Douglas and Washington 4+ catches, Gordon 50+ rush yards), Brock Purdy 225+ at MIN (#31 against the pass), Joe Burrow 301+.
+  a warning on a player we feature: Dalton Kincaid. FanDuel's receiving line is 25.5; he averages 54. His snaps fell to 46% the last
+  two games (Dawson Knox 72%) with 3 targets in each. The model still projects 47 yards and he leads the plus-money list (3+ catches
+  +162). Owner 11/15: check whether a pass catcher's trend is going down before using him. Josh Palmer to IR this week helps him;
+  the snaps do not. Ask the owner before a Kincaid leg goes in a posted slip.
