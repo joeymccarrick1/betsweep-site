@@ -1226,8 +1226,8 @@ Tuesday roll) and reading what a phone shows.
 - First real local run (3 AM, the build that went out as main 23853f97): 488 pages, 0 problems; the published copy: 514 pages, 0.
 - **The full set to run before a publish:** reprice.py --publish none, then tests/home_filing.py, promo_clock.py, social_feed.py,
   social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py, social_grade.py, weather_gate.py,
-  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py (added
-  11/17 morning), `python3 availfix.py selftest`, and tests/local_gate.py.
+  finals_build.py, live_finals.py, live_gamemap.py, live_first_screen.py, live_regrade.py, week_end.py, inactive_block.py, reprice_live.py (both added
+  11/17 morning), `python3 availfix.py selftest`, `python3 news_desk.py --selftest`, and tests/local_gate.py.
 
 ## 11/17, ~3:15 AM CT: a leg on an inactive player is void on the Live page from the inactives list
 
@@ -1348,4 +1348,15 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
 - Seen on the way, NOT changed (the owner's call, goes with Tuesday's biggest-gaps list): the second "plus-money edge" on
   Week 11 is DJ Giddens anytime TD +3300, model 11% against 3% priced. A model chance nearly four times the book's on a long
   shot is far more likely an input problem than an edge.
+
+## 11/17, 8:25 AM CT: after the roll every scheduled rebuild would have stopped - reprice read the wrong data file (fixed)
+
+- Since 11/15 a publish keeps the previous build's `data-<hash>.js` in /build/ (a page cached for a few minutes still names it).
+  `reprice.live_data` took the last data file BY NAME. After this morning's roll the folder held data-02f3... (Week 11, linked by
+  the page) and data-4ed8... (Week 10, kept): the old one sorts last, so reprice saw "the site serves Week 10", the mirror said
+  11, and it would have ended every run with exit 3 ("rolling the week is a session's job") - a quiet skip, no failure mail -
+  until a session published again. Inside a week the same mistake only miscounted "prices moved" against one build back.
+- Now it reads the file build/index.html links (newest by time if the page cannot be read). tests/reprice_live.py, 5 checks, is
+  in the pre-publish set. Found while checking the 8:16 AM publish, before the first scheduled run of the new week (9:20 AM).
+- tests/inactive_block.py read the builder data the same wrong way; it reads the linked file too.
 

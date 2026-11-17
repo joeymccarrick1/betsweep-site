@@ -25,8 +25,8 @@ VIS = "var vis = function(e){ if(!e) return false; var r = e.getBoundingClientRe
 
 def builder_data():
     """the builder's data as the page serves it: {week, games: [{gid, ko, fin}], legs: [{pl, g, m, gl}]}"""
-    fs = sorted(f for f in os.listdir(os.path.join(ROOT, "build")) if re.match(r"data-.*\.js$", f))
-    s = open(os.path.join(ROOT, "build", fs[-1]), encoding="utf-8").read(); m = re.search(r"window\.__BS\s*=\s*", s)
+    ref = re.search(r"data-[0-9a-f]{8,}\.js", open(os.path.join(ROOT, "build", "index.html"), encoding="utf-8", errors="ignore").read())   # the file the page links (the folder keeps the previous build's too)
+    s = open(os.path.join(ROOT, "build", ref.group(0)), encoding="utf-8").read(); m = re.search(r"window\.__BS\s*=\s*", s)
     return json.JSONDecoder().raw_decode(s, m.end())[0]
 
 async def main():

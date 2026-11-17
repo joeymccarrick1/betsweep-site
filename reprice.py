@@ -120,9 +120,20 @@ def board_shrank(bd, live, W, now_ms=None):
 
 def live_data(clone):
     """The builder data the clone is serving: {"week", "built", "legs": {key: (odds, status)}}, or None."""
-    fs = sorted(glob.glob(os.path.join(clone, "build", "data-*.js")))
-    if not fs: return None
-    s = open(fs[-1], encoding="utf-8").read(); m = re.search(r"window\.__BS\s*=\s*", s)
+    # 11/17: the file build/index.html LINKS. Since 11/15 the folder also keeps the previous build's data file (a page cached for a
+    # few minutes still names it), and "the last one by name" was that older file as often as not. On the first morning after a week
+    # roll it was last week's: this function said the site served Week 10, the mirror said 11, and every scheduled rebuild would have
+    # stopped with "rolling the week is a session's job" until a session happened to publish again.
+    bdir = os.path.join(clone, "build"); f = None
+    try:
+        ref = re.search(r"data-[0-9a-f]{8,}\.js", open(os.path.join(bdir, "index.html"), encoding="utf-8", errors="ignore").read())
+        if ref and os.path.exists(os.path.join(bdir, ref.group(0))): f = os.path.join(bdir, ref.group(0))
+    except Exception: pass
+    if not f:
+        fs = sorted(glob.glob(os.path.join(bdir, "data-*.js")), key=os.path.getmtime)
+        if not fs: return None
+        f = fs[-1]
+    s = open(f, encoding="utf-8").read(); m = re.search(r"window\.__BS\s*=\s*", s)
     if not m: return None
     return json.JSONDecoder().raw_decode(s, m.end())[0]
 
