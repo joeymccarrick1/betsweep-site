@@ -5,13 +5,16 @@ from playwright.async_api import async_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 now = int(time.time() * 1000); PAST = now - 20 * 3600e3; FUT = now + 5 * 3600e3
 def leg(pl, m, ln, g, ko, o=-150, gl=None): d = {"pl": pl, "m": m, "ln": ln, "g": g, "ko": ko, "o": o, "k": f"{pl}|{m}|{ln}"}; d.update({"gl": gl} if gl else {}); return d
+# 11/17: the week comes from the built Social page, so the test means the same thing after the week rolls (it was written against Week 10).
+# The games in it (BAL-LAC, NYJ-KC) are made up for the faked score feed and are not tied to any week's board.
+WEEK = int(__import__("re").search(r"var W = (\d+),", open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "social", "index.html")).read()).group(1))
 def iso(ms): return __import__("datetime").datetime.fromtimestamp(ms / 1000, __import__("datetime").timezone.utc).isoformat()   # the database returns timestamptz as text, so the fake does too (11/16)
-def post(i, h, title, legs, score=0, week=10): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "tails": 2 if i == 1 else 0, "rx": {"fire": 3} if i == 1 else {}, "result": None, "units": None, "handle": h, "title": title, "week": week, "legs": legs, "fd_odds": 300 + i, "first_ko": iso(min(l["ko"] for l in legs)), "last_ko": iso(max(l["ko"] for l in legs)), "score": score, "created_at": "2026-11-15T20:00:00Z"}
+def post(i, h, title, legs, score=0, week=WEEK): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "tails": 2 if i == 1 else 0, "rx": {"fire": 3} if i == 1 else {}, "result": None, "units": None, "handle": h, "title": title, "week": week, "legs": legs, "fd_odds": 300 + i, "first_ko": iso(min(l["ko"] for l in legs)), "last_ko": iso(max(l["ko"] for l in legs)), "score": score, "created_at": "2026-11-15T20:00:00Z"}
 POSTS = [post(1, "opener", "Tonight", [leg("Justin Herbert", "Passing Yards", 175, "BAL-LAC", FUT)], 5),
          post(2, "winner", "SNF four", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST), leg("Ja'Marr Chase", "Anytime TD", 1, "CIN-PIT", PAST), leg("Over 41.5", "Total", 41.5, "CIN-PIT", PAST, gl={"k": "T", "side": "OVER"})], 3),
          post(3, "loser", "Two TDs", [leg("Ja'Marr Chase", "2+ TD", 1, "CIN-PIT", PAST), leg("Joe Burrow", "Passing TDs", 1, "CIN-PIT", PAST)], 1),
          post(4, "ghost", "Not in box", [leg("Nobody Here", "Receptions", 2, "CIN-PIT", PAST)], 0)]
-LASTW = [post(9, "oldwin", "Week 9 hit", [leg("Travis Kelce", "Receiving Yards", 50, "NYJ-KC", PAST - 7 * 864e5)], 2, week=9), post(8, "oldloss", "Week 9 miss", [leg("Travis Kelce", "Receiving Yards", 90, "NYJ-KC", PAST - 7 * 864e5)], 2, week=9)]
+LASTW = [post(9, "oldwin", "Week 9 hit", [leg("Travis Kelce", "Receiving Yards", 50, "NYJ-KC", PAST - 7 * 864e5)], 2, week=WEEK - 1), post(8, "oldloss", "Week 9 miss", [leg("Travis Kelce", "Receiving Yards", 90, "NYJ-KC", PAST - 7 * 864e5)], 2, week=WEEK - 1)]
 SCORE = {"events": [{"id": "E1", "status": {"type": {"state": "post"}}, "competitions": [{"competitors": [{"team": {"abbreviation": "CIN"}, "score": "38"}, {"team": {"abbreviation": "PIT"}, "score": "18"}]}]},
                     {"id": "E2", "status": {"type": {"state": "pre"}}, "competitions": [{"competitors": [{"team": {"abbreviation": "BAL"}, "score": "0"}, {"team": {"abbreviation": "LAC"}, "score": "0"}]}]}]}
 def ath(n, st): return {"athlete": {"displayName": n}, "stats": st}
@@ -45,7 +48,7 @@ async def main():
             async def espn(route):
                 u = route.request.url; await route.fulfill(status=200, content_type="application/json", body=json.dumps(SCORE if "scoreboard" in u else SUMMARY))
             await ctx.route("**/site.api.espn.com/**", espn)
-            await ctx.route("**/data/box-w9.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"week": 9, "box": {"Travis Kelce": [0, 0, 0, 1, 1, 4, 72, 0, 38]}, "games": {"NYJ-KC": [12, 35]}, "final": True})))
+            await ctx.route(f"**/data/box-w{WEEK - 1}.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"week": WEEK - 1, "box": {"Travis Kelce": [0, 0, 0, 1, 1, 4, 72, 0, 38]}, "games": {"NYJ-KC": [12, 35]}, "final": True})))
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto("http://127.0.0.1:8823/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(3200)
             ids = lambda: pg.evaluate("Array.from(document.querySelectorAll('#feed > article.post')).map(a => a.id)")

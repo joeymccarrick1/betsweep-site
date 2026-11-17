@@ -1050,3 +1050,15 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   code must tolerate the previous build's shared scripts: guard anything newly exported (the screenshot posting checks
   `BSImport.gmap` before calling it).
 
+## 11/17, 12:40 AM CT: every page test now runs in any week
+
+- **tests/home_filing.py was rebuilt on made-up slips** (36 checks). tests/fixtures/promos_w10_mnf.json holds two built promo
+  records (the Sweep and a side slip with a +7.5 leg); the test gives them a kickoff two days ahead, renders them with the current
+  `home.sweep_block` / `home.promos_block`, swaps them into the built Today page in place of its own Sweep and promo sections,
+  fakes the score feed for BAL / LAC and sets the page clock around the kickoff. Cases: pre, bust, cash, cover, nocover, and
+  "herbert" (11/16 as it happened: 129 passing yards, no passing TD). Service workers are blocked in its browser context.
+- **tests/social_feed.py** reads the week from the built Social page (was hard-coded to 10 / 9).
+- **The full set to run before a publish** (all week-independent now): reprice.py --publish none, then tests/home_filing.py,
+  promo_clock.py, social_feed.py, social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py,
+  social_grade.py, weather_gate.py, and the crawl (`SITE=./site python3 tests/site_crawl.py`).
+
