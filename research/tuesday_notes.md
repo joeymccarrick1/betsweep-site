@@ -39,3 +39,15 @@
   ground-game win - Hampton 105, Herbert 51 rushing and the rushing TD) with a late scratch on top (McConkey out at 5:52 PM CT,
   flagged to the owner at 6:17 PM). Every leg in both slips that did not need Herbert's arm hit.
 
+
+
+## Added 11/17 ~2 AM CT (Live page: finished games were graded without numbers)
+- Fixed and tested (RUNBOOK, same date). Check after the Week 11 roll: the Live page shows every game as not started, the game
+  chips open their cards, and "Final" does not appear.
+- Friday morning (the first window the old bug would have hit): open /live/ with Thursday's game final and confirm the score shows,
+  slips grade, and the page made one scoreboard call and no box score call (the build's finals carry it).
+- Still to do: (1) totals in slips can follow another game with the same number on the Live page (use the slip's game map, as the
+  builder and My BetSweep do); (2) past weeks' saved records (bs_log_w<W>) may hold losses the bug wrote on a Monday night or a
+  Tuesday morning - re-grade them once from /data/box-w<W>.json; (3) count return touchdowns for anytime-TD legs in both graders;
+  (4) show an inactive player's legs as void as soon as the inactives are out (the "What changed" feed has them), not only after
+  the snap counts publish.

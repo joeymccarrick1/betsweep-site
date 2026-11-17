@@ -79,3 +79,8 @@ option to social_grade.py before he does; today's dry run would record 24 losses
     public graded record pages for BetSweep and every poster.
 11. **Boards weight**: render the first few game cards, the rest as the reader scrolls.
 Later, owner's call: automatic bet sync (paid outside service).
+
+- 11/17 ~2 AM CT: step 9, Live page, first half - the page graded finished games with no numbers (winners dead, losses saved into
+  the season record). Fixed with finals from the build (finals.py) and a rule that nothing is settled without real numbers; chips,
+  score display, fold labels and the finished-week line fixed on the way (RUNBOOK). Next on Live: totals follow the slip's game map;
+  the first screen (tools box and an empty "What changed" push the game down); pregame notes sit above the legs in a live card.

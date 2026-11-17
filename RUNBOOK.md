@@ -1062,3 +1062,49 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   promo_clock.py, social_feed.py, social_elsewhere.py, social_shot.py, builder_fold.py, boards_fold.py, me_hub.py,
   social_grade.py, weather_gate.py, and the crawl (`SITE=./site python3 tests/site_crawl.py`).
 
+
+## 11/17, ~2 AM CT: the Live page graded finished games it had no numbers for - winners shown dead, losses saved (fixed)
+
+Found on the page-by-page pass (alpha plan step 9, Live), by opening the page on a finished week with ESPN cut off.
+
+- **What was wrong.** The score feed the pages share (`live.py`, `window.BSLive`) stops asking ESPN once every game that has kicked
+  off has a final score in the build - right for the boards and the builder, which only show the score. The Live page also needs a
+  box score to grade legs, and its only box score was ESPN's, fetched per game through an ESPN id that only the feed supplies. So
+  from the first rebuild after a slate's last game until the next kickoff (Friday to Sunday morning for the Thursday game, Sunday
+  night to Monday night, Monday night to the Tuesday roll) the page had no score and no box score, and graded anyway: game lines
+  against 0-0, every player leg as "dead - stats not loaded". Five legs that had all won read "5 legs, 0 hit, 5 dead - DEAD",
+  My week read 0-5, and those five losses were written into `bs_log_w<week>` (My season, synced to the account). The ↻ button
+  forced the feed and put it right until the next visit. In the code since at least 11/4.
+- **The rule now (build_live.py `live()`):** a leg is settled only when the game is FINAL and the page holds real numbers for it.
+  - no final score -> game-line legs wait ("final score not in yet"); in play with no feed they say "score delayed" (was 0-0 math)
+  - no stat line for the player -> the leg waits ("not graded yet"). In play a man missing from a loaded box score still counts
+    as 0, as before; after the final he may simply not have played, so he waits
+  - did not play (the build's snap counts say so) -> **void**, never a loss. A slip with a void leg can still cash; the card says
+    FanDuel voids the leg and pays the rest at a shorter price, and it does not show the full-ticket payout or the win card
+  - the end of regulation is not final (a tie going to overtime used to flash every open leg dead for a moment)
+  - waiting and void legs are never written to My week / My season; a result saved earlier is kept while its leg waits, so a slow
+    box score cannot erase it; a record the bug filled with losses is rewritten the next time the page has real numbers
+- **Where the real numbers come from now.**
+  1. **The build (new, `finals.py`).** `D.fb` = for every game with a final in in/games.csv: the score, each leg player's stat line
+     from the nflverse weekly stats, and who did not play (no stat line and no snaps, for a name those files know from another
+     week). A box is only handed over when both teams have rows and the points the file credits to each team's players add up
+     to that team's final score (297 of 300 team-games this season do; a mismatch means score only). With these the page needs no
+     ESPN call for a finished game. `finals.refresh()` tries for a newer nflverse copy when a final game is missing from the one
+     on hand (the hourly build keeps one copy per day).
+  2. **The schedule's final-score text** (`g.fin`) when there is no `fb` entry.
+  3. **ESPN**, as before, for a game in play, for a final the build has nothing for yet (Sunday evening), and for the two things
+     the files lack - first touchdown and longest reception - when the reader holds or opens such a leg. The page now asks the
+     feed once (`askScores()`) when a finished game has no ESPN id, so "Box score & plays" works on finished games again, and it
+     retries a failed box score after a minute (it used to try once and then treat the game as "loaded, everybody 0").
+- **Also fixed on the way:** finished games showed "– – –" instead of the score; a closed game inside the open Final fold said
+  "Hide"; the game chips under the title did nothing for a game inside a closed fold (they now open the fold and the card and
+  scroll to it, and so does a `/live/#lv-GID` link from search); the line "No game in progress · the watch list below..." was
+  shown on a finished week with no watch list below - it now says the week is finished, gives next week's first kickoff from the
+  schedule, and links to Receipts and My BetSweep.
+- **Tests:** tests/live_finals.py (29 checks, made-up final and box score for one game of whatever week is built: finals in the
+  build with ESPN cut off; score only; nothing at all; ESPN answering; a real loss; a void; in play; end of regulation; no feed)
+  and tests/finals_build.py (16 checks, no network). Both are in the pre-publish set from now on.
+- **Known, next:** a game total in a slip ("Over 38.5") is matched by its number alone, and most games carry that number as an
+  alternate line - so the Live page can track another game's total (the builder fixed this on 11/10 with a game map the Live page
+  does not read yet). Touchdowns on returns are not counted as anytime touchdowns (same as before, and as the Social grader).
+  Weeks already rolled keep whatever was last saved for them; they can be re-graded from /data/box-w<W>.json.
