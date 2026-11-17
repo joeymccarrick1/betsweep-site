@@ -29,6 +29,8 @@ with tempfile.TemporaryDirectory() as t:
 ph = HS.plus_phrase(IN, html=False); m = re.fullmatch(r"Weeks? [\d, -]+: (\d+)% hit against a (\d+)% price, [+-]?\d+% at a unit each \(([\d,]+) legs\)", ph)
 check(bool(m) and int(m.group(1)) > int(m.group(2)) and "&" not in ph and "\u2212" not in ph, f"the plus tier's record for Model's Best and the builder chip is counted, in plain text for a tooltip ({ph})")
 with tempfile.TemporaryDirectory() as t: check("175 legs" in HS.plus_phrase(t, html=False), "and falls back to the 11/17 count when the snapshots are missing")
+tp = HS.tier_phrases(IN); check(set(tp) == {"even", "td", "safe"} and all(re.search(r"\d+% hit against a \d+% price \([\d,]+ legs", v) and "'" not in v and "&" not in v for v in tp.values()), f"the even / touchdown / safe chips carry counted records, safe inside a tooltip ({tp['even']})")
+ev = HS._tiers(L)[0]; check(d["EVEN_N"] == f"{len(ev):,}" and len(ev) >= 30, f"the page's tracked even-money line is the same count ({d['EVEN_HIT']} against {d['EVEN_IMP']}, {d['EVEN_N']} legs)")
 w = HS.weights_text(); check("touchdowns" in w and "rushing yards" in w and "very little" in w, f"the weights sentence comes from calib.py ({w[:70]}...)")
 pg = os.path.join(SITE, "how", "index.html")
 if os.path.exists(pg):

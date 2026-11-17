@@ -26,6 +26,7 @@ DEFAULT = {
     "TD_SENT": "Touchdown scorers at +151 or longer returned −3% as a group (497 legs) and touchdown favorites −7%: a touchdown price pays only where the model sits well above it.",
     "PASS_SENT": "Passing-yard lines <em>above</em> the projection hit 58% (200 legs); passing legs at −200 or shorter lost 7%.",
     "MODEL70": "legs it had at 70% or better hit 63%",
+    "EVEN_HIT": "59%", "EVEN_IMP": "53%", "EVEN_N": "152",
     "WEIGHTS": "about half on touchdowns and receptions, about a quarter on receiving yards, and very little on passing yards and rushing yards, where FanDuel's number alone graded better",
 }
 
@@ -89,6 +90,30 @@ def plus_phrase(in_dir="in", values=None, html=True):
         print("note how_stats.plus_phrase: the 11/17 count stays -", e)
         return PLUS_DEFAULT.replace("{W}", "Weeks&nbsp;6–&#8288;10" if html else "Weeks 6-10")
 
+EVEN_MK = ("Passing Yards", "Receiving Yards", "Receptions")   # keep in step with build_builder.py's even / safe tier markets
+def _tiers(L):
+    """(even overs, touchdown tier, safe tier) cut the way build_builder.py assigns the tiers, as far as a graded snapshot can tell:
+    overs only (the snapshots hold no under prices) and without the 11/17 touchdown role rule (snap projections are not frozen)."""
+    R = [x for x in L if x["raw"] is not None]
+    ev = [x for x in R if x["m"] in EVEN_MK and -135 <= x["o"] <= 115 and x["raw"] - _imp(x["o"]) >= 0.08]
+    td = [x for x in R if x["m"] == "Anytime TD" and x["o"] <= 200 and x["raw"] >= _imp(x["o"])]
+    sf = [x for x in R if x["m"] in EVEN_MK and x["adj"] is not None and x["adj"] >= 0.65 and x["raw"] >= _imp(x["o"]) and not (-135 <= x["o"] <= 115 and x["raw"] - _imp(x["o"]) >= 0.08)]
+    return ev, td, sf
+TIER_DEFAULT = {"even": "overs like this, Weeks 6-10: 59% hit against a 53% price (152 legs)",
+                "td": "Weeks 6-10, before the role rule: 38% hit against a 39% price (47 legs, a small sample)",
+                "safe": "Weeks 6-10: 64% hit against a 68% price (333 legs)"}
+def tier_phrases(in_dir="in", values=None):
+    """Plain-text records for the builder's even / touchdown / safe tier chips (they quoted Weeks 6-7 until 11/17)."""
+    try:
+        L = legs(in_dir, values); weeks = sorted({x["w"] for x in L}); W = weeks_txt(weeks, html=False); ev, td, sf = _tiers(L); out = {}
+        for k, rows, lead, tail in (("even", ev, "overs like this, ", ""), ("td", td, "", ""), ("safe", sf, "", "")):
+            n, h, im, r = _s(rows)
+            if n < 30: out[k] = TIER_DEFAULT[k]; continue
+            out[k] = f"{lead}{W}{', before the role rule' if k == 'td' else ''}: {_pct(h)} hit against a {_pct(im)} price ({n:,} legs{', a small sample' if n < 100 else ''})"
+        return out
+    except Exception as e:
+        print("note how_stats.tier_phrases: the 11/17 count stays -", e); return dict(TIER_DEFAULT)
+
 def weights_text():
     """The model's share of the shown chance by market, in words, from calib.py (W_MARKET + the two recalibrated markets)."""
     try:
@@ -134,6 +159,7 @@ def stats(in_dir="in"):
     d["PASS_SENT"] = d["PASS_SENT"][:1].upper() + d["PASS_SENT"][1:] if d["PASS_SENT"] else DEFAULT["PASS_SENT"]
     hi = [x for x in L if x["adj"] is not None and x["adj"] >= 0.70]; n70, h70, _, _ = _s(hi)
     d["MODEL70"] = f"legs it had at 70% or better hit {_pct(h70)}" if n70 >= 100 else DEFAULT["MODEL70"]
+    en, eh, ei, er = _s(_tiers(L)[0]); d.update(EVEN_HIT=_pct(eh), EVEN_IMP=_pct(ei), EVEN_N=f"{en:,}") if en >= 30 else d.update({k: DEFAULT[k] for k in ("EVEN_HIT", "EVEN_IMP", "EVEN_N")})
     d["WEIGHTS"] = weights_text()
     return d
 

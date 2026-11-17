@@ -1571,3 +1571,16 @@ who are OUT this week ON THE SAME TEAM, so nobody inherited a target. FanDuel ha
 - The same count feeds the plus tier's line on Model's Best (home.py) and the builder's tier chip (build_builder.py __PLUS_TXT__):
   how_stats.plus_phrase() = the tier's own four markets: "Weeks 6-10: 40% hit against a 30% price, +30% at a unit each (175 legs)".
 - Pre-publish list: add `python3 tests/how_stats.py` (no browser, one second).
+- 1:50 PM, the other tier lines were stale too (they quoted Weeks 6-7) and are counted now (how_stats.tier_phrases / _tiers, the
+  builder's own tier rules; overs only, and without the touchdown role rule, which cannot be rebuilt for past weeks): the builder's
+  even / touchdown / safe chips, Model's Best's touchdown and even-money subtitles (the touchdown one still said "longer-priced
+  scorers have paid"), and one line on /how/ ("so far those overs have hit 59% against a 53% price (152 legs)").
+  Weeks 6-10: even tier overs 59% vs 53% (+11%, 152 legs; by week -9, +20, +17, +23, +16); touchdown tier 38% vs 39% (47 legs; 4 of
+  20 in Weeks 9-10); safe tier 64% vs 68% (333 legs).
+- A LEAD, NOT A RULE YET: inside the even tier the result is nearly all receiving yards where the raw model is 12+ points over a
+  near-even price (-135 to +115): 45 of 65 (69%) against a 53% price, ahead in all five weeks (8-12 points over: 20 of 39, no edge).
+  Several lines of one player in one week count separately in that 65, so the real sample is smaller. This week it names two
+  players: Dalton Kincaid (25+ / 26+ / 30+ receiving yards) and Ashton Dulin (whose number is the trade bump overshooting). Every
+  leg is frozen weekly, so the count keeps itself; look again when it has 100+ legs before building a slip rule on it.
+- NOT RECOUNTED (each has its own definition; a Tuesday job): the fixed-span numbers inside flag texts and slip warnings ("Weeks 6-9
+  (439 legs)", "graded Weeks 6-8, favorites returned about -9% each"). They name their span, so they are dated, not wrong.

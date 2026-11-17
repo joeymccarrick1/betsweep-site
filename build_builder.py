@@ -1371,6 +1371,8 @@ a.pname{color:inherit;text-decoration:none;cursor:pointer} a.pname:hover,a.pname
 try:
     import how_stats as _HOWS; _PLUS_TXT = _HOWS.plus_phrase(globals().get("IN", "in"), html=False)   # 11/17: counted from the graded legs on every build
 except Exception as _e: _PLUS_TXT = "Weeks 6-10: 40% hit against a 30% price, +30% at a unit each (175 legs)"
+try: _TIER_TXT = _HOWS.tier_phrases(globals().get("IN", "in"))   # the even / touchdown / safe chips' records, counted the same way
+except Exception as _e: _TIER_TXT = {"even": "overs like this, Weeks 6-10: 59% hit against a 53% price (152 legs)", "td": "Weeks 6-10, before the role rule: 38% hit against a 39% price (47 legs, a small sample)", "safe": "Weeks 6-10: 64% hit against a 68% price (333 legs)"}
 BUILDER_JS = r"""
 (function(){
   var D = window.__BS;
@@ -1391,7 +1393,7 @@ BUILDER_JS = r"""
   function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.ba && l.ba[b]) return {s: l.ba[b].s, o: l.ba[b].o, ln: l.ba[b].ln, sub: true}; return null; }
   function subName(l, x){ if(l.gl){ var sd = l.gl.side; return l.m === 'Total' ? (sd === 'OVER' ? 'Over ' : 'Under ') + x.ln : sd + ' ' + (x.ln > 0 ? '+' : '') + x.ln; } return l.pl + ' ' + x.ln + '+'; }
   var TIERL = {plus: "Model's Best · plus-money edge", even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · short-priced"};
-  var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - __PLUS_TXT__', even: 'Priced near even money and the model is 8+ pts off FanDuel - in Weeks 6-7 these unders won 59%, overs 55%', td: 'Anytime TD the model rates at or above FanDuel\'s price - 34% hit at ~+270 in Weeks 6-7 (small sample)', safe: 'Model 65%+ and at or above the price - 65% hit at about -195 in Weeks 6-7'};
+  var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - __PLUS_TXT__', even: 'Priced near even money and the model is 8+ pts off FanDuel - __EVEN_TXT__', td: 'Anytime TD at +200 or shorter that the model rates at or above FanDuel\'s price, for a player with a real role - __TD_TXT__', safe: 'Model 65%+ and at or above the price - __SAFE_TXT__'};
   function tierChip(l){ return l.tier ? '<span class="tierb t-' + l.tier + '" title="' + esc(TIERT[l.tier]) + '">' + TIERL[l.tier] + '</span>' : ''; }
   function lnTxt(l){ return l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'; }   // unders show FanDuel's main line ('under 74.5')
   function legName(l){ return l.pl + (isGL(l) || isTD(l) || l.m === 'First TD' ? '' : ' ' + lnTxt(l)); }
@@ -2566,7 +2568,7 @@ body = f'''<div class="bld">
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
 <script>{LIVE.LIVE_JS}</script>
 <script>{BOOKS.BOOKS_JS}</script>
-<script>{BUILDER_JS.replace('__PLUS_TXT__', _PLUS_TXT)}</script>'''
+<script>{BUILDER_JS.replace('__PLUS_TXT__', _PLUS_TXT).replace('__EVEN_TXT__', _TIER_TXT['even']).replace('__TD_TXT__', _TIER_TXT['td']).replace('__SAFE_TXT__', _TIER_TXT['safe'])}</script>'''
 
 _NOW_MS = __import__("time").time() * 1000   # 11/16: games still to be played lead the chip row; a played game's chip is dimmed (template: nav a.played)
 page = (open(os.path.join(HERE, "template.html")).read()
