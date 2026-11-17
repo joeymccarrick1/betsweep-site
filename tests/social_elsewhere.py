@@ -3,15 +3,25 @@ one-game filter on Social (/social/#g=BAL-LAC). Serves ./site with a faked accou
 import asyncio, json, os, sys, threading, http.server, functools, time
 from playwright.async_api import async_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
-now = int(time.time() * 1000); FUT = now + 3 * 3600e3; PAST = now - 30 * 3600e3
+# 11/16: the games and the clock come from the built boards page. The page clock is frozen two hours before the week's last kickoff, so that
+# game is always "still to come" and the first game of the week is always finished - on any day, in any week. The names below (BAL-LAC,
+# CIN-PIT, DET-NE) are stand-ins swapped for the real game ids by J().
+import re as _re
+_cards = sorted((int(k), g) for g, k in _re.findall(r'<section class="card[^"]*" id="([A-Z]+-[A-Z]+)"[^>]*data-ko="(\d+)"', open(os.path.join(ROOT, "boards", "index.html")).read()))
+WEEK = int(_re.search(r'id="hsbar" data-week="(\d+)"', open(os.path.join(ROOT, "index.html")).read()).group(1))     # the week the built site is on
+GL, GD, GN = _cards[-1][1], _cards[0][1], _cards[1][1]          # last game of the week, the first (finished), another finished one with no posts
+def J(x): return x.replace("BAL-LAC", GL).replace("CIN-PIT", GD).replace("DET-NE", GN).replace("BAL vs LAC", GL.replace("-", " vs ")) if isinstance(x, str) else json.loads(J(json.dumps(x)))
+now = _cards[-1][0] - 2 * 3600e3; FUT = _cards[-1][0]; PAST = _cards[0][0]
+FREEZE = "Date.now = function(){ return %d; };" % now
 def iso(ms): return __import__("datetime").datetime.fromtimestamp(ms / 1000, __import__("datetime").timezone.utc).isoformat()   # the database returns timestamptz as text
 def leg(pl, m, ln, g, ko): return {"pl": pl, "m": m, "ln": ln, "g": g, "ko": ko, "o": -150, "k": f"{pl}|{m}|{ln}"}
-def post(i, h, title, legs, score, tails=0): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "handle": h, "title": title, "week": 10, "legs": legs, "fd_odds": 250 + 10 * i, "first_ko": iso(min(l["ko"] for l in legs)), "last_ko": iso(max(l["ko"] for l in legs)), "score": score, "tails": tails, "rx": {}, "result": None, "units": None, "created_at": "2026-11-16T15:00:00Z"}
+def post(i, h, title, legs, score, tails=0): return {"id": i, "user_id": "00000000-0000-0000-0000-00000000000%d" % i, "handle": h, "title": title, "week": WEEK, "legs": legs, "fd_odds": 250 + 10 * i, "first_ko": iso(min(l["ko"] for l in legs)), "last_ko": iso(max(l["ko"] for l in legs)), "score": score, "tails": tails, "rx": {}, "result": None, "units": None, "created_at": "2026-11-16T15:00:00Z"}
 POSTS = [post(1, "HerbFan", "Herbo time", [leg("Justin Herbert", "Passing Yards", 175, "BAL-LAC", FUT), leg("Derrick Henry", "Anytime TD", 1, "BAL-LAC", FUT)], 7, 4),
          post(2, "RunHeavy", "", [leg("Derrick Henry", "Rushing Yards", 60, "BAL-LAC", FUT)], 9),
          post(3, "LateOne", "Monday three", [leg("Zay Flowers", "Receiving Yards", 50, "BAL-LAC", FUT), leg("Omarion Hampton", "Anytime TD", 1, "BAL-LAC", FUT), leg("Over 38.5", "Total", 38.5, "BAL-LAC", FUT)], 2),
          post(4, "Fourth", "Also tonight", [leg("Justin Herbert", "Rushing Yards", 15, "BAL-LAC", FUT)], 1),
          dict(post(5, "Sunday", "Old slip", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST)], 30), result="lost", units=-1)]   # a finished, graded slip
+POSTS = J(POSTS)
 FAKE = """window.__POSTS = %s; try{ if(localStorage.getItem("t_empty")) window.__POSTS = window.__POSTS.filter(function(p){ return p.id === 5; }); }catch(e){}
 var PRO = [{user_id: "00000000-0000-0000-0000-000000000001", handle: "HerbFan", color: 2, emoji: "\\ud83c\\udfc8"}];
 function Q(rows, t){ var f = {}, cols = '', q = {select: function(c){ cols = c || ''; return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
@@ -29,9 +39,13 @@ async def main():
         b = await p.chromium.launch()
         for theme in ("light", "dark"):
             ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
-            await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}" + FAKE)
+            await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}" + FREEZE + FAKE)
             await ctx.route("**/site.api.espn.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body='{"events":[]}'))
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
+            _ev, _go = pg.evaluate, pg.goto
+            async def ev(src, *a, _ev=_ev): return await _ev(J(src), *a)
+            async def go(url, _go=_go, **k): return await _go(J(url), **k)
+            pg.evaluate, pg.goto = ev, go
             # ---- Today ----
             await pg.goto("http://127.0.0.1:8851/?x=1", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             st = await pg.evaluate("""() => { var s = document.getElementById('socstrip'); if(!s) return null; s.scrollIntoView({block: 'center'}); var o = document.documentElement;
@@ -52,12 +66,12 @@ async def main():
             await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             bd = await pg.evaluate("""() => { var o = document.documentElement; function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; }
                 var c = document.getElementById('BAL-LAC'); c.querySelector('.ginfo').scrollIntoView({block: 'center'}); return {mnf: a('BAL-LAC'), cin: a('CIN-PIT'), det: a('DET-NE'), over: o.scrollWidth - o.clientWidth}; }""")
-            check(bd == {"mnf": "4 slips on Social -> /social/#g=BAL-LAC", "cin": "1 slip on Social -> /social/#g=CIN-PIT", "det": None, "over": 0}, f"[{theme}] Boards: each game card counts its posted slips and links to them; a finished game with none says nothing ({bd})")
+            check(bd == J({"mnf": "4 slips on Social -> /social/#g=BAL-LAC", "cin": "1 slip on Social -> /social/#g=CIN-PIT", "det": None, "over": 0}), f"[{theme}] Boards: each game card counts its posted slips and links to them; a finished game with none says nothing ({bd})")
             if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/boards-social-{theme}.png")
             # ---- Social, one game ----
             await pg.goto("http://127.0.0.1:8851/social/#g=BAL-LAC", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
             so = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), bar: (document.querySelector('#feed .gfbar') || {}).textContent || '', house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden)})""")
-            check(so["ids"] == ["p2", "p1", "p3", "p4"] and "BAL vs LAC" in so["bar"] and not so["house"], f"[{theme}] Social opened from a game card shows that game's slips only, says so, and the house slips step aside ({so})")
+            check(so["ids"] == ["p2", "p1", "p3", "p4"] and J("BAL vs LAC") in so["bar"] and not so["house"], f"[{theme}] Social opened from a game card shows that game's slips only, says so, and the house slips step aside ({so})")
             if SHOTS: await pg.evaluate("window.scrollTo(0, Math.max(0, document.querySelector('#feed .gfbar').getBoundingClientRect().top + scrollY - 190))"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/social-onegame-{theme}.png")
             await pg.click('#feed .gfbar a'); await pg.wait_for_timeout(400)
             so2 = await pg.evaluate("""() => ({bar: !!document.querySelector('#feed .gfbar'), house: !!(document.querySelector('.soc .house') && !document.querySelector('.soc .house').hidden), hash: location.hash})""")
@@ -73,7 +87,7 @@ async def main():
             if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/today-social-empty-{theme}.png")
             await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             b2 = await pg.evaluate("""() => { function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; } return [a('BAL-LAC'), a('DET-NE')]; }""")
-            check(b2 == ["Post a slip for this game -> /build/#g-BAL-LAC", None], f"[{theme}] an upcoming game nobody has posted on offers the builder ({b2})")
+            check(b2 == J(["Post a slip for this game -> /build/#g-BAL-LAC", None]), f"[{theme}] an upcoming game nobody has posted on offers the builder ({b2})")
             await pg.evaluate("localStorage.removeItem('t_empty')")
             # ---- a database that has not had sql/social_v4.sql yet (no emoji column): the poster's colour still shows ----
             await pg.evaluate("localStorage.setItem('t_nov4', '1')"); await pg.goto("http://127.0.0.1:8851/?x=4", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)

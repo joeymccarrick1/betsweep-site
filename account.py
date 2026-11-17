@@ -145,6 +145,26 @@ ACCOUNT_JS = r"""
 """
 
 ME_CSS = """
+/* 11/16 the hub: three numbers and profit by week, before any scrolling */
+.me .hub{margin:14px 0 4px}
+.me .hubt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.me .ht{display:flex;flex-direction:column;gap:2px;min-height:92px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);text-decoration:none;min-width:0}
+.me .ht small{color:var(--mute);font-size:12px;font-weight:600} .me .ht b{font-family:var(--display);font-size:30px;line-height:1.05;font-variant-numeric:tabular-nums} .me .ht span{color:var(--mute);font-size:12px;line-height:1.3}
+.me .ht b.up{color:var(--good)} .me .ht b.down{color:var(--bad)}
+.me .hubw{margin-top:8px;padding:12px 12px 10px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.me .hubw h3{margin:0 0 8px;font-family:var(--display);font-size:17px;color:var(--ink)} .me .hubw h3 small{font-family:inherit;font-weight:400;font-size:12px;color:var(--mute);margin-left:6px;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.me .pw{list-style:none;margin:0;padding:0;display:flex;gap:0;overflow-x:auto;scrollbar-width:none} .me .pw::-webkit-scrollbar{display:none}
+.me .pw.noneg button{grid-template-rows:42px 18px auto auto} .me .pw.nopos button{grid-template-rows:8px 42px auto auto}
+.me .pw li{flex:1 0 40px;max-width:72px;display:block;padding:0;border:0;font-size:inherit} .me .pw li b{font-family:inherit} .me .pw button{display:grid;grid-template-rows:42px 42px auto auto;width:100%;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;text-align:center}
+.me .pw .t{display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line)} .me .pw .d{display:flex;align-items:flex-start;justify-content:center}
+.me .pw i{display:block;width:56%;max-width:28px;border-radius:3px 3px 0 0;background:var(--good)} .me .pw .d i{border-radius:0 0 3px 3px;background:var(--bad)} .me .pw .flat i{background:var(--mute)}
+.me .pw i.o{width:9px;height:9px;margin-top:5px;border-radius:50%;background:none;border:2px solid var(--mute)}
+.me .pw b{font-size:12.5px;font-variant-numeric:tabular-nums;margin-top:3px} .me .pw li.up b{color:var(--good)} .me .pw li.down b{color:var(--bad)} .me .pw li.open b{color:var(--mute);font-weight:500;font-size:11px}
+.me .pw small{font-size:11px;color:var(--mute)}
+.me #crec > h2{flex-wrap:wrap} .me #crec > h2 #record{order:10;flex-basis:100%;margin-top:2px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:13px !important;line-height:1.4;color:var(--mute)}
+.me details.how{margin:0 0 8px} .me details.how summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;list-style:none} .me details.how summary::-webkit-details-marker{display:none}
+.me details.how summary::after{content:"";width:7px;height:7px;margin-left:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-2px) rotate(45deg)} .me details.how[open] summary::after{transform:translateY(1px) rotate(225deg)}
+@media(max-width:380px){.me .ht b{font-size:26px} .me .ht{padding:10px}}
 .pushbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px} .pushbtns button{font:inherit;font-size:13px;font-weight:700;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .pushbtns #pushon{background:var(--red);border-color:var(--red);color:#fff} .pushprefs{display:grid;gap:8px;margin-top:12px;font-size:13.5px} .pushprefs[hidden]{display:none} .pushprefs label{display:flex;gap:8px;align-items:flex-start;line-height:1.4} .pushprefs input{width:18px;height:18px;margin-top:1px;accent-color:var(--red)} #pushmsg:empty{display:none} #pushmsg.ok{color:var(--good)} #pushmsg.err{color:var(--bad)}
 .me{max-width:980px;margin:0 auto;padding:0 16px 40px}
@@ -236,6 +256,30 @@ ME_JS = r"""
       + (Object.keys(B.n).length ? '<table class="bkt"><thead><tr><th>Slips by size</th><th>W-L</th><th>Hit</th><th>Units</th></tr></thead><tbody>' + rows(B.n, 1) + '</tbody></table>'
       + '<table class="bkt"><thead><tr><th>Slips by price</th><th>W-L</th><th>Hit</th><th>Units</th></tr></thead><tbody>' + rows(B.o, 1) + '</tbody></table>' : '')
       + '<p class="m">Graded from the box scores. Units are at each slip\'s own stake.</p></details>'; }
+  // 11/16 (alpha plan step 7): the top of the page answers three things before any scrolling - what is open, the record in units, and
+  // how each week went. Same numbers the record list below works out; nothing here is graded twice or guessed. o = null: nothing saved yet.
+  function hubRender(o){ var $ = function(id){ return document.getElementById(id); }; if (!$('hub')) return;
+    function un(v, d){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(d == null ? 2 : d).replace(/\.00$/, '') + 'u'; }
+    function tone(el, v){ el.classList.toggle('up', v > 0); el.classList.toggle('down', v < 0); }
+    if (!o){ $('hopen').textContent = '0'; $('hopens').textContent = 'Save a slip and it is tracked here'; $('hrec').textContent = '\u2013'; $('hunits').textContent = 'no graded slips yet'; $('hweek').textContent = '\u2013'; $('hweeks').textContent = ''; $('hubw').hidden = true; tone($('hrec'), 0); tone($('hweek'), 0); return; }
+    var st = o.open.reduce(function(a, x){ return a + (+x.st || 0); }, 0), allWin = o.open.length && o.open.every(function(x){ return x.win != null; }), win = o.open.reduce(function(a, x){ return a + (x.win || 0); }, 0);
+    $('hopen').textContent = String(o.open.length);
+    $('hopens').textContent = o.open.length ? un(st, 2).replace(/^[+\u2212]/, '') + ' at stake' + (allWin ? ' \u00b7 ' + un(win, 1).replace(/^\+/, '') + ' if all cash' : '') : 'none open this week';
+    var graded = o.W + o.L; $('hrec').textContent = graded ? o.W + '\u2013' + o.L : '\u2013'; $('hunits').textContent = graded ? un(o.U) + ' all weeks' : 'no graded slips yet'; tone($('hrec'), graded ? o.U : 0);
+    var by = {}; o.bk.forEach(function(b){ var e = by[b.w] = by[b.w] || {u: 0, w: 0, l: 0, p: 0}; if (b.res === 'HIT'){ e.w++; if (b.u != null) e.u += b.u; } else if (b.res === 'MISS'){ e.l++; e.u += b.u; } else e.p++; });
+    var tw = by[o.topW] || {u: 0, w: 0, l: 0, p: 0}, tg = tw.w + tw.l; $('hweekl').textContent = 'Week ' + o.topW;
+    $('hweek').textContent = tg ? un(tw.u) : '\u2013'; tone($('hweek'), tg ? tw.u : 0); $('hweeks').textContent = (tg ? tw.w + '\u2013' + tw.l + ' graded' : 'nothing graded yet') + (tw.p ? ' \u00b7 ' + tw.p + ' open' : '');
+    var wks = Object.keys(by).map(Number).sort(function(a, b){ return a - b; }), anyG = wks.some(function(w){ return by[w].w + by[w].l; }), box = $('hubw');
+    if (!anyG){ box.hidden = true; return; }
+    var mx = Math.max.apply(null, wks.map(function(w){ return Math.abs(by[w].u); }).concat([0.01]));
+    var neg = wks.some(function(w){ return by[w].u < 0 && by[w].w + by[w].l; }), pos = wks.some(function(w){ return by[w].u > 0; });
+    box.hidden = false; box.innerHTML = '<h3>Profit by week <small>units, at each slip\u2019s own stake</small></h3><ol class="pw' + (neg ? '' : ' noneg') + (pos ? '' : ' nopos') + '">' + wks.map(function(w){ var e = by[w], g = e.w + e.l, h = g ? Math.max(3, Math.round(40 * Math.abs(e.u) / mx)) : 0, cls = !g ? 'open' : e.u > 0 ? 'up' : e.u < 0 ? 'down' : 'flat';
+      var say = 'Week ' + w + ': ' + (g ? un(e.u).replace(/u$/, '') + ' units, ' + e.w + '\u2013' + e.l + ' on ' + g + ' graded slip' + (g === 1 ? '' : 's') : 'not graded yet') + (e.p ? ', ' + e.p + ' open' : '');
+      return '<li class="' + cls + '"><button type="button" data-w="' + w + '" aria-label="' + esc(say) + '"><span class="t">' + (cls === 'up' || cls === 'flat' ? '<i style="height:' + (cls === 'flat' ? 3 : h) + 'px"></i>' : '') + '</span><span class="d">' + (cls === 'down' ? '<i style="height:' + h + 'px"></i>' : cls === 'open' ? '<i class="o"></i>' : '') + '</span><b>' + (g ? un(e.u, 1).replace(/u$/, '') : e.p + ' open') + '</b><small>W' + w + '</small></button></li>'; }).join('') + '</ol>'; }
+  function hubGo(id, w){ var c = document.getElementById(id); if (!c) return; c.classList.remove('shut');
+    if (w != null){ var t = c.querySelector('.wkh[data-w="' + w + '"]'); if (t){ if (!t.classList.contains('on')){ var bt = t.querySelector('.wkt'); if (bt) bt.click(); } c = t; } }
+    c.scrollIntoView({block: 'start', behavior: 'smooth'}); }
+  document.addEventListener('click', function(e){ var t = e.target.closest && e.target.closest('#hub .ht, #hub .pw button'); if (!t) return; e.preventDefault(); hubGo('crec', t.dataset.w != null ? t.dataset.w : null); });
   function render(){
     var u = window.bsAccount && window.bsAccount.user; var who = document.getElementById('who');
     who.innerHTML = u ? 'Signed in as <b>'+esc(u.email||'')+'</b>. Everything below follows you to any device you sign in on.' : 'Not signed in: this page shows what is saved in this browser only. <button type="button" class="cta" id="mein" style="margin-left:8px;padding:6px 12px;font-size:13px">Sign in to sync it</button>';
@@ -244,7 +288,7 @@ ME_JS = r"""
     var sl = [], ks = keys(/^bs_slips_w\d+$/); ks.forEach(function(k){ var w = k.replace('bs_slips_w',''); try{ (JSON.parse(g(k))||[]).forEach(function(s){ sl.push({w: +w, s: s}); }); }catch(e){} });
     sl.sort(function(a,b){ return b.w - a.w; });
     var el = document.getElementById('slips');
-    if (!sl.length){ bankRender([]); el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
+    if (!sl.length){ bankRender([]); hubRender(null); el.innerHTML = '<li class="none">No saved betslips yet. Build one on the Live page or the Parlay Builder, or tap Tail on a promoted bet, and it shows up here.</li>'; document.getElementById('record').textContent = ''; }
     else { el.innerHTML = '<li class="none">Grading…</li>';
       Promise.all(sl.map(function(x){ return getBox(x.w); }).concat(sl.map(function(x){ return getClose(x.w); }))).then(function(all){ var ds = all.slice(0, sl.length), cs = all.slice(sl.length); var W = 0, L = 0, U = 0, P = 0, OPEN = [], BK = [], BRK = {m:{}, n:{}, o:{}}, html = '', lastW = null, topW = sl.length ? sl[0].w : 0, CB = 0, CN = 0, CP = 0;
         sl.forEach(function(x, i){ var s = x.s, d = ds[i], c = cs[i], seen = {}, gs = (s.keys||[]).map(function(k){ var n = seen[k] = (seen[k] || 0) + 1, gid = s.g && s.g[k] ? s.g[k][n - 1] : (/\|Total\|/.test(k) ? onlyGame(k) : null); return {k:k, g: gradeKey(k, d, gid), clv: clvOf(s, k, c)}; });
@@ -252,7 +296,7 @@ ME_JS = r"""
           CB += beat; CN += withClv.length; CP += withClv.reduce(function(a,g){ return a + g.clv.pts; }, 0);
           var live = gs.filter(function(g){ return g.g.r !== 'PUSH'; }); var res = live.some(function(g){ return g.g.r==='MISS'; }) ? 'MISS' : live.every(function(g){ return g.g.r==='HIT'; }) ? 'HIT' : 'PENDING';
           var stake = +s.stake || 1, dd = dec(s.odds), u = res==='HIT' ? (dd ? (dd-1)*stake : null) : res==='MISS' ? -stake : null;
-          if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++; BK.push({w: x.w, u: u, res: res, st: stake, name: s.name || 'Slip'}); if (res === 'PENDING' && x.w === topW) OPEN.push({name: s.name || 'Slip', st: stake, keys: gs.filter(function(g){ return g.g.r !== 'HIT' && g.g.r !== 'MISS' && g.g.r !== 'PUSH'; }).map(function(g){ return g.k; })});
+          if (res==='HIT'){ W++; if (u!=null) U += u; } else if (res==='MISS'){ L++; U += u; } else P++; BK.push({w: x.w, u: u, res: res, st: stake, name: s.name || 'Slip'}); if (res === 'PENDING' && x.w === topW) OPEN.push({name: s.name || 'Slip', st: stake, win: dd ? (dd - 1) * stake : null, keys: gs.filter(function(g){ return g.g.r !== 'HIT' && g.g.r !== 'MISS' && g.g.r !== 'PUSH'; }).map(function(g){ return g.k; })});
           // owner 11/1 item 6: record breakdown - legs by market, slips by leg count and by price band
           gs.forEach(function(g){ if (g.g.r !== 'HIT' && g.g.r !== 'MISS') return; var mk = String(g.k).split('|')[1] || '?'; mk = mk.replace(/^Under /, 'Under: '); var c = BRK.m[mk] = BRK.m[mk] || [0, 0]; c[1]++; if (g.g.r === 'HIT') c[0]++; });
           if (res === 'HIT' || res === 'MISS'){ var nl = (s.keys||[]).length, nb = nl <= 1 ? '1 leg' : nl <= 3 ? '2-3 legs' : nl <= 5 ? '4-5 legs' : '6+ legs';
@@ -274,7 +318,7 @@ ME_JS = r"""
           html = '<li class="none" id="exposure" style="border-left:3px solid var(--red);padding-left:10px;margin-bottom:10px"><b>Same player on more than one open slip.</b> One quiet game would sink every slip he is on:<br>' +
             rep.slice(0, 8).map(function(p){ var st = by[p].reduce(function(a, o){ return a + (+o.st || 0); }, 0), any = by[p].some(function(o){ return +o.st > 1; });
               return esc(p) + ': ' + by[p].length + ' slips (' + by[p].map(function(o){ return esc(o.name); }).join(', ') + ')' + (any ? ', ' + st.toFixed(0) + ' staked' : ''); }).join('<br>') + '</li>' + html; })();
-        el.innerHTML = html; bankRender(BK); brkRender(BRK); document.getElementById('record').textContent = ((W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u at 1u = your stake' : (P? P+' pending' : '')) + (CN ? ' · beat the close on '+CB+' of '+CN+' legs ('+(CP/CN>=0?'+':'')+(CP/CN).toFixed(1)+' pts avg)' : ''); }); }
+        el.innerHTML = html; bankRender(BK); brkRender(BRK); hubRender({W: W, L: L, U: U, open: OPEN, bk: BK, topW: topW}); document.getElementById('record').textContent = ((W+L) ? W+'–'+L+(P? ' ('+P+' pending)':'')+' · '+(U>=0?'+':'')+U.toFixed(2)+'u' : (P? P+' pending' : '')) + (CN ? ' · beat the close on '+CB+' of '+CN+' legs ('+(CP/CN>=0?'+':'')+(CP/CN).toFixed(1)+' pts avg)' : ''); }); }
     // exposure (owner 10/26, after 'I have so much riding on Ken Walker'): the latest week's saved slips + the working builder slip,
     // grouped by player (an either-TD leg counts for both names; game lines by their text). Stake and to-win at the slip's own stake/odds.
     (function(){ var ex = document.getElementById('expo'); if (!ex) return;
@@ -388,9 +432,12 @@ def me_page():
 <div class="me">
  <h1>My BetSweep</h1>
  <p class="m" id="who"></p>
- <div class="methmrow" id="cthm" title="How BetSweep looks on this device. Auto follows your phone or computer's light or dark setting."><span id="thmlab">Theme</span><div class="thm methm" role="group" aria-labelledby="thmlab"><button type="button" data-thm="auto">Auto</button><button type="button" data-thm="dark">Dark</button><button type="button" data-thm="light">Light</button></div></div>
- <div class="card" id="cbank"><h2>Bankroll <span id="bkhead" style="font-size:16px"></span></h2><p class="m">Private to you: kept in this browser and, when you sign in, in your own account - no one else can see it. Saved slips grade into it automatically (Save slip, Tail, or the FanDuel screenshot import); add anything you bet elsewhere below. Your unit resets every Tuesday to a set share of the bankroll, so it grows when you win and shrinks when you lose.</p><div id="bank"></div></div>
- <div class="card" id="crec" data-def="shut"><h2>Your record <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save - from the Parlay Builder's Save slip, the Live page, or Tail on a promoted bet - sits here with its Bet on FanDuel button until kickoff, then is graded from the box scores after the games, the same way we grade our own legs. Units at the slip's odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p><div id="recbrk"></div><ul id="slips"></ul></div>
+ <section class="hub" id="hub" aria-label="Your bets at a glance">
+  <div class="hubt"><a class="ht" href="#crec"><small>Open slips</small><b id="hopen">&ndash;</b><span id="hopens"></span></a><a class="ht" href="#crec"><small>Record</small><b id="hrec">&ndash;</b><span id="hunits"></span></a><a class="ht" href="#crec"><small id="hweekl">This week</small><b id="hweek">&ndash;</b><span id="hweeks"></span></a></div>
+  <div class="hubw" id="hubw" hidden></div>
+ </section>
+ <div class="card" id="crec"><h2>Your slips <span id="record" style="font-size:16px"></span></h2><p class="m">Every slip you save, graded from the box scores after the games.</p><details class="how"><summary>How saving and grading work</summary><p class="m">Save slip in the Parlay Builder, the Live page, or Tail on a promoted bet puts a slip here with its Bet on FanDuel button until kickoff. After the games it is graded from the box scores, the same way we grade our own legs. Units are at the slip's own odds and stake; a push drops the leg. Totals and first-TD legs show as pending until that grading lands.</p></details><div id="recbrk"></div><ul id="slips"></ul></div>
+ <div class="card" id="cbank" data-def="shut"><h2>Bankroll <span id="bkhead" style="font-size:16px"></span></h2><p class="m">Private to you. Saved slips grade into it automatically; add anything you bet elsewhere below.</p><details class="how"><summary>How the bankroll works</summary><p class="m">It is kept in this browser and, when you sign in, in your own account - no one else can see it. Slips from Save slip, Tail, or the FanDuel screenshot import grade into it. Your unit resets every Tuesday to a set share of the bankroll, so it grows when you win and shrinks when you lose.</p></details><div id="bank"></div></div>
  {__import__("slipimport").CARD_HTML}
  <div class="card" id="cexpo" data-def="shut"><h2>Exposure this week</h2><p class="m">Who your open slips depend on. Every player in at least two of this week's saved slips, with the stake riding on him and what you would stop being able to win if he has a bad night. Only slips saved here count - tap Tail on a promo or Save slip in the builder for the bets you place.</p><ul id="expo"></ul></div>
  <div class="card" id="alerts" data-def="shut"><h2>Slip alerts</h2><p class="m">Get a notification on this device when a player on one of your saved slips (or your open betslip) is ruled <b>Out</b> or <b>Doubtful</b> before kickoff - with a swap idea from the same game - plus, if you want them, live updates on your saved slips during games and a Thursday note when the Model's Best picks are up. Alerts follow the slips saved to your account, so sign in first.</p><p class="m" id="pushmsg"></p><div class="pushbtns"><button type="button" id="pushon" hidden>Turn on alerts</button><button type="button" id="pushtest" hidden>Send a test alert</button><button type="button" id="pushoff" hidden>Turn off on this device</button></div><div class="pushprefs" id="pushprefs" hidden><label><input type="checkbox" id="pplive" checked> Live updates during games: a leg on a saved slip hits or busts, a slip cashes</label><label><input type="checkbox" id="ppweekly" checked> Thursday note when the week's Model's Best picks are up</label></div></div>
@@ -398,6 +445,7 @@ def me_page():
  <div class="card" id="cbld" data-def="shut"><h2>Parlay Builder <a href="/build/">Open →</a></h2><ul id="builder"></ul></div>
  <div class="card" id="ctrd" data-def="shut"><h2>Trade calculator <a href="/trade/">Open →</a></h2><ul id="trades"></ul></div>
  <div class="card" id="cfan" data-def="shut"><h2>Fantasy teams &amp; DFS lineups <a href="/team/">Fantasy →</a></h2><ul id="fantasy"></ul></div>
+ <div class="methmrow" id="cthm" title="How BetSweep looks on this device. Auto follows your phone or computer's light or dark setting."><span id="thmlab">Theme</span><div class="thm methm" role="group" aria-labelledby="thmlab"><button type="button" data-thm="auto">Auto</button><button type="button" data-thm="dark">Dark</button><button type="button" data-thm="light">Light</button></div></div>
  <p class="m">Accounts are optional and free. Sign out from the header at any time; to delete your account and everything saved with it, email support@betsweep.co from the signed-in address.</p>
 </div>
 <script>{ME_JS}</script>

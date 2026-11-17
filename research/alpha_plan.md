@@ -44,7 +44,7 @@ opens are where the alpha gap is. Order for the next stretch:
    on game cards so a phone only lays out what is near the screen; check the first screen (slate, then the next game to kick off).
 2. (DONE 11/16 evening for the promo note; other intro paragraphs still to do, page by page) **Today (step 9).** The paragraph under the promos ("The other slips we post on X and Instagram ...", seven lines of small text)
    becomes one line with the rest behind an info button; the same pass on the other intro paragraphs.
-3. **Me hub (step 7).** Open slips, record in units, profit calendar; profile icon in the header. account.py already grades saved
+3. (DONE 11/16 night: hub with open slips, record in units, profit by week; the header pill already opens it) **Me hub (step 7).** Open slips, record in units, profit calendar; profile icon in the header. account.py already grades saved
    slips from /data/box-w<W>.json - build on that.
 4. **Sharps strip** only once graded records with wins exist (needs FEED_GRADE_SECRET - the owner's step - and a winner).
 (DONE 11/16 8:05 PM CT: secret in and accepted; database timer running - RUNBOOK. Check the first graded run Tuesday.) Was waiting on the owner: add the repo secret FEED_GRADE_SECRET (or say "start records at Week 11" first - then add a --from-week

@@ -37,7 +37,11 @@ async def main():
             else:
                 check(s["fold"] and s["inside"] >= 1 and s["outside"] >= 1 and s["doneOutside"] == 0 and s["liveInside"] == 0 and s["inside"] + s["outside"] == s["cards"], f"[{theme}] every finished game sits in the fold and every game still to come sits above it ({s['outside']} up, {s['inside']} folded)")
                 check(not s["open"] and s["sum"] == f"{s['inside']} game{'' if s['inside'] == 1 else 's'} already played" and s["sumH"] >= 44 and s["foldLast"], f"[{theme}] the fold starts closed, says how many games it holds, and is the last thing in the list ({s['sum']})")
-                check(s["chips"].lstrip("u").strip("p") == "" and "u" in s["chips"] and "p" in s["chips"], f"[{theme}] the chip row leads with games still to come; played games follow, dimmed ({s['chips']})")
+                # the ORDER of the chips is set when the page is built, the dimming follows the clock. A page built after the last kickoff
+                # (a Monday-night build) is in plain kickoff order, so the order is only asserted for a page built before it.
+                late_build = os.path.getmtime(os.path.join(ROOT, "build", "index.html")) * 1000 > last
+                check("u" in s["chips"] and "p" in s["chips"] and s["chips"].count("u") == s["outside"] and (late_build or s["chips"].lstrip("u").strip("p") == ""),
+                      f"[{theme}] chips are dimmed by the clock" + ("" if late_build else " and lead with games still to come") + f" ({s['chips']}" + ("; built after the last kickoff, so kickoff order" if late_build else "") + ")")
                 check(s["over"] == 0, f"[{theme}] no sideways scroll")
                 if SHOTS: await pg.evaluate("document.querySelector('#games').scrollIntoView({block: 'start'})"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/builder-fold-{theme}.png")
                 # a chip to a played game opens the fold and lands on that game

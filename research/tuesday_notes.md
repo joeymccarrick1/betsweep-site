@@ -30,4 +30,9 @@
   hand (mode grade). Then build the "this week's sharps" strip only if a graded win exists.
 - **Timer check.** Confirm the run lists show the mirror at :05/:35, price moves at :12/:42 and the rebuild at :20 arriving by
   dispatch since Monday 8 PM CT.
+- **Two tests are tied to Week 10** (tests/social_feed.py, tests/home_filing.py: BAL-LAC, week 10, a fixed kickoff). After the roll
+  rework them like tests/social_elsewhere.py (page clock frozen before the week's last kickoff; games and week read from the built
+  pages) before trusting them as a publish check.
+- **My BetSweep hub:** after Week 10's box file is written, open /me/ with real saved slips and check that the Week 10 bar and the
+  record match the slips list underneath.
 

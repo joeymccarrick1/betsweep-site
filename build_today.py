@@ -290,6 +290,7 @@ def sections(IN_, OUT_):
     # owner 11/16: busted promos are NOT listed on this page (he tried a "Lost" fold here for an hour and took it off) - they leave it,
     # and the week's misses are on /receipts/ (build_site.py, home.lost_block).
     try:   # alpha plan step 5 (11/16): the three most-upvoted open slips, right under the promos
+        # below today's game, never above it (owner's 11/11 rule for this page: the head, then the game; only the day's own callouts between)
         import social as _SOC; social_strip = _SOC.strip_html(W)
     except Exception as _e: print("note: Social strip skipped:", _e); social_strip = ""
     # ---- page ------------------------------------------------------------------------------------------------------------------------
@@ -303,12 +304,12 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 {sweep_html}
 {winners_html}
 <!--bs:promos-->
-{social_strip}
 {under_html}
 {stale_html}
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. Weeks 6–8: 41% hit at about +200, +31% at a unit each. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p>
  <p class="tdall"><a href="/boards/">All {len(games)} games this week</a></p></section>
+{social_strip}
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>
 <section class="sec" id="tdnewsS"><div class="sech"><h2 class="t">News desk</h2><a class="seeall" href="/news/">All {len(news)} notes</a></div>{("<ul class='tdnewsl' id='tdnewsl' data-cap='3'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}</section>
 <section class="sec" id="record"><div class="sech"><h2 class="t">Track record</h2><a class="seeall" href="/receipts/">Every week</a></div>{rec_html}<p class="none" style="margin-top:8px;font-size:12.5px"><a href="/how/" style="color:var(--ink)">How BetSweep picks</a></p></section>

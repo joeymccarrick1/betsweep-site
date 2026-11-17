@@ -977,3 +977,26 @@ foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its L
   runs: 24 posts recorded as lost, 0 won; tonight's game adds whatever was posted on it. The owner was told this three times and
   did not ask to start records at Week 11.
 
+## 11/16 night: My BetSweep opens on a hub (alpha plan step 7); the Social block sits below today's game
+
+- **The hub** (`account.py`: `#hub` in `me_page()`, `hubRender()` / `hubGo()` in ME_JS, styles at the top of ME_CSS). Three tiles
+  and a chart, filled from the SAME numbers the slips list already works out (nothing is graded twice):
+  Open slips (this week's ungraded slips: how many, units at stake, what they pay if all cash) - Record (W-L over every graded
+  week, units) - Week N (that week's units once something is graded; "nothing graded yet" instead of a zero). Under them,
+  **Profit by week**: a bar per week with saved slips, above the line for a winning week, below it for a losing one, an open
+  ring for a week not graded yet; tap a week and its slips open in the list. Weekly, not daily: saved slips are graded from the
+  weekly box files (`/data/box-w<W>.json`), so a week is the smallest honest unit. With nothing saved the hub says so.
+- **Order on the page:** who line, hub, Your slips (open by default now), Bankroll (folded by default), import, exposure, alerts,
+  email, builder, trades, fantasy, then the Theme switch (moved from the top - it is a setting). The two long intro paragraphs
+  became one line each with "How ... work" behind a tap (`details.how`). A reader's own folded / open choices are kept
+  (`bs_me_fold2`).
+- The header already carries the way in: signed in, the "My BetSweep" pill with the account's initial; signed out, "Sign in".
+- **Today:** "Top on Social" moved from above today's game to just below it. The 11/11 rule for that page stands: the head, then
+  the game, with only the day's own callouts (Daily Sweep, winners, the day's other posted slips, Under of the day) between.
+  tests/home_compact.py now names `promo` among those callouts.
+- **Tests:** `python3 tests/me_hub.py` (20 checks, made-up slips and box files, light + dark). tests/social_elsewhere.py now freezes
+  the page clock two hours before the week's last kickoff and reads the games and the week from the built pages, so it means the
+  same thing on any day of any week (it failed after Monday's kickoff until then). tests/builder_fold.py asserts chip ORDER only
+  for a page built before the last kickoff. STILL TIED TO WEEK 10: tests/social_feed.py and tests/home_filing.py (hard-coded
+  BAL-LAC / week 10) - rework them the same way after Tuesday's roll.
+
