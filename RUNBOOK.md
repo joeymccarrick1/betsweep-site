@@ -1584,3 +1584,11 @@ who are OUT this week ON THE SAME TEAM, so nobody inherited a target. FanDuel ha
   leg is frozen weekly, so the count keeps itself; look again when it has 100+ legs before building a slip rule on it.
 - NOT RECOUNTED (each has its own definition; a Tuesday job): the fixed-span numbers inside flag texts and slip warnings ("Weeks 6-9
   (439 legs)", "graded Weeks 6-8, favorites returned about -9% each"). They name their span, so they are dated, not wrong.
+- 2:07 PM, THE BUMP OVERSHOT ON ONE PLAYER AND PUT HIM ON MODEL'S BEST: Ashton Dulin (5 catches in 6 games, two of them 55 and 30
+  yards) carried "Adj Yds / Rec" 21.4, so 2.07 inherited targets were worth +20 yards: 32 projected against FanDuel's 16.5-20.5, an
+  "even" tier leg on Model's Best. Inherited targets are ordinary targets, not his long ball. 'AUTO - WR Projections'!L2:L300 (Proj
+  Rec Yds), the bump term only: when a receiver has fewer than 15 catches (G x D), the bump values a catch at the smaller of his own
+  yards per catch and the tab's average (SUMPRODUCT(I, D) / SUMPRODUCT(G, D) = 13.0 today). 15+ catches: unchanged. Was
+  ROUND(N($AU)*N($AK)*N($AL),1); now ROUND(N($AU)*N($AK)*IF(N($G)*N($D)<15,MIN(N($AL),<tab average>),N($AL)),1). One repeatCell.
+  Through the mirror, all 230 receiver rows before and after: six moved - Dulin 32.1 -> 24.1, five others by under a yard (Virgil,
+  T. Burks, Z. Jones, C. Allen, Bryant). On the site Dulin is now within four points of FanDuel at every line and in no tier.
