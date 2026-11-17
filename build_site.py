@@ -327,7 +327,7 @@ body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs butto
 /* the long introduction under a page title folds to three lines on a phone (app script adds .bsclamp and the More button) */
 .bsmore{display:none}
 @media (max-width:760px){
-  .bsclamp{display:-webkit-box !important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .bsclamp{display:-webkit-box !important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden} .bsclamp.two{-webkit-line-clamp:2;margin-bottom:4px}
   .bsmore{display:inline-block;font:inherit;font-family:var(--ctl);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:none;border:0;border-bottom:2px solid var(--red);padding:0 0 1px;margin:2px 0 12px;cursor:pointer}
   /* phones run a 5px page gutter so cards use the width (BIGGER_CSS). Text that sits straight on the page background - titles,
      introductions, breadcrumbs - was 5px from the glass too. It gets a real margin; the cards keep theirs. */
@@ -419,6 +419,13 @@ APP_JS = r"""<script>
       if(p.closest('.sitenav, .top, article, .tdhead, .bssrch, dialog') || p.dataset.fold) return; p.dataset.fold = '1';
       if((p.textContent || '').trim().length < 190) return;
       p.classList.add('bsclamp'); var b = document.createElement('button'); b.type = 'button'; b.className = 'bsmore'; b.textContent = 'More'; b.setAttribute('aria-expanded', 'false');
+      b.addEventListener('click', function(){ var open = p.classList.toggle('bsclamp') === false; b.textContent = open ? 'Less' : 'More'; b.setAttribute('aria-expanded', open); });
+      p.parentNode.insertBefore(b, p.nextSibling); });
+    // 11/17 (page pass, Model's Best): the rule line above a list of picks ran five lines of small print before the first card. One
+    // that long folds to two lines, same More button.
+    [].slice.call(document.querySelectorAll('main.wk .subt')).forEach(function(p){ if(p.dataset.fold) return; p.dataset.fold = '1';
+      if((p.textContent || '').trim().length < 110) return;
+      p.classList.add('bsclamp', 'two'); var b = document.createElement('button'); b.type = 'button'; b.className = 'bsmore'; b.textContent = 'More'; b.setAttribute('aria-expanded', 'false');
       b.addEventListener('click', function(){ var open = p.classList.toggle('bsclamp') === false; b.textContent = open ? 'Less' : 'More'; b.setAttribute('aria-expanded', open); });
       p.parentNode.insertBefore(b, p.nextSibling); }); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldIntro); else foldIntro();
@@ -1075,7 +1082,7 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         _best = _best.replace('<h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>', "", 1)   # the page title says it
         if not _B.get("plays_n"): _best = re.sub(r'<section class="sec" id="plays">.*?</section>', "", _best, count=1, flags=re.S)   # an empty "top plays" note is not a section
         if _best:
-            _wk_made.append(_week_page("/best/", "Model's Best", f"Week {_wkw}. Where the model and FanDuel's price disagree the most, the thinned rooms, and every game's best parlay. Each leg shows the model's chance beside the chance the price needs.",
+            _wk_made.append(_week_page("/best/", "Model's Best", f"Week {_wkw}. Where the model and FanDuel's price disagree most.",
                                        _best, "Model's Best on BetSweep: the week's plus-money edges, near-even looks, next man up, touchdown and game-line radar, and the best parlay for every game.", _slipjs))
         # owner 11/13: "I don't think we need the 'this weeks games' page. We already have all that info on other pages" - /slate/ is no
         # longer built or linked; the old address forwards to the Matchup Boards (one board per game, same lines and scripts).

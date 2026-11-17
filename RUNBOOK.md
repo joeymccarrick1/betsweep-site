@@ -1336,3 +1336,16 @@ Arizona's STARTING quarterback. All 20 notes in that list were then read one by 
 - Not touched: role proposals read from passing mentions ("former Raiders starting quarterback Kirk Cousins", "could be without
   starting quarterback Baker Mayfield" both propose QB1 - true, for the wrong reason).
 
+## 11/17, 8:15 AM CT: Model's Best - the first pick is on the first screen (page pass, step 9)
+
+- On a phone the title was followed by five lines of introduction and five lines of small print about the plus-money rule; the
+  first pick card started at the bottom of the screen (about 740 px of 844). The introduction is one sentence now ("Week N. Where
+  the model and FanDuel's price disagree most.") and a rule line (`main.wk .subt`) longer than 110 characters folds to two lines
+  with the same "More" button the long page introductions use (`foldIntro` in build_site.py; phones only, nothing removed).
+  The first card now starts at about 530 px with its three book buttons in view.
+- Player pages and the News page were looked at in the same pass: both already lead with content (last ten games against the
+  line; the folded introduction and the team chips). The News page's content was the problem - see the news desk section above.
+- Seen on the way, NOT changed (the owner's call, goes with Tuesday's biggest-gaps list): the second "plus-money edge" on
+  Week 11 is DJ Giddens anytime TD +3300, model 11% against 3% priced. A model chance nearly four times the book's on a long
+  shot is far more likely an input problem than an edge.
+
