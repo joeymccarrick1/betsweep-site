@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """sweep.py - The Daily Sweep (owner 11/10: "I'd love for us to start 1-3").
 
-One house slip per game day: about four favorites at -300 to -200 landing near +300, low-risk legs only, on the site before the first
+One house slip per game day: about three favorites the model likes at -130 to -199 landing near +300 (a trial since 11/18, owner: "Sure
+we can try it and see how it goes"; four at -300 to -200 before that - PROMO_DESK.md rule 3), low-risk legs only, on the site before the first
 kickoff and graded like every other promoted bet. Why it exists: the receipts showed 0-37 on the slips we posted in Weeks 6-9 (34 of
 them +477 or longer) while the short favorite slips that won in Week 9 were built in chat and never went on the record.
 

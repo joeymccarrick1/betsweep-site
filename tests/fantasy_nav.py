@@ -184,6 +184,19 @@ async def checklist(b, players, theme):
         if not agree[-1]: print("   mismatch:", r, "|", lh.replace("\n", " "), "| tab", tab, "top", top)
     check(all(agree), f"{T}: a tap opens that league on its Lineup tab, and the tab shows the same points and the same sidelined starters ({len(agree)} leagues)")
     cur = await pg.evaluate("[...document.querySelectorAll('#allg .allgr.on')].map(b => b.dataset.id)"); check(cur == [rows[-1]["id"]] if len(rows) > 1 else True, f"{T}: the league on screen is marked in the list")
+    # free agents who would start (the mock's draft leaves a few top players unpicked in most leagues, so the fold is never empty here)
+    pk = await pg.evaluate("[...document.querySelectorAll('#allg .allgk .pk')].map(d => ({n: d.querySelector('b').textContent, sub: d.querySelector('small').textContent, ls: [...d.querySelectorAll('.allgo')].map(b => [b.dataset.id, b.textContent.trim()])}))")
+    nfree = [int(re.search(r"free in (\d+) league", p["sub"]).group(1)) for p in pk]; name2id = {p["n"]: p["id"] for p in players}
+    held = [(p["n"], lid) for p in pk for lid, _ in p["ls"] if any(name2id.get(p["n"]) in r["players"] for r in next(x[1] for x in LS if x[0]["league_id"] == lid))]
+    check(1 <= len(pk) <= 5 and nfree == sorted(nfree, reverse=True) and all(1 <= len(p["ls"]) <= 3 and len(p["ls"]) == min(3, n) for p, n in zip(pk, nfree)) and not held
+          and all(re.search(r"\+\d+\.\d$", x) and float(x.rsplit("+", 1)[1]) >= 2 for p in pk for _, x in p["ls"]),
+          f"{T}: the fold lists free agents worth two points or more over a starter, the most widely available first, and only in leagues where nobody holds them ({[(p['n'], n) for p, n in zip(pk, nfree)][:3]})")
+    if pk:
+        first = pk[0]; lid, lab = first["ls"][0]; await pg.evaluate("document.querySelector('#allg .allgk').open = true"); await pg.click(f'#allg .allgk .allgo[data-id="{lid}"]')
+        await pg.wait_for_function(f"document.querySelector('#leagueH').textContent.indexOf({json.dumps(next(x[0]['name'] for x in LS if x[0]['league_id'] == lid))}) === 0", timeout=15000); await pg.wait_for_timeout(450)
+        tab = await pg.evaluate("document.querySelector('#tmTabs .tab.on').dataset.t"); wv = await pg.evaluate("[...document.querySelectorAll('#waiv li')].map(li => li.innerText.replace(/\\n/g, ' | '))")
+        row = next((x for x in wv if x.startswith(first["n"])), ""); up = re.search(r"\+(\d+\.\d) over your [A-Z]+", row)
+        check(tab == "waivers" and bool(up) and abs(float(up.group(1)) - float(lab.rsplit("+", 1)[1])) < 0.11, f"{T}: a tap opens that league's waiver list, and it shows the same player at the same margin ({row[:70]})")
     # the sheet: the same check as each row's chip, and its own order
     await pg.evaluate("window.scrollTo(0, 0)"); await pg.click(".lgbar .lgcur"); await pg.wait_for_selector("#lgov .lgrow")
     chips = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow')].map(b => [b.dataset.id, (b.querySelector('.lgchip') || {}).textContent || ''])")
@@ -197,7 +210,7 @@ async def checklist(b, players, theme):
     n0 = len(asked); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000); await pg.wait_for_timeout(900)
     head2 = await pg.evaluate("document.querySelector('#allg .allgh b').textContent"); again = [u for u in asked[n0:] if u.endswith("/rosters")]
     check(head2 == head and await pg.evaluate(VIS, "#allg .allgr") and len(again) == 1, f"{T}: opened, it stays open for the visit, and a reload within the half hour asks Sleeper for the league on screen only ({len(again)} roster call)")
-    most = await pg.evaluate("[...document.querySelectorAll('#allg .allgm span')].map(s => s.textContent.trim())")
+    most = await pg.evaluate("[...document.querySelectorAll('#allg .allgm:not(.allgk) span')].map(s => s.textContent.trim())")
     cnt = {}
     for li, x in enumerate(LS):
         if li == 9: continue

@@ -1998,3 +1998,37 @@ need you" and the first league to fix; a tap opens the list in place, a tap on a
   lineup that already is the model's reads Set (the page's own best lineup is played back as Sleeper's); a one-league account gets no card.
 - Limits: mocked Sleeper leagues only. Not yet done: sending every league's roster to the account for Sunday inactive alerts (today only
   leagues the reader has opened are stored), and the same card on the Trade page.
+
+## 11/18, 9:10-10:00 AM CT: the house slip changes shape on the owner's word (a trial), and free agents across leagues
+
+**The slip rule (owner 9:09 AM, asked whether to build from legs the model likes at -130 to -199, three for about +300: "Sure we can try
+it and see how it goes").** PROMO_DESK.md rule 3 and the Daily Sweep recipe now say so; sweep.py's header, the home page's teaser line
+and two sentences on How BetSweep picks follow (the How page states the record and that it is a trial graded in public).
+- What "the model likes it" means, from research/floor_depth.py's legs at -130 to -199 (one rung per player and market, Weeks 6-10):
+  a Model's Best short-priced pick (shown 65%+, raw model at or over the price) 52 of 69, 75.4% against 64.0%; raw model 8+ points over
+  the price 42 of 60, 70.0% against 61.0%, ahead in all five weeks; either one 66 of 92, ahead in all five weeks, median price -172
+  (three pay about +295). The model merely at or over the price with the shown number under 65%: 105 of 185, 56.8% against 59.9% - not
+  enough, and the desk rule says so. Every leg in that price range: 57.2% against 61.3%.
+- In-sample, three different players drawn from one week's pool all hit 38% of the time (a +300 slip breaks even at 25%). That is the
+  optimistic reading: the pool was defined on these same weeks, and the red-flag / role rules cannot be applied to the past.
+- It is a TRIAL. Every slip built this way carries "trial 11/18: 3 legs, -130 to -199" in its Notes ('ASSIST - Slip Log' and the promo
+  row); Tuesday's grading reports the tally to the owner. The old shape (4 legs at -300 to -200, "Keep it at 4", 11/10) is not to be
+  brought back, nor plus-money legs brought in, without him.
+- Wednesday's board holds 5 legs in the pool and none of them passes the low-risk rule yet (Sunday's lines are still posting); the one
+  Thursday game has none. The recipe's fallback covers it: that game's Sweep says leg or a same-game either-or TD pair in the third
+  spot, or two legs, or no Sweep that day - never a -200-or-shorter floor.
+
+**Fantasy: free agents who would start for you** (the second fold in the all-leagues card).
+- `lineupCheck()` now also returns `fa`: up to three unowned players in that league whose points this week beat the weakest starter the
+  model would play at their position by `PICK_MIN` (2.0) or more - the Waivers tab's own comparison, a spot with nobody in it counted
+  as zero. Same rosters call, no extra request. Not computed for best-ball leagues.
+- The card groups them by player: "free in 4 leagues", each league a button with the margin ("+4.1"); most widely available first, five
+  players at most, three league buttons each ("and N more"). A tap opens that league on its Waivers tab. With every lineup set, the
+  folded line says "N free agents who would start for you".
+- tests/fantasy_nav.py (129): the fold only names players nobody in that league holds, margins of two points or more, most leagues
+  first, and the league's own waiver list shows the same player at the same margin.
+- Limits: Sleeper does not say who is on waivers versus a free agent, the comparison is this week's points (a streaming view, not
+  dynasty value), and it is tested on mocked leagues only.
+- Not built yet: Sunday inactive and Saturday lineup pushes for every league. Saving every league's roster is a one-line client change,
+  but slip-alerts.ts sends one push per league under one tag, so a 14-league account would get 14 buzzes for one message. The function
+  needs a per-user summary first, and the owner has to redeploy it.

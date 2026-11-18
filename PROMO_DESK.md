@@ -20,10 +20,22 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
    leg (owner 11/7: "We need low risk").
 2. FORM VS MATCHUP: if a leg fails rule 1 mainly on matchup (a tough-defense flag) but the player's recent form or role is strong
    (e.g. Bucky Irving vs CHI, "playing like a top 3-5 back"), do not drop it silently - list it under "Your call" with both sides.
-3. SHORT FAVORITE SLIPS ARE THE CORE: about 4 legs at roughly -300 to -200, landing near +300 (the Week 9 shape that won three times).
-   Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
-   (Owner 11/10, after the site audit pointed out that /how/ said the opposite: "I want the -300/200 slips." The /how/ page now
-   describes this format. Keep the one-line audit fact in the draft, as the paragraph above these rules says; do not argue the format or swap it for plus-money legs.)
+3. SHORT FAVORITE SLIPS ARE THE CORE - ON TRIAL SINCE 11/18 IN A NEW SHAPE: about 3 legs the model likes, each priced -130 to -199,
+   landing near +300. "The model likes it" means one of two things, in this order: (a) a Model's Best short-priced pick (shown 65%+
+   with the raw model at or over the price: 52 of 69 at these prices, 75.4% against 64.0%); (b) the raw model 8 or more points over
+   FanDuel's price (42 of 60, 70.0% against 61.0%, ahead in all five weeks). The model merely at or over the price is NOT enough
+   (shown under 65%: 105 of 185, 56.8% against 59.9%). The two together: 66 of 92, ahead in all five weeks, median price -172, three of
+   them pay about +295. No passing-yards leg on (b) alone (10 of 23 when the model was only at or over). NOTHING AT -200 OR SHORTER as
+   a core leg. Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
+   (Owner 11/18 9:09 AM, asked "build from legs the model likes between -130 and -199 instead; three of those pays about +300. Want me
+   to make that the rule for the slips I build?": "Sure we can try it and see how it goes." The record behind the ask, graded Weeks 6-10
+   (research/floor_depth.py section 5c): legs the model liked at -200 or shorter went 112 of 185, 60.5% against a 71.6% price, losing in
+   all five weeks; legs it liked priced longer than -200 went 54 of 71, 76.1% against 63.7%, no losing week. 71 picks is a small
+   sample - this is a TRIAL: put "trial 11/18: 3 legs, -130 to -199" in the Notes of every slip built this way ('ASSIST - Slip Log' and
+   the promo row) so Tuesday's grading can set the two shapes side by side, and report the tally to him each Tuesday.
+   Before this, 11/10: "I want the -300/200 slips" and "Keep it at 4" - the shape below was 4 legs at -300 to -200 until 11/18. If he
+   asks for a -300 type leg by name, build it and give the one-line record; do not argue it. Do not go back to the old shape, or on to
+   plus-money legs, without him.)
 3a. THE DAILY SWEEP (owner 11/10: "I'd love for us to start 1-3"): ONE house slip per game day is the flagship - the short favorite
    slip of rule 3, posted on the site before the day's first kickoff with its own public record (home page hero; gen/sweep.py).
    Why: the receipts showed 0-37 on the slips we posted in Weeks 6-9 (34 of them +477 or longer) while the short slips that won in
@@ -163,11 +175,14 @@ Every recipe below is subject to the Market mix rule above (11/4): where a recip
 - **sweep** (THE DAILY SWEEP, rule 3a; `"type": "sweep"`, `"slot": "sweep_thu"` / `"sweep_sun"` / `"sweep_mon"` / `"sweep_sat"` ...): exactly ONE
   per game day (the CT date of the kickoffs: Thursday, Sunday, Monday, plus Saturday / Friday / holiday games when the week has them). It is
   NOT subject to the Market mix rule or the "2-3 legs" line above - the owner rules decide it:
-  - Shape: 4 legs (3 or 5 only when the price cannot be reached otherwise), each priced about -300 to -200 (a leg at -350 or -180 is fine
-    when the slip still lands in range), FanDuel price +250 to +400. (Owner 11/10 9:25 PM: "Keep it at 4." A three-leg default was
-    written here for two hours that evening after the deep dive and withdrawn on his word - do not shorten it again without him.) On a one-game day it is a same-game slip: use FanDuel's own SGP price,
+  - Shape (TRIAL, owner 11/18 9:09 AM - rule 3): 3 legs, each priced -130 to -199 and liked by the model as rule 3 defines it (a
+    Model's Best short-priced pick first, else the raw model 8+ points over the price), FanDuel price +250 to +400. No leg at -200 or shorter. If the day has fewer than three such
+    legs that also pass every check below, fill the third spot with that game's Sweep says leg or a same-game either-or TD pair (rule
+    6), or post two legs and say so, or skip the day - never fill with a -200-or-shorter floor. Notes on the row: "trial 11/18: 3 legs,
+    -130 to -199". (History: 4 legs at -300 to -200 from 11/10, "Keep it at 4", until this trial. A three-leg default written on 11/10
+    was withdrawn on his word that night; this one is his own "Sure we can try it".) On a one-game day it is a same-game slip: use FanDuel's own SGP price,
     never the legs multiplied; if it cannot be read, write "price on FanDuel" and give the multiplied figure labelled as an estimate - the
-    owner types the real price in `odds` when he approves. On a multi-game day take the day's four best legs, at most two from one game.
+    owner types the real price in `odds` when he approves. On a multi-game day take the day's three best legs, no more than two from one game.
   - Every leg: builder risk score 0-1 (rule 1 - no "Some risk", no "High risk"), passes the Leg filter, an over unless that game's
     Sweep says calls for unders (rule 4), no backup-QB dependency (rule 5), agrees with the game's most likely endings and its Sweep says
     (rule 12), predictable players first (rule 8). No two legs that need the same team to win big, and no more than two legs on one team.
