@@ -35,8 +35,9 @@ def leagues(players, nl):
         out.append((L, R, U, rec[1]))
     return out
 
-async def session(b, players, theme, nl=14, stored=None, mode=None):
+async def session(b, players, theme, nl=14, stored=None, mode=None, tweak=None):
     LS = leagues(players, nl); pm = {p["id"]: {"full_name": p["n"], "first_name": p["n"].split(" ")[0], "last_name": " ".join(p["n"].split(" ")[1:]), "position": p["pos"], "team": p.get("tm") or "", "fantasy_positions": [p["pos"]]} for p in players}; asked = []
+    if tweak: tweak(LS, pm)
     ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=1, is_mobile=True, has_touch=True)
     await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}")
     if stored: await ctx.add_init_script(f"try{{localStorage.setItem('bs_sleeper_user','{stored}')}}catch(e){{}}")
@@ -129,6 +130,102 @@ async def trade(b, players, theme):
     check(gone and await pg.evaluate(VIS, "#slUser") and not await pg.evaluate(VIS, ".lgbar .lgcur") and await pg.evaluate("document.querySelector('#slUser').value") == "", f"{T}: Escape closes the sheet; \"Use another\" brings the username box back, empty")
     check(not errs, f"{T}: no script errors ({errs[:1]})"); await ctx.close()
 
+SLOTPOS = {"QB": ("QB",), "RB": ("RB",), "WR": ("WR",), "TE": ("TE",), "FLEX": ("RB", "WR", "TE"), "SUPER_FLEX": ("QB", "RB", "WR", "TE")}
+def real_lineups(players, hurt=(), best_ball=(), lineup=None):
+    """The mock's rosters start their first eight players whatever the slot. For the lineup check each of MY rosters gets a legal lineup
+    (the first fitting player per slot), `hurt` players are Out on Sleeper, `best_ball` leagues set themselves, and `lineup` = {league
+    index: [player ids]} sets one league's starters outright."""
+    pos = {p["id"]: p["pos"] for p in players}
+    def tw(LS, pm):
+        for li, (L, R, U, rec) in enumerate(LS):
+            mine = R[0]; used = set(); st = []
+            for sl in [x for x in L["roster_positions"] if x != "BN"]:
+                pid = next((i for i in mine["players"] if i not in used and pos[i] in SLOTPOS[sl]), "0"); used.add(pid); st.append(pid)
+            mine["starters"] = list(lineup[li]) if lineup and li in lineup else st
+            if li in best_ball: L["settings"]["best_ball"] = 1
+        for i in hurt: pm[i]["injury_status"] = "Out"
+    return tw
+
+ROWS = """[...document.querySelectorAll('#allg .allgr')].map(b => ({id: b.dataset.id, name: b.querySelector('b').textContent, why: b.querySelector('small').textContent, chip: b.querySelector('.lgchip').textContent}))"""
+async def checklist(b, players, theme):
+    T = f"all leagues, {theme}"
+    hold = {}
+    def tw(LS, pm): real_lineups(players, best_ball=[9])(LS, pm); hold["pm"] = pm
+    ctx, pg, asked, errs, LS = await session(b, players, theme, tweak=tw)
+    await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_timeout(600)
+    check(not await pg.evaluate(VIS, "#allg"), f"{T}: nothing about other leagues before a username is given")
+    # the player to hurt: a wide receiver I start in the first league who is playing this week (not on bye, active in the model)
+    playing = set(await pg.evaluate("window.__BS.players.filter(p => p.o !== 'BYE' && p.act).map(p => p.n)")); byid = {p["id"]: p for p in players}
+    hurt = next(i for i in LS[0][1][0]["starters"] if i != "0" and byid[i]["pos"] == "WR" and byid[i]["n"] in playing); hname = byid[hurt]["n"]; hold["pm"][hurt]["injury_status"] = "Out"
+    where = [li for li, x in enumerate(LS) if hurt in x[1][0]["starters"] and li != 9]
+    await pg.fill("#user", "mock"); await pg.click("#go"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000)
+    await pg.wait_for_function("document.querySelector('#allg') && !document.querySelector('#allg').hidden && !document.querySelector('#allg').classList.contains('busy')", timeout=25000); await pg.wait_for_timeout(300)
+    head = await pg.evaluate("document.querySelector('#allg .allgh b').textContent"); sub = await pg.evaluate("document.querySelector('#allg .allgh small').textContent"); rows = await pg.evaluate(ROWS)
+    m = re.match(r"(\d+) of (\d+) lineups need you$", head)
+    check(bool(m) and int(m.group(1)) == len(rows) >= len(where) and int(m.group(2)) == 13, f"{T}: one line says how many lineups need you ({head}; {sub[:70]}…)")
+    ros = [u for u in asked if u.endswith("/rosters")]; check(sorted(ros) == sorted(f"league/L{i}/rosters" for i in range(14)) and asked.count("players/nfl") == 1, f"{T}: read with one rosters call per league and one player list ({len(ros)} roster calls, {asked.count('players/nfl')} player list)")
+    hit = [r for r in rows if r["id"] in [f"L{i}" for i in where]]
+    check(len(hit) == len(where) and all(f"{hname[0]}. {hname.split(' ', 1)[1]} (out)" in r["why"] and "can't play" in r["why"] and r["chip"].startswith("Fix ") for r in hit), f"{T}: every league starting the injured player is listed and names him ({hname}: {len(where)} leagues; e.g. {hit[0]['why'] if hit else None})")
+    check(not any(r["id"] == "L9" for r in rows) and "best-ball league sets itself" in await pg.evaluate("document.querySelector('#allg .allgf').textContent"), f"{T}: the best-ball league is not on the list; the footnote says it sets itself")
+    order = [r["chip"].startswith("Fix ") for r in rows]; check(order == sorted(order, reverse=True) and all(re.match(r"(Fix \d+|\+\d+\.\d)$", r["chip"]) for r in rows), f"{T}: lineups with a starter who cannot play come before lineups that only leave points on the bench ({[r['chip'] for r in rows]})")
+    box = await pg.evaluate("(() => { const r = document.querySelector('#allg').getBoundingClientRect(); return [Math.round(r.height), Math.round(r.right), Math.round(r.left)]; })()")
+    check(await pg.evaluate(OVER) <= 0 and box[1] <= 390 and box[2] >= 0 and box[0] <= 80 and not await pg.evaluate(VIS, "#allg .allgr") and rows[0]["name"] in sub, f"{T}: until asked it is one line that names the first league to fix ({box[0]}px tall; no sideways scroll)")
+    await pg.click("#allg .allgh"); await pg.wait_for_timeout(150)
+    check(await pg.evaluate(VIS, "#allg .allgr") and await pg.evaluate("document.querySelector('#allg .allgh').getAttribute('aria-expanded')") == "true" and await pg.evaluate(OVER) <= 0, f"{T}: a tap opens the list in place")
+    # each listed league agrees with its own Lineup tab
+    agree = []
+    for r in rows[:1] + rows[-2:]:
+        await pg.click(f'#allg .allgr[data-id="{r["id"]}"]'); await pg.wait_for_function(f"document.querySelector('#leagueH').textContent.indexOf({json.dumps(r['name'])}) === 0", timeout=15000); await pg.wait_for_timeout(450)
+        lh = await pg.evaluate("document.querySelector('#lineupH').innerText"); li = await pg.evaluate("document.querySelector('#lineup').innerText"); tab = await pg.evaluate("document.querySelector('#tmTabs .tab.on').dataset.t")
+        top = await pg.evaluate("Math.round(document.querySelector('#tmTabs').getBoundingClientRect().top)")
+        g1 = re.search(r"\+(\d+\.\d) pts", r["why"]); g2 = re.search(r"\+(\d+\.\d) pts", lh)
+        dead = re.findall(r"([^,:·]+?) \((?:out|bye|IR|PUP|Sus)\)", r["why"].split("can't play:")[1].split("·")[0]) if "can't play" in r["why"] else []
+        agree.append(tab == "lineup" and -5 <= top <= 140 and (not g1 or (g2 and abs(float(g1.group(1)) - float(g2.group(1))) < 0.11)) and all(d.strip().split(". ", 1)[-1] in li for d in dead))
+        if not agree[-1]: print("   mismatch:", r, "|", lh.replace("\n", " "), "| tab", tab, "top", top)
+    check(all(agree), f"{T}: a tap opens that league on its Lineup tab, and the tab shows the same points and the same sidelined starters ({len(agree)} leagues)")
+    cur = await pg.evaluate("[...document.querySelectorAll('#allg .allgr.on')].map(b => b.dataset.id)"); check(cur == [rows[-1]["id"]] if len(rows) > 1 else True, f"{T}: the league on screen is marked in the list")
+    # the sheet: the same check as each row's chip, and its own order
+    await pg.evaluate("window.scrollTo(0, 0)"); await pg.click(".lgbar .lgcur"); await pg.wait_for_selector("#lgov .lgrow")
+    chips = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow')].map(b => [b.dataset.id, (b.querySelector('.lgchip') || {}).textContent || ''])")
+    check(len(chips) == 14 and dict(chips)["L9"] == "Best ball" and all(c for _, c in chips) and {i for i, c in chips if c.startswith("Fix ") or c.startswith("+")} == {r["id"] for r in rows}, f"{T}: the league list carries the same verdict on every row ({[c for _, c in chips][:6]}…)")
+    sb = await pg.evaluate("[...document.querySelectorAll('#lgov .lgsort .tab')].map(b => b.textContent)"); await pg.click('#lgov .lgsort [data-s="sw"]'); await pg.wait_for_timeout(200)
+    first = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow .lgchip')].map(b => b.textContent)")
+    rank = [2 if c.startswith("Fix ") else 1 if c.startswith("+") else 0 for c in first]
+    check(sb == ["Sleeper order", "Needs you first"] and rank == sorted(rank, reverse=True) and len(first) == 14, f"{T}: \"Needs you first\" puts the lineups to fix on top ({first[:4]}…)")
+    await pg.click('#lgov .lgsort [data-s=""]'); await pg.keyboard.press("Escape")
+    # open stays open for the visit; a reload reads nothing twice
+    n0 = len(asked); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000); await pg.wait_for_timeout(900)
+    head2 = await pg.evaluate("document.querySelector('#allg .allgh b').textContent"); again = [u for u in asked[n0:] if u.endswith("/rosters")]
+    check(head2 == head and await pg.evaluate(VIS, "#allg .allgr") and len(again) == 1, f"{T}: opened, it stays open for the visit, and a reload within the half hour asks Sleeper for the league on screen only ({len(again)} roster call)")
+    most = await pg.evaluate("[...document.querySelectorAll('#allg .allgm span')].map(s => s.textContent.trim())")
+    cnt = {}
+    for li, x in enumerate(LS):
+        if li == 9: continue
+        for i in x[1][0]["starters"]:
+            if i != "0": cnt[byid[i]["n"]] = cnt.get(byid[i]["n"], 0) + 1
+    want = [f"{n} {c}" for n, c in sorted(cnt.items(), key=lambda kv: (-kv[1], kv[0])) if c >= 2][:8]
+    got = [re.sub(r"(Q|BYE|OUT)$", "", x) for x in most]
+    check(len(most) >= 3 and got == want, f"{T}: the most-started players are counted across leagues ({most[:3]})")
+    check(not errs, f"{T}: no script errors ({errs[:1]})"); await ctx.close()
+    return LS, rows
+
+async def checklist_set(b, players):
+    """When Sleeper's lineup IS the model's lineup, the league reads Set - checked by asking the page for its lineup and playing it back."""
+    ctx, pg, asked, errs, LS = await session(b, players, "dark", stored="mock", tweak=real_lineups(players))
+    await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000); await pg.wait_for_timeout(700)
+    names = await pg.evaluate("[...document.querySelectorAll('#lineup li .who > b')].map(b => b.childNodes[0].textContent.trim())"); await ctx.close()
+    ids = [next((p["id"] for p in players if p["n"] == n), None) for n in names]
+    check(len(ids) >= 8 and all(ids), f"the page's own best lineup for the first league can be read back ({len(ids)} starters)")
+    ctx, pg, asked, errs, LS = await session(b, players, "dark", stored="mock", tweak=real_lineups(players, lineup={0: ids}))
+    await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000)
+    await pg.wait_for_function("document.querySelector('#allg') && !document.querySelector('#allg').classList.contains('busy')", timeout=25000); await pg.wait_for_timeout(300)
+    rows = await pg.evaluate(ROWS); lh = await pg.evaluate("document.querySelector('#lineupH').innerText"); chip = await pg.evaluate("(document.querySelector('.lgbar .lgchip') || {}).textContent || ''")
+    check(not any(r["id"] == "L0" for r in rows) and "match the model" in lh and chip == "Set" and not errs, f"a lineup that already is the model's lineup reads Set and stays off the list (bar chip: {chip}; {lh.strip()[:60].replace(chr(10), " ")})"); await ctx.close()
+    # one league: no card
+    ctx, pg, asked, errs, LS = await session(b, players, "dark", nl=1, stored="mock", tweak=real_lineups(players))
+    await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000); await pg.wait_for_timeout(900)
+    check(not await pg.evaluate(VIS, "#allg") and not errs, "a one-league account gets no all-leagues card"); await ctx.close()
+
 async def team(b, players, theme):
     T = f"fantasy, {theme}"
     ctx, pg, asked, errs, LS = await session(b, players, theme)
@@ -173,6 +270,8 @@ async def main():
         check(mw == 0.7 or mw == 0, f"the market's share of a trade value is 70% when the market feed is on ({mw})")
         for theme in ("dark", "light"): await trade(b, players, theme)
         for theme in ("dark", "light"): await team(b, players, theme)
+        for theme in ("dark", "light"): await checklist(b, players, theme)
+        await checklist_set(b, players)
         # a hand-built team is left alone: no Sleeper request on load
         ctx, pg, asked, errs, LS = await session(b, players, "dark", stored="mock", mode="manual")
         await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)

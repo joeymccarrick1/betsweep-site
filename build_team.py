@@ -190,6 +190,33 @@ TEAM_CSS = r"""
 .tm-wrap .quick a{flex:1 1 150px;text-decoration:none}
 .tm-wrap #sleeperBox.conn > h2,.tm-wrap #sleeperBox.conn .connect,.tm-wrap #sleeperBox .leagues{display:none}
 .tm-wrap #sleeperBox .lgbar{margin:12px 14px}
+/* 11/18: every league at once */
+.allg{margin:0 14px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.allg[hidden],.allg .allgb[hidden]{display:none}
+.allg .allgh{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);background:none;border:0;cursor:pointer}
+.allg .tx{flex:1;min-width:0}
+.allg .allgh b{display:block;font-family:var(--display);font-size:17px;line-height:1.2;letter-spacing:.01em}
+.allg.need .allgh b{color:var(--red)} .allg.ok .allgh b{color:var(--good)}
+.allg small{display:block;color:var(--mute);font-size:12px;line-height:1.4}
+.allg .allgh small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.allg .chev{flex:none;color:var(--mute);font-size:13px;transition:transform .15s} .allg.open .chev{transform:rotate(180deg)}
+.allg .allgb{border-top:1px solid var(--line)}
+.allg ul{list-style:none;margin:0;padding:0}
+.allg li + li{border-top:1px solid var(--line)}
+.allg .allgr{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);background:none;border:0;cursor:pointer}
+.allg .allgr.on{background:var(--bg)}
+.allg .allgr b{display:block;font-size:14.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.allg .allgr small{white-space:normal}
+.allg .allgf{margin:0;padding:9px 12px;color:var(--mute);font-size:12.5px;line-height:1.45;border-top:1px solid var(--line)}
+.allg ul + .allgf{border-top:1px solid var(--line)} .allg .allgb > .allgf:first-child{border-top:0}
+.allg .allgm{border-top:1px solid var(--line);padding:0 12px}
+.allg .allgm summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--ink)}
+.allg .allgm p{margin:0 0 10px;display:flex;flex-wrap:wrap;gap:6px}
+.allg .allgm p.r{display:block;color:var(--mute);font-size:12px}
+.allg .allgm span{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12.5px;white-space:nowrap}
+.allg .allgm span b{color:var(--red)} .allg .allgm .bt{font-style:normal;margin:0}
+.allg .allgh:focus-visible,.allg .allgr:focus-visible,.allg .allgm summary:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+@media (prefers-reduced-motion:reduce){ .allg .chev{transition:none} }
 .tm-wrap details.howd{flex-basis:100%;color:var(--mute);font-size:13px}
 .tm-wrap details.howd > summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--mute);text-decoration:underline}
 .tm-wrap #out{display:grid;gap:14px;min-width:0}
@@ -416,16 +443,17 @@ TEAM_JS = r"""
 
   // ---- Sleeper fetches ----
   function get(path){ return fetch(API + path).then(function(r){ if(!r.ok) throw new Error(path + ' -> ' + r.status); return r.json(); }); }
-  var PMAP = null;
+  var PMAP = null, PMAPP = null;
   function playersMap(){
     if(PMAP) return Promise.resolve(PMAP);
     try{ var c = JSON.parse(localStorage.getItem('bs_sleeper_players') || 'null'); if(c && Date.now() - c.t < 36e5 * 20){ PMAP = c.m; return Promise.resolve(PMAP); } }catch(e){}
-    return get('players/nfl').then(function(all){
+    if(PMAPP) return PMAPP;   // 11/18: the all-leagues read asks while the first league is still loading - one download, not two
+    return PMAPP = get('players/nfl').then(function(all){
       var m = {}; Object.keys(all).forEach(function(id){ var x = all[id]; if(!x || !x.position) return;
         if(['QB','RB','WR','TE','K','DEF'].indexOf(x.position) < 0 && !(x.fantasy_positions || []).some(function(f){ return ['QB','RB','WR','TE','K','DEF'].indexOf(f) >= 0; })) return;
         m[id] = {n: x.position === 'DEF' ? id : (x.full_name || ((x.first_name || '') + ' ' + (x.last_name || ''))), t: x.team || '', p: x.position, i: x.injury_status || '', s: x.status || ''}; });
       PMAP = m; try{ localStorage.setItem('bs_sleeper_players', JSON.stringify({t: Date.now(), m: m})); }catch(e){}
-      return m; });
+      return m; }).catch(function(e){ PMAPP = null; throw e; });
   }
   function modelFor(sp){
     if(!sp) return null;
@@ -437,6 +465,90 @@ TEAM_JS = r"""
     return (byName[k] || [])[0] || null;
   }
   function badInjury(sp){ return sp && /^(Out|IR|PUP|Sus|Doubtful|NA)$/i.test(sp.i || ''); }
+  // 11/18: one starter, scored and flagged - shared by the Lineup tab and the all-leagues check so the two never disagree
+  function mkEntry(pm, s){ return function(id){
+      var sp = pm[id] || {n: id, t: '', p: '?', i: ''}; var mp = modelFor(sp); var pts = mp ? ptsFor(mp, s) : null;
+      var flag = '';
+      if(mp && mp.o === 'BYE'){ pts = 0; flag = 'bye'; }
+      else if(badInjury(sp)){ pts = 0; flag = 'out'; }
+      else if(mp && !mp.act){ pts = 0; flag = mp.av ? 'out' : 'np'; }
+      else if(/Questionable/i.test(sp.i || '') || (mp && mp.q)) flag = 'q';
+      if(pts === null && !flag) flag = 'np';
+      return {id: id, sp: sp, mp: mp, pos: sp.p === 'DEF' ? 'DEF' : (mp ? mp.p : sp.p), pts: pts || 0, flag: flag, name: sp.p === 'DEF' ? (sp.n + ' D/ST') : sp.n};
+  }; }
+
+  // ---- 11/18 "Keep working": every league at once (owner 11/17: "I have a ton of sleeper teams") ----
+  // One rosters call per league (the league bar already makes it) is enough to read a lineup: Sleeper's `starters` is the lineup as it is
+  // set right now. A league NEEDS YOU when a starter cannot play (out, IR, bye), a lineup spot is empty, or the model's best lineup from
+  // the same roster is worth a point or more over the one that is set. Best-ball leagues set themselves and are never listed.
+  var GAIN_MIN = 1.0;
+  function lineupCheck(l, pm, rosters){
+    var me = state.user && state.user.user_id, mine = (rosters || []).filter(function(r){ return r.owner_id === me || (r.co_owners || []).indexOf(me) >= 0; })[0];
+    if(!mine) return null;
+    var s = l.scoring_settings || {}, slots = l.roster_positions || [], entry = mkEntry(pm, s), byId = {};
+    var roster = (mine.players || []).map(entry); roster.forEach(function(e){ byId[e.id] = e; });
+    var cur = (mine.starters || []).filter(function(id){ return id && id !== '0'; });
+    var nSlot = slots.filter(function(x){ return x !== 'BN' && x !== 'IR' && x !== 'TAXI'; }).length;
+    var bb = !!(l.settings && Number(l.settings.best_ball) === 1);
+    var best = optimal(slots, roster.filter(function(e){ return e.flag !== 'out' && e.flag !== 'bye'; }).map(function(e){ return {id: e.id, pos: e.pos, pts: e.pts, e: e}; }));
+    var bestTotal = 0; Object.keys(best).forEach(function(i){ bestTotal += best[i].pts; });
+    var curTotal = 0, dead = [], q = 0, st = [];
+    cur.forEach(function(id){ var e = byId[id] || entry(id); curTotal += e.pts; st.push([e.name, e.flag]);
+      if(e.flag === 'out' || e.flag === 'bye') dead.push([e.name, e.flag === 'bye' ? 'bye' : (e.sp.i && /IR|PUP|Sus/i.test(e.sp.i) ? e.sp.i : 'out')]);
+      else if(e.flag === 'q') q++; });
+    var open = cur.length ? Math.max(0, nSlot - cur.length) : 0;
+    var gain = cur.length ? Math.max(0, bestTotal - curTotal) : 0, swaps = cur.length ? Object.keys(best).filter(function(i){ return cur.indexOf(best[i].id) < 0; }).length : 0;
+    var need = (bb || !cur.length) ? 0 : (dead.length || open) ? 2 : gain >= GAIN_MIN ? 1 : 0;
+    return { txt: bb ? 'Best ball' : !cur.length ? 'No lineup' : need === 2 ? 'Fix ' + (dead.length + open) : need === 1 ? '+' + f1(gain) : 'Set',
+      cls: need === 2 ? 'sell' : (need === 0 && !bb && cur.length) ? 'buy' : '', title: 'Lineup check, Week ' + (state.week || WEEK),
+      ord: need * 1000 + Math.min(999, Math.round(gain * 10)), need: need, dead: dead, open: open, gain: Math.round(gain * 10) / 10, swaps: swaps, q: q, bb: bb, none: !cur.length, st: st };
+  }
+  var AFTER = null;   // run once after the next league finishes loading (a tap on the checklist lands on that league's Lineup tab)
+  var SCANNED = false;   // the read of the other leagues has been started
+  function allRender(){ var box = $('#allg'); if(!box) return; var S = bsLg.state(), ls = S.leagues || [];
+    if(ls.length < 2 || !state.user){ box.hidden = true; box.innerHTML = ''; return; }
+    var done = 0, need = [], set = 0, bb = 0, q = 0, none = 0, off = 0, cnt = {};
+    ls.forEach(function(l){ var c = S.chip[l.league_id]; if(c === undefined) return; done++; if(!c || c.need === undefined){ off++; return; }
+      if(c.bb) bb++; else if(c.none) none++; else if(c.need) need.push([l, c]); else set++;
+      if(c.q && !c.bb && !c.none) q++;
+      if(!c.bb) (c.st || []).forEach(function(x){ var k = x[0]; if(!cnt[k]) cnt[k] = {n: 0, f: x[1]}; cnt[k].n++; }); });
+    need.sort(function(a, b){ return b[1].ord - a[1].ord; });
+    var total = ls.length, unread = total - done, busy = unread > 0 && (S.busy > 0 || !SCANNED), live = total - off - bb - none - unread;
+    var openPref = null; try{ openPref = sessionStorage.getItem('bs_allg'); }catch(e){}
+    var isOpen = openPref === '1';   // one line until asked: an account with many leagues to fix would push the league itself a screen down
+    function shortName(n){ n = String(n); var i = n.indexOf(' '); return (i < 1 || / D\/ST$/.test(n)) ? n : n.charAt(0) + '. ' + n.slice(i + 1); }   // "Q. Judkins": a row stays two lines
+    function why(c){ var p = [];
+      if(c.dead.length) p.push(c.dead.length + ' starter' + (c.dead.length > 1 ? 's' : '') + ' can\'t play: ' + c.dead.slice(0, 3).map(function(d){ return esc(shortName(d[0])) + ' (' + esc(String(d[1]).toLowerCase() === 'bye' ? 'bye' : d[1] === 'out' ? 'out' : d[1]) + ')'; }).join(', ') + (c.dead.length > 3 ? ' and ' + (c.dead.length - 3) + ' more' : ''));
+      if(c.open) p.push(c.open + ' empty lineup spot' + (c.open > 1 ? 's' : ''));
+      if(c.gain >= GAIN_MIN) p.push('+' + f1(c.gain) + ' pts with ' + (c.swaps === 1 ? 'one swap' : 'the model\'s lineup'));
+      return p.join(' · '); }
+    var curId = state.league && state.league.league_id;
+    var rows = need.map(function(x){ var l = x[0], c = x[1];
+      return '<li><button type="button" class="allgr' + (l.league_id === curId ? ' on' : '') + '" data-id="' + esc(l.league_id) + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + why(c) + '</small></span><span class="lgchip ' + esc(c.cls || '') + '">' + esc(c.txt) + '</span></button></li>'; }).join('');
+    var foot = [];
+    if(!busy){
+      if(need.length && set) foot.push(set + (set === 1 ? ' lineup is' : ' lineups are') + ' already the model\'s best.');
+      if(q) foot.push(q + (q === 1 ? ' has' : ' have') + ' a questionable starter to check before kickoff.');
+      if(bb) foot.push(bb + ' best-ball league' + (bb === 1 ? ' sets itself.' : 's set themselves.'));
+      if(none) foot.push('No lineup set yet in ' + none + '.');
+      if(off) foot.push('Not on a roster in ' + off + '.');
+      if(unread) foot.push('Sleeper did not answer for ' + unread + ' - open the league list to try again.'); }
+    var top = Object.keys(cnt).filter(function(k){ return cnt[k].n >= 2; }).sort(function(a, b){ return cnt[b].n - cnt[a].n || (a < b ? -1 : 1); }).slice(0, 8);
+    var most = (!busy && top.length) ? '<details class="allgm"><summary>Who you start the most</summary><p>' + top.map(function(k){ var f = cnt[k].f;
+        return '<span>' + esc(k) + ' <b>' + cnt[k].n + '</b>' + (f === 'q' ? '<i class="bt q">Q</i>' : f === 'bye' ? '<i class="bt bye">BYE</i>' : f === 'out' ? '<i class="bt out">OUT</i>' : '') + '</span>'; }).join('') + '</p><p class="r">How many of your lineups each player is in this week.</p></details>' : '';
+    var head = busy ? 'Checking your ' + total + ' lineups…' : need.length ? need.length + ' of ' + live + ' lineups need you' : 'All ' + live + ' lineups are set';
+    var sub = busy ? done + ' of ' + total + ' read' : (need.length && !isOpen) ? esc(need[0][0].name) + ': ' + why(need[0][1]) + (need.length > 1 ? ' · and ' + (need.length - 1) + ' more' : '')
+      : 'Week ' + (state.week || WEEK) + ' · every league on this account';
+    box.hidden = false; box.className = 'allg' + (busy ? ' busy' : need.length ? ' need' : ' ok') + (isOpen ? ' open' : '');
+    box.innerHTML = '<button type="button" class="allgh" aria-expanded="' + (isOpen ? 'true' : 'false') + '"><span class="tx"><b>' + head + '</b><small>' + sub + '</small></span><span class="chev" aria-hidden="true">▾</span></button>'
+      + '<div class="allgb"' + (isOpen ? '' : ' hidden') + '>' + (rows ? '<ul>' + rows + '</ul>' : '') + (foot.length ? '<p class="allgf">' + foot.join(' ') + '</p>' : '') + most + '</div>'; }
+  document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return;
+    var h = t.closest('#allg .allgh'); if(h){ var box = $('#allg'), now = !box.classList.contains('open'); try{ sessionStorage.setItem('bs_allg', now ? '1' : '0'); }catch(e){} allRender(); return; }
+    var r = t.closest('#allg .allgr'); if(!r) return;
+    var l = state.leagues.filter(function(x){ return x.league_id === r.dataset.id; })[0]; if(!l) return;
+    AFTER = function(){ TABS.show('lineup', true); var a = $('#tmTabs'); if(a && a.scrollIntoView) a.scrollIntoView({block: 'start'}); };
+    if(state.league && state.league.league_id === l.league_id && !out.hidden){ var f = AFTER; AFTER = null; f(); return; }
+    QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); });
 
   var state = {user: null, leagues: [], league: null, week: WEEK, season: null};
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('#fdm [data-fm]'); if(!b) return; FPM = b.getAttribute('data-fm'); try { localStorage.setItem('bs_fp_mode', FPM); } catch(e){} if(LASTR) render.apply(null, LASTR); });
@@ -447,9 +559,11 @@ TEAM_JS = r"""
   // 11/17 evening. One row of tabs for the graded team; the league bar and its sheet replace the wall of league buttons.
   var TABS = bsTabs.mount($('#tmTabs'), [{id: 'lineup', label: 'Lineup'}, {id: 'roster', label: 'Roster'}, {id: 'league', label: 'League'}, {id: 'waivers', label: 'Waivers'}], {root: out, key: 'bs_tab_team'});
   var QUIET = false;   // true while the page loads a league by itself (a saved username, a league picked from the sheet): no jump down the page
-  bsLg.mount({bar: $('#lgbar'), get: get,
+  bsLg.mount({bar: $('#lgbar'), get: get, ns: 'lu', sortLabel: 'Needs you first',
+    extra: function(l, ros){ return playersMap().then(function(pm){ return lineupCheck(l, pm, ros); }); },
+    onUpdate: function(){ allRender(); },
     onPick: function(l){ QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); },
-    onChange: function(){ bsLg.clear(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
+    onChange: function(){ bsLg.clear(); state.user = null; allRender(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
   function connect(byHand){ QUIET = !byHand;
     var u = $('#user').value.trim().replace(/^@/, ''); if(!u) return;
     $('#go').disabled = true; say('Looking up ' + u + ' on Sleeper…'); out.hidden = true; $('#leagues').innerHTML = ''; $('#leagues').classList.remove('picked');
@@ -459,7 +573,7 @@ TEAM_JS = r"""
     .then(function(ls){ ls = (ls || []).filter(function(l){ return l.status !== 'pre_draft'; }); state.leagues = ls;
       if(!ls.length){ say('No ' + state.season + ' NFL leagues on that account.', true); return; }
       say(''); var box = $('#leagues'); var last = ''; try{ last = localStorage.getItem('bs_sleeper_league') || ''; }catch(e){}
-      $('#sleeperBox').classList.add('conn'); bsLg.set(state.user, u, ls, null);
+      $('#sleeperBox').classList.add('conn'); bsLg.set(state.user, u, ls, null); allRender();
       ls.forEach(function(l){ var b = document.createElement('button'); b.type = 'button'; b.className = 'lgo'; b.innerHTML = esc(l.name) + '<small>' + l.total_rosters + ' teams · ' + esc(scoringLabel(l.scoring_settings)) + '</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
       if(ls.length > 1){ var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'lgsw'; sw.textContent = 'Switch league (' + ls.length + ') ▾'; sw.addEventListener('click', function(){ box.classList.remove('picked'); }); box.appendChild(sw); }
       var auto = ls.filter(function(l){ return l.league_id === last; })[0] || ls[0];
@@ -474,7 +588,10 @@ TEAM_JS = r"""
     say('Loading ' + l.name + '…'); out.hidden = true;
     var wk = Math.min(Math.max(state.week || WEEK, 1), 18);
     Promise.all([playersMap(), get('league/' + l.league_id + '/rosters'), get('league/' + l.league_id + '/users'), get('league/' + l.league_id + '/matchups/' + wk).catch(function(){ return []; }), get('players/nfl/trending/add?lookback_hours=24&limit=40').catch(function(){ return []; })])
-    .then(function(r){ bsLg.note(l.league_id, r[1]); render(l, r[0], r[1], r[2], r[3], r[4], wk); say(''); })
+    .then(function(r){ var chk; try{ chk = lineupCheck(l, r[0], r[1]); }catch(e){ console.error(e); }
+      bsLg.note(l.league_id, r[1], chk); render(l, r[0], r[1], r[2], r[3], r[4], wk); say('');
+      if(AFTER){ var f = AFTER; AFTER = null; f(); }
+      if(state.leagues.length > 1){ SCANNED = true; bsLg.scan(); allRender(); } })   // the other leagues: one rosters call each, three at a time, kept for half an hour
     .catch(function(e){ say('Sleeper did not answer for that league. Try again in a moment.', true); console.error(e); });
   }
 
@@ -488,16 +605,7 @@ TEAM_JS = r"""
     var hot = {}; (trending || []).forEach(function(t){ hot[t.player_id] = t.count; });
     var owned = {}; rosters.forEach(function(r){ (r.players || []).forEach(function(id){ owned[id] = r.roster_id; }); });
 
-    function entry(id){
-      var sp = pm[id] || {n: id, t: '', p: '?', i: ''}; var mp = modelFor(sp); var pts = mp ? ptsFor(mp, s) : null;
-      var flag = '';
-      if(mp && mp.o === 'BYE'){ pts = 0; flag = 'bye'; }
-      else if(badInjury(sp)){ pts = 0; flag = 'out'; }
-      else if(mp && !mp.act){ pts = 0; flag = mp.av ? 'out' : 'np'; }
-      else if(/Questionable/i.test(sp.i || '') || (mp && mp.q)) flag = 'q';
-      if(pts === null && !flag) flag = 'np';
-      return {id: id, sp: sp, mp: mp, pos: sp.p === 'DEF' ? 'DEF' : (mp ? mp.p : sp.p), pts: pts || 0, flag: flag, name: sp.p === 'DEF' ? (sp.n + ' D/ST') : sp.n};
-    }
+    var entry = mkEntry(pm, s);
     var roster = (mine.players || []).map(entry);
     var pool = roster.filter(function(e){ return e.flag !== 'out' && e.flag !== 'bye'; }).map(function(e){ return {id: e.id, pos: e.pos, pts: e.pts, e: e}; });
     var best = optimal(slots, pool);
@@ -780,6 +888,7 @@ body = f'''<div class="tm-wrap">
    <details class="howd"><summary>How this works</summary><p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p></details>
   </div>
   <div class="lgbar" id="lgbar" hidden></div>
+  <div class="allg" id="allg" hidden></div>
   <div class="leagues" id="leagues"></div>
   </div>
   <div id="manualBox" hidden>

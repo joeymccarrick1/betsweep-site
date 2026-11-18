@@ -135,7 +135,17 @@ def _floor_text(calib):
         cut = (getattr(calib, "FLOOR_CUT", {}) or {}).get("Receiving Yards"); band = getattr(calib, "FLOOR_BAND", None)
         if not cut or not band: return ""
         return (f". Receiving-yards lines that sit at {band[1] * 100:.0f} to {band[2] * 100:.0f} percent of a player's projection also come down about "
-                f"{_word(max(1, round(cut * 100)))} point{'s' if round(cut * 100) != 1 else ''}, because the shown number ran above the hit rate there in every graded week it was tested on")
+                f"{_word(max(1, round(cut * 100)))} point{'s' if round(cut * 100) != 1 else ''}, because the shown number ran above the hit rate there in every graded week it was tested on") + _price_text(calib)
+    except Exception: return ""
+
+def _price_text(calib):
+    """And one for calib.py's reading of a short price (PRICE_KNOT / PRICE_SLOPE)."""
+    try:
+        k = getattr(calib, "PRICE_KNOT", None); sl = getattr(calib, "PRICE_SLOPE", None)
+        if not k or sl is None or sl >= 1: return ""
+        odds = -round(100 * k / (1 - k)); how = "half" if abs(sl - 0.5) < 1e-9 else f"{sl * 100:.0f}%"
+        return (f". A FanDuel price shorter than {odds} ({k * 100:.0f} percent) counts at {how} strength above that mark, because legs priced shorter than that "
+                f"have hit about two times in three however short the price got")
     except Exception: return ""
 
 def stats(in_dir="in"):

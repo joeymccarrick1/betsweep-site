@@ -99,8 +99,12 @@ JS = r"""
     return b.join(' · '); }
   function kind(l){ var t = l.settings ? l.settings.type : 0; return (t === 2 ? 'dynasty' : t === 1 ? 'keeper' : 'redraft') + ((l.roster_positions || []).indexOf('SUPER_FLEX') >= 0 ? ' · superflex' : ''); }
   function ckey(){ return 'bs_lg_rec_' + ((LG.user && LG.user.user_id) || ''); }
-  function load(){ LG.rec = {}; LG.chip = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && Date.now() - c.t < 18e5){ LG.rec = c.rec || {}; LG.chip = c.chip || {}; } }catch(e){} }
-  function save(){ try{ sessionStorage.setItem(ckey(), JSON.stringify({ t: Date.now(), rec: LG.rec, chip: LG.chip })); }catch(e){} }
+  // 11/18: each page keeps its own chips (opt.ns): the Trade page's playoff odds and the Fantasy page's lineup check are different
+  // answers about the same league, and one visit moves between the two pages.
+  function ns(){ return (LG.opt && LG.opt.ns) || 'p'; }
+  function load(){ LG.rec = {}; LG.chip = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && Date.now() - c.t < 18e5){ LG.rec = c.rec || {}; LG.chip = (c.chips || {})[ns()] || {}; } }catch(e){} }
+  function save(){ try{ var all = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && c.chips && Date.now() - c.t < 18e5) all = c.chips; }catch(e){}
+      all[ns()] = LG.chip; sessionStorage.setItem(ckey(), JSON.stringify({ t: Date.now(), rec: LG.rec, chips: all })); }catch(e){} }
   function byId(id){ return LG.leagues.filter(function(l){ return l.league_id === id; })[0]; }
   function recOf(ros){ var me = LG.user && LG.user.user_id, r = (ros || []).filter(function(x){ return x.owner_id === me || (x.co_owners || []).indexOf(me) >= 0; })[0];
     if(!r) return null; var s = r.settings || {}, f = function(x){ var q = x.settings || {}; return (q.fpts || 0) + (q.fpts_decimal || 0) / 100; };
@@ -119,12 +123,13 @@ JS = r"""
       + (c && c.sw != null ? '<i class="lgsw' + (c.sw >= 25 ? ' big' : c.sw >= 10 ? ' mid' : '') + '" title="Points of playoff odds between winning and losing this week">' + (c.sw >= 1 ? c.sw + '-pt week' : 'no swing') + '</i>' : '') + '</span></button>'; }
   // 11/18: "Biggest week first" - the leagues where this week moves the reader's playoff odds the most lead; leagues not read yet,
   // or with nothing at stake (season over, no roster), keep their order after them.
-  function swOf(l){ var c = LG.chip[l.league_id]; return c && c.sw != null ? c.sw : -1; }
+  function swOf(l){ var c = LG.chip[l.league_id]; return !c ? -1 : c.ord != null ? c.ord : c.sw != null ? c.sw : -1; }
   function list(){ var ul = $('#lgov .lglist'); if(!ul) return;
     var ls = LG.leagues.filter(function(l){ return !LG.q || String(l.name).toLowerCase().indexOf(LG.q) >= 0; });
     if(LG.sort === 'sw') ls = ls.map(function(l, i){ return [l, i]; }).sort(function(a, b){ return (swOf(b[0]) - swOf(a[0])) || (a[1] - b[1]); }).map(function(x){ return x[0]; });
     ul.innerHTML = ls.length ? ls.map(function(l){ return '<li>' + rowHtml(l) + '</li>'; }).join('') : '<li class="none">No league matches that.</li>'; }
-  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(LG.sort === 'sw' && $('#lgov')) list(); else if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); sortBtn(); }
+  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(LG.sort === 'sw' && $('#lgov')) list(); else if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); sortBtn();
+    if(LG.opt && LG.opt.onUpdate){ try{ LG.opt.onUpdate(id); }catch(e){ console.error(e); } } }
   function sortBtn(){ var s = $('#lgov .lgsort'); if(!s) return; var n = LG.leagues.filter(function(l){ return swOf(l) >= 0; }).length; s.hidden = n < 2;
     [].forEach.call(s.querySelectorAll('.tab'), function(b){ var on = (b.getAttribute('data-s') || '') === (LG.sort || ''); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
   function pump(){ while(LG.busy < 3 && LG.queue.length){ (function(l){ LG.busy++;
@@ -139,7 +144,7 @@ JS = r"""
     ov.innerHTML = '<div class="lgsheet" role="dialog" aria-modal="true" aria-label="Your Sleeper leagues"><header><h3>Your leagues<small>' + LG.leagues.length + '</small></h3><button type="button" class="lgx" aria-label="Close">✕</button></header>'
       + '<div class="lgwho"><span>Sleeper username <b>' + esc(LG.uname) + '</b></span><button type="button" class="lgchg">Use another</button></div>'
       + (LG.leagues.length > 8 ? '<input type="search" class="lgq" placeholder="Search your leagues" autocomplete="off" aria-label="Search your leagues">' : '')
-      + (LG.opt.extra && LG.leagues.length > 2 ? '<div class="tabs lgsort" role="group" aria-label="Order" hidden><button type="button" class="tab" data-s="">Sleeper order</button><button type="button" class="tab" data-s="sw">Biggest week first</button></div>' : '')
+      + (LG.opt.extra && LG.leagues.length > 2 ? '<div class="tabs lgsort" role="group" aria-label="Order" hidden><button type="button" class="tab" data-s="">Sleeper order</button><button type="button" class="tab" data-s="sw">' + esc(LG.opt.sortLabel || 'Biggest week first') + '</button></div>' : '')
       + '<ul class="lglist"></ul></div>';
     document.body.appendChild(ov); document.documentElement.classList.add('lgopen');
     ov.addEventListener('click', function(e){
@@ -153,7 +158,12 @@ JS = r"""
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && $('#lgov')) close(); });
   window.bsLg = {
     // mount({bar: element, get: function(path) -> Promise, onPick(league), onChange(), extra(league, rosters) -> {txt, cls, title} | Promise})
+    // opt.ns names this page's chips; opt.sortLabel words the sheet's second order (chip.ord, else chip.sw, high first);
+    // opt.onUpdate(league_id) fires each time a league's record or chip lands
     mount: function(opt){ LG.opt = opt; bar(); },
+    // read every league now (the sheet does this when it opens): one rosters call per league not yet read, three at a time
+    scan: function(){ if(LG.opt && LG.leagues.length) fill(); },
+    state: function(){ return { leagues: LG.leagues, rec: LG.rec, chip: LG.chip, busy: LG.busy + LG.queue.length }; },
     // after the page has the account's leagues
     set: function(user, uname, leagues, cur){ var same = LG.user && user && LG.user.user_id === user.user_id; LG.user = user; LG.uname = uname || ''; LG.leagues = leagues || []; LG.cur = cur || null; if(!same) load(); bar(); },
     current: function(l){ LG.cur = l; bar(); },

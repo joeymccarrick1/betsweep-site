@@ -68,9 +68,30 @@ def floor_cut(market, line, proj):
     if not (a < r < d): return 0.0
     return c * ((r - a) / (b - a) if r < b else (1.0 if r <= hi else (d - r) / (d - hi)))
 
+# ---- owner 11/18 morning ("Keep working"): FanDuel's shortest prices (research/floor_depth.py section 5, Weeks 6-10) ----
+# In the three blend markets the hit rate climbs with the price up to about 70% and then stops: priced 68-72% hit 66.3% (416 legs),
+# 72-76% hit 67.7% (381), 76-80% hit 63.4% (186). Across every market a leg at -317 or shorter lost 14.6% a leg, negative in all five
+# weeks. Fitted on the other four weeks, the best slope for the price above 70% was 0 in every fold (the extra price carried no
+# information); that full squeeze was better in 4 of 5 held-out weeks, and HALF of it in all 5 (+0.0002 / +0.0062 / +0.0034 / +0.0015 /
+# +0.0028; log loss 0.6534 -> 0.6507 on 779 legs). At knots of 68% and 72% the half squeeze tied its worst week (-0.0000, -0.0002) and
+# won the other four. So above PRICE_KNOT the price counts at half strength: -300 (75%) reads as 72.5%, -400 (80%) as 75%.
+# Over side of the three blend markets only (the RECAL markets have their own fitted map; no graded unders or other markets up there).
+# The edge is still shown against the REAL price, so a leg the model merely agrees with at -300 now shows a few points under it.
+# NOT adopted: giving the model no credit above a short price (3 of 5 weeks on its own), squeezing the shown number itself above 68%
+# (half size: 4 of 5), a flat cut for legs shown 70%+ (4 of 5; 5 of 5 only at 72%). Legs shown 70%+ still hit about 65% - the builder's
+# honest chance (honest.py, capped at 68%) is the number that says so, and build_builder keeps -200 or shorter out of the short-priced tier.
+PRICE_KNOT = 0.70; PRICE_SLOPE = 0.5
+PRICE_MARKETS = ("Receiving Yards", "Receptions", "Passing Yards")
+
+def squeezed(market, book):
+    """FanDuel's implied % as the blend reads it (over side): above PRICE_KNOT it counts at PRICE_SLOPE strength."""
+    if book is None or market not in PRICE_MARKETS or book <= PRICE_KNOT: return book
+    return PRICE_KNOT + PRICE_SLOPE * (book - PRICE_KNOT)
+
 def shown(p, book, market=None, w=W_MODEL, line=None, proj=None):
     """The shown % for a leg: per-market recalibration where research/recal.py found one (unders use the over side), else shrink().
-    line / proj (the X of an X+ rung and the player's projection) switch on the floor cut above; without them the number is the plain blend."""
+    line / proj (the X of an X+ rung and the player's projection) switch on the floor cut above; without them the number is the blend
+    alone. A short price is read at half strength first (squeezed())."""
     if p is None: return None
     if book is None: return p
     mk = str(market or ""); under = mk.startswith("Under "); base = mk[6:] if under else mk
@@ -80,6 +101,6 @@ def shown(p, book, market=None, w=W_MODEL, line=None, proj=None):
         v = 1 / (1 + _m.exp(-(c + a * _lg(po) + b * _lg(bo))))
         return max(0.01, min(0.99, 1 - v if under else v))
     if w == W_MODEL: w = W_MARKET.get(base, w)
-    v = shrink(p, book, w); cut = floor_cut(base, line, proj)
+    v = shrink(p, book if under else squeezed(base, book), w); cut = floor_cut(base, line, proj)
     if cut: v = max(0.01, min(0.99, v + cut if under else v - cut))   # the under is the other side of the same line
     return v

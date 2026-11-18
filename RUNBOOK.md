@@ -1933,3 +1933,68 @@ page; what changed is how much opens at once. Phone lengths (390x844), live copy
   line from Week 11 on, and that line - not the 32 of 50 - decides whether it ever becomes a tier.
 - Rushing and passing floors: the cut made them worse (0 of 5, 1 of 5). Rushing already has its RECAL row.
 - Still untestable: DraftKings / Hard Rock consensus as "the market" (only 23 graded tier picks carry the other books' prices).
+
+## 11/18, 7:35-9:00 AM CT: short prices (calibration + the short-priced tier) and an all-leagues lineup check (owner 7:34 AM: "Keep working")
+
+**What started it.** A reliability table of the live shown % on the 8,094 graded frozen legs (Weeks 6-10): calibrated within a point from
+0 to 70% (overall +0.6), but legs shown at 70-80% hit 65.5% (505 legs from 433 player-weeks, t 3.5, high in all five weeks). It is the
+price: in the three blend markets the hit rate climbs with FanDuel's price up to about 70% and then stops (priced 68-72%: 66.3%, 72-76%:
+67.7%, 76-80%: 63.4%); across every market a leg at -317 or shorter lost 14.6% a leg, negative in all five weeks. honest.py had found the
+same wall on 11/15 for the builder's "honest chance" (capped at 68%); the shown % and the tier had not followed.
+
+**1. calib.py: a price above 70% is read at half strength** (`PRICE_KNOT`, `PRICE_SLOPE`, `squeezed()`; inside `shown()`, over side of
+receiving yards / receptions / passing yards). Fitted off-week the best slope above 70% was 0 in every fold; that full squeeze was better
+in 4 of 5 held-out weeks and half of it in 5 of 5 (+0.0002 / +0.0062 / +0.0034 / +0.0015 / +0.0028). Knots of 68% and 72% tied their
+worst week and won the other four. Effect: -300 reads as 72.5%, -400 as 75%; a leg the model merely agrees with at -300 now shows two to
+three points UNDER its price. The edge is still shown against the real price. Still true after it: legs priced 76%+ show 70.9% and hit
+63.4% - the squeeze is a step, like the touchdown weight. The receiving floor cut was re-tested on top of it: still 5 of 5.
+Not adopted: no model credit above a short price (3 of 5 alone), squeezing the shown number itself above 68% (half size 4 of 5), a flat
+cut for legs shown 70%+ (4 of 5; 5 of 5 only at 72%).
+
+**2. build_builder.py: the short-priced tier takes nothing at -200 or shorter, and nothing with one of our red flags.**
+- Price. The tier's rule on graded legs (shown 65%+, raw model at or over the price, best rung per player and market): 255 picks, 65.1%,
+  -13.4 units. Its picks at -200 or shorter: 112 of 185 (60.5% against a 71.6% price), -28.1 units, losing in all five weeks. Its picks
+  priced longer than -200: 54 of 71 (76.1% against 63.7%), +13.7 units, no losing week. The tighter the cap the better (-285: -0.04 a leg,
+  -257: +0.03, -233: +0.06, -200: +0.19). -200 is the line the site already draws for a floor leg (honest.FLOOR_ODDS; the best-parlay rule
+  of 11/15), and Week 10, graded after that rule, agreed (10 of 16 against 27 of 44). `_SAFE_FLOOR = -200`.
+- Red flags. Seven of the twelve tier picks on Wednesday's board carried one (losing side, near-zero risk, backup QB, blowout script,
+  tough matchup, cleared 2 of 10) - legs the owner's low-risk rule (11/7) keeps out of every slip. flag_stats.py has the two graded ones
+  under their prices in every week counted (near-zero 61% against 70%, 247 legs; yardage floors on the losing side 60% against 70%).
+  Judged rung by rung, so a player can still come in at another line. The backtest above cannot apply this half (past flags are not
+  archived), so the live tier is narrower than the 71 picks it describes.
+- Role. The near-zero rule of 11/15 (four games on record; under half the line in fewer than a third of them) now applies to every tier
+  pick (`_safe_role_ok`). The flag itself only looks at legs priced -180 or shorter, and with the cap most of the tier sits at -130 to -179.
+- Wednesday's board (TNF plus the first Sunday lines): the tier went from 12 picks to 1. Expect a handful on a full board, not a dozen.
+- The model's lead at a short price is not an edge: priced 70%+, legs with the raw model at or over the price hit 60.5% (129) against
+  66.3% for the rest (650), in every market with enough legs. This is the 11/15 slip rule ("a big gap on a short-priced floor leg is a
+  warning"), now with Week 10 in.
+- Words: the tier's tooltip, the Guide and the Season page say "priced longer than -200"; How BetSweep picks gets one sentence on the
+  half-strength reading, written from calib.py's constants.
+
+**3. research/floor_depth.py section 5** prints all of it each Tuesday: 5a hit rate by price, 5b the squeeze by held-out week at three
+knots, 5c the tier by price cap week by week, with a "SINCE THE CAP" line from Week 11 on (if the left-out legs start beating their price,
+lift the cap). tests/calib_floor.py (25): the squeeze (nothing at or under the knot, half above it, overs of the three markets only, never
+lowers the number as the price shortens, no jump), every receptions / passing leg on the built board shows the calibrated number, no tier
+pick at -200 or shorter, none with a red flag, each with four games on record and few near-zero games.
+
+**4. Fantasy: every league at once** (owner 11/17: "I have a ton of sleeper teams"). Under the league bar, one line: "5 of 13 lineups
+need you" and the first league to fix; a tap opens the list in place, a tap on a league opens it on its Lineup tab.
+- A league needs you when a starter cannot play (out, IR, bye), a lineup spot is empty, or the model's best lineup from the same roster
+  is worth a point or more over the one set in Sleeper (`GAIN_MIN`). Best-ball leagues set themselves and are never listed.
+- `lineupCheck(l, pm, rosters)` in build_team.py scores a starter with `mkEntry()` - the Lineup tab's own `entry()`, lifted out of
+  `render()` - so the list and the tab cannot disagree. It needs only the rosters call the league bar already makes: Sleeper's `starters`
+  is the lineup as set. The other leagues are read after the first one is on screen, three at a time, kept half an hour.
+- fantasy_nav.py: chips are now kept per page (`opt.ns`; the Trade page's playoff odds and the Fantasy page's lineup verdict are
+  different answers about the same league), `bsLg.scan()` reads every league without opening the sheet, `opt.onUpdate` tells the page,
+  `bsLg.state()` hands it the results, and the sheet's second order is worded by the page (`opt.sortLabel`: "Needs you first" here,
+  "Biggest week first" on Trade; chip.ord, else chip.sw). The league bar's chip on Fantasy is the lineup verdict ("Fix 2", "+3.4", "Set").
+- The fold "Who you start the most" counts each player across the lineups (two or more), with his BYE / OUT / Q tag.
+- One download of Sleeper's player list, not two (`PMAPP`): the all-leagues read asks for it while the first league is still loading.
+- One line until asked on purpose: opened by default, a 13-league account pushed the league itself a full screen down (the page test
+  caught it: tabs at 911px).
+- tests/fantasy_nav.py (125): one rosters call per league and one player list; every league starting an injured player names him; the
+  best-ball league is off the list; a tap lands on that league's Lineup tab and the tab shows the same points and the same sidelined
+  starters; the sheet carries the same verdicts and sorts "Needs you first"; a reload inside the half hour asks for one league only; a
+  lineup that already is the model's reads Set (the page's own best lineup is played back as Sleeper's); a one-league account gets no card.
+- Limits: mocked Sleeper leagues only. Not yet done: sending every league's roster to the account for Sunday inactive alerts (today only
+  leagues the reader has opened are stored), and the same card on the Trade page.

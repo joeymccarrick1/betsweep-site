@@ -745,6 +745,14 @@ def td_role(l):
     if (l.get("rzs") or 0) >= 0.15 and sn >= 0.20: return "red zone"
     if _LONG.get(l["pl"], 0) >= 2 and sn >= 0.25: return "long score"
     return None
+_SAFE_FLOOR = -200   # 11/18: the short-priced tier takes no leg at this price or shorter (see the tier rule below)
+def _safe_role_ok(l):
+    """11/18: the 11/15 near-zero rule for EVERY short-priced pick. The flag above only looks at legs priced -180 or shorter, and with the
+    -200 cap most of this tier now sits between -130 and -179: four games on record, and under half this line in fewer than a third."""
+    if not FE or l.get("m") not in _NZ_STAT or not l.get("ln"): return True
+    if not l.get("nz"):
+        _g = [g.get(_NZ_STAT[l["m"]]) or 0 for g in FE.games(l["pl"])]; l["nz"] = [sum(1 for x in _g if x < 0.5 * l["ln"]), len(_g)]
+    return l["nz"][1] >= 4 and l["nz"][0] * 3 < l["nz"][1]
 _td_out = []
 for l in LEGS:
     if l.get("m") in ("Anytime TD", "First TD", "2+ TD", "3+ TD") and not l.get("gl") and "/" not in l["pl"] and " or " not in l["pl"]:
@@ -767,7 +775,19 @@ for l in LEGS:
         if l["raw_p"] >= l["bk"] and "/" not in l["pl"] and o is not None and o <= 200: l["tier"] = "td"
     elif l["m"] in ("Passing Yards", "Receiving Yards", "Receptions"):   # owner 11/1: Longest Reception out (the model's weakest market); 11/4: Rushing Yards out
         if o is not None and -135 <= o <= 115 and l["raw_p"] - l["bk"] >= 0.08: l["tier"] = "even"
-        elif (l.get("p") or 0) >= 0.65 and l["raw_p"] >= l["bk"] and "Cleared this line in only" not in (l.get("w") or ""):
+        # 11/18 (research/floor_depth.py section 5c): this tier's picks priced -200 or shorter went 112 of 185 (60.5%) against a 71.6% price,
+        # -28.1 units, losing in all five graded weeks (-7.3 / -7.4 / -7.2 / -0.1 / -6.0); its picks priced longer than -200 went 54 of 71
+        # (76.1% against 63.7%), +13.7 units, no losing week (+3.5 / +2.7 / +2.8 / +4.8 / 0.0). The tighter the cap the better it did
+        # (-285: -0.04 a leg, -257: +0.03, -233: +0.06, -200: +0.19). -200 is the line the rest of the site already draws for a floor leg
+        # (honest.FLOOR_ODDS, the best-parlay rule of 11/15 in build_boards), and Week 10 - graded after that rule - agreed (10 of 16 against
+        # 27 of 44). So a short-priced pick is a favourite the model likes at -130 to -199, not a heavy one.
+        # Same morning: a pick here carries none of the builder's own red flags. Seven of the twelve picks on Wednesday's board did (losing side,
+        # near-zero risk, backup QB, blowout script, tough matchup, cleared 2 of 10) - legs the owner's "low-risk legs only" rule (11/7) keeps out
+        # of every slip. The two with a graded record are under their prices in every week counted (flag_stats.py: near-zero 61% against 70%,
+        # 247 legs, 5 of 5 weeks; yardage floors on the losing side 60% against 70%). The red flag is judged rung by rung, so a player whose
+        # deepest rung is flagged can still come in at another.
+        elif ((l.get("p") or 0) >= 0.65 and l["raw_p"] >= l["bk"] and o is not None and o > _SAFE_FLOOR and "Cleared this line in only" not in (l.get("w") or "")
+              and not any(f[0] == "bad" for f in (l.get("fh") or [])) and _safe_role_ok(l)):
             k = (l["pl"], l["m"])
             if k not in _safe_best or l["raw_p"] - l["bk"] > _safe_best[k]["raw_p"] - _safe_best[k]["bk"]: _safe_best[k] = l
 for l in _safe_best.values():
@@ -1406,7 +1426,7 @@ BUILDER_JS = r"""
   function bookPick(l, b){ if(l.bks && l.bks[b]) return {s: l.bks[b].s, o: l.bks[b].o, sub: false}; if(l.ba && l.ba[b]) return {s: l.ba[b].s, o: l.ba[b].o, ln: l.ba[b].ln, sub: true}; return null; }
   function subName(l, x){ if(l.gl){ var sd = l.gl.side; return l.m === 'Total' ? (sd === 'OVER' ? 'Over ' : 'Under ') + x.ln : sd + ' ' + (x.ln > 0 ? '+' : '') + x.ln; } return l.pl + ' ' + x.ln + '+'; }
   var TIERL = {plus: "Model's Best · plus-money edge", even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · short-priced"};
-  var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - __PLUS_TXT__', even: 'Priced near even money and the model is 8+ pts off FanDuel - __EVEN_TXT__', td: 'Anytime TD at +200 or shorter that the model rates at or above FanDuel\'s price, for a player with a real role - __TD_TXT__', safe: 'Model 65%+ and at or above the price - __SAFE_TXT__'};
+  var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - __PLUS_TXT__', even: 'Priced near even money and the model is 8+ pts off FanDuel - __EVEN_TXT__', td: 'Anytime TD at +200 or shorter that the model rates at or above FanDuel\'s price, for a player with a real role - __TD_TXT__', safe: 'Model 65%+ and at or above the price, priced longer than -200, none of our red flags - __SAFE_TXT__'};
   function tierChip(l){ return l.tier ? '<span class="tierb t-' + l.tier + '" title="' + esc(TIERT[l.tier]) + '">' + TIERL[l.tier] + '</span>' : ''; }
   function lnTxt(l){ return l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'; }   // unders show FanDuel's main line ('under 74.5')
   function legName(l){ return l.pl + (isGL(l) || isTD(l) || l.m === 'First TD' ? '' : ' ' + lnTxt(l)); }

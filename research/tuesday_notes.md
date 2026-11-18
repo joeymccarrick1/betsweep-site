@@ -128,3 +128,7 @@
      Its over-statement was the largest on the board (277 legs: price 69.3%, hit 60.6%), so look at it first.
   4. Section 4b, the "SINCE IT WAS PICKED" line: deep receiving line + model 10 points over the price. 32 of 50 through Week 10 means
      nothing on its own (picked after looking). Two or three graded weeks on that line decide whether it becomes a tracked tier.
+- (11/18 morning) floor_depth.py section 5, same run: **5b** the half-strength reading of a price above 70% must still be better in every
+  held-out week at the live knot; **5c** read the "SINCE THE CAP" lines - the short-priced tier now takes nothing at -200 or shorter and
+  nothing red-flagged. If the left-out legs beat their price for two graded weeks, lift the cap; if legs shown 70%+ keep hitting about 65%
+  with Week 11 in, the next step is PRICE_SLOPE 0.5 -> 0.25 (the fitted slope has been 0 in every fold).

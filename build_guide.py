@@ -99,7 +99,7 @@ SECTIONS = [
 <p><span class="cg" style="background:var(--good)">High</span> <span class="cg" style="background:var(--warn)">Medium</span> <span class="cg" style="background:var(--red);color:#fff">Low</span> <b>Confidence</b> grades how much can go wrong with our read of the game: a big gap to the betting line, the line moving during the week, a quarterback change, a key player newly out. Low-confidence games open with the reasons showing.</p>
 <p><b>Best parlay</b> on each card is the 2-4 leg FanDuel slip, priced between -110 and +500, that the model thinks is most likely to cash.</p>"""),
 ("tiers", "Model's Best, top plays, promoted bets", """
-<ul><li><b>Model's Best</b> - three tiers tracked separately: <i>even</i> (prices near even money where the model is 8+ points off the price), <i>TD</i> (anytime TDs at +200 or shorter where the raw model beats the price) and <i>short-priced</i> (calibrated 65%+). Each is graded on the season page.</li>
+<ul><li><b>Model's Best</b> - three tiers tracked separately: <i>even</i> (prices near even money where the model is 8+ points off the price), <i>TD</i> (anytime TDs at +200 or shorter where the raw model beats the price) and <i>short-priced</i> (calibrated 65%+ and, from Week 11, priced longer than -200 with none of our red flags: the shorter ones had hit 60% against a 72% price). Each is graded on the season page.</li>
 <li><b>Promoted bets</b> on the home page are slips BetSweep posts. They are graded at the posted price on the receipts.</li></ul>"""),
 ("slip", "The betslip", """
 <p>The <b>+</b> next to any leg adds it to one slip shared by every page. The slip shows the parlay's FanDuel price next to the model's chance and edge.</p>
