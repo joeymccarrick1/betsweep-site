@@ -1816,3 +1816,13 @@ page; what changed is how much opens at once. Phone lengths (390x844), live copy
   Parlays tab before reading it; tests/inactive_block.py opens Line shop's "Show all" before counting rows.
 - Not this change: tests/menu_ask.py fails one check ("Theme near the top of My BetSweep") on the published copy too - it predates the
   hub-box tabs on My BetSweep.
+- *The local gate after a shared-script change.* tests/local_gate.py crawls ./site alone. When the shared stylesheet or script
+  changes, rechrome.py writes a copy of every kept page (Season, the receipts, old short links: 36 pages on 11/17) into ./site, and
+  those link the published copy's /s/tpl-<hash>.css, which ./site does not have: the gate HOLDs on "MISSING FILE" for /season/ and
+  the receipts. That is the local crawl, not the build. Check it the way the workflow does - on the build copied into a scratch
+  copy of the published site: `mkdir -p /tmp/cc/site && git -C <clone> archive HEAD | tar -x -C /tmp/cc/site`, then
+  `python3 -c "import reprice as R; R.copy_into_clone('/tmp/cc/site')"`, then `SITE=/tmp/cc/site python3 tests/local_gate.py`
+  (11/17: 540 pages, 0 problems). tests/page_fold.py takes the same SITE.
+- Published 10:48 PM CT (gen-overrides c9f847f7, live 8ad63fad, deployment success). Published copy, phone screens: Players 3.8,
+  First TD 4.5, Season 4.4, DFS 4.0, Teams 4.9, Usage 3.3, Teasers 3.2, Line shop 3.0, News 2.7, Who benefits 2.7, Model's Best 2.6;
+  47 page types, no sideways scroll, no script errors; tests/page_fold.py 86 on the published copy. MASTER log row 605.
