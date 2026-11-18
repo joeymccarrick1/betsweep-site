@@ -257,7 +257,7 @@ html.lgopen{overflow:hidden}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 12:55 PM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 1:52 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -348,7 +348,7 @@ html.lgopen{overflow:hidden}
   </div>
  </div>
 </div>
-<script src="/team/data-236c23ae1d41.js"></script>
+<script src="/team/data-ce872cdd7a46.js"></script>
 <script>
 (function(){
   function $(s, r){ return (r || document).querySelector(s); }
@@ -636,8 +636,8 @@ html.lgopen{overflow:hidden}
   function syncRoster(l, roster, curStarters){
     try { var acct = window.bsAccount, curSet = {}; curStarters.forEach(function(id){ curSet[id] = 1; });
       if (acct && acct.user && acct.client) { var row = { user_id: acct.user.id, league_id: String(l.league_id || l.id || ''), league: l.name || '', sleeper: state.user.display_name || state.user.username || '',
-          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }),
-          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }), updated_at: new Date().toISOString() };
+          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || '', id: String(e.id)}; }),
+          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || '', id: String(e.id)}; }), updated_at: new Date().toISOString() };
         if (row.league_id) acct.client.from('fantasy_rosters').upsert(row, {onConflict: 'user_id,league_id'}).then(function(r){ if (r.error && !/relation|does not exist/i.test(r.error.message)) console.warn('roster sync', r.error.message); }); } } catch(e){}
   }
   // 11/18: the same row for EVERY league on the account, written as the all-leagues read goes round - so Sunday's inactives and Saturday's
