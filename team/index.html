@@ -46,6 +46,33 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .tm-wrap .quick a{flex:1 1 150px;text-decoration:none}
 .tm-wrap #sleeperBox.conn > h2,.tm-wrap #sleeperBox.conn .connect,.tm-wrap #sleeperBox .leagues{display:none}
 .tm-wrap #sleeperBox .lgbar{margin:12px 14px}
+/* 11/18: every league at once */
+.allg{margin:0 14px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.allg[hidden],.allg .allgb[hidden]{display:none}
+.allg .allgh{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);background:none;border:0;cursor:pointer}
+.allg .tx{flex:1;min-width:0}
+.allg .allgh b{display:block;font-family:var(--display);font-size:17px;line-height:1.2;letter-spacing:.01em}
+.allg.need .allgh b{color:var(--red)} .allg.ok .allgh b{color:var(--good)}
+.allg small{display:block;color:var(--mute);font-size:12px;line-height:1.4}
+.allg .allgh small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.allg .chev{flex:none;color:var(--mute);font-size:13px;transition:transform .15s} .allg.open .chev{transform:rotate(180deg)}
+.allg .allgb{border-top:1px solid var(--line)}
+.allg ul{list-style:none;margin:0;padding:0}
+.allg li + li{border-top:1px solid var(--line)}
+.allg .allgr{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);background:none;border:0;cursor:pointer}
+.allg .allgr.on{background:var(--bg)}
+.allg .allgr b{display:block;font-size:14.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.allg .allgr small{white-space:normal}
+.allg .allgf{margin:0;padding:9px 12px;color:var(--mute);font-size:12.5px;line-height:1.45;border-top:1px solid var(--line)}
+.allg ul + .allgf{border-top:1px solid var(--line)} .allg .allgb > .allgf:first-child{border-top:0}
+.allg .allgm{border-top:1px solid var(--line);padding:0 12px}
+.allg .allgm summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--ink)}
+.allg .allgm p{margin:0 0 10px;display:flex;flex-wrap:wrap;gap:6px}
+.allg .allgm p.r{display:block;color:var(--mute);font-size:12px}
+.allg .allgm span{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12.5px;white-space:nowrap}
+.allg .allgm span b{color:var(--red)} .allg .allgm .bt{font-style:normal;margin:0}
+.allg .allgh:focus-visible,.allg .allgr:focus-visible,.allg .allgm summary:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+@media (prefers-reduced-motion:reduce){ .allg .chev{transition:none} }
 .tm-wrap details.howd{flex-basis:100%;color:var(--mute);font-size:13px}
 .tm-wrap details.howd > summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--mute);text-decoration:underline}
 .tm-wrap #out{display:grid;gap:14px;min-width:0}
@@ -217,14 +244,14 @@ html.lgopen{overflow:hidden}
 
 <link rel="stylesheet" href="/s/site-4ef0cede56.css"></head>
 <body>
-<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><div class="navask" id="navask" data-eg="Tee Higgins 75+ rec yds" data-team="Commanders"><form id="navaskf" role="search" action="/build/" method="get"><label for="navaskq">Ask BetSweep</label><div class="navaskr"><input type="search" id="navaskq" name="ask" maxlength="400" placeholder="Ask BetSweep" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"><button type="submit">Ask</button></div><p class="navaskh">Try <b>Tee Higgins 75+ rec yds</b>, <b>Commanders</b> or <b>best td</b>.</p></form><div class="navaskout" id="navaskout" hidden aria-live="polite"></div></div><a href="/" class="">Today</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Games <i aria-hidden="true">▾</i></button><span class="ddh">Games</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/dossier/" class="">Game previews<small>The read before the bet</small></a><a href="/news/" class="">News desk<small>Who is out, limited or back</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/best/" class="">Model's Best<small>The week's edges in one list</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/sweep/" class="">Sweep my slip<small>A verdict from a screenshot</small></a><a href="/pairs/" class="">Either-or TDs<small>Two names, one leg</small></a><a href="/shop/" class="">Line shop<small>Same leg, better price</small></a><a href="/boost/" class="">Boost finder<small>The best slip for a boost</small></a><a href="/teasers/" class="">Teaser finder<small>6, 6.5 and 7 points, priced</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Play <i aria-hidden="true">▾</i></button><span class="ddh">Play</span><div class="ddm"><a href="/beat/" class="">Beat the model<small>Your five vs its five</small></a><a href="/survivor/" class="">Survivor planner<small>Your pick, and who to save</small></a><a href="/social/" class="">Social<small>Slips people posted this week</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/teams/" class="">Teams<small>Stats, results, box scores</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd on"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="on">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/targets/" class="">Trade desk<small>Buy low, sell high</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/badbeats/" class="">Missed by one<small>The week's bad beats</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/all/" class="">Every page<small>The whole site on one screen</small></a></div></div></div></div></nav>
+<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><div class="navask" id="navask" data-eg="Stefon Diggs 60+ rec yds" data-team="Commanders"><form id="navaskf" role="search" action="/build/" method="get"><label for="navaskq">Ask BetSweep</label><div class="navaskr"><input type="search" id="navaskq" name="ask" maxlength="400" placeholder="Ask BetSweep" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"><button type="submit">Ask</button></div><p class="navaskh">Try <b>Stefon Diggs 60+ rec yds</b>, <b>Commanders</b> or <b>best td</b>.</p></form><div class="navaskout" id="navaskout" hidden aria-live="polite"></div></div><a href="/" class="">Today</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Games <i aria-hidden="true">▾</i></button><span class="ddh">Games</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/dossier/" class="">Game previews<small>The read before the bet</small></a><a href="/news/" class="">News desk<small>Who is out, limited or back</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/best/" class="">Model's Best<small>The week's edges in one list</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/sweep/" class="">Sweep my slip<small>A verdict from a screenshot</small></a><a href="/pairs/" class="">Either-or TDs<small>Two names, one leg</small></a><a href="/shop/" class="">Line shop<small>Same leg, better price</small></a><a href="/boost/" class="">Boost finder<small>The best slip for a boost</small></a><a href="/teasers/" class="">Teaser finder<small>6, 6.5 and 7 points, priced</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Play <i aria-hidden="true">▾</i></button><span class="ddh">Play</span><div class="ddm"><a href="/beat/" class="">Beat the model<small>Your five vs its five</small></a><a href="/survivor/" class="">Survivor planner<small>Your pick, and who to save</small></a><a href="/social/" class="">Social<small>Slips people posted this week</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/teams/" class="">Teams<small>Stats, results, box scores</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd on"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="on">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/targets/" class="">Trade desk<small>Buy low, sell high</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/badbeats/" class="">Missed by one<small>The week's bad beats</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/all/" class="">Every page<small>The whole site on one screen</small></a></div></div></div></div></nav>
 <script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
 <script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>
 <div class="top">
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 1:43 AM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 8:31 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -245,6 +272,7 @@ html.lgopen{overflow:hidden}
    <details class="howd"><summary>How this works</summary><p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p></details>
   </div>
   <div class="lgbar" id="lgbar" hidden></div>
+  <div class="allg" id="allg" hidden></div>
   <div class="leagues" id="leagues"></div>
   </div>
   <div id="manualBox" hidden>
@@ -314,7 +342,7 @@ html.lgopen{overflow:hidden}
   </div>
  </div>
 </div>
-<script src="/team/data-d91bc803fb86.js"></script>
+<script src="/team/data-cdfc1dbe800d.js"></script>
 <script>
 (function(){
   function $(s, r){ return (r || document).querySelector(s); }
@@ -352,8 +380,12 @@ html.lgopen{overflow:hidden}
     return b.join(' · '); }
   function kind(l){ var t = l.settings ? l.settings.type : 0; return (t === 2 ? 'dynasty' : t === 1 ? 'keeper' : 'redraft') + ((l.roster_positions || []).indexOf('SUPER_FLEX') >= 0 ? ' · superflex' : ''); }
   function ckey(){ return 'bs_lg_rec_' + ((LG.user && LG.user.user_id) || ''); }
-  function load(){ LG.rec = {}; LG.chip = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && Date.now() - c.t < 18e5){ LG.rec = c.rec || {}; LG.chip = c.chip || {}; } }catch(e){} }
-  function save(){ try{ sessionStorage.setItem(ckey(), JSON.stringify({ t: Date.now(), rec: LG.rec, chip: LG.chip })); }catch(e){} }
+  // 11/18: each page keeps its own chips (opt.ns): the Trade page's playoff odds and the Fantasy page's lineup check are different
+  // answers about the same league, and one visit moves between the two pages.
+  function ns(){ return (LG.opt && LG.opt.ns) || 'p'; }
+  function load(){ LG.rec = {}; LG.chip = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && Date.now() - c.t < 18e5){ LG.rec = c.rec || {}; LG.chip = (c.chips || {})[ns()] || {}; } }catch(e){} }
+  function save(){ try{ var all = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && c.chips && Date.now() - c.t < 18e5) all = c.chips; }catch(e){}
+      all[ns()] = LG.chip; sessionStorage.setItem(ckey(), JSON.stringify({ t: Date.now(), rec: LG.rec, chips: all })); }catch(e){} }
   function byId(id){ return LG.leagues.filter(function(l){ return l.league_id === id; })[0]; }
   function recOf(ros){ var me = LG.user && LG.user.user_id, r = (ros || []).filter(function(x){ return x.owner_id === me || (x.co_owners || []).indexOf(me) >= 0; })[0];
     if(!r) return null; var s = r.settings || {}, f = function(x){ var q = x.settings || {}; return (q.fpts || 0) + (q.fpts_decimal || 0) / 100; };
@@ -372,12 +404,13 @@ html.lgopen{overflow:hidden}
       + (c && c.sw != null ? '<i class="lgsw' + (c.sw >= 25 ? ' big' : c.sw >= 10 ? ' mid' : '') + '" title="Points of playoff odds between winning and losing this week">' + (c.sw >= 1 ? c.sw + '-pt week' : 'no swing') + '</i>' : '') + '</span></button>'; }
   // 11/18: "Biggest week first" - the leagues where this week moves the reader's playoff odds the most lead; leagues not read yet,
   // or with nothing at stake (season over, no roster), keep their order after them.
-  function swOf(l){ var c = LG.chip[l.league_id]; return c && c.sw != null ? c.sw : -1; }
+  function swOf(l){ var c = LG.chip[l.league_id]; return !c ? -1 : c.ord != null ? c.ord : c.sw != null ? c.sw : -1; }
   function list(){ var ul = $('#lgov .lglist'); if(!ul) return;
     var ls = LG.leagues.filter(function(l){ return !LG.q || String(l.name).toLowerCase().indexOf(LG.q) >= 0; });
     if(LG.sort === 'sw') ls = ls.map(function(l, i){ return [l, i]; }).sort(function(a, b){ return (swOf(b[0]) - swOf(a[0])) || (a[1] - b[1]); }).map(function(x){ return x[0]; });
     ul.innerHTML = ls.length ? ls.map(function(l){ return '<li>' + rowHtml(l) + '</li>'; }).join('') : '<li class="none">No league matches that.</li>'; }
-  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(LG.sort === 'sw' && $('#lgov')) list(); else if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); sortBtn(); }
+  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(LG.sort === 'sw' && $('#lgov')) list(); else if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); sortBtn();
+    if(LG.opt && LG.opt.onUpdate){ try{ LG.opt.onUpdate(id); }catch(e){ console.error(e); } } }
   function sortBtn(){ var s = $('#lgov .lgsort'); if(!s) return; var n = LG.leagues.filter(function(l){ return swOf(l) >= 0; }).length; s.hidden = n < 2;
     [].forEach.call(s.querySelectorAll('.tab'), function(b){ var on = (b.getAttribute('data-s') || '') === (LG.sort || ''); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
   function pump(){ while(LG.busy < 3 && LG.queue.length){ (function(l){ LG.busy++;
@@ -392,7 +425,7 @@ html.lgopen{overflow:hidden}
     ov.innerHTML = '<div class="lgsheet" role="dialog" aria-modal="true" aria-label="Your Sleeper leagues"><header><h3>Your leagues<small>' + LG.leagues.length + '</small></h3><button type="button" class="lgx" aria-label="Close">✕</button></header>'
       + '<div class="lgwho"><span>Sleeper username <b>' + esc(LG.uname) + '</b></span><button type="button" class="lgchg">Use another</button></div>'
       + (LG.leagues.length > 8 ? '<input type="search" class="lgq" placeholder="Search your leagues" autocomplete="off" aria-label="Search your leagues">' : '')
-      + (LG.opt.extra && LG.leagues.length > 2 ? '<div class="tabs lgsort" role="group" aria-label="Order" hidden><button type="button" class="tab" data-s="">Sleeper order</button><button type="button" class="tab" data-s="sw">Biggest week first</button></div>' : '')
+      + (LG.opt.extra && LG.leagues.length > 2 ? '<div class="tabs lgsort" role="group" aria-label="Order" hidden><button type="button" class="tab" data-s="">Sleeper order</button><button type="button" class="tab" data-s="sw">' + esc(LG.opt.sortLabel || 'Biggest week first') + '</button></div>' : '')
       + '<ul class="lglist"></ul></div>';
     document.body.appendChild(ov); document.documentElement.classList.add('lgopen');
     ov.addEventListener('click', function(e){
@@ -406,7 +439,12 @@ html.lgopen{overflow:hidden}
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && $('#lgov')) close(); });
   window.bsLg = {
     // mount({bar: element, get: function(path) -> Promise, onPick(league), onChange(), extra(league, rosters) -> {txt, cls, title} | Promise})
+    // opt.ns names this page's chips; opt.sortLabel words the sheet's second order (chip.ord, else chip.sw, high first);
+    // opt.onUpdate(league_id) fires each time a league's record or chip lands
     mount: function(opt){ LG.opt = opt; bar(); },
+    // read every league now (the sheet does this when it opens): one rosters call per league not yet read, three at a time
+    scan: function(){ if(LG.opt && LG.leagues.length) fill(); },
+    state: function(){ return { leagues: LG.leagues, rec: LG.rec, chip: LG.chip, busy: LG.busy + LG.queue.length }; },
     // after the page has the account's leagues
     set: function(user, uname, leagues, cur){ var same = LG.user && user && LG.user.user_id === user.user_id; LG.user = user; LG.uname = uname || ''; LG.leagues = leagues || []; LG.cur = cur || null; if(!same) load(); bar(); },
     current: function(l){ LG.cur = l; bar(); },
@@ -518,16 +556,17 @@ html.lgopen{overflow:hidden}
 
   // ---- Sleeper fetches ----
   function get(path){ return fetch(API + path).then(function(r){ if(!r.ok) throw new Error(path + ' -> ' + r.status); return r.json(); }); }
-  var PMAP = null;
+  var PMAP = null, PMAPP = null;
   function playersMap(){
     if(PMAP) return Promise.resolve(PMAP);
     try{ var c = JSON.parse(localStorage.getItem('bs_sleeper_players') || 'null'); if(c && Date.now() - c.t < 36e5 * 20){ PMAP = c.m; return Promise.resolve(PMAP); } }catch(e){}
-    return get('players/nfl').then(function(all){
+    if(PMAPP) return PMAPP;   // 11/18: the all-leagues read asks while the first league is still loading - one download, not two
+    return PMAPP = get('players/nfl').then(function(all){
       var m = {}; Object.keys(all).forEach(function(id){ var x = all[id]; if(!x || !x.position) return;
         if(['QB','RB','WR','TE','K','DEF'].indexOf(x.position) < 0 && !(x.fantasy_positions || []).some(function(f){ return ['QB','RB','WR','TE','K','DEF'].indexOf(f) >= 0; })) return;
         m[id] = {n: x.position === 'DEF' ? id : (x.full_name || ((x.first_name || '') + ' ' + (x.last_name || ''))), t: x.team || '', p: x.position, i: x.injury_status || '', s: x.status || ''}; });
       PMAP = m; try{ localStorage.setItem('bs_sleeper_players', JSON.stringify({t: Date.now(), m: m})); }catch(e){}
-      return m; });
+      return m; }).catch(function(e){ PMAPP = null; throw e; });
   }
   function modelFor(sp){
     if(!sp) return null;
@@ -539,6 +578,90 @@ html.lgopen{overflow:hidden}
     return (byName[k] || [])[0] || null;
   }
   function badInjury(sp){ return sp && /^(Out|IR|PUP|Sus|Doubtful|NA)$/i.test(sp.i || ''); }
+  // 11/18: one starter, scored and flagged - shared by the Lineup tab and the all-leagues check so the two never disagree
+  function mkEntry(pm, s){ return function(id){
+      var sp = pm[id] || {n: id, t: '', p: '?', i: ''}; var mp = modelFor(sp); var pts = mp ? ptsFor(mp, s) : null;
+      var flag = '';
+      if(mp && mp.o === 'BYE'){ pts = 0; flag = 'bye'; }
+      else if(badInjury(sp)){ pts = 0; flag = 'out'; }
+      else if(mp && !mp.act){ pts = 0; flag = mp.av ? 'out' : 'np'; }
+      else if(/Questionable/i.test(sp.i || '') || (mp && mp.q)) flag = 'q';
+      if(pts === null && !flag) flag = 'np';
+      return {id: id, sp: sp, mp: mp, pos: sp.p === 'DEF' ? 'DEF' : (mp ? mp.p : sp.p), pts: pts || 0, flag: flag, name: sp.p === 'DEF' ? (sp.n + ' D/ST') : sp.n};
+  }; }
+
+  // ---- 11/18 "Keep working": every league at once (owner 11/17: "I have a ton of sleeper teams") ----
+  // One rosters call per league (the league bar already makes it) is enough to read a lineup: Sleeper's `starters` is the lineup as it is
+  // set right now. A league NEEDS YOU when a starter cannot play (out, IR, bye), a lineup spot is empty, or the model's best lineup from
+  // the same roster is worth a point or more over the one that is set. Best-ball leagues set themselves and are never listed.
+  var GAIN_MIN = 1.0;
+  function lineupCheck(l, pm, rosters){
+    var me = state.user && state.user.user_id, mine = (rosters || []).filter(function(r){ return r.owner_id === me || (r.co_owners || []).indexOf(me) >= 0; })[0];
+    if(!mine) return null;
+    var s = l.scoring_settings || {}, slots = l.roster_positions || [], entry = mkEntry(pm, s), byId = {};
+    var roster = (mine.players || []).map(entry); roster.forEach(function(e){ byId[e.id] = e; });
+    var cur = (mine.starters || []).filter(function(id){ return id && id !== '0'; });
+    var nSlot = slots.filter(function(x){ return x !== 'BN' && x !== 'IR' && x !== 'TAXI'; }).length;
+    var bb = !!(l.settings && Number(l.settings.best_ball) === 1);
+    var best = optimal(slots, roster.filter(function(e){ return e.flag !== 'out' && e.flag !== 'bye'; }).map(function(e){ return {id: e.id, pos: e.pos, pts: e.pts, e: e}; }));
+    var bestTotal = 0; Object.keys(best).forEach(function(i){ bestTotal += best[i].pts; });
+    var curTotal = 0, dead = [], q = 0, st = [];
+    cur.forEach(function(id){ var e = byId[id] || entry(id); curTotal += e.pts; st.push([e.name, e.flag]);
+      if(e.flag === 'out' || e.flag === 'bye') dead.push([e.name, e.flag === 'bye' ? 'bye' : (e.sp.i && /IR|PUP|Sus/i.test(e.sp.i) ? e.sp.i : 'out')]);
+      else if(e.flag === 'q') q++; });
+    var open = cur.length ? Math.max(0, nSlot - cur.length) : 0;
+    var gain = cur.length ? Math.max(0, bestTotal - curTotal) : 0, swaps = cur.length ? Object.keys(best).filter(function(i){ return cur.indexOf(best[i].id) < 0; }).length : 0;
+    var need = (bb || !cur.length) ? 0 : (dead.length || open) ? 2 : gain >= GAIN_MIN ? 1 : 0;
+    return { txt: bb ? 'Best ball' : !cur.length ? 'No lineup' : need === 2 ? 'Fix ' + (dead.length + open) : need === 1 ? '+' + f1(gain) : 'Set',
+      cls: need === 2 ? 'sell' : (need === 0 && !bb && cur.length) ? 'buy' : '', title: 'Lineup check, Week ' + (state.week || WEEK),
+      ord: need * 1000 + Math.min(999, Math.round(gain * 10)), need: need, dead: dead, open: open, gain: Math.round(gain * 10) / 10, swaps: swaps, q: q, bb: bb, none: !cur.length, st: st };
+  }
+  var AFTER = null;   // run once after the next league finishes loading (a tap on the checklist lands on that league's Lineup tab)
+  var SCANNED = false;   // the read of the other leagues has been started
+  function allRender(){ var box = $('#allg'); if(!box) return; var S = bsLg.state(), ls = S.leagues || [];
+    if(ls.length < 2 || !state.user){ box.hidden = true; box.innerHTML = ''; return; }
+    var done = 0, need = [], set = 0, bb = 0, q = 0, none = 0, off = 0, cnt = {};
+    ls.forEach(function(l){ var c = S.chip[l.league_id]; if(c === undefined) return; done++; if(!c || c.need === undefined){ off++; return; }
+      if(c.bb) bb++; else if(c.none) none++; else if(c.need) need.push([l, c]); else set++;
+      if(c.q && !c.bb && !c.none) q++;
+      if(!c.bb) (c.st || []).forEach(function(x){ var k = x[0]; if(!cnt[k]) cnt[k] = {n: 0, f: x[1]}; cnt[k].n++; }); });
+    need.sort(function(a, b){ return b[1].ord - a[1].ord; });
+    var total = ls.length, unread = total - done, busy = unread > 0 && (S.busy > 0 || !SCANNED), live = total - off - bb - none - unread;
+    var openPref = null; try{ openPref = sessionStorage.getItem('bs_allg'); }catch(e){}
+    var isOpen = openPref === '1';   // one line until asked: an account with many leagues to fix would push the league itself a screen down
+    function shortName(n){ n = String(n); var i = n.indexOf(' '); return (i < 1 || / D\/ST$/.test(n)) ? n : n.charAt(0) + '. ' + n.slice(i + 1); }   // "Q. Judkins": a row stays two lines
+    function why(c){ var p = [];
+      if(c.dead.length) p.push(c.dead.length + ' starter' + (c.dead.length > 1 ? 's' : '') + ' can\'t play: ' + c.dead.slice(0, 3).map(function(d){ return esc(shortName(d[0])) + ' (' + esc(String(d[1]).toLowerCase() === 'bye' ? 'bye' : d[1] === 'out' ? 'out' : d[1]) + ')'; }).join(', ') + (c.dead.length > 3 ? ' and ' + (c.dead.length - 3) + ' more' : ''));
+      if(c.open) p.push(c.open + ' empty lineup spot' + (c.open > 1 ? 's' : ''));
+      if(c.gain >= GAIN_MIN) p.push('+' + f1(c.gain) + ' pts with ' + (c.swaps === 1 ? 'one swap' : 'the model\'s lineup'));
+      return p.join(' · '); }
+    var curId = state.league && state.league.league_id;
+    var rows = need.map(function(x){ var l = x[0], c = x[1];
+      return '<li><button type="button" class="allgr' + (l.league_id === curId ? ' on' : '') + '" data-id="' + esc(l.league_id) + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + why(c) + '</small></span><span class="lgchip ' + esc(c.cls || '') + '">' + esc(c.txt) + '</span></button></li>'; }).join('');
+    var foot = [];
+    if(!busy){
+      if(need.length && set) foot.push(set + (set === 1 ? ' lineup is' : ' lineups are') + ' already the model\'s best.');
+      if(q) foot.push(q + (q === 1 ? ' has' : ' have') + ' a questionable starter to check before kickoff.');
+      if(bb) foot.push(bb + ' best-ball league' + (bb === 1 ? ' sets itself.' : 's set themselves.'));
+      if(none) foot.push('No lineup set yet in ' + none + '.');
+      if(off) foot.push('Not on a roster in ' + off + '.');
+      if(unread) foot.push('Sleeper did not answer for ' + unread + ' - open the league list to try again.'); }
+    var top = Object.keys(cnt).filter(function(k){ return cnt[k].n >= 2; }).sort(function(a, b){ return cnt[b].n - cnt[a].n || (a < b ? -1 : 1); }).slice(0, 8);
+    var most = (!busy && top.length) ? '<details class="allgm"><summary>Who you start the most</summary><p>' + top.map(function(k){ var f = cnt[k].f;
+        return '<span>' + esc(k) + ' <b>' + cnt[k].n + '</b>' + (f === 'q' ? '<i class="bt q">Q</i>' : f === 'bye' ? '<i class="bt bye">BYE</i>' : f === 'out' ? '<i class="bt out">OUT</i>' : '') + '</span>'; }).join('') + '</p><p class="r">How many of your lineups each player is in this week.</p></details>' : '';
+    var head = busy ? 'Checking your ' + total + ' lineups…' : need.length ? need.length + ' of ' + live + ' lineups need you' : 'All ' + live + ' lineups are set';
+    var sub = busy ? done + ' of ' + total + ' read' : (need.length && !isOpen) ? esc(need[0][0].name) + ': ' + why(need[0][1]) + (need.length > 1 ? ' · and ' + (need.length - 1) + ' more' : '')
+      : 'Week ' + (state.week || WEEK) + ' · every league on this account';
+    box.hidden = false; box.className = 'allg' + (busy ? ' busy' : need.length ? ' need' : ' ok') + (isOpen ? ' open' : '');
+    box.innerHTML = '<button type="button" class="allgh" aria-expanded="' + (isOpen ? 'true' : 'false') + '"><span class="tx"><b>' + head + '</b><small>' + sub + '</small></span><span class="chev" aria-hidden="true">▾</span></button>'
+      + '<div class="allgb"' + (isOpen ? '' : ' hidden') + '>' + (rows ? '<ul>' + rows + '</ul>' : '') + (foot.length ? '<p class="allgf">' + foot.join(' ') + '</p>' : '') + most + '</div>'; }
+  document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return;
+    var h = t.closest('#allg .allgh'); if(h){ var box = $('#allg'), now = !box.classList.contains('open'); try{ sessionStorage.setItem('bs_allg', now ? '1' : '0'); }catch(e){} allRender(); return; }
+    var r = t.closest('#allg .allgr'); if(!r) return;
+    var l = state.leagues.filter(function(x){ return x.league_id === r.dataset.id; })[0]; if(!l) return;
+    AFTER = function(){ TABS.show('lineup', true); var a = $('#tmTabs'); if(a && a.scrollIntoView) a.scrollIntoView({block: 'start'}); };
+    if(state.league && state.league.league_id === l.league_id && !out.hidden){ var f = AFTER; AFTER = null; f(); return; }
+    QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); });
 
   var state = {user: null, leagues: [], league: null, week: WEEK, season: null};
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('#fdm [data-fm]'); if(!b) return; FPM = b.getAttribute('data-fm'); try { localStorage.setItem('bs_fp_mode', FPM); } catch(e){} if(LASTR) render.apply(null, LASTR); });
@@ -549,9 +672,11 @@ html.lgopen{overflow:hidden}
   // 11/17 evening. One row of tabs for the graded team; the league bar and its sheet replace the wall of league buttons.
   var TABS = bsTabs.mount($('#tmTabs'), [{id: 'lineup', label: 'Lineup'}, {id: 'roster', label: 'Roster'}, {id: 'league', label: 'League'}, {id: 'waivers', label: 'Waivers'}], {root: out, key: 'bs_tab_team'});
   var QUIET = false;   // true while the page loads a league by itself (a saved username, a league picked from the sheet): no jump down the page
-  bsLg.mount({bar: $('#lgbar'), get: get,
+  bsLg.mount({bar: $('#lgbar'), get: get, ns: 'lu', sortLabel: 'Needs you first',
+    extra: function(l, ros){ return playersMap().then(function(pm){ return lineupCheck(l, pm, ros); }); },
+    onUpdate: function(){ allRender(); },
     onPick: function(l){ QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); },
-    onChange: function(){ bsLg.clear(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
+    onChange: function(){ bsLg.clear(); state.user = null; allRender(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
   function connect(byHand){ QUIET = !byHand;
     var u = $('#user').value.trim().replace(/^@/, ''); if(!u) return;
     $('#go').disabled = true; say('Looking up ' + u + ' on Sleeper…'); out.hidden = true; $('#leagues').innerHTML = ''; $('#leagues').classList.remove('picked');
@@ -561,7 +686,7 @@ html.lgopen{overflow:hidden}
     .then(function(ls){ ls = (ls || []).filter(function(l){ return l.status !== 'pre_draft'; }); state.leagues = ls;
       if(!ls.length){ say('No ' + state.season + ' NFL leagues on that account.', true); return; }
       say(''); var box = $('#leagues'); var last = ''; try{ last = localStorage.getItem('bs_sleeper_league') || ''; }catch(e){}
-      $('#sleeperBox').classList.add('conn'); bsLg.set(state.user, u, ls, null);
+      $('#sleeperBox').classList.add('conn'); bsLg.set(state.user, u, ls, null); allRender();
       ls.forEach(function(l){ var b = document.createElement('button'); b.type = 'button'; b.className = 'lgo'; b.innerHTML = esc(l.name) + '<small>' + l.total_rosters + ' teams · ' + esc(scoringLabel(l.scoring_settings)) + '</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
       if(ls.length > 1){ var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'lgsw'; sw.textContent = 'Switch league (' + ls.length + ') ▾'; sw.addEventListener('click', function(){ box.classList.remove('picked'); }); box.appendChild(sw); }
       var auto = ls.filter(function(l){ return l.league_id === last; })[0] || ls[0];
@@ -576,7 +701,10 @@ html.lgopen{overflow:hidden}
     say('Loading ' + l.name + '…'); out.hidden = true;
     var wk = Math.min(Math.max(state.week || WEEK, 1), 18);
     Promise.all([playersMap(), get('league/' + l.league_id + '/rosters'), get('league/' + l.league_id + '/users'), get('league/' + l.league_id + '/matchups/' + wk).catch(function(){ return []; }), get('players/nfl/trending/add?lookback_hours=24&limit=40').catch(function(){ return []; })])
-    .then(function(r){ bsLg.note(l.league_id, r[1]); render(l, r[0], r[1], r[2], r[3], r[4], wk); say(''); })
+    .then(function(r){ var chk; try{ chk = lineupCheck(l, r[0], r[1]); }catch(e){ console.error(e); }
+      bsLg.note(l.league_id, r[1], chk); render(l, r[0], r[1], r[2], r[3], r[4], wk); say('');
+      if(AFTER){ var f = AFTER; AFTER = null; f(); }
+      if(state.leagues.length > 1){ SCANNED = true; bsLg.scan(); allRender(); } })   // the other leagues: one rosters call each, three at a time, kept for half an hour
     .catch(function(e){ say('Sleeper did not answer for that league. Try again in a moment.', true); console.error(e); });
   }
 
@@ -590,16 +718,7 @@ html.lgopen{overflow:hidden}
     var hot = {}; (trending || []).forEach(function(t){ hot[t.player_id] = t.count; });
     var owned = {}; rosters.forEach(function(r){ (r.players || []).forEach(function(id){ owned[id] = r.roster_id; }); });
 
-    function entry(id){
-      var sp = pm[id] || {n: id, t: '', p: '?', i: ''}; var mp = modelFor(sp); var pts = mp ? ptsFor(mp, s) : null;
-      var flag = '';
-      if(mp && mp.o === 'BYE'){ pts = 0; flag = 'bye'; }
-      else if(badInjury(sp)){ pts = 0; flag = 'out'; }
-      else if(mp && !mp.act){ pts = 0; flag = mp.av ? 'out' : 'np'; }
-      else if(/Questionable/i.test(sp.i || '') || (mp && mp.q)) flag = 'q';
-      if(pts === null && !flag) flag = 'np';
-      return {id: id, sp: sp, mp: mp, pos: sp.p === 'DEF' ? 'DEF' : (mp ? mp.p : sp.p), pts: pts || 0, flag: flag, name: sp.p === 'DEF' ? (sp.n + ' D/ST') : sp.n};
-    }
+    var entry = mkEntry(pm, s);
     var roster = (mine.players || []).map(entry);
     var pool = roster.filter(function(e){ return e.flag !== 'out' && e.flag !== 'bye'; }).map(function(e){ return {id: e.id, pos: e.pos, pts: e.pts, e: e}; });
     var best = optimal(slots, pool);
