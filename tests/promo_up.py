@@ -16,7 +16,12 @@ sql = open(os.path.join(HERE, "sql", "push_promo.sql"), encoding="utf-8").read()
 check("add column if not exists promo boolean not null default false" in sql and "__" not in sql, "sql/push_promo.sql adds the switch, off by default, with no secret or placeholder in it")
 import importlib.util
 acct = open(os.path.join(HERE, "account.py"), encoding="utf-8").read()
-check(re.search(r"^PROMO_ALERTS = (True|False)$", acct, re.M) is not None and "{PROMO_CB}" in acct and "update({promo: pp.checked})" in acct, "the account page has the switch behind PROMO_ALERTS and saves push_subs.promo on its own")
+mflag = re.search(r"^PROMO_ALERTS = (True|False)\b", acct, re.M)
+check(mflag is not None and "{PROMO_CB}" in acct and "update({promo: pp.checked})" in acct, "the account page has the switch behind PROMO_ALERTS and saves push_subs.promo on its own")
+mep = os.path.join(os.environ.get("SITE") or os.path.join(HERE, "site"), "me", "index.html")
+if mflag and os.path.exists(mep):
+    me = open(mep, encoding="utf-8").read(); on = mflag.group(1) == "True"; has = 'id="pppromo"' in me and "When BetSweep posts a slip" in me
+    check(has == on and ('id="pppromolab" hidden' in me) == on, f"My BetSweep {'shows' if on else 'does not show'} the switch (PROMO_ALERTS = {on}); it starts hidden until the device's own setting is read")
 if not m: print(f"\n{ok} passed, {bad} failed"); sys.exit(1)
 HARNESS = r"""
 type Sub = { endpoint: string; user_id: string; p256dh?: string; auth?: string };

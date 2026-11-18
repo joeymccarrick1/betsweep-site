@@ -23,10 +23,10 @@ GOOGLE = False
 # 11/10 9:25 PM: the owner had the SQL in hand ("On it"), so the switch is on. The request fails quietly until the function exists and
 # starts counting the moment it does - nothing else to do on either side. (The session cannot reach Supabase to confirm the function.)
 PAGE_COUNTS = True
-# owner 11/17 ("I want all four"): "tell me when a slip posts" - one more switch under Slip alerts. OFF until the owner has run
+# owner 11/17 ("I want all four"): "tell me when a slip posts" - one more switch under Slip alerts. It stayed off until the owner had run
 # sql/push_promo.sql and redeployed push/slip-alerts.ts (promoUp): a switch that does nothing is worse than none. The box reads and
 # writes push_subs.promo on its own, so a database without the column only hides it.
-PROMO_ALERTS = False
+PROMO_ALERTS = True   # 11/17, 9:23 PM CT: the owner ran sql/push_promo.sql and redeployed slip-alerts ("Ran the sql and slip alerts")
 PROMO_CB = ('<label id="pppromolab" hidden><input type="checkbox" id="pppromo"> When BetSweep posts a slip: the Daily Sweep and the long shots, the moment they go up</label>'
             if PROMO_ALERTS else "")
 PAGE_COUNTS_SINCE = "November 10, 2026"

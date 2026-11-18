@@ -1761,3 +1761,12 @@ build before its kickoff, from the site's history: Weeks 8, 9, 10 (14 + 15 + 14 
   sentence is now counted on the flag's own definition once 150 legs sit on each side (the closing-spread count stays as the
   fallback and is still printed). tests/flag_stats.py 18.
 - MASTER log row 604 (11/17 evening). Rows 603 and 604 are both dated 11/17; 604 is this session's.
+
+## 11/17, 9:25 PM CT: the posted-slip alert is ON (owner: "Ran the sql and slip alerts")
+
+- account.PROMO_ALERTS = True: My BetSweep > Slip alerts shows "When BetSweep posts a slip". The box stays hidden until the device's own
+  push_subs.promo is read, so a database without the column shows nothing rather than a dead switch. The session cannot reach the
+  database: whether the column and the redeployed function are in is the owner's word plus that behaviour. First real check: the next
+  slip posted with a kickoff ahead (Thursday's Daily Sweep) should push to a device with the switch on within one alerts run of the
+  publish; the function's summary carries `posted`.
+- tests/promo_up.py 17 (the flag line may carry a comment; the built My BetSweep page is checked against the flag).
