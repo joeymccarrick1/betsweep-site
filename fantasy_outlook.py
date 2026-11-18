@@ -18,7 +18,7 @@ What it does, in the browser, for a Sleeper league the reader has imported on th
      position, or with 70%+ of their value in this season) matched to the contender whose lineup they improve most, with a young
      player of similar value to ask for - and the draft slot the team is tracking for, since selling points also moves the pick.
 
-JS exposes window.bsOutlook = {sim, plan, lineup, slots, games, pf, html}; html(league, teams, sched, esc) returns the card. The
+JS exposes window.bsOutlook = {sim, plan, quick, lineup, slots, games, pf, html}; html(league, teams, sched, esc) returns the card. The
 caller owns the data: teams = [{r: Sleeper roster, name, me, ps: [{mp: model player or null, v: trade value}]}] where a model player
 carries n, pos, age, adj (points per game), Re (games left he is expected to play), st, ros, fut.
 """
@@ -144,6 +144,13 @@ window.bsOutlook = (function(){
       '</table><p class="none">' + (live ? 'The weeks left were played 3,000 times on your league\'s schedule. Each team scores around a mean that is half its points per game so far and half the strength of its best lineup by this model' + (info.median ? ', with the extra game against the weekly median' : '') + '. ' : '') + 'Columns: record, points per game, playoff odds.</p></details></div>';
     return h;
   }
-  return {sim: sim, plan: plan, lineup: lineup, slots: slots, games: games, pf: pf, html: html};
+  // One league's verdict in a word, for a list of many leagues (fantasy_nav.py's league sheet): the same odds and the same cut-offs
+  // as the card - 70 / 35 / 12% - without the trade search. n = sims (1,500 is plenty for a chip). null when the reader has no roster.
+  function quick(l, teams, sched, n){ var me = teams.filter(function(t){ return t.me; })[0]; if(!me) return null;
+    var info = sim(l, teams, sched, n || 1500), ty = l.settings ? l.settings.type : 0, keep = ty === 1 || ty === 2, live = info.weeks.length > 0;
+    var v = !live ? (me.po >= 0.5 ? 'in' : 'out') : me.po >= 0.7 ? 'buy' : me.po >= 0.35 ? 'bubble' : me.po >= 0.12 ? 'long' : 'out';
+    var chip = {buy: ['Buy', 'buy'], 'in': ['Buy', 'buy'], bubble: ['Hold', 'hold'], long: [keep ? 'Sell' : 'Hold', keep ? 'sell' : 'hold'], out: [keep ? 'Sell' : 'Out', keep ? 'sell' : 'hold']}[v];
+    return {v: v, txt: chip[0], cls: chip[1], po: me.po, pct: pct(me.po, live), live: live}; }
+  return {sim: sim, plan: plan, quick: quick, lineup: lineup, slots: slots, games: games, pf: pf, html: html};
 })();
 """

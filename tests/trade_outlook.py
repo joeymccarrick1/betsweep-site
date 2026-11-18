@@ -89,7 +89,9 @@ async def main():
             check(bool(stt) and stt.get("B") == [names[0]], f"{theme}: Load puts the target on the calculator's other side ({stt and stt.get('B')})")
             check(d["over"] <= 0 and not errs, f"{theme}: no sideways scroll, no script errors ({d['over']}, {errs[:1]})")
             if theme == "dark":
-                await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(700); await pg.fill("#slUser", "mock"); await pg.click("#slGo"); await pg.wait_for_selector("#olk", timeout=15000); await pg.wait_for_timeout(400)
+                # 11/17 evening: a saved username imports by itself on a return visit; the page comes back on the tab it was left on (the
+                # calculator, after Load), so the league is one tap away
+                await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_selector(".lgbar .lgcur", timeout=15000); await pg.click('#tcTabs [data-t="league"]'); await pg.wait_for_selector("#olk", timeout=15000); await pg.wait_for_timeout(400)
                 po2 = float(await pg.evaluate("document.querySelector('#olk').dataset.po")); check(po2 == d["po"], f"the same standings give the same odds twice ({po2} = {d['po']})")
             await ctx.close()
         # ---- 2. the same roster at 1-9, dynasty: sell ----

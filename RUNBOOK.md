@@ -1643,3 +1643,62 @@ Code: fantasy_outlook.py (CSS + JS, window.bsOutlook) included by build_trade.py
   (Sell; buyers are contenders; draft slot stated), 1-9 in redraft (nothing to sell), and the one-tap arrival. The sandbox cannot
   reach Sleeper, so the real API has NOT been exercised end to end by a session - the calls are the same ones the page already made
   (rosters, users) plus matchups/<week>.
+
+## 11/17, 6:30-8 PM CT: owner "what else needs to be done?" - checks, the card parlay pick, Volatile off slips, fantasy pages for many leagues, market 70%
+
+**State at 6:30 PM.** Nothing failed in the last 25 runs; every Week 10 row of 'ASSIST - Slip Log' (rows 9-60) has a result and every
+losing row a why-tag. Week 10 by tag: thin role 14, bad luck 11, wrong script 20 (7 of 52 won). After the 11/15 rules (rows 43-60, 16
+losses): 1 thin role, 2 bad luck, 13 wrong script, and 12 of the 16 died on one quarterback's passing night (Rodgers 143 yards needing
+200, rows 46 / 48 / 49; Herbert 129, rows 50-57 and 60). Both posted Monday slips (rows 57, 60) needed Herbert's yards and a TD pass.
+
+**The timer note is closed.** The owner ran sql/github_timers.sql again on the morning of 11/17: since 9:20:01 AM CT feeds.yml has been
+started by dispatch on every ten-minute slot (56 of 56 through 6:30 PM, none failed). The three notes above that say "until the owner
+runs the timers SQL again" no longer apply; the hand dispatch is only for a mirror found old.
+
+**Passing-yard legs, Weeks 6-10 (437 graded).** Favorites (-400 to -131) hit 62.7% against 67.9% priced, -7.6% a leg (209 legs): the
+same as receiving yards (-8.6%) and receptions (-9.4%). The market is not the leak; one leg stacked into every slip is. Where the
+projection sat 25+ yards over the line: 61.0% against 71.2% (-14.4%, 77 legs) - a wide gap on a passing floor is not safety. By closing
+spread: underdogs of 3.5+ 57% against 68% (61 legs, 38 QB-weeks), favorites 64 / 68, within a field goal 65 / 68. Thin; not a rule.
+
+**Game-card Best parlay (bp_pick.py, build_boards.dogml, tests/bp_pick.py 25).** Tuesday 3:50 PM: 10 of 13 cards were two game lines
+at -6 to -10 cents (8 of those games had no props posted - their ~100 builder "legs" are all spreads, totals, moneylines; HOU-IND has
+props and one player leg reaches the last gate, Nico Collins 6+ catches at +172, which no strip takes; MIN-SF none).
+- With nothing within 5 cents of fair the picker took the best EV outright; the first pass prices at 3,000 draws, where a slip's EV
+  moves about two cents by simulation alone. Now those candidates are re-priced with the card's own draws, slips within 3 cents of the
+  best EV are tied, a slip with a player leg beats two game lines, then the most likely to hit wins.
+- A card parlay carries no moneyline the model has under a coin flip, unless Sweep says calls that side. This - not the tie - moved
+  PHI-PIT off Eagles ML + Over 38.5 (+423, 18%, -6.8c) under "Model has PIT 21.5-17": the PIT pairs were 3.4 cents behind it.
+  (Told the owner at 6:50 PM it was "a fraction of a cent" - true of LAC-NYJ at 3,000 draws, not of PHI-PIT. Corrected in the report.)
+- Changed 11/17 evening: PHI-PIT -> PIT -4.5 + Under 38.5 (25%), LAC-NYJ -> LAC -3.5 + Over 41.5 (24%), MIN-SF -> 49ers ML + Over 46.5
+  (29%). The five big-spread cards keep "dog + total": the favorite's side is juiced to -115 and fails the 3-point gate.
+- Home page: "Built for the game's most likely script" only when it is (bp_pick.fit_note); otherwise "Does best if ... (N% likely)".
+- `BP_DEBUG=1 python3 build_boards.py` prints every candidate, its chance per ending, and the rule that picked.
+
+**Volatile is off slips (owner "Sure").** sweep.TAG_W["Volatile"] = 0: no risk point, off the builder and the boards, still on the
+player page. Walk-forward Weeks 7-10 it did not separate (3.2 points under the price against 3.4 for the rest). 17 players carried it;
+7 legs leave Some / High risk for Low. Re-check on Tuesdays (flag_stats prints it).
+
+**Fantasy page and Trade calculator for a manager with many leagues (fantasy_nav.py, tests/fantasy_nav.py 82, trade_outlook 35).**
+Owner: "more intuitive and maybe condensed. It's a lot of scrolling ... I have a ton of sleeper teams". Measured at phone size with a
+14-league mock account: Trade calculator 19.6 screens (league buttons 0.6, import box 1.2 screens down, rankings 13.7), Fantasy 8.2.
+- `bsLg` (league bar + sheet): the bar shows the league on screen, record, place, and on the Trade calculator the verdict; the sheet
+  lists every league with a search box past eight; each row fills in its record (one rosters call per league, three at a time, kept 30
+  minutes in sessionStorage) and - Trade calculator only - Buy / Hold / Sell / Out with playoff odds (bsOutlook.quick: the card's own
+  odds and 70 / 35 / 12% cut-offs, 1,500 sims, that league's schedule). 14 leagues = 14 + 56 Sleeper requests, once.
+- `bsTabs`: one section at a time. Trade: Calculator / My league / Rankings (import or /trade/#league opens My league; any Load button
+  opens Calculator). Fantasy: Lineup / Roster / League / Waivers (League goes for a hand-built team). The row stays under the site bar;
+  on the Fantasy page the page-links row above it no longer sticks.
+- A saved username loads by itself on both pages (before: typing + a button on Fantasy, only /trade/#league on Trade). A hand-built
+  team (bs_team_mode = manual) is left alone. The connect form goes once connected; "Use another" in the sheet brings it back.
+- Trade: the format toggles fold into one line that follows the league picked; rankings show 30 rows + "Show all N"; the method note
+  folds. Fantasy: the two intro cards are two small buttons; "How this works" folds; the waiver list's matchup chip no longer stretches.
+- After: Trade calculator 2 screens (Calculator), 3.3 (My league), 3.7 (Rankings); Fantasy 2.5-3.1 per tab.
+- NOT done: verdict chips on the Fantasy page's own sheet (they show there only when the Trade calculator computed them in the same
+  session); draft-pick ownership (league/<id>/traded_picks).
+
+**Market share of a trade value: 30% -> 70% (build_trade.MKT_W).** Owner, after loading his own leagues: "I think we need to add
+keepcuttrades rankings and blend into ours until we can beat it." KeepTradeCut's FAQ: no API, scraping forbidden, and using its full
+values in another tool is forbidden by its terms - so its numbers are not used. The market on file is FantasyCalc (real trades, pulled
+daily by the sheet's script into 'AUTO - Market Values'; 419 players, stamped 11/17 5:53). Its share went from 30% to 70%; the page
+says so in three places. Other market sources with clear permission, if a second one is wanted: Dynasty Dealer's public API (free for
+commercial use with a visible "Values by Dynasty Dealer" link; Sleeper ids; daily) and DynastyProcess's open data on GitHub (GPL-3).

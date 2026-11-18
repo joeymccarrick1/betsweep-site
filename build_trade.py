@@ -196,10 +196,16 @@ rows = [r for r in rows if ppr(r["a"]) >= 1.0 or r["g"] >= 3 or r["a25"] or r["a
 rows.sort(key=lambda r: -ppr(r["a"]))
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
 n_age = sum(1 for r in rows if r["age"]); n_prior = sum(1 for r in rows if r["a25"] or r["a24"]); n_mkt = sum(1 for r in rows if r["mkt"])
-DATA = {"week": WEEK, "last": LAST_WEEK, "built": stamp, "players": rows, "dyn": DYN, "mkt_w": 0.3 if MKT else 0.0, "pickmkt": PICKMKT}
+# Owner 11/17 evening, after loading his own leagues: "I think we need to add keepcuttrades rankings and blend into ours until we can beat
+# it." KeepTradeCut's own FAQ forbids scraping its values or using them in another tool, so its numbers are not used. The market here
+# is the one already on file - FantasyCalc, built from real trades - and its share of the shown value goes from 30% to 70%. It comes
+# back down when our own numbers beat the market's on a weekly check (research/value_board.py - see RUNBOOK). One number to change.
+MKT_W = 0.7
+DATA = {"week": WEEK, "last": LAST_WEEK, "built": stamp, "players": rows, "dyn": DYN, "mkt_w": MKT_W if MKT else 0.0, "pickmkt": PICKMKT}
 json.dump(DATA, open(os.path.join(OUT, "trade_values.json"), "w"), separators=(",", ":"))
 
 import fantasy_outlook as _FO   # owner 11/17: buy, hold or sell from the league's standings (playoff odds, who to trade for)
+import fantasy_nav as _FN       # owner 11/17 evening: league bar + section tabs ("a lot of scrolling ... I have a ton of sleeper teams")
 CSS = r"""
 .tc{max-width:1180px;margin:0 auto}
 .tc .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
@@ -277,6 +283,34 @@ CSS = r"""
 .tc .team h3{cursor:pointer;user-select:none}.tc .team h3 i.cv{font-style:normal;color:var(--mute);font-size:12px}
 .tc .team.shut .pb,.tc .team.shut ul{display:none}
 .tc .tgl{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+/* 11/17 evening (owner: "more intuitive and maybe condensed ... I have a ton of sleeper teams"): league bar on top, three tabs, format folded */
+.tc .lgzone{margin:0 0 2px}
+.tc .lgzone .row{margin:0 0 10px} .tc .lgzone .row[hidden]{display:none}
+.tc .lgzone .row input{flex:1 1 180px;min-width:0;min-height:44px;font-size:16px}
+.tc .lgzone .row .go{min-height:44px}
+.tc .lgzone .row .meth{flex-basis:100%;font-size:12.5px}
+.tc .lgzone .leagues{display:none}
+.tc .lgzone .msg{margin:0 0 10px}
+.tc details.fmt{padding:0}
+.tc details.fmt > summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13.5px;min-height:44px}
+.tc details.fmt > summary::-webkit-details-marker{display:none}
+.tc details.fmt > summary b{flex:1;min-width:0;font-weight:600;color:var(--ink)}
+.tc details.fmt > summary i{flex:none;font-style:normal;font-family:var(--ctl,var(--display));font-size:12.5px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em}
+.tc details.fmt > summary i::after{content:" ▾"} .tc details.fmt[open] > summary i::after{content:" ▴"}
+.tc details.fmt .opts{padding:0 14px 12px}
+.tc .acts{display:flex;gap:8px;justify-content:flex-end;margin:-4px 0 14px}
+.tc details.fold{border-top:1px solid var(--line);margin-top:12px;padding-top:2px}
+.tc details.fold > summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 0;min-height:44px}
+.tc details.fold > summary::-webkit-details-marker{display:none}
+.tc details.fold > summary h3{flex:1;margin:0;font-family:var(--display);font-size:17px}
+.tc details.fold > summary small{color:var(--mute);font-size:12px}
+.tc details.fold > summary::after{content:"▾";color:var(--mute)} .tc details.fold[open] > summary::after{content:"▴"}
+.tc .rkmore{display:flex;width:100%;margin-top:10px}
+.tc .rkmore[hidden]{display:none}
+.tc .lgempty{color:var(--mute);font-size:14px;line-height:1.5;margin:0}
+.tc details.methd > summary{cursor:pointer;font-weight:600;color:var(--ink);min-height:32px;display:flex;align-items:center} .tc details.methd[open] > summary{margin-bottom:8px}
+.tc #slFmt{margin:0 0 10px;font-size:12.5px}
+.tc .ideas li.more{display:block;text-align:center;border:0;padding-top:8px}
 .tc .team h3{margin:0;font-family:var(--display);font-size:16px;display:flex;justify-content:space-between;align-items:baseline}
 .tc .team h3 b{font-variant-numeric:tabular-nums}
 .tc .team .pb{display:flex;gap:6px;font-size:11px;color:var(--mute);margin:4px 0 6px;flex-wrap:wrap}
@@ -294,7 +328,12 @@ CSS = r"""
 JS = r"""
 (function(){
   var D = window.__BS, P = D.players, WEEK = D.week;
-  var st = {sf:false, tep:0, ppr:1, teams:12, dyn:false, A:[], B:[], rkpos:'ALL', sortk:'v'};
+  var st = {sf:false, tep:0, ppr:1, teams:12, dyn:false, A:[], B:[], rkpos:'ALL', sortk:'v', rkAll:false};
+  // 11/17 evening: one section on screen at a time. /trade/#league (the Fantasy page's Buy or sell? button) opens on the league.
+  var TABS = bsTabs.mount(document.getElementById('tcTabs'), [{id:'calc', label:'Calculator'}, {id:'league', label:'My league'}, {id:'rank', label:'Rankings'}],
+                          {root: document.querySelector('.tc'), key: 'bs_tab_trade', start: location.hash === '#league' ? 'league' : null});
+  function toCalc(){ TABS.show('calc', true); window.scrollTo({top:0,behavior:'smooth'}); }
+  function fmtLine(){ var e = document.getElementById('fmtSum'); if(e) e.textContent = (st.dyn?'Dynasty':'Redraft')+' · '+(st.sf?'Superflex':'1QB')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'Half PPR':'Standard')+(st.tep?' · TE +'+st.tep:'')+' · '+st.teams+' teams'; }
   var DYN = D.dyn, DISC = 0.8, YEARS = 3, SEASON_G = 17;
   // rookie picks as tradeable assets (dynasty only): expected best ppg in the first three seasons, busts as zero (rookie_values.json)
   var PICKS = [];
@@ -360,7 +399,7 @@ JS = r"""
     // his first THREE seasons from the draft year (not just the part inside our window, which left a 2028 pick with one season),
     // 70% of his expected best-ppg as a rookie then 100%, above the flex baseline plus a tenth of his points as a floor (a player on a roster today gets a quarter; a pick is not a body yet),
     // each season discounted 20% a year from today. Checked against FantasyCalc 10/28: firsts and seconds within ~15% of the market, 2028 firsts a little above it (we discount
-    // 20% a year, the market more), thirds below it (busts are zero here; the market prices hope) - then the 30% market blend applies.
+    // 20% a year, the market more), thirds below it (busts are zero here; the market prices hope) - then the market blend applies (D.mkt_w).
     PICKS.forEach(function(p){ var sc = 0;
       if (st.dyn){ for (var i=0; i<YEARS; i++){ var y = p.lag + i, pp = p.ppg_rk * (i===0 ? 0.7 : 1.0); sc += (Math.max(0, pp - flexRepl) + 0.10*pp) * SEASON_G * Math.pow(DISC, y); } }
       p.score = sc; p.ros = 0; p.fut = sc; p.adj = p.ppg_rk; p.pts = 0; p.vorp = 0; });
@@ -396,13 +435,16 @@ JS = r"""
     return list.map(function(p){ return '<li><span class="pos '+p.pos+'">'+(p.pick?'PK':p.pos)+'</span><span class="who"><b>'+esc(p.n)+(p.pick?'':' <small>'+p.tm+' · '+p.prk+'</small>')+'</b><small>'+(p.pick? '' : p.adj.toFixed(1)+' ppg · '+p.pts+' pts over '+p.Re+' games')+chips(p)+'</small></span><span class="val">'+p.v.toLocaleString()+'</span><button class="x" data-side="'+key+'" data-n="'+esc(p.n)+'" aria-label="remove">×</button></li>'; }).join('')
       + '<div class="tot"><small>'+(list.length? list.length+' player'+(list.length>1?'s':'') : 'add players')+'</small><b>'+tot.toLocaleString()+'</b></div>'; }
   function verdict(){ var a = st.A.reduce(function(s,n){ return s+(byName[n]?byName[n].v:0); },0), b = st.B.reduce(function(s,n){ return s+(byName[n]?byName[n].v:0); },0);
-    var el = document.getElementById('verdict'); if(!a && !b){ el.innerHTML = '<h3>Add players to both sides</h3><p>Values are rest-of-season, from the model\'s own game data - not a vote.</p>'; return; }
+    var el = document.getElementById('verdict'); if(!a && !b){ el.innerHTML = '<h3>Add players to both sides</h3><p>'+(D.mkt_w ? 'Values are '+Math.round(D.mkt_w*100)+'% the trade market and '+Math.round((1-D.mkt_w)*100)+'% our model. A player\'s chip shows where the two disagree.' : 'Values are rest-of-season, from the model\'s own game data - not a vote.')+'</p>'; return; }
     var t=a+b, pa = t? a/t*100 : 50, diff = Math.abs(a-b), pct = t? diff/Math.max(a,b)*100 : 0;
     var who = diff/Math.max(a,b,1) < 0.05 ? 'Fair trade' : (a>b ? 'Side A wins' : 'Side B wins');
     el.innerHTML = '<h3>'+who+(who==='Fair trade'?'':' by '+pct.toFixed(0)+'%')+'</h3><div class="bar"><i class="a" style="width:'+pa.toFixed(1)+'%"></i><i class="b" style="width:'+(100-pa).toFixed(1)+'%"></i></div><p>Side A '+a.toLocaleString()+' · Side B '+b.toLocaleString()+' · '+(st.dyn?'dynasty (3-year)':'rest of season')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+st.teams+' teams</p>'; }
   function render(){ compute(); document.getElementById('sideA').innerHTML = sideHtml('A'); document.getElementById('sideB').innerHTML = sideHtml('B'); verdict(); rankings(); save(); if (window.__bsLeague && !document.getElementById('slOut').hidden) window.__bsLeague();
-    document.querySelectorAll('.opts label').forEach(function(l){ var i=l.querySelector('input'); if(i) l.classList.toggle('on', i.checked); }); }
+    document.querySelectorAll('.opts label').forEach(function(l){ var i=l.querySelector('input'); if(i) l.classList.toggle('on', i.checked); }); fmtLine(); }
   function rankings(){ var pos = st.rkpos, list = ALL.filter(function(p){ return (pos==='ALL' || p.pos===pos) && (st.dyn || !p.pick); }).sort(function(a,b){ return st.sortk==='adj'? b.adj-a.adj : st.sortk==='pts'? b.pts-a.pts : b.v-a.v; }).slice(0, pos==='ALL'?150:60);
+    // 11/17 evening: the table was 13.7 phone screens of the page. Thirty rows, the rest behind one button.
+    var full = list.length, mb = document.getElementById('rkMore'); if(!st.rkAll) list = list.slice(0, 30);
+    if(mb){ mb.hidden = full <= 30; mb.textContent = st.rkAll ? 'Show the top 30' : 'Show all ' + full; }
     document.getElementById('rk').innerHTML = list.map(function(p,i){
       var status = p.pick ? '' : p.Re===0 ? '<em class="st dn">'+esc(p.why||'out')+'</em>' : p.st==='OUT' ? '<em class="st dn">'+esc(p.why)+'</em>' : p.st==='QUESTIONABLE' ? '<em class="st q">Q</em>' : '';
       var sub = p.pick ? 'rookie pick' : esc(p.tm)+' · '+p.prk+(st.dyn && p.age ? ' · age '+p.age.toFixed(0) : '');
@@ -423,7 +465,8 @@ JS = r"""
     document.addEventListener('click', function(e){ if(!sug.contains(e.target) && e.target!==inp) sug.hidden=true; }); }
   wire('A'); wire('B');
   document.addEventListener('click', function(e){ var x = e.target.closest('.x[data-side]'); if(x){ var s = st[x.dataset.side]; var i = s.indexOf(x.dataset.n); if(i>=0) s.splice(i,1); render(); return; }
-    var ab = e.target.closest('.addbtn[data-side]'); if(ab){ if(st.A.indexOf(ab.dataset.n)<0 && st.B.indexOf(ab.dataset.n)<0){ st[ab.dataset.side].push(ab.dataset.n); render(); window.scrollTo({top:0,behavior:'smooth'}); } return; }
+    var ab = e.target.closest('.addbtn[data-side]'); if(ab){ if(st.A.indexOf(ab.dataset.n)<0 && st.B.indexOf(ab.dataset.n)<0){ st[ab.dataset.side].push(ab.dataset.n); render(); toCalc(); } return; }
+    if(e.target.closest('#rkMore')){ st.rkAll = !st.rkAll; rankings(); return; }
     var rb = e.target.closest('.rkopts button'); if(rb){ if(rb.dataset.pos){ st.rkpos = rb.dataset.pos; } document.querySelectorAll('.rkopts button[data-pos]').forEach(function(b){ b.classList.toggle('on', b.dataset.pos===st.rkpos); }); rankings(); return; }
     var th = e.target.closest('th[data-k]'); if(th){ st.sortk = th.dataset.k; rankings(); } });
   document.getElementById('sf').addEventListener('change', function(e){ st.sf = e.target.checked; render(); });
@@ -446,26 +489,30 @@ JS = r"""
       return get('players/nfl').then(function(all){ var m = {}; Object.keys(all).forEach(function(id){ var x = all[id]; if(!x || ['QB','RB','WR','TE'].indexOf(x.position)<0) return; m[id] = {n: x.full_name || ((x.first_name||'')+' '+(x.last_name||'')), t: x.team||'', p: x.position, i: x.injury_status||''}; }); PM = m; try{ localStorage.setItem('bs_sleeper_players', JSON.stringify({t: Date.now(), m: m})); }catch(e){} return m; }); }
     function modelFor(id, pm){ if (bySid[id]) return bySid[id]; var sp = pm[id]; if(!sp) return null; return byNorm[normn(sp.n)+'|'+sp.p] || null; }
     var S = {user:null, leagues:[], league:null, season:null, rosters:null, users:null, pm:null};
-    $('#slGo').addEventListener('click', connect); $('#slUser').addEventListener('keydown', function(e){ if(e.key==='Enter') connect(); });
+    $('#slGo').addEventListener('click', function(){ connect(true); }); $('#slUser').addEventListener('keydown', function(e){ if(e.key==='Enter') connect(true); });
     try{ var su = localStorage.getItem('bs_sleeper_user'); if(su) $('#slUser').value = su; }catch(e){}
-    if(location.hash === '#league' && $('#slUser').value) setTimeout(connect, 0);   // arriving from the Fantasy page's "Buy or sell?" card with a username already on this device
-    function connect(){ var u = $('#slUser').value.trim().replace(/^@/,''); if(!u) return; $('#slGo').disabled = true; say('Looking up '+u+' on Sleeper…'); $('#slOut').hidden = true; $('#slLeagues').innerHTML = '';
+    // 11/17 evening: a username already on this device loads its leagues by itself on every visit (before, only /trade/#league did), so
+    // the league bar is there before the reader asks. The tab does not change unless he came for the league.
+    if($('#slUser').value) setTimeout(function(){ connect(false); }, 0);
+    function connect(byHand){ var u = $('#slUser').value.trim().replace(/^@/,''); if(!u) return; $('#slGo').disabled = true; say('Looking up '+u+' on Sleeper…'); $('#slOut').hidden = true; $('#slLeagues').innerHTML = '';
       get('state/nfl').then(function(x){ S.season = String(x.season || new Date().getFullYear()); return get('user/'+encodeURIComponent(u)); })
       .then(function(user){ if(!user || !user.user_id) throw new Error('no user'); S.user = user; try{ localStorage.setItem('bs_sleeper_user', u); }catch(e){} return get('user/'+user.user_id+'/leagues/nfl/'+S.season); })
       .then(function(ls){ ls = (ls||[]).filter(function(l){ return l.status !== 'pre_draft'; }); S.leagues = ls; if(!ls.length){ say('No '+S.season+' NFL leagues on that account.', true); return; } say('');
+        $('#slRow').hidden = true; bsLg.set(S.user, u, ls, null); if(byHand) TABS.show('league', true);
         var box = $('#slLeagues'), last = ''; try{ last = localStorage.getItem('bs_sleeper_league')||''; }catch(e){}
         ls.forEach(function(l){ var b = document.createElement('button'); b.type='button'; b.innerHTML = esc(l.name)+'<small>'+l.total_rosters+' teams'+(l.settings && l.settings.type===2 ? ' · dynasty' : '')+((l.roster_positions||[]).indexOf('SUPER_FLEX')>=0 ? ' · superflex' : '')+'</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
         var auto = ls.filter(function(l){ return l.league_id===last; })[0] || ls[0]; if(auto) pick(auto, box.children[ls.indexOf(auto)]); })
-      .catch(function(e){ say('Could not find that Sleeper username (it is the username, not the team name).', true); console.error(e); })
+      .catch(function(e){ $('#slRow').hidden = false; say('Could not find that Sleeper username (it is the username, not the team name).', true); console.error(e); })
       .then(function(){ $('#slGo').disabled = false; }); }
-    function pick(l, btn){ S.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){}
+    function pick(l, btn){ S.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){} bsLg.current(l);
       Array.prototype.forEach.call($('#slLeagues').children, function(b){ b.classList.toggle('on', b===btn); }); say('Loading '+l.name+'…'); $('#slOut').hidden = true;
       // the league's format drives the toggles: superflex slot, TE premium bonus, PPR value, dynasty type, team count
       var sc = l.scoring_settings || {}, rp = l.roster_positions || [];
       st.sf = rp.indexOf('SUPER_FLEX') >= 0; st.tep = (sc.bonus_rec_te || 0) >= 0.75 ? 1 : (sc.bonus_rec_te || 0) > 0 ? 0.5 : 0; st.ppr = (sc.rec||0) >= 0.75 ? 1 : (sc.rec||0) > 0 ? 0.5 : 0;
       st.dyn = !!(l.settings && l.settings.type === 2); st.teams = [10,12,14].reduce(function(b,x){ return Math.abs(x-(l.total_rosters||12)) < Math.abs(b-(l.total_rosters||12)) ? x : b; }, 12);
       $('#sf').checked = st.sf; $('#dyn').checked = st.dyn; $('#tep').value = String(st.tep); $('#ppr').value = String(st.ppr); $('#teams').value = String(st.teams);
-      Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users')]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; S.sched = undefined; say('');
+      if(window.__bsRender) window.__bsRender();   // 11/17 evening: the calculator (its format line, the sides, the verdict) follows the league the moment it is picked
+      Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users')]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; S.sched = undefined; say(''); bsLg.note(l.league_id, S.rosters);
         // owner 11/17 (buy or sell): the weeks left on the league's own schedule, for the playoff odds. Rosters and values show at once; the outlook waits for the schedule.
         var gp = Math.max.apply(null, S.rosters.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
         if(!ws.length){ S.sched = {}; render(); return; }
@@ -477,12 +524,13 @@ JS = r"""
     var OPEN = {me: true, opp: false};   // my roster open, opponents collapsed by default; a single card's own toggle overrides the group
     document.addEventListener('click', function(e){ var tg = e.target.closest('[data-tg]'); if (tg){ var k = tg.dataset.tg; OPEN[k] = !OPEN[k]; if (k==='opp') Object.keys(OPEN).forEach(function(x){ if (x!=='me' && x!=='opp') delete OPEN[x]; }); render(); return; }
       var h = e.target.closest('.team h3'); if (h && !e.target.closest('button')){ var c = h.parentNode; if (c.dataset.me==='1') OPEN.me = !OPEN.me; else { var rid = c.dataset.rid; var cur = OPEN[rid] != null ? OPEN[rid] : OPEN.opp; OPEN[rid] = !cur; } render(); } });
-    function render(){ if(!S.rosters) return; compute(); var l = S.league, me = S.user.user_id, uname = {}; S.users.forEach(function(u){ uname[u.user_id] = (u.metadata && u.metadata.team_name) || u.display_name; });
-      var teams = S.rosters.map(function(r){ var ps = (r.players||[]).map(function(id){ var mp = modelFor(id, S.pm); var sp = S.pm[id]; return {id:id, mp:mp, sp:sp, v: mp? mp.v : 0}; }).filter(function(x){ return x.mp || x.sp; });
+    function teamsOf(rosters, users, pm){ var me = S.user.user_id, uname = {}; (users||[]).forEach(function(u){ uname[u.user_id] = (u.metadata && u.metadata.team_name) || u.display_name; });
+      return rosters.map(function(r){ var ps = (r.players||[]).map(function(id){ var mp = modelFor(id, pm); var sp = pm[id]; return {id:id, mp:mp, sp:sp, v: mp? mp.v : 0}; }).filter(function(x){ return x.mp || x.sp; });
         ps.sort(function(a,b){ return b.v-a.v; }); var byp = {QB:0,RB:0,WR:0,TE:0}, cnt = {QB:0,RB:0,WR:0,TE:0}; ps.forEach(function(x){ if(x.mp){ byp[x.mp.pos]+=x.v; cnt[x.mp.pos]++; } });
-        return {r:r, name: uname[r.owner_id] || ('Team '+r.roster_id), me: r.owner_id===me || (r.co_owners||[]).indexOf(me)>=0, ps:ps, tot: ps.reduce(function(s,x){ return s+x.v; },0), byp:byp, cnt:cnt, rec: (r.settings? r.settings.wins+'-'+r.settings.losses : '')}; });
+        return {r:r, name: uname[r.owner_id] || ('Team '+r.roster_id), me: r.owner_id===me || (r.co_owners||[]).indexOf(me)>=0, ps:ps, tot: ps.reduce(function(s,x){ return s+x.v; },0), byp:byp, cnt:cnt, rec: (r.settings? r.settings.wins+'-'+r.settings.losses : '')}; }); }
+    function render(){ if(!S.rosters) return; compute(); var l = S.league; var teams = teamsOf(S.rosters, S.users, S.pm);
       teams.sort(function(a,b){ return b.tot-a.tot; });
-      $('#slFmt').textContent = l.name+': '+(st.dyn?'dynasty':'redraft')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+l.total_rosters+' teams. Toggles above were set from the league settings; change them if your league scores differently.';
+      $('#slFmt').textContent = 'Valued as '+(st.dyn?'dynasty':'redraft')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+l.total_rosters+' teams, from the league\'s own settings. Change it under Calculator if yours differs.';
       $('#slTeams').innerHTML = '<div class="tgl"><button type="button" class="addbtn" data-tg="me">'+(OPEN.me?'Collapse':'Expand')+' my team</button><button type="button" class="addbtn" data-tg="opp">'+(OPEN.opp?'Collapse':'Expand')+' all opponents</button></div>' + teams.map(function(t, i){ var open = t.me ? OPEN.me : (OPEN[t.r.roster_id] != null ? OPEN[t.r.roster_id] : OPEN.opp); return '<div class="team'+(t.me?' me':'')+(open?'':' shut')+'" data-rid="'+t.r.roster_id+'" data-me="'+(t.me?1:0)+'"><h3 role="button" tabindex="0"><span><i class="cv">'+(open?'▾':'▸')+'</i> '+(i+1)+'. '+esc(t.name)+(t.me?' <small>(you)</small>':'')+' <small>'+esc(t.rec)+'</small></span><b>'+t.tot.toLocaleString()+'</b></h3><div class="pb">'+['QB','RB','WR','TE'].map(function(k){ return '<span>'+k+' <b>'+t.byp[k].toLocaleString()+'</b> ('+t.cnt[k]+')</span>'; }).join('')+'</div><ul>'+t.ps.map(function(x){ var mp = x.mp; return '<li><span class="pos '+(mp?mp.pos:(x.sp.p||''))+'">'+(mp?mp.pos:x.sp.p)+'</span><span class="nm">'+esc(mp?mp.n:x.sp.n)+(mp?'':' <small>not valued</small>')+'</span>'+(mp? '<button class="addbtn" data-n="'+esc(mp.n)+'" data-side="'+(t.me?'A':'B')+'">'+(t.me?'+A':'+B')+'</button>' : '')+'<span class="vv">'+(mp? mp.v.toLocaleString() : '—')+'</span></li>'; }).join('')+'</ul></div>'; }).join('');
       $('#slOutlook').innerHTML = S.sched === undefined ? '<div class="olk"><p class="none">Reading your league\'s schedule for the playoff odds...</p></div>' : bsOutlook.html(l, teams, S.sched, PICKS);
       // trade ideas: my surplus position (most value above the league average at that position) for their need, 1-for-1 within 12%
@@ -498,9 +546,24 @@ JS = r"""
         ideas.sort(function(a,b){ return (b.give.v+b.get.v)-(a.give.v+a.get.v); });
         var seen = {}; ideas = ideas.filter(function(i){ var k = i.give.n+'|'+i.get.n; if(seen[k]) return false; seen[k]=true; return true; }).slice(0,8); }
       $('#slIdeas').innerHTML = ideas.length ? ideas.map(function(i){ return '<li><b class="t">'+esc(i.give.n)+'</b> <small>('+i.give.pos+', '+i.give.v.toLocaleString()+')</small> for <b class="t">'+esc(i.get.n)+'</b> <small>('+i.get.pos+', '+i.get.v.toLocaleString()+') with '+esc(i.team)+' · '+(i.gain>=0?'+':'')+i.gain.toLocaleString()+' for you</small><button class="addbtn" data-idea="'+esc(i.give.n)+'|'+esc(i.get.n)+'">Load</button></li>'; }).join('') : '<li><small>'+(mine? 'No balanced 1-for-1 swaps from a surplus position right now - use the +A / +B buttons on the rosters to build one by hand.' : 'You are not on a roster in this league.')+'</small></li>';
+      var okc = $('#olk'), vd = okc && okc.querySelector('.vd');
+      if(vd && S.sched !== undefined){ var po = +okc.dataset.po, live = Object.keys(S.sched).length > 0;
+        bsLg.note(l.league_id, null, {txt: vd.textContent+' · '+(live ? (po >= 0.995 ? '99%+' : po < 0.005 ? 'under 1%' : Math.round(po*100)+'%') : (po >= 0.5 ? 'in' : 'out')), cls: vd.classList.contains('sell') ? 'sell' : vd.classList.contains('hold') ? 'hold' : 'buy', title: 'Playoff odds'}); }
+      $('#ideasCt').textContent = ideas.length ? String(ideas.length) : ''; $('#slEmpty').hidden = true;
       $('#slOut').hidden = false; }
-    document.addEventListener('click', function(e){ var b = e.target.closest('[data-idea]'); if(!b) return; var k = b.dataset.idea.split('|'); st.A = [k[0]]; st.B = [k[1]]; window.__bsRender(); window.scrollTo({top:0,behavior:'smooth'}); });
-    document.addEventListener('click', function(e){ var b = e.target.closest('[data-ol]'); if(!b) return; var k = b.dataset.ol.split('|'); st.A = k[0] ? k[0].split(';') : []; st.B = k[1] ? k[1].split(';') : []; window.__bsRender(); window.scrollTo({top:0,behavior:'smooth'}); });
+    // The league sheet's verdict for a league that is not on screen: its rosters (given), the weeks left on its schedule, then the same
+    // odds and cut-offs as the card (bsOutlook.quick). Lineup strength uses the scoring toggles of the league on screen; the odds lean on
+    // records and points scored far more than on that, so a chip can sit a few points from the card the league shows when opened.
+    function leagueChip(l, ros){ return players().then(function(pm){
+        var gp = Math.max.apply(null, ros.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
+        return Promise.all(ws.map(function(w){ return get('league/'+l.league_id+'/matchups/'+w).catch(function(){ return []; }); })).then(function(ms){ var sc = {};
+          ms.forEach(function(m, i){ var by = {}; (m||[]).forEach(function(x){ if(x.matchup_id == null) return; (by[x.matchup_id] = by[x.matchup_id] || []).push(x.roster_id); }); sc[ws[i]] = Object.keys(by).map(function(k){ return by[k]; }).filter(function(p){ return p.length === 2; }); });
+          var q = bsOutlook.quick(l, teamsOf(ros, [], pm), sc, 1500); return q ? {txt: q.txt+' · '+q.pct, cls: q.cls, title: 'Playoff odds'} : null; }); }); }
+    bsLg.mount({bar: $('#lgbar'), get: get, extra: leagueChip,
+      onPick: function(l){ pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); TABS.show('league', true); window.scrollTo({top:0}); },
+      onChange: function(){ bsLg.clear(); $('#slRow').hidden = false; $('#slOut').hidden = true; $('#slEmpty').hidden = false; S.rosters = null; var i = $('#slUser'); i.value = ''; i.focus(); } });
+    document.addEventListener('click', function(e){ var b = e.target.closest('[data-idea]'); if(!b) return; var k = b.dataset.idea.split('|'); st.A = [k[0]]; st.B = [k[1]]; window.__bsRender(); toCalc(); });
+    document.addEventListener('click', function(e){ var b = e.target.closest('[data-ol]'); if(!b) return; var k = b.dataset.ol.split('|'); st.A = k[0] ? k[0].split(';') : []; st.B = k[1] ? k[1].split(';') : []; window.__bsRender(); toCalc(); });
     window.__bsLeague = render;
   })();
   window.__bsRender = render;
@@ -509,58 +572,76 @@ JS = r"""
 })();
 """
 
+_mw = round(MKT_W * 100)
+_MK_NOTE = (f"The value shown is {_mw}% the market and {100 - _mw}% ours. The market is FantasyCalc's values, which come from real trades, for the matching format (redraft or dynasty, 1QB or superflex), each on the 0-9,999 scale. We lean on the market until our own numbers beat it on a weekly check; until 11/17 the mix was the other way round. The chip on each player shows how far our number sits from the market's - that gap is where the model disagrees with the crowd, and it is the part worth reading."
+            if n_mkt else "Market values were not available for this build, so the numbers shown are ours alone; when the market feed is on, the shown value is mostly the market's and each player carries a 'vs market' chip.")
+
 body = f'''<div class="tc">
- <section class="panel">
-  <div class="opts">
-   <label><input type="checkbox" id="dyn"> Dynasty <small>(3-year value, rookie picks)</small></label>
-   <label><input type="checkbox" id="sf"> Superflex <small>(2 QB starters)</small></label>
-   <label>TE premium <select id="tep"><option value="0">off</option><option value="0.5">+0.5 / catch</option><option value="1">+1.0 / catch</option></select></label>
-   <label>Scoring <select id="ppr"><option value="1">PPR</option><option value="0.5">Half PPR</option><option value="0">Standard</option></select></label>
-   <label>Teams <select id="teams"><option>10</option><option selected>12</option><option>14</option></select></label>
-   <button type="button" id="swap" class="addbtn" style="font-size:13px;padding:6px 10px">Swap sides</button>
-   <button type="button" id="clear" class="addbtn" style="font-size:13px;padding:6px 10px">Clear</button>
-  </div>
- </section>
- <section class="panel verdict" id="verdict"></section>
- <div class="sides">
-  <section class="panel side"><h2>Side A <small>gives</small></h2><div class="add"><input id="inA" placeholder="Add a player…" autocomplete="off"><div class="sug" id="sugA" hidden></div></div><ul class="legs" id="sideA"></ul></section>
-  <section class="panel side"><h2>Side B <small>gives</small></h2><div class="add"><input id="inB" placeholder="Add a player…" autocomplete="off"><div class="sug" id="sugB" hidden></div></div><ul class="legs" id="sideB"></ul></section>
- </div>
- <section class="panel lg" id="league">
-  <h2 style="margin:0 0 6px;font-family:var(--display);font-size:20px">Your league <small style="color:var(--mute);font-size:12px;font-weight:500">Sleeper import · playoff odds · buy or sell · trade ideas</small></h2>
-  <div class="row"><input id="slUser" placeholder="Sleeper username" autocomplete="off"><button type="button" class="go" id="slGo">Import</button><span class="meth">Reads only public league data; nothing is posted to Sleeper.</span></div>
+ <div class="lgzone lg" id="league">
+  <div class="row" id="slRow"><input id="slUser" placeholder="Sleeper username" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Sleeper username"><button type="button" class="go" id="slGo">Import</button><span class="meth">Import your Sleeper leagues for playoff odds, buy or sell, and trade ideas. Read-only: nothing is posted to Sleeper.</span></div>
+  <div class="lgbar" id="lgbar" hidden></div>
   <div class="msg" id="slMsg" hidden></div>
   <div class="leagues" id="slLeagues"></div>
-  <div id="slOut" hidden>
-   <p class="meth" id="slFmt"></p>
-   <div id="slOutlook"></div>
-   <h3 style="margin:12px 0 4px;font-family:var(--display);font-size:16px">Trade ideas for you</h3>
-   <p class="meth" style="margin:0 0 4px">Swaps where you give from a position you are deep at and get back a position you are thin at, priced within 12% either way by the calculator - so the other manager can say yes. Tap one to load it above and adjust.</p>
-   <ul class="ideas" id="slIdeas"></ul>
-   <div class="teams" id="slTeams"></div>
+ </div>
+ <div id="tcTabs"></div>
+ <div data-tab="calc">
+  <details class="panel fmt" id="fmt"><summary><b id="fmtSum">League format</b><i>Change</i></summary>
+   <div class="opts">
+    <label><input type="checkbox" id="dyn"> Dynasty <small>(3-year value, rookie picks)</small></label>
+    <label><input type="checkbox" id="sf"> Superflex <small>(2 QB starters)</small></label>
+    <label>TE premium <select id="tep"><option value="0">off</option><option value="0.5">+0.5 / catch</option><option value="1">+1.0 / catch</option></select></label>
+    <label>Scoring <select id="ppr"><option value="1">PPR</option><option value="0.5">Half PPR</option><option value="0">Standard</option></select></label>
+    <label>Teams <select id="teams"><option>10</option><option selected>12</option><option>14</option></select></label>
+   </div>
+  </details>
+  <section class="panel verdict" id="verdict"></section>
+  <div class="sides">
+  <section class="panel side"><h2>Side A <small>gives</small></h2><div class="add"><input id="inA" placeholder="Add a player…" autocomplete="off"><div class="sug" id="sugA" hidden></div></div><ul class="legs" id="sideA"></ul></section>
+  <section class="panel side"><h2>Side B <small>gives</small></h2><div class="add"><input id="inB" placeholder="Add a player…" autocomplete="off"><div class="sug" id="sugB" hidden></div></div><ul class="legs" id="sideB"></ul></section>
   </div>
- </section>
+  <div class="acts"><button type="button" id="swap" class="addbtn" style="font-size:13px;padding:6px 10px">Swap sides</button><button type="button" id="clear" class="addbtn" style="font-size:13px;padding:6px 10px">Clear</button></div>
+ </div>
+ <div data-tab="league">
+  <section class="panel">
+   <p class="lgempty" id="slEmpty">Type your Sleeper username at the top and each of your leagues opens here: playoff odds, whether to buy or sell, who to trade for, and every roster valued.</p>
+   <div id="slOut" hidden>
+    <p class="meth" id="slFmt"></p>
+    <div id="slOutlook"></div>
+    <details class="fold" id="ideasFold" open><summary><h3>Trade ideas for you</h3><small id="ideasCt"></small></summary>
+   <p class="meth" style="margin:0 0 4px">Swaps where you give from a position you are deep at and get back a position you are thin at, priced within 12% either way by the calculator - so the other manager can say yes. Tap one to load it above and adjust.</p>
+    <ul class="ideas" id="slIdeas"></ul>
+    </details>
+    <details class="fold" id="teamsFold"><summary><h3>Every roster, valued</h3><small>tap a team to open it</small></summary>
+    <div class="teams" id="slTeams"></div>
+    </details>
+   </div>
+  </section>
+ </div>
+ <div data-tab="rank">
  <section class="panel">
-  <h2 style="margin:0 0 6px;font-family:var(--display);font-size:20px"><span id="rkhead">Rest-of-season rankings</span> <small style="color:var(--mute);font-size:12px;font-weight:500">Weeks {WEEK}–{LAST_WEEK} · recomputed with the toggles above</small></h2>
+  <h2 style="margin:0 0 6px;font-family:var(--display);font-size:20px"><span id="rkhead">Rest-of-season rankings</span> <small style="color:var(--mute);font-size:12px;font-weight:500">Weeks {WEEK}–{LAST_WEEK} · for the format set under Calculator</small></h2>
   <div class="rkopts"><button type="button" data-pos="ALL" class="on">All</button><button type="button" data-pos="QB">QB</button><button type="button" data-pos="RB">RB</button><button type="button" data-pos="WR">WR</button><button type="button" data-pos="TE">TE</button><span class="meth" id="replnote"></span></div>
   <div class="rkwrap"><table class="rk"><thead><tr><th class="r n">#</th><th>Player</th><th class="r ol" data-k="adj">Outlook</th><th class="r mk" title="our value minus the market's (FantasyCalc), on the same 0-9,999 scale">vs mkt</th><th class="r v" data-k="v">Value</th><th class="ab">Add</th></tr></thead><tbody id="rk"></tbody></table></div>
+  <button type="button" class="bsbtn sec rkmore" id="rkMore" hidden></button>
  </section>
- <section class="panel meth">
+ <details class="panel meth methd"><summary>How these values are built</summary>
   <b>How the value is built.</b> Every number starts from this season's game log, games the player actually played and finished (a missed week is not a zero, and a game he left early - under 35% of his normal touches - is dropped rather than counted as a bad game). Per-game averages become fantasy points under the scoring you pick, are blended with the last two seasons' per-game lines (2025 counting double, each aged to this season on the position curve, together weighted like six games - so a star who has missed most of this season is still priced as the player he was, and a hot month does not rewrite him); a player with no history at all (a rookie, a first-year starter) is pulled down toward the average starter when a short sample is running hot - three pseudo-games' worth, because five good games is not yet a career - and left alone otherwise; then multiplied by the games left: regular-season weeks through Week {LAST_WEEK}, minus the bye, minus the weeks the injury report says he misses (IR "through Week N" and "out for the season" are read from our availability table; an unlisted timeline assumes four weeks). Nobody who plays is a zero: a quarter of a player's own points rides along under the above-baseline term, so bench bodies keep a small value and the table fades to nothing only at the practice-squad end. Value is points above a bench-depth baseline for your format (the 18th QB, 45th RB, 54th WR, 18th TE in a 12-team league - 1.5x the starters, so a fringe starter is worth something); with superflex on, the baseline is the 30th QB instead of the 18th, which is why quarterbacks jump - raised to a power and scaled so the best player is 9,999. The curve is deliberate - one star is worth more than two average starters, which is how real trade markets behave - and its steepness is fitted to the market's own shape when market values are on, so a "vs market" gap is a disagreement about a player, not about scale. With TE premium on, the bonus is added on top of a baseline measured in base scoring, so every tight end goes up and the high-catch ones go up most. Superflex, TE premium, scoring and league size recompute everything on the page.<br><br>
   <b>Dynasty.</b> With the toggle on, value is this season's remainder plus the next two seasons: next year's points per game is this year's times the position's age curve (from every 2012-2025 pair of seasons with 8+ games both years: running backs lose about 11% a year from 25 and 21% a year from 30; receivers hold until 24 then lose 6% at 25 and 15% a year at 30; tight ends peak at 24; quarterbacks are flat to 30), times the chance he is still a relevant player the following year (about 80% in the mid-20s, 60% for a 30-year-old back), above the same replacement starter, discounted 20% a year. Rookie picks are priced from what drafted players actually produced in their first three seasons, busts counted as zero (early firsts about 16.5 ppg at their best, mid firsts 13.4, late firsts 11.2, seconds 10.2, thirds 8.2; NFL round-one pick buckets stand in for early/mid/late fantasy firsts, which is an approximation) priced like any player here: his first three seasons from the draft year (70% of that number as a rookie, then 100%), above the flex baseline, discounted 20% a year from today, then blended 30% with the market's pick prices when they are on. Firsts and seconds land within about 15% of the market; thirds run below it because busts count as zero here and the market prices hope. A player with no birth date on file is treated as 26 and says so. The research, tables and sample sizes are published in the generator bundle (gen/research/dynasty/RESEARCH.md). It is a projection-model view of dynasty value, deliberately blind to hype; contracts and depth charts beyond this season are not in it yet.<br><br>
-  <b>Market blend.</b> {"The value shown is 70% ours and 30% the market (FantasyCalc's crowd-sourced trade values for the matching format: redraft or dynasty, 1QB or superflex), each on the 0-9,999 scale. The chip on each player shows how far our number sits from the market's - that gap is where the model disagrees with the crowd, and it is the part worth reading." if n_mkt else "Market values were not available for this build, so the numbers shown are ours alone; when the market feed is on, the shown value is 70% ours / 30% FantasyCalc and each player carries a 'vs market' chip."}<br><br>
+  <b>Market blend.</b> {_MK_NOTE}<br><br>
   Built {stamp} CT from data through Week {WEEK - 1}; ages on file for {n_age} of {len(rows)} players, prior-season lines for {n_prior}, market values for {n_mkt}. Information only.
- </section>
+ </details>
+ </div>
 </div>
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
+<script>{_FN.JS}</script>
 <script>{_FO.JS}</script>
 <script>{JS}</script>'''
 
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep Trade Calculator</title>")
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>Trade Calculator</b></h1>")
-        .replace("</style>", CSS + _FO.CSS + "\n</style>", 1)
-        .replace("{{DESC}}", f"Trade values built from the model's own game data, not a vote: {len(rows)} players, rest-of-season or dynasty (age curves + rookie picks), superflex and TE-premium toggles, every value recomputed on the page; import a Sleeper league to see every roster valued and trade ideas.")
+        .replace("</style>", CSS + _FN.CSS + _FO.CSS + "\n</style>", 1)
+        .replace("{{DESC}}", f"Trade values that blend the real trade market with the model's own game data: {len(rows)} players, rest-of-season or dynasty (age curves + rookie picks), superflex and TE-premium toggles, every value recomputed on the page; import a Sleeper league to see every roster valued and trade ideas.")
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv">← This week\'s boards</a>').replace("{{CARDS}}", body)
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ""))
 page = re.sub(r'<div class="key">.*?</dl>\n</div>\n', '', page, count=1, flags=re.S)

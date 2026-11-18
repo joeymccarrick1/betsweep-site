@@ -176,6 +176,7 @@ stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")
 DATA = {"week": WEEK, "stamp": stamp, "players": PLAYERS}
 n_act = sum(1 for p in PLAYERS if p["act"])
 
+import fantasy_nav as _FN   # owner 11/17 evening: league bar + section tabs ("a lot of scrolling ... I have a ton of sleeper teams")
 TEAM_CSS = r"""
 /* owner 11/9: import a roster from ESPN / Yahoo screenshots (read on-device with tesseract.js) */
 .mimp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
@@ -183,6 +184,19 @@ TEAM_CSS = r"""
 .mimp .hint{margin:0;flex:1 1 220px}
 
 .tm-wrap{max-width:1360px;margin:0 auto;display:grid;gap:14px}
+/* 11/17 evening: the page had two intro cards filling a phone's first screen and 8.2 screens in all. Two small buttons, the league bar
+   once Sleeper is connected (the connect form goes), and the graded team in four tabs. */
+.tm-wrap .quick{display:flex;gap:8px;flex-wrap:wrap}
+.tm-wrap .quick a{flex:1 1 150px;text-decoration:none}
+.tm-wrap #sleeperBox.conn > h2,.tm-wrap #sleeperBox.conn .connect,.tm-wrap #sleeperBox .leagues{display:none}
+.tm-wrap #sleeperBox .lgbar{margin:12px 14px}
+.tm-wrap details.howd{flex-basis:100%;color:var(--mute);font-size:13px}
+.tm-wrap details.howd > summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--mute);text-decoration:underline}
+.tm-wrap #out{display:grid;gap:14px;min-width:0}
+.tm-wrap #out[hidden]{display:none}
+.tm-wrap #out > [data-tab]{display:grid;gap:14px;min-width:0}
+.tm-wrap #out .fxtabs{margin:0}
+body:has(#tmTabs) .top .nav{position:static}   /* the page-links row scrolls away here; the section tabs are the row that stays */
 .sscta{display:flex;align-items:center;gap:4px 14px;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 20px;margin:0 0 12px;position:relative}.sscta::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 2px 2px 0;background:var(--red)}.sscta b{font-family:var(--brand);font-style:italic;font-weight:800;font-size:22px;letter-spacing:-.01em;flex-basis:100%}.sscta span{color:var(--mute);font-size:14px;line-height:1.45;flex:1 1 260px}.sscta i{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--red);white-space:nowrap}
 .tm-wrap .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .tm-wrap h2{font-family:var(--display);font-weight:700;letter-spacing:.01em;text-transform:none;font-size:18px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -248,6 +262,7 @@ TEAM_CSS = r"""
 .waiv ul{list-style:none;margin:0;padding:0}
 .waiv li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 14px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
 .waiv li b{font-weight:600} .waiv li span{display:block;color:var(--mute);font-size:11.5px}
+.waiv li span.bt{display:inline-block;vertical-align:middle;margin-left:6px}   /* 11/17: the matchup chip was stretched across the row by the rule above */
 .waiv li .pts{font-family:var(--display);font-size:16px;text-align:right}
 .waiv li .pts small{display:block;font-family:var(--body);font-size:10.5px;color:var(--good)}
 .note{padding:8px 14px;color:var(--mute);font-size:12px;line-height:1.5;border-top:1px solid var(--line);margin:0}
@@ -428,8 +443,14 @@ TEAM_JS = r"""
   var msg = $('#msg'), out = $('#out');
   function say(t, err){ msg.hidden = !t; msg.textContent = t || ''; msg.classList.toggle('err', !!err); }
 
-  $('#go').addEventListener('click', connect); $('#user').addEventListener('keydown', function(e){ if(e.key === 'Enter') connect(); });
-  function connect(){
+  $('#go').addEventListener('click', function(){ connect(true); }); $('#user').addEventListener('keydown', function(e){ if(e.key === 'Enter') connect(true); });
+  // 11/17 evening. One row of tabs for the graded team; the league bar and its sheet replace the wall of league buttons.
+  var TABS = bsTabs.mount($('#tmTabs'), [{id: 'lineup', label: 'Lineup'}, {id: 'roster', label: 'Roster'}, {id: 'league', label: 'League'}, {id: 'waivers', label: 'Waivers'}], {root: out, key: 'bs_tab_team'});
+  var QUIET = false;   // true while the page loads a league by itself (a saved username, a league picked from the sheet): no jump down the page
+  bsLg.mount({bar: $('#lgbar'), get: get,
+    onPick: function(l){ QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); },
+    onChange: function(){ bsLg.clear(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
+  function connect(byHand){ QUIET = !byHand;
     var u = $('#user').value.trim().replace(/^@/, ''); if(!u) return;
     $('#go').disabled = true; say('Looking up ' + u + ' on Sleeper…'); out.hidden = true; $('#leagues').innerHTML = ''; $('#leagues').classList.remove('picked');
     get('state/nfl').then(function(st){ state.season = String(st.season || new Date().getFullYear()); state.week = st.week || WEEK; return get('user/' + encodeURIComponent(u)); })
@@ -438,6 +459,7 @@ TEAM_JS = r"""
     .then(function(ls){ ls = (ls || []).filter(function(l){ return l.status !== 'pre_draft'; }); state.leagues = ls;
       if(!ls.length){ say('No ' + state.season + ' NFL leagues on that account.', true); return; }
       say(''); var box = $('#leagues'); var last = ''; try{ last = localStorage.getItem('bs_sleeper_league') || ''; }catch(e){}
+      $('#sleeperBox').classList.add('conn'); bsLg.set(state.user, u, ls, null);
       ls.forEach(function(l){ var b = document.createElement('button'); b.type = 'button'; b.className = 'lgo'; b.innerHTML = esc(l.name) + '<small>' + l.total_rosters + ' teams · ' + esc(scoringLabel(l.scoring_settings)) + '</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
       if(ls.length > 1){ var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'lgsw'; sw.textContent = 'Switch league (' + ls.length + ') ▾'; sw.addEventListener('click', function(){ box.classList.remove('picked'); }); box.appendChild(sw); }
       var auto = ls.filter(function(l){ return l.league_id === last; })[0] || ls[0];
@@ -446,13 +468,13 @@ TEAM_JS = r"""
     .then(function(){ $('#go').disabled = false; });
   }
   function pick(l, btn){
-    state.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){}
+    state.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){} bsLg.current(l);
     Array.prototype.forEach.call($('#leagues').children, function(b){ b.classList.toggle('on', b === btn); });
     $('#leagues').classList.add('picked');
     say('Loading ' + l.name + '…'); out.hidden = true;
     var wk = Math.min(Math.max(state.week || WEEK, 1), 18);
     Promise.all([playersMap(), get('league/' + l.league_id + '/rosters'), get('league/' + l.league_id + '/users'), get('league/' + l.league_id + '/matchups/' + wk).catch(function(){ return []; }), get('players/nfl/trending/add?lookback_hours=24&limit=40').catch(function(){ return []; })])
-    .then(function(r){ render(l, r[0], r[1], r[2], r[3], r[4], wk); say(''); })
+    .then(function(r){ bsLg.note(l.league_id, r[1]); render(l, r[0], r[1], r[2], r[3], r[4], wk); say(''); })
     .catch(function(e){ say('Sleeper did not answer for that league. Try again in a moment.', true); console.error(e); });
   }
 
@@ -596,7 +618,9 @@ TEAM_JS = r"""
       } else { $('#leaguePanel').hidden = true; }
     } catch(e){ console.warn('league block', e); }
     $('#leagueH').innerHTML = '<b>' + esc(l.name) + '</b> <span class="r">' + esc(scoringLabel(s)) + ' · Week ' + wk + (wk !== WEEK ? ' (model is on Week ' + WEEK + ')' : '') + (manual ? ' · built by hand' : '') + '</span>';
-    out.hidden = false; out.scrollIntoView({block: 'start', behavior: 'smooth'});
+    // a hand-built team has no league to rank: that tab goes, and the reader is not left on it
+    var lt = $('#tmTabs [data-t="league"]'); if(lt){ lt.hidden = $('#leaguePanel').hidden; if(lt.hidden && TABS.cur() === 'league') TABS.show('lineup', true); }
+    out.hidden = false; if(!QUIET) out.scrollIntoView({block: 'start', behavior: 'smooth'}); QUIET = false;
   }
   function sosTag(mp){ var d = mp && mp.sos; if(!d || Math.abs(d) < 0.3) return ''; return '<span class="bt sos ' + (d > 0 ? 'up' : 'dn') + '" title="Strength of schedule: the defenses this player has faced so far made his season numbers look ' + (d > 0 ? 'worse' : 'better') + ' than they are; projection ' + (d > 0 ? 'raised' : 'lowered') + ' ' + Math.abs(d).toFixed(1) + ' pts for this matchup">SOS ' + (d > 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + '</span>'; }
   function snapTag(mp){ return mp && mp.sd ? '<span class="bt sd" title="Snap share down: ' + mp.sd[0] + '% of snaps over the last 2 games vs ' + mp.sd[1] + '% for the season; projection trimmed ' + mp.sd[2] + '%">snaps ↓' + mp.sd[2] + '%</span>' : ''; }
@@ -736,13 +760,15 @@ TEAM_JS = r"""
   chips(); renderTeams();
   try{ if(localStorage.getItem('bs_team_mode') === 'manual' && !new URLSearchParams(location.search).get('u')) $('.mode button[data-m="manual"]').click(); }catch(e){}
   try{ var saved = localStorage.getItem('bs_sleeper_user'); if(saved){ $('#user').value = saved; } }catch(e){}
-  var q = new URLSearchParams(location.search).get('u'); if(q){ $('#user').value = q; connect(); }
+  var q = new URLSearchParams(location.search).get('u'); if(q){ $('#user').value = q; connect(true); }
+  // 11/17 evening: a username already on this device grades the last league by itself - no typing, no button - unless the reader
+  // works from a hand-built team.
+  else if($('#user').value && !$('#sleeperBox').hidden) connect(false);
 })();
 """
 
 body = f'''<div class="tm-wrap">
- <a class="sscta" href="/team/compare/"><b>Who should I start?</b><span>Stuck on your flex? Compare two or more players - projection, matchup, recent games, risks - and get the model's pick with the reasons.</span><i>Open</i></a>
- <a class="sscta" href="/trade/#league"><b>Buy or sell?</b><span>Your record and your odds of making the playoffs decide it. Import a Sleeper league and see who to trade for if you are in the hunt, and which veterans to sell - and to whom - if you are not.</span><i>Open</i></a>
+ <div class="quick"><a class="bsbtn sec" href="/team/compare/">Who should I start?</a><a class="bsbtn sec" href="/trade/#league">Buy or sell?</a></div>
  <section class="panel">
   <div class="mode"><button type="button" class="on" data-m="sleeper">From Sleeper</button><button type="button" data-m="manual">Build it by hand</button></div>
   <div id="sleeperBox">
@@ -751,8 +777,9 @@ body = f'''<div class="tm-wrap">
    <label for="user">Sleeper username</label>
    <input id="user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your Sleeper username">
    <button type="button" id="go">Grade my team</button>
-   <p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p>
+   <details class="howd"><summary>How this works</summary><p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p></details>
   </div>
+  <div class="lgbar" id="lgbar" hidden></div>
   <div class="leagues" id="leagues"></div>
   </div>
   <div id="manualBox" hidden>
@@ -777,24 +804,30 @@ body = f'''<div class="tm-wrap">
   <div class="msg" id="msg" hidden></div>
  </section>
  <div id="out" hidden>
-  <section class="panel" style="margin-bottom:14px">
+  <div id="tmTabs"></div>
+  <div data-tab="lineup">
+  <section class="panel">
    <h2 id="leagueH"></h2>
    <div class="tiles" id="tiles"></div>
    <div class="oppbar" id="oppbar"></div>
    <div class="meter" id="meter" hidden></div>
    <div class="ins" id="ins" hidden></div>
   </section>
-  <section class="panel" style="margin-bottom:14px">
+  <section class="panel">
    <h2 id="lineupH"><b>Lineup check</b></h2>
    <div class="fdm" id="fdm" hidden></div>
    <ul class="lineup" id="lineup"></ul>
    <p class="note">Green bar = a player the model would start who is not in your lineup right now. Points are the model's projection under this league's scoring. Players Sleeper lists as Out, IR or Doubtful, players on bye, and players the model has inactive are scored 0 and never recommended. Sleeper has no public way to set a lineup from here, so make the swaps in the Sleeper app.</p>
   </section>
-  <section class="panel" style="margin-bottom:14px">
+  </div>
+  <div data-tab="roster">
+  <section class="panel">
    <h2><b>Your roster</b> <span class="r">highlighted = model starter</span></h2>
    <ul class="roster" id="roster"></ul>
   </section>
-  <section class="panel" style="margin-bottom:14px" id="leaguePanel" hidden>
+  </div>
+  <div data-tab="league">
+  <section class="panel" id="leaguePanel" hidden>
    <h2 id="prH"><b>The league, by the model</b> <span class="r">every roster's best lineup under this league's scoring · this week's matchups with a win chance</span><button type="button" class="share" id="prShare" title="Share this as an image to the league chat">Share to the chat</button></h2>
    <div class="prwrap" id="prwrap">
     <div class="prcard" id="prcard">
@@ -806,20 +839,24 @@ body = f'''<div class="tm-wrap">
    </div>
    <p class="note">Power rankings = each team's best possible lineup this week by the model (bye and out players score 0). Win chance assumes about 5 points of noise per starter. Drop the image in the league chat and let them argue.</p>
   </section>
+  </div>
+  <div data-tab="waivers">
   <section class="panel">
    <h2 id="waivH"><b>Waiver wire</b></h2>
    <div class="waiv" id="waiv"></div>
    <p class="note" id="waivNote"></p>
   </section>
+  </div>
  </div>
 </div>
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
+<script>{_FN.JS}</script>
 <script>{TEAM_JS}</script>'''
 
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep Fantasy</title>")
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>Fantasy</b></h1>")
-        .replace("</style>", TEAM_CSS + "\n</style>", 1)
+        .replace("</style>", TEAM_CSS + _FN.CSS + "\n</style>", 1)
         .replace("{{DESC}}", f"Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. {n_act} players projected for Week {WEEK}. Built {stamp} CT.")
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/RTTqiN3sdMHGgojimQ9hZv" class="tool">Matchup Boards →</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a>').replace("{{CARDS}}", body)
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ""))
