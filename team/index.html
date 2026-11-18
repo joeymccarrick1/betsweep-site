@@ -71,6 +71,12 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .allg .allgm p.r{display:block;color:var(--mute);font-size:12px}
 .allg .allgm span{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12.5px;white-space:nowrap}
 .allg .allgm span b{color:var(--red)} .allg .allgm .bt{font-style:normal;margin:0}
+.allg .allgm summary i{font-style:normal;font-weight:700;color:var(--red);margin-left:6px}
+.allg .allgk .pk{padding:2px 0 10px} .allg .allgk .pk > b{font-size:14.5px} .allg .allgk .pk > small{display:inline;font-size:12px}
+.allg .allgk .pk p{margin:6px 0 0}
+.allg .allgo{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;font:inherit;font-size:12.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;cursor:pointer;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.allg .allgo b{color:var(--good);font-weight:700} .allg .allgk .more{border:0;padding:0 4px;color:var(--mute)}
+.allg .allgo:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .allg .allgh:focus-visible,.allg .allgr:focus-visible,.allg .allgm summary:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
 @media (prefers-reduced-motion:reduce){ .allg .chev{transition:none} }
 .tm-wrap details.howd{flex-basis:100%;color:var(--mute);font-size:13px}
@@ -251,7 +257,7 @@ html.lgopen{overflow:hidden}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 8:31 AM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 9:35 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -342,7 +348,7 @@ html.lgopen{overflow:hidden}
   </div>
  </div>
 </div>
-<script src="/team/data-cdfc1dbe800d.js"></script>
+<script src="/team/data-b217ba3f04b2.js"></script>
 <script>
 (function(){
   function $(s, r){ return (r || document).querySelector(s); }
@@ -594,7 +600,7 @@ html.lgopen{overflow:hidden}
   // One rosters call per league (the league bar already makes it) is enough to read a lineup: Sleeper's `starters` is the lineup as it is
   // set right now. A league NEEDS YOU when a starter cannot play (out, IR, bye), a lineup spot is empty, or the model's best lineup from
   // the same roster is worth a point or more over the one that is set. Best-ball leagues set themselves and are never listed.
-  var GAIN_MIN = 1.0;
+  var GAIN_MIN = 1.0, PICK_MIN = 2.0;   // a pickup has to beat the starter by two points to be worth a claim
   function lineupCheck(l, pm, rosters){
     var me = state.user && state.user.user_id, mine = (rosters || []).filter(function(r){ return r.owner_id === me || (r.co_owners || []).indexOf(me) >= 0; })[0];
     if(!mine) return null;
@@ -612,7 +618,16 @@ html.lgopen{overflow:hidden}
     var open = cur.length ? Math.max(0, nSlot - cur.length) : 0;
     var gain = cur.length ? Math.max(0, bestTotal - curTotal) : 0, swaps = cur.length ? Object.keys(best).filter(function(i){ return cur.indexOf(best[i].id) < 0; }).length : 0;
     var need = (bb || !cur.length) ? 0 : (dead.length || open) ? 2 : gain >= GAIN_MIN ? 1 : 0;
-    return { txt: bb ? 'Best ball' : !cur.length ? 'No lineup' : need === 2 ? 'Fix ' + (dead.length + open) : need === 1 ? '+' + f1(gain) : 'Set',
+    // free agents who would START this week: the Waivers tab's own comparison (his points against the weakest starter the model would
+    // play at that spot), kept when it is worth PICK_MIN or more. A spot with nobody to start counts as zero.
+    var fa = [];
+    if(!bb){ var worst = {}, owned = {}; Object.keys(best).forEach(function(i){ var p = best[i]; if(!(p.pos in worst) || p.pts < worst[p.pos]) worst[p.pos] = p.pts; });
+      slots.forEach(function(sl){ if(['QB','RB','WR','TE','K','DEF'].indexOf(sl) >= 0 && !(sl in worst)) worst[sl] = 0; });
+      (rosters || []).forEach(function(r){ (r.players || []).forEach(function(id){ owned[id] = 1; }); });
+      Object.keys(pm).forEach(function(id){ if(owned[id]) return; var sp = pm[id], mp = modelFor(sp); if(!mp || !mp.act || mp.o === 'BYE' || badInjury(sp) || !(mp.p in worst)) return;
+        var pts = ptsFor(mp, s), up = pts - worst[mp.p]; if(pts > 1 && up >= PICK_MIN) fa.push([sp.p === 'DEF' ? sp.n + ' D/ST' : sp.n, mp.p, Math.round(up * 10) / 10, mp.t || '', mp.o || '']); });
+      fa.sort(function(a, b){ return b[2] - a[2]; }); fa = fa.slice(0, 3); }
+    return { fa: fa, txt: bb ? 'Best ball' : !cur.length ? 'No lineup' : need === 2 ? 'Fix ' + (dead.length + open) : need === 1 ? '+' + f1(gain) : 'Set',
       cls: need === 2 ? 'sell' : (need === 0 && !bb && cur.length) ? 'buy' : '', title: 'Lineup check, Week ' + (state.week || WEEK),
       ord: need * 1000 + Math.min(999, Math.round(gain * 10)), need: need, dead: dead, open: open, gain: Math.round(gain * 10) / 10, swaps: swaps, q: q, bb: bb, none: !cur.length, st: st };
   }
@@ -649,17 +664,25 @@ html.lgopen{overflow:hidden}
     var top = Object.keys(cnt).filter(function(k){ return cnt[k].n >= 2; }).sort(function(a, b){ return cnt[b].n - cnt[a].n || (a < b ? -1 : 1); }).slice(0, 8);
     var most = (!busy && top.length) ? '<details class="allgm"><summary>Who you start the most</summary><p>' + top.map(function(k){ var f = cnt[k].f;
         return '<span>' + esc(k) + ' <b>' + cnt[k].n + '</b>' + (f === 'q' ? '<i class="bt q">Q</i>' : f === 'bye' ? '<i class="bt bye">BYE</i>' : f === 'out' ? '<i class="bt out">OUT</i>' : '') + '</span>'; }).join('') + '</p><p class="r">How many of your lineups each player is in this week.</p></details>' : '';
+    var pk = {}; ls.forEach(function(l){ var c = S.chip[l.league_id]; if(!c || !c.fa) return; c.fa.forEach(function(f){ var k = f[0] + '|' + f[1], o = pk[k] || (pk[k] = {n: f[0], pos: f[1], tm: f[3], opp: f[4], ls: [], sum: 0}); o.ls.push([l, f[2]]); o.sum += f[2]; }); });
+    var plist = Object.keys(pk).map(function(k){ return pk[k]; }).sort(function(a, b){ return b.ls.length - a.ls.length || b.sum - a.sum || (a.n < b.n ? -1 : 1); }).slice(0, 5);
+    var picks = (!busy && plist.length) ? '<details class="allgm allgk"><summary>Free agents who would start for you <i>' + plist.length + '</i></summary>' + plist.map(function(o){
+        o.ls.sort(function(a, b){ return b[1] - a[1]; });
+        return '<div class="pk"><b>' + esc(o.n) + '</b> <small>' + esc(o.pos) + (o.tm ? ' · ' + esc(o.tm) + (o.opp ? ' vs ' + esc(o.opp) : '') : '') + ' · free in ' + o.ls.length + (o.ls.length === 1 ? ' league' : ' leagues') + '</small><p>'
+          + o.ls.slice(0, 3).map(function(x){ return '<button type="button" class="allgo" data-id="' + esc(x[0].league_id) + '" data-go="waivers">' + esc(x[0].name) + ' <b>+' + f1(x[1]) + '</b></button>'; }).join('')
+          + (o.ls.length > 3 ? '<span class="more">and ' + (o.ls.length - 3) + ' more</span>' : '') + '</p></div>'; }).join('')
+      + '<p class="r">Points over the starter the model would play at that spot this week. A tap opens that league\'s waiver list.</p></details>' : '';
     var head = busy ? 'Checking your ' + total + ' lineups…' : need.length ? need.length + ' of ' + live + ' lineups need you' : 'All ' + live + ' lineups are set';
     var sub = busy ? done + ' of ' + total + ' read' : (need.length && !isOpen) ? esc(need[0][0].name) + ': ' + why(need[0][1]) + (need.length > 1 ? ' · and ' + (need.length - 1) + ' more' : '')
-      : 'Week ' + (state.week || WEEK) + ' · every league on this account';
+      : 'Week ' + (state.week || WEEK) + ((!need.length && !isOpen && plist.length) ? ' · ' + plist.length + ' free agent' + (plist.length === 1 ? '' : 's') + ' who would start for you' : ' · every league on this account');
     box.hidden = false; box.className = 'allg' + (busy ? ' busy' : need.length ? ' need' : ' ok') + (isOpen ? ' open' : '');
     box.innerHTML = '<button type="button" class="allgh" aria-expanded="' + (isOpen ? 'true' : 'false') + '"><span class="tx"><b>' + head + '</b><small>' + sub + '</small></span><span class="chev" aria-hidden="true">▾</span></button>'
-      + '<div class="allgb"' + (isOpen ? '' : ' hidden') + '>' + (rows ? '<ul>' + rows + '</ul>' : '') + (foot.length ? '<p class="allgf">' + foot.join(' ') + '</p>' : '') + most + '</div>'; }
+      + '<div class="allgb"' + (isOpen ? '' : ' hidden') + '>' + (rows ? '<ul>' + rows + '</ul>' : '') + (foot.length ? '<p class="allgf">' + foot.join(' ') + '</p>' : '') + picks + most + '</div>'; }
   document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return;
     var h = t.closest('#allg .allgh'); if(h){ var box = $('#allg'), now = !box.classList.contains('open'); try{ sessionStorage.setItem('bs_allg', now ? '1' : '0'); }catch(e){} allRender(); return; }
-    var r = t.closest('#allg .allgr'); if(!r) return;
-    var l = state.leagues.filter(function(x){ return x.league_id === r.dataset.id; })[0]; if(!l) return;
-    AFTER = function(){ TABS.show('lineup', true); var a = $('#tmTabs'); if(a && a.scrollIntoView) a.scrollIntoView({block: 'start'}); };
+    var r = t.closest('#allg .allgr, #allg .allgo'); if(!r) return;
+    var l = state.leagues.filter(function(x){ return x.league_id === r.dataset.id; })[0]; if(!l) return; var tab = r.dataset.go || 'lineup';
+    AFTER = function(){ TABS.show(tab, true); var a = $('#tmTabs'); if(a && a.scrollIntoView) a.scrollIntoView({block: 'start'}); };
     if(state.league && state.league.league_id === l.league_id && !out.hidden){ var f = AFTER; AFTER = null; f(); return; }
     QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); });
 
