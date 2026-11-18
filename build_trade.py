@@ -512,7 +512,7 @@ JS = r"""
       st.dyn = !!(l.settings && l.settings.type === 2); st.teams = [10,12,14].reduce(function(b,x){ return Math.abs(x-(l.total_rosters||12)) < Math.abs(b-(l.total_rosters||12)) ? x : b; }, 12);
       $('#sf').checked = st.sf; $('#dyn').checked = st.dyn; $('#tep').value = String(st.tep); $('#ppr').value = String(st.ppr); $('#teams').value = String(st.teams);
       if(window.__bsRender) window.__bsRender();   // 11/17 evening: the calculator (its format line, the sides, the verdict) follows the league the moment it is picked
-      Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users')]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; S.sched = undefined; say(''); bsLg.note(l.league_id, S.rosters);
+      Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users'), get('league/'+l.league_id+'/traded_picks').catch(function(){ return null; })]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; S.traded = r[3]; S.sched = undefined; say(''); bsLg.note(l.league_id, S.rosters);
         // owner 11/17 (buy or sell): the weeks left on the league's own schedule, for the playoff odds. Rosters and values show at once; the outlook waits for the schedule.
         var gp = Math.max.apply(null, S.rosters.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
         if(!ws.length){ S.sched = {}; render(); return; }
@@ -532,7 +532,7 @@ JS = r"""
       teams.sort(function(a,b){ return b.tot-a.tot; });
       $('#slFmt').textContent = 'Valued as '+(st.dyn?'dynasty':'redraft')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+l.total_rosters+' teams, from the league\'s own settings. Change it under Calculator if yours differs.';
       $('#slTeams').innerHTML = '<div class="tgl"><button type="button" class="addbtn" data-tg="me">'+(OPEN.me?'Collapse':'Expand')+' my team</button><button type="button" class="addbtn" data-tg="opp">'+(OPEN.opp?'Collapse':'Expand')+' all opponents</button></div>' + teams.map(function(t, i){ var open = t.me ? OPEN.me : (OPEN[t.r.roster_id] != null ? OPEN[t.r.roster_id] : OPEN.opp); return '<div class="team'+(t.me?' me':'')+(open?'':' shut')+'" data-rid="'+t.r.roster_id+'" data-me="'+(t.me?1:0)+'"><h3 role="button" tabindex="0"><span><i class="cv">'+(open?'▾':'▸')+'</i> '+(i+1)+'. '+esc(t.name)+(t.me?' <small>(you)</small>':'')+' <small>'+esc(t.rec)+'</small></span><b>'+t.tot.toLocaleString()+'</b></h3><div class="pb">'+['QB','RB','WR','TE'].map(function(k){ return '<span>'+k+' <b>'+t.byp[k].toLocaleString()+'</b> ('+t.cnt[k]+')</span>'; }).join('')+'</div><ul>'+t.ps.map(function(x){ var mp = x.mp; return '<li><span class="pos '+(mp?mp.pos:(x.sp.p||''))+'">'+(mp?mp.pos:x.sp.p)+'</span><span class="nm">'+esc(mp?mp.n:x.sp.n)+(mp?'':' <small>not valued</small>')+'</span>'+(mp? '<button class="addbtn" data-n="'+esc(mp.n)+'" data-side="'+(t.me?'A':'B')+'">'+(t.me?'+A':'+B')+'</button>' : '')+'<span class="vv">'+(mp? mp.v.toLocaleString() : '—')+'</span></li>'; }).join('')+'</ul></div>'; }).join('');
-      $('#slOutlook').innerHTML = S.sched === undefined ? '<div class="olk"><p class="none">Reading your league\'s schedule for the playoff odds...</p></div>' : bsOutlook.html(l, teams, S.sched, PICKS);
+      $('#slOutlook').innerHTML = S.sched === undefined ? '<div class="olk"><p class="none">Reading your league\'s schedule for the playoff odds...</p></div>' : bsOutlook.html(l, teams, S.sched, PICKS, S.traded);   // S.traded: who holds which rookie picks (11/17 evening)
       // trade ideas: my surplus position (most value above the league average at that position) for their need, 1-for-1 within 12%
       var mine = teams.filter(function(t){ return t.me; })[0]; var ideas = [];
       if (mine){ var avg = {}; ['QB','RB','WR','TE'].forEach(function(k){ avg[k] = teams.reduce(function(s,t){ return s+t.byp[k]; },0)/teams.length; });
@@ -573,7 +573,12 @@ JS = r"""
 """
 
 _mw = round(MKT_W * 100)
-_MK_NOTE = (f"The value shown is {_mw}% the market and {100 - _mw}% ours. The market is FantasyCalc's values, which come from real trades, for the matching format (redraft or dynasty, 1QB or superflex), each on the 0-9,999 scale. We lean on the market until our own numbers beat it on a weekly check; until 11/17 the mix was the other way round. The chip on each player shows how far our number sits from the market's - that gap is where the model disagrees with the crowd, and it is the part worth reading."
+# the weekly check the note points to (research/value_board.py, run on Tuesdays): how often each side ranked the following weeks better
+try:
+    _vb = json.load(open(os.path.join(HERE, "research", "value_board.json"))); _vn, _vo = int(_vb["of"]), int(_vb["ahead"])
+    _VB_NOTE = (f" So far the market has ranked the weeks that followed better in {_vn - _vo} of {_vn} weekly builds (through Week {_vb['through']})." if _vn else "")
+except Exception as _e: _VB_NOTE = ""; print("note: no value scoreboard on file (research/value_board.json):", _e)
+_MK_NOTE = (f"The value shown is {_mw}% the market and {100 - _mw}% ours. The market is FantasyCalc's values, which come from real trades, for the matching format (redraft or dynasty, 1QB or superflex), each on the 0-9,999 scale. We lean on the market until our own numbers beat it on a weekly check; until 11/17 the mix was the other way round.{_VB_NOTE} The chip on each player shows how far our number sits from the market's - that gap is where the model disagrees with the crowd, and it is the part worth reading."
             if n_mkt else "Market values were not available for this build, so the numbers shown are ours alone; when the market feed is on, the shown value is mostly the market's and each player carries a 'vs market' chip.")
 
 body = f'''<div class="tc">

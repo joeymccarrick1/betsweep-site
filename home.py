@@ -579,6 +579,9 @@ def _in_of(OUT): return os.path.join(os.path.dirname(os.path.abspath(OUT)), "in"
 def promo_card(p, kicker="Promoted", hero=False):
     """one promoted-bet card (the home page's Promoted bets / Side action grid, and the Daily Sweep hero with hero=True)"""
     many = len(p["legs"]) >= 7
+    # owner 11/17: an open slip that leans on the same player as another open slip says so (sweep.shared sets p["shares"] in build_promo)
+    _sn = SW.share_note(p)
+    _shn = f'<p class="pshare" style="margin:8px 0 0;padding:6px 0 6px 10px;border-left:3px solid var(--red);font-size:12.5px;line-height:1.45;color:var(--mute)">{E(_sn)}</p>' if _sn else ""
     legs = ""
     for l in p["legs"]:
         who = l["who"]; ml = l["disp"][len(who):].strip(" ·") if l["disp"].startswith(who) else l["disp"]
@@ -641,9 +644,9 @@ def promo_card(p, kicker="Promoted", hero=False):
                 + f'<button type="button" class="swshare" data-url="{E(_su)}" data-title="{E("The Daily Sweep: " + title)}">Share</button>')
         gfx = f'<p class="swgfx">Graphics: <a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>4:5</a> · <a href="{E(p["img"]["square"])}" download>Square</a> · <a href="{E(p["img"]["story"])}" download>Story</a> · <a href="{E(share)}" target="_blank" rel="noopener">Post on X</a></p>'
         return (f'<article class="promo sweep" data-keep="1" data-day="{E(p.get("day") or "")}" data-res="{kres or ""}" data-odds="{int(p["fd"]) if p.get("fd") else ""}" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>{E(kicker)}</small>{st}</div><h3>{E(title)}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs{(" · " + E(gl_)) if gl_ and gl_ != title else ""}</div>'
-                f'<ul class="pl{" many" if many else ""}">{legs}</ul><div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div>{gfx}</article>')
+                f'<ul class="pl{" many" if many else ""}">{legs}</ul>{_shn}<div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div>{gfx}</article>')
     return (f'<article class="promo" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>{E(kicker)}</small>{st}</div><h3>{E(p["title"])}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs</div>'
-            f'<ul class="pl{" many" if many else ""}">{legs}</ul><div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div></article>')
+            f'<ul class="pl{" many" if many else ""}">{legs}</ul>{_shn}<div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div></article>')
 
 
 def promos_block(OUT, sweep_exists=False):

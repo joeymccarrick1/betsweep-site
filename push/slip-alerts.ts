@@ -573,11 +573,43 @@ export async function run(now = Date.now()) {
       }
     }
   }
+  // owner 11/17 ("all four"): a slip just posted -> one push to every device that asked for it. Its own try: a missing column or an
+  // unreachable promo file must not cost the run its other alerts.
+  let npost = 0;
+  try { npost = await promoUp(W, now, gone); } catch (e) { console.warn("promo up", String(e)); }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, moves: nmv, risk: nrisk, promoAlerts: npromo, inactives: ninact, removed: gone.length, statuses: ST.size, frozeBeat };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, moves: nmv, risk: nrisk, promoAlerts: npromo, posted: npost, inactives: ninact, removed: gone.length, statuses: ST.size, frozeBeat };
 }
 
 // owner 11/5: marks that are not per user (Discord posts, model-wide sends) live in bs_marks (key text primary key; owner/betsweep-11-5.sql)
+// "The Daily Sweep is up" (owner 11/17). One push per subscriber per posted slip: push_sent player = __promoup__w<week>-<slot>, status
+// POSTED. A slip counts as just posted when it is LIVE on /b/promos.json, has no result, its first kickoff is still ahead, and its
+// Posted date is today or yesterday in Central time - so the first run after this is deployed, and the first run after someone
+// switches the alert on, do not replay the week. Only devices with push_subs.promo = true are asked (sql/push_promo.sql adds the
+// column, default false); until that column exists the select throws and the caller's try leaves it at zero.
+export async function promoUp(W: number, now: number, gone: string[]): Promise<number> {
+  const promos: any[] = await (await fetch(`${SITE}/b/promos.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => []);
+  if (!Array.isArray(promos) || !promos.length) return 0;
+  const ct = (ms: number) => { const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(ms)); const o: Record<string, string> = {}; for (const x of p) o[x.type] = x.value; return `${o.year}-${o.month}-${o.day}`; };
+  const days = [ct(now), ct(now - 24 * 3600e3)];
+  const fresh = promos.filter((p) => String(p.status || "LIVE").toUpperCase() === "LIVE" && p.week === W && !String(p.result || "").trim() && Number(p.first_ko || 0) > now && days.includes(String(p.posted || "").slice(0, 10)));
+  if (!fresh.length) return 0;
+  const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth&promo=is.true");
+  if (!subs.length) return 0;
+  const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.POSTED`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
+  let n = 0;
+  for (const pr of fresh) {
+    const code = `w${pr.week}-${pr.slot}`, key = `__promoup__${code}`;
+    const legs = (pr.legs || []).map((l: any) => String(l.disp || l.who || "")).filter(Boolean);
+    const price = Number(pr.fd) ? ` (${Number(pr.fd) > 0 ? "+" : ""}${Math.round(Number(pr.fd))})` : "";
+    const msg = { title: ((pr.sweep ? "The Daily Sweep is up" : `New slip: ${pr.title}`) + price).slice(0, 90), body: (legs.slice(0, 4).join(" \u00b7 ") + (legs.length > 4 ? ` +${legs.length - 4} more` : "")).slice(0, 300), url: `/b/${code}`, tag: `bs-promoup-${code}` };
+    const told = new Set<string>();
+    for (const s of subs) { if (done.has(`${s.user_id}|${key}`)) continue;
+      try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) { n++; told.add(String(s.user_id)); } } catch (e) { console.warn("push", String(e)); } }
+    for (const uid of told) await mark(uid, W, key, "POSTED");
+  }
+  return n;
+}
 export async function keysDone(prefix: string): Promise<Set<string>> {
   try { const rows: any[] = await rest(`bs_marks?select=key&key=like.${encodeURIComponent(prefix + "%")}`); return new Set(rows.map((r) => r.key)); } catch { return new Set(); }
 }

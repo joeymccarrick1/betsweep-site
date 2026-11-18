@@ -1702,3 +1702,57 @@ values in another tool is forbidden by its terms - so its numbers are not used. 
 daily by the sheet's script into 'AUTO - Market Values'; 419 players, stamped 11/17 5:53). Its share went from 30% to 70%; the page
 says so in three places. Other market sources with clear permission, if a second one is wanted: Dynasty Dealer's public API (free for
 commercial use with a visible "Values by Dynasty Dealer" link; Sleeper ids; daily) and DynastyProcess's open data on GitHub (GPL-3).
+
+## 11/17, 8 PM CT: owner "I want all four" - overlap check, posted-slip alert, pick ownership, the values scoreboard, game scripts recovered
+
+**Values scoreboard (research/value_board.py, value_board.json).** "Blend into ours until we can beat it" needs a check that says when.
+Nothing new had to be saved: every Tuesday's Trade calculator is in the site's history, and the page puts both numbers on each player
+(`ours`, `mv`). The script opens each week's first build as it was published (Playwright, the old page + its data file), reads both in
+redraft 1QB PPR, and compares them with PPR points per game from that week on (nflverse weekly stats). Three builds so far:
+| built before | graded on | ours | market | 70% ours | 70% market |
+| Week 8 | Weeks 8-10 | .427 | .442 | .438 | .446 |
+| Week 9 | Weeks 9-10 | .467 | .495 | .478 | .486 |
+| Week 10 | Week 10 | .387 | .446 | .416 | .429 |
+(pooled Spearman rank correlation with what followed, players either side had as startable: QB 24, RB 48, WR 60, TE 24.)
+- The market ranked the following weeks better in 3 of 3 builds. By position: the market at WR in all three (.47 / .59 / .61 against
+  .43 / .49 / .39) and at QB in two; ours at RB in two and at TE in all three. **Our receiver values are where the market beats us.**
+- Disagreements of 1,500+ (56 players): by place among their position afterwards, 23 for ours, 21 for the market - a coin flip. The
+  first version of this count said 38-18 for ours; it turned a player's finish into a value off the HIGHER of the two numbers, which
+  leans toward whichever side is higher on a player. The place count stands.
+- Where the two disagreed and the market's own number then moved, it moved toward ours 30 of 46 times in redraft and 20 of 33 in
+  dynasty. Suggestive (z about 2.4 against a coin), not proof.
+- Working rule for build_trade.MKT_W (0.7 now): ours gets its share back when it out-ranks the market, pooled, in three straight
+  weekly builds. Run `python3 research/value_board.py --write` on Tuesdays once the week's stats are in; the Trade calculator's note
+  prints the tally from the json.
+
+**Overlap check on posted slips (sweep.shared / share_note, tests/promo_overlap.py 14).** Two open promos (no result, not hidden) that
+carry a leg on the same player - or the same game line / the same either-or pair word for word - are one bet posted twice.
+build_promo prints `promo check warning - overlap: slots A and B (...) share X` and saves `shares` on each promo; the home page's cards
+(home.promo_card) say "Also riding X: <other slip>. If that misses, both slips lose - play one, or size the two as one bet."
+/b/promos.json carries `shares` too. An either-or TD leg does not overlap with a plain leg on one of its two players. In chat: the second
+slip for a stand-alone game is built for the other script, with no player in common with the first.
+
+**"The Daily Sweep is up" (push/slip-alerts.ts promoUp, sql/push_promo.sql, tests/promo_up.py 16) - BUILT, OFF, two owner steps.**
+One push per posted slip to the devices with push_subs.promo = true: LIVE, no result, first kickoff ahead, Posted today or yesterday
+(Central); push_sent `__promoup__w<week>-<slot>` / POSTED remembers who was told. /b/promos.json now carries fd, first_ko, result,
+posted. The switch on My BetSweep > Slip alerts is behind account.PROMO_ALERTS = False. To turn it on: (1) the owner runs
+sql/push_promo.sql (one `alter table ... add column if not exists promo boolean not null default false`, no secret), (2) he redeploys
+the slip-alerts function from push/slip-alerts.ts, (3) a session sets PROMO_ALERTS = True and publishes. The test runs the function's
+own text under node with the database and push service stubbed (tsc reports the same 21 Deno-only messages as before, no new ones).
+
+**Who holds which rookie picks (fantasy_outlook.ownPicks; tests/trade_outlook.py 43).** league/<id>/traded_picks lists only the picks
+that changed hands; every other pick is with its own roster. Next two seasons, rounds 1-3 (what the page prices); a first is early /
+mid / late by where its original team is tracking to finish (t.er) for next year and mid for the year after. Dynasty only (the page
+prices picks only there). The card lists "Your picks", pays for a target only with a pick the reader holds ("your 2028 1st", "the 2027
+2nd you hold from Team 4") and asks a buyer only for a pick he holds; Load puts the priced asset on the calculator. No pick list from
+Sleeper = the card says nothing about who holds what.
+
+**Game scripts recovered (research/freeze_scripts.py -> research/scripts_history.json).** The model's read of each game at the last
+build before its kickoff, from the site's history: Weeks 8, 9, 10 (14 + 15 + 14 games; the last pre-kickoff build was a median 45 to
+112 minutes ahead). Weeks 6-7 had no builder data file in the history. Weekly snap shares never needed saving: in/snap_counts_2026.csv
+(nflverse) holds every week.
+- **Losing side, by its own definition** (yardage overs on the team the likeliest ending has losing by 10+), floor legs at -180 or
+  shorter, Weeks 8-10: 58.8% against 70.3% priced on that side (-11.5 points, 318 legs, 189 player-weeks; -3.8 / -16.3 / -15.6 by
+  week); 70.4% against 70.3% on the side it has winning big (311 legs: break-even, each week within a point); 66.5% against 70.3% in
+  games with no big-win ending (325). Every price, not just floors: loser side 46.4 / 56.6, winner side 55.7 / 56.9.
+  A yardage floor is a fair bet on the projected big winner and a bad one on the projected big loser.

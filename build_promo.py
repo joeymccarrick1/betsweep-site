@@ -405,6 +405,8 @@ async def render(promos):
 
 if __name__ == "__main__":
     promos = parse_rows()
+    # owner 11/17: two open slips that lean on the same player are one bet posted twice - say so in the log and on the cards
+    for _ln in SW.shared(promos): print("promo check warning - overlap:", _ln)
     json.dump(promos, open(os.path.join(OUT, "promos.json"), "w"), indent=1)
     for pr in promos:
         unpriced = [l["who"] for l in pr["legs"] if l["p"] is None]

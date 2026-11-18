@@ -147,6 +147,48 @@ def risk_score(leg, bd):
 #   like every failed tag, off the builder and the boards; the player page still shows it. Re-check on Tuesdays (flag_stats prints it).
 TAG_W = {"Soft matchup": 0, "Matchup shifting": 1, "Volatile": 0}
 
+GL_MARKETS = ("spread", "total", "moneyline", "ml")
+def shared(promos):
+    """Posted slips that fail together (owner 11/17: "I want all four" - the overlap check). The slip log's last 16 losses before it:
+    12 on one quarterback's passing night, and both slips posted that Monday needed him. For every pair of open promos (no result yet,
+    not hidden) the players both lean on - a leg of any kind on the same player - and the game lines or either-or pairs both
+    carry word for word. Sets p["shares"] = [{"slot", "title", "who": [...], "lines": [...]}] on every promo (empty when it
+    shares nothing) and returns one line per overlapping pair for the build log. Pure: promos are build_promo's dicts."""
+    import re as _re
+    def split(p):
+        who, lines = {}, set()
+        for l in p.get("legs") or []:
+            mk = str(l.get("market") or "").strip(); w = str(l.get("who") or "").strip()
+            if not w: continue
+            if mk.lower() in GL_MARKETS: lines.add(w); continue
+            # an either-or leg ("A or B" to score) can still hit when one of the two has a quiet night, so it is not a leg the two
+            # slips fail on together - unless both slips carry the very same pair, which then counts like a shared line
+            if _re.search(r"\s+or\s+", w, flags=_re.I): lines.add(w); continue
+            who.setdefault(w, []).append(mk)
+        return who, lines
+    for p in promos: p["shares"] = []
+    live = [p for p in promos if not str(p.get("result") or "").strip() and str(p.get("status") or "LIVE").upper() != "HIDDEN"]
+    out = []
+    for i, a in enumerate(live):
+        wa, la = split(a)
+        for b in live[i + 1:]:
+            wb, lb = split(b); both = [n for n in wa if n in wb]; lines = sorted(la & lb)
+            if not both and not lines: continue
+            a["shares"].append({"slot": b.get("slot"), "title": b.get("title"), "who": both, "lines": lines})
+            b["shares"].append({"slot": a.get("slot"), "title": a.get("title"), "who": both, "lines": lines})
+            out.append(f"slots {a.get('slot')} and {b.get('slot')} ('{a.get('title')}' / '{b.get('title')}') share " + ", ".join(both + lines)
+                       + ": one quiet night sinks both. Post one, or build the second for the other script.")
+    return out
+
+def share_note(p):
+    """The sentence a card carries when another open slip leans on the same player or line ("" when none)."""
+    sh = [x for x in (p.get("shares") or []) if x.get("who") or x.get("lines")]
+    if not sh or str(p.get("result") or "").strip(): return ""
+    def names(v): return v[0] if len(v) == 1 else ", ".join(v[:-1]) + " and " + v[-1]
+    x = sh[0]; what = names((x.get("who") or []) + (x.get("lines") or [])); n = len((x.get("who") or []) + (x.get("lines") or []))
+    more = f" (and {len(sh) - 1} more slip{'s' if len(sh) > 2 else ''})" if len(sh) > 1 else ""
+    return f"Also riding {what}: {x.get('title')}{more}. If {'that misses' if n == 1 else 'those miss'}, both slips lose - play one, or size the two as one bet."
+
 def dependence(legs, qb_of=None):
     """Legs that fail together (owner 11/15). legs = builder legs (pl, pos, tm, m, g). Returns warnings for a slip where 3+ legs, or more
     than half of a 3+ leg slip, need one team's passing game: the quarterback's passing legs and his pass catchers' receiving legs."""

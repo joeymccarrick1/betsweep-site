@@ -27,6 +27,7 @@ CSS = r"""
 .tc .olk{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px 10px;margin:10px 0 14px;background:var(--card)}
 .tc .olk .vd{display:inline-block;font-family:var(--display);font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:12px;line-height:1;padding:5px 10px;border-radius:999px;color:#fff;background:var(--good);vertical-align:middle;margin-right:8px}
 .tc .olk .vd.sell{background:var(--bad)} .tc .olk .vd.hold{background:var(--mute)}
+.tc .olk .olpk{margin:6px 0 0;font-size:12.5px;line-height:1.45;color:var(--mute)} .tc .olk .olpk b{color:var(--ink);font-weight:600;margin-right:4px}
 .tc .olk h3{display:inline;font-family:var(--display);font-size:19px;line-height:1.2;margin:0;vertical-align:middle}
 .tc .olk .olline{margin:8px 0 2px;font-size:14px;line-height:1.5} .tc .olk .olline b{font-family:var(--display);font-size:16px}
 .tc .olk .olwhy{margin:2px 0 8px;color:var(--mute);font-size:13.5px;line-height:1.5}
@@ -83,11 +84,36 @@ window.bsOutlook = (function(){
   }
   function nowShare(p){ var a = p.ros || 0, b = p.fut || 0; return a + b > 0 ? a / (a + b) : 1; }
   function nearPick(picks, want){ var best = null; (picks || []).forEach(function(p){ if(!(p.v > 0)) return; var r = p.v / Math.max(want, 1); if(r >= 0.6 && r <= 1.25 && (!best || Math.abs(p.v - want) < Math.abs(best.v - want))) best = p; }); return best; }
+  // Who holds which rookie picks (owner 11/17: "who owns which draft picks"). Sleeper lists only the picks that changed hands
+  // (league/<id>/traded_picks: season, round, roster_id = whose pick it was, owner_id = who holds it now); every other pick is still
+  // with its own roster. The next two seasons, rounds 1-3 - what the page prices. A first is early / mid / late by where its original
+  // team is tracking to finish this year (t.er, from sim) for next year's draft, and mid for the year after. Sets t.picks on every
+  // team; false (and nothing set) when the list is not an array or the page has no pick values in this format (redraft, keeper).
+  var RDN = ['', '1st', '2nd', '3rd'];
+  function ownPicks(l, teams, traded, picks){
+    teams.forEach(function(t){ delete t.picks; });
+    if(!Array.isArray(traded) || !(picks || []).some(function(p){ return p.v > 0; })) return false;
+    var season = +(l.season || 0); if(!season) return false;
+    var rounds = Math.min(3, (l.settings && l.settings.draft_rounds) || 3), T = teams.length, byRid = {}, asset = {}, holder = {};
+    (picks || []).forEach(function(p){ asset[p.n] = p; });
+    teams.forEach(function(t){ byRid[t.r.roster_id] = t; t.picks = []; });
+    [season + 1, season + 2].forEach(function(y){ for(var rd = 1; rd <= rounds; rd++) teams.forEach(function(t){ holder[y + '|' + rd + '|' + t.r.roster_id] = t.r.roster_id; }); });
+    traded.forEach(function(x){ var k = (+x.season) + '|' + (+x.round) + '|' + x.roster_id; if(holder[k] != null && byRid[x.owner_id]) holder[k] = x.owner_id; });
+    Object.keys(holder).forEach(function(k){ var q = k.split('|'), y = +q[0], rd = +q[1], orig = byRid[q[2]], own = byRid[holder[k]]; if(!orig || !own) return;
+      var tier = rd > 1 ? '' : (y === season + 1 && orig.er != null ? (orig.er > T * 2 / 3 ? 'early ' : orig.er > T / 3 ? 'mid ' : 'late ') : 'mid ');
+      var a = asset[y + ' ' + tier + RDN[rd] + ' round pick']; own.picks.push({y: y, rd: rd, from: orig, mine: orig === own, a: a || null, v: a ? a.v : 0}); });
+    teams.forEach(function(t){ t.picks.sort(function(a, b){ return a.y - b.y || a.rd - b.rd || (b.mine - a.mine); }); });
+    return true; }
+  function pickName(p, mine){ return p.mine ? (mine ? 'your ' : 'their ') + p.y + ' ' + RDN[p.rd] : 'the ' + p.y + ' ' + RDN[p.rd] + (mine ? ' you hold from ' : ' they hold from ') + p.from.name; }
+  function nearOwned(list, want){ var best = null; (list || []).forEach(function(p){ if(!(p.v > 0) || !p.a) return; var r = p.v / Math.max(want, 1); if(r >= 0.6 && r <= 1.25 && (!best || Math.abs(p.v - want) < Math.abs(best.v - want))) best = p; }); return best; }
+  function pickLine(t){ var by = {}; (t.picks || []).forEach(function(p){ (by[p.y] = by[p.y] || []).push(p); });
+    return Object.keys(by).sort().map(function(y){ return y + ': ' + by[y].map(function(p){ return RDN[p.rd] + (p.mine ? '' : ' (' + E(p.from.name) + '\'s)'); }).join(', '); }).join(' · '); }
   function plan(l, teams, info, picks){
     var me = teams.filter(function(t){ return t.me; })[0]; if(!me) return null;
     var ty = l.settings ? l.settings.type : 0, kind = ty === 2 ? 'dynasty' : ty === 1 ? 'keeper' : 'redraft', keep = kind !== 'redraft', sl = slots(l);
     var v = !info.weeks.length ? (me.po >= 0.5 ? 'in' : 'out') : me.po >= 0.7 ? 'buy' : me.po >= 0.35 ? 'bubble' : me.po >= 0.12 ? 'long' : 'out';
     var base = lineup(me.ps, sl), mine = {}, buys = [], sells = []; base.st.forEach(function(x){ mine[x.mp.n] = 1; });
+    var owned = !!me.picks;   // pick ownership is known: only a pick the paying side really holds is named
     if(v === 'buy' || v === 'bubble' || v === 'in'){
       var from = teams.filter(function(t){ return !t.me && t.po <= 0.25; }); if(from.length < 2) from = teams.filter(function(t){ return !t.me && t.po < me.po; });
       from.forEach(function(t){ t.ps.forEach(function(x){ if(!avail(x)) return; var g = lineup(me.ps.concat([x]), sl).pts - base.pts; if(g >= 1) buys.push({x: x, t: t, gain: g}); }); });
@@ -97,7 +123,7 @@ window.bsOutlook = (function(){
       buys.forEach(function(b){ var want = b.x.v, one = null, two = null; bench.forEach(function(c){ var r = c.v / Math.max(want, 1); if(r >= 0.8 && r <= 1.2 && (!one || Math.abs(c.v - want) < Math.abs(one.v - want))) one = c; });
         // nobody alone: two bench players whose values add up to his (a contender can pay two for one - it also opens a roster spot)
         if(!one){ var top = bench.slice(0, 12); for(var i = 0; i < top.length; i++) for(var j = i + 1; j < top.length; j++){ var sum = top[i].v + top[j].v, r2 = sum / Math.max(want, 1); if(r2 >= 0.9 && r2 <= 1.2 && (!two || Math.abs(sum - want) < Math.abs(two[0].v + two[1].v - want))) two = [top[i], top[j]]; } }
-        b.offer = one ? [one] : two; b.pick = b.offer ? null : nearPick(picks, want); });
+        b.offer = one ? [one] : two; b.pick = b.offer ? null : owned ? nearOwned(me.picks, want) : nearPick(picks, want); });
     }
     if(keep && (v === 'long' || v === 'out')){
       var to = teams.filter(function(t){ return !t.me && t.po >= 0.5; }); if(to.length < 2) to = teams.filter(function(t){ return !t.me && t.po > me.po; });
@@ -106,17 +132,19 @@ window.bsOutlook = (function(){
         var best = null; to.forEach(function(t, i){ var g = lineup(t.ps.concat([x]), sl).pts - bases[i].pts; if(g >= 1 && (!best || g > best.gain)) best = {t: t, gain: g, st: bases[i].st}; });
         if(!best) return; var their = {}, ask = null; best.st.forEach(function(y){ their[y.mp.n] = 1; });
         best.t.ps.forEach(function(y){ if(!y.mp || their[y.mp.n] || !y.mp.age || y.mp.age > 25) return; var r = y.v / Math.max(x.v, 1); if(r >= 0.6 && r <= 1.2 && (!ask || (y.mp.fut || 0) > (ask.mp.fut || 0))) ask = y; });
-        sells.push({x: x, t: best.t, gain: best.gain, ask: ask, pick: ask ? null : nearPick(picks, x.v)}); });
+        sells.push({x: x, t: best.t, gain: best.gain, ask: ask, pick: ask ? null : owned ? nearOwned(best.t.picks, x.v) : nearPick(picks, x.v)}); });
       sells.sort(function(a, b){ return b.x.v - a.x.v; }); sells = sells.slice(0, 5);
     }
-    return {v: v, kind: kind, keep: keep, me: me, buys: buys, sells: sells, slot: teams.filter(function(t){ return t.er > me.er; }).length + 1, n: teams.length};
+    return {v: v, kind: kind, keep: keep, me: me, owned: owned, buys: buys, sells: sells, slot: teams.filter(function(t){ return t.er > me.er; }).length + 1, n: teams.length};
   }
   function pct(p, live){ return !live ? (p >= 0.5 ? 'in' : 'out') : p >= 0.995 ? '99%+' : p < 0.005 ? 'under 1%' : Math.round(p * 100) + '%'; }
   function ord(n){ var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
   function who(x){ var p = x.mp; return '<b class="t">' + E(p.n) + '</b> <small>(' + p.pos + (p.age ? ', ' + Math.round(p.age) : '') + ')</small>'; }
   var E = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
-  function html(l, teams, sched, picks){
-    var info = sim(l, teams, sched), pl = plan(l, teams, info, picks); if(!pl) return '';
+  function html(l, teams, sched, picks, traded){
+    var info = sim(l, teams, sched); ownPicks(l, teams, traded, picks); var pl = plan(l, teams, info, picks); if(!pl) return '';
+    // a pick as the card names it and as the calculator knows it: one the reader (or the buyer) holds when that is known, else the nearest by value
+    function pk(q, mine){ return !q ? null : q.a ? {label: pickName(q, mine), n: q.a.n, v: q.v, own: true} : {label: q.n, n: q.n, v: q.v, own: false}; }
     var me = pl.me, s = me.r.settings || {}, live = info.weeks.length > 0, rec = (s.wins || 0) + '-' + (s.losses || 0) + (s.ties ? '-' + s.ties : '');
     var pfr = teams.slice().sort(function(a, b){ return pf(b.r) - pf(a.r); }).indexOf(me) + 1, one = me.po > 0 ? Math.max(2, Math.round(1 / me.po)) : 0;
     var chip = {buy: ['Buy', ''], 'in': ['Buy', ''], bubble: ['Hold', 'hold'], long: [pl.keep ? 'Sell' : 'Hold', pl.keep ? 'sell' : 'hold'], out: [pl.keep ? 'Sell' : 'Out', pl.keep ? 'sell' : 'hold']}[pl.v];
@@ -129,15 +157,16 @@ window.bsOutlook = (function(){
                out: pl.keep ? 'Turn veterans into younger players and picks while contenders will pay. Fewer points now also moves your draft slot up: you are tracking for the ' + ord(pl.slot) + ' pick of ' + pl.n + (pl.kind === 'keeper' ? ' (if your league drafts in reverse order of finish).' : ' in a reverse-standings rookie draft.') : 'Nothing carries over in a redraft league, so there is nothing to sell and no pick to play for. Set your best lineup and play spoiler.'}[pl.v];
     var h = '<div class="olk" id="olk" data-v="' + pl.v + '" data-kind="' + pl.kind + '" data-po="' + me.po.toFixed(4) + '"><span class="vd ' + chip[1] + '">' + chip[0] + '</span><h3>' + title + '</h3>' +
       '<p class="olline"><b>' + rec + '</b> · ' + ord(pfr) + ' of ' + pl.n + ' in points · <b>' + pct(me.po, live) + '</b>' + (live ? ' to make the playoffs' : ' of the playoffs') + ' (' + info.spots + ' of ' + pl.n + ' get in)' +
-      (live ? ' · about ' + me.ew.toFixed(1) + ' wins · regular season ends Week ' + info.last : '') + '</p><p class="olwhy">' + why + '</p>';
-    if(pl.buys.length){ h += '<h4>Who to trade for</h4><ul>' + pl.buys.map(function(b){ var o = b.offer, ot = !o ? (b.pick ? 'Nobody on your bench matches him. A pick worth about the same: ' + E(b.pick.n) + ' (' + b.pick.v.toLocaleString() + ')' : 'Nobody on your bench matches his value - build the offer above')
-          : 'Offer ' + o.map(function(c){ return E(c.mp.n) + ' (' + c.mp.pos + ', ' + c.v.toLocaleString() + ')'; }).join(' and ') + ' off your bench', give = o ? o.map(function(c){ return c.mp.n; }).join(';') : (b.pick ? b.pick.n : '');
+      (live ? ' · about ' + me.ew.toFixed(1) + ' wins · regular season ends Week ' + info.last : '') + '</p><p class="olwhy">' + why + '</p>' +
+      (pl.owned && me.picks.length ? '<p class="olpk"><b>Your picks</b> ' + pickLine(me) + '</p>' : pl.owned ? '<p class="olpk"><b>Your picks</b> none in the next two drafts (rounds 1-3)</p>' : '');
+    if(pl.buys.length){ h += '<h4>Who to trade for</h4><ul>' + pl.buys.map(function(b){ var o = b.offer, q = pk(b.pick, true), ot = !o ? (q ? 'Nobody on your bench matches him. ' + (q.own ? 'A pick of yours worth about the same: ' : 'A pick worth about the same: ') + E(q.label) + ' (' + q.v.toLocaleString() + ')' : pl.owned ? 'Nobody on your bench matches him and no pick you hold is near his value - build the offer in the calculator' : 'Nobody on your bench matches his value - build the offer above')
+          : 'Offer ' + o.map(function(c){ return E(c.mp.n) + ' (' + c.mp.pos + ', ' + c.v.toLocaleString() + ')'; }).join(' and ') + ' off your bench', give = o ? o.map(function(c){ return c.mp.n; }).join(';') : (q ? q.n : '');
         return '<li>' + who(b.x) + ' <span class="gn">+' + b.gain.toFixed(1) + ' pts a week</span> <small>from ' + E(b.t.name) + ' (' + pct(b.t.po, live) + (live ? ' to make it' : '') + ') · value ' + b.x.v.toLocaleString() + '</small>' +
           '<span class="of"><small>' + ot + '</small> <button type="button" class="addbtn" data-ol="' + E(give) + '|' + E(b.x.mp.n) + '">Load</button></span></li>'; }).join('') + '</ul>';
     } else if(pl.v === 'buy' || pl.v === 'bubble' || pl.v === 'in') h += '<p class="none">No player on a team that is out of it would lift your best lineup by a point a week. Your starters are already the strong part.</p>';
-    if(pl.sells.length){ h += '<h4>Who to sell, and to whom</h4><ul>' + pl.sells.map(function(b){ var a = b.ask;
+    if(pl.sells.length){ h += '<h4>Who to sell, and to whom</h4><ul>' + pl.sells.map(function(b){ var a = b.ask, q = pk(b.pick, false);
         return '<li>' + who(b.x) + ' <small>to ' + E(b.t.name) + ' (' + pct(b.t.po, live) + (live ? ' to make it' : '') + ') · value ' + b.x.v.toLocaleString() + '</small> <span class="gn">+' + b.gain.toFixed(1) + ' pts a week for them</span>' +
-          '<span class="of"><small>' + (a ? 'Ask for ' + E(a.mp.n) + ' (' + a.mp.pos + ', ' + Math.round(a.mp.age) + ', ' + a.v.toLocaleString() + ')' : b.pick ? 'Ask for a pick worth about the same: ' + E(b.pick.n) + ' (' + b.pick.v.toLocaleString() + ')' : 'Ask for a pick: nobody young on their bench is near his value') + '</small> <button type="button" class="addbtn" data-ol="' + E(b.x.mp.n) + '|' + E(a ? a.mp.n : b.pick ? b.pick.n : '') + '">Load</button></span></li>'; }).join('') + '</ul>';
+          '<span class="of"><small>' + (a ? 'Ask for ' + E(a.mp.n) + ' (' + a.mp.pos + ', ' + Math.round(a.mp.age) + ', ' + a.v.toLocaleString() + ')' : q ? (q.own ? 'Ask for ' + E(q.label) : 'Ask for a pick worth about the same: ' + E(q.label)) + ' (' + q.v.toLocaleString() + ')' : pl.owned ? 'Nobody young on their bench is near his value, and no single pick they hold is either - ask for two' : 'Ask for a pick: nobody young on their bench is near his value') + '</small> <button type="button" class="addbtn" data-ol="' + E(b.x.mp.n) + '|' + E(a ? a.mp.n : q ? q.n : '') + '">Load</button></span></li>'; }).join('') + '</ul>';
     } else if(pl.keep && (pl.v === 'long' || pl.v === 'out')) h += '<p class="none">No veteran on your roster would lift a contender\'s lineup by a point a week, so there is no obvious sale. Hold your young players.</p>';
     h += '<details><summary>Every team\'s playoff odds</summary><table>' + teams.slice().sort(function(a, b){ return (b.po - a.po) || (b.ew - a.ew); }).map(function(t){ var ts = t.r.settings || {};
         return '<tr class="' + (t.me ? 'me' : '') + '"><td>' + E(t.name) + (t.me ? ' (you)' : '') + '</td><td class="r">' + (ts.wins || 0) + '-' + (ts.losses || 0) + '</td><td class="r">' + (t.ppg == null ? '' : t.ppg.toFixed(1)) + '</td><td class="r">' + pct(t.po, live) + '<span class="bar"><i style="width:' + Math.round(t.po * 100) + '%"></i></span></td></tr>'; }).join('') +
@@ -151,6 +180,6 @@ window.bsOutlook = (function(){
     var v = !live ? (me.po >= 0.5 ? 'in' : 'out') : me.po >= 0.7 ? 'buy' : me.po >= 0.35 ? 'bubble' : me.po >= 0.12 ? 'long' : 'out';
     var chip = {buy: ['Buy', 'buy'], 'in': ['Buy', 'buy'], bubble: ['Hold', 'hold'], long: [keep ? 'Sell' : 'Hold', keep ? 'sell' : 'hold'], out: [keep ? 'Sell' : 'Out', keep ? 'sell' : 'hold']}[v];
     return {v: v, txt: chip[0], cls: chip[1], po: me.po, pct: pct(me.po, live), live: live}; }
-  return {sim: sim, plan: plan, quick: quick, lineup: lineup, slots: slots, games: games, pf: pf, html: html};
+  return {sim: sim, plan: plan, quick: quick, ownPicks: ownPicks, lineup: lineup, slots: slots, games: games, pf: pf, html: html};
 })();
 """

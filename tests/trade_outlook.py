@@ -28,12 +28,12 @@ def league(players, me_good, kind):
             rosters[1].append(p)
     rec = {1: (8, 2, 1290) if me_good else (1, 9, 1010), 2: (8, 2, 1270), 3: (7, 3, 1250), 4: (6, 4, 1220), 5: (6, 4, 1200), 6: (5, 5, 1180), 7: (4, 6, 1150), 8: (3, 7, 1120), 9: (2, 8, 1060), 10: (1, 9, 1000) if me_good else (8, 2, 1280)}
     R = [{"roster_id": i, "owner_id": f"u{i}", "players": [p["id"] for p in rosters[i]], "settings": {"wins": rec[i][0], "losses": rec[i][1], "ties": 0, "fpts": rec[i][2], "fpts_decimal": 0}} for i in rosters]
-    L = {"league_id": f"L{int(me_good)}{kind}", "name": "Mock League", "total_rosters": 10, "status": "in_season", "settings": {"type": kind, "playoff_teams": 6, "playoff_week_start": 15},
+    L = {"league_id": f"L{int(me_good)}{kind}", "name": "Mock League", "total_rosters": 10, "status": "in_season", "season": "2026", "settings": {"type": kind, "playoff_teams": 6, "playoff_week_start": 15},
          "scoring_settings": {"rec": 1}, "roster_positions": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "FLEX"] + ["BN"] * 7}
     U = [{"user_id": f"u{i}", "display_name": f"Team {i}", "metadata": {}} for i in rosters]
     return L, R, U, rosters
 
-async def run(b, theme, players, me_good, kind, auto=False):
+async def run(b, theme, players, me_good, kind, auto=False, traded=None):
     L, R, U, rosters = league(players, me_good, kind); pm = {p["id"]: {"full_name": p["n"], "position": p["pos"], "team": p.get("tm") or ""} for p in players}; asked = []
     ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=1, is_mobile=True, has_touch=True)
     await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}")
@@ -47,6 +47,7 @@ async def run(b, theme, players, me_good, kind, auto=False):
         elif u.endswith("/rosters"): body = R
         elif u.endswith("/users"): body = U
         elif u == "players/nfl": body = pm
+        elif u.endswith("/traded_picks") and traded is not None: body = traded
         elif m: w = int(m.group(1)); ids = list(range(1, 11)); ids = ids[w % 9 + 1:] + ids[:w % 9 + 1]; body = [{"roster_id": ids[i], "matchup_id": i // 2 + 1} for i in range(10)]
         else: body = {}
         await route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
@@ -57,7 +58,7 @@ async def run(b, theme, players, me_good, kind, auto=False):
     await pg.wait_for_selector("#olk", timeout=15000); await pg.wait_for_timeout(500)
     d = await pg.evaluate(r"""() => { const o = document.querySelector('#olk'), de = document.documentElement; const lis = h => { const hd = [...o.querySelectorAll('h4')].find(x => x.textContent.indexOf(h) === 0); return hd ? [...hd.nextElementSibling.querySelectorAll('li')].map(li => li.innerText.replace(/\s+/g, ' ')) : []; };
         return {v: o.dataset.v, kind: o.dataset.kind, po: +o.dataset.po, chip: o.querySelector('.vd').textContent, title: o.querySelector('h3').textContent, line: o.querySelector('.olline').innerText, why: o.querySelector('.olwhy').innerText,
-                buys: lis('Who to trade for'), sells: lis('Who to sell'), rows: [...o.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.textContent)), over: de.scrollWidth - de.clientWidth, top: Math.round(o.getBoundingClientRect().top + scrollY)}; }""")
+                buys: lis('Who to trade for'), sells: lis('Who to sell'), picks: (o.querySelector('.olpk') || {}).innerText || '', rows: [...o.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.textContent)), over: de.scrollWidth - de.clientWidth, top: Math.round(o.getBoundingClientRect().top + scrollY)}; }""")
     if os.environ.get("SHOT"):   # a picture of the card for a human to look at
         await pg.evaluate("document.querySelector('#olk').scrollIntoView({block: 'start'}); window.scrollBy(0, -64)"); await pg.wait_for_timeout(300)
         await pg.screenshot(path=os.path.join(os.environ["SHOT"], f"outlook_{int(me_good)}{kind}_{theme}.png"))
@@ -113,6 +114,32 @@ async def main():
         pg, ctx, d, errs, asked, rosters = await run(b, "dark", players, True, 2, auto=True)
         y = await pg.evaluate("Math.round(document.querySelector('#league').getBoundingClientRect().top)")
         check(d["chip"] == "Buy" and not errs, f"/trade/#league with a saved username imports by itself ({d['title'][:40]})"); check(-200 <= y <= 400, f"and lands on the league section (its top is {y}px from the top of the screen)"); await ctx.close()
+        # ---- 5. who holds which rookie picks (owner 11/17): only a pick the paying side really has is named ----
+        TR = [{"season": "2027", "round": 2, "roster_id": 1, "previous_owner_id": 1, "owner_id": 2},     # the reader's 2027 2nd now sits with Team 2
+              {"season": "2027", "round": 1, "roster_id": 9, "previous_owner_id": 9, "owner_id": 2},     # Team 2 also holds Team 9's 2027 1st
+              {"season": "2028", "round": 1, "roster_id": 10, "previous_owner_id": 10, "owner_id": 1},   # the reader holds Team 10's 2028 1st
+              {"season": "2026", "round": 1, "roster_id": 3, "previous_owner_id": 3, "owner_id": 1},     # a draft already held: ignored
+              {"season": "2029", "round": 1, "roster_id": 3, "previous_owner_id": 3, "owner_id": 1}]     # further out than the page prices: ignored
+        pg, ctx, d, errs, asked, rosters = await run(b, "dark", players, False, 2, traded=TR)
+        check(any(u.endswith("/traded_picks") for u in asked), "the league's traded picks are read")
+        check(d["picks"].replace("\n", " ").startswith("Your picks 2027: 1st, 3rd · 2028: 1st, 1st (Team 10's), 2nd, 3rd"), f"the card lists the picks the reader holds - his 2027 2nd is gone, Team 10's 2028 1st is his ({d['picks'][:80]})")
+        hold = {"Team 2": {"their 2027 1st", "the 2027 1st they hold from Team 9", "their 2027 2nd", "the 2027 2nd they hold from Team 1", "their 2027 3rd", "their 2028 1st", "their 2028 2nd", "their 2028 3rd"}}
+        asks = [(re.search(r"to (Team \d+)", x).group(1), m.group(1)) for x in d["sells"] for m in [re.search(r"Ask for ((?:their|the) 20\d\d (?:1st|2nd|3rd)(?: they hold from Team \d+)?) \(", x)] if m]
+        generic = [x for x in d["sells"] if "a pick worth about the same" in x]
+        check(not generic and all(not (t in hold) or a in hold[t] for t, a in asks) and all(not a.startswith("their 2027 2nd") or t != "Team 1" for t, a in asks), f"a pick asked for is one that buyer holds, named as theirs ({asks[:3] or 'no pick asks this build: every ask was a player'})")
+        check(not errs and d["over"] <= 0, f"picks view: no script errors, no sideways scroll ({errs[:1]})"); await ctx.close()
+        pg, ctx, d, errs, asked, rosters = await run(b, "light", players, True, 2, traded=TR)
+        mine = re.findall(r"A pick of yours worth about the same: ((?:your|the) 20\d\d (?:1st|2nd|3rd)(?: you hold from Team \d+)?) \(", " ".join(d["buys"])); gen = [x for x in d["buys"] if "A pick worth about the same" in x]
+        check(not gen and all(m != "your 2027 2nd" for m in mine), f"a buyer is only told to pay with a pick he holds - never the 2027 2nd he traded away ({mine[:3] or 'every offer this build was a bench player'})")
+        if mine:
+            await pg.evaluate("(() => { const b = [...document.querySelectorAll('#olk li')].find(li => li.innerText.indexOf('A pick of yours') >= 0).querySelector('[data-ol]'); b.click(); })()"); await pg.wait_for_timeout(400)
+            stt = await pg.evaluate("(() => { for (const k of Object.keys(localStorage)) if (k.indexOf('bs_trade_') === 0) return JSON.parse(localStorage.getItem(k)); return null; })()")
+            check(bool(stt) and len(stt.get("A") or []) == 1 and re.fullmatch(r"20\d\d (early 1st|mid 1st|late 1st|2nd|3rd) round pick", stt["A"][0] or "") is not None, f"Load puts that pick on the calculator as the asset it is priced as ({stt and stt.get('A')})")
+        await ctx.close()
+        pg, ctx, d, errs, asked, rosters = await run(b, "dark", players, False, 0, traded=TR)
+        check(d["picks"] == "" and not errs, "a redraft league has no picks line (nothing carries over)"); await ctx.close()
+        pg, ctx, d, errs, asked, rosters = await run(b, "dark", players, False, 2)
+        check(d["picks"] == "" and not errs, "when Sleeper gives no pick list the card says nothing about who holds what"); await ctx.close()
         fp = open(os.path.join(ROOT, "team", "index.html"), encoding="utf-8").read(); check('href="/trade/#league"' in fp and "Buy or sell?" in fp, "the Fantasy page carries the Buy or sell? card")
         await b.close()
     srv.shutdown(); print(f"{ok} passed, {bad} failed"); sys.exit(1 if bad else 0)
