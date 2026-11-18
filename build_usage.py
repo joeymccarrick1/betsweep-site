@@ -85,6 +85,15 @@ CSS = """
 .uw .none{padding:12px 14px;color:var(--mute);font-size:13px;margin:0;line-height:1.5}
 .uw .vac{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;font-size:13px;color:var(--mute);border-bottom:1px solid var(--line)} .uw .vac b{color:var(--ink)}
 .uw tr[hidden]{display:none}
+.uw .bfold > summary{list-style:none;cursor:pointer;position:relative;padding-right:40px} .uw .bfold > summary::-webkit-details-marker{display:none}
+.uw .bfold > summary::after{content:"";position:absolute;right:16px;top:18px;width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .15s}
+.uw .bfold[open] > summary::after{transform:rotate(225deg);top:22px}
+.uw .bfold > summary h2{border-bottom:0;padding-bottom:2px} .uw .bfold .bnm{color:var(--ink)}
+.uw .bfold .bgain{margin:0;padding:0 14px 11px;font-size:13.5px;line-height:1.45;color:var(--mute)} .uw .bfold .bgain b{color:var(--ink);font-weight:600}
+.uw .bfold[open] > summary{border-bottom:1px solid var(--line)} .uw .bfold .bwhy{padding-bottom:0}
+.uw .bfold > summary:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+@media (prefers-reduced-motion:reduce){ .uw .bfold > summary::after{transition:none} }
+.uw .umore{margin:0;padding:10px 12px;border-top:1px solid var(--line)} .uw .umore[hidden]{display:none} .uw .umore .bsbtn{width:100%}
 @media (max-width:640px){
   .uw .tw{overflow:visible} .uw table,.uw tbody{display:block} .uw thead{display:none}
   .uw tbody tr{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:2px 6px;padding:11px 12px;border-bottom:1px solid var(--line)} .uw tbody tr[hidden]{display:none} .uw tbody tr:last-child{border-bottom:0}
@@ -145,13 +154,17 @@ usage = (head(f"NFL usage trends: snap share & target share risers and fallers �
          + "".join(f'<button type="button" data-p="{x}"{" class=\"on\"" if x == "ALL" else ""}>{x}</button>' for x in ("ALL", "RB", "WR", "TE")) + '</div>'
          '<section><h2 id="uh">Rising roles <small>sorted by how much the role grew</small></h2><div class="tw"><table>' + thead + '<tbody>'
          + "".join(trow(r, "up") for r in up) + "".join(trow(r, "down") for r in down)
-         + '</tbody></table></div><p class="none" id="uempty" hidden>Nobody in this group.</p></section>'
+         + '</tbody></table></div><p class="none" id="uempty" hidden>Nobody in this group.</p>'
+         '<p class="umore" id="umore" hidden><button type="button" class="bsbtn sec" id="umoreb">Show all</button></p></section>'
          '<p class="m" style="font-size:12px">Snap share from nflverse snap counts; targets, carries and PPR from the nflverse weekly stats; injury context from the weekly injury report, the same detection the projections use (an injury-shaped week is not read as a role change). '
          'The model already adjusts for snap trends; this page shows the evidence. <a href="/benefits/">Who benefits from this week\'s injuries →</a></p></div>'
          """<script>(function(){var k='up',p='ALL',rows=[].slice.call(document.querySelectorAll('.uw tbody tr')),h=document.getElementById('uh'),em=document.getElementById('uempty');
-function f(){var n=0;rows.forEach(function(r){var ok=r.getAttribute('data-kind')===k&&(p==='ALL'||r.getAttribute('data-pos')===p);r.hidden=!ok;if(ok)n++;});em.hidden=n>0;
-h.firstChild.nodeValue=k==='up'?'Rising roles ':'Falling roles ';h.querySelector('small').textContent=k==='up'?'sorted by how much the role grew':'sorted by how much the role shrank';}
-document.querySelectorAll('#uctl button').forEach(function(b){b.addEventListener('click',function(){if(b.hasAttribute('data-k')){k=b.getAttribute('data-k');document.querySelectorAll('#uctl [data-k]').forEach(function(x){x.classList.toggle('on',x===b);});}else{p=b.getAttribute('data-p');document.querySelectorAll('#uctl [data-p]').forEach(function(x){x.classList.toggle('on',x===b);});}f();});});f();})();</script>""")
+var CAP=12,all=false,mo=document.getElementById('umore'),mb=document.getElementById('umoreb');
+function f(){var n=0;rows.forEach(function(r){var ok=r.getAttribute('data-kind')===k&&(p==='ALL'||r.getAttribute('data-pos')===p);if(ok)n++;r.hidden=!ok||(!all&&n>CAP);});em.hidden=n>0;
+mo.hidden=all||n<=CAP;mb.textContent='Show all '+n;
+h.firstChild.nodeValue=k==='up'?'Rising roles ':'Falling roles ';h.querySelector('small').textContent=(k==='up'?'biggest gains first':'biggest drops first')+(n>CAP&&!all?' \u00b7 top '+CAP+' of '+n:'');}
+mb.addEventListener('click',function(){all=true;f();});
+document.querySelectorAll('#uctl button').forEach(function(b){b.addEventListener('click',function(){if(b.hasAttribute('data-k')){k=b.getAttribute('data-k');document.querySelectorAll('#uctl [data-k]').forEach(function(x){x.classList.toggle('on',x===b);});}else{p=b.getAttribute('data-p');document.querySelectorAll('#uctl [data-p]').forEach(function(x){x.classList.toggle('on',x===b);});}all=false;f();});});f();})();</script>""")
 open(os.path.join(OUT, "usage.html"), "w").write(usage)
 print(f"wrote out/usage.html: {len(up)} risers, {len(down)} fallers (week {W})")
 
@@ -186,13 +199,17 @@ for k, p, u, tw, g in outs:
     mates = [kk for kk, q in S.players.items() if q["team"] == p["team"] and kk != k and q["pos"] in REL[p["pos"]] and q["games"] and not q.get("old")]   # not a player who has since been traded away
     st = p["status"]
     opp = (g["b"] if g["a"] == p["team"] else g["a"]) if g else ""; vs = "vs" if (g and g.get("b") == p["team"]) else "@"
-    head_h = (f'<h2>{plink(p["name"])} <span class="st{" q" if st[0] == "Doubtful" else ""}">{E(st[0])}</span> <small>{p["pos"]} · {E(p["team"])}'
-              f'{(" " + vs + " " + E(opp) + " · " + E(g.get("kick") or "")) if g else ""}{(" · " + E(st[2])) if st[2] else ""}</small></h2>')
+    # 11/17 (page pass): the header carried the whole news line and every block was open - 7.6 phone screens for four players. Each block
+    # now folds behind its header, which says who got the work; the news line moves inside.
+    head_h = (f'<h2><span class="bnm">{E(p["name"])}</span> <span class="st{" q" if st[0] == "Doubtful" else ""}">{E(st[0])}</span> <small>{p["pos"]} · {E(p["team"])}'
+              f'{(" " + vs + " " + E(opp) + " · " + E(g.get("kick") or "")) if g else ""}</small></h2>')
+    why_h = f'<p class="none bwhy">{plink(p["name"])}' + (f': {E(st[2])}' if st[2] else " - tap his name for his full page") + '</p>'
+    gain = ""
     vac = (f'<div class="vac"><span>He leaves per game: <b>{P(u["snap"])}</b> of snaps</span>' + (f'<span><b>{u["tgt"]:.1f}</b> targets ({P(u["ts"])} share)</span>' if p["pos"] != "QB" else "")
            + (f'<span><b>{u["car"]:.1f}</b> carries</span>' if p["pos"] in ("RB", "QB") else "") + f'<span><b>{u["ppr"]:.1f}</b> PPR pts</span></div>')
     if without and withw:
         n_missed += 1
-        trs = []
+        trs = []; tops = []
         for kk in mates:
             a = S.usage(kk, withw); b = S.usage(kk, without)
             if not b: continue
@@ -201,10 +218,13 @@ for k, p, u, tw, g in outs:
             if (b["snap"] or 0) < 0.15 and (b["tgt"] + b["car"]) < 2: continue
             gained = a is None or delta > 0.25 or ((b["snap"] or 0) - (a["snap"] or 0)) > 0.03 or (b["ppr"] - a["ppr"]) > 0.5
             q = S.players[kk]
+            tops.append((-delta + (0 if gained else 100), q["name"], delta))
             trs.append((-delta + (0 if gained else 100), f'<tr><td class="nm"><b>{plink(q["name"])}</b><span class="pos">{q["pos"]}</span>{status(q)}</td>'
                                f'<td data-l="Snaps">{P(b["snap"])}{dpp(a["snap"] if a else None, b["snap"])}</td><td data-l="Tgt / g">{N(b["tgt"])}{dn(a["tgt"] if a else None, b["tgt"])}</td>'
                                f'<td data-l="Car / g">{N(b["car"])}{dn(a["car"] if a else None, b["car"])}</td><td data-l="PPR / g">{N(b["ppr"])}{dn(a["ppr"] if a else None, b["ppr"])}</td><td class="lg">{best_leg(q)}</td></tr>'))
         trs.sort(key=lambda x: x[0])
+        _tg = [x for x in tops if x[0] < 50]; _tg.sort(key=lambda x: x[0])
+        if _tg: gain = f'Without him, the biggest bump went to <b>{E(_tg[0][1])}</b> ({_tg[0][2]:+.1f} targets + carries a game' + (f', then {E(_tg[1][1])} {_tg[1][2]:+.1f}' if len(_tg) > 1 and _tg[1][2] > 0.25 else "") + ')'
         note = f'In the {len(without)} game{"s" if len(without) > 1 else ""} he missed this season (Week {", ".join(map(str, without))}) vs the {len(withw)} he played in full. Big number = without him, small = the change.'
         if len(without) == 1: note += " One game is a small sample - read it as who got the work, not a rate."
         body = (vac + f'<p class="none" style="padding-bottom:0">{E(note)}</p><div class="tw"><table><thead><tr><th>Teammate</th><th>Snaps</th><th>Targets / g</th><th>Carries / g</th><th>PPR / g</th><th>Best-priced leg this week</th></tr></thead><tbody>'
@@ -219,9 +239,11 @@ for k, p, u, tw, g in outs:
             q = S.players[kk]
             trs.append((-((b["snap"] or 0) + 0.02 * (b["tgt"] + b["car"])), f'<tr><td class="nm"><b>{plink(q["name"])}</b><span class="pos">{q["pos"]}</span>{status(q)}</td><td data-l="Snaps L3">{P(b["snap"])}</td><td data-l="Tgt / g">{N(b["tgt"])}</td><td data-l="Car / g">{N(b["car"])}</td><td data-l="PPR / g">{N(b["ppr"])}</td><td class="lg">{best_leg(q)}</td></tr>'))
         trs.sort(key=lambda x: x[0])
+        _nx = sorted(((-((S.usage(kk, l3) or {}).get("snap") or 0), S.players[kk]["name"], (S.usage(kk, l3) or {}).get("snap") or 0) for kk in mates if S.players[kk]["pos"] == p["pos"] and S.usage(kk, l3)), key=lambda x: x[0])
+        if _nx and _nx[0][2] >= 0.1: gain = f'No game missed yet this season. Next in line at {p["pos"]} by snaps: <b>{E(_nx[0][1])}</b> ({_nx[0][2] * 100:.0f}% over the last 3)'
         body = (vac + '<p class="none" style="padding-bottom:0">He has not missed a game this season, so there is no "without him" split yet. These are his teammates\' roles over the last 3 games - the volume he leaves goes to some of them; the model\'s projections already move it by role.</p>'
                 '<div class="tw"><table><thead><tr><th>Teammate</th><th>Snaps L3</th><th>Targets / g</th><th>Carries / g</th><th>PPR / g</th><th>Best-priced leg this week</th></tr></thead><tbody>' + "".join(h for _, h in trs[:8]) + '</tbody></table></div>')
-    blocks.append(f'<section>{head_h}{body}</section>')
+    blocks.append(f'<section><details class="bfold"><summary>{head_h}<p class="bgain">{gain or "Tap for his teammates\' roles."}</p></summary>{why_h}{body}</details></section>')
 bene = (head(f"Who benefits from NFL injuries · Week {W} · BetSweep",
              f"Week {W}: every starter who is Out or Doubtful, and who got his snaps, targets and carries in the games he missed - with each teammate's best-priced prop.")
         + f'<div class="uw"><h1>Who benefits</h1><p class="m">Every player with a real role who is <b>Out</b> or <b>Doubtful</b> on this week\'s injury report, and where his work went in the games he already missed this season. '

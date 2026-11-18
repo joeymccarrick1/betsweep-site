@@ -13,6 +13,7 @@ usage: python3 build_site.py [domain=betsweep.co]
 import os, re, json, glob, shutil, base64, html, time as _time, datetime as _dt
 _BUILD_T0 = _time.time()   # rechrome.py (end of this file) leaves every page written after this moment alone
 import account as ACCT
+import fantasy_nav as _FN   # the section tabs (bsTabs) for the week pages
 import ask as ASK   # owner 11/11: Ask BetSweep lives in the menu of every page (form, styles and script in ask.py)
 BIGGER_CSS = """
 /* bigger text, less gutter (users: "text is a little small") - phones use the full width, everything scales up ~10% */
@@ -336,6 +337,11 @@ body .tabs .tab.on,body .seg button.on,body .pos button.on,body .usg .tabs butto
 @media (max-width:760px){
   .bsclamp{display:-webkit-box !important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden} .bsclamp.two{-webkit-line-clamp:2;margin-bottom:4px}
   .bsmore{display:inline-block;font:inherit;font-family:var(--ctl);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:none;border:0;border-bottom:2px solid var(--red);padding:0 0 1px;margin:2px 0 12px;cursor:pointer}
+  /* 11/17 (page pass): the Season page's report cards open on their titles on a phone (app script adds .bsfold and the tap). The page is
+     built on Tuesdays and a reprice does not rebuild it, so the fold lives in the shared sheet and script. */
+  .card.calib.bsfold{content-visibility:visible} .card.calib.bsfold > :not(h2){display:none !important} .card.calib.bsfold > h2{margin-bottom:0}
+  .card.calib > h2.bsfh{position:relative;padding-right:30px;cursor:pointer} .card.calib > h2.bsfh::after{content:"";position:absolute;right:6px;top:7px;width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg)}
+  .card.calib:not(.bsfold) > h2.bsfh::after{transform:rotate(225deg);top:11px} .card.calib > h2.bsfh:focus-visible{outline:2px solid var(--red);outline-offset:3px}
   /* phones run a 5px page gutter so cards use the width (BIGGER_CSS). Text that sits straight on the page background - titles,
      introductions, breadcrumbs - was 5px from the glass too. It gets a real margin; the cards keep theirs. */
   .top .mast{padding-left:9px;padding-right:9px}
@@ -438,6 +444,16 @@ APP_JS = r"""<script>
       b.addEventListener('click', function(){ var open = p.classList.toggle('bsclamp') === false; b.textContent = open ? 'Less' : 'More'; b.setAttribute('aria-expanded', open); });
       p.parentNode.insertBefore(b, p.nextSibling); }); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldIntro); else foldIntro();
+  // 1b. 11/17 (page pass): the Season page is one summary card and seven long report cards - ten phone screens. On a phone each report
+  //     card opens on its title and a tap opens it; a link straight to one (#id) arrives with it open. Nothing is removed.
+  function foldCards(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    [].slice.call(document.querySelectorAll('section.card.calib')).forEach(function(c){ var h = c.querySelector('h2'); if(!h || h.parentNode !== c || c.dataset.fold) return; c.dataset.fold = '1';
+      var open = !!(c.id && location.hash === '#' + c.id); if(!open) c.classList.add('bsfold');
+      h.classList.add('bsfh'); h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0'); h.setAttribute('aria-expanded', open ? 'true' : 'false');
+      function tog(){ var o = !c.classList.toggle('bsfold'); h.setAttribute('aria-expanded', o ? 'true' : 'false'); }
+      h.addEventListener('click', function(e){ if(e.target.closest('a')) return; tog(); });
+      h.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tog(); } }); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldCards); else foldCards();
   // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
   var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
   // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
@@ -898,6 +914,56 @@ WK_CSS = """
 .nwh:first-of-type{margin-top:6px}
 @media (max-width:560px){ .wkh h1{font-size:34px} }
 """
+WK_TABS_CSS = """
+.wk > .wktabs{max-width:1360px;margin:14px auto 0;padding:8px 16px}   /* a direct child of the page so the row can stay pinned for its whole length */
+.wk .wktabs + .sec{margin-top:12px}
+#news .fxtabs{margin-bottom:4px}
+.fxtabs .tab.zero{opacity:.45}
+.nwgrp .nwcap{margin:2px 0 8px;color:var(--mute);font-size:12.5px;line-height:1.4}
+.nwgrp .tdnewsl li{cursor:pointer} .nwgrp .tdnewsl li[hidden]{display:none}
+.nwgrp .tdnewsl li p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nwgrp .tdnewsl li.open p{display:block;overflow:visible}
+.nwgrp .tdnewsl li:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.nwgrp .nwe[hidden]{display:none}
+"""
+# /best/: tabs from the page's own blocks. A link to /best/#parlay (Today's "Every game") opens on that tab.
+BEST_TABS_JS = r"""(function(){
+  var host = document.getElementById('wktabs'), main = document.querySelector('main.wk'), TABS = __TABS__; if(!host || !main || !window.bsTabs || TABS.length < 2) return;
+  var best = document.getElementById('best');
+  function has(id){ return TABS.some(function(t){ return t.id === id; }); }
+  var h = (location.hash || '').slice(1), start = has(h) ? h : (h === 'best' ? TABS[0].id : null);
+  var T = bsTabs.mount(host, TABS, { root: main, key: 'bs_tab_best', start: start, onShow: function(id){ if(best) best.classList.toggle('fxoff', !best.querySelector('[data-tab="' + id + '"]')); } });
+  // the number on a tab = cards a visitor can still bet (kicked-off cards and ruled-out players' cards are not counted)
+  function counts(){ TABS.forEach(function(t){ var n = 0;
+    [].forEach.call(main.querySelectorAll('[data-tab="' + t.id + '"]'), function(p){ [].forEach.call(p.querySelectorAll('article.play, .parlay, .pmini'), function(c){ if(!c.hidden && !c.classList.contains('started') && getComputedStyle(c).display !== 'none') n++; }); });
+    T.count(t.id, n); var b = host.querySelector('[data-t="' + t.id + '"]'); if(b) b.classList.toggle('zero', !n); }); }
+  counts(); setTimeout(counts, 1500); setInterval(counts, 60000); document.addEventListener('bs-risk', function(){ setTimeout(counts, 60); });
+  window.addEventListener('hashchange', function(){ var x = (location.hash || '').slice(1); if(has(x)) T.show(x); });
+})();"""
+NEWS_JS = r"""(function(){
+  var f = document.getElementById('nwf'), sec = document.getElementById('news'); if(!f || !sec) return;
+  var grps = [].slice.call(sec.querySelectorAll('.nwgrp')), host = document.getElementById('wktabs'), none = document.getElementById('nwnone'), team = '', T = null;
+  if(host && window.bsTabs && grps.length > 1) T = bsTabs.mount(host, grps.map(function(g){ return { id: g.getAttribute('data-tab'), label: g.getAttribute('data-label') }; }), { root: sec, key: 'bs_tab_news' });
+  function apply(){ var total = 0, first = null, cur = T ? T.cur() : null, curN = 0;
+    if(!grps.length){   // one group only: the plain list
+      [].forEach.call(sec.querySelectorAll('.tdnewsl li'), function(li){ var on = !team || li.getAttribute('data-team') === team; li.hidden = !on; if(on) total++; });
+      [].forEach.call(sec.querySelectorAll('.tdnewsl'), function(ul){ var any = ul.querySelector('li:not([hidden])'); ul.hidden = !any; if(ul.previousElementSibling) ul.previousElementSibling.hidden = !any; }); }
+    grps.forEach(function(g){ var n = 0, id = g.getAttribute('data-tab');
+      [].forEach.call(g.querySelectorAll('.tdnewsl li'), function(li){ var on = !team || li.getAttribute('data-team') === team; li.hidden = !on; if(on) n++; });
+      var e = g.querySelector('.nwe'); if(e) e.hidden = n > 0;
+      if(T){ T.count(id, n); var b = host.querySelector('[data-t="' + id + '"]'); if(b) b.classList.toggle('zero', !n); }
+      total += n; if(n && !first) first = id; if(id === cur) curN = n; });
+    if(none) none.hidden = total > 0;
+    if(T && !curN && first) T.show(first, true); }   // the team has nothing in the group on screen: go to the first one that does
+  f.addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; team = b.getAttribute('data-t') || '';
+    [].forEach.call(f.children, function(x){ x.classList.toggle('on', x === b); }); apply(); });
+  // a note is two lines until it is tapped
+  function tog(li){ var open = li.classList.toggle('open'); li.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  [].forEach.call(sec.querySelectorAll('.nwgrp .tdnewsl li'), function(li){ li.setAttribute('tabindex', '0'); li.setAttribute('role', 'button'); li.setAttribute('aria-expanded', 'false'); });
+  sec.addEventListener('click', function(e){ var li = e.target.closest('.nwgrp .tdnewsl li'); if(li && !e.target.closest('a')) tog(li); });
+  sec.addEventListener('keydown', function(e){ if(e.key !== 'Enter' && e.key !== ' ') return; var li = e.target.closest('.nwgrp .tdnewsl li'); if(li && e.target === li){ e.preventDefault(); tog(li); } });
+  apply();
+})();"""
 HOME_COMPACT_CSS = """
 /* 11/10 evening: the short home page */
 .hfoot{max-width:1360px;margin:26px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.55} .hfoot a{color:var(--ink)}
@@ -1081,9 +1147,12 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         try: _TP = json.load(open(os.path.join(OUT, "today_parts.json")))
         except Exception: _TP = {}
         _wkw = _B.get("week") or ""
-        def _week_page(path, title, lead, inner, desc, tail=""):
+        def _week_page(path, title, lead, inner, desc, tail="", tabs=False):
+            # tabs (11/17 page pass): the page shows one section at a time under a row of tabs (fantasy_nav.py's bsTabs, the same row
+            # the Fantasy page and the Trade calculator use). The script is inline because the page's own script calls it while parsing.
             body = (f'<title>{html.escape(title)} · BetSweep</title>\n<meta name="description" content="{html.escape(desc)}">\n'
-                    '<style>' + LANDING_CSS + _HOME.HOME_CSS + _LIVE.LIVE_CSS + _TP.get("css", "") + WK_CSS + '</style>\n'
+                    '<style>' + LANDING_CSS + _HOME.HOME_CSS + _LIVE.LIVE_CSS + _TP.get("css", "") + WK_CSS + (_FN.TABS_CSS + WK_TABS_CSS if tabs else "") + '</style>\n'
+                    + ("<script>" + _FN.TABS_JS + "</script>\n" if tabs else "") +
                     f'<main class="wk"><header class="wkh"><h1>{html.escape(title)}</h1><p class="lead">{lead}</p></header>\n{inner}\n</main>\n' + tail)
             fn = os.path.join(OUT, "wk_" + path.strip("/").replace("/", "_") + ".html"); open(fn, "w").write(body)
             made.append(place_plain(fn, os.path.join(SITE, *path.strip("/").split("/")), path)); return path
@@ -1093,8 +1162,16 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         _best = _best.replace('<h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>', "", 1)   # the page title says it
         if not _B.get("plays_n"): _best = re.sub(r'<section class="sec" id="plays">.*?</section>', "", _best, count=1, flags=re.S)   # an empty "top plays" note is not a section
         if _best:
+            # 11/17 (page pass, owner: "It's a lot of scrolling to find what you're looking for"): 9.2 phone screens in one scroll. One tab
+            # per tier of Model's Best (home.py marks them) and per section that follows; the count on a tab is what is still open to bet.
+            _bt = [{"id": m.group(1), "label": m.group(2)} for m in re.finditer(r'<div class="mbgrp" data-tab="([a-z]+)" data-label="([^"]+)"', _best)]
+            for _sid, _lab in (("plays", "Top plays"), ("nextman", "Next up"), ("radar", "Radar"), ("parlay", "Parlays")):
+                if f'<section class="sec" id="{_sid}">' in _best:
+                    _best = _best.replace(f'<section class="sec" id="{_sid}">', f'<section class="sec" id="{_sid}" data-tab="{_sid}">', 1); _bt.append({"id": _sid, "label": _lab})
+            _best = _best.replace('<section class="sec" id="best">', '<div id="wktabs" class="wktabs"></div>\n<section class="sec" id="best">', 1) if '<section class="sec" id="best">' in _best else '<div id="wktabs" class="wktabs"></div>\n' + _best
             _wk_made.append(_week_page("/best/", "Model's Best", f"Week {_wkw}. Where the model and FanDuel's price disagree most.",
-                                       _best, "Model's Best on BetSweep: the week's plus-money edges, near-even looks, next man up, touchdown and game-line radar, and the best parlay for every game.", _slipjs))
+                                       _best, "Model's Best on BetSweep: the week's plus-money edges, near-even looks, next man up, touchdown and game-line radar, and the best parlay for every game.",
+                                       _slipjs + "\n<script>" + BEST_TABS_JS.replace("__TABS__", json.dumps(_bt, separators=(",", ":"))) + "</script>\n", tabs=len(_bt) > 1))
         # owner 11/13: "I don't think we need the 'this weeks games' page. We already have all that info on other pages" - /slate/ is no
         # longer built or linked; the old address forwards to the Matchup Boards (one board per game, same lines and scripts).
         os.makedirs(os.path.join(SITE, "slate"), exist_ok=True)
@@ -1102,10 +1179,18 @@ if os.path.exists(os.path.join(OUT, "today.html")):
             '<script>location.replace("/boards/" + location.search + location.hash)</script></head><body><a href="/boards/">Matchup Boards</a></body></html>')
         if _TP.get("news"):
             _teams = "".join(f'<button type="button" data-t="{html.escape(t)}">{html.escape(t)}</button>' for t in _TP.get("teams") or [])
+            # 11/17 (page pass): 9 phone screens, the first group alone 8. One group at a time under a tab, each note two lines until
+            # it is tapped, and the team filter re-counts the tabs (and moves to the first group that has a note for that team).
+            _ng = _TP.get("groups") or []
+            if len(_ng) > 1:
+                _nbody = ('<div id="wktabs"></div>' + f'<div class="nwf" id="nwf"><button type="button" data-t="" class="on">All teams</button>{_teams}</div>'
+                          + "".join(f'<div class="nwgrp" data-tab="{html.escape(g["k"])}" data-label="{html.escape(g["label"])}"><p class="nwcap">{html.escape(g["title"])}</p>{g["html"]}<p class="none nwe" hidden>Nothing in this group for that team.</p></div>' for g in _ng))
+            else:
+                _nbody = f'<div class="nwf" id="nwf"><button type="button" data-t="" class="on">All teams</button>{_teams}</div>' + _TP["news"]
             _wk_made.append(_week_page("/news/", "News desk", f"Week {_wkw}, as of {html.escape(str(_TP.get('stamp', '')))} CT. {_TP.get('n', '')} notes that moved the model's numbers, read from ESPN, RotoWire, CBS, Yahoo and the team injury pages at every rebuild. The chips on player names across the site update every 10 minutes.",
-                                       (_TP.get("stale") or "") + f'<section class="sec" id="news"><div class="nwf" id="nwf"><button type="button" data-t="" class="on">All teams</button>{_teams}</div>{_TP["news"]}<p class="none" id="nwnone" hidden>No notes for that team this week.</p></section>',
+                                       (_TP.get("stale") or "") + f'<section class="sec" id="news">{_nbody}<p class="none" id="nwnone" hidden>No notes for that team this week.</p></section>',
                                        f"The Week {_wkw} NFL news that moved BetSweep's model: who is out, limited, questionable or back, and whose role changed.",
-                                       "<script>(function(){var f=document.getElementById('nwf');if(!f)return;f.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var t=b.getAttribute('data-t');[].forEach.call(f.children,function(x){x.classList.toggle('on',x===b)});var n=0;[].forEach.call(document.querySelectorAll('#news .tdnewsl li'),function(li){var on=!t||li.getAttribute('data-team')===t;li.hidden=!on;if(on)n++});[].forEach.call(document.querySelectorAll('#news .tdnewsl'),function(ul){var any=ul.querySelector('li:not([hidden])');ul.hidden=!any;if(ul.previousElementSibling)ul.previousElementSibling.hidden=!any});document.getElementById('nwnone').hidden=n>0})})();</script>\n"))
+                                       "<script>" + NEWS_JS + "</script>\n", tabs=len(_ng) > 1))
         if _TP.get("targets"):
             _wk_made.append(_week_page("/targets/", "Trade desk", f"Buy low and sell high after Week {int(_wkw) - 1 if str(_wkw).isdigit() else _wkw}, from snaps and schedule rather than the box score: players whose role says more (or less) than their recent points.",
                                        _TP["targets"].replace('<h2 class="t">Trade desk <small class="tsub">buy low, sell high · snaps and schedule, not the box score</small></h2>', "", 1),

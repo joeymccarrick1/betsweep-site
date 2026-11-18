@@ -69,8 +69,10 @@ async def main():
             pg, ctx, errs = await page("/", s["ko"] - 2 * 3600e3); a = await pg.evaluate(PREAD); await ctx.close()
             pg, ctx, errs = await page("/", s["ko"] + 10 * 60e3); z = await pg.evaluate(PREAD); await ctx.close()
             check(a["shown"] and a["cards"] >= 1 and not z["shown"] and z["fd"] == 0 and not errs, f"Today shows its lead parlay before that game kicks off and drops it once it has (before: {a['cards']} card, {a['fd']} FanDuel link; after: shown {z['shown']})")
-        pg, ctx, errs = await page("/best/", first - 26 * 3600e3, nofin=True); a = await pg.evaluate(PREAD); await ctx.close()
-        pg, ctx, errs = await page("/best/", last + 6 * 3600e3); z = await pg.evaluate(PREAD)
+        # 11/17: Model's Best shows one section at a time under tabs - the parlays are on their own tab, so open it before reading
+        PTAB = "() => { var b = document.querySelector('.fxtabs [data-t=\"parlay\"]'); if(b) b.click(); }"
+        pg, ctx, errs = await page("/best/", first - 26 * 3600e3, nofin=True); await pg.evaluate(PTAB); a = await pg.evaluate(PREAD); await ctx.close()
+        pg, ctx, errs = await page("/best/", last + 6 * 3600e3); await pg.evaluate(PTAB); z = await pg.evaluate(PREAD)
         if not a["there"]: print("   (no Best parlay section on the built Model's Best page; its checks are skipped)")
         else:
             check(a["cards"] >= 1 and not a["note"], f"Model's Best lists the parlays before the week ({a['cards']} cards)")

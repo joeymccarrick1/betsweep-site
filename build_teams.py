@@ -15,6 +15,7 @@ Writes out/teams/<abbr>.html (32 bodies), out/teams/index.html, out/teams/teams.
 fetched when a game is opened, shared by both teams' pages). build_site.py places them at /teams/.
 """
 import os, csv, json, html, collections, urllib.request
+import fantasy_nav as _FN   # the section tabs (bsTabs) for the teams index
 
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 E = html.escape; SEASON = 2026
@@ -350,6 +351,9 @@ nwk = max([int(g["week"]) for g in G if played(g)] or [0])
 idx = (head("NFL teams: stats, results & box scores · BetSweep", "Every NFL team's 2026 season: record, points and yards per game with league ranks, against-the-spread and over/under records, and the box score of every game.") +
        f'<div class="pp tdir"><p class="crumb"><a href="/">Home</a> › Teams</p><header><span class="tb" style="--p:#d7332a;--s:#8f1d17">NFL</span><h1>Teams</h1>'
        f'<div class="sub"><span>2026 regular season</span><span>through Week {nwk}</span><span>box scores for every game</span></div><div class="acts"><a href="/player/">Players</a><a class="pri" href="/boards/">Matchup boards</a></div></header>'
-       + dhtml + lt + '</div><script src="/teams/teams.js" defer></script>')
+       # 11/17 (page pass): the eight divisions and the 32-row league table were one 6.9-screen scroll on a phone; one of the two per tab
+       + '<style>' + _FN.TABS_CSS + '</style><div id="tdTabs"></div><div data-tab="div">' + dhtml + '</div><div data-tab="lt">' + lt + '</div>'
+       + '</div><script>' + _FN.TABS_JS + '</script><script>(function(){var h=document.getElementById("tdTabs"),r=document.querySelector(".tdir");if(h&&r&&window.bsTabs)bsTabs.mount(h,[{id:"div",label:"Standings"},{id:"lt",label:"League table"}],{root:r,key:"bs_tab_teams",start:location.hash==="#leaguet"?"lt":null});})();</script>'
+       + '<script src="/teams/teams.js" defer></script>')
 open(os.path.join(OUT, "teams", "index.html"), "w").write(idx)
 print(f"wrote out/teams: {len(TEAMS)} team pages + directory, {nbox} game box scores, through week {nwk}")

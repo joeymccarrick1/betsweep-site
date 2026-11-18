@@ -72,8 +72,11 @@ JS = r"""
     host.classList.add('tabs'); host.classList.add('fxtabs'); host.setAttribute('role', 'tablist');
     var anchor = document.createElement('div'); anchor.className = 'fxanchor'; host.parentNode.insertBefore(anchor, host);   // where the row sits when it is not pinned
     host.innerHTML = tabs.map(function(t){ return '<button type="button" class="tab" role="tab" data-t="' + esc(t.id) + '">' + esc(t.label) + '<small></small></button>'; }).join('');
+    // a row too wide for the screen keeps the chosen tab in view (again after a count changes a tab's width)
+    function keep(){ var b = host.querySelector('.tab.on'); if(b && host.scrollWidth > host.clientWidth + 2) host.scrollLeft = Math.max(0, b.offsetLeft - (host.clientWidth - b.offsetWidth) / 2); }
     function show(id, quiet){ if(!tabs.some(function(t){ return t.id === id; })) id = tabs[0].id; cur = id;
       Array.prototype.forEach.call(host.children, function(b){ var on = b.dataset.t === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      keep();
       Array.prototype.forEach.call(root.querySelectorAll('[data-tab]'), function(el){ el.classList.toggle('fxoff', el.dataset.tab !== id); });
       if(opt.key){ try{ sessionStorage.setItem(opt.key, id); }catch(e){} }
       // a tap while the row is pinned: bring the new section's start up under it instead of leaving the reader mid-way down
@@ -82,7 +85,7 @@ JS = r"""
     host.addEventListener('click', function(e){ var b = e.target.closest('.tab'); if(b) show(b.dataset.t); });
     var first = opt.start; if(!first && opt.key){ try{ first = sessionStorage.getItem(opt.key); }catch(e){} }
     show(first || tabs[0].id, true);
-    return { show: show, cur: function(){ return cur; }, count: function(id, n){ var b = host.querySelector('[data-t="' + id + '"] small'); if(b) b.textContent = n ? ' ' + n : ''; } }; }
+    return { show: show, cur: function(){ return cur; }, count: function(id, n){ var b = host.querySelector('[data-t="' + id + '"] small'); if(b){ var x = n ? ' ' + n : ''; if(b.textContent !== x){ b.textContent = x; keep(); } } } }; }
   window.bsTabs = { mount: tabsMount };
 
   // ---------- league bar + sheet ----------
@@ -148,3 +151,7 @@ JS = r"""
   };
 })();
 """
+
+# 11/17 (page pass): the section tabs on their own, for pages with no league bar (Model's Best, the News desk, DFS, the record pages)
+TABS_CSS = CSS[:CSS.index("/* ---- league bar + sheet ---- */")]
+TABS_JS = JS[:JS.index("  // ---------- league bar + sheet ----------")] + "})();\n"

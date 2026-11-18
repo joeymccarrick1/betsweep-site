@@ -224,7 +224,8 @@ PCSS = r""".l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(
 .pd li b{display:block;font-weight:600} .pd li small{color:var(--mute);font-size:12px}
 .pd li .st{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--red);color:#fff}
 .pd li .st.q{background:var(--warn);color:#0f141c}
-.pd .cnt{color:var(--mute);font-size:12px;margin:8px 0 0}
+.pd .cnt{color:var(--mute);font-size:12px;margin:8px 0 0} .pd .pdmore{margin:10px 0 0} .pd .pdmore[hidden]{display:none} .pd .pdmore .bsbtn{width:100%} .pd li[hidden]{display:none}
+.pd ul:not(.js) li:nth-child(n+31){display:none}   /* until the script has run: the same first 30, so the list does not flash at full length */
 """
 
 PJS = r"""
@@ -244,9 +245,15 @@ PJS = r"""
   // directory filter
   var q = document.getElementById('pdq'); if(!q) return;
   var items = [].slice.call(document.querySelectorAll('.pd li')), pos = 'ALL', cnt = document.getElementById('pdcnt');
-  function f(){ var s = q.value.trim().toLowerCase(), n = 0; items.forEach(function(li){ var ok = (pos === 'ALL' || li.getAttribute('data-pos') === pos) && (!s || li.getAttribute('data-s').indexOf(s) >= 0); li.hidden = !ok; if(ok) n++; }); if(cnt) cnt.textContent = n + ' players'; }
-  q.addEventListener('input', f);
-  document.querySelectorAll('.pd .pos button').forEach(function(b){ b.addEventListener('click', function(){ pos = b.getAttribute('data-p'); document.querySelectorAll('.pd .pos button').forEach(function(x){ x.classList.toggle('on', x === b); }); f(); }); });
+  // 11/17 (page pass): the list opened with every player on it (34 phone screens). It opens on the first 30 - the players with props this
+  // week, biggest roles first - and a search or a position starts short again; one button shows the rest.
+  var CAP = 30, all = false, more = document.getElementById('pdmore'), mb = document.getElementById('pdmoreb'), ul = document.querySelector('.pd ul'); if(ul) ul.classList.add('js');
+  function f(){ var s = q.value.trim().toLowerCase(), n = 0; items.forEach(function(li){ var ok = (pos === 'ALL' || li.getAttribute('data-pos') === pos) && (!s || li.getAttribute('data-s').indexOf(s) >= 0); if(ok) n++; li.hidden = !ok || (!all && n > CAP); });
+    if(more){ more.hidden = all || n <= CAP; mb.textContent = 'Show all ' + n; }
+    if(cnt) cnt.textContent = n ? (n > CAP && !all ? 'First ' + CAP + ' of ' + n + ' players' : n + ' player' + (n === 1 ? '' : 's')) : 'Nobody matches that. Try a last name or a team.'; }
+  q.addEventListener('input', function(){ all = false; f(); });
+  if(mb) mb.addEventListener('click', function(){ all = true; f(); });
+  document.querySelectorAll('.pd .pos button').forEach(function(b){ b.addEventListener('click', function(){ pos = b.getAttribute('data-p'); all = false; document.querySelectorAll('.pd .pos button').forEach(function(x){ x.classList.toggle('on', x === b); }); f(); }); });
   try{ var h = new URLSearchParams(location.search).get('q'); if(h){ q.value = h; } }catch(e){}
   f();
 })();
@@ -517,6 +524,6 @@ idx = (head(f"NFL player props & stats · Week {W} · BetSweep", f"Every NFL pla
        f'<div class="pd" data-week="{W}"><h1>Players</h1><p class="m">Every player with a prop on the board this week (listed first) or a real role this season. One page each: his lines at FanDuel, DraftKings and Hard Rock against the model, how often he has cleared them, his offense vs the defense, snap share and game log.</p>'
        '<div class="ctl"><input id="pdq" type="search" placeholder="Search a player, team or position" autocomplete="off" aria-label="Search players"><div class="pos">' +
        "".join(f'<button type="button" data-p="{x}"{" class=\"on\"" if x == "ALL" else ""}>{x}</button>' for x in ("ALL", "QB", "RB", "WR", "TE")) +
-       '</div></div><ul>' + "".join(h for _, h in items) + '</ul><p class="cnt" id="pdcnt"></p></div><script src="/player/player.js" defer></script>')
+       '</div></div><ul>' + "".join(h for _, h in items) + '</ul><p class="pdmore" id="pdmore" hidden><button type="button" class="bsbtn sec" id="pdmoreb">Show all</button></p><p class="cnt" id="pdcnt"></p></div><script src="/player/player.js" defer></script>')
 open(os.path.join(OUT, "players", "index.html"), "w").write(idx)
 print(f"wrote out/players: {len(pages)} player pages ({n_legs} with props this week), week {W}")

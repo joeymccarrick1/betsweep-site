@@ -167,7 +167,7 @@ for pts in POINTS:
     h2 = hrate(pts, "k2"); w2, l2, _ = HIST[pts]["k2"]; oth = max((hrate(pts, k) or 0) for k in ("k1", "k0", "z", "tot"))
     hist_rows = "".join(f'<tr data-rate="{(hrate(pts, k) or 0):.4f}"><td><b>{KIND_TXT[k]}</b></td><td class="r">{rec_txt(pts, k)}</td><td class="r"><b>{(hrate(pts, k) or 0)*100:.1f}%</b></td></tr>'
                         for k in ("k2", "k1", "tot", "z", "k0") if (HIST[pts][k][0] + HIST[pts][k][1]))
-    sections.append(f'''<section class="tz" data-pts="{pts:g}" data-from="{HIST_FROM}" data-h2="{(h2 or 0):.4f}" data-w2="{w2}" data-l2="{l2}" data-oth="{oth:.4f}">
+    sections.append(f'''<section class="tz" data-tab="p{str(pts).replace(".", "")}" data-label="{pts:g}-point" data-pts="{pts:g}" data-from="{HIST_FROM}" data-h2="{(h2 or 0):.4f}" data-w2="{w2}" data-l2="{l2}" data-oth="{oth:.4f}">
  <div class="tzh"><h2>{pts:g}-point teasers</h2><label>Your book's price for two legs <input type="text" inputmode="numeric" class="px" value="{DEFAULT_PRICE[pts]}" size="5"></label></div>
  <p class="tzv">{verdict(pts, DEFAULT_PRICE[pts])}</p>
  <h3>Best pairs this week <small>different games · chance of both · points over or under the price</small></h3>
@@ -182,6 +182,7 @@ for pts in POINTS:
 try:
     import account as ACCT; _link, _base = ACCT._base_css()
 except Exception: _link, _base = "", ""
+import fantasy_nav as _FN   # 11/17 (page pass): the three teaser sizes were one 6.9-screen scroll on a phone; one size per tab
 body = f'''<title>Teaser finder · Week {W} · BetSweep</title>
 <meta name="description" content="Six, six-and-a-half and seven-point NFL teasers scored by the BetSweep model: which teased spreads and totals clear the price, and which cross 3 and 7.">
 {_link}
@@ -201,14 +202,19 @@ table.tl{{width:100%;border-collapse:collapse;font-size:14px}} .tl th,.tl td{{pa
 details.tzmore{{margin:14px 0 0;border-top:1px solid var(--line)}} details.tzmore > summary{{cursor:pointer;list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between;font-family:var(--display);font-weight:700;font-size:16px}} details.tzmore > summary::-webkit-details-marker{{display:none}}
 details.tzmore > summary small{{font-family:var(--body);font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px;margin-right:auto}} details.tzmore > summary::after{{content:"▾";color:var(--mute)}} details.tzmore[open] > summary::after{{content:"▴"}}
 @media (max-width:560px){{ .pairs li{{grid-template-columns:minmax(0,1fr) auto}} .pairs .pe{{grid-column:2}} }}
+{_FN.TABS_CSS}
 </style>
 <div class="tzw" data-week="{W}">
 <h1><small>Week {W}</small>Teaser finder</h1>
 <p class="m">A teaser moves every spread and total in the slip 6, 6.5 or 7 points your way and prices two legs at one number. Each leg's chance here is how that kind of move has really done in every regular-season game since {HIST_FROM}, shifted when the model's own number sits off FanDuel's line. Type your book's two-leg price and the verdict and edges update.</p>
+<div id="tzTabs"></div>
 {"".join(sections)}
 <p class="m" style="font-size:12.5px">Pairs are from different games only. "Through 3 and 7" means the move covers both of the two most common winning margins: an underdog of +1 to +3 teased up past +7, or a favorite of -7 to -9 teased down under -3. History is every regular-season game since {HIST_FROM} at the closing line, so it is a long-run rate for that kind of move, not a read on this week's teams. Not betting advice.</p>
 </div>
+<script>{_FN.TABS_JS}</script>
 <script>
+(function(){{ var th = document.getElementById('tzTabs'), tw = document.querySelector('.tzw');
+  if(th && tw && window.bsTabs){{ var ts = [].map.call(tw.querySelectorAll('.tz[data-tab]'), function(s){{ return {{id: s.getAttribute('data-tab'), label: s.getAttribute('data-label')}}; }}); if(ts.length > 1) bsTabs.mount(th, ts, {{root: tw, key: 'bs_tab_teaser'}}); }} }})();
 (function(){{ function imp(o){{ o = +o; if (!o) return null; return o > 0 ? 100/(o+100) : -o/(-o+100); }}
   document.querySelectorAll('.tz').forEach(function(sec){{ var inp = sec.querySelector('.px');
     // a phone's number pad has no minus key: a bare 130 is -130 (teasers are priced minus); a typed + keeps it plus

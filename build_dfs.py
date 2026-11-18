@@ -8,6 +8,7 @@ parsed in the browser, kept in localStorage), matches names to the model, re-sco
 optimizer. Nothing leaves the browser. Player IDs from the CSV let the page export a lineup file the site accepts for upload.
 """
 import json, os, re, html, datetime
+import fantasy_nav as _FN   # the section tabs (bsTabs): on a phone the pool, the lineup and the guide are one tap apart
 HERE = os.path.dirname(os.path.abspath(__file__))
 # reuse build_team.py's loader: PLAYERS (n,t,p,o,fp,py,ptd,int,ry,rtd,rec,rcy,rctd,act,role,av,st,sd,q,dr,k), WEEK, LOGO, BANNER, vals(), E
 src = open(os.path.join(HERE, "build_team.py")).read().split("stamp = datetime")[0]
@@ -126,6 +127,10 @@ CSS = r"""
 .dfs .note{padding:8px 12px;font-size:11.5px;color:var(--mute);line-height:1.5}
 .dfs .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .dfs .mbar{display:none}
+/* 11/17 (page pass): 10.3 phone screens, the lineup and its Build button seven screens under the player pool. On one column the page
+   is three tabs (Players / Lineup / How it works) and the pool opens at 20 rows; side by side (wide screens) nothing changes. */
+@media(min-width:981px){ .dfs .fxtabs{display:none} .dfs [data-tab].fxoff{display:block!important} }
+.dfs.onlu .mbar{display:none}
 @media(max-width:980px){.dfs .lu{position:static}
  .dfs .mbar{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:20;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;justify-content:space-between;align-items:center;font-size:13px;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
  .dfs .mbar b{font-family:var(--display);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
@@ -168,7 +173,14 @@ JS = r"""
     return Math.round(s*100)/100;
   }
   // ---- state ----
-  var site = 'dk', SAL = {}, SRC = null, lineup = [], locks = {}, excl = {}, sortKey = 'val', sortDir = -1, shown = 60, alts = [];
+  var site = 'dk', SAL = {}, SRC = null, lineup = [], locks = {}, excl = {}, sortKey = 'val', sortDir = -1, alts = [];
+  var NARROW = !!(window.matchMedia && matchMedia('(max-width:980px)').matches), FIRST = NARROW ? 20 : 60, STEP = NARROW ? 40 : 60, shown = FIRST;
+  // ---- tabs: one column only (the wide layout hides the row and shows every panel) ----
+  var DT = null;
+  (function(){ var h = $('#dfTabs'), root = document.querySelector('.dfs'); if(!h || !root || !window.bsTabs) return;
+    DT = bsTabs.mount(h, [{id: 'pool', label: 'Players'}, {id: 'lu', label: 'Lineup'}, {id: 'how', label: 'How it works'}],
+      {root: root, key: 'bs_tab_dfs', start: location.hash === '#lineup' ? 'lu' : null, onShow: function(id){ root.classList.toggle('onlu', id !== 'pool'); }});
+    var mb = $('#mbar'); if(mb) mb.addEventListener('click', function(e){ if(getComputedStyle(h).display === 'none') return; e.preventDefault(); DT.show('lu'); }); })();
   try { site = localStorage.getItem('bs_dfs_site') || 'dk'; } catch(e){}
   function key(p){ return p.p + '|' + norm(p.n); }
   function luKey(){ return 'bs_dfs_lu_' + site + (isSG() ? '_sg' : ''); }
@@ -378,7 +390,8 @@ JS = r"""
     var fPos = $('#fPos').value, fGame = $('#fGame').value, q = $('#fQ').value.trim().toLowerCase(), onlyAct = $('#fAct').checked, onlySal = $('#fSal').checked;
     var rows = P.filter(function(p){ if(!isSG() && p.p === 'K') return false; if(isSG() && SG.game && p.t !== SG.game.split('-')[0] && p.t !== SG.game.split('-')[1]) return false; if(fPos !== 'all' && !(fPos === 'FLEX' ? SITES[site].flex.indexOf(p.p) >= 0 : p.p === fPos)) return false; if(fGame !== 'all' && p.t !== fGame.split('-')[0] && p.t !== fGame.split('-')[1]) return false; if(q && (p.n + ' ' + p.t).toLowerCase().indexOf(q) < 0) return false; if(onlyAct && (!p.act || siteOut(p))) return false; if(onlySal && hasSal() && !sal(p)) return false; return true; });
     rows.forEach(function(p){ p._pts = pts(p); p._sal = sal(p); p._val = p._sal ? p._pts / (p._sal / 1000) : null; });
-    rows.sort(function(a, b){ var ka = a[{val:'_val', pts:'_pts', sal:'_sal', name:'n'}[sortKey]], kb = b[{val:'_val', pts:'_pts', sal:'_sal', name:'n'}[sortKey]]; if(ka == null && kb == null) return 0; if(ka == null) return 1; if(kb == null) return -1; return (ka < kb ? -1 : ka > kb ? 1 : 0) * sortDir; });
+    rows.sort(function(a, b){ var ka = a[{val:'_val', pts:'_pts', sal:'_sal', name:'n'}[sortKey]], kb = b[{val:'_val', pts:'_pts', sal:'_sal', name:'n'}[sortKey]]; if(ka == null && kb == null) return sortKey === 'val' ? b._pts - a._pts : 0;   /* no salaries yet: value has nothing to rank, so the best projections lead (it was QBs A to Z) */
+      if(ka == null) return 1; if(kb == null) return -1; return (ka < kb ? -1 : ka > kb ? 1 : 0) * sortDir; });
     var inL = {}; lineup.forEach(function(k){ inL[k] = 1; });
     $('#count').textContent = rows.length + ' players';
     $('#plist').innerHTML = rows.slice(0, shown).map(function(p){ var k = key(p); var cls = (inL[k] ? 'inl ' : '') + (excl[k] ? 'ex ' : '') + (!p.act || siteOut(p) ? 'na' : '');
@@ -387,7 +400,7 @@ JS = r"""
         '<td class="sal"><input type="number" inputmode="numeric" value="' + (p._sal || '') + '" placeholder="—" aria-label="salary"></td>' +
         '<td><b>' + p._pts.toFixed(1) + '</b>' + (isSG() ? '<span class="mt">' + mvpLabel() + ' ' + (p._pts * SG.mult).toFixed(1) + (sal(p, true) ? ' · $' + sal(p, true).toLocaleString() : '') + '</span>' : '') + '</td><td class="val ' + vcls + '">' + (p._val == null ? '—' : '<b>' + p._val.toFixed(2) + '</b>') + '</td>' +
         '<td class="act">' + (inL[k] ? '<button class="rm">Remove</button>' : '<button class="add"' + (!p.act ? ' title="listed out / inactive"' : '') + '>Add</button>') + ' <button class="x' + (excl[k] ? ' on' : '') + '" title="exclude from Optimize">✕</button></td></tr>'; }).join('');
-    $('#more').textContent = rows.length > shown ? 'Show ' + Math.min(60, rows.length - shown) + ' more' : ''; $('#more').hidden = rows.length <= shown;
+    $('#more').textContent = rows.length > shown ? 'Show ' + Math.min(STEP, rows.length - shown) + ' more of ' + rows.length : ''; $('#more').hidden = rows.length <= shown;
     $$('#plist th').forEach(function(th){ th.classList.toggle('on', th.dataset.s === sortKey); });
   }
   function renderLineup(){
@@ -403,6 +416,7 @@ JS = r"""
     $('#totPts').textContent = total().toFixed(1); $('#totSal').textContent = hasSal() ? '$' + u.toLocaleString() : '—'; $('#totN').textContent = (NS - empty) + '/' + NS;
     $('#exportBtn').disabled = empty > 0 || !hasSal() || !lineup.every(function(k){ return SAL[k] && (isM(k) && site === 'dk' ? SAL[k].cpt && SAL[k].cpt.id : SAL[k].id); });
     $('#copyBtn').disabled = lineup.length === 0;
+    if(DT) DT.count('lu', (NS - empty) + '/' + NS);
     var mb = $('#mbarTxt'); if(mb) mb.textContent = 'Lineup ' + (NS - empty) + '/' + NS + ' · ' + total().toFixed(1) + ' pts' + (hasSal() ? ' · ' + (left >= 0 ? '$' + left.toLocaleString() + ' left' : 'OVER CAP') : '');
     $('#optBtn').textContent = empty === NS ? 'Build the best lineup' : (empty ? 'Fill the ' + empty + ' open slot' + (empty > 1 ? 's' : '') : 'Re-optimize around locks');
   }
@@ -427,7 +441,7 @@ JS = r"""
   ['sgN','sgMult','sgSal'].forEach(function(id){ $('#' + id).addEventListener('change', function(){ SG.n = +$('#sgN').value; SG.mult = +$('#sgMult').value; SG.smult[site] = +$('#sgSal').value;
     if(lineup.length > SG.n){ lineup = lineup.slice(0, SG.n); } alts = []; save(); renderAll(); }); });
   $('#sgGame').addEventListener('change', function(){ SG.game = this.value; var ta = SG.game.split('-')[0], tb = SG.game.split('-')[1];
-    lineup = lineup.filter(function(k){ var p = byKey[k]; return p && (p.t === ta || p.t === tb); }); if(mvp && lineup.indexOf(mvp) < 0) mvp = null; alts = []; shown = 60; save(); renderAll(); });
+    lineup = lineup.filter(function(k){ var p = byKey[k]; return p && (p.t === ta || p.t === tb); }); if(mvp && lineup.indexOf(mvp) < 0) mvp = null; alts = []; shown = FIRST; save(); renderAll(); });
   $('#csvBtn').addEventListener('click', function(){ var txt = $('#csv').value, r = importCSV(txt); if(!r.err){ LASTCSV = txt; LASTSITE = site; setTimeout(showShare, 0); } var m = $('#srcMsg'); m.hidden = false; if(r.err){ m.className = 'msg err'; m.textContent = r.err; return; } SAL = r.map; SRC = r.src;
     if(r.sg && r.games.length === 1){ if(!isSG()){ save(); fmt = 'sg'; loadLu(); } SG.game = r.games[0]; if(Object.keys(r.map).some(function(k){ return r.map[k].cpt; })) SG.smult[site] = 1.5; lineup = lineup.filter(function(k){ var p = byKey[k]; return p && [p.t, p.o].sort().join('-') === SG.game; }); }
     m.className = 'msg ok'; m.textContent = 'Loaded ' + r.n + ' salaries.' + (r.unmatched.length ? ' Not in the model (' + r.unmatched.length + '): ' + r.unmatched.slice(0, 12).join(', ') + (r.unmatched.length > 12 ? '…' : '') : ''); $('#csv').value = ''; save(); alts = []; renderAll(); });
@@ -450,8 +464,8 @@ JS = r"""
     c.from('dfs_salaries').upsert(row, {onConflict: 'site,week'}).then(function(r){ b.disabled = false; m.hidden = false;
       if(r.error){ m.className = 'msg err'; m.textContent = 'Not shared: ' + r.error.message; return; }
       SHARED[site] = row; m.className = 'msg ok'; m.textContent = 'Shared - everyone opening the ' + (site === 'dk' ? 'DraftKings' : 'FanDuel') + ' tab this week now gets these ' + ra.n + ' salaries automatically (unless they load their own list).'; LASTCSV = null; showShare(); }); });
-  ['fPos','fGame','fQ','fAct','fSal'].forEach(function(id){ $('#' + id).addEventListener('input', function(){ shown = 60; renderList(); }); $('#' + id).addEventListener('change', function(){ shown = 60; renderList(); }); });
-  $('#more').addEventListener('click', function(){ shown += 60; renderList(); });
+  ['fPos','fGame','fQ','fAct','fSal'].forEach(function(id){ $('#' + id).addEventListener('input', function(){ shown = FIRST; renderList(); }); $('#' + id).addEventListener('change', function(){ shown = FIRST; renderList(); }); });
+  $('#more').addEventListener('click', function(){ shown += STEP; renderList(); });
   $$('#plist th[data-s]').forEach(function(th){ th.addEventListener('click', function(){ if(sortKey === th.dataset.s) sortDir = -sortDir; else { sortKey = th.dataset.s; sortDir = th.dataset.s === 'name' ? 1 : -1; } renderList(); }); });
   $('#plist').addEventListener('click', function(ev){ var tr = ev.target.closest('tr'); if(!tr) return; var k = tr.dataset.k, p = byKey[k];
     if(ev.target.classList.contains('add')){ if(lineup.indexOf(k) >= 0) return;
@@ -537,8 +551,9 @@ body = f'''<div class="dfs">
   </details>
   <div class="status"><span id="srcStat"></span><span>Week {WEEK} model · {n_act} active players · built {stamp} CT</span></div>
  </section>
+ <div id="dfTabs"></div>
  <div class="grid2">
-  <section class="panel">
+  <section class="panel" data-tab="pool">
    <h2>Player pool <span class="r" id="count"></span></h2>
    <div class="filters">
     <select id="fPos" aria-label="position"><option value="all">All positions</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option><option value="FLEX">FLEX (RB/WR/TE)</option><option value="DEF">DEF</option><option value="K">K</option></select>
@@ -551,7 +566,7 @@ body = f'''<div class="dfs">
    <button type="button" class="more" id="more"></button>
    <p class="note">Proj = the model's projection re-scored in the selected site's rules (DraftKings: full PPR, 4-pt pass TD, +3 bonuses for 300 pass / 100 rush / 100 rec yards counted at the model's chance of clearing them; FanDuel: half PPR, 4-pt pass TD). Pts / $1K is the value number: 3+ is the usual bar for a cash-game play, 2.5 is roster filler. ✕ keeps a player out of Optimize. Tags: Q = questionable, snaps ↓ = snap share falling (projection already trimmed), 1st TD = the model's first-touchdown chance.</p>
   </section>
-  <aside class="panel lu" id="lineup">
+  <aside class="panel lu" id="lineup" data-tab="lu">
    <h2>Your lineup <span class="r" id="capLabel"></span></h2>
    <div class="cap"><div class="nums"><b id="capUsed"></b><span id="capLeft"></span></div><div class="bar"><i id="capbar"></i></div><div class="nums"><span id="capAvg"></span></div></div>
    <div class="tot"><div><small>Projected</small><b id="totPts">0.0</b></div><div><small>Salary</small><b id="totSal">—</b></div><div><small>Filled</small><b id="totN">0/9</b></div></div>
@@ -580,18 +595,19 @@ body = f'''<div class="dfs">
   </aside>
  </div>
  <a class="mbar" id="mbar" href="#lineup"><span id="mbarTxt">Lineup 0/9</span><b>View lineup ↓</b></a>
- <section class="panel"><div class="expl">
+ <section class="panel" data-tab="how"><div class="expl">
   <p><b>How it works.</b> Every number here is the BetSweep model's Week {WEEK} projection (the same one behind the matchup boards and the parlay builder), converted to the site's scoring, with injury designations and the snap-share trim already applied. Salaries come from the player list you load, matched to the model by name and team; players the model does not project (deep bench, injured all year) are listed in the load message and skipped. A player is scored only if he projects - we never fill a missing player with zero.</p>
   <dl><dt>Proj</dt><dd>projected fantasy points in the site's rules</dd><dt>Pts / $1K</dt><dd>projected points per $1,000 of salary - the value column; sort by it to find the cheap plays the model likes</dd><dt>Lock</dt><dd>keep this player when you re-optimize</dd><dt>✕</dt><dd>exclude from the optimizer (he stays in the list)</dd><dt>Single game (MVP)</dt><dd>for Showdown / single-game contests: pick the game, and the lineup is one MVP (Captain on DraftKings) plus FLEX slots, any position including K and D/ST. The MVP scores 1.5x and costs 1.5x salary on both sites (read straight from the player list when it has the MVP / Captain salary). The optimizer tries every realistic MVP, fills the rest exactly under the cap, and keeps at least one player from each team. A DraftKings Showdown file switches this on by itself. ★ on a FLEX row makes that player the MVP.</dd><dt>Upload file</dt><dd>a one-lineup CSV in the site's import format, built from the IDs in the list you loaded - import it on the contest's upload page instead of clicking nine players</dd></dl>
  </div></section>
 </div>
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
+<script>{_FN.TABS_JS}</script>
 <script>{JS}</script>'''
 
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep DFS Builder</title>")
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>DFS Lineup Builder</b></h1>")
-        .replace("</style>", CSS + "\n</style>", 1)
+        .replace("</style>", CSS + _FN.TABS_CSS + "\n</style>", 1)
         .replace("{{DESC}}", f"Build DraftKings and FanDuel lineups against the BetSweep model - classic, or single game with an MVP / Captain at 1.5x: load the site's player list, see every player's projection in that site's scoring and his points per $1K, tap players in or let the optimizer fill the lineup under the cap, then download the upload file. Built {stamp} CT.")
         .replace("{{NAV}}", "").replace("{{CARDS}}", body)
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ""))

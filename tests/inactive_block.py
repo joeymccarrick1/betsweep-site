@@ -199,10 +199,12 @@ async def main():
         # ---- Line shop ----
         if os.path.isfile(os.path.join(ROOT, "shop", "index.html")):
             SREAD = "(P) => { " + VIS + " var rows = qa('.shl li'); return {shown: rows.filter(vis).length, first: (rows.filter(function(e){ return vis(e) && e.getAttribute('data-rk'); })[0] || {getAttribute: function(){ return ''; }}).getAttribute('data-rk').split('|')[0], his: rows.filter(function(e){ return (e.getAttribute('data-rk') || '').split('|')[0] === P; }).length, hisShown: rows.filter(function(e){ return vis(e) && (e.getAttribute('data-rk') || '').split('|')[0] === P; }).length}; }"
-            pg, ctx, errs, _ = await page("/shop/"); h0 = await pg.evaluate(SREAD, ""); await ctx.close()
+            # 11/17: the list shows its first 15 rows with the rest behind "Show all" - open it, so a row leaving is counted and not back-filled
+            SALL = "() => { var b = document.getElementById('shmore'); if(b && !b.parentNode.hidden) b.click(); }"
+            pg, ctx, errs, _ = await page("/shop/"); await pg.evaluate(SALL); h0 = await pg.evaluate(SREAD, ""); await ctx.close()
             if not h0["first"]: skip("Line shop lists no player leg right now (or the page predates data-rk)")
             else:
-                ps = h0["first"]; pg, ctx, errs, _ = await page("/shop/", ps); h = await pg.evaluate(SREAD, ps); await ctx.close()
+                ps = h0["first"]; pg, ctx, errs, _ = await page("/shop/", ps); await pg.evaluate(SALL); h = await pg.evaluate(SREAD, ps); await ctx.close()
                 check(h["his"] >= 1 and h["hisShown"] == 0 and h["shown"] == h0["shown"] - h["his"] and not errs, f"Line shop with {ps} ruled out: his {h['his']} row{'s' if h['his'] > 1 else ''} left the list, the other {h['shown']} stay")
         await b.close()
     print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

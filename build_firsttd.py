@@ -182,12 +182,19 @@ for gid in dict.fromkeys(r["gid"] for r in rows):
         f'<td class="lam" title="projected rushing + receiving TD">{r["lam"]:.2f}</td><td class="pr"><b>{r["pr"]*100:.1f}%</b></td><td class="fair">{r["fair"]}</td>'
         f'<td class="fdp">{odds_str(r["fd"]) or "—"}</td>{edge_cell(r)}<td class="go">{fdlink(r, "Add to slip")}</td></tr>'
         for i, r in enumerate(rs))
+    # 11/17 (page pass): 14 open tables ran 17.8 phone screens. A game is its header until it is tapped, and the header answers the
+    # question first: the three most likely to score the game's first touchdown. A chip or a name in the lists above opens its game.
+    top3 = " · ".join(f'{E(r["n"])} <b>{r["pr"]*100:.1f}%</b>' for r in rs[:3])
     cards.append(f'''<section class="ftd" id="ftd-{gid}" data-ko="{ko or ""}">
- <div class="fhd" style="--ca:{TEAMCOL.get(a, ("#333","#333"))[0]};--cb:{TEAMCOL.get(b, ("#333","#333"))[0]}">
+ <details class="fgd">
+ <summary class="fhd" style="--ca:{TEAMCOL.get(a, ("#333","#333"))[0]};--cb:{TEAMCOL.get(b, ("#333","#333"))[0]}">
   <h2>{badge(a)} {E(NAMES.get(a, a))} <small>@</small> {badge(b)} {E(NAMES.get(b, b))}</h2>
-  <p>{E(rs[0]["kick"])}{" · " if rs[0]["kick"] else ""}model: {a} {ta:.2f} TD, {b} {tb:.2f} TD ({tot:.2f} total) · {a} scores first {ta/tot*SCALE*100:.0f}%, {b} {tb/tot*SCALE*100:.0f}%, D/ST or no TD {(1-SCALE)*100:.1f}%</p>
- </div>
+  <p class="fwhen">{E(rs[0]["kick"])}{" · " if rs[0]["kick"] else ""}{len(rs)} players</p>
+  <p class="ftop3">{top3}</p>
+ </summary>
+ <p class="fmodel">Model: {a} {ta:.2f} TD, {b} {tb:.2f} TD ({tot:.2f} total) · {a} scores first {ta/tot*SCALE*100:.0f}%, {b} {tb/tot*SCALE*100:.0f}%, D/ST or no TD {(1-SCALE)*100:.1f}%</p>
  <div class="tw"><table><thead><tr><th></th><th>Player</th><th title="projected rushing + receiving TD">Proj TD</th><th>First TD</th><th>Fair</th><th>FanDuel</th><th>Book %</th><th>Edge</th><th></th></tr></thead><tbody>{trs}</tbody></table></div>
+ </details>
 </section>''')
 
 TOPN = 12
@@ -251,6 +258,19 @@ CSS = """
 .ftdwrap .how dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:6px 0 0}
 .ftdwrap .how dt{font-weight:700}.ftdwrap .how dd{margin:0}
 .ftd .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ftd .fgd > summary{list-style:none;cursor:pointer;padding-right:44px} .ftd .fgd > summary::-webkit-details-marker{display:none}
+.ftd .fgd > summary::after{content:"";position:absolute;right:18px;top:26px;width:9px;height:9px;border-right:2px solid rgba(255,255,255,.75);border-bottom:2px solid rgba(255,255,255,.75);transform:rotate(45deg);transition:transform .15s}
+.ftd .fgd[open] > summary::after{transform:rotate(225deg);top:31px}
+.ftd .fgd > summary:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.ftd .fhd .ftop3{margin-top:7px;font-size:13.5px;line-height:1.45;opacity:1} .ftd .fhd .ftop3 b{font-weight:700;color:#ff8f86}
+.ftd .fmodel{margin:0;padding:9px 14px;font-size:12.5px;line-height:1.45;color:var(--mute);border-bottom:1px solid var(--line)}
+.ftdwrap details.how > summary{list-style:none;cursor:pointer;font:700 15px/1.2 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:28px}
+.ftdwrap details.how > summary::-webkit-details-marker{display:none} .ftdwrap details.how > summary::after{content:"▾";color:var(--mute);font-size:14px} .ftdwrap details.how[open] > summary::after{content:"▴"}
+.ftdwrap details.how[open] > summary{margin-bottom:8px}
+.ftdwrap .fsw{display:none}
+@media(max-width:760px){ .ftdwrap .fsw{display:flex;gap:6px;margin:12px 0 0} .ftdwrap .fsw .tab{flex:1 0 0;min-height:40px} .ftdwrap .strips{margin-top:10px}
+  .ftdwrap .strips[data-s="0"] > div:nth-child(2),.ftdwrap .strips[data-s="1"] > div:nth-child(1){display:none} }
+@media (prefers-reduced-motion:reduce){ .ftd .fgd > summary::after{transition:none} }
 /* 11/17: a game that has kicked off says so and loses its FanDuel buttons (the page offered "add to slip" on finished games) */
 .ftd.started .fhd h2::after{content:"Kicked off";margin-left:10px;font:700 11px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:4px 9px;vertical-align:middle;white-space:nowrap}
 .ftd.started td.go a,.ftd.started .fdgo{display:none} .ftdwrap .strips li[hidden]{display:none}
@@ -273,18 +293,27 @@ FTD_JS = r"""<script>
   }
   run(); setInterval(run, 60000);
   document.addEventListener('bs-risk', run);   // the live injury list arrived or changed: a ruled-out player leaves the two lists
+  // 11/17 (page pass): games are folded - a chip, a name in the two lists or a shared link to #ftd-<game> opens that game
+  function openHash(h){ if(!h || h.indexOf('#ftd-') !== 0) return; var s = document.getElementById(h.slice(1)), d = s && s.querySelector('details.fgd'); if(d) d.open = true; }
+  document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('a[href^="#ftd-"]'); if(a) openHash(a.getAttribute('href')); });
+  window.addEventListener('hashchange', function(){ openHash(location.hash); }); openHash(location.hash);
+  // phones: one of the two lists at a time
+  var sw = document.getElementById('fsw'), st = document.getElementById('fstrips');
+  if(sw && st) sw.addEventListener('click', function(e){ var b = e.target.closest('.tab'); if(!b) return; st.setAttribute('data-s', b.getAttribute('data-s'));
+    [].forEach.call(sw.children, function(x){ x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); });
 })();
 </script>""".replace("__TOPN__", str(TOPN))
 body = f'''<div class="ftdwrap">
- <div class="strips">
+ <div class="tabs fsw" id="fsw" role="group" aria-label="Which list"><button type="button" class="tab on" data-s="0" aria-pressed="true">Most likely</button><button type="button" class="tab" data-s="1" aria-pressed="false">Best edges</button></div>
+ <div class="strips" id="fstrips" data-s="0">
   <div><h3>Most likely to score first<small>whole slate</small></h3><ul>{strip(likely, "likely")}</ul></div>
   <div><h3>Best edges vs FanDuel<small>{npriced} players priced</small></h3><ul>{strip(edges, "edge")}</ul></div>
  </div>
- <div class="how"><h3>How we get the number</h3>
+ <details class="how"><summary>How we get the number</summary>
   <p>Each player's chance of the game's first touchdown is his share of the projected touchdowns in that game: his projected rushing + receiving TD over both teams' total, times {SCALE*100:.1f}% (the remaining {(1-SCALE)*100:.1f}% covers a defensive or special-teams first TD and games with no TD). That is the whole model: team strength, pace and game script are already inside the projections, so the share is the clean way to convert them. Tested on every 2025 and 2026 game since Week 3 ({'317'} games): it beats an even split by a wide margin and is calibrated top to bottom, and no extra tilt toward the favorite or the top option improved it.</p>
   <dl><dt>First TD</dt><dd>the model's probability he scores the game's first touchdown</dd><dt>Fair</dt><dd>the American odds that probability converts to, no vig</dd><dt>FanDuel / Book %</dt><dd>FanDuel's first touchdown scorer price and the hit rate it implies</dd><dt>Edge</dt><dd>First TD % minus Book %, in points: <b>VALUE</b> at +3 or better, <b>FAIR</b> from 0 to +3, <b>PASS</b> below 0</dd></dl>
   <p style="margin-top:8px;color:var(--mute);font-size:13px">First TD is a high-variance market by nature: the best number on the slate is usually under 20%. Treat these as single legs or small plays, and shop the price. Built {stamp} CT from the live sheet. Information only, not a guarantee; 21+, please bet responsibly.</p>
- </div>
+ </details>
  {"".join(cards)}
 </div>
 {FTD_JS}'''

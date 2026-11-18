@@ -329,7 +329,11 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
     # is built from home.py's cards).
     def news_li(n): return f'<li class="{E(n["k"])}" data-team="{E(n.get("team", ""))}" data-player="{E(n["player"])}"><span class="nt">{E(tag_short(n))}</span><div><b>{E(n["player"])} <small>{E(n.get("team", ""))} {E(n.get("pos", ""))}</small></b><p>{E(clean_txt(n))}</p></div></li>'
     groups = [("Out or doubtful", [n for n in news if n["k"] == "bad"]), ("Limited, questionable or a smaller role", [n for n in news if n["k"] == "watch"]), ("Back, or a bigger role", [n for n in news if n["k"] == "good"])]
-    json.dump({"week": W, "stamp": stamp, "n": len(news), "css": TODAY_CSS,
+    # 11/17 (page pass): the same three groups as data, so /news/ can show one at a time under a tab (label = the tab's word)
+    _labels = {"bad": "Out", "watch": "Limited", "good": "Back"}
+    news_groups = [{"k": k, "label": _labels[k], "title": t, "n": len(ns), "html": '<ul class="tdnewsl">' + "".join(news_li(n) for n in ns) + '</ul>'}
+                   for k, (t, ns) in zip(("bad", "watch", "good"), groups) if ns]
+    json.dump({"week": W, "stamp": stamp, "n": len(news), "css": TODAY_CSS, "groups": news_groups,
                "news": "".join(f'<h2 class="t nwh">{E(t)} <small class="tsub">{len(ns)}</small></h2><ul class="tdnewsl">{"".join(news_li(n) for n in ns)}</ul>' for t, ns in groups if ns),
                "stale": stale_html, "targets": tgt_html, "teams": sorted({n.get("team", "") for n in news if n.get("team")})},
               open(os.path.join(OUT_, "today_parts.json"), "w"))

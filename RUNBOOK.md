@@ -1770,3 +1770,49 @@ build before its kickoff, from the site's history: Weeks 8, 9, 10 (14 + 15 + 14 
   slip posted with a kickoff ahead (Thursday's Daily Sweep) should push to a device with the switch on within one alerts run of the
   publish; the function's summary carries `posted`.
 - tests/promo_up.py 17 (the flag line may carry a comment; the built My BetSweep page is checked against the flag).
+
+## 11/17, 9:40-10:30 PM CT: the long pages, shortened (owner 9:23 PM: "Did you finish updating and optimizing every page?")
+
+Same treatment the Fantasy page and the Trade calculator got at 8 PM: tabs, folds and "show all" buttons. No row was removed from any
+page; what changed is how much opens at once. Phone lengths (390x844), live copy before -> this build:
+
+| page | before | after | what changed |
+|---|---|---|---|
+| Players (/player/) | 33.9 | 3.8 | first 30 (props this week first); search and position still look through everyone; "Show all N" |
+| First TD | 17.8 | 4.5 | each game folded behind a header naming its three most likely scorers; a chip, a name in the lists or #ftd-<game> opens it; one of the two top lists at a time on a phone; the method folded |
+| Line shop | 14.0 | 3.4 | three-line rows with the better price on the button; first 15; an All / DraftKings / Hard Rock switch |
+| Usage | 12.8 | 3.3 | first 12 of the list on screen, "Show all N"; Rising / Falling and position re-count |
+| Season | 10.4* | 4.4 | on a phone its seven report cards open on their titles (shared script, see below) |
+| DFS | 10.3 | 3.9 | Players / Lineup / How it works as tabs on one column (wide screens unchanged); pool opens at 20 rows; with no salaries the best projections lead (it was QBs A to Z) |
+| Model's Best | 9.2 | 2.6 | one tab per tier (Plus money / TDs / Near even) and per section (Next up / Radar / Parlays), the count = cards still open to bet; /best/#parlay opens on the parlays |
+| News desk | 9.0 | 2.7 | Out / Limited / Back tabs, notes two lines until tapped, the team filter re-counts the tabs and moves to the first group with a note |
+| Who benefits | 7.6 | 2.7 | one folded block per injured player; the header says who got the work |
+| Teams | 6.9 | 4.9 | Standings / League table tabs |
+| Teasers | 6.9 | 3.2 | one teaser size per tab |
+
+- *Measuring.* Pages built from template.html (Boards, Receipts, Season) give every off-screen `.card` a 900px placeholder
+  (`content-visibility:auto; contain-intrinsic-size:auto 900px`), so `scrollHeight` at load over-states them. The 9:25 PM table said
+  Receipts 27, Boards 15.4, Season 13.3; with every card laid out they are 15.0, 10.9 and 10.4. /tmp-style check: add
+  `*{content-visibility:visible!important}` before reading the height. A closed `<details>` also keeps its content's box, so a test's
+  "is it on screen" must use `el.checkVisibility()`, not a bounding box (tests/page_fold.py VIS).
+- *Tabs.* fantasy_nav.TABS_CSS / TABS_JS are bsTabs alone (no league bar). The script goes inline before the page's own script. The
+  host has to be a direct child of something as tall as the page or the row cannot stay pinned (a wrapper the height of the row pins
+  nothing). A row wider than the screen scrolls sideways and keeps the chosen tab in view (`keep()`, also after a count changes).
+- *Model's Best.* home.py wraps each tier in `<div class="mbgrp" data-tab data-label>` with its own "All kicked off" line; build_site.py
+  tags the sections that follow and mounts the tabs (BEST_TABS_JS). B["best"] is used on /best/ only.
+- *News.* build_today.py writes the three groups as data (today_parts.json `groups`); build_site.py NEWS_JS.
+- *Season.* Built on Tuesdays and kept by a reprice, so its fold is in the shared stylesheet and script (build_site.py: `.card.calib.bsfold`,
+  `foldCards()`), which rechrome.py puts on every kept page at each build. A folded card is `content-visibility:visible` so it takes
+  its real height. Wide screens are untouched.
+- *Local builds.* out/season-receipt.html and out/results-week9.html in this checkout were 11/10 leftovers, so local /season/ was a
+  week-old page the publish run never builds. Moved out of out/ (to /tmp/stale_out): a local build now keeps the published Season page
+  and receipts the way the workflow does. That kept page links the published copy's own /s/tpl-<hash>.css, which a local ./site
+  does not have - it renders unstyled locally and styled once published.
+- *Left alone, on purpose.* Boards (10.9 real: one card per game under jump chips), the Parlay Builder (7.7: game cards already folded,
+  chips), weekly Receipts (15.0 real: jump chips; its scorecard is also the share image, so tabs there belong in build_results.py with
+  next Tuesday's receipt), the Guide (8.3: a reading page with a contents list), legal pages. Not done yet: player pages (6.7),
+  game dossiers (6.1), team pages (5.8).
+- tests/page_fold.py (86): lengths in both themes, every fold / tab / cap above, deep links, wide screens. tests/week_end.py opens the
+  Parlays tab before reading it; tests/inactive_block.py opens Line shop's "Show all" before counting rows.
+- Not this change: tests/menu_ask.py fails one check ("Theme near the top of My BetSweep") on the published copy too - it predates the
+  hub-box tabs on My BetSweep.

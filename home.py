@@ -986,7 +986,7 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .promo .slink{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 16px 10px;font-size:12px;color:var(--mute)} .promo .slink code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink);background:var(--chalk);padding:2px 7px;border-radius:6px} .promo .slink button{font:inherit;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .promo .slink a{color:var(--ink)}
 .promo .cap[hidden]{display:none}
 
-.plays{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.plays{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px} .mbgrp:not(.fxoff) ~ .mbgrp{margin-top:16px}
 .play{position:relative;display:flex;flex-direction:column;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px}
 .play.lead{border-color:color-mix(in srgb,var(--red) 55%,var(--line))}
 .play.lead::before{content:"TOP PLAY";position:absolute;top:-9px;left:12px;background:var(--red);color:#fff;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.14em;padding:2px 8px;border-radius:99px}
@@ -1152,11 +1152,14 @@ def sections(IN, OUT, latest_week=None):
     mbe, mbt, mbs = model_best(D)
     B["best_teaser"] = best_teaser(D, list(mbe) + list(mbt) + list(mbs), len(mbe) + len(mbt) + len(mbs))
     if mbe or mbt or mbs:
+        # 11/17 (page pass): each tier is its own block with its own "all kicked off" line, so /best/ can show one tier at a time
+        # (build_site.py mounts the tabs; data-tab / data-label are read there and are inert anywhere else).
+        def _tier(tab, label, rule, cards): return f'<div class="mbgrp" data-tab="{tab}" data-label="{label}"><div class="subt">{rule}</div><div class="plays">{cards}</div><p class="none allstarted" hidden>All kicked off.</p></div>'
         out.append('<section class="sec" id="best"><h2 class="t">Model\'s Best <small class="tsub">where the model has actually beaten the price</small></h2>'
-                   + (f'<div class="subt">Plus-money edges · +150 or longer where the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) · {_HOWS.plus_phrase(values=D.get("legsnaps"))}</div><div class="plays">{"".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))}</div>' if mbe else "")
-                   + (f'<div class="subt">Touchdowns the model likes at +200 or shorter, for players with a real role · {_HOWS.tier_phrases(values=D.get("legsnaps"))["td"]}</div><div class="plays">{"".join(play_card(x) for x in mbt)}</div>' if mbt else "")
-                   + (f'<div class="subt">Near even money, model 8+ points off FanDuel · {_HOWS.tier_phrases(values=D.get("legsnaps"))["even"]} · tracked, not a lead; rushing yards removed</div><div class="plays">{"".join(play_card(x, "floor") for x in mbs)}</div>' if mbs else "")
-                   + '<p class="none allstarted" hidden>All kicked off.</p><p class="none" style="margin-top:10px;font-size:12.5px">Graded every week on the season page. The whole priced pool loses about 8% at FanDuel\'s prices — the edge lives in the few hundred plus-money legs a week the model sees differently, not in heavy favorites. <a href="/build/?best=1" style="color:var(--ink)">All Model\'s Best legs in the builder →</a></p></section>')
+                   + (_tier("plus", "Plus money", f'Plus-money edges · +150 or longer where the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) · {_HOWS.plus_phrase(values=D.get("legsnaps"))}', "".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(mbe))) if mbe else "")
+                   + (_tier("td", "TDs", f'Touchdowns the model likes at +200 or shorter, for players with a real role · {_HOWS.tier_phrases(values=D.get("legsnaps"))["td"]}', "".join(play_card(x) for x in mbt)) if mbt else "")
+                   + (_tier("even", "Near even", f'Near even money, model 8+ points off FanDuel · {_HOWS.tier_phrases(values=D.get("legsnaps"))["even"]} · tracked, not a lead; rushing yards removed', "".join(play_card(x, "floor") for x in mbs)) if mbs else "")
+                   + '<p class="none" style="margin-top:10px;font-size:12.5px">Graded every week on the season page. The whole priced pool loses about 8% at FanDuel\'s prices — the edge lives in the few hundred plus-money legs a week the model sees differently, not in heavy favorites. <a href="/build/?best=1" style="color:var(--ink)">All Model\'s Best legs in the builder →</a></p></section>')
     if mbe or mbt or mbs: B["best"] = out[-1]
     plays_html = "".join(play_card(x, "lead" if i == 0 else "") for i, x in enumerate(tp))
     out.append('<section class="sec" id="plays"><h2 class="t">The model\'s top plays this week</h2>'
