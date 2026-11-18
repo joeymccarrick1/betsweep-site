@@ -18,6 +18,7 @@ is in the slip on every page.
 """
 import os, re, json, csv, html, math, datetime as dt
 import plydata as PD
+import fantasy_nav as _FN   # the section tabs (bsTabs) - player pages open on this week's props
 from zoneinfo import ZoneInfo
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out"); IN = os.path.join(HERE, "in")
@@ -228,6 +229,10 @@ PCSS = r""".l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(
 .pd ul:not(.js) li:nth-child(n+31){display:none}   /* until the script has run: the same first 30, so the list does not flash at full length */
 """
 
+# the tab row on a .pp page (player, team, game preview): flush with the cards, a little air under the header
+PP_TABS_CSS = """
+.pp .fxtabs{margin:0 0 12px} .pp header + .fxanchor + .fxtabs{margin-top:-4px}
+"""
 PJS = r"""
 (function(){
   var wk = document.querySelector('[data-week]'), W = wk ? +wk.getAttribute('data-week') : 0; if(!W) return;
@@ -485,10 +490,16 @@ def page(k, p):
     top = sorted([l for l in p["legs"] if l["m"] in MORDER and l.get("e") is not None], key=lambda l: -l["e"])[:1]
     desc = f'{p["name"]} ({p["pos"]}, {p["team"]}) Week {W}' + (f' vs {opp}' if opp else "") + ': props with FanDuel, DraftKings and Hard Rock prices, the BetSweep model\'s chance and edge, hit rates, matchup ranks, snap share and game log.'
     acts = (f'<a class="pri" href="/build/?p={E(p["name"])}">Parlay Builder</a>' if p["legs"] else "") + (f'<a href="/boards/#{E(g["gid"])}">Matchup board</a>' if g else "") + f'<a href="{E(nu)}" target="_blank" rel="noopener" title="News ({nsrc})">News</a>'
+    # 11/17 (page pass, owner: "Okay keep working"): the page was one 6.7-screen scroll on a phone with the charts ahead of the lines.
+    # This week's props open first; the charts, the model's notes with our record on him, and the stats are one tap away each.
+    _l10 = last10_block(p); _n10 = min(10, len(p["games"] + p.get("prev_games", [])))
+    _blocks = [(i, lab, h) for i, lab, h in (("props", "Props", props_block(p)), ("last", f"Last {_n10}", _l10), ("model", "Model", flags_block(p) + record_block(p)),
+                                             ("stats", "Stats", usage_block(k, p) + log_block(p) + mates_block(k, p))) if h]
+    _th, _tb = _FN.panels("ppTabs", _blocks, None, start="props" if p["legs"] else next((i for i, _, _ in _blocks if i != "props"), "props"))
     body = (head(f'{p["name"]} props, stats & matchup · Week {W} · BetSweep', desc) +
             f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › <a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a> › {E(p["name"])}</p>'
             f'<header><a class="tb" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
-            + last10_block(p) + props_block(p) + record_block(p) + flags_block(p) + usage_block(k, p) + log_block(p) + mates_block(k, p) + jsonld(p, opp) +
+            + _th + _tb + jsonld(p, opp) +
             '</div><div class="ppbar" id="ppbar"><b></b><a href="/build/">Open betslip</a></div><script src="/player/player.js" defer></script>')
     return body, desc
 
@@ -499,7 +510,7 @@ for k, p in pages.items():
     body, desc = page(k, p)
     open(os.path.join(OUT, "players", p["slug"] + ".html"), "w").write(body)
     slugs[p["name"]] = p["slug"]; n_legs += bool(p["legs"])
-open(os.path.join(OUT, "players", "player.css"), "w").write(__import__("account")._base_css()[1] + PCSS)   # site tokens + light/dark, once for every page
+open(os.path.join(OUT, "players", "player.css"), "w").write(__import__("account")._base_css()[1] + PCSS + _FN.TABS_CSS + PP_TABS_CSS)   # site tokens + light/dark, once for every page; the section tabs (player, team and game-preview pages all link this file)
 open(os.path.join(OUT, "players", "player.js"), "w").write(PJS)
 json.dump(slugs, open(os.path.join(OUT, "players", "slugs.json"), "w"))
 json.dump({o: n for o, n in getattr(S, "moved", {}).items() if n in set(slugs.values())}, open(os.path.join(OUT, "players", "redirects.json"), "w"))   # audit 11/10: old team-suffixed addresses of traded players

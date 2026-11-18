@@ -376,6 +376,24 @@ try:
     _t = open(os.path.join(HERE, "template.html"), encoding="utf-8").read(); _TPL_CSS = _t[_t.index("<style>") + 7: _t.index("</style>")]
     if "/*LIVECSS*/" in _TPL_CSS: _TPL_CSS = _TPL_CSS[:_TPL_CSS.index("/*LIVECSS*/")]   # build_boards fills the placeholders after this point; the prefix is identical on every template page
 except Exception: _TPL_CSS = ""
+# the weekly receipt's scorecard on a phone (foldScore in the shared script): the tab row sits inside the card, and two tiles share a row
+SCORE_TABS_CSS = """
+/* while a card's picture is drawn (.bsshoot, see the picture buttons in the app script): the card is laid out in full - the image tool
+   draws an off-screen copy of the page, where a lazy card (template.html: content-visibility:auto, 900px placeholder) is never "on
+   screen", so every picture of a card taller than that was cut off at 992px - and no color-mix() value is left in it */
+.card.bsshoot{content-visibility:visible !important} .card.bsshoot table.sc{background-color:var(--chalk) !important}
+/* the Story picture is drawn from a 540px frame added to <body>, and every direct child of <body> is zoomed 1.1x (1.06x on wide screens,
+   BIGGER_CSS): the card inside came out 594px wide and its right edge was cut off in the picture. The frame is not zoomed. */
+body > .storyframe{zoom:1 !important}
+@media (max-width:760px){
+  .card.scorecard .scbody > .fxtabs{position:static;background:none;border-bottom:0;padding:10px 0 2px;margin:0}
+  .card.scorecard .scbody [data-tab] > h3:first-child{margin-top:10px}
+  .card.scorecard.bsshoot .scbody [data-tab].fxoff{display:block !important} .card.scorecard.bsshoot .scbody > .fxtabs{display:none !important}
+  .storyframe .scbody [data-tab].fxoff{display:block !important} .storyframe .scbody > .fxtabs{display:none !important}
+  .card.scorecard .tiles{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px} .card.scorecard .tile{padding:10px 11px} .card.scorecard .tile b{font-size:26px}
+  .card.scorecard .tiles > .tile:last-child:nth-child(odd){grid-column:1 / -1}
+}
+"""
 SHARED = {}   # name -> (served path, content)
 def _write_shared():
     os.makedirs(os.path.join(SITE, "s", "fonts"), exist_ok=True)
@@ -384,8 +402,10 @@ def _write_shared():
         if os.path.exists(src): shutil.copy(src, os.path.join(SITE, "s", "fonts", f))
     h2c = os.path.join(_ASSETS, "html2canvas.min.js")
     if os.path.exists(h2c): shutil.copy(h2c, os.path.join(SITE, "s", "html2canvas.min.js"))
-    site_css = FONT_CSS + _inner(NAV_CSS, "style") + "\n" + _inner(BRAND_CSS, "style")
-    app_js = _inner(APP_JS, "script")
+    site_css = FONT_CSS + _inner(NAV_CSS, "style") + "\n" + _inner(BRAND_CSS, "style") + "\n" + _FN.TABS_CSS + SCORE_TABS_CSS
+    # the section tabs ride in the shared script too (11/17): the pages a reprice keeps as they are - the weekly receipts - get
+    # their tabs from foldScore() below and have no inline copy. A page that carries its own copy has already defined it.
+    app_js = "if(!window.bsTabs){" + _FN.TABS_JS + "}\n" + _inner(APP_JS, "script")
     try:   # owner 11/10: anonymous page counts ride in the shared script, only when account.PAGE_COUNTS is on (see account.py)
         import account as _ACCT_HIT; app_js += _ACCT_HIT.hit_js()
     except Exception: pass
@@ -454,6 +474,31 @@ APP_JS = r"""<script>
       h.addEventListener('click', function(e){ if(e.target.closest('a')) return; tog(); });
       h.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tog(); } }); }); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldCards); else foldCards();
+  // 1c. 11/17 (page pass): a weekly receipt's scorecard is five groups of tiles and tables - six phone screens before the first game.
+  //     On a phone it shows one group at a time under a row of tabs (Lines / Posted / Calls / Projections / Games, from the groups the
+  //     page has). "Copy card as image" and "Story" still draw the whole card: every group is laid out while the picture is taken.
+  function foldScore(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches || !window.bsTabs) return;
+    var card = document.querySelector('section.card.scorecard'), sb = card && card.querySelector('.scbody'); if(!sb || sb.dataset.fold) return;
+    var kids = [].slice.call(sb.children); if(kids.filter(function(e){ return e.tagName === 'H3'; }).length < 3) return; sb.dataset.fold = '1';
+    var NAME = [[/fanduel/i, 'Lines'], [/posted/i, 'Posted'], [/calls/i, 'Calls'], [/projection/i, 'Projections'], [/game by game/i, 'Games']], tabs = [], cur = null;
+    kids.forEach(function(el){
+      if(el.tagName === 'H3'){ var txt = el.textContent.trim(), lab = txt.split(' ')[0]; NAME.some(function(n){ if(n[0].test(txt)){ lab = n[1]; return true; } return false; });
+        cur = document.createElement('div'); cur.setAttribute('data-tab', 'sc' + tabs.length); sb.insertBefore(cur, el); tabs.push({ id: 'sc' + tabs.length, label: lab }); }
+      if(cur) cur.appendChild(el); });
+    var host = document.createElement('div'); sb.insertBefore(host, sb.firstChild); bsTabs.mount(host, tabs, { root: sb }); }
+  // 1d. 11/17: the picture buttons on a card ("Copy card as image", "Story 9:16"). While the page's own handler draws, the card carries
+  //     .bsshoot (styles in the shared sheet). Found while testing the scorecard tabs, on the published pages as they were:
+  //       - the receipt scorecard's picture failed with "Could not render": the image tool (html2canvas 1.4.1) cannot read the color()
+  //         value a browser reports for color-mix(), and the scorecard's tables had one as their background;
+  //       - every other card's picture (Season, a receipt's Calls) stopped at 992px: the tool draws an off-screen copy of the page,
+  //         where a lazy card is never "on screen" and keeps its 900px placeholder height.
+  //     With .bsshoot the card is laid out in full, a folded scorecard shows every group, and its tables take a plain background.
+  //     The class comes off when the picture lands, or after 12 seconds.
+  document.addEventListener('click', function(e){ var bt = e.target.closest && e.target.closest('button.snap:not(.more)'); if(!bt) return;
+    var card = document.getElementById(bt.getAttribute('data-target') || ''); if(!card) return; card.classList.add('bsshoot');
+    var mo = null, t = setTimeout(done, 12000); function done(){ card.classList.remove('bsshoot'); if(mo) mo.disconnect(); clearTimeout(t); }
+    if(window.MutationObserver){ mo = new MutationObserver(function(ms){ if(ms.some(function(m){ return [].some.call(m.addedNodes, function(n){ return n.classList && n.classList.contains('shotwrap'); }); })) done(); }); mo.observe(card, { childList: true }); } }, true);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldScore); else foldScore();
   // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
   var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
   // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards

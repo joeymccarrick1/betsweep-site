@@ -323,10 +323,13 @@ for t in TEAMS:
         sub += f'<span>Week {W}: {"vs" if home else "@"} {tlink(opp)} · {E(g.get("kick") or "")}</span>' + (f'<span>model {tp:.0f}-{op:.0f}</span>' if isinstance(tp, (int, float)) and isinstance(op, (int, float)) else "")
     acts = (f'<a class="pri" href="/boards/#{E(g["gid"])}">Matchup board</a>' + (f'<a href="/dossier/{E(g["gid"])}/">Game preview</a>' if os.path.exists(os.path.join(OUT, "dossier", g["gid"] + ".html")) else "") + f'<a href="/build/?g={E(g["gid"])}">Parlay Builder</a>' if g else "") + '<a href="/teams/">All teams</a><a href="/player/">Players</a>'
     desc = f'{full(t)} 2026: {s["w"]}-{s["l"]} record, points and yards per game with league ranks, against-the-spread and over/under record, and the box score of every game this season.'
+    # 11/17 (page pass): 5.8 phone screens in one scroll. Stats (at a glance, the per-game table, the defense against each role),
+    # Games (results, schedule, box scores) and Leaders are one tab each; the page opens on Stats. #games / #leaders open theirs.
+    _th, _tb = _FN.panels("tpTabs", [(i, lab, h) for i, lab, h in (("stats", "Stats", sheet(t) + stat_table(t) + vs_roles(t)), ("games", "Games", games_block(t)), ("leaders", "Leaders", leaders(t))) if h], None)
     body = (head(f'{full(t)} stats, results & box scores · BetSweep', desc) +
             f'<div class="pp tpage" data-team="{t}"><p class="crumb"><a href="/teams/">Teams</a> › {E(DIV.get(t, ""))} › {E(full(t))}</p>'
             f'<header><span class="tb" style="--p:{c1};--s:{c2}">{E(t)}</span><h1>{E(full(t))}</h1><div class="sub">{sub}</div><div class="acts">{acts}</div></header>'
-            + sheet(t) + stat_table(t) + vs_roles(t) + games_block(t) + leaders(t) + '</div><script src="/teams/teams.js" defer></script>')
+            + _th + _tb + '</div><script src="/teams/teams.js" defer></script>')
     open(os.path.join(OUT, "teams", t.lower() + ".html"), "w").write(body)
 # ---- directory: divisions + a sortable league table ------------------------------------------------------------------------------------
 divs = collections.OrderedDict()

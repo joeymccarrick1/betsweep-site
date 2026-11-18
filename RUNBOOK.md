@@ -1826,3 +1826,51 @@ page; what changed is how much opens at once. Phone lengths (390x844), live copy
 - Published 10:48 PM CT (gen-overrides c9f847f7, live 8ad63fad, deployment success). Published copy, phone screens: Players 3.8,
   First TD 4.5, Season 4.4, DFS 4.0, Teams 4.9, Usage 3.3, Teasers 3.2, Line shop 3.0, News 2.7, Who benefits 2.7, Model's Best 2.6;
   47 page types, no sideways scroll, no script errors; tests/page_fold.py 86 on the published copy. MASTER log row 605.
+
+## 11/17, 11:30 PM CT: player pages, team pages and game previews under tabs (owner: "Okay keep working")
+
+| page type | before | after | tabs |
+|---|---|---|---|
+| a player (382 pages) | 6.7 | 2.6 | Props / Last N / Model / Stats - opens on this week's props; with no lines this week it opens on Last N (217 pages on a Tuesday) |
+| a team (32) | 5.8 | 3.0 | Stats (at a glance, per-game table, defense against each role) / Games / Leaders |
+| a game preview (13) | 6.1 | 2.4 | one column: Game (script, injuries / weather / news, tested spots) / each offense; two columns (901px+) unchanged, no tab row |
+
+- fantasy_nav.panels(host_id, blocks, key, start, weak): the panels are written with the opening one on screen and the rest `.fxoff`, so
+  nothing flashes before the script runs; `<noscript>` shows them all; `#<tab id>` in the address opens a tab. These three page types
+  pass key=None on purpose: a page reached from everywhere (a name on the boards, the search, a teammate link) always opens the same
+  way - a player's props - instead of whatever tab was open on the last player. (Fantasy / Trade / Model's Best / News keep theirs.)
+- Player tab ids: props, last, model (What the model sees + BetSweep's record on him), stats (Usage + Game log + Teammates). Team:
+  stats, games, leaders. Preview: game, o<team> (e.g. #okc).
+- The tab styles ride in /player/player.css (build_players.py writes it; team pages and previews link the same file), so a build that
+  skips build_players.py would leave team and preview tabs unstyled - it never does (the step is in reprice.BUILD twice).
+- tests/page_fold.py is 104: adds a player with props (every section under a tab, each shown once, + still adds to the slip, the row
+  stays pinned, #stats), a player without, a team (box score still loads under Games, #games), a preview (phone tabs, wide unchanged,
+  #o<team>).
+- Looked at and left: Survivor (4.8 - a tool with a flow, the owner's toggle stays put), Home (5.9 - nine short sections he laid out),
+  How (4.8, a reading page).
+
+## 11/18, 12:15 AM CT: receipt scorecards on a phone, and the share pictures that were broken
+
+- *Receipts.* A weekly receipt's scorecard is five groups of tiles and tables - 6 of the page's 15 phone screens. On a phone it shows
+  one group at a time (Lines / Posted / Calls / Projections / Games, from the groups the page has) with two tiles to a row:
+  Week 10 15.0 -> 10.4 with every card laid out, Week 9 15.3 -> 10.9. Like Season, the receipts are kept by a reprice, so this lives
+  in the shared script (`foldScore()`) and stylesheet (SCORE_TABS_CSS) and reaches Weeks 5-10 through rechrome.py. The shared script
+  now carries bsTabs itself (`if(!window.bsTabs){...}`), the shared sheet the tab styles. Wide screens: unchanged.
+- *The share pictures ("Copy card as image", "Story 9:16").* Found while checking that a folded scorecard still shares whole. On the
+  published pages as they were, in the test browser (Chromium 153):
+    - the receipt scorecard: "Could not render - Attempting to parse an unsupported color function "color"". html2canvas 1.4.1 cannot
+      read the `color(srgb ...)` value a browser reports for `color-mix()`, and `table.sc` has one as its background. Phone and wide.
+    - every other card (Season, a receipt's Calls): the picture stopped at 992px. The tool draws an off-screen copy of the page; a
+      `.card` is `content-visibility:auto` with a 900px placeholder and is never "on screen" in that copy. template.html has
+      `.card.shooting{content-visibility:visible}` for this, but nothing adds `shooting` any more.
+  Fix, in the shared script and sheet so it reaches the kept pages: a click on a picture button puts `.bsshoot` on its card before
+  the page's own handler runs (capture phase); `.card.bsshoot` is laid out in full, a folded scorecard shows every group and hides
+  its tab row, `table.sc` takes plain `var(--chalk)`. The class comes off when the picture lands (a `.shotwrap` is added) or after
+  12 seconds. Pictures now: scorecard 760x8072 on a phone and 2466x5510 wide (the whole card), Calls 760x4086, Season 760x3928.
+  The Story picture's right edge was cut off as well: its 540px frame is added to <body>, whose children are zoomed 1.1x (1.06x wide),
+  so the card inside was 594px. `body > .storyframe{zoom:1 !important}` (shared sheet). Season's Story before / after: cut at
+  "FROZE" with the chart's last week missing -> the whole width.
+- Why nobody saw it: the buttons say "Could not render" / hand back a picture that looks plausible at a glance. Worth a real-phone
+  check by the owner (Safari reports color-mix() the same way, so it very likely failed there too - not verified from here).
+- tests/page_fold.py is 126: receipt tabs on Weeks 5-10, the four pictures against their cards' proportions, the Story frame's width. Its server falls back to
+  the published copy for a /s/ file a local ./site lacks (CLONE env), the way the publish step's merge does.

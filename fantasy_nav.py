@@ -155,3 +155,28 @@ JS = r"""
 # 11/17 (page pass): the section tabs on their own, for pages with no league bar (Model's Best, the News desk, DFS, the record pages)
 TABS_CSS = CSS[:CSS.index("/* ---- league bar + sheet ---- */")]
 TABS_JS = JS[:JS.index("  // ---------- league bar + sheet ----------")] + "})();\n"
+
+
+def panels(host_id, blocks, key, start=None, weak=(), root=".pp"):
+    """11/17 (page pass, the detail pages): one section group at a time under a row of tabs, for a page built as plain HTML.
+
+    blocks = [(id, label, html)], empty ones already left out. Returns (host, body): `host` goes where the row should sit, `body` is
+    the panels followed by the script that mounts the row. The panel that opens (`start`, else the first) is on screen as built and
+    the others carry .fxoff, so nothing flashes or jumps before the script runs; with scripts off every panel shows. With a `key`
+    the tab chosen earlier in the visit is kept from page to page (sessionStorage), except the ids in `weak` (a tab that is nearly
+    empty on this page); with key=None the page always opens on `start` - the right default for a page reached from many places
+    (a tap on a player's name should land on his props, whatever was open on the last player). #<id> in the address opens that
+    tab either way. Fewer than two blocks: no row."""
+    import json as _json
+    if len(blocks) < 2: return "", "".join(h for _, _, h in blocks)
+    ids = [i for i, _, _ in blocks]; start = start if start in ids else ids[0]
+    host = f'<div id="{host_id}"></div>'
+    body = "".join(f'<div data-tab="{i}"' + ("" if i == start else ' class="fxoff"') + f'>{h}</div>' for i, _, h in blocks)
+    body += '<noscript><style>.fxoff{display:block!important}</style></noscript>'
+    body += ('<script>' + TABS_JS + '</script><script>(function(){var h=document.getElementById(' + _json.dumps(host_id) + '),T=' + _json.dumps([{"id": i, "label": l} for i, l, _ in blocks], separators=(",", ":"))
+             + ',K=' + _json.dumps(key) + ',W=' + _json.dumps(list(weak)) + ',s=' + _json.dumps(start) + ';if(!h||!window.bsTabs)return;'
+             'function has(x){return T.some(function(t){return t.id===x})}var x=(location.hash||"").slice(1);'
+             'if(has(x))s=x;else if(K){try{var m=sessionStorage.getItem(K);if(m&&has(m)&&W.indexOf(m)<0)s=m}catch(e){}}'
+             'var B=bsTabs.mount(h,T,{root:h.closest(' + _json.dumps(root) + ')||document,key:K||null,start:s});'
+             'window.addEventListener("hashchange",function(){var y=(location.hash||"").slice(1);if(has(y))B.show(y)});})();</script>')
+    return host, body

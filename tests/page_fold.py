@@ -16,12 +16,19 @@ Model's Best 9.2, News 9.0, Who benefits 7.6. Each page keeps every row it had; 
   Teasers        one teaser size per tab  (6.9)
   Season         on a phone its report cards open on their titles; the fold is in the shared script because a reprice does not
                  rebuild that page  (10.4 with every card laid out)
+  A player       opens on this week's props; Last N games, the model's notes and the stats are tabs  (6.7). A player with no lines
+                 this week opens on his last games instead of an empty Props tab. Always the same opening tab: a tap on a name
+                 anywhere should land on his props, whatever was open on the last player.
+  A team         Stats / Games / Leaders tabs  (5.8)
+  A game preview on one column: the game, then each offense as a tab; two columns on a wide screen as before  (6.1)
+  A receipt      on a phone its scorecard shows one group at a time (Lines / Posted / Calls / Projections / Games) with two tiles to a
+                 row; the share picture still draws the whole card. Shared script, like Season  (15.0 with every card laid out)
 
   python3 tests/page_fold.py [shots_dir]      (SITE=/path/to/a/published/copy to check that instead of ./site)"""
 import asyncio, functools, http.server, json, os, re, sys, threading
 from playwright.async_api import async_playwright
 ROOT = os.environ.get("SITE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
-PORT = 8871; ok = [0, 0]
+PORT = 8871; ok = [0, 0]; CLONE = os.environ.get("CLONE", "/home/claude/betsweep-site")
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 def skip(what): print("SKIP " + what)
 def has(path): return os.path.isfile(os.path.join(ROOT, path.strip("/"), "index.html"))
@@ -33,6 +40,12 @@ LEN = "() => ({scr: document.documentElement.scrollHeight / innerHeight, over: d
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
+        def translate_path(self, path):
+            # a page a reprice keeps (Season, the receipts) links the published copy's own /s/tpl-<hash>.css, which a local ./site does not
+            # have; the publish step merges s/, so the published site does. Serve such a file from the published copy when it is here.
+            p = super().translate_path(path)
+            if not os.path.exists(p) and path.startswith("/s/") and os.path.isfile(os.path.join(CLONE, path.split("?")[0].lstrip("/"))): return os.path.join(CLONE, path.split("?")[0].lstrip("/"))
+            return p
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), functools.partial(H, directory=ROOT)); threading.Thread(target=srv.serve_forever, daemon=True).start()
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -257,6 +270,140 @@ async def main():
             check(not errs, f"Season phone: no script errors {errs[:1] or ''}"); await ctx.close()
             pg, ctx, errs = await page("/season/", w=1280); w = await pg.evaluate(S2); await ctx.close()
             check(w["folded"] == 0 and not errs, "on a wide screen the Season cards are open as before")
+
+        # ---------- a player's page ----------
+        pdir = os.path.join(ROOT, "player"); with_props = no_props = None
+        if os.path.isdir(pdir):
+            for sl in sorted(os.listdir(pdir)):
+                fp = os.path.join(pdir, sl, "index.html")
+                if not os.path.isfile(fp): continue
+                src = open(fp, encoding="utf-8").read()
+                if 'id="ppTabs"' not in src: continue
+                if with_props is None and '<div data-tab="props">' in src and 'class="add"' in src and src.count("data-tab=") >= 4: with_props = sl
+                if no_props is None and '<div data-tab="props" class="fxoff">' in src: no_props = sl
+                if with_props and no_props: break
+        PP = "() => { " + VIS + " var t = document.querySelector('.pp .fxtabs'); var secs = qa('.pp section'); return {tabs: t ? qa('.tab', t).map(function(b){ return b.dataset.t + (b.classList.contains('on') ? '*' : ''); }) : null, panels: qa('.pp [data-tab]').map(function(p){ return [p.getAttribute('data-tab'), vis(p), qa('section', p).length]; }), secs: secs.length, shown: secs.filter(vis).map(function(s){ return (s.querySelector('h2') || {textContent: ''}).textContent.trim().slice(0, 22); }), loose: secs.filter(function(s){ return !s.closest('[data-tab]'); }).length, top: t ? Math.round(t.getBoundingClientRect().top) : null, nav: Math.round(document.querySelector('.sitenav').getBoundingClientRect().bottom), bar: (document.querySelector('#ppbar b') || {textContent: ''}).textContent}; }"
+        if not with_props: skip("no player page with props and tabs in this build")
+        else:
+            path = f"/player/{with_props}/"
+            for theme in ("light", "dark"):   # the dark page stays open for the checks that follow
+                pg, ctx, errs = await page(path, theme, t=T0); d = await pg.evaluate(LEN); s = await pg.evaluate(PP); await shot(pg, f"fold-player-{theme}")
+                check(d["scr"] <= 4.5 and d["over"] <= 1 and not errs, f"[{theme}] a player page ({with_props}) opens at {d['scr']:.1f} phone screens (it was 6.7), no sideways scroll, no script errors {errs[:1] or ''}")
+                if theme == "light": await ctx.close()
+            check(s["tabs"] and s["tabs"][0] == "props*" and [p[1] for p in s["panels"]] == [True] + [False] * (len(s["panels"]) - 1) and any("props" in x.lower() for x in s["shown"]), f"it opens on this week's props, the other sections one tap away ({s['tabs']})")
+            check(s["loose"] == 0 and sum(p[2] for p in s["panels"]) == s["secs"], f"every section of the page is under a tab ({s['secs']} sections in {len(s['panels'])} tabs)")
+            seen = 0
+            for i in [x.rstrip("*") for x in s["tabs"]]:
+                await pg.click(f'.pp .fxtabs [data-t="{i}"]'); await pg.wait_for_timeout(100); z = await pg.evaluate(PP); seen += len(z["shown"])
+                if [p[0] for p in z["panels"] if p[1]] != [i]: check(False, f"tab {i} shows {[p[0] for p in z['panels'] if p[1]]}")
+            check(seen == s["secs"], f"walking the tabs shows every section once ({seen} of {s['secs']})")
+            await pg.click('.pp .fxtabs [data-t="props"]'); await pg.wait_for_timeout(100)
+            addsel = ".pp [data-tab=props] .add[data-k]:not([disabled])"
+            if await pg.evaluate("(s) => { var qa = function(q){ return Array.from(document.querySelectorAll(q)); }; return qa(s).filter(function(e){ return !e.checkVisibility || e.checkVisibility(); }).length; }", addsel):
+                await pg.evaluate("(s) => { var b = Array.from(document.querySelectorAll(s)).filter(function(e){ return !e.checkVisibility || e.checkVisibility(); })[0]; b.scrollIntoView({block: 'center'}); b.click(); }", addsel); await pg.wait_for_timeout(150); a = await pg.evaluate(PP)
+                check("1 leg" in a["bar"], f"a + on a line still adds it to the slip ({a['bar']!r})")
+            await pg.evaluate("window.scrollTo(0, 900)"); await pg.wait_for_timeout(300); y = await pg.evaluate(PP)
+            check(abs(y["top"] - y["nav"]) <= 2, f"the tab row stays under the site bar while the page scrolls (row at {y['top']}px, bar ends at {y['nav']}px)")
+            await ctx.close()
+            last = [x.rstrip("*") for x in s["tabs"]][-1]
+            pg, ctx, errs = await page(path + "#" + last, t=T0); h = await pg.evaluate(PP); await ctx.close()
+            check(h["tabs"][-1] == last + "*" and not errs, f"{path}#{last} opens on that tab")
+            src = open(os.path.join(pdir, with_props, "index.html"), encoding="utf-8").read()
+            check("<noscript><style>.fxoff{display:block!important}</style></noscript>" in src, "with scripts off every section shows (noscript)")
+        if not no_props: skip("every player page in this build has props, so the no-props opening has nothing to check")
+        else:
+            pg, ctx, errs = await page(f"/player/{no_props}/", t=T0); n = await pg.evaluate(PP); d = await pg.evaluate(LEN); await ctx.close()
+            on = [x for x in n["tabs"] if x.endswith("*")][0]
+            check(on != "props*" and "props" in n["tabs"] and len([p for p in n["panels"] if p[1]]) == 1 and d["scr"] <= 4.5 and not errs, f"a player with no lines this week ({no_props}) opens on {on.rstrip('*')} instead of an empty Props tab ({n['tabs']}, {d['scr']:.1f} screens)")
+
+        # ---------- a team's page ----------
+        tdir = os.path.join(ROOT, "teams"); team = next((x for x in sorted(os.listdir(tdir)) if os.path.isfile(os.path.join(tdir, x, "index.html")) and 'id="tpTabs"' in open(os.path.join(tdir, x, "index.html"), encoding="utf-8").read()), None) if os.path.isdir(tdir) else None
+        if not team: skip("no team page with tabs in this build")
+        else:
+            TP = "() => { " + VIS + " var t = document.querySelector('.pp .fxtabs'); return {tabs: t ? qa('.tab', t).map(function(b){ return b.dataset.t + (b.classList.contains('on') ? '*' : ''); }) : null, panels: qa('.pp [data-tab]').map(function(p){ return [p.getAttribute('data-tab'), vis(p)]; }), loose: qa('.pp section').filter(function(s){ return !s.closest('[data-tab]'); }).length, games: qa('.pp details.gm[data-g]').filter(vis).length, box: qa('.pp details.gm[open] .pbox table').filter(vis).length}; }"
+            for theme in ("light", "dark"):   # the dark page stays open for the checks that follow
+                pg, ctx, errs = await page(f"/teams/{team}/", theme); d = await pg.evaluate(LEN); s = await pg.evaluate(TP); await shot(pg, f"fold-team-{theme}")
+                check(d["scr"] <= 4.5 and d["over"] <= 1 and not errs, f"[{theme}] a team page ({team}) opens at {d['scr']:.1f} phone screens (it was 5.8), no sideways scroll, no script errors {errs[:1] or ''}")
+                if theme == "light": await ctx.close()
+            check(s["tabs"] == ["stats*", "games", "leaders"] and [p[1] for p in s["panels"]] == [True, False, False] and s["loose"] == 0 and s["games"] == 0, f"it opens on Stats; Games and Leaders are tabs ({s['tabs']})")
+            await pg.click('.pp .fxtabs [data-t="games"]'); await pg.wait_for_timeout(120); g = await pg.evaluate(TP)
+            check(g["games"] >= 1 and [p[1] for p in g["panels"]] == [False, True, False], f"Games lists the results and schedule ({g['games']} played games)")
+            await pg.click(".pp details.gm[data-g] > summary"); await pg.wait_for_timeout(700); b2 = await pg.evaluate(TP)
+            check(b2["box"] >= 1, f"a tap on a game still loads its box score ({b2['box']} tables)")
+            await pg.click('.pp .fxtabs [data-t="leaders"]'); await pg.wait_for_timeout(120); l = await pg.evaluate(TP)
+            check([p[1] for p in l["panels"]] == [False, False, True] and not errs, "Leaders is its own tab")
+            await ctx.close()
+            pg, ctx, errs = await page(f"/teams/{team}/#games"); h = await pg.evaluate(TP); await ctx.close()
+            check(h["tabs"][1] == "games*" and not errs, f"/teams/{team}/#games opens on the games")
+
+        # ---------- a game preview ----------
+        ddir = os.path.join(ROOT, "dossier"); gm = next((x for x in sorted(os.listdir(ddir)) if os.path.isfile(os.path.join(ddir, x, "index.html")) and 'id="dsTabs"' in open(os.path.join(ddir, x, "index.html"), encoding="utf-8").read()), None) if os.path.isdir(ddir) else None
+        if not gm: skip("no game preview with tabs in this build")
+        else:
+            DS = "() => { " + VIS + " var t = document.querySelector('.pp .fxtabs'); return {tabs: t && vis(t) ? qa('.tab', t).map(function(b){ return b.textContent.trim() + (b.classList.contains('on') ? '*' : ''); }) : null, panels: qa('.pp [data-tab]').map(function(p){ return [p.getAttribute('data-tab'), vis(p), qa('section', p).length]; }), loose: qa('.pp section').filter(function(s){ return !s.closest('[data-tab]'); }).length, cols: (function(){ var x = qa('.dsx > div').filter(vis).map(function(e){ return Math.round(e.getBoundingClientRect().left); }); return x.filter(function(v, i){ return x.indexOf(v) === i; }).length; })()}; }"
+            for theme in ("light", "dark"):   # the dark page stays open for the checks that follow
+                pg, ctx, errs = await page(f"/dossier/{gm}/", theme); d = await pg.evaluate(LEN); s = await pg.evaluate(DS); await shot(pg, f"fold-preview-{theme}")
+                check(d["scr"] <= 4.5 and d["over"] <= 1 and not errs, f"[{theme}] a game preview ({gm}) opens at {d['scr']:.1f} phone screens (it was 6.1), no sideways scroll, no script errors {errs[:1] or ''}")
+                if theme == "light": await ctx.close()
+            a_, b_ = gm.split("-")
+            check(s["tabs"] == ["Game*", f"{a_} offense", f"{b_} offense"] and [p[1] for p in s["panels"]] == [True, False, False] and s["loose"] == 0 and s["panels"][0][2] == 3, f"it opens on the game: script, injuries / weather / news, tested spots ({s['tabs']})")
+            await pg.click(f'#dsTabs [data-t="o{b_.lower()}"]'); await pg.wait_for_timeout(120); o = await pg.evaluate(DS)
+            check([p[1] for p in o["panels"]] == [False, False, True] and o["panels"][2][2] == 3, f"{b_} offense shows that side's three sections alone")
+            await ctx.close()
+            pg, ctx, errs = await page(f"/dossier/{gm}/", w=1280); w = await pg.evaluate(DS); await ctx.close()
+            check(w["tabs"] is None and all(p[1] for p in w["panels"]) and w["cols"] == 2 and not errs, "on a wide screen the preview is unchanged: no tab row, the game on top, the two offenses side by side")
+            pg, ctx, errs = await page(f"/dossier/{gm}/#o{a_.lower()}"); h = await pg.evaluate(DS); await ctx.close()
+            check(h["tabs"][1].endswith("*") and not errs, f"/dossier/{gm}/#o{a_.lower()} opens on that offense")
+
+        # ---------- a weekly receipt (kept by a reprice; its scorecard tabs come from the shared script) ----------
+        rdir = os.path.join(ROOT, "receipts"); weeks = sorted((int(x[4:]) for x in os.listdir(rdir) if re.fullmatch(r"week\d+", x) and os.path.isfile(os.path.join(rdir, x, "index.html"))), reverse=True) if os.path.isdir(rdir) else []
+        RC = "() => { " + VIS + " var sb = document.querySelector('section.card.scorecard .scbody'); if(!sb) return null; var t = sb.querySelector(':scope > .fxtabs'); var grp = qa(':scope > [data-tab]', sb); return {tabs: t && vis(t) ? qa('.tab', t).map(function(b){ return b.textContent.trim() + (b.classList.contains('on') ? '*' : ''); }) : null, groups: grp.map(function(g){ return [vis(g), (g.querySelector('h3') || {textContent: ''}).textContent.trim().slice(0, 24)]; }), loose: qa(':scope > *', sb).filter(function(e){ return !e.hasAttribute('data-tab') && !e.classList.contains('fxtabs') && !e.classList.contains('fxanchor'); }).length, h3: qa('h3', sb).length, cols: (function(){ var x = qa('.tiles', sb).filter(vis)[0]; if(!x) return 0; var l = qa('.tile', x).map(function(e){ return Math.round(e.getBoundingClientRect().left); }); return l.filter(function(v, i){ return l.indexOf(v) === i; }).length; })(), cardH: Math.round(document.querySelector('section.card.scorecard').getBoundingClientRect().height)}; }"
+        if not weeks: skip("no weekly receipt in this copy")
+        else:
+            wk = weeks[0]; pg, ctx, errs = await page(f"/receipts/week{wk}/"); s = await pg.evaluate(RC)
+            if not s or not s["tabs"]: check(False, f"the Week {wk} receipt's scorecard has its tabs on a phone ({s})")
+            else:
+                check(len(s["tabs"]) == s["h3"] == len(s["groups"]) and [g[0] for g in s["groups"]] == [True] + [False] * (len(s["groups"]) - 1) and s["loose"] == 0, f"the Week {wk} receipt's scorecard shows one group at a time on a phone ({s['tabs']})")
+                check(s["cols"] == 2, f"its tiles sit two to a row ({s['cols']})")
+                seen = []
+                for i in range(len(s["tabs"])):
+                    await pg.click(f'section.card.scorecard .scbody > .fxtabs [data-t="sc{i}"]'); await pg.wait_for_timeout(100); z = await pg.evaluate(RC); seen.append([g[1] for g in z["groups"] if g[0]])
+                check(all(len(x) == 1 for x in seen) and len({x[0] for x in seen}) == len(s["tabs"]), f"each tab shows its own group ({[x[0] for x in seen]})")
+            check(not errs, f"Week {wk} receipt: no script errors {errs[:1] or ''}"); await ctx.close()
+            pg, ctx, errs = await page(f"/receipts/week{wk}/"); await pg.add_style_tag(content="*{content-visibility:visible!important}"); await pg.wait_for_timeout(300); d = await pg.evaluate(LEN); await ctx.close()
+            check(d["scr"] <= 12.5, f"with every card laid out the Week {wk} receipt is {d['scr']:.1f} phone screens (it was 15.0)")
+            for w2 in weeks[1:]:
+                pg, ctx, errs = await page(f"/receipts/week{w2}/"); o = await pg.evaluate(RC); await ctx.close()
+                if o and o["h3"] >= 3: check(bool(o["tabs"]) and o["loose"] == 0 and len(o["tabs"]) == o["h3"] and not errs, f"the Week {w2} receipt gets the same tabs ({o['tabs']})")
+            pg, ctx, errs = await page(f"/receipts/week{wk}/", w=1280); w = await pg.evaluate(RC); await ctx.close()
+            check(w and w["tabs"] is None and not w["groups"] and not errs, "on a wide screen the scorecard is one piece, as before")
+
+        # ---------- the picture buttons ("Copy card as image"): the whole card, on any card ----------
+        # Found 11/17 on the published pages: the scorecard's picture failed ("Could not render": a color-mix() background the image tool
+        # cannot read) and every other card's stopped at 992px (a lazy card keeps its 900px placeholder in the tool's off-screen copy).
+        async def picture(path, sel, w=390):
+            pg, ctx, errs = await page(path, w=w)
+            c = await pg.evaluate("(s) => { var c = document.querySelector(s); if(!c) return null; var b = c.querySelector('.snap:not(.story):not(.more)'); if(!b) return null; c.classList.add('bsshoot'); var r = c.getBoundingClientRect(); var out = [r.width, r.height]; c.classList.remove('bsshoot'); b.scrollIntoView({block: 'center'}); b.click(); return out; }", sel)
+            if not c: await ctx.close(); return None
+            try:
+                await pg.wait_for_selector(sel + " .shotwrap img", timeout=60000); await pg.wait_for_timeout(300)
+                im = await pg.evaluate("(s) => { var i = document.querySelector(s + ' .shotwrap img'), c = document.querySelector(s); return [i.naturalWidth, i.naturalHeight, c.classList.contains('bsshoot')]; }", sel)
+            except Exception:
+                im = [0, 0, await pg.evaluate("(s) => (document.querySelector(s + ' .snap:not(.story):not(.more)') || {textContent: ''}).textContent", sel)]
+            await ctx.close(); return {"card": c, "pic": im, "errs": errs}
+        if weeks:   # the Story frame is not zoomed with the rest of the page, so the 540px picture holds the whole width of the card
+            for w in (390, 1280):
+                pg, ctx, errs = await page(f"/receipts/week{weeks[0]}/", w=w)
+                z = await pg.evaluate("() => { var f = document.createElement('div'); f.className = 'storyframe'; var c = document.querySelector('section.card.calls, section.card.summary').cloneNode(true); c.removeAttribute('id'); f.appendChild(c); document.body.appendChild(f); var r = [getComputedStyle(f).zoom, Math.round(f.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().right), getComputedStyle(document.querySelector('.top, main, .grid') || document.body).zoom]; f.remove(); return r; }"); await ctx.close()
+                check(str(z[0]) == "1" and z[1] == 540 and z[2] <= 541, f"the Story frame at {w}px is 540px wide with the card inside it (frame {z[1]}px, card's right edge {z[2]}px; the page itself is zoomed {z[3]})")
+        shots = [(f"/receipts/week{weeks[0]}/", "section.card.scorecard", 390, "a receipt's scorecard, phone (folded on screen)"), (f"/receipts/week{weeks[0]}/", "section.card.scorecard", 1280, "a receipt's scorecard, wide"), (f"/receipts/week{weeks[0]}/", "section.card.calls", 390, "a receipt's Calls card")] if weeks else []
+        if has("/season/"): shots.append(("/season/", "section.card.summary", 390, "the Season card"))
+        for path, sel, w, what in shots:
+            r = await picture(path, sel, w)
+            if not r: skip(f"{what}: no picture button on this copy"); continue
+            if not r["pic"][0]: check(False, f"{what}: the picture did not render ({r['pic'][2]!r})"); continue
+            ratio = r["pic"][1] / r["pic"][0]; want = r["card"][1] / r["card"][0]
+            check(want * 0.85 <= ratio <= want * 1.03 and r["pic"][1] > 2100 and r["pic"][2] is False, f"{what}: the picture is the whole card ({r['pic'][0]}x{r['pic'][1]}, height/width {ratio:.2f} against the card's {want:.2f})")
         await b.close()
     print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
 asyncio.run(main())

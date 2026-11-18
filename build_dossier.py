@@ -18,6 +18,7 @@ Reads: out/builder_data.json, in/stats_team_week_2026.csv, in/stats_player_week_
 in/ctx_news.json, research/situational_spots.json. Writes out/dossier/<gid>.html, out/dossier/index.html, out/dossier.json (served at /b/dossier.json).
 """
 import os, re, csv, json, math, html, collections, urllib.request
+import fantasy_nav as _FN   # the section tabs (bsTabs): one column shows the game or one offense at a time
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 E = html.escape; SEASON = 2026; NV = "https://github.com/nflverse/nflverse-data/releases/download"
 FIX = {"LAR": "LA", "JAC": "JAX", "WSH": "WAS", "OAK": "LV", "SD": "LAC", "STL": "LA"}
@@ -267,6 +268,7 @@ CSS = """<style>
 .pp .tb.sm{grid-row:auto;width:30px;height:30px;font-size:11.5px;border-radius:6px;box-shadow:inset 0 -3px 0 var(--s,#000);text-decoration:none;vertical-align:middle;margin-left:6px}
 .dsx{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px} .dsx>div{display:grid;gap:14px;align-content:start;min-width:0} @media (max-width:900px){.dsx{grid-template-columns:minmax(0,1fr)}}
 .dsx section{margin:0}
+@media (min-width:901px){ .pp.dsp .dsx > [data-tab].fxoff{display:grid!important} .pp.dsp > [data-tab].fxoff{display:block!important} .pp.dsp > .fxtabs{display:none} }   /* two columns: everything on screen, no tab row */
 .dsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .dsgrid a{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px} .dsgrid a:hover{border-color:var(--red)}
 .dsgrid b{font-family:var(--display);font-weight:700;font-size:20px} .dsgrid small{display:block;color:var(--mute);font-size:12.5px;margin-top:4px}
@@ -299,7 +301,7 @@ for g in B.get("games", []):
     sides = ""
     for off, d in ((a, b), (b, a)):
         sh, sd = similar_block(off, d); lh, ld = leak_block(off, d); sims[off] = sd; leaks[off] = ld
-        sides += (f'<div><section><h2>{badge(off)} {E(NAMES.get(off, off))} offense vs similar defenses</h2><p class="none">Context, not a pick: tested 2024-26, a player&#39;s numbers against the most similar past defenses did not predict his next game (players 20%+ above their average in those games hit FanDuel overs 46.5% vs 56.7% priced).</p>{sh}</section>'
+        sides += (f'<div data-tab="o{off.lower()}" class="fxoff"><section><h2>{badge(off)} {E(NAMES.get(off, off))} offense vs similar defenses</h2><p class="none">Context, not a pick: tested 2024-26, a player&#39;s numbers against the most similar past defenses did not predict his next game (players 20%+ above their average in those games hit FanDuel overs 46.5% vs 56.7% priced).</p>{sh}</section>'
                   f'<section><h2>Where the {E(NAMES.get(d, d))} defense leaks <small>by role, this season</small></h2>{lh}</section>'
                   f'<section><h2>{E(off)} running hot / cold <small>last 3 games vs season</small></h2><ul class="fl">' + ("".join(f'<li class="{k}">{E(t)}</li>' for k, t in heat(off)) or '<li>Nobody 25%+ off his season pace.</li>') + '</ul></section></div>')
     script = ""
@@ -310,13 +312,21 @@ for g in B.get("games", []):
     sp = "".join(f'<li class="{"good" if k == "lean" else ""}">{E(t)}</li>' for k, t in spot) or '<li>No tested spot applies to this game.</li>'
     desc = f'{away} at {home}, Week {W}: how each offense has done against defenses like this one, where each defense leaks by position, game script, weather, injuries, news and the situational spots that actually hold up.'
     body = (head(f'{away} @ {home} game preview · Week {W} · BetSweep', desc) +
-            f'<div class="pp"><p class="crumb"><a href="/dossier/">Game previews</a> › {E(away)} @ {E(home)}</p>'
+            f'<div class="pp dsp"><p class="crumb"><a href="/dossier/">Game previews</a> › {E(away)} @ {E(home)}</p>'
             f'<header><span class="tb" style="--p:#d7332a;--s:#8f1d17">{W}</span><h1>{E(away)} @ {E(home)}</h1><div class="sub"><span>{E(g.get("kick", ""))}</span><span>Week {W} game preview</span></div>'
             f'<div class="acts"><a class="pri" href="/boards/#{E(gid)}">Matchup board</a><a href="/build/?g={E(gid)}">Parlay Builder</a><a href="/teams/{a.lower()}/">{E(a)}</a><a href="/teams/{b.lower()}/">{E(b)}</a></div></header>'
-            f'<section><h2>Game script</h2>{script or "<p class=lede>No script for this game in the build.</p>"}</section>'
+            # 11/17 (page pass): 6.1 phone screens in one scroll. On one column the page is three tabs - the game (script, injuries /
+            # weather / news, tested spots) and each offense against the other defense; it opens on the game. Two columns (wide
+            # screens) keep everything on screen and no tab row (CSS below). #o<team> opens that offense.
+            f'<div id="dsTabs"></div>'
+            f'<div data-tab="game"><section><h2>Game script</h2>{script or "<p class=lede>No script for this game in the build.</p>"}</section>'
             f'<section><h2>Injuries, weather, news</h2><ul class="fl">{fl}</ul></section>'
-            f'<section><h2>Situational spots <small>tested on 2006-2025 closing spreads; only spots that beat -110 in both decades count</small></h2><ul class="fl">{sp}</ul></section>'
-            f'<div class="dsx">{sides}</div></div>')
+            f'<section><h2>Situational spots <small>tested on 2006-2025 closing spreads; only spots that beat -110 in both decades count</small></h2><ul class="fl">{sp}</ul></section></div>'
+            f'<div class="dsx">{sides}</div>'
+            '<noscript><style>.fxoff{display:block!important}</style></noscript>'
+            f'<script>{_FN.TABS_JS}</script><script>(function(){{var h=document.getElementById("dsTabs"),T={json.dumps([{"id": "game", "label": "Game"}, {"id": "o" + a.lower(), "label": a + " offense"}, {"id": "o" + b.lower(), "label": b + " offense"}], separators=(",", ":"))};if(!h||!window.bsTabs)return;'
+            'function has(x){return T.some(function(t){return t.id===x})}var s=(location.hash||"").slice(1);'
+            'var B=bsTabs.mount(h,T,{root:h.closest(".pp"),start:has(s)?s:"game"});window.addEventListener("hashchange",function(){var y=(location.hash||"").slice(1);if(has(y))B.show(y)});})();</script></div>')
     open(os.path.join(OUT, "dossier", gid + ".html"), "w").write(body)
     J["games"][gid] = {"a": a, "b": b, "kick": g.get("kick"), "script": probs, "flags": [t for _, t in flags], "spots": [{"k": k, "t": t} for k, t in spot], "similar": sims, "leak": leaks}
     cards.append((g.get("sort", ""), f'<a href="/dossier/{E(gid)}/"><b>{E(away)} @ {E(home)}</b><small>{E(g.get("kick", ""))} · {E(g.get("most", "") or "")}</small>'
