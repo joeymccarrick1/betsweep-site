@@ -57,6 +57,9 @@ if os.path.exists(bd):
     check(not red, "no short-priced tier pick carries one of the builder's red flags" + (f" (first: {red[0]})" if red else ""))
     thin = [f"{l['pl']} {l['ln']:g}+ {l.get('nz')}" for l in safe if not (l.get("nz") and l["nz"][1] >= 4 and l["nz"][0] * 3 < l["nz"][1])]
     check(not thin, "every short-priced tier pick has four games on record and finished under half its line in fewer than a third of them" + (f" (first: {thin[0]})" if thin else ""))
+    pool = [l for l in L if l.get("sp")]
+    okp = all(-199 <= l["o"] <= -130 and (l.get("tier") == "safe" or l["raw_p"] - l["bk"] >= 0.08) and not any(f[0] == "bad" for f in (l.get("fh") or [])) and l.get("nz") and l["nz"][1] >= 4 and l["nz"][0] * 3 < l["nz"][1] for l in pool)
+    check(okp and len({(l["pl"], l["m"]) for l in pool}) == len(pool) and all(l.get("sp") for l in safe if -199 <= l["o"] <= -130), f"the house-slip pool is marked: -130 to -199, a tier pick or the model 8+ over, no red flag, a real role, one rung a player ({len(pool)} legs)")
     un = [l for l in L if l.get("m") == "Under " + RY and not l.get("flat")]
     offu = [l for l in un if gap(l, "Under " + RY) > (0.03 if l.get("dv") else 0.00011)]
     check(not offu, f"receiving-yards unders follow the same rule ({len(un)} legs)")

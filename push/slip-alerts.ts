@@ -851,6 +851,33 @@ async function projections(): Promise<{ P: Map<string, any>; W: number }> {
   const P = new Map<string, any>(); for (const p of (proj?.players || [])) if (p && p.n) P.set(norm(p.n), { name: p.n, pos: p.p, team: p.t, opp: p.o, fp: p.fp, out: p.av === "OUT" });
   return { P, W: +(proj?.week || 0) };
 }
+// ---- 11/18: read the lineup from Sleeper right before a roster push (owner: "Sure that sounds great") ----
+// A saved roster is the lineup as it was the last time its owner had the Fantasy page open. He sets lineups in Sleeper's own app, so by
+// Sunday the saved one can be days old: an inactive he already benched would still buzz him, and one he moved INTO the lineup would not.
+// Rows saved since 11/18 carry each player's Sleeper id, which is all this needs: one public rosters call per league (league id only -
+// nothing about the reader is sent), the roster sharing the most players with the saved one is his, and starters / bench are re-split
+// by id. Players he added since the save have no name here and are left out. Any failure, a row without ids, or a roster that no longer
+// looks like his leaves the saved roster as it was.
+const SLEEPER = Deno.env.get("SLEEPER_API") ?? "https://api.sleeper.app/v1";
+async function freshRosters(rows: any[]): Promise<{ rows: any[]; fresh: number }> {
+  let fresh = 0; const out: any[] = [];
+  const one = async (r: any) => {
+    const known = new Map<string, any>(); for (const p of [...(r.starters || []), ...(r.bench || [])]) if (p && p.id) known.set(String(p.id), p);
+    if (known.size < 3 || !/^\d+$/.test(String(r.league_id || ""))) return r;
+    try {
+      const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 4000);
+      const res = await fetch(`${SLEEPER}/league/${r.league_id}/rosters`, { signal: ac.signal }); clearTimeout(t);
+      if (!res.ok) return r; const all: any = await res.json(); if (!Array.isArray(all)) return r;
+      let best: any = null, bestN = 0; for (const x of all) { const n = (x.players || []).filter((id: any) => known.has(String(id))).length; if (n > bestN) { best = x; bestN = n; } }
+      if (!best || bestN * 2 < known.size) return r;
+      const st = new Set((best.starters || []).map(String)); const have = (best.players || []).map(String).filter((id: string) => known.has(id));
+      fresh++; return { ...r, starters: have.filter((id: string) => st.has(id)).map((id: string) => known.get(id)), bench: have.filter((id: string) => !st.has(id)).map((id: string) => known.get(id)) };
+    } catch (_e) { return r; }
+  };
+  for (let i = 0; i < rows.length; i += 6) out.push(...await Promise.all(rows.slice(i, i + 6).map(one)));
+  return { rows: out, fresh };
+}
+
 // ---- Sleeper roster inactives (Sunday 11:35 AM / 2:35 / 6:35 PM CT, TNF / MNF 5:35 PM): the official ESPN inactive list from the feeds
 // branch x the rosters the Fantasy page saved (fantasy_rosters). "X is out - the model's best bench play is Y" from /b/startsit.json.
 // 11/18: ONE push per player per person. With the same starter in several leagues the old loop sent one push per league under one tag,
@@ -867,7 +894,8 @@ export async function inactives(now = Date.now()) {
   const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly");
   const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.INACTIVE`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
   let n = 0; const gone: string[] = [];
-  const byUser = new Map<string, any[]>(); for (const r of rosters) { const a = byUser.get(r.user_id); if (a) a.push(r); else byUser.set(r.user_id, [r]); }
+  const fr = await freshRosters(rosters.filter((r) => subs.some((s) => s.user_id === r.user_id)));   // only readers a push can reach
+  const byUser = new Map<string, any[]>(); for (const r of fr.rows) { const a = byUser.get(r.user_id); if (a) a.push(r); else byUser.set(r.user_id, [r]); }
   for (const [uid, rs] of byUser) {
     const us = subs.filter((s) => s.user_id === uid); if (!us.length) continue;
     const hits = new Map<string, { name: string; rows: { r: any; pos: string; bench: any; key: string }[] }>();
@@ -888,7 +916,7 @@ export async function inactives(now = Date.now()) {
       n += await pushAll(us, msg, gone); for (const y of h.rows) { await mark(uid, W, y.key, "INACTIVE"); done.add(`${uid}|${y.key}`); }
     }
   }
-  await dropGone(gone); return { week: W, date, outs: outs.length, rosters: rosters.length, sent: n };
+  await dropGone(gone); return { week: W, date, outs: outs.length, rosters: rosters.length, fresh: fr.fresh, sent: n };
 }
 
 // ---- Saturday-night start/sit (7:05 PM CT): the model's lineup calls for the saved rosters ----
@@ -900,7 +928,8 @@ export async function startsit(now = Date.now()) {
   const subs: Sub[] = (await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly")).filter((s: Sub) => s.weekly !== false);
   const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.STARTSIT`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
   let n = 0; const gone: string[] = [];
-  const byUser = new Map<string, any[]>(); for (const r of rosters) { const a = byUser.get(r.user_id); if (a) a.push(r); else byUser.set(r.user_id, [r]); }
+  const fr = await freshRosters(rosters.filter((r) => subs.some((s) => s.user_id === r.user_id)));   // only readers a push can reach
+  const byUser = new Map<string, any[]>(); for (const r of fr.rows) { const a = byUser.get(r.user_id); if (a) a.push(r); else byUser.set(r.user_id, [r]); }
   for (const [uid, rs] of byUser) {
     const us = subs.filter((s) => s.user_id === uid); if (!us.length) continue; const todo: { r: any; key: string; calls: string[] }[] = [];
     for (const r of rs) {
@@ -918,7 +947,7 @@ export async function startsit(now = Date.now()) {
           body: (todo.slice(0, 3).map((t) => `${t.r.league || "A league"}: ${t.calls[0]}${t.calls.length > 1 ? ` +${t.calls.length - 1} more` : ""}`).join(". ") + (todo.length > 3 ? `. ${todo.length - 3} more league${todo.length === 4 ? "" : "s"}` : "") + `. Every lineup that needs you is on the Fantasy page.`).slice(0, 300), url: "/team/", tag: `bs-ss-${W}` };
     n += await pushAll(us, msg, gone); for (const t of todo) await mark(uid, W, t.key, "STARTSIT");
   }
-  await dropGone(gone); return { week: W, rosters: rosters.length, sent: n };
+  await dropGone(gone); return { week: W, rosters: rosters.length, fresh: fr.fresh, sent: n };
 }
 
 // ---- email digest (Thu + Sun 9:20 AM CT) through Resend: the morning brief, or on Thursdays the week's top looks ----

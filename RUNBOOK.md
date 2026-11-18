@@ -2080,3 +2080,22 @@ row; on, thirteen.
   itself before it sends (league id and Sleeper name are already in the row) - a function change, so another deploy by the owner.
 - tests/fantasy_nav.py (133): the built switch matches build_team.py; on, thirteen rows for fourteen leagues (not the best-ball one) and
   the footnote; off, one row and no footnote; a reader who is not signed in never sees the footnote.
+
+## 11/18, 1:35 PM CT: roster pushes read the lineup from Sleeper first (owner 1:30 PM: "Sure that sounds great")
+
+- push/slip-alerts.ts `freshRosters()`: before `inactives()` or `startsit()` builds a push, each saved Sleeper league of a reader a push
+  can reach is re-read with one public rosters call (league id only, 4 s limit, six at a time). The roster sharing the most players
+  with the saved one is his (at least half of them); starters and bench are re-split by Sleeper id. Players added since the save have
+  no name here and are left out. A failure, a hand-built team, a row saved before 11/18 (no ids) or a roster that no longer looks like
+  his leaves the saved lineup as it was. Nothing is written back. The reply carries `fresh` (how many were re-read).
+- build_team.py: every saved starter / bench entry now carries `id` (the Sleeper player id). Rows refresh the next time the reader
+  opens the Fantasy page; until then his rows have no ids and behave as before.
+- Privacy Policy, "Sleeper usernames": one sentence added - signed in with alerts on, the alert service asks Sleeper for the current
+  lineups in those leagues before a fantasy alert; the request carries the league's ID and nothing about the reader. Published before
+  the owner deploys, as the page promises. TELL THE OWNER it was added (done in the 11/18 report).
+- tests/fantasy_push.py (21): asked once per Sleeper league of a reachable reader; a starter since benched no longer counts; one since
+  moved into the lineup does, with today's bench; Sleeper down or a stranger's roster keeps the saved lineup. tsc baseline unchanged.
+- OWNER: paste the file again and deploy. Until he does, the deployed function simply ignores the ids.
+- Same publish: build_builder.py marks the house-slip pool (`sp: 1`, chip "Sweep pool", also shown by "Model's Best only"): -130 to
+  -199, a short-priced tier pick or the raw model 8+ over (passing only as a tier pick), no red flag, real role, one rung per player
+  and market. PROMO_DESK.md rule 3 points the desk at it. Two legs on Wednesday's board. tests/calib_floor.py (26).

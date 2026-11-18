@@ -26,7 +26,7 @@ The owner set these in chat after Week 9 and wants every promo, draft and check 
    FanDuel's price (42 of 60, 70.0% against 61.0%, ahead in all five weeks). The model merely at or over the price is NOT enough
    (shown under 65%: 105 of 185, 56.8% against 59.9%). The two together: 66 of 92, ahead in all five weeks, median price -172, three of
    them pay about +295. No passing-yards leg on (b) alone (10 of 23 when the model was only at or over). NOTHING AT -200 OR SHORTER as
-   a core leg. Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
+   a core leg. The builder data marks these legs `sp: 1` (chip "Sweep pool"): start from them, then run every check below. Bigger slips are small-stake extras. Pick legs by matchup, projection and game script, not by edge alone.
    (Owner 11/18 9:09 AM, asked "build from legs the model likes between -130 and -199 instead; three of those pays about +300. Want me
    to make that the rule for the slips I build?": "Sure we can try it and see how it goes." The record behind the ask, graded Weeks 6-10
    (research/floor_depth.py section 5c): legs the model liked at -200 or shorter went 112 of 185, 60.5% against a 71.6% price, losing in

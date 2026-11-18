@@ -528,8 +528,8 @@ TEAM_JS = r"""
   function syncRoster(l, roster, curStarters){
     try { var acct = window.bsAccount, curSet = {}; curStarters.forEach(function(id){ curSet[id] = 1; });
       if (acct && acct.user && acct.client) { var row = { user_id: acct.user.id, league_id: String(l.league_id || l.id || ''), league: l.name || '', sleeper: state.user.display_name || state.user.username || '',
-          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }),
-          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }), updated_at: new Date().toISOString() };
+          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || '', id: String(e.id)}; }),
+          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || '', id: String(e.id)}; }), updated_at: new Date().toISOString() };
         if (row.league_id) acct.client.from('fantasy_rosters').upsert(row, {onConflict: 'user_id,league_id'}).then(function(r){ if (r.error && !/relation|does not exist/i.test(r.error.message)) console.warn('roster sync', r.error.message); }); } } catch(e){}
   }
   // 11/18: the same row for EVERY league on the account, written as the all-leagues read goes round - so Sunday's inactives and Saturday's

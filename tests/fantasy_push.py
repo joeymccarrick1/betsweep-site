@@ -13,7 +13,7 @@ def check(c, msg):
 src = open(os.environ.get("ALERTS_TS") or os.path.join(HERE, "push", "slip-alerts.ts"), encoding="utf-8").read()
 def cut(sig):
     m = re.search(re.escape(sig) + r".*?\n}\n", src, re.S); return m.group(0) if m else None
-parts = {k: cut(k) for k in ("export function norm(", "async function pushAll(", "async function projections(", "export async function inactives(", "export async function startsit(")}
+parts = {k: cut(k) for k in ("export function norm(", "async function pushAll(", "async function projections(", "async function freshRosters(", "export async function inactives(", "export async function startsit(")}
 check(all(parts.values()), "push/slip-alerts.ts has norm, pushAll, projections, inactives and startsit")
 ctd = re.search(r"^const CT_DATE = .*$", src, re.M)
 check(bool(ctd), "and CT_DATE")
@@ -23,7 +23,10 @@ type Sub = { endpoint: string; user_id: string; p256dh?: string; auth?: string; 
 const SITE = "https://example.test", FEEDS = "https://feeds.test";
 let ROSTERS: any[] = []; let SUBS: any[] = []; let SENT: any[] = []; let INA: any = { games: {} }; let PROJ: any = { week: 11, players: [] };
 const pushes: any[] = []; const marks: any[] = [];
-(globalThis as any).fetch = async (u: string) => ({ json: async () => (String(u).indexOf("inactives.json") >= 0 ? INA : PROJ) });
+const SLEEPER = "https://sleeper.test"; let SL: Record<string, any> = {}; const asked: string[] = [];
+(globalThis as any).fetch = async (u: string) => { const m = String(u).match(/sleeper\.test\/league\/(\w+)\/rosters/);
+  if (m) { asked.push(m[1]); const v = SL[m[1]]; if (v === "boom") throw new Error("down"); return { ok: v !== undefined, json: async () => v }; }
+  return { ok: true, json: async () => (String(u).indexOf("inactives.json") >= 0 ? INA : PROJ) }; };
 async function rest(path: string, _init?: any): Promise<any> {
   if (path.startsWith("fantasy_rosters?")) return ROSTERS; if (path.startsWith("push_subs?")) return SUBS;
   if (path.startsWith("push_sent?")) { const st = (path.match(/status=eq\.(\w+)/) || [])[1]; return SENT.filter((x) => x.status === st); } return []; }
@@ -69,6 +72,21 @@ ROSTERS = [
 SUBS = [{ endpoint: "a1", user_id: "A" }, { endpoint: "b1", user_id: "B" }, { endpoint: "e1", user_id: "E", weekly: false }];
 await run("ss", () => startsit(NOW));
 await run("ss_again", () => startsit(NOW));
+// ---- the lineup is re-read from Sleeper before a push (rows saved with ids) ----
+const pi = (n: string, p: string, id: string) => ({ name: n, pos: p, team: "HOU", id });
+INA = { games: { g1: { out: [{ name: "Joe Mixon", team: "HOU" }] } } }; SENT = [];
+ROSTERS = [
+  lg("A", "101", "Benched Him", [pi("Joe Mixon", "RB", "1"), pi("Nico Collins", "WR", "2")], [pi("Nick Chubb", "RB", "3"), pi("Tank Dell", "WR", "4")]),
+  lg("A", "102", "Started Him", [pi("Nick Chubb", "RB", "3"), pi("Nico Collins", "WR", "2")], [pi("Joe Mixon", "RB", "1"), pi("Woody Marks", "RB", "5")]),
+  lg("A", "103", "Sleeper Down", [pi("Joe Mixon", "RB", "1"), pi("Nico Collins", "WR", "2")], [pi("Nick Chubb", "RB", "3")]),
+  lg("A", "104", "Not His Roster", [pi("Joe Mixon", "RB", "1"), pi("Nico Collins", "WR", "2")], [pi("Nick Chubb", "RB", "3"), pi("Tank Dell", "WR", "4")]),
+  lg("A", "manual1", "Hand Built", [pi("Joe Mixon", "RB", "1"), pi("Nico Collins", "WR", "2")], [pi("Nick Chubb", "RB", "3")]),
+  lg("C", "105", "No Push", [pi("Joe Mixon", "RB", "1"), pi("Nico Collins", "WR", "2")], [pi("Nick Chubb", "RB", "3")]),
+];
+SL = { "101": [{ players: ["9", "8"], starters: ["9"] }, { players: ["1", "2", "3", "4", "77"], starters: ["3", "2", "77"] }],
+       "102": [{ players: ["1", "2", "3", "5"], starters: ["1", "2"] }], "103": "boom", "104": [{ players: ["1", "60", "61", "62"], starters: ["1"] }] };
+SUBS = [{ endpoint: "a1", user_id: "A" }];
+asked.length = 0; await run("fresh", () => inactives(NOW)); out.fresh.asked = asked.slice();
 console.log(JSON.stringify(out));
 """
 fns = "\n".join([ctd.group(0)] + [parts[k].replace("export async function", "async function").replace("export function", "function") for k in parts])
@@ -99,4 +117,9 @@ check(bool(SA) and SA[0]["body"] == "Nashville Dynasty: Joe Mixon is out +1 more
 check(len(SB) == 1 and SB[0]["title"] == "Lineup check: Home League" and SB[0]["body"] == "The model would start Dalton Schultz over Cade Stover (+4.7). Full lineup and the reasons on the Fantasy page.", f"one league with a call reads exactly as before ({SB[0]['body'] if SB else None})")
 check(not any(p["to"] == "e1" for p in ss["pushes"]) and len(ss["marks"]) == 5 and not any("L3" in m for m in ss["marks"]), f"a device with weekly alerts off gets nothing; a league with no call is not marked ({len(ss['marks'])} marks)")
 check(not o["ss_again"]["pushes"], "the lineup check is sent once")
+fr = o["fresh"]; ft = fr["pushes"][0] if fr["pushes"] else {"title": "", "body": ""}
+check(sorted(fr["asked"]) == ["101", "102", "103", "104"], f"before a push Sleeper is asked once per saved Sleeper league of a reader a push can reach - not for a hand-built team, not for a reader with no device ({fr['asked']})")
+check(len(fr["pushes"]) == 1 and ft["title"] == "Joe Mixon is INACTIVE in 4 of your lineups" and "Benched Him" not in ft["body"], f"a starter he has since benched in Sleeper no longer counts ({ft['title']})")
+check("Started Him: Woody Marks (11.8)" in ft["body"], f"one he has since moved INTO the lineup does, with the bench as it is now ({ft['body'][:120]})")
+check("Sleeper Down:" in ft["body"] and fr["r"].get("fresh") == 2 and sum(1 for m in fr["marks"] if "104" in m) == 1, f"when Sleeper does not answer, or no roster there looks like his, the saved lineup stands ({fr['r'].get('fresh')} refreshed)")
 print(f"\n{ok} passed, {bad} failed"); sys.exit(1 if bad else 0)

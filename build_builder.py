@@ -792,6 +792,21 @@ for l in LEGS:
             if k not in _safe_best or l["raw_p"] - l["bk"] > _safe_best[k]["raw_p"] - _safe_best[k]["bk"]: _safe_best[k] = l
 for l in _safe_best.values():
     if not l.get("tier"): l["tier"] = "safe"
+# 11/18 (owner 9:09 AM, the house-slip trial - PROMO_DESK.md rule 3): the legs a trial slip is built from get their own mark so they can
+# be found in the builder. -130 to -199, an over in a graded market, and the model likes it: a short-priced tier pick, or the raw model
+# 8+ points over FanDuel (42 of 60, ahead in all five weeks; passing yards only as a tier pick). No red flag, a real role, one rung per
+# player and market (the biggest lead). l["sp"] = 1.
+_sp_best = {}
+for l in LEGS:
+    if l.get("gl") or l.get("u") or l.get("m") not in ("Receiving Yards", "Receptions", "Passing Yards") or l.get("raw_p") is None or l.get("bk") is None: continue
+    _o = l.get("o")
+    if _o is None or not (-199 <= _o <= -130) or l.get("status") in ("OUT", "BYE") or (l.get("z") or [""])[0] == "r": continue
+    if not (l.get("tier") == "safe" or (l["raw_p"] - l["bk"] >= 0.08 and l["m"] != "Passing Yards")): continue
+    if any(f[0] == "bad" for f in (l.get("fh") or [])) or "Cleared this line in only" in (l.get("w") or "") or not _safe_role_ok(l): continue
+    _k = (l["pl"], l["m"])
+    if l.get("tier") == "safe" or _k not in _sp_best or (_sp_best[_k].get("tier") != "safe" and l["raw_p"] - l["bk"] > _sp_best[_k]["raw_p"] - _sp_best[_k]["bk"]): _sp_best[_k] = l
+for l in _sp_best.values(): l["sp"] = 1
+print(f"sweep pool (trial): {len(_sp_best)} legs")
 for l in LEGS:
     if l.get("tier"): NT[l["tier"]] += 1
 print(f"model's best: {NT['plus']} plus-money edges, {NT['even']} even-odds (overs + unders), {NT['td']} TDs, {NT['safe']} short-priced legs")
@@ -1171,7 +1186,7 @@ BUILDER_CSS = r"""
 .mup i{font-style:normal;color:#fff;padding:1px 6px;display:flex;align-items:center} .mup b{font-weight:600;font-size:9px;padding:0 4px;background:var(--chalk);color:var(--mute);display:flex;align-items:center;text-transform:lowercase}
 .mup em{font-style:normal;font-weight:600;font-size:9.5px;padding:0 5px;background:var(--chalk);color:var(--mute);display:flex;align-items:center;text-transform:uppercase;letter-spacing:.06em}
 .hist table.mbs{border-collapse:collapse;margin:4px 0 6px;font-size:12px;font-variant-numeric:tabular-nums} .hist table.mbs th,.hist table.mbs td{padding:3px 8px;text-align:center;border-bottom:1px solid var(--line)} .hist table.mbs tbody th{text-align:left;font-weight:600;color:var(--ink);white-space:nowrap} .hist table.mbs thead th{font-family:var(--display);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)} .hist table.mbs tr.cur th{color:var(--red)} .rkc{display:inline-block;min-width:24px;padding:1px 4px;border-radius:3px;color:#fff;font-family:var(--display);font-weight:700;font-size:11px} .dpill.opill{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)} .pc .posm + .posm{margin-left:4px}
-.lg .who .tierb{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.03em;padding:2px 6px;border-radius:3px;background:#d7332a;color:#fff} .lg .who .tierb.t-td{background:#7a3fd0} .lg .who .tierb.t-safe{background:#1f7a4d}
+.lg .who .tierb{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.03em;padding:2px 6px;border-radius:3px;background:#d7332a;color:#fff} .lg .who .tierb.t-td{background:#7a3fd0} .lg .who .tierb.t-safe{background:#1f7a4d} .lg .who .tierb.t-sp{background:none;color:var(--ink);border:1px solid var(--line);margin-left:4px}
 .lg .who .dprow{display:block;margin-top:3px;line-height:1} .lg .who .dprow .dpill{color:#fff;font-size:10px;padding:1px 5px}
 .snchip{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.04em;padding:1px 6px;border-radius:3px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;vertical-align:middle;cursor:help;font-variant-numeric:tabular-nums} .alts .snrow{padding:4px 0 2px} .hist .snrow{margin-top:4px}
 .mkbtn{cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -1385,7 +1400,7 @@ a.pname{color:inherit;text-decoration:none;cursor:pointer} a.pname:hover,a.pname
 .pb .pbn{display:inline-flex;flex-direction:column;line-height:1.1;font-variant-numeric:tabular-nums} .pb .pbn b{font-size:14px} .pb .pbn small{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 .pb .add{margin-left:auto;font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:none;border:1.5px solid var(--red);border-radius:8px;padding:7px 13px;cursor:pointer;white-space:nowrap}
 .pb .add.in{background:var(--red);color:#fff} .pb .add.lockd{border-color:var(--line);color:var(--mute);cursor:not-allowed}
-.pb .tierb{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:.03em;padding:2px 6px;border-radius:3px;background:#d7332a;color:#fff} .pb .tierb.t-td{background:#7a3fd0} .pb .tierb.t-safe{background:#1f7a4d} .pb .hist{margin-top:8px}
+.pb .tierb{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:.03em;padding:2px 6px;border-radius:3px;background:#d7332a;color:#fff} .pb .tierb.t-td{background:#7a3fd0} .pb .tierb.t-safe{background:#1f7a4d} .pb .tierb.t-sp{background:none;color:var(--ink);border:1px solid var(--line);margin-left:4px} .pb .hist{margin-top:8px}
 .pb.td .pbh{margin-bottom:2px}
 
 /* ---- slip panel cleanup (owner 10/28): one collapsible build box, book buttons by name, a BetSweep social button ---- */
@@ -1427,7 +1442,8 @@ BUILDER_JS = r"""
   function subName(l, x){ if(l.gl){ var sd = l.gl.side; return l.m === 'Total' ? (sd === 'OVER' ? 'Over ' : 'Under ') + x.ln : sd + ' ' + (x.ln > 0 ? '+' : '') + x.ln; } return l.pl + ' ' + x.ln + '+'; }
   var TIERL = {plus: "Model's Best · plus-money edge", even: "Model's Best · even odds", td: "Model's Best · TD", safe: "Model's Best · short-priced"};
   var TIERT = {plus: '+150 or longer and the model is 5+ points over FanDuel\'s implied chance (receptions, receiving yards, TDs, passing) - __PLUS_TXT__', even: 'Priced near even money and the model is 8+ pts off FanDuel - __EVEN_TXT__', td: 'Anytime TD at +200 or shorter that the model rates at or above FanDuel\'s price, for a player with a real role - __TD_TXT__', safe: 'Model 65%+ and at or above the price, priced longer than -200, none of our red flags - __SAFE_TXT__'};
-  function tierChip(l){ return l.tier ? '<span class="tierb t-' + l.tier + '" title="' + esc(TIERT[l.tier]) + '">' + TIERL[l.tier] + '</span>' : ''; }
+  function tierChip(l){ return (l.tier ? '<span class="tierb t-' + l.tier + '" title="' + esc(TIERT[l.tier]) + '">' + TIERL[l.tier] + '</span>' : '')
+    + (l.sp ? '<span class="tierb t-sp" title="A leg our house slip can be built from: priced -130 to -199, the model well over the price, none of our red flags. On trial since Week 11.">Sweep pool</span>' : ''); }
   function lnTxt(l){ return l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'; }   // unders show FanDuel's main line ('under 74.5')
   function legName(l){ return l.pl + (isGL(l) || isTD(l) || l.m === 'First TD' ? '' : ' ' + lnTxt(l)); }
   function bookNote(ls){ var el = $('#bknote'); if(!el) return; var out = [];
@@ -1607,7 +1623,7 @@ BUILDER_JS = r"""
     var out = legs.filter(function(l){
       if(st.game !== 'all' && l.g !== st.game) return false;
       if(st.market !== 'all' && (st.market === 'UNDERS' ? !l.u : l.m !== st.market)) return false;
-      if(st.tier && !l.tier && !sel[l.i]) return false;
+      if(st.tier && !l.tier && !l.sp && !sel[l.i]) return false;
       if(st.pos !== 'all' && l.pos !== st.pos) return false;
       if(!oddsOk(l.o)) return false;
       if(st.clean && l.w) return false;
