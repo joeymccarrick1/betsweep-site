@@ -1232,6 +1232,19 @@ def _bp_load():
         except Exception: pass
     return {}
 BP_FROZEN = _bp_load()
+# owner 11/17 ("I want all four": save each week's game scripts). The model's read of every game - projected points, the four endings,
+# the likeliest - as its card shows it, filed at every build until the game kicks off: data/scripts-w<week>.json. Before this a past
+# week's scripts could only be dug out of the site's history (research/freeze_scripts.py did that once, Weeks 8-10), so a flag defined
+# on "the model's most likely ending" (Losing side) was graded on the closing spread instead. flag_stats.scripts() reads these.
+_SC_FILE = f"scripts-w{WEEK}.json"
+def _sc_load():
+    for path in ([os.path.join(os.environ["BS_SITE"], "data", _SC_FILE)] if os.environ.get("BS_SITE") else []) + [os.path.join(OUT, "data", _SC_FILE)]:
+        try:
+            d = json.load(open(path, encoding="utf-8"))
+            if int(d.get("week") or 0) == int(WEEK) and isinstance(d.get("games"), dict): return d["games"]
+        except Exception: pass
+    return {}
+SC_FROZEN = _sc_load()
 def bp_grade(rec, a, b):
     """('W' | 'L' | None, hits, legs, text of the leg that lost) for a filed parlay: player legs from the game log (home._glog - the
     sheet's, or the nflverse weekly file), game lines from the final score. None until every leg can be graded or one has lost."""
@@ -1384,6 +1397,8 @@ for a, b, pl_all in blocks:
         bp_html, bp_rec = best_parlay(a, b, pl, s, None if cf["form"]["used"] or not cf["mkt"] else cf["mkt"]["probs"], _lean)
         if bp_rec and bp_html: BP_FROZEN[gid] = {"html": bp_html, "rec": bp_rec, "ko": _ko, "at": datetime.datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M")}
         else: BP_FROZEN.pop(gid, None)
+    if not (_ko and float(_ko) < _BP_NOW):   # not kicked off: this build's read of the game replaces the one on file
+        SC_FROZEN[gid] = {"a": a, "b": b, "pa": s[2], "pb": s[3], "probs": [s[5], s[6], s[7], s[8]], "most": s[9], "ko": _ko, "at": datetime.datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d %H:%M")}
     CONF_ROWS.append((gid, cf["grade"], cf["score"], [(k, t_) for _, k, t_ in cf["flags"]]))
     if _ko is None or _ko > datetime.datetime.now(ZoneInfo("UTC")).timestamp() * 1000:
         _m = cf["mkt"] or {}
@@ -1549,6 +1564,7 @@ import live as LIVE
 import books as BOOKS
 os.makedirs(os.path.join(OUT, "data"), exist_ok=True)
 json.dump({"week": WEEK, "games": BP_FROZEN, "note": "the best parlay each game card showed at its last build before kickoff"}, open(os.path.join(OUT, "data", _BP_FILE), "w", encoding="utf-8"), ensure_ascii=False)
+json.dump({"week": WEEK, "games": SC_FROZEN, "note": "the model's read of each game at its last build before kickoff: projected points (pa, pb), the four endings (a by 10+, close and low, shootout, b by 10+) and the likeliest"}, open(os.path.join(OUT, "data", _SC_FILE), "w", encoding="utf-8"))
 print(f"best parlays on file: {len(BP_FROZEN)} game(s) -> out/data/{_BP_FILE}")
 json.dump(BEST_PARLAYS, open(os.path.join(OUT, "best_parlays.json"), "w"))   # for build_calls.py (model-calls archive)
 json.dump({"week": int(WEEK), "games": LEAN_LOG}, open(os.path.join(OUT, "sweep_leans.json"), "w"))   # owner 11/10: Sweep says leads; build_calls.py archives what the lean changed

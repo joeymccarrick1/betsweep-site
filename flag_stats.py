@@ -72,6 +72,27 @@ def _spreads(in_dir, season):
     except Exception: pass
     return out
 
+def scripts(in_dir="in"):
+    """{(week, team): (most likely ending, the game's two teams)} from the model's own pre-kickoff read of each game: Weeks 8-10
+    recovered from the site's history (research/scripts_history.json), later weeks from the file build_boards writes at every build
+    (data/scripts-w<week>.json - the published copy under BS_SITE, else the last local build's). A week still being played is left out."""
+    import glob, time
+    here = os.path.dirname(os.path.abspath(__file__)); out = {}; now = time.time() * 1000
+    def take(wk, games):
+        if not games or max((g.get("ko") or 0) for g in games.values()) > now: return
+        for g in games.values():
+            if g.get("a") and g.get("b") and g.get("most"): out[(int(wk), g["a"])] = (g["most"], g["b"]); out[(int(wk), g["b"])] = (g["most"], g["a"])
+    try:
+        for wk, games in (json.load(open(os.path.join(here, "research", "scripts_history.json")))["weeks"]).items(): take(wk, games)
+    except Exception: pass
+    for d in ([os.path.join(os.environ["BS_SITE"], "data")] if os.environ.get("BS_SITE") else []) + [os.path.join(here, "out", "data")]:
+        for f in sorted(glob.glob(os.path.join(d, "scripts-w*.json"))):
+            try:
+                j = json.load(open(f, encoding="utf-8"))
+                if not any(k[0] == int(j["week"]) for k in out): take(j["week"], j.get("games") or {})
+            except Exception: pass
+    return out
+
 def counts(in_dir="in", season=None):
     L = legs(in_dir)
     if len(L) < 1000: return None
@@ -97,6 +118,13 @@ def counts(in_dir="in", season=None):
         except Exception: season = 2026
     SP = _spreads(in_dir, season); fl = [x for x in L if x["o"] <= -180 and x["m"] in YARDS and (x["w"], x["tm"]) in SP]
     C["losing"] = {"dog": _s([x for x in fl if SP[(x["w"], x["tm"])] <= -5.5]), "fav": _s([x for x in fl if SP[(x["w"], x["tm"])] >= 5.5])}
+    # 11/17 evening: the same flag by ITS OWN definition - the team the model's likeliest ending has losing by 10+ - on the weeks whose
+    # pre-kickoff scripts are on file (scripts()). The spread version above stays as the fallback and as a second view.
+    SC = scripts(in_dir); own = [x for x in L if x["o"] <= -180 and x["m"] in YARDS and (x["w"], x["tm"]) in SC]
+    lose = [x for x in own if SC[(x["w"], x["tm"])][0] == f'{x["opp"]} by 10+']; win = [x for x in own if SC[(x["w"], x["tm"])][0] == f'{x["tm"]} by 10+']
+    ow = sorted({x["w"] for x in own})
+    C["losing_own"] = {"weeks": ow, "lose": _s(lose), "win": _s(win), "rest": _s([x for x in own if x not in lose and x not in win]) if len(own) < 5000 else {},
+                       "weeks_under": sum(1 for w in ow if (lambda t: t["n"] and t["hit"] < t["imp"])(_s([x for x in lose if x["w"] == w])))}
     # favorites, with and without a model edge
     fav = [x for x in L if x["o"] <= -130]; ed = [x for x in fav if x["raw"] is not None and x["raw"] - _imp(x["o"]) >= 0.05]
     bands = [_s([x for x in ed if lo <= x["o"] <= hi]) for lo, hi in ((-179, -130), (-249, -180), (-99999, -250))]
@@ -134,7 +162,7 @@ DEFAULT = {
     "rush_under_rate": 0.57,
     "rush_under": "the rate main-line rushing unders have hit in Weeks 6-10 (389 lines)",
     "near_zero": "Floor legs on players like that hit 61% against a 70% price in Weeks 6-10 (247 legs, under in all 5 weeks).",
-    "losing": "Yardage floors on underdogs of 5.5 or more have hit 60% against a 70% price in Weeks 6-10 (299 legs); on favorites that big, 68%.",
+    "losing": "Yardage floors on the side the model had losing big have hit 59% against a 70% price in Weeks 8-10 (318 legs, under in all 3 weeks); on the side it had winning big, 70%.",
     "fav": "graded Weeks 6-10, favorites returned about -10% per leg (-6% even where the model had an edge)",
     "disagree": "When we disagree with the book by 10+ points the book has usually been closer (Weeks 6-10: model 66%, hit 51%)",
     "team": "Team-markets this far under went on to hit about 4 points under their prices, the rest about 3 points under (Weeks 7-10).",
@@ -154,6 +182,10 @@ def text(in_dir="in"):
     if z["n"] >= 60: T["near_zero"] = f"Floor legs on players like that hit {_pct(z['hit'])} against a {_pct(z['imp'])} price in {W} ({z['n']} legs" + (f", under in all {z['weeks_with']} weeks" if z["weeks_under"] == z["weeks_with"] and z["weeks_with"] > 1 else f", under in {z['weeks_under']} of {z['weeks_with']} weeks") + ")."
     d, f = C["losing"]["dog"], C["losing"]["fav"]
     if d["n"] >= 100 and f["n"] >= 100: T["losing"] = f"Yardage floors on underdogs of 5.5 or more have hit {_pct(d['hit'])} against a {_pct(d['imp'])} price in {W} ({d['n']} legs); on favorites that big, {_pct(f['hit'])}."
+    lo = C.get("losing_own") or {}
+    if lo and lo["lose"]["n"] >= 150 and lo["win"]["n"] >= 150:   # the flag's own definition, once enough weeks of scripts are on file
+        T["losing"] = (f"Yardage floors on the side the model had losing big have hit {_pct(lo['lose']['hit'])} against a {_pct(lo['lose']['imp'])} price in {_span(lo['weeks'])} ({lo['lose']['n']} legs"
+                       + (f", under in all {len(lo['weeks'])} weeks" if lo["weeks_under"] == len(lo["weeks"]) and len(lo["weeks"]) > 1 else "") + f"); on the side it had winning big, {_pct(lo['win']['hit'])}.")
     a, eb = C["fav"]["all"], C["fav"]["edge_bands"]
     e = C["fav"]["edge"]
     if a["n"] >= 500: T["fav"] = f"graded {W}, favorites returned about {_roi(a['roi'])} per leg" + (f" ({_roi(e['roi'])} even where the model had an edge)" if e["n"] >= 100 else "")

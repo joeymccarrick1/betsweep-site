@@ -1756,3 +1756,8 @@ build before its kickoff, from the site's history: Weeks 8, 9, 10 (14 + 15 + 14 
   week); 70.4% against 70.3% on the side it has winning big (311 legs: break-even, each week within a point); 66.5% against 70.3% in
   games with no big-win ending (325). Every price, not just floors: loser side 46.4 / 56.6, winner side 55.7 / 56.9.
   A yardage floor is a fair bet on the projected big winner and a bad one on the projected big loser.
+- **Filed from now on** (build_boards.py SC_FROZEN -> data/scripts-w<week>.json): every build before a game's kickoff replaces that
+  game's record; after kickoff it stays. flag_stats.scripts() reads the recovered weeks plus these files, and the Losing side
+  sentence is now counted on the flag's own definition once 150 legs sit on each side (the closing-spread count stays as the
+  fallback and is still printed). tests/flag_stats.py 18.
+- MASTER log row 604 (11/17 evening). Rows 603 and 604 are both dated 11/17; 604 is this session's.
