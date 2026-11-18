@@ -362,6 +362,7 @@ import honest as HONEST
 HON = HONEST.load(IN)
 import sweep as _SWPB
 import sgp as _SGPB; _SGPC = _SGPB.load()   # FanDuel's same-game price, estimated from its own quotes on our posted slips (owner 11/17)
+import bp_pick as _BPK   # which candidate slip the card shows (11/17 evening)
 _FAILED_TAGS = {t for t, _w in _SWPB.TAG_W.items() if _w == 0}   # flags that failed the Tuesday grade: off the boards, still on the player page
 import faceoff as FACEOFF   # receiver face-off on each game card (owner 10/22: Burden over Odunze was visible in usage + corner data)
 try: FO = FACEOFF.load(IN, WEEK)
@@ -1071,8 +1072,16 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
     def backs(r):
         g = r["l"].get("gl")
         return bool(lean and g and ((r["l"]["market"] == "Total" and g["side"] == lean["total"]) or (r["l"]["market"] != "Total" and g["side"] == lean["side"])))
+    # 11/17 evening: no moneyline the model itself has under a coin flip. A card's Best parlay is not a bet on the side its own projection
+    # has losing - PHI-PIT read "Model has PIT 21.5-17" over Eagles ML + Over 38.5 at +423, LAC-NYJ carried the Jets moneyline: with every
+    # game-line pair 6 to 10 cents under fair, the long moneyline won on a slightly smaller hold. A Sweep says call for that side still
+    # rides (the lean rules above decide then); the spread on either side is untouched.
+    def dogml(r):
+        l = r["l"]
+        return bool(l.get("gl") and l["market"] == "Moneyline" and r["prob"] < 0.5 and not (lean and lean.get("side") == l["gl"]["side"]))
     def choose(pool_rows, need_back=False):
         """the slip picked from these legs: (pj, ev, d, combo, C, plus, near) or None when no slip lands in the price window"""
+        pool_rows = [r for r in pool_rows if not dogml(r)]
         cands = [r for r in pool_rows if r["scripts"] and not r["tb"] and r["prob"] - r["l"]["book"] >= -0.015]
         if nplayers(cands) < 4: cands = [r for r in pool_rows if r["scripts"] and not r["tb"] and r["prob"] - r["l"]["book"] >= -0.03]
         if nplayers(cands) < 4: cands = [r for r in pool_rows if r["scripts"] and r["prob"] - r["l"]["book"] >= -0.03]
@@ -1119,11 +1128,25 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
             pb = joint_prob([r["l"]["book"] for r in combo], C, n=3000)
             de = _SGPB.price(n, pb, _SGPC) if pb > 0 else d
             priced.append((pj, pj * de - 1, de, combo, C))
-        plus = [x for x in priced if x[1] >= 0]
-        near = [x for x in priced if x[1] >= -0.05]
-        pool = plus or near
-        if need_back and not pool: return None   # the line's own game leg rides only when the slip with it is within 5 cents of fair
-        return (max(pool, key=lambda x: (x[0], x[1])) if pool else max(priced, key=lambda x: x[1])) + (plus, near)
+        if priced and max(x[1] for x in priced) < -_BPK.NEAR and not need_back:
+            # Nothing is within 5 cents of fair, so the pick below compares slips inside a 3-cent tie. At 3,000 draws a slip's EV moves about
+            # two cents by simulation alone - the size of the tie - so these few are re-priced with the draws the card itself prints.
+            _fine = []
+            for _pj, _ev, _de, combo, C in priced:
+                _pb = joint_prob([r["l"]["book"] for r in combo], C, n=30000)
+                de = _SGPB.price(len(combo), _pb, _SGPC) if _pb > 0 else _de
+                pj = sum(w[k] * joint_prob([r["ps"][k] for r in combo], C, n=12000) for k in range(4) if w[k] > 0)
+                _fine.append((pj, pj * de - 1, de, combo, C))
+            priced = _fine
+        if os.environ.get("BP_DEBUG"):
+            for _x in sorted(priced, key=lambda x: -x[1]):
+                print(f"BPDBG   {a}-{b} cand: " + " + ".join(str(r["l"]["player"]) for r in _x[3]) + f" | pj {_x[0]:.3f} ev {_x[1]:+.3f} dec {_x[2]:.2f} | per ending " + " ".join(f"{math.prod(r['ps'][k] for r in _x[3]):.2f}" for k in range(4)) + f" | w {' '.join(f'{x:.2f}' for x in w)}")
+        # which one the card shows: bp_pick.py (11/17 evening: when nothing is within 5 cents of fair, slips within 3 cents of the best
+        # EV are tied and the most likely to cash wins - "best EV by a cent" kept putting the longest price on a game-lines card)
+        pk, plus, near, _rule = _BPK.pick(priced, has_player=lambda x: any(not r["l"].get("gl") for r in x[3]))
+        if need_back and not (plus or near): return None   # the line's own game leg rides only when the slip with it is within 5 cents of fair
+        if os.environ.get("BP_DEBUG"): print(f"BPDBG   {a}-{b} picked (rule {_rule}): " + " + ".join(str(r["l"]["player"]) for r in pk[3]))
+        return pk + (plus, near)
     allrows = list(rows.values())
     if os.environ.get("BP_DEBUG"):
         _pr = [r for r in allrows if not r["l"].get("gl")]
@@ -1190,7 +1213,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
         return f'{E(l["player"])}: {own} · FanDuel implies {l["book"]*100:.0f}% · legs at this price have hit {l["br"]*100:.0f}%'
     _work = "<br>".join(x for x in (work_txt(r) for r in combo) if x)
     work_html = f'<span class="bpwork" style="display:block;flex-basis:100%;font-size:12px;line-height:1.4;opacity:.85;margin-top:6px"><b>Show the work</b><br>{_work}</span>' if _work else ""
-    note = "" if plus else ('<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this one is within 5 cents of fair</span>' if near else '<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this is the closest</span>')
+    note = "" if plus else ('<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; this one is within 5 cents of fair</span>' if near else '<span class="bpwarn">no +EV build lands in the -110 to +500 window this run; of the closest, this is the most likely to hit</span>')
     note += sw_note
     html_ = (f'<div class="bestslip"><span class="lt">Best parlay <small>{len(combo)} legs</small></span><span class="bpodds" title="About what FanDuel pays on this same-game slip. The legs multiply to {am_from_dec(d_mult)}; FanDuel prices same-game legs together, so check the quote.">≈ {am_from_dec(d)}</span>{legs_html}{work_html}'
              f'<span class="bpnum">about <b>{pjh*100:.0f}%</b> to hit <small title="What legs at these prices have actually hit this season, nudged by our model. The model alone says {pj*100:.0f}%.">graded</small> · fair {fair_odds(pjh)} · EV <b class="{"up" if evh>=0 else "dn"}">{"+" if evh>=0 else ""}${evh:.2f}</b> per $1 · does best if <b title="if the game ends {E(lab[fit_k])}, this slip hits {by_k[fit_k]*100:.0f}% of the time">{E(lab[fit_k])}</b> <span title="the model&#39;s chance of that ending">({w[fit_k]*100:.0f}% likely)</span></span>{note}{fd_button([r["l"] for r in combo], "best parlay")}</div>')

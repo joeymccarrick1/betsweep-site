@@ -122,6 +122,7 @@ def top_plays(D, n=8):
 import booklinks as BL   # DraftKings / Hard Rock links (exact rung or the book's nearest line), owner 10/22
 import sweep as SW      # owner 11/10: the Daily Sweep (a promo row whose Title starts with "Daily Sweep")
 import how_stats as _HOWS   # 11/17: the plus tier's record is counted from the graded legs, not typed (it said Weeks 6-8 for two weeks)
+import bp_pick as _BPK   # fit_note: the lead parlay's reason, true to the model's ending odds (11/17 evening)
 def leg_line(m, ln):
     if m in ("Anytime TD", "First TD", "2+ TD", "3+ TD"): return m
     if str(m).startswith("Under "): return f"under {float(ln):g} {m[6:].lower()}"   # FanDuel main-line unders (owner 10/27)
@@ -318,7 +319,7 @@ def parlays(D):
             m = next((x for x in D["bd"]["legs"] if x["pl"] == l[0] and x["m"] == l[1] and abs(float(x["ln"] or 0) - float(l[2] or 0)) < 0.01 and x["g"] == p["gid"]), None)
             bl.append(m)
         fdl = ("https://sportsbook.fanduel.com/addToBetslip?" + "&".join(f"marketId[{i}]={x['fd']['m']}&selectionId[{i}]={x['fd']['s']}" for i, x in enumerate(bl))) if bl and all(x and (x.get("fd") or {}).get("m") for x in bl) else None
-        out.append({"gid": p["gid"], "a": p["a"], "b": p["b"], "pj": p["pj"], "ev": p["ev"], "dec": p["dec"], "fit": p.get("fit", ""), "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""),
+        out.append({"gid": p["gid"], "a": p["a"], "b": p["b"], "pj": p["pj"], "ev": p["ev"], "dec": p["dec"], "fit": p.get("fit", ""), "why": _BPK.fit_note(p, g), "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""),
                     "legs": [{"pl": l[0], "m": l[1], "ln": l[2], "o": l[3], "p": l[4], "e": l[5]} for l in p["legs"]], "fd": fdl, "bl": bl if all(bl) else []})
     return out
 
@@ -335,7 +336,7 @@ def parlay_block(ps, compact=False):
     legs = "".join(f'<li><b>{E(l["pl"])}</b><span>{E(leg_line(l["m"], l["ln"]))} <small>{E(odds_str(l["o"]))}</small></span><em>{l["p"]*100:.0f}%</em></li>' for l in top["legs"])
     others = "".join(f'<a class="pmini" href="/boards/#g-{E(p["gid"])}" data-gid="{E(p["gid"])}" data-ko="{p.get("ko") or ""}"><b>{at_gid(p["gid"])}</b><span>{len(p["legs"])} legs · ≈ {E(dec_to_us(p["dec"]))}</span><em>model {p["pj"]*100:.0f}% · EV {p["ev"]*100:+.0f}%</em></a>' for p in ps[1:5])
     return (f'<div class="parlay" data-gid="{E(top["gid"])}" data-ko="{top.get("ko") or ""}"><div class="phd"><small>Best same-game parlay</small><h3>{at_gid(top["gid"])} <span>{E(top.get("kick",""))}</span></h3>'
-            f'<p>Built for the game\'s most likely script ({E(top["fit"])}); the model gives the full slip <b>{top["pj"]*100:.0f}%</b> against about <b>{E(dec_to_us(top["dec"]))}</b> on FanDuel (EV {top["ev"]*100:+.0f}%). <span class="sgest" title="FanDuel prices same-game legs together, so this is our estimate of its quote, not the legs multiplied.">Same-game price, estimated.</span></p></div>'
+            f'<p>{(E(top.get("why") or "") + "; the") if top.get("why") else "The"} model gives the full slip <b>{top["pj"]*100:.0f}%</b> against about <b>{E(dec_to_us(top["dec"]))}</b> on FanDuel (EV {top["ev"]*100:+.0f}%). <span class="sgest" title="FanDuel prices same-game legs together, so this is our estimate of its quote, not the legs multiplied.">Same-game price, estimated.</span></p></div>'
             f'<ul class="plegs">{legs}</ul><div class="pfoot">' + (f'<a class="fdb" href="{E(top["fd"])}" target="_blank" rel="noopener">Add all to FanDuel</a>' if top.get("fd") else "") + BL.buttons(top.get("bl") or [], single=False).replace(">Bet it on ", ">") + f'<a class="more" href="/boards/#g-{E(top["gid"])}">Open the board</a><a class="more" href="{E(build_href(top["gid"], [(l["pl"], l["m"], l["ln"]) for l in top["legs"]]))}">Edit in the builder</a></div></div>'
             + (f'<div class="pothers">{others}</div>' if (others and not compact) else ""))
 
