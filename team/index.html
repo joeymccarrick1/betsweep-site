@@ -257,7 +257,7 @@ html.lgopen{overflow:hidden}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 10:00 AM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Wed 11/18 12:55 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -348,7 +348,7 @@ html.lgopen{overflow:hidden}
   </div>
  </div>
 </div>
-<script src="/team/data-5c6653734966.js"></script>
+<script src="/team/data-236c23ae1d41.js"></script>
 <script>
 (function(){
   function $(s, r){ return (r || document).querySelector(s); }
@@ -678,6 +678,8 @@ html.lgopen{overflow:hidden}
       if(bb) foot.push(bb + ' best-ball league' + (bb === 1 ? ' sets itself.' : 's set themselves.'));
       if(none) foot.push('No lineup set yet in ' + none + '.');
       if(off) foot.push('Not on a roster in ' + off + '.');
+      // said where it happens: with the switch on, a signed-in reader's lineups in these leagues are kept on his account for the pushes
+      if(D.all_alerts && window.bsAccount && window.bsAccount.user) foot.push('Signed in: these lineups are saved to your account so inactive and lineup alerts cover every league.');
       if(unread) foot.push('Sleeper did not answer for ' + unread + ' - open the league list to try again.'); }
     var top = Object.keys(cnt).filter(function(k){ return cnt[k].n >= 2; }).sort(function(a, b){ return cnt[b].n - cnt[a].n || (a < b ? -1 : 1); }).slice(0, 8);
     var most = (!busy && top.length) ? '<details class="allgm"><summary>Who you start the most</summary><p>' + top.map(function(k){ var f = cnt[k].f;
