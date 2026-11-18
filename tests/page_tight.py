@@ -1,6 +1,8 @@
 """11/18 (owner: "Tighten all of those you listed"): Boards, the builder, Home, Survivor, the Guide, How and the legal pages on a phone.
-Nothing is removed: board cards open on "Show the game", the builder's price grids on "Game lines", the home page's lower sections
-sit under tabs, reading pages fold under their section titles, Survivor's tables show eight rows until asked. Wide screens are untouched."""
+Nothing is removed: the home page's lower sections sit under tabs, reading pages fold under their section titles, Survivor's tables
+show eight rows until asked. Boards and the builder were re-done the same afternoon (owner 3:52 PM: "I don't really like how you have
+packaged and condensed the parlay builder and the matchup boards ... make it make a little more sense"): a board card is the whole
+scorecard again with only its fine print folded, and every builder game card carries the same two buttons. Wide screens are untouched."""
 import asyncio, os, re, sys, threading, http.server, functools
 from playwright.async_api import async_playwright
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); ROOT = os.environ.get("SITE") or os.path.join(HERE, "site"); PORT = 8871
@@ -25,23 +27,51 @@ async def main():
         b = await p.chromium.launch()
         for theme in ("dark", "light"):
             # ---- boards ----
-            ctx, pg, errs = await page(b, "/boards/", theme=theme); await pg.add_style_tag(content=".card:not(.bsgshut){content-visibility:visible!important}")
-            n = await pg.evaluate("document.querySelectorAll('section.card.bsgshut').length"); g = await pg.evaluate("[...document.querySelectorAll('section.card[id]')].filter(c => c.querySelector(':scope > .bestslip')).length")
-            scr = await pg.evaluate(SCR); first = await pg.evaluate("document.querySelector('section.card.bsgshut').id")
-            check(g >= 4 and n == g and scr <= 6.5 and await pg.evaluate(OVER) <= 0, f"boards, {theme}: every game card opens on its header and confidence line ({n} of {g} folded, {scr} screens)")
-            await pg.click(f"#{first} > .bsgtog"); await pg.wait_for_timeout(200)
-            check(await pg.evaluate(VIS, f"#{first} > .bestslip") and await pg.evaluate(f"document.querySelector('#{first} > .bsgtog').getAttribute('aria-expanded')") == "true" and "Hide the game" in await pg.evaluate(f"document.querySelector('#{first} > .bsgtog').textContent"), f"boards, {theme}: \"Show the game\" opens the lines, the buttons and the best parlay")
-            await pg.click(f"#{first} > .bsgtog"); check(not await pg.evaluate(VIS, f"#{first} > .bestslip") and not errs, f"boards, {theme}: and closes it again ({errs[:1]})"); await ctx.close()
+            ctx, pg, errs = await page(b, "/boards/", theme=theme); await pg.add_style_tag(content=".card{content-visibility:visible!important}"); await pg.wait_for_timeout(200)
+            d = await pg.evaluate("""() => { const vis = e => !!e && e.getClientRects().length > 0, cs = [...document.querySelectorAll('section.card[id]')].filter(c => c.querySelector(':scope > .bestslip'));
+              return {n: cs.length, first: cs.length ? cs[0].id : '', tidy: cs.filter(c => c.classList.contains('bstidy')).length, stub: document.querySelectorAll('.bsgtog, .bsgshut').length,
+                full: cs.filter(c => vis(c.querySelector(':scope > .ginfo .gk')) && vis(c.querySelector(':scope > .vbtns .vbtn')) && vis(c.querySelector(':scope > .conf')) && (vis(c.querySelector(':scope > .bestslip .bpl')) || c.querySelector(':scope > .bestslip.none'))).length,
+                work: cs.filter(c => { const w = c.querySelector(':scope > .bestslip > .bpwork'); return !w || (!vis(w) && vis(c.querySelector(':scope > .bestslip > .bpmore'))); }).length,
+                lines: cs.map(c => Math.round(c.querySelector(':scope > .ginfo').getBoundingClientRect().height / 1.1)),
+                add: cs.filter(c => { const f = c.querySelector(':scope > .bestslip > .fdgo'), o = c.querySelector(':scope > .bestslip > .bpodds'); return !vis(f) || !o || Math.abs(f.getBoundingClientRect().top - o.getBoundingClientRect().top) < 26; }).length,
+                dots: cs.filter(c => { const k = [...c.querySelector(':scope > .ginfo').children].filter(vis); return k.length && k[0].tagName === 'SPAN' && k[k.length - 1].tagName === 'SPAN' && !k.some((e, i) => e.tagName === 'I' && k[i + 1] && k[i + 1].tagName === 'I'); }).length,
+                card: Math.round(cs.reduce((a, c) => a + c.getBoundingClientRect().height, 0) / Math.max(cs.length, 1))}; }""")
+            scr = await pg.evaluate(SCR); n = d["n"]
+            check(n >= 4 and d["stub"] == 0 and d["tidy"] == n and d["full"] == n, f"boards, {theme}: no \"Show the game\" row - every card shows its kickoff, Game Script / Projections, its confidence line and its best parlay's legs ({d['full']} of {n})")
+            check(d["work"] == n and d["add"] == n, f"boards, {theme}: on every card the leg-by-leg reasoning waits under \"Show the work\" and \"+ Add\" sits beside the parlay's price")
+            check(d["dots"] == n and max(d["lines"]) <= 60 and sum(1 for h in d["lines"] if h <= 32) >= n // 2, f"boards, {theme}: the kickoff line is one line on most cards, two at most, with no stray dots (heights {sorted(set(d['lines']))})")
+            check(d["card"] <= 600 and await pg.evaluate(OVER) <= 0, f"boards, {theme}: a card averages {d['card']}px tall (it was about 710 with everything open); the page is {scr} screens for {n} games")
+            first = d["first"]; await pg.click(f"#{first} > .bestslip > .bpmore"); await pg.wait_for_timeout(200)
+            check(await pg.evaluate(VIS, f"#{first} > .bestslip > .bpwork") and await pg.evaluate(f"document.querySelector('#{first} > .bestslip > .bpmore').getAttribute('aria-expanded')") == "true" and "Hide the work" in await pg.evaluate(f"document.querySelector('#{first} > .bestslip > .bpmore').textContent")
+                  and not await pg.evaluate(f"document.querySelector('#{first}').classList.contains('expanded')"), f"boards, {theme}: \"Show the work\" opens the reasoning in place (the board itself stays shut)")
+            await pg.click(f"#{first} > .bestslip > .bpmore"); await pg.wait_for_timeout(150); shut = not await pg.evaluate(VIS, f"#{first} > .bestslip > .bpwork")
+            hid = await pg.evaluate(f"[...document.querySelectorAll('#{first} > .ginfo .bsx')].length"); await pg.click(f"#{first} > .vbtns .vbtn[data-view=script]"); await pg.wait_for_timeout(300)
+            check(shut and await pg.evaluate(f"document.querySelector('#{first}').classList.contains('expanded')") and (hid == 0 or await pg.evaluate(VIS, f"#{first} > .ginfo .bsx")) and not errs, f"boards, {theme}: it closes again, and Game Script opens the full board with the stadium and the rest back on the kickoff line ({errs[:1]})")
+            await ctx.close()
             # ---- builder ----
             ctx, pg, errs = await page(b, "/build/", theme=theme)
-            cards = await pg.evaluate("[...document.querySelectorAll('#games > .gcard')].map(c => [c.id, c.classList.contains('glz'), !!c.querySelector('.glgrid') && c.querySelector('.glgrid').getClientRects().length > 0])")
-            scr = await pg.evaluate(SCR)
-            check(len(cards) >= 2 and cards[0][1] is False and cards[0][2] and all(c[1] and not c[2] for c in cards[1:]) and scr <= 6.5 and await pg.evaluate(OVER) <= 0, f"builder, {theme}: the next game shows its prices, the other {len(cards) - 1} show one \"Game lines\" row ({scr} screens)") if len(cards) >= 2 else check(True, f"builder, {theme}: fewer than two games to come - nothing to fold")
+            CARDS = """() => [...document.querySelectorAll('#games > .gcard')].map(c => { const vis = e => !!e && e.getClientRects().length > 0, bs = [...c.querySelectorAll(':scope > .gsw .gswb')];
+              return {id: c.id, btns: bs.map(x => x.textContent.replace(/[▾▴]/g, '').trim()), on: bs.map(x => x.classList.contains('on')), ax: bs.map(x => x.getAttribute('aria-expanded')), h: bs.map(x => Math.round(x.getBoundingClientRect().height / 1.1)),
+                      grid: vis(c.querySelector('.glgrid')), body: !!c.querySelector('.gbody'), pill: vis(c.querySelector('.ghd .opn')), old: !!c.querySelector('.gll'), props: !/not posted|locked/i.test((c.querySelector('.ghd .gsum') || {}).textContent || ''), lines: !!c.querySelector('.glgrid'),
+                      order: (() => { const g = c.querySelector('.glgrid'), y = c.querySelector('.gbody'); return g && y && vis(g) ? g.getBoundingClientRect().top < y.getBoundingClientRect().top : null; })()}; })"""
+            cards = await pg.evaluate(CARDS); scr = await pg.evaluate(SCR)
             if len(cards) >= 2:
-                await pg.click(f"#{cards[1][0]} .gll"); await pg.wait_for_timeout(250)
-                check(await pg.evaluate(VIS, f"#{cards[1][0]} .glgrid") and not await pg.evaluate(VIS, f"#{cards[1][0]} .gll"), f"builder, {theme}: a tap on \"Game lines\" opens that game's prices")
-                await pg.click(f"#{cards[1][0]} .glgrid .glb, #{cards[1][0]} .glgrid button"); await pg.wait_for_timeout(250)
-                check(await pg.evaluate(VIS, f"#{cards[1][0]} .glgrid") and not errs, f"builder, {theme}: and it stays open when a price is tapped ({errs[:1]})")
+                both = [c for c in cards if c["btns"] == ["Game lines", "Player legs"]]; want = lambda c: (["Game lines"] if c["lines"] else []) + (["Player legs"] if c["props"] else [])
+                check(all(c["btns"] == want(c) and not any(c["on"]) and not c["grid"] and not c["body"] and not c["pill"] and not c["old"] and min(c["h"] or [44]) >= 44 for c in cards) and len(both) >= 2 and cards[0]["btns"] == want(cards[0]),
+                      f"builder, {theme}: every game card - the first like the rest - carries the same buttons, Game lines and Player legs, both shut ({len(both)} of {len(cards)} with both; the others have no player props posted yet; {scr} screens)")
+                check(scr <= 6.0 and await pg.evaluate(OVER) <= 0, f"builder, {theme}: the page is {scr} phone screens (7.7 before the first pass)")
+                gid = both[1]["id"]; ix = [c["id"] for c in cards].index(gid)
+                await pg.click(f"#{gid} .gswb[data-gl]"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
+                check(c["grid"] and c["on"] == [True, False] and c["ax"][0] == "true" and not c["body"], f"builder, {theme}: Game lines opens that game's prices and nothing else")
+                await pg.click(f"#{gid} .glgrid .glb:not(.none)"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
+                check(c["grid"] and await pg.evaluate(f"document.querySelectorAll('#{gid} .glgrid .glb.in').length") == 1 and not errs, f"builder, {theme}: a tapped price goes on the slip and the prices stay open ({errs[:1]})")
+                await pg.click(f"#{gid} .gswb[data-gp]"); await pg.wait_for_timeout(350); c = (await pg.evaluate(CARDS))[ix]
+                check(c["body"] and c["grid"] and c["on"] == [True, True] and c["order"] is True, f"builder, {theme}: Player legs opens the legs under the prices, and both buttons show as open")
+                await pg.click(f"#{gid} .gswb[data-gl]"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
+                check(not c["grid"] and c["body"] and c["on"] == [False, True], f"builder, {theme}: Game lines closes the prices and leaves the legs open")
+                await pg.click(f"#{gid} .ghd"); await pg.wait_for_timeout(350); c = (await pg.evaluate(CARDS))[ix]
+                check(not c["body"] and c["on"] == [False, False] and not errs, f"builder, {theme}: the header still opens and closes the player legs ({errs[:1]})")
+            else: check(True, f"builder, {theme}: fewer than two games to come - nothing to compare")
             await ctx.close()
             # ---- home ----
             ctx, pg, errs = await page(b, "/", theme=theme)
@@ -83,11 +113,16 @@ async def main():
         # ---- a link to a section arrives with it open; wide screens are left alone ----
         ctx, pg, errs = await page(b, "/guide/"); ids = await pg.evaluate("[...document.querySelectorAll('.gd > section[id]')].map(s => s.id)"); await ctx.close()
         ctx, pg, errs = await page(b, f"/guide/#{ids[-1]}"); check(await pg.evaluate(f"document.querySelector('#{ids[-1]} > h2').getAttribute('aria-expanded')") == "true", f"guide: a link to a section (#{ids[-1]}) arrives with it open"); await ctx.close()
-        ctx, pg, errs = await page(b, "/boards/"); gid = await pg.evaluate("document.querySelectorAll('section.card.bsgshut')[2].id"); await ctx.close()
-        ctx, pg, errs = await page(b, f"/boards/#{gid}"); check(not await pg.evaluate(f"document.querySelector('#{gid}').classList.contains('bsgshut')"), f"boards: a link to a game (#{gid}) arrives with it open"); await ctx.close()
-        for path, sel in (("/boards/", ".bsgshut, .bsgtog"), ("/guide/", "h2.bsdfh"), ("/", "#hometabs"), ("/survivor/", ".svcap")):
+        ctx, pg, errs = await page(b, "/boards/"); gid = await pg.evaluate("[...document.querySelectorAll('section.card.bstidy')][2].id"); await ctx.close()
+        ctx, pg, errs = await page(b, f"/boards/#{gid}"); check(await pg.evaluate(f"document.querySelector('#{gid}').classList.contains('expanded')") and await pg.evaluate(f"[...document.querySelectorAll('section.card.expanded')].length") == 1, f"boards: a link to a game (#{gid}) arrives with that board open and the others as scorecards"); await ctx.close()
+        wks = sorted([d for d in os.listdir(os.path.join(ROOT, "receipts")) if re.fullmatch(r"week\d+", d)], key=lambda d: int(d[4:])) if os.path.isdir(os.path.join(ROOT, "receipts")) else []
+        if wks:   # the first pass had folded the weekly receipt's game cards too (any card with a kickoff line); they are left as they were
+            ctx, pg, errs = await page(b, f"/receipts/{wks[-1]}/"); n = await pg.evaluate("document.querySelectorAll('section.card[id] > .ginfo').length")
+            check(n >= 4 and await pg.evaluate("document.querySelectorAll('.bstidy, .bsgtog, .bsgshut, .bpmore, .ginfo .bsx').length") == 0 and not errs, f"/receipts/{wks[-1]}/ on a phone: its {n} game cards are not folded or trimmed"); await ctx.close()
+        for path, sel in (("/boards/", ".bstidy, .bpmore, .bsgtog"), ("/guide/", "h2.bsdfh"), ("/", "#hometabs"), ("/survivor/", ".svcap")):
             ctx, pg, errs = await page(b, path, w=1200); check(await pg.evaluate(f"document.querySelectorAll('{sel}').length") == 0 and not errs, f"{path} on a wide screen: nothing is folded"); await ctx.close()
-        ctx, pg, errs = await page(b, "/build/", w=1200); check(not await pg.evaluate(VIS, ".gll") and await pg.evaluate("[...document.querySelectorAll('#games .glgrid')].every(g => g.getClientRects().length > 0)"), "builder on a wide screen: every game shows its prices"); await ctx.close()
+        ctx, pg, errs = await page(b, "/build/", w=1200)
+        check(not await pg.evaluate(VIS, ".gsw") and await pg.evaluate("[...document.querySelectorAll('#games > .gcard:not(.done) .glgrid')].every(g => g.getClientRects().length > 0)") and await pg.evaluate(VIS, "#games .ghd .opn"), "builder on a wide screen: no button row - every game shows its prices and the header's pill opens the legs"); await ctx.close()
         await b.close()
     srv.shutdown(); print(f"\n{ok} passed, {bad} failed"); sys.exit(1 if bad else 0)
 asyncio.run(main())

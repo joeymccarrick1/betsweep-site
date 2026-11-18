@@ -2162,3 +2162,32 @@ row; on, thirteen.
   length limit is 6.5 now - the block comes and goes with the news.
 - The block's own line read "Ruled out since our last FanDuel price pull (Wed 6:34 AM CT)" at 4:40 PM: the sheet's props pull had not
   run since the morning. Not changed here (the pull is the sheet's Apps Script on its own schedule); worth a look if it repeats.
+
+## 11/18, 4:45-5:15 PM CT: Boards and the builder on a phone, second pass (owner 3:52 PM)
+
+- Owner, 45 minutes after the 3:08 PM tightening went out: "I don't really like how you have packaged and condensed the parlay builder
+  and the matchup boards. I think we can make it make a little more sense."
+- What was wrong with the first pass, looking at it on a phone:
+  - Boards: a card was its header, the confidence line and one row, "Show the game". That row hid the kickoff, the best parlay and
+    the card's own two buttons (Game Script / Projections) behind a third button with a vague name; opened, "Hide the game" sat in
+    the middle of the card. The same script had also folded the weekly Receipts' game cards (it matched any card with a kickoff
+    line) - not asked for, not noticed until now.
+  - Builder: two different openers on one card (a pill inside the header for the player legs, a "Game lines" row under it), and the
+    first game behaved differently from the rest (its price grid was open).
+- Now (phones, 760px and under; wide screens untouched):
+  - Boards (`tidyBoards()` in build_site.py APP_JS, class `bstidy`, board cards only = cards with a `.bestslip`): the scorecard is
+    whole again - teams and projected score, the kickoff line, Game Script / Projections, the confidence line, the best parlay with
+    its legs. Only fine print folds: the stadium, calm-weather detail and a spread / total that repeats the header leave the kickoff
+    line (`.bsx`; back when the board is opened); the best parlay's title row is always title / price / "+ Add" (the title wraps
+    inside its own box); the parlay's numbers are one line ending in "Show the work", which opens the full numbers and the leg-by-leg
+    reasoning ("Show the work" was a bold label over text that was always showing). A share picture (`.bsshoot`, `.storyframe`) is
+    drawn with everything in it, as before. `contain-intrinsic-size:auto 520px` on a tidy card (the template's 900px guess made the
+    page look fourteen screens long before the cards rendered).
+  - Builder (build_builder.py `one()`): every game card carries the same two buttons under its header, `.gsw` > `.gswb` - "Game
+    lines" (`openL`) and "Player legs" (`openG`, same as tapping the header) - in the look of the boards' Game Script / Projections
+    pair. Each opens its own part of the card, lines above legs. No first-game exception. A game with no player props posted has
+    the one button. The header's pill is hidden on phones.
+- Lengths, 13 games, phone screens measured laid out in full: Boards 11.3 (before today) -> 4.9 (first pass) -> 9.5; a card 710px ->
+  524px. Builder 7.7 -> 5.4 -> 5.4. The boards gave back most of the first pass's saving on purpose: the stub was short because
+  it hid the page. Next lever if the owner wants it shorter: each best parlay's legs on one line until tapped (about 6.5 screens).
+- tests/page_tight.py (68): both pages re-written for the second pass; receipts cards are not folded or trimmed.

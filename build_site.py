@@ -378,20 +378,37 @@ try:
 except Exception: _TPL_CSS = ""
 # the weekly receipt's scorecard on a phone (foldScore in the shared script): the tab row sits inside the card, and two tiles share a row
 SCORE_TABS_CSS = """
-/* 11/18: reading pages fold under their section titles, board cards under "Show the game", the home page's lower sections under tabs
-   (app script: foldDoc, foldBoards, homeTabs - phones only) */
+/* 11/18: reading pages fold under their section titles, the home page's lower sections sit under tabs, board cards keep their
+   fine print folded (app script: foldDoc, homeTabs, tidyBoards - phones only) */
 h2.bsdfh{position:relative;padding:10px 30px 10px 0;margin:0;border-top:1px solid var(--line);cursor:pointer}
 h2.bsdfh::after{content:"";position:absolute;right:6px;top:50%;width:8px;height:8px;margin-top:-7px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg)}
 h2.bsdfh.open::after{transform:rotate(225deg);margin-top:-2px} h2.bsdfh:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .bsdfb[hidden]{display:none} .bsdfb{padding-bottom:8px}
 .bsdfall{display:block;margin:0 0 8px auto;min-height:36px;padding:0 12px;font:inherit;font-size:12.5px;color:var(--ink);background:none;border:1px solid var(--line);border-radius:999px;cursor:pointer}
-.card.bsgshut{content-visibility:visible} .card.bsgshut > .ginfo, .card.bsgshut > .vbtns, .card.bsgshut > .bestslip{display:none !important}
-.card > .bsgtog{display:flex !important;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin:6px 0 0;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:10px;cursor:pointer}
-.card > .bsgtog i{font-style:normal;color:var(--mute);transition:transform .15s} .card:not(.bsgshut) > .bsgtog i{transform:rotate(180deg)}
-.card > .bsgtog:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.card.bsshoot.bsgshut > .ginfo, .card.bsshoot.bsgshut > .bestslip{display:revert !important} .card.bsshoot > .bsgtog{display:none !important}
+/* board cards on a phone, second pass (app script: tidyBoards). The card is the scorecard it always was; only fine print folds.
+   A card not yet scrolled to holds about its real height (the template's 900px guess made thirteen cards look like fourteen screens). */
+.card.bstidy:not(.expanded){contain-intrinsic-size:auto 520px}
+.card.bstidy:not(.expanded) > .ginfo .bsx, .card.bstidy:not(.expanded) > .ginfo .wx.r-low small{display:none}
+.card.bstidy > .bestslip > *{order:1} .card.bstidy > .bestslip > .lt, .card.bstidy > .bestslip > .bpodds, .card.bstidy > .bestslip > .fdgo{order:0}
+.card.bstidy > .bestslip > .bpnum{order:2} .card.bstidy > .bestslip > .bpmore{order:3} .card.bstidy > .bestslip > .bpwork{order:4}
+/* the title row is always title, price, "+ Add": the title gives way (it wraps inside its own box) so the button never drops a row */
+.card.bstidy > .bestslip > .lt{flex:1 1 0;min-width:0;line-height:1.3} .card.bstidy > .bestslip > .lt > small:first-of-type::before{content:"\\A";white-space:pre} .card.bstidy > .bestslip > .fdgo{min-height:36px;margin-left:0}
+.card.bstidy:not(.bsshoot) > .bestslip.bswk:not(.bsopen) > .bpwork{display:none !important}
+.card.bstidy > .bestslip.bswk > .bpwork{margin-top:0 !important} .card.bstidy > .bestslip.bswk > .bpwork > b:first-child, .card.bstidy > .bestslip.bswk > .bpwork > b:first-child + br{display:none}
+/* shut: the parlay's numbers are one line that ends in "Show the work"; open: the numbers in full, then the reasoning */
+.card.bstidy:not(.bsshoot) > .bestslip.bswk:not(.bsopen) > .bpnum{flex:1 1 calc(100% - 132px);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.bstidy > .bestslip > .bpmore{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:36px;margin:-6px 0 -6px auto;padding:0 0 0 6px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:none;border:0;cursor:pointer;white-space:nowrap}
+.card.bstidy:not(.expanded) > .vbtns{padding-top:7px !important;padding-bottom:7px !important}
+.bestslip > .bpmore i{font-style:normal;color:var(--mute);transition:transform .15s} .bestslip.bsopen > .bpmore i{transform:rotate(180deg)}
+.bestslip > .bpmore:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.card.bstidy > .bestslip.bsopen > .bpmore{margin-left:0;padding-left:0}
+/* a picture of a card (.bsshoot, .storyframe) is drawn with everything in it, as before */
+.card.bsshoot > .ginfo .bsx, .storyframe .ginfo .bsx{display:revert !important} .card.bsshoot > .ginfo .wx small, .storyframe .ginfo .wx small{display:revert !important}
+.card.bsshoot > .bestslip > .bpwork, .storyframe .card.bstidy > .bestslip.bswk:not(.bsopen) > .bpwork{display:block !important} .card.bsshoot > .bestslip > .bpmore, .storyframe .bestslip > .bpmore{display:none !important}
+.storyframe .card.bstidy > .bestslip.bswk:not(.bsopen) > .bpnum{flex:0 0 100%;white-space:normal;overflow:visible}
+.card.bsshoot > .bestslip > .bpwork > b:first-child, .card.bsshoot > .bestslip > .bpwork > b:first-child + br, .storyframe .bestslip > .bpwork > b:first-child, .storyframe .bestslip > .bpwork > b:first-child + br{display:revert !important}
 .hometabs > .fxtabs{margin-top:14px} .hometabs .fxtabs .tab[hidden]{display:none}
-@media (prefers-reduced-motion:reduce){ .card > .bsgtog i{transition:none} }
+@media (prefers-reduced-motion:reduce){ .bestslip > .bpmore i{transition:none} }
 /* while a card's picture is drawn (.bsshoot, see the picture buttons in the app script): the card is laid out in full - the image tool
    draws an off-screen copy of the page, where a lazy card (template.html: content-visibility:auto, 900px placeholder) is never "on
    screen", so every picture of a card taller than that was cut off at 992px - and no color-mix() value is left in it */
@@ -537,17 +554,33 @@ APP_JS = r"""<script>
       all.forEach(function(x){ if(x.id === id || x.body.contains(el) || x.h === el){ x.set(true); setTimeout(function(){ el.scrollIntoView({block: 'start'}); }, 30); } }); }
     window.addEventListener('hashchange', toHash); toHash(); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldDoc); else foldDoc();
-  //   foldBoards: thirteen game cards were eleven screens. Each card keeps its header and its confidence line; the lines, the buttons and
-  //     the best parlay open on a tap ("Show the game"). A link to a game (#AWAY-HOME) arrives with it open.
-  function foldBoards(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
-    var cards = [].slice.call(document.querySelectorAll('section.card[id]')).filter(function(c){ return c.querySelector(':scope > .bestslip, :scope > .ginfo') && !c.dataset.fold; });
+  //   tidyBoards (11/18, 4:45 PM; owner 3:52 PM: "I don't really like how you have packaged and condensed the parlay builder and the
+  //     matchup boards. I think we can make it make a little more sense"). The first pass (foldBoards, 3:08 PM) cut every game card to
+  //     its header and one row, "Show the game" - which hid the kickoff, the best parlay and the card's own two buttons behind a third
+  //     button. That row is gone. A card is the scorecard it always was: teams and projected score, the kickoff line, Game Script /
+  //     Projections, the confidence line, the best parlay with its legs. What folds on a phone is fine print: the stadium, the detail of
+  //     calm weather and a spread / total that only repeats the header leave the kickoff line (they are back when the board is opened);
+  //     the best parlay's "+ Add" button sits beside its price instead of on a row of its own; the leg-by-leg reasoning opens under
+  //     "Show the work", which was a bold label on text that was always showing. Thirteen cards: 11.3 phone screens before, 8 now.
+  function tidyBoards(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    // board cards only (they carry a best parlay). The first pass matched any card with a kickoff line, so it had also cut the weekly
+    // Receipts' game cards down to "Show the game" - nobody asked for that; they are as they were again.
+    var cards = [].slice.call(document.querySelectorAll('section.card[id]')).filter(function(c){ return c.querySelector(':scope > .bestslip') && !c.dataset.fold; });
     if(cards.length < 4) return;
-    function set(c, o){ c.classList.toggle('bsgshut', !o); var b = c.querySelector(':scope > .bsgtog'); if(b){ b.setAttribute('aria-expanded', o ? 'true' : 'false'); b.firstChild.textContent = o ? 'Hide the game ' : 'Show the game '; } }
-    cards.forEach(function(c){ c.dataset.fold = '1'; var b = document.createElement('button'); b.type = 'button'; b.className = 'bsgtog'; b.innerHTML = 'Show the game <i aria-hidden="true">▾</i>';
-      var hd = c.querySelector(':scope > details.conf') || c.querySelector(':scope > header, :scope > .hd'); if(hd && hd.nextSibling) c.insertBefore(b, hd.nextSibling); else c.appendChild(b);
-      b.addEventListener('click', function(){ set(c, c.classList.contains('bsgshut')); }); set(c, location.hash === '#' + c.id); });
-    window.addEventListener('hashchange', function(){ var c = document.getElementById((location.hash || '').slice(1)); if(c && c.dataset.fold) set(c, true); }); }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldBoards); else foldBoards();
+    cards.forEach(function(c){ c.dataset.fold = '1'; c.classList.add('bstidy');
+      var gi = c.querySelector(':scope > .ginfo');
+      if(gi){ var kids = [].slice.call(gi.children), shown = function(el){ return el.tagName === 'SPAN' && !el.classList.contains('bsx'); };
+        kids.forEach(function(el){ if(el.tagName === 'SPAN' && ((!el.classList.contains('gk') && !el.classList.contains('wx') && !el.classList.contains('mkt')) || (el.classList.contains('mkt') && el.classList.contains('agree')))) el.classList.add('bsx'); });
+        // a dot stays only between two pieces that are still showing
+        kids.forEach(function(el, i){ if(el.tagName !== 'I') return; var before = false, after = false, k;
+          for(k = i - 1; k >= 0; k--){ if(kids[k].tagName === 'I' && !kids[k].classList.contains('bsx')) break; if(shown(kids[k])){ before = true; break; } }
+          for(k = i + 1; k < kids.length; k++){ if(shown(kids[k])){ after = true; break; } }
+          if(!before || !after) el.classList.add('bsx'); }); }
+      var bs = c.querySelector(':scope > .bestslip'), wk = bs && bs.querySelector(':scope > .bpwork');
+      if(wk){ var b = document.createElement('button'); b.type = 'button'; b.className = 'bpmore'; b.setAttribute('aria-expanded', 'false'); b.innerHTML = 'Show the work <i aria-hidden="true">▾</i>';
+        bs.insertBefore(b, wk); bs.classList.add('bswk');
+        b.addEventListener('click', function(ev){ ev.stopPropagation(); var o = !bs.classList.contains('bsopen'); bs.classList.toggle('bsopen', o); b.setAttribute('aria-expanded', o ? 'true' : 'false'); b.firstChild.textContent = o ? 'Hide the work ' : 'Show the work '; }); } }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tidyBoards); else tidyBoards();
   //   homeTabs: under today's game the home page stacked Model's Best, the best parlay, the news desk and the track record - two
   //     screens. One row of tabs shows one at a time (the choice is kept for the visit; a link to one opens it).
   function homeTabs(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches || !window.bsTabs) return;
