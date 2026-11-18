@@ -2061,3 +2061,22 @@ row; on, thirteen.
 3. Privacy Policy, "Optional accounts": "your fantasy roster so alerts can cover your players" becomes "your fantasy rosters in that
    Sleeper account's leagues so alerts can cover your players" - ask the owner first; it is his document.
 4. First real check: Saturday 7:05 PM CT (one "Lineup check" push naming how many lineups), then Sunday's inactives.
+
+## 11/18, 12:35 PM CT: roster pushes for every league are ON (owner 12:34 PM: "Updated slip alerts. Change private policy.")
+
+- The owner says the slip-alerts function of 11/18 is deployed. That is his word: nothing here can read the deployed function. The first
+  real check is **Saturday 11/21, 7:05 PM CT** - ONE push titled "Lineup check: N of your lineups" (or the old single-league wording if
+  only one lineup has a call) - and then Sunday's inactives ("X is INACTIVE in N of your lineups"). If several pushes arrive for one
+  message, the old function is still live: set `ALL_LEAGUE_ALERTS = False`, publish, and send him the file again.
+- build_team.py `ALL_LEAGUE_ALERTS = True`: the all-leagues read now saves every league with a lineup to `fantasy_rosters` for a signed-in
+  reader (best-ball leagues and leagues with no lineup are skipped). The card's footnote tells a signed-in reader so: "Signed in: these
+  lineups are saved to your account so inactive and lineup alerts cover every league."
+- Privacy Policy (build_legal.py), "Optional accounts": "your fantasy roster" is now "your fantasy rosters in that Sleeper account's
+  leagues", in the same build - the page promises to change before the site does. "Privacy Policy last updated" reads November 18, 2026;
+  the line now shows the LATER of the policy date and the page-count date (it had been showing November 10 since the page counts went on,
+  one day behind the 11/11 edit).
+- What a saved roster is: the lineup as Sleeper had it the last time the reader had the Fantasy page open (the read is kept half an
+  hour). A lineup changed in Sleeper afterwards is not seen until the next visit. To fix that the function would have to read Sleeper
+  itself before it sends (league id and Sleeper name are already in the row) - a function change, so another deploy by the owner.
+- tests/fantasy_nav.py (133): the built switch matches build_team.py; on, thirteen rows for fourteen leagues (not the best-ball one) and
+  the footnote; off, one row and no footnote; a reader who is not signed in never sees the footnote.

@@ -166,7 +166,8 @@ async def checklist(b, players, theme):
     ros = [u for u in asked if u.endswith("/rosters")]; check(sorted(ros) == sorted(f"league/L{i}/rosters" for i in range(14)) and asked.count("players/nfl") == 1, f"{T}: read with one rosters call per league and one player list ({len(ros)} roster calls, {asked.count('players/nfl')} player list)")
     hit = [r for r in rows if r["id"] in [f"L{i}" for i in where]]
     check(len(hit) == len(where) and all(f"{hname[0]}. {hname.split(' ', 1)[1]} (out)" in r["why"] and "can't play" in r["why"] and r["chip"].startswith("Fix ") for r in hit), f"{T}: every league starting the injured player is listed and names him ({hname}: {len(where)} leagues; e.g. {hit[0]['why'] if hit else None})")
-    check(not any(r["id"] == "L9" for r in rows) and "best-ball league sets itself" in await pg.evaluate("document.querySelector('#allg .allgf').textContent"), f"{T}: the best-ball league is not on the list; the footnote says it sets itself")
+    ftxt = await pg.evaluate("document.querySelector('#allg .allgf').textContent")
+    check(not any(r["id"] == "L9" for r in rows) and "best-ball league sets itself" in ftxt and "saved to your account" not in ftxt, f"{T}: the best-ball league is not on the list; the footnote says it sets itself, and says nothing of an account to a reader who is not signed in")
     order = [r["chip"].startswith("Fix ") for r in rows]; check(order == sorted(order, reverse=True) and all(re.match(r"(Fix \d+|\+\d+\.\d)$", r["chip"]) for r in rows), f"{T}: lineups with a starter who cannot play come before lineups that only leave points on the bench ({[r['chip'] for r in rows]})")
     box = await pg.evaluate("(() => { const r = document.querySelector('#allg').getBoundingClientRect(); return [Math.round(r.height), Math.round(r.right), Math.round(r.left)]; })()")
     check(await pg.evaluate(OVER) <= 0 and box[1] <= 390 and box[2] >= 0 and box[0] <= 80 and not await pg.evaluate(VIS, "#allg .allgr") and rows[0]["name"] in sub, f"{T}: until asked it is one line that names the first league to fix ({box[0]}px tall; no sideways scroll)")
@@ -240,22 +241,27 @@ async def checklist_set(b, players):
     check(not await pg.evaluate(VIS, "#allg") and not errs, "a one-league account gets no all-leagues card"); await ctx.close()
 
 async def league_alerts(b, players):
-    """Saving every league's roster for the pushes is behind a build flag (ALL_LEAGUE_ALERTS). Off: only the league on screen is saved,
-    as before. On (switched here in the page): one row per league with a lineup, none for the best-ball league, none twice."""
+    """Every league's roster is saved for the Sunday / Saturday pushes (build flag ALL_LEAGUE_ALERTS, on since 11/18 once the owner had
+    deployed the one-push-per-person function). On: one row per league with a lineup, none for the best-ball league, none twice, and the
+    card says so to a signed-in reader. Off (forced here in the page): only the league on screen is saved, as before 11/18."""
     FAKE = "window.__UP = []; window.bsAccount = {user: {id: 'U1'}, client: {from: function(t){ return {upsert: function(row, o){ window.__UP.push([t, row.league_id, row.league, (row.starters || []).length, (row.bench || []).length, o && o.onConflict]); return Promise.resolve({}); }}; }}};"
+    src_flag = re.search(r"^ALL_LEAGUE_ALERTS = (True|False)", open(os.path.join(HERE, "build_team.py"), encoding="utf-8").read(), re.M).group(1) == "True"
     res = {}
     for on in (False, True):
         ctx, pg, asked, errs, LS = await session(b, players, "dark", tweak=real_lineups(players, best_ball=[9]))
         await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_timeout(700)
-        flag = await pg.evaluate("window.__BS.all_alerts"); await pg.evaluate(FAKE + ("window.__BS.all_alerts = true;" if on else ""))
+        flag = await pg.evaluate("window.__BS.all_alerts"); await pg.evaluate(FAKE + f"window.__BS.all_alerts = {'true' if on else 'false'};")
         await pg.fill("#user", "mock"); await pg.click("#go"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000)
         await pg.wait_for_function("document.querySelector('#allg') && !document.querySelector('#allg').classList.contains('busy')", timeout=25000); await pg.wait_for_timeout(400)
-        res[on] = (await pg.evaluate("window.__UP"), flag, list(errs)); await ctx.close()
-    off, flag, e0 = res[False]; on, _, e1 = res[True]
-    check(flag is False and len(off) == 1 and off[0][:3] == ["fantasy_rosters", "L0", "Nashville Dynasty"] and not e0, f"as built (the flag is off) only the league on screen is saved to the account ({len(off)} row)")
+        foot = await pg.evaluate("(document.querySelector('#allg .allgf') || {}).textContent || ''")
+        res[on] = (await pg.evaluate("window.__UP"), flag, list(errs), foot); await ctx.close()
+    off, flag, e0, f0 = res[False]; on, _, e1, f1 = res[True]
+    check(flag is src_flag, f"the page is built with the switch as build_team.py sets it ({'on' if src_flag else 'off'})")
+    check(len(off) == 1 and off[0][:3] == ["fantasy_rosters", "L0", "Nashville Dynasty"] and "saved to your account" not in f0 and not e0, f"with the switch off only the league on screen is saved to the account ({len(off)} row)")
     ids = [r[1] for r in on]
     check(sorted(ids) == sorted(f"L{i}" for i in range(14) if i != 9) and all(r[0] == "fantasy_rosters" and r[3] >= 8 and r[4] >= 1 and r[5] == "user_id,league_id" for r in on) and not e1,
-          f"switched on, every league with a lineup is saved once - starters and bench - and the best-ball league is not ({len(on)} rows)")
+          f"with it on, every league with a lineup is saved once - starters and bench - and the best-ball league is not ({len(on)} rows)")
+    check("these lineups are saved to your account so inactive and lineup alerts cover every league" in f1, "and the card tells a signed-in reader that his lineups are saved for the alerts")
 
 async def team(b, players, theme):
     T = f"fantasy, {theme}"

@@ -18,9 +18,11 @@ def num(x):
     try: return float(str(x).replace(",", "").replace("%", "").replace("+", ""))
     except Exception: return None
 exec(open(os.path.join(HERE, "brand.py")).read())
-# 11/18: save every league's roster for the Sunday / Saturday pushes. Turn on ONLY after the owner has deployed the push/slip-alerts.ts
-# of 11/18 (one push per person; tests/fantasy_push.py) - the function before it sent one push per league. See RUNBOOK "11/18, 10:35 AM".
-ALL_LEAGUE_ALERTS = False
+# 11/18: save every league's roster for the Sunday / Saturday pushes. Needs the push/slip-alerts.ts of 11/18 deployed (one push per
+# person; tests/fantasy_push.py) - the function before it sent one push per league. See RUNBOOK "11/18, 10:35 AM".
+# ON since 11/18 12:34 PM CT on the owner's word: "Updated slip alerts. Change private policy." (the Privacy Policy sentence changed in
+# the same build - build_legal.py). If the function is ever rolled back to an older copy, turn this off in the same breath.
+ALL_LEAGUE_ALERTS = True
 boards = vals("boards.json"); WEEK = int(float(boards[1][1]))
 
 def col(h, name):
@@ -568,6 +570,8 @@ TEAM_JS = r"""
       if(bb) foot.push(bb + ' best-ball league' + (bb === 1 ? ' sets itself.' : 's set themselves.'));
       if(none) foot.push('No lineup set yet in ' + none + '.');
       if(off) foot.push('Not on a roster in ' + off + '.');
+      // said where it happens: with the switch on, a signed-in reader's lineups in these leagues are kept on his account for the pushes
+      if(D.all_alerts && window.bsAccount && window.bsAccount.user) foot.push('Signed in: these lineups are saved to your account so inactive and lineup alerts cover every league.');
       if(unread) foot.push('Sleeper did not answer for ' + unread + ' - open the league list to try again.'); }
     var top = Object.keys(cnt).filter(function(k){ return cnt[k].n >= 2; }).sort(function(a, b){ return cnt[b].n - cnt[a].n || (a < b ? -1 : 1); }).slice(0, 8);
     var most = (!busy && top.length) ? '<details class="allgm"><summary>Who you start the most</summary><p>' + top.map(function(k){ var f = cnt[k].f;

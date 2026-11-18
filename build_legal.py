@@ -72,13 +72,19 @@ TERMS = eff + f"""
 # the site stores today (tables: user_state, push_subs, email_prefs, fantasy_rosters, beat_picks, beat_leagues + beat_league_members, ask_log, short_links + link_hits, feed_*,
 # sweat_*). 11/11: the ask box moved into the site menu (ask.py); the board answer is local, only the written answer is sent.
 # The owner should read it and have counsel look at it; when a feature starts storing something new, add it HERE first.
-PRIVACY_UPDATED = "November 11, 2026"
+# 11/18 (owner 12:34 PM: "Change private policy"): "your fantasy roster" became "your fantasy rosters in that Sleeper account's leagues" in
+# the same build that switched build_team.ALL_LEAGUE_ALERTS on - the Fantasy page now saves every league's lineup for the pushes.
+PRIVACY_UPDATED = "November 18, 2026"
 # owner 11/10 (deep dive): anonymous page counts. When account.PAGE_COUNTS is on, the policy says so in three places (the short version,
 # what we collect, cookies and tracking) and carries the date it was switched on - the page promises to change before the site does.
 try:
     import account as _ACCT_L; _PC = bool(_ACCT_L.PAGE_COUNTS); _PC_SINCE = _ACCT_L.PAGE_COUNTS_SINCE or PRIVACY_UPDATED
 except Exception: _PC, _PC_SINCE = False, PRIVACY_UPDATED
-if _PC: PRIVACY_UPDATED = _PC_SINCE
+if _PC:   # the page carries the LATER of the two dates (through 11/18 this line showed the page-count date even after later edits)
+    import datetime as _dtl
+    _d = lambda x: _dtl.datetime.strptime(x, "%B %d, %Y")
+    try: PRIVACY_UPDATED = max(PRIVACY_UPDATED, _PC_SINCE, key=_d)
+    except Exception: pass
 PRIVACY = eff.replace("</p>", f" · Privacy Policy last updated {PRIVACY_UPDATED}</p>") + f"""
 <p>Short version: {L["site"]} works without an account, runs no ad trackers{" and counts page views without knowing who you are" if _PC else " and no analytics scripts"}, and keeps your slips and settings in your browser. If you choose to sign in (optional), we store your email address and the things you build, post or switch on, so they follow you between devices and the features you asked for can work - nothing else.</p>
 <h2>What we collect</h2>
@@ -86,7 +92,7 @@ PRIVACY = eff.replace("</p>", f" · Privacy Policy last updated {PRIVACY_UPDATED
 <li><b>Unless you sign in, post or make a short link, nothing you type on the site is sent to us.</b> Parlay slips, Fantasy rosters, DFS lineups, your survivor pools, your bankroll plan and your settings are stored in your browser's local storage on your device and never leave it except when you choose to open a sportsbook link or share something.</li>
 <li><b>Sleeper usernames.</b> If you enter a Sleeper username on the Fantasy page, your browser asks Sleeper's public API for that account's leagues and rosters directly. Unless you are signed in, BetSweep's servers are not involved and we do not see or store it.</li>
 <li><b>Roster screenshots.</b> If you import a roster from a screenshot, the picture is read in your browser and is not uploaded to us. The reader is open-source software that your browser loads from the jsDelivr network when you use it.</li>
-<li><b>Optional accounts.</b> If you sign in, we store your email address, the time you accepted these terms and confirmed you are 21 or older, and the items you build on the site (saved betslips, the builder slip, hand-built fantasy teams, DFS lineups, trade scenarios, your bankroll plan, your survivor pools on the Survivor planner, the Sleeper username and league you entered, and your fantasy roster so alerts can cover your players). They are kept with our authentication and database provider, Supabase (servers in the United States), tied to your account and readable only by you and by us for support. Signing out leaves a copy in your browser; to delete the account and everything stored with it, email <a href="mailto:{L["contact"]}">{L["contact"]}</a> from the signed-in address and it is removed within 30 days. We do not sell or share it.</li>
+<li><b>Optional accounts.</b> If you sign in, we store your email address, the time you accepted these terms and confirmed you are 21 or older, and the items you build on the site (saved betslips, the builder slip, hand-built fantasy teams, DFS lineups, trade scenarios, your bankroll plan, your survivor pools on the Survivor planner, the Sleeper username and league you entered, and your fantasy rosters in that Sleeper account's leagues so alerts can cover your players). They are kept with our authentication and database provider, Supabase (servers in the United States), tied to your account and readable only by you and by us for support. Signing out leaves a copy in your browser; to delete the account and everything stored with it, email <a href="mailto:{L["contact"]}">{L["contact"]}</a> from the signed-in address and it is removed within 30 days. We do not sell or share it.</li>
 <li><b>Alerts.</b> If you turn on notifications, we store the push address and keys your browser gives us (your browser maker's push service - Apple, Google or Mozilla - delivers the message), a short description of the browser, and your alert settings. Turning alerts off removes them.</li>
 <li><b>The game-day email.</b> If you switch on the email brief on My BetSweep, we store that choice with your email address and send the brief through Resend, our email provider. You can switch it off there at any time. We send no other marketing email.</li>
 <li><b>Beat the model.</b> Your five picks each week, the display name you chose and how the picks graded are stored with your account. The leaderboard shows that name, your graded picks and your record - never your email. If you start or join a friend league there, we also store the league's name, its invite code and who is in it; the people in a league see each other's display name and record, nothing else, and anyone with the invite link can join until the person who started it closes it.</li>
