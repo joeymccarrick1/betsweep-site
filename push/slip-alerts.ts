@@ -853,6 +853,9 @@ async function projections(): Promise<{ P: Map<string, any>; W: number }> {
 }
 // ---- Sleeper roster inactives (Sunday 11:35 AM / 2:35 / 6:35 PM CT, TNF / MNF 5:35 PM): the official ESPN inactive list from the feeds
 // branch x the rosters the Fantasy page saved (fantasy_rosters). "X is out - the model's best bench play is Y" from /b/startsit.json.
+// 11/18: ONE push per player per person. With the same starter in several leagues the old loop sent one push per league under one tag,
+// each replacing the last on the phone, so the reader saw a single league's swap. Now the push says how many lineups and gives the
+// first three swaps. A player in one lineup gets exactly the message he got before.
 export async function inactives(now = Date.now()) {
   const ina: any = await (await fetch(`${FEEDS}/inactives.json`, { headers: { "cache-control": "no-cache" } })).json().catch(() => null);
   const outs: { name: string; team: string }[] = []; for (const g of Object.values((ina?.games || {}) as Record<string, any>)) for (const o of (g.out || [])) if (o?.name) outs.push({ name: String(o.name), team: String(o.team || "") });
@@ -864,36 +867,56 @@ export async function inactives(now = Date.now()) {
   const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly");
   const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.INACTIVE`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
   let n = 0; const gone: string[] = [];
-  for (const r of rosters) {
-    const us = subs.filter((s) => s.user_id === r.user_id); if (!us.length) continue;
-    for (const st of (r.starters || [])) {
-      const o = OUT.get(norm(st.name)); if (!o) continue; const key = `__ina__${r.league_id}|${norm(st.name)}`.slice(0, 300); if (done.has(`${r.user_id}|${key}`)) continue;
+  const byUser = new Map<string, any[]>(); for (const r of rosters) { const a = byUser.get(r.user_id); if (a) a.push(r); else byUser.set(r.user_id, [r]); }
+  for (const [uid, rs] of byUser) {
+    const us = subs.filter((s) => s.user_id === uid); if (!us.length) continue;
+    const hits = new Map<string, { name: string; rows: { r: any; pos: string; bench: any; key: string }[] }>();
+    for (const r of rs) for (const st of (r.starters || [])) {
+      const k = norm(st.name); if (!OUT.get(k)) continue; const key = `__ina__${r.league_id}|${k}`.slice(0, 300); if (done.has(`${uid}|${key}`)) continue;
       const pos = String(st.pos || ""); const bench = (r.bench || []).filter((b: any) => b && b.pos === pos && !OUT.has(norm(b.name))).map((b: any) => ({ b, pr: P.get(norm(b.name)) })).filter((x: any) => x.pr && x.pr.fp != null).sort((a: any, b: any) => b.pr.fp - a.pr.fp)[0];
-      const msg = { title: `${st.name} is INACTIVE${r.league ? ` (${r.league})` : ""}`.slice(0, 90),
-        body: bench ? `Official inactives. Your best bench ${pos} by the model: ${bench.b.name} (${(+bench.pr.fp).toFixed(1)} pts${bench.pr.opp ? ` vs ${bench.pr.opp}` : ""}). Swap before kickoff.` : `Official inactives. No ${pos} on your bench with a projection - check the waiver wire.`,
-        url: "/team/", tag: `bs-ina-${norm(st.name)}` };
-      n += await pushAll(us, msg, gone); await mark(r.user_id, W, key, "INACTIVE"); done.add(`${r.user_id}|${key}`);
+      const row = { r, pos, bench, key }; const h = hits.get(k); if (h) h.rows.push(row); else hits.set(k, { name: st.name, rows: [row] });
+    }
+    for (const h of hits.values()) {
+      const x = h.rows[0]; const swap = (y: any) => y.bench ? `${y.bench.b.name} (${(+y.bench.pr.fp).toFixed(1)})` : `no ${y.pos} on the bench`;
+      const msg = h.rows.length === 1
+        ? { title: `${h.name} is INACTIVE${x.r.league ? ` (${x.r.league})` : ""}`.slice(0, 90),
+            body: x.bench ? `Official inactives. Your best bench ${x.pos} by the model: ${x.bench.b.name} (${(+x.bench.pr.fp).toFixed(1)} pts${x.bench.pr.opp ? ` vs ${x.bench.pr.opp}` : ""}). Swap before kickoff.` : `Official inactives. No ${x.pos} on your bench with a projection - check the waiver wire.`,
+            url: "/team/", tag: `bs-ina-${norm(h.name)}` }
+        : { title: `${h.name} is INACTIVE in ${h.rows.length} of your lineups`.slice(0, 90),
+            body: (`Official inactives. Best bench play by the model: ` + h.rows.slice(0, 3).map((y) => `${y.r.league || "a league"}: ${swap(y)}`).join("; ") + (h.rows.length > 3 ? `; ${h.rows.length - 3} more on the Fantasy page` : "") + `. Swap before kickoff.`).slice(0, 300),
+            url: "/team/", tag: `bs-ina-${norm(h.name)}` };
+      n += await pushAll(us, msg, gone); for (const y of h.rows) { await mark(uid, W, y.key, "INACTIVE"); done.add(`${uid}|${y.key}`); }
     }
   }
   await dropGone(gone); return { week: W, date, outs: outs.length, rosters: rosters.length, sent: n };
 }
 
-// ---- Saturday-night start/sit (7:05 PM CT): the model's lineup calls for each saved roster, one push per league ----
+// ---- Saturday-night start/sit (7:05 PM CT): the model's lineup calls for the saved rosters ----
+// 11/18: one push per person. One league with a call reads as it always did ("Lineup check: <league>"); several are counted in the
+// title with the first call from each of three leagues - the Fantasy page lists every lineup that needs him.
 export async function startsit(now = Date.now()) {
   const { P, W } = await projections(); if (!P.size) return { sent: 0, reason: "no projections (team/compare/data.json)" };
   const rosters: any[] = await rest("fantasy_rosters?select=user_id,league_id,league,starters,bench");
   const subs: Sub[] = (await rest("push_subs?select=endpoint,user_id,p256dh,auth,live,weekly")).filter((s: Sub) => s.weekly !== false);
   const sent: any[] = await rest(`push_sent?select=user_id,player&week=eq.${W}&status=eq.STARTSIT`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
   let n = 0; const gone: string[] = [];
-  for (const r of rosters) {
-    const us = subs.filter((s) => s.user_id === r.user_id); if (!us.length) continue; const key = `__ss__${r.league_id}`.slice(0, 300); if (done.has(`${r.user_id}|${key}`)) continue;
-    const calls: string[] = [];
-    for (const st of (r.starters || [])) { const sp = P.get(norm(st.name)); if (!sp || sp.fp == null || sp.out) { if (sp?.out) calls.push(`${st.name} is out`); continue; }
-      const better = (r.bench || []).filter((b: any) => b && b.pos === st.pos).map((b: any) => P.get(norm(b.name))).filter((bp: any) => bp && bp.fp != null && !bp.out && bp.fp - sp.fp >= 2).sort((a: any, b: any) => b.fp - a.fp)[0];
-      if (better) calls.push(`${better.name} over ${st.name} (+${(better.fp - sp.fp).toFixed(1)})`); }
-    if (!calls.length) continue;
-    const msg = { title: `Lineup check${r.league ? `: ${r.league}` : ""}`.slice(0, 90), body: `The model would start ${calls.slice(0, 3).join("; ")}${calls.length > 3 ? ` +${calls.length - 3} more` : ""}. Full lineup and the reasons on the Fantasy page.`.slice(0, 300), url: "/team/", tag: `bs-ss-${W}` };
-    n += await pushAll(us, msg, gone); await mark(r.user_id, W, key, "STARTSIT");
+  const byUser = new Map<string, any[]>(); for (const r of rosters) { const a = byUser.get(r.user_id); if (a) a.push(r); else byUser.set(r.user_id, [r]); }
+  for (const [uid, rs] of byUser) {
+    const us = subs.filter((s) => s.user_id === uid); if (!us.length) continue; const todo: { r: any; key: string; calls: string[] }[] = [];
+    for (const r of rs) {
+      const key = `__ss__${r.league_id}`.slice(0, 300); if (done.has(`${uid}|${key}`)) continue;
+      const calls: string[] = [];
+      for (const st of (r.starters || [])) { const sp = P.get(norm(st.name)); if (!sp || sp.fp == null || sp.out) { if (sp?.out) calls.push(`${st.name} is out`); continue; }
+        const better = (r.bench || []).filter((b: any) => b && b.pos === st.pos).map((b: any) => P.get(norm(b.name))).filter((bp: any) => bp && bp.fp != null && !bp.out && bp.fp - sp.fp >= 2).sort((a: any, b: any) => b.fp - a.fp)[0];
+        if (better) calls.push(`${better.name} over ${st.name} (+${(better.fp - sp.fp).toFixed(1)})`); }
+      if (calls.length) todo.push({ r, key, calls });
+    }
+    if (!todo.length) continue; const t0 = todo[0];
+    const msg = todo.length === 1
+      ? { title: `Lineup check${t0.r.league ? `: ${t0.r.league}` : ""}`.slice(0, 90), body: `The model would start ${t0.calls.slice(0, 3).join("; ")}${t0.calls.length > 3 ? ` +${t0.calls.length - 3} more` : ""}. Full lineup and the reasons on the Fantasy page.`.slice(0, 300), url: "/team/", tag: `bs-ss-${W}` }
+      : { title: `Lineup check: ${todo.length} of your lineups`.slice(0, 90),
+          body: (todo.slice(0, 3).map((t) => `${t.r.league || "A league"}: ${t.calls[0]}${t.calls.length > 1 ? ` +${t.calls.length - 1} more` : ""}`).join(". ") + (todo.length > 3 ? `. ${todo.length - 3} more league${todo.length === 4 ? "" : "s"}` : "") + `. Every lineup that needs you is on the Fantasy page.`).slice(0, 300), url: "/team/", tag: `bs-ss-${W}` };
+    n += await pushAll(us, msg, gone); for (const t of todo) await mark(uid, W, t.key, "STARTSIT");
   }
   await dropGone(gone); return { week: W, rosters: rosters.length, sent: n };
 }

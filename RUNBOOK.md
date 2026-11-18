@@ -2032,3 +2032,32 @@ and two sentences on How BetSweep picks follow (the How page states the record a
 - Not built yet: Sunday inactive and Saturday lineup pushes for every league. Saving every league's roster is a one-line client change,
   but slip-alerts.ts sends one push per league under one tag, so a 14-league account would get 14 buzzes for one message. The function
   needs a per-user summary first, and the owner has to redeploy it.
+
+## 11/18, 10:35 AM CT: roster pushes for every league - the function is ready, the switch is OFF until the owner redeploys
+
+**Why.** The Fantasy page saved only the league on screen to `fantasy_rosters`, so Sunday's inactive push and Saturday's lineup check
+covered one league of a 14-league account. Saving them all is easy; the function was the problem: `inactives()` and `startsit()` sent
+one push per league under one tag, each replacing the last on the phone (or, where a phone ignores tags, fourteen buzzes).
+
+**push/slip-alerts.ts (the owner deploys it; reference copy here, his copy in owner_send/).**
+- `inactives()`: one push per player per person. In one lineup: the old message, byte for byte. In several: "Joe Mixon is INACTIVE in 3
+  of your lineups" and "Best bench play by the model: <league>: <player> (pts); ...", three leagues at most, then "N more on the Fantasy
+  page". Each league is still marked under the old key (`__ina__<league>|<player>`), so a deploy mid-Sunday repeats nothing.
+- `startsit()`: one push per person. One league with a call: the old message. Several: "Lineup check: 4 of your lineups" with the first
+  call from each of three leagues. A league with no call is not marked, as before.
+- tests/fantasy_push.py (17) cuts both functions out of the file and runs them under node with the database, the push service, the
+  feed and the projections stubbed - what is checked is what gets deployed. The one-league expectations were also run against the
+  function as deployed on 11/17 and pass there, so nothing changes for a one-league reader. tsc reports the same 53 baseline messages
+  (Deno globals) before and after. In the pre-publish set.
+
+**build_team.py: `ALL_LEAGUE_ALERTS = False`** (page data `all_alerts`). When True, the all-leagues read saves every league with a
+lineup through the same `syncRoster()` the Lineup tab uses (lifted out of `render()`; one row per league, upsert on user and league);
+best-ball leagues and leagues with no lineup are skipped. tests/fantasy_nav.py checks both settings with a stand-in account: off, one
+row; on, thirteen.
+
+**To switch it on (in this order):**
+1. The owner pastes push/slip-alerts.ts over the slip-alerts Edge Function and deploys (Verify JWT stays off), and says so.
+2. Set `ALL_LEAGUE_ALERTS = True`, run the pre-publish set, publish.
+3. Privacy Policy, "Optional accounts": "your fantasy roster so alerts can cover your players" becomes "your fantasy rosters in that
+   Sleeper account's leagues so alerts can cover your players" - ask the owner first; it is his document.
+4. First real check: Saturday 7:05 PM CT (one "Lineup check" push naming how many lineups), then Sunday's inactives.

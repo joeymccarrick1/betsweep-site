@@ -18,6 +18,9 @@ def num(x):
     try: return float(str(x).replace(",", "").replace("%", "").replace("+", ""))
     except Exception: return None
 exec(open(os.path.join(HERE, "brand.py")).read())
+# 11/18: save every league's roster for the Sunday / Saturday pushes. Turn on ONLY after the owner has deployed the push/slip-alerts.ts
+# of 11/18 (one push per person; tests/fantasy_push.py) - the function before it sent one push per league. See RUNBOOK "11/18, 10:35 AM".
+ALL_LEAGUE_ALERTS = False
 boards = vals("boards.json"); WEEK = int(float(boards[1][1]))
 
 def col(h, name):
@@ -173,7 +176,7 @@ for p in PLAYERS:
     if p.get("ins"): p["ins"].append(KICKTS.get(p["t"].replace("LAR", "LA"), 0))
 
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
-DATA = {"week": WEEK, "stamp": stamp, "players": PLAYERS}
+DATA = {"week": WEEK, "stamp": stamp, "players": PLAYERS, "all_alerts": ALL_LEAGUE_ALERTS}
 n_act = sum(1 for p in PLAYERS if p["act"])
 
 import fantasy_nav as _FN   # owner 11/17 evening: league bar + section tabs ("a lot of scrolling ... I have a ton of sleeper teams")
@@ -518,6 +521,24 @@ TEAM_JS = r"""
       cls: need === 2 ? 'sell' : (need === 0 && !bb && cur.length) ? 'buy' : '', title: 'Lineup check, Week ' + (state.week || WEEK),
       ord: need * 1000 + Math.min(999, Math.round(gain * 10)), need: need, dead: dead, open: open, gain: Math.round(gain * 10) / 10, swaps: swaps, q: q, bb: bb, none: !cur.length, st: st };
   }
+  // owner 11/5: a signed-in user's roster follows the account (fantasy_rosters) so the alert function can push official inactives on
+  // Sunday and the Saturday-night lineup check. Starters = Sleeper's current lineup; bench = the rest. One row per league.
+  function syncRoster(l, roster, curStarters){
+    try { var acct = window.bsAccount, curSet = {}; curStarters.forEach(function(id){ curSet[id] = 1; });
+      if (acct && acct.user && acct.client) { var row = { user_id: acct.user.id, league_id: String(l.league_id || l.id || ''), league: l.name || '', sleeper: state.user.display_name || state.user.username || '',
+          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }),
+          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }), updated_at: new Date().toISOString() };
+        if (row.league_id) acct.client.from('fantasy_rosters').upsert(row, {onConflict: 'user_id,league_id'}).then(function(r){ if (r.error && !/relation|does not exist/i.test(r.error.message)) console.warn('roster sync', r.error.message); }); } } catch(e){}
+  }
+  // 11/18: the same row for EVERY league on the account, written as the all-leagues read goes round - so Sunday's inactives and Saturday's
+  // lineup check cover leagues the reader never opened. OFF (D.all_alerts, build flag ALL_LEAGUE_ALERTS) until the owner has deployed
+  // the slip-alerts.ts that sends one push per person: the old function sent one per league. Best-ball leagues have no lineup to set
+  // and are not saved; nor is a league with no lineup yet.
+  function saveLeague(l, pm, rosters){
+    if(!D.all_alerts) return; var me = state.user && state.user.user_id, mine = (rosters || []).filter(function(r){ return r.owner_id === me || (r.co_owners || []).indexOf(me) >= 0; })[0];
+    if(!mine || (l.settings && Number(l.settings.best_ball) === 1)) return;
+    var cur = (mine.starters || []).filter(function(id){ return id && id !== '0'; }); if(!cur.length) return;
+    syncRoster(l, (mine.players || []).map(mkEntry(pm, l.scoring_settings || {})), cur); }
   var AFTER = null;   // run once after the next league finishes loading (a tap on the checklist lands on that league's Lineup tab)
   var SCANNED = false;   // the read of the other leagues has been started
   function allRender(){ var box = $('#allg'); if(!box) return; var S = bsLg.state(), ls = S.leagues || [];
@@ -583,7 +604,7 @@ TEAM_JS = r"""
   var TABS = bsTabs.mount($('#tmTabs'), [{id: 'lineup', label: 'Lineup'}, {id: 'roster', label: 'Roster'}, {id: 'league', label: 'League'}, {id: 'waivers', label: 'Waivers'}], {root: out, key: 'bs_tab_team'});
   var QUIET = false;   // true while the page loads a league by itself (a saved username, a league picked from the sheet): no jump down the page
   bsLg.mount({bar: $('#lgbar'), get: get, ns: 'lu', sortLabel: 'Needs you first',
-    extra: function(l, ros){ return playersMap().then(function(pm){ return lineupCheck(l, pm, ros); }); },
+    extra: function(l, ros){ return playersMap().then(function(pm){ try{ saveLeague(l, pm, ros); }catch(e){ console.error(e); } return lineupCheck(l, pm, ros); }); },
     onUpdate: function(){ allRender(); },
     onPick: function(l){ QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); },
     onChange: function(){ bsLg.clear(); state.user = null; allRender(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
@@ -701,11 +722,7 @@ TEAM_JS = r"""
 
     // owner 11/5: a signed-in user's roster follows the account (fantasy_rosters) so the alert function can push official inactives on
     // Sunday ("X is inactive - best bench play Y") and the Saturday-night lineup check. Starters = Sleeper's current lineup; bench = the rest.
-    try { var acct = window.bsAccount, curSet = {}; curStarters.forEach(function(id){ curSet[id] = 1; });
-      if (acct && acct.user && acct.client) { var row = { user_id: acct.user.id, league_id: String(l.league_id || l.id || ''), league: l.name || '', sleeper: state.user.display_name || state.user.username || '',
-          starters: roster.filter(function(e){ return curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }),
-          bench: roster.filter(function(e){ return !curSet[e.id]; }).map(function(e){ return {name: e.sp.n, pos: e.pos, team: e.sp.t || ''}; }), updated_at: new Date().toISOString() };
-        if (row.league_id) acct.client.from('fantasy_rosters').upsert(row, {onConflict: 'user_id,league_id'}).then(function(r){ if (r.error && !/relation|does not exist/i.test(r.error.message)) console.warn('roster sync', r.error.message); }); } } catch(e){}
+    syncRoster(l, roster, curStarters);
     // full roster
     roster.sort(function(a, b){ return b.pts - a.pts || a.name.localeCompare(b.name); });
     $('#roster').innerHTML = roster.map(function(e){ return '<li class="' + (startSet[e.id] ? 'st' : '') + '"><span class="pz">' + esc(e.pos) + '</span><span class="who"><b>' + esc(e.name) + tagFor(e) + '</b><span>' + (e.mp ? esc(e.mp.t) + (e.mp.o ? ' vs ' + esc(e.mp.o) : '') + (e.mp.role && e.mp.role !== e.pos ? ' · ' + esc(e.mp.role) : '') : 'not in the model this week') + '</span></span><span class="pts"><b>' + f1(e.pts) + '</b><small>' + (startSet[e.id] ? 'start' : 'bench') + '</small>' + altPts(e, s) + '</span></li>'; }).join('');

@@ -239,6 +239,24 @@ async def checklist_set(b, players):
     await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000); await pg.wait_for_timeout(900)
     check(not await pg.evaluate(VIS, "#allg") and not errs, "a one-league account gets no all-leagues card"); await ctx.close()
 
+async def league_alerts(b, players):
+    """Saving every league's roster for the pushes is behind a build flag (ALL_LEAGUE_ALERTS). Off: only the league on screen is saved,
+    as before. On (switched here in the page): one row per league with a lineup, none for the best-ball league, none twice."""
+    FAKE = "window.__UP = []; window.bsAccount = {user: {id: 'U1'}, client: {from: function(t){ return {upsert: function(row, o){ window.__UP.push([t, row.league_id, row.league, (row.starters || []).length, (row.bench || []).length, o && o.onConflict]); return Promise.resolve({}); }}; }}};"
+    res = {}
+    for on in (False, True):
+        ctx, pg, asked, errs, LS = await session(b, players, "dark", tweak=real_lineups(players, best_ball=[9]))
+        await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_timeout(700)
+        flag = await pg.evaluate("window.__BS.all_alerts"); await pg.evaluate(FAKE + ("window.__BS.all_alerts = true;" if on else ""))
+        await pg.fill("#user", "mock"); await pg.click("#go"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000)
+        await pg.wait_for_function("document.querySelector('#allg') && !document.querySelector('#allg').classList.contains('busy')", timeout=25000); await pg.wait_for_timeout(400)
+        res[on] = (await pg.evaluate("window.__UP"), flag, list(errs)); await ctx.close()
+    off, flag, e0 = res[False]; on, _, e1 = res[True]
+    check(flag is False and len(off) == 1 and off[0][:3] == ["fantasy_rosters", "L0", "Nashville Dynasty"] and not e0, f"as built (the flag is off) only the league on screen is saved to the account ({len(off)} row)")
+    ids = [r[1] for r in on]
+    check(sorted(ids) == sorted(f"L{i}" for i in range(14) if i != 9) and all(r[0] == "fantasy_rosters" and r[3] >= 8 and r[4] >= 1 and r[5] == "user_id,league_id" for r in on) and not e1,
+          f"switched on, every league with a lineup is saved once - starters and bench - and the best-ball league is not ({len(on)} rows)")
+
 async def team(b, players, theme):
     T = f"fantasy, {theme}"
     ctx, pg, asked, errs, LS = await session(b, players, theme)
@@ -285,6 +303,7 @@ async def main():
         for theme in ("dark", "light"): await team(b, players, theme)
         for theme in ("dark", "light"): await checklist(b, players, theme)
         await checklist_set(b, players)
+        await league_alerts(b, players)
         # a hand-built team is left alone: no Sleeper request on load
         ctx, pg, asked, errs, LS = await session(b, players, "dark", stored="mock", mode="manual")
         await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)
