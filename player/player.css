@@ -137,4 +137,5 @@ a{color:var(--ink)}
 .pd li b{display:block;font-weight:600} .pd li small{color:var(--mute);font-size:12px}
 .pd li .st{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--red);color:#fff}
 .pd li .st.q{background:var(--warn);color:#0f141c}
-.pd .cnt{color:var(--mute);font-size:12px;margin:8px 0 0}
+.pd .cnt{color:var(--mute);font-size:12px;margin:8px 0 0} .pd .pdmore{margin:10px 0 0} .pd .pdmore[hidden]{display:none} .pd .pdmore .bsbtn{width:100%} .pd li[hidden]{display:none}
+.pd ul:not(.js) li:nth-child(n+31){display:none}   /* until the script has run: the same first 30, so the list does not flash at full length */
