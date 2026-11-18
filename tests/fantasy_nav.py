@@ -240,6 +240,25 @@ async def checklist_set(b, players):
     await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000); await pg.wait_for_timeout(900)
     check(not await pg.evaluate(VIS, "#allg") and not errs, "a one-league account gets no all-leagues card"); await ctx.close()
 
+async def trade_all(b, players):
+    """Trade page, every league on one line (owner 11/18: "Build all leagues list")."""
+    ctx, pg, asked, errs, LS = await session(b, players, "dark")
+    await pg.goto(f"http://127.0.0.1:{PORT}/trade/", wait_until="domcontentloaded"); await pg.wait_for_timeout(700)
+    check(not await pg.evaluate(VIS, "#allg"), "trade, all leagues: nothing before a username is given")
+    await pg.fill("#slUser", "mock"); await pg.click("#slGo"); await pg.wait_for_selector("#olk", timeout=15000)
+    await pg.wait_for_function("document.querySelector('#allg') && !document.querySelector('#allg').hidden && !document.querySelector('#allg').classList.contains('busy')", timeout=40000); await pg.wait_for_timeout(300)
+    head = await pg.evaluate("document.querySelector('#allg .allgh b').textContent"); sub = await pg.evaluate("document.querySelector('#allg .allgh small').textContent")
+    nums = [int(x) for x in re.findall(r"(?:Push in|hold in|sell in) (\d+)", head)]
+    box = await pg.evaluate("Math.round(document.querySelector('#allg').getBoundingClientRect().height)")
+    check(sum(nums) == 14 and sub.startswith("Biggest week: ") and box <= 80 and not await pg.evaluate(VIS, "#allg .allgr") and await pg.evaluate(OVER) <= 0, f"trade, all leagues: one line counts the leagues to push in, hold and sell in, and names the biggest week ({head}; {sub[:60]})")
+    await pg.click("#allg .allgh"); await pg.wait_for_timeout(200)
+    rows = await pg.evaluate("[...document.querySelectorAll('#allg .allgr')].map(b => [b.dataset.id, b.querySelector('b').textContent, b.querySelector('small').textContent, b.querySelector('.lgchip').textContent])")
+    sw = [int(re.match(r"(\d+)-point week", r[2]).group(1)) if re.match(r"(\d+)-point week", r[2]) else -1 for r in rows]
+    check(len(rows) == 14 and sw == sorted(sw, reverse=True) and all(re.search(r" · (\d+%|99%\+|under 1%)$", r[3]) for r in rows), f"trade, all leagues: opened, every league is listed with its verdict and odds, biggest week first ({rows[0][1]}: {rows[0][2]}, {rows[0][3]})")
+    lid, name = rows[-1][0], rows[-1][1]; await pg.click(f'#allg .allgr[data-id="{lid}"]'); await pg.wait_for_timeout(1500)
+    cur = await pg.evaluate("document.querySelector('.lgbar .lgcur b').textContent"); tab = await pg.evaluate("document.querySelector('#tcTabs .tab.on').dataset.t")
+    check(cur == name and tab == "league" and not errs, f"trade, all leagues: a tap opens that league on the My league tab ({cur}) with no script errors ({errs[:1]})"); await ctx.close()
+
 async def league_alerts(b, players):
     """Every league's roster is saved for the Sunday / Saturday pushes (build flag ALL_LEAGUE_ALERTS, on since 11/18 once the owner had
     deployed the one-push-per-person function). On: one row per league with a lineup, none for the best-ball league, none twice, and the
@@ -310,6 +329,7 @@ async def main():
         for theme in ("dark", "light"): await checklist(b, players, theme)
         await checklist_set(b, players)
         await league_alerts(b, players)
+        await trade_all(b, players)
         # a hand-built team is left alone: no Sleeper request on load
         ctx, pg, asked, errs, LS = await session(b, players, "dark", stored="mock", mode="manual")
         await pg.goto(f"http://127.0.0.1:{PORT}/team/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)

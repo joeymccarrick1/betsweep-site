@@ -560,9 +560,32 @@ JS = r"""
         return Promise.all(ws.map(function(w){ return get('league/'+l.league_id+'/matchups/'+w).catch(function(){ return []; }); })).then(function(ms){ var sc = {};
           ms.forEach(function(m, i){ var by = {}; (m||[]).forEach(function(x){ if(x.matchup_id == null) return; (by[x.matchup_id] = by[x.matchup_id] || []).push(x.roster_id); }); sc[ws[i]] = Object.keys(by).map(function(k){ return by[k]; }).filter(function(p){ return p.length === 2; }); });
           var q = bsOutlook.quick(l, teamsOf(ros, [], pm), sc, 1500); return q ? {txt: q.txt+' · '+q.pct, cls: q.cls, title: 'Playoff odds', sw: q.sw, wk: q.wk} : null; }); }); }
-    bsLg.mount({bar: $('#lgbar'), get: get, extra: leagueChip,
+    // 11/18 (owner: "Build all leagues list"): every league's verdict on one line under the league bar - how many to push in, hold or
+    // sell in, and whose week moves his playoff odds the most. The same read the league list makes when it opens (playoff odds per
+    // league), started once the first league is on screen; open, it lists every league, biggest week first; a tap opens that league.
+    var ALLSCAN = false;
+    function allTrade(){ var box = $('#allg'); if(!box) return; var T = bsLg.state(), ls = T.leagues || [];
+      if(ls.length < 2){ box.hidden = true; box.innerHTML = ''; return; }
+      var done = 0, rows = [], n = {buy: 0, hold: 0, sell: 0}, off = 0;
+      ls.forEach(function(l){ var c = T.chip[l.league_id]; if(c === undefined) return; done++; if(!c || !c.txt){ off++; return; } n[c.cls] = (n[c.cls] || 0) + 1; rows.push([l, c]); });
+      rows.sort(function(a, b){ return (b[1].sw == null ? -1 : b[1].sw) - (a[1].sw == null ? -1 : a[1].sw); });
+      var unread = ls.length - done, busy = unread > 0 && (T.busy > 0 || !ALLSCAN), open = false; try{ open = sessionStorage.getItem('bs_allg_t') === '1'; }catch(e){}
+      var parts = []; if(n.buy) parts.push('Push in ' + n.buy); if(n.hold) parts.push('hold in ' + n.hold); if(n.sell) parts.push('sell in ' + n.sell);
+      var top = rows[0], head = busy ? 'Reading your ' + ls.length + ' leagues…' : (parts.join(' · ') || 'No playoff picture yet');
+      var sub = busy ? done + ' of ' + ls.length + ' read' : (top && top[1].sw != null && !open) ? 'Biggest week: ' + esc(top[0].name) + ' (' + top[1].sw + '-point swing in playoff odds)' : 'Playoff odds and verdict, every league on this account';
+      var cur = S.league && S.league.league_id;
+      box.hidden = false; box.className = 'allg' + (busy ? ' busy' : '') + (open ? ' open' : '');
+      box.innerHTML = '<button type="button" class="allgh" aria-expanded="' + open + '"><span class="tx"><b>' + head + '</b><small>' + sub + '</small></span><span class="chev" aria-hidden="true">▾</span></button>'
+        + '<div class="allgb"' + (open ? '' : ' hidden') + '><ul>' + rows.map(function(x){ var l = x[0], c = x[1];
+            return '<li><button type="button" class="allgr' + (l.league_id === cur ? ' on' : '') + '" data-id="' + esc(l.league_id) + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + (c.sw != null ? c.sw + '-point week' + (c.wk ? ' (Week ' + c.wk + ')' : '') : 'no game left to swing it') + '</small></span><span class="lgchip ' + esc(c.cls || '') + '">' + esc(c.txt) + '</span></button></li>'; }).join('') + '</ul>'
+        + ((off || (unread && !busy)) ? '<p class="allgf">' + (off ? 'No verdict for ' + off + ' (not on a roster, or the season is over there). ' : '') + (unread && !busy ? 'Sleeper did not answer for ' + unread + '.' : '') + '</p>' : '') + '</div>'; }
+    document.addEventListener('click', function(e){ var t = e.target; if(!t.closest) return;
+      if(t.closest('#allg .allgh')){ var o = !$('#allg').classList.contains('open'); try{ sessionStorage.setItem('bs_allg_t', o ? '1' : '0'); }catch(x){} allTrade(); return; }
+      var r = t.closest('#allg .allgr'); if(!r) return; var l = S.leagues.filter(function(x){ return x.league_id === r.dataset.id; })[0]; if(!l) return;
+      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); TABS.show('league', true); var a = $('#lgbar'); if(a && a.scrollIntoView) a.scrollIntoView({block: 'start'}); });
+    bsLg.mount({bar: $('#lgbar'), get: get, extra: leagueChip, onUpdate: function(){ allTrade(); if(!ALLSCAN && S.leagues && S.leagues.length > 1){ ALLSCAN = true; bsLg.scan(); } },
       onPick: function(l){ pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); TABS.show('league', true); window.scrollTo({top:0}); },
-      onChange: function(){ bsLg.clear(); $('#slRow').hidden = false; $('#slOut').hidden = true; $('#slEmpty').hidden = false; S.rosters = null; var i = $('#slUser'); i.value = ''; i.focus(); } });
+      onChange: function(){ bsLg.clear(); ALLSCAN = false; allTrade(); $('#slRow').hidden = false; $('#slOut').hidden = true; $('#slEmpty').hidden = false; S.rosters = null; var i = $('#slUser'); i.value = ''; i.focus(); } });
     document.addEventListener('click', function(e){ var b = e.target.closest('[data-idea]'); if(!b) return; var k = b.dataset.idea.split('|'); st.A = [k[0]]; st.B = [k[1]]; window.__bsRender(); toCalc(); });
     document.addEventListener('click', function(e){ var b = e.target.closest('[data-ol]'); if(!b) return; var k = b.dataset.ol.split('|'); st.A = k[0] ? k[0].split(';') : []; st.B = k[1] ? k[1].split(';') : []; window.__bsRender(); toCalc(); });
     window.__bsLeague = render;
@@ -586,6 +609,7 @@ body = f'''<div class="tc">
  <div class="lgzone lg" id="league">
   <div class="row" id="slRow"><input id="slUser" placeholder="Sleeper username" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Sleeper username"><button type="button" class="go" id="slGo">Import</button><span class="meth">Import your Sleeper leagues for playoff odds, buy or sell, and trade ideas. Read-only: nothing is posted to Sleeper.</span></div>
   <div class="lgbar" id="lgbar" hidden></div>
+  <div class="allg" id="allg" hidden></div>
   <div class="msg" id="slMsg" hidden></div>
   <div class="leagues" id="slLeagues"></div>
  </div>

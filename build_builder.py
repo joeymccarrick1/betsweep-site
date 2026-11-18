@@ -1127,6 +1127,7 @@ BUILDER_CSS = r"""
 .altcol h4{margin:0 0 2px;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);text-align:center}
 .altpair{display:grid;grid-template-columns:1fr 1fr;gap:6px} .altcol.mid .glb{min-height:46px}
 @media (max-width:560px){ .altpanel{grid-template-columns:minmax(0,1fr) 82px minmax(0,1fr);gap:6px} .altcol{max-width:82px} .altpair{grid-template-columns:1fr;gap:5px} }
+.gll{display:none} @media (max-width:760px){ .gcard.glz > .glgrid{display:none} .gcard.glz > .gll{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--card);border:0;border-top:1px solid var(--line);cursor:pointer} .gll:focus-visible{outline:2px solid var(--red);outline-offset:-2px} }
 @media (max-width:560px){ .glgrid{grid-template-columns:minmax(0,1fr) 82px minmax(0,1fr);gap:6px;padding:8px 10px} .glside{gap:5px;width:82px} .glb b{font-size:14px} .glb small{font-size:11px} .glb{min-height:46px;padding:4px 2px} }
 .gteamlist h3{margin:0;padding:8px 14px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:color-mix(in srgb,var(--chalk) 60%,transparent);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
 .gteamlist h3 .hint{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:3px 10px;white-space:nowrap} .gteamlist h3 .hint .car{font-style:normal} @media (max-width:560px){ .gteamlist h3 .hint span{display:none} .gteamlist h3 .hint{font-size:10.5px;padding:3px 8px} }
@@ -1525,6 +1526,7 @@ BUILDER_JS = r"""
   function snChip(l){ if(l.sn == null) return ''; var l3 = (l.sn3 || []).map(function(x){ return Math.round(x*100); }).join(' · ');
     return '<span class="snchip" title="Projected offensive snap share for this game; last three games newest first' + (l.snw ? '; ' + esc(l.snw) : '') + '">Snaps ~' + Math.round(l.sn*100) + '%' + (l3 ? ' (' + l3 + ')' : '') + '</span>'; }
   var openG = {};   // game cards opened on the Games view
+  var openL = {};   // 11/18: game cards whose price grid was opened on a phone (the next game and an opened game show theirs anyway)
   var openAlt = {}; // Alt game lines panel open per game
   function lum(h){ h = h.replace('#',''); var r = parseInt(h.substr(0,2),16)/255, g = parseInt(h.substr(2,2),16)/255, b = parseInt(h.substr(4,2),16)/255; return 0.2126*r + 0.7152*g + 0.0722*b; }
   function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
@@ -1875,7 +1877,11 @@ BUILDER_JS = r"""
         }).join('') + '</div>';
       }
       var lv = LV[gid], tk = (lv && window.BSLive) ? window.BSLive.tickHtml(g, lv) : '';
-      return '<section class="gcard' + (open ? ' open' : '') + (off ? ' off' : '') + (finished(gid) ? ' done' : '') + (lv && lv.st === 'in' ? ' live' : '') + '" id="g-' + gid + '">' + head +
+      // 11/18 (owner: "Tighten all of those"): midweek thirteen games each carried a grid of prices - six phone screens of the page's
+      // eight. On a phone the next game and any opened game show the grid; the rest show one row, "Game lines", that opens it.
+      var showL = open || gid === up[0] || !!openL[gid];
+      var glt = (finished(gid) || showL) ? '' : '<button type="button" class="gll" data-gl="' + gid + '" aria-expanded="false">Game lines <i class="car">▾</i></button>';
+      return '<section class="gcard' + (open ? ' open' : '') + (showL ? '' : ' glz') + (off ? ' off' : '') + (finished(gid) ? ' done' : '') + (lv && lv.st === 'in' ? ' live' : '') + '" id="g-' + gid + '">' + head + glt +
         '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + (finished(gid) ? '' : glGrid(g, off)) + body + '</section>';
     }
     wrap.innerHTML = up.map(one).join('') + (dn.length ? '<details class="gdone"' + (doneOpen || !up.length ? ' open' : '') + '><summary><b>' + dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played</b> <small>finals and what the model projected</small></summary>' + dn.map(one).join('') + '</details>' : '');
@@ -2420,6 +2426,7 @@ BUILDER_JS = r"""
     if(cardsClick(ev)) return;
     var gb = ev.target.closest('.glb[data-i]'); if(gb){ if(!gb.disabled) toggle(+gb.dataset.i); return; }
     var ab = ev.target.closest('.altbtn'); if(ab){ var ag = ab.dataset.g; if(openAlt[ag]) delete openAlt[ag]; else openAlt[ag] = true; renderGames(); return; }
+    var gll = ev.target.closest('.gll'); if(gll){ openL[gll.dataset.gl] = true; renderGames(); return; }
     var gh = ev.target.closest('.ghd'); if(gh){ var gid = gh.dataset.g; if(openG[gid]) delete openG[gid]; else openG[gid] = true; renderGames(); if(openG[gid]) $('#g-' + gid).scrollIntoView({block:'start', behavior:'smooth'}); return; }
     var pn = ev.target.closest('.pn.cyc'); if(pn){ var ok = pn.dataset.orig; var li = pn.closest('.lg'); var cur = legs[+li.dataset.i];
       var orig = legs.filter(function(x){ return x.pl + '|' + x.m === ok; })[0]; if(!orig) return; var cl = cycleList(orig); var j = cl.findIndex(function(x){ return x.i === cur.i; }); var nx = cl[(j + 1) % cl.length];

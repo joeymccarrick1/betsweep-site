@@ -2099,3 +2099,24 @@ row; on, thirteen.
 - Same publish: build_builder.py marks the house-slip pool (`sp: 1`, chip "Sweep pool", also shown by "Model's Best only"): -130 to
   -199, a short-priced tier pick or the raw model 8+ over (passing only as a tier pick), no red flag, real role, one rung per player
   and market. PROMO_DESK.md rule 3 points the desk at it. Two legs on Wednesday's board. tests/calib_floor.py (26).
+
+## 11/18, 2:20-3:15 PM CT: the pages left alone are tightened, and the Trade page gets its all-leagues line (owner 2:19 PM)
+
+- Owner: "Slip alerts is good to go" - the function with `freshRosters()` is deployed, on his word. First real check stays Saturday 7:05 PM.
+- "Tighten all of those you listed", phones only (760px and under), nothing removed, wide screens untouched. Lengths in phone screens,
+  measured laid out in full: Boards 11.3 -> 4.9, builder 7.7 -> 5.4, Home 7.5 -> 5.0, Guide 8.3 -> 3.5, How 5.3 -> 2.4, Privacy
+  6.9 -> 1.9, Terms 5.4 -> 2.3, Responsible gambling 3.6 -> 2.5, Survivor 4.8 -> 3.9.
+  - Shared script (build_site.py APP_JS, so it reaches template pages too): `foldBoards()` - a game card keeps its header and
+    confidence line, "Show the game" opens the rest, a #GAME link arrives open, a share picture is drawn opened; `foldDoc()` - Guide,
+    How and the legal pages fold under their h2 titles (first section open, except on legal pages where the opening summary stays
+    above the titles), "Open all sections", a #section link arrives open; `homeTabs()` - Model's Best / Best parlay / News / Record
+    under one tab row on the home page (bsTabs, key bs_tab_home).
+  - build_builder.py: on a phone only the next game and an opened game show the price grid; the others show a "Game lines" row
+    (`openL`, class `glz`).
+  - build_survivor.py: tables over ten rows show eight until "Show all N rows" (`capTables`, kept across re-draws); the long
+    footnote sits under "How the win chances are made".
+  - tests/page_tight.py (49), in the pre-publish set.
+- Trade page, every league on one line (`allTrade()` in build_trade.py): "Push in 5 · hold in 4 · sell in 5" and the biggest week;
+  opened, every league with its verdict, odds and swing, biggest week first; a tap opens that league. The read starts once the first
+  league is on screen (the same per-league playoff-odds read the league list makes). The card's styles moved to fantasy_nav.py so both
+  pages share them. tests/fantasy_nav.py (137).

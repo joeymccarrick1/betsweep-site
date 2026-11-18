@@ -191,6 +191,9 @@ CSS = """
 .sv .call b.pick{font-family:var(--brand);font-style:italic;font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.01em;display:block}
 .sv .call p{margin:6px 0 0;line-height:1.5;font-size:14.5px}
 .sv .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sv .tw.svcap tbody tr:nth-child(n+9){display:none}
+.sv .svmore{display:block;width:100%;min-height:44px;margin:8px 0 14px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.sv .svhow{margin:10px 0} .sv .svhow summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600} .sv .svhow .fn{margin-top:0}
 .sv table{width:100%;border-collapse:collapse;font-size:14px}
 .sv th{text-align:left;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);padding:6px 8px;border-bottom:1.5px solid var(--line);white-space:nowrap}
 .sv td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -249,6 +252,13 @@ JS = r"""
     return {lp: lp, picks: picks, ok: ok}; }
   // ---- render ----
   var sel = null;   // the team the user tapped for this week (null = the planner's own best)
+  // 11/18 (owner: "Tighten all of those"): the two tables ran thirty-odd rows each on a phone. Each shows its first eight until asked;
+  // the choice holds while the planner is re-drawn.
+  var svAll = {};
+  function capTables(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    [].slice.call(document.querySelectorAll('#svout .tw')).forEach(function(tw, i){ var rows = tw.querySelectorAll('tbody tr'); if(rows.length <= 10 || svAll[i]) return;
+      tw.classList.add('svcap'); var b = document.createElement('button'); b.type = 'button'; b.className = 'svmore'; b.textContent = 'Show all ' + rows.length + ' rows';
+      b.addEventListener('click', function(){ svAll[i] = 1; tw.classList.remove('svcap'); b.remove(); }); tw.parentNode.insertBefore(b, tw.nextSibling); }); }
   function render(){
     var p = P(), from = firstWeek(), poolsEl = $('#svpools');
     poolsEl.innerHTML = S.pools.map(function(x, i){ return '<button type="button" data-i="' + i + '" class="' + (i === S.cur ? 'on' : '') + '">' + esc(x.name) + '</button>'; }).join('') + (S.pools.length < 6 ? '<button type="button" class="add" data-add="1">+ Add a pool</button>' : '');
@@ -295,6 +305,7 @@ JS = r"""
         h += '<tr><td class="n">' + w + '</td><td><b class="t">' + t + '</b> ' + esc(vs(t, x)) + '<small>' + esc(x.k) + '</small></td><td class="n">' + pct(x.p) + src(x) + '</td><td class="n">' + pct(cum) + '</td></tr>'; });
       h += '</tbody></table></div>'; }
     if(pk){ pk.innerHTML = hCall; out.innerHTML = h; } else out.innerHTML = hCall + h;
+    capTables();
   }
   document.addEventListener('click', function(e){
     var b = e.target.closest && e.target.closest('button, tr.opt'); if(!b || !b.closest('.sv')) return;
@@ -341,7 +352,7 @@ page = f"""<title>Survivor planner · BetSweep</title>
 <details style="margin-top:22px"><summary style="cursor:pointer;color:var(--mute);font-size:13.5px">Team ratings behind the later weeks</summary>
 <div class="tw"><table style="max-width:420px"><thead><tr><th>#</th><th>Team</th><th>Points vs average</th></tr></thead><tbody>{rate_rows}</tbody></table></div>
 <p class="hint">Home field is worth {HFA:+.1f} points in these lines.{f" Over the last four weeks the ratings land within {rmse:.1f} points of the actual closing spread on average." if rmse is not None else ""}</p></details>
-<p class="fn">Two sets of win chances, and by default the planner uses their average ("Both"). The model's: this week, its own projected score for each team (built from the player projections and the injury report, not from FanDuel's line) turned into a win chance. FanDuel's: this week's moneylines with the vig removed. Where they disagree the option shows both numbers. The model has not projected later weeks, so there its number is the line-based estimate moved by half of where the model has disagreed with the lines so far. Later weeks are estimates ("est."): team ratings fitted to this season's closing spreads, recent weeks counted more, turned into a win chance. They move every rebuild as new lines close, and an injury that has not reached a closing line yet is not in them. "Survive" is the chance of winning every pick on the road shown; it does not know what the rest of your pool picks. Your pools are saved on this device (and to your account when you are signed in). Built {E(DATA["built"])} CT. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
+<details class="svhow"><summary>How the win chances are made</summary><p class="fn">Two sets of win chances, and by default the planner uses their average ("Both"). The model's: this week, its own projected score for each team (built from the player projections and the injury report, not from FanDuel's line) turned into a win chance. FanDuel's: this week's moneylines with the vig removed. Where they disagree the option shows both numbers. The model has not projected later weeks, so there its number is the line-based estimate moved by half of where the model has disagreed with the lines so far. Later weeks are estimates ("est."): team ratings fitted to this season's closing spreads, recent weeks counted more, turned into a win chance. They move every rebuild as new lines close, and an injury that has not reached a closing line yet is not in them. "Survive" is the chance of winning every pick on the road shown; it does not know what the rest of your pool picks. Your pools are saved on this device (and to your account when you are signed in). Built {E(DATA["built"])} CT. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p></details>
 </div>
 <script>window.__SV = {json.dumps(DATA, separators=(",", ":"))};</script>
 <script>{JS}</script>

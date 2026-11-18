@@ -195,39 +195,8 @@ TEAM_CSS = r"""
 .tm-wrap .quick a{flex:1 1 150px;text-decoration:none}
 .tm-wrap #sleeperBox.conn > h2,.tm-wrap #sleeperBox.conn .connect,.tm-wrap #sleeperBox .leagues{display:none}
 .tm-wrap #sleeperBox .lgbar{margin:12px 14px}
-/* 11/18: every league at once */
-.allg{margin:0 14px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
-.allg[hidden],.allg .allgb[hidden]{display:none}
-.allg .allgh{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);background:none;border:0;cursor:pointer}
-.allg .tx{flex:1;min-width:0}
-.allg .allgh b{display:block;font-family:var(--display);font-size:17px;line-height:1.2;letter-spacing:.01em}
-.allg.need .allgh b{color:var(--red)} .allg.ok .allgh b{color:var(--good)}
-.allg small{display:block;color:var(--mute);font-size:12px;line-height:1.4}
-.allg .allgh small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.allg .chev{flex:none;color:var(--mute);font-size:13px;transition:transform .15s} .allg.open .chev{transform:rotate(180deg)}
-.allg .allgb{border-top:1px solid var(--line)}
-.allg ul{list-style:none;margin:0;padding:0}
-.allg li + li{border-top:1px solid var(--line)}
-.allg .allgr{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);background:none;border:0;cursor:pointer}
-.allg .allgr.on{background:var(--bg)}
-.allg .allgr b{display:block;font-size:14.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.allg .allgr small{white-space:normal}
-.allg .allgf{margin:0;padding:9px 12px;color:var(--mute);font-size:12.5px;line-height:1.45;border-top:1px solid var(--line)}
-.allg ul + .allgf{border-top:1px solid var(--line)} .allg .allgb > .allgf:first-child{border-top:0}
-.allg .allgm{border-top:1px solid var(--line);padding:0 12px}
-.allg .allgm summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--ink)}
-.allg .allgm p{margin:0 0 10px;display:flex;flex-wrap:wrap;gap:6px}
-.allg .allgm p.r{display:block;color:var(--mute);font-size:12px}
-.allg .allgm span{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12.5px;white-space:nowrap}
-.allg .allgm span b{color:var(--red)} .allg .allgm .bt{font-style:normal;margin:0}
-.allg .allgm summary i{font-style:normal;font-weight:700;color:var(--red);margin-left:6px}
-.allg .allgk .pk{padding:2px 0 10px} .allg .allgk .pk > b{font-size:14.5px} .allg .allgk .pk > small{display:inline;font-size:12px}
-.allg .allgk .pk p{margin:6px 0 0}
-.allg .allgo{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;font:inherit;font-size:12.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;cursor:pointer;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.allg .allgo b{color:var(--good);font-weight:700} .allg .allgk .more{border:0;padding:0 4px;color:var(--mute)}
-.allg .allgo:focus-visible{outline:2px solid var(--red);outline-offset:2px}
-.allg .allgh:focus-visible,.allg .allgr:focus-visible,.allg .allgm summary:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
-@media (prefers-reduced-motion:reduce){ .allg .chev{transition:none} }
+.tm-wrap #sleeperBox .allg{margin:0 14px 12px}
+
 .tm-wrap details.howd{flex-basis:100%;color:var(--mute);font-size:13px}
 .tm-wrap details.howd > summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--mute);text-decoration:underline}
 .tm-wrap #out{display:grid;gap:14px;min-width:0}

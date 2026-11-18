@@ -66,8 +66,9 @@ async def main():
         pg, ctx, errs = await page("/", first - 26 * 3600e3); s = await pg.evaluate(PREAD); await ctx.close()
         if not s["there"] or not s["ko"]: print("   (no lead parlay on the built Today page; its checks are skipped)")
         else:
-            pg, ctx, errs = await page("/", s["ko"] - 2 * 3600e3); a = await pg.evaluate(PREAD); await ctx.close()
-            pg, ctx, errs = await page("/", s["ko"] + 10 * 60e3); z = await pg.evaluate(PREAD); await ctx.close()
+            HTAB = "() => { var b = document.querySelector('#hometabs .fxtabs [data-t=\"parlay\"]'); if(b && !b.hidden) b.click(); }"   # 11/18: on a phone the parlay sits under a tab
+            pg, ctx, errs = await page("/", s["ko"] - 2 * 3600e3); await pg.evaluate(HTAB); a = await pg.evaluate(PREAD); await ctx.close()
+            pg, ctx, errs = await page("/", s["ko"] + 10 * 60e3); await pg.evaluate(HTAB); z = await pg.evaluate(PREAD); await ctx.close()
             check(a["shown"] and a["cards"] >= 1 and not z["shown"] and z["fd"] == 0 and not errs, f"Today shows its lead parlay before that game kicks off and drops it once it has (before: {a['cards']} card, {a['fd']} FanDuel link; after: shown {z['shown']})")
         # 11/17: Model's Best shows one section at a time under tabs - the parlays are on their own tab, so open it before reading
         PTAB = "() => { var b = document.querySelector('.fxtabs [data-t=\"parlay\"]'); if(b) b.click(); }"

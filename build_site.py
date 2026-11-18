@@ -378,6 +378,20 @@ try:
 except Exception: _TPL_CSS = ""
 # the weekly receipt's scorecard on a phone (foldScore in the shared script): the tab row sits inside the card, and two tiles share a row
 SCORE_TABS_CSS = """
+/* 11/18: reading pages fold under their section titles, board cards under "Show the game", the home page's lower sections under tabs
+   (app script: foldDoc, foldBoards, homeTabs - phones only) */
+h2.bsdfh{position:relative;padding:10px 30px 10px 0;margin:0;border-top:1px solid var(--line);cursor:pointer}
+h2.bsdfh::after{content:"";position:absolute;right:6px;top:50%;width:8px;height:8px;margin-top:-7px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg)}
+h2.bsdfh.open::after{transform:rotate(225deg);margin-top:-2px} h2.bsdfh:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.bsdfb[hidden]{display:none} .bsdfb{padding-bottom:8px}
+.bsdfall{display:block;margin:0 0 8px auto;min-height:36px;padding:0 12px;font:inherit;font-size:12.5px;color:var(--ink);background:none;border:1px solid var(--line);border-radius:999px;cursor:pointer}
+.card.bsgshut{content-visibility:visible} .card.bsgshut > .ginfo, .card.bsgshut > .vbtns, .card.bsgshut > .bestslip{display:none !important}
+.card > .bsgtog{display:flex !important;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin:6px 0 0;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.card > .bsgtog i{font-style:normal;color:var(--mute);transition:transform .15s} .card:not(.bsgshut) > .bsgtog i{transform:rotate(180deg)}
+.card > .bsgtog:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.card.bsshoot.bsgshut > .ginfo, .card.bsshoot.bsgshut > .bestslip{display:revert !important} .card.bsshoot > .bsgtog{display:none !important}
+.hometabs > .fxtabs{margin-top:14px} .hometabs .fxtabs .tab[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){ .card > .bsgtog i{transition:none} }
 /* while a card's picture is drawn (.bsshoot, see the picture buttons in the app script): the card is laid out in full - the image tool
    draws an off-screen copy of the page, where a lazy card (template.html: content-visibility:auto, 900px placeholder) is never "on
    screen", so every picture of a card taller than that was cut off at 992px - and no color-mix() value is left in it */
@@ -499,6 +513,59 @@ APP_JS = r"""<script>
     var mo = null, t = setTimeout(done, 12000); function done(){ card.classList.remove('bsshoot'); if(mo) mo.disconnect(); clearTimeout(t); }
     if(window.MutationObserver){ mo = new MutationObserver(function(ms){ if(ms.some(function(m){ return [].some.call(m.addedNodes, function(n){ return n.classList && n.classList.contains('shotwrap'); }); })) done(); }); mo.observe(card, { childList: true }); } }, true);
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldScore); else foldScore();
+  // 1d. 11/18 (owner: "Tighten all of those you listed" - Guide, How, the legal pages, Boards, Home). All on a phone only, nothing removed.
+  //   foldDoc: a long reading page opens on its section titles. Each h2 and what follows it (to the next h2) folds under the title; the
+  //     first section, and one a link points at (#id), start open; "Open all" undoes it.
+  function foldDoc(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    var hs = [].slice.call(document.querySelectorAll('.how > h2, article.legal > h2, .gd > section[id] > h2:first-child')).filter(function(h){ return !h.closest('.card, .fxtabs, .allg') && !h.dataset.fold; });
+    if(!/^\/(guide|how|privacy|terms|responsible-gambling)\//.test(location.pathname) || hs.length < 4) return;
+    var all = [];
+    hs.forEach(function(h, i){ h.dataset.fold = '1'; var body = document.createElement('div'); body.className = 'bsdfb'; var n = h.nextSibling, kids = [];
+      while(n && !(n.nodeType === 1 && n.tagName === 'H2')){ kids.push(n); n = n.nextSibling; }
+      if(!kids.length) return; h.parentNode.insertBefore(body, kids[0]); kids.forEach(function(k){ body.appendChild(k); });
+      var sec = h.parentNode.tagName === 'SECTION' ? h.parentNode : null, id = h.id || (sec && sec.id) || '';
+      function set(o){ body.hidden = !o; h.setAttribute('aria-expanded', o ? 'true' : 'false'); h.classList.toggle('open', !!o); }
+      h.classList.add('bsdfh'); h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0'); set((i === 0 && !h.closest('article.legal')) || (id && location.hash === '#' + id));   // a legal page keeps its opening summary above the titles
+      h.addEventListener('click', function(e){ if(e.target.closest('a')) return; set(body.hidden); });
+      h.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); set(body.hidden); } });
+      all.push({h: h, body: body, set: set, id: id}); });
+    if(!all.length) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'bsdfall'; b.textContent = 'Open all sections';
+    b.addEventListener('click', function(){ var shut = all.some(function(x){ return x.body.hidden; }); all.forEach(function(x){ x.set(shut); }); b.textContent = shut ? 'Close all sections' : 'Open all sections'; });
+    all[0].h.parentNode.insertBefore(b, all[0].h);
+    function toHash(){ var id = (location.hash || '').slice(1); if(!id) return; var el = document.getElementById(id); if(!el) return;
+      all.forEach(function(x){ if(x.id === id || x.body.contains(el) || x.h === el){ x.set(true); setTimeout(function(){ el.scrollIntoView({block: 'start'}); }, 30); } }); }
+    window.addEventListener('hashchange', toHash); toHash(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldDoc); else foldDoc();
+  //   foldBoards: thirteen game cards were eleven screens. Each card keeps its header and its confidence line; the lines, the buttons and
+  //     the best parlay open on a tap ("Show the game"). A link to a game (#AWAY-HOME) arrives with it open.
+  function foldBoards(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    var cards = [].slice.call(document.querySelectorAll('section.card[id]')).filter(function(c){ return c.querySelector(':scope > .bestslip, :scope > .ginfo') && !c.dataset.fold; });
+    if(cards.length < 4) return;
+    function set(c, o){ c.classList.toggle('bsgshut', !o); var b = c.querySelector(':scope > .bsgtog'); if(b){ b.setAttribute('aria-expanded', o ? 'true' : 'false'); b.firstChild.textContent = o ? 'Hide the game ' : 'Show the game '; } }
+    cards.forEach(function(c){ c.dataset.fold = '1'; var b = document.createElement('button'); b.type = 'button'; b.className = 'bsgtog'; b.innerHTML = 'Show the game <i aria-hidden="true">▾</i>';
+      var hd = c.querySelector(':scope > details.conf') || c.querySelector(':scope > header, :scope > .hd'); if(hd && hd.nextSibling) c.insertBefore(b, hd.nextSibling); else c.appendChild(b);
+      b.addEventListener('click', function(){ set(c, c.classList.contains('bsgshut')); }); set(c, location.hash === '#' + c.id); });
+    window.addEventListener('hashchange', function(){ var c = document.getElementById((location.hash || '').slice(1)); if(c && c.dataset.fold) set(c, true); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldBoards); else foldBoards();
+  //   homeTabs: under today's game the home page stacked Model's Best, the best parlay, the news desk and the track record - two
+  //     screens. One row of tabs shows one at a time (the choice is kept for the visit; a link to one opens it).
+  function homeTabs(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches || !window.bsTabs) return;
+    if(location.pathname !== '/' && location.pathname !== '/today/') return;
+    var want = [['bestt', "Model's Best"], ['parlay', 'Best parlay'], ['tdnewsS', 'News'], ['record', 'Record']], secs = [];
+    want.forEach(function(w){ var e = document.getElementById(w[0]); if(e && !e.hidden && e.getClientRects().length) secs.push([e, w]); });
+    if(secs.length < 3 || document.getElementById('hometabs')) return;
+    var first = secs[0][0], wrap = document.createElement('div'); wrap.id = 'hometabs'; wrap.className = 'hometabs'; first.parentNode.insertBefore(wrap, first);
+    var host = document.createElement('div'); wrap.appendChild(host);
+    secs.forEach(function(x){ x[0].setAttribute('data-tab', x[1][0]); wrap.appendChild(x[0]); });
+    var h = (location.hash || '').slice(1), start = secs.some(function(x){ return x[1][0] === h; }) ? h : null;
+    var T = bsTabs.mount(host, secs.map(function(x){ return { id: x[1][0], label: x[1][1] }; }), { root: wrap, key: start ? null : 'bs_tab_home', start: start || secs[0][1][0] });
+    // a section the page hides later (the lead parlay once its game has kicked off) gives up its tab
+    function prune(){ secs.forEach(function(x){ var bt = host.querySelector('[data-t="' + x[1][0] + '"]'); if(!bt) return; var gone = x[0].hidden; bt.hidden = gone;
+        if(gone && T && T.cur() === x[1][0]){ var nx = secs.filter(function(y){ return !y[0].hidden; })[0]; if(nx) T.show(nx[1][0], true); } }); }
+    prune(); setTimeout(prune, 800); setTimeout(prune, 3000);
+    window.addEventListener('hashchange', function(){ var k = (location.hash || '').slice(1); if(T && secs.some(function(x){ return x[1][0] === k; })) T.show(k); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', homeTabs); else homeTabs();
   // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
   var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
   // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
