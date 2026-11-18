@@ -1,3 +1,33 @@
+if(!window.bsTabs){
+(function(){
+  function $(s, r){ return (r || document).querySelector(s); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function ord(n){ var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+  // ---------- section tabs ----------
+  // mount(host, [{id, label}], {root, key, start, onShow}) -> {show(id, quiet), cur(), count(id, n)}
+  function tabsMount(host, tabs, opt){ opt = opt || {}; var root = opt.root || document, cur = null;
+    host.classList.add('tabs'); host.classList.add('fxtabs'); host.setAttribute('role', 'tablist');
+    var anchor = document.createElement('div'); anchor.className = 'fxanchor'; host.parentNode.insertBefore(anchor, host);   // where the row sits when it is not pinned
+    host.innerHTML = tabs.map(function(t){ return '<button type="button" class="tab" role="tab" data-t="' + esc(t.id) + '">' + esc(t.label) + '<small></small></button>'; }).join('');
+    // a row too wide for the screen keeps the chosen tab in view (again after a count changes a tab's width)
+    function keep(){ var b = host.querySelector('.tab.on'); if(b && host.scrollWidth > host.clientWidth + 2) host.scrollLeft = Math.max(0, b.offsetLeft - (host.clientWidth - b.offsetWidth) / 2); }
+    function show(id, quiet){ if(!tabs.some(function(t){ return t.id === id; })) id = tabs[0].id; cur = id;
+      Array.prototype.forEach.call(host.children, function(b){ var on = b.dataset.t === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      keep();
+      Array.prototype.forEach.call(root.querySelectorAll('[data-tab]'), function(el){ el.classList.toggle('fxoff', el.dataset.tab !== id); });
+      if(opt.key){ try{ sessionStorage.setItem(opt.key, id); }catch(e){} }
+      // a tap while the row is pinned: bring the new section's start up under it instead of leaving the reader mid-way down
+      if(!quiet){ var off = parseFloat(getComputedStyle(host).top) || 0, y = anchor.getBoundingClientRect().top + window.scrollY - off; if(window.scrollY > y) window.scrollTo(0, Math.max(0, y)); }
+      if(opt.onShow) opt.onShow(id); }
+    host.addEventListener('click', function(e){ var b = e.target.closest('.tab'); if(b) show(b.dataset.t); });
+    var first = opt.start; if(!first && opt.key){ try{ first = sessionStorage.getItem(opt.key); }catch(e){} }
+    show(first || tabs[0].id, true);
+    return { show: show, cur: function(){ return cur; }, count: function(id, n){ var b = host.querySelector('[data-t="' + id + '"] small'); if(b){ var x = n ? ' ' + n : ''; if(b.textContent !== x){ b.textContent = x; keep(); } } } }; }
+  window.bsTabs = { mount: tabsMount };
+
+})();
+}
 
 (function(){
   // ---- 11/4 UX audit: three site-wide behaviours ----
@@ -35,6 +65,41 @@
       b.addEventListener('click', function(){ var open = p.classList.toggle('bsclamp') === false; b.textContent = open ? 'Less' : 'More'; b.setAttribute('aria-expanded', open); });
       p.parentNode.insertBefore(b, p.nextSibling); }); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldIntro); else foldIntro();
+  // 1b. 11/17 (page pass): the Season page is one summary card and seven long report cards - ten phone screens. On a phone each report
+  //     card opens on its title and a tap opens it; a link straight to one (#id) arrives with it open. Nothing is removed.
+  function foldCards(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches) return;
+    [].slice.call(document.querySelectorAll('section.card.calib')).forEach(function(c){ var h = c.querySelector('h2'); if(!h || h.parentNode !== c || c.dataset.fold) return; c.dataset.fold = '1';
+      var open = !!(c.id && location.hash === '#' + c.id); if(!open) c.classList.add('bsfold');
+      h.classList.add('bsfh'); h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0'); h.setAttribute('aria-expanded', open ? 'true' : 'false');
+      function tog(){ var o = !c.classList.toggle('bsfold'); h.setAttribute('aria-expanded', o ? 'true' : 'false'); }
+      h.addEventListener('click', function(e){ if(e.target.closest('a')) return; tog(); });
+      h.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tog(); } }); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldCards); else foldCards();
+  // 1c. 11/17 (page pass): a weekly receipt's scorecard is five groups of tiles and tables - six phone screens before the first game.
+  //     On a phone it shows one group at a time under a row of tabs (Lines / Posted / Calls / Projections / Games, from the groups the
+  //     page has). "Copy card as image" and "Story" still draw the whole card: every group is laid out while the picture is taken.
+  function foldScore(){ if(!window.matchMedia || !matchMedia('(max-width:760px)').matches || !window.bsTabs) return;
+    var card = document.querySelector('section.card.scorecard'), sb = card && card.querySelector('.scbody'); if(!sb || sb.dataset.fold) return;
+    var kids = [].slice.call(sb.children); if(kids.filter(function(e){ return e.tagName === 'H3'; }).length < 3) return; sb.dataset.fold = '1';
+    var NAME = [[/fanduel/i, 'Lines'], [/posted/i, 'Posted'], [/calls/i, 'Calls'], [/projection/i, 'Projections'], [/game by game/i, 'Games']], tabs = [], cur = null;
+    kids.forEach(function(el){
+      if(el.tagName === 'H3'){ var txt = el.textContent.trim(), lab = txt.split(' ')[0]; NAME.some(function(n){ if(n[0].test(txt)){ lab = n[1]; return true; } return false; });
+        cur = document.createElement('div'); cur.setAttribute('data-tab', 'sc' + tabs.length); sb.insertBefore(cur, el); tabs.push({ id: 'sc' + tabs.length, label: lab }); }
+      if(cur) cur.appendChild(el); });
+    var host = document.createElement('div'); sb.insertBefore(host, sb.firstChild); bsTabs.mount(host, tabs, { root: sb }); }
+  // 1d. 11/17: the picture buttons on a card ("Copy card as image", "Story 9:16"). While the page's own handler draws, the card carries
+  //     .bsshoot (styles in the shared sheet). Found while testing the scorecard tabs, on the published pages as they were:
+  //       - the receipt scorecard's picture failed with "Could not render": the image tool (html2canvas 1.4.1) cannot read the color()
+  //         value a browser reports for color-mix(), and the scorecard's tables had one as their background;
+  //       - every other card's picture (Season, a receipt's Calls) stopped at 992px: the tool draws an off-screen copy of the page,
+  //         where a lazy card is never "on screen" and keeps its 900px placeholder height.
+  //     With .bsshoot the card is laid out in full, a folded scorecard shows every group, and its tables take a plain background.
+  //     The class comes off when the picture lands, or after 12 seconds.
+  document.addEventListener('click', function(e){ var bt = e.target.closest && e.target.closest('button.snap:not(.more)'); if(!bt) return;
+    var card = document.getElementById(bt.getAttribute('data-target') || ''); if(!card) return; card.classList.add('bsshoot');
+    var mo = null, t = setTimeout(done, 12000); function done(){ card.classList.remove('bsshoot'); if(mo) mo.disconnect(); clearTimeout(t); }
+    if(window.MutationObserver){ mo = new MutationObserver(function(ms){ if(ms.some(function(m){ return [].some.call(m.addedNodes, function(n){ return n.classList && n.classList.contains('shotwrap'); }); })) done(); }); mo.observe(card, { childList: true }); } }, true);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldScore); else foldScore();
   // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
   var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
   // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
