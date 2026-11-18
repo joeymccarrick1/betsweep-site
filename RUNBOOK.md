@@ -810,7 +810,7 @@ build_players.py `last10_block(p)`: under the header, one bar chart per main mar
 rec yds, catches; WR and TE rec yds, catches): a bar a game, oldest to newest, up to ten (earlier-team games included), this week's
 FanDuel rung priced closest to even drawn across as a dashed line, each bar marked over / under by colour and by a tick or dash, and
 "Cleared 81+ in 3 of 9" in words. No props on the board this week = the season average is drawn and nothing is called a hit. Plain
-HTML and CSS (site variables), no script. Still to do from step 6: the same picture inside a leg's details in the builder.
+HTML and CSS (site variables), no script. (The builder half of step 6 - the same picture inside a leg's details - was built the same day: `l10()`, see "Leg details lead with the picture" below. Nothing is left from step 6.)
 
 ## Social v3 database script (alpha plan step 2, 11/16) - the owner runs it
 
@@ -2120,3 +2120,45 @@ row; on, thirteen.
   opened, every league with its verdict, odds and swing, biggest week first; a tap opens that league. The read starts once the first
   league is on screen (the same per-league playoff-odds read the league list makes). The card's styles moved to fantasy_nav.py so both
   pages share them. tests/fantasy_nav.py (137).
+
+## 11/18, 4:00-4:45 PM CT: one player in every league - "Find a player" on the Trade page (owner 4:00 PM)
+
+- Owner: "Can we make it so I can look for a player and see who I should attach in a trade for each league? For example I had someone
+  reach out that they wanted to trade me Jaxon Smith Ngigba in League of Ordinary Gentleman. I want to be able to see which players I
+  could send him easily."
+- A fourth tab on /trade/, "Find a player" (`{id:'find'}`; `/trade/#find` opens it, `/trade/#find=Name` opens it on that player; the
+  player is kept for the visit in sessionStorage `bs_trade_find`). Type a name (initials work: "jsn") and every league on the account
+  is read:
+  - `offersFor(l, c, pm, p)` values him in THAT league's format (`inFormat()` sets the toggles, recomputes, reads plain numbers and puts
+    the on-screen format back - nothing inside waits), finds the roster holding him, and packages the reader's own valued players
+    (plus, in a dynasty league where Sleeper said who holds what, the rookie picks he holds - `bsOutlook.ownPicks`, a first tiered by
+    today's standings) into offers: one for one at 90-112% of his value, two for one at 98-125% (centre 110%), three for one at
+    106-136% (centre 120%) - `FAIR`. The side getting the best player pays for the roster spot; FantasyCalc's own calculator adds a
+    value adjustment for the same reason. In a two- or three-piece offer no piece is worth as much as the player (`CAP`, 97%), and the
+    third piece is under 35% of him.
+  - Each offer carries both starting lineups before and after (`bsOutlook.lineup`, the model's points a week). Order: the reader's
+    lineup change, plus the other lineup's change (weight 0.8 in redraft, 0.3 in dynasty, capped -10..+4), minus distance from the
+    centre of its band, minus a little per extra piece, plus a little for a position that roster is thin at. Four at most; no main
+    piece in more than two; no two offers sharing two pieces.
+  - Leagues where another roster has him are rows (the league on screen opens by itself; a tap opens another); "On your roster in:",
+    "Free agent in:" are one line each. "Open in the calculator" switches the page to that league and loads both sides.
+  - Sleeper calls: rosters come from the all-leagues read when it has run (`leagueChip` seeds `FP.cache`, ten minutes); names and
+    traded picks are asked only for a league where another roster has him.
+- The calculator's headline now says who GIVES more ("Side A gives 9% more", then "Side B comes out ahead"). It read "Side A wins by
+  9%" when Side A's pile was the bigger one - under the "Side A gives" headings that is the side coming out behind. Told the owner.
+- Four tabs on a phone: `#tcTabs .tab` is tighter at 480px and under so the row does not slide (fits 360-390px).
+- tests/trade_find.py (95, in the pre-publish set): four mocked leagues (redraft, dynasty superflex TE-premium with traded picks, one
+  where the reader has him, one where nobody does), both themes; every value against the calculator's own numbers in that league's
+  format, lineup numbers against a lineup worked out in the test, picks held vs traded away, Sleeper calls counted, the on-screen
+  format restored, the calculator hand-off, no account, the link, a reload. tests/fantasy_nav.py: four tabs.
+- Limits: mocked Sleeper leagues only (the sandbox cannot reach Sleeper). Not built: the reverse ("what could I get for a player I
+  have"), offers where the other manager adds a piece back, IDP / kickers / defenses (not valued on the page).
+- Asked the same hour: "Did we blend keep cut trade into our trade calculator?" - no: KeepTradeCut's terms forbid it; the blend is
+  FantasyCalc at 70% (MKT_W), 353 of 511 players carrying a market value in the 3:05 PM build. Offered to draft a permission request.
+- Same publish, found by the pre-publish set: "Lines to check" (stale_lines.py, on the home page and the News desk) had grown to 1.6
+  phone screens on Wednesday's injury reports (14-22 teammate lines) and both pages failed their length checks. More than six lines:
+  the first two players and two lines each show, and one button shows the rest ("Show all 14 lines (3 players out)" / "Show fewer").
+  Home 6.9 -> 6.0 screens, News 5.1 -> 4.2. tests/page_tight.py checks it when the block is long (55 checks on such a day); its home
+  length limit is 6.5 now - the block comes and goes with the news.
+- The block's own line read "Ruled out since our last FanDuel price pull (Wed 6:34 AM CT)" at 4:40 PM: the sheet's props pull had not
+  run since the morning. Not changed here (the pull is the sheet's Apps Script on its own schedule); worth a look if it repeats.

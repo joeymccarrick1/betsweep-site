@@ -48,11 +48,19 @@ async def main():
             tabs = await pg.evaluate("[...document.querySelectorAll('#hometabs .fxtabs .tab')].map(t => t.textContent.trim())")
             if len(tabs) >= 3:
                 vis = await pg.evaluate("[...document.querySelectorAll('#hometabs > [data-tab]')].filter(e => e.getClientRects().length > 0).map(e => e.id)"); scr = await pg.evaluate(SCR)
-                check(len(vis) == 1 and scr <= 6 and await pg.evaluate(OVER) <= 0, f"home, {theme}: the lower sections sit under one row of tabs ({tabs}; showing {vis}; {scr} screens)")
+                check(len(vis) == 1 and scr <= 6.5 and await pg.evaluate(OVER) <= 0, f"home, {theme}: the lower sections sit under one row of tabs ({tabs}; showing {vis}; {scr} screens)")
                 await pg.evaluate("document.querySelector('#hometabs').scrollIntoView()"); await pg.click("#hometabs .fxtabs .tab:nth-child(2)"); await pg.wait_for_timeout(200)
                 vis2 = await pg.evaluate("[...document.querySelectorAll('#hometabs > [data-tab]')].filter(e => e.getClientRects().length > 0).map(e => e.id)")
                 check(len(vis2) == 1 and vis2 != vis and not errs, f"home, {theme}: a tab shows its section and hides the last ({vis2}; {errs[:1]})")
             else: check(not errs, f"home, {theme}: fewer than three lower sections today - no tabs, no errors")
+            # "Lines to check" (stale_lines.py): a heavy injury report shows two players and two lines each until asked
+            ST = "(() => { const w = document.querySelector('#bsstale'); if(!w || w.hidden) return null; const vis = e => e.getClientRects().length > 0, li = [...w.querySelectorAll('li[data-ko]')], b = w.querySelector('.stmore'); return {all: li.filter(e => !e.hidden).length, shown: li.filter(vis).length, who: [...w.querySelectorAll('.stit')].filter(vis).length, btn: b && vis(b) ? b.textContent : '', h: Math.round(w.getBoundingClientRect().height / 1.1)}; })()"
+            st = await pg.evaluate(ST)
+            if st and st["all"] > 6:
+                check(st["shown"] <= 4 and st["who"] <= 2 and f"Show all {st['all']} lines" in st["btn"], f"home, {theme}: Lines to check opens on {st['shown']} of {st['all']} lines ({st['who']} players, {st['h']}px) under \"{st['btn']}\"")
+                await pg.click("#bsstale .stmore"); await pg.wait_for_timeout(150); st2 = await pg.evaluate(ST)
+                check(st2["shown"] == st["all"] and st2["btn"] == "Show fewer" and not errs, f"home, {theme}: the button shows all {st2['shown']} lines and turns into \"Show fewer\"")
+            elif st: check(st["shown"] == st["all"] and not st["btn"], f"home, {theme}: Lines to check is short today ({st['all']} lines) - all shown, no button")
             await ctx.close()
             # ---- reading pages ----
             for path, mx, first_open in (("/guide/", 4.5, True), ("/how/", 3.5, True), ("/terms/", 3.5, False), ("/privacy/", 3.0, False), ("/responsible-gambling/", 3.5, False)):

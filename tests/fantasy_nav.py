@@ -67,7 +67,7 @@ async def trade(b, players, theme):
     ctx, pg, asked, errs, LS = await session(b, players, theme)
     await pg.goto(f"http://127.0.0.1:{PORT}/trade/", wait_until="domcontentloaded"); await pg.wait_for_timeout(800)
     tabs = await pg.evaluate("[...document.querySelectorAll('#tcTabs .tab')].map(b => [b.dataset.t, b.classList.contains('on')])")
-    check(tabs == [["calc", True], ["league", False], ["rank", False]] and await pg.evaluate(VIS, "#slUser") and await pg.evaluate(VIS, "#sideA") and not await pg.evaluate(VIS, "#rk"), f"{T}: a new visitor gets three tabs with the calculator open, and the username box at the top")
+    check(tabs == [["calc", True], ["league", False], ["find", False], ["rank", False]] and await pg.evaluate(VIS, "#slUser") and await pg.evaluate(VIS, "#sideA") and not await pg.evaluate(VIS, "#rk") and not await pg.evaluate(VIS, "#inF"), f"{T}: a new visitor gets four tabs (Find a player since 11/18) with the calculator open, and the username box at the top")
     h0 = await pg.evaluate(SCR); fm = await pg.evaluate("document.querySelector('#fmtSum').textContent"); check(h0 <= 3 and re.match(r"(Redraft|Dynasty) · (1QB|Superflex) · ", fm) and not await pg.evaluate("document.querySelector('#fmt').open"), f"{T}: the format is one line until asked ({fm}); the page is {h0} screens")
     check("70% the trade market and 30% our model" in await pg.evaluate("document.querySelector('#verdict').innerText"), f"{T}: the empty calculator says what the values are (70% market)")
     await pg.fill("#slUser", "mock"); await pg.click("#slGo"); await pg.wait_for_selector("#olk", timeout=15000); await pg.wait_for_timeout(700)

@@ -135,9 +135,20 @@ CSS = """
 .stit li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14.5px} .stit li[hidden]{display:none}
 .stit li span{min-width:0} .stit li small{display:block;color:var(--mute);font-size:12px}
 .stit li a{flex:none;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--red);white-space:nowrap}
+.stit.stx,.stit li.stx{display:none}
+.stmore{display:block;width:100%;min-height:44px;margin:2px 0 8px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:none;border:1px solid var(--line);border-radius:10px;cursor:pointer} .stmore[hidden]{display:none}
+.stmore:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 """
-JS = ("(function(){function t(){var n=Date.now(),any=false;document.querySelectorAll('#bsstale li[data-ko]').forEach(function(e){var live=+e.getAttribute('data-ko')>n;e.hidden=!live;if(live)any=true;});"
-      "document.querySelectorAll('#bsstale .stit').forEach(function(it){it.hidden=!it.querySelector('li:not([hidden])');});var w=document.getElementById('bsstale');if(w)w.hidden=!any;}"
+# 11/18: on a heavy injury afternoon (four players ruled out, 22 teammate lines) the block was 1.6 phone screens at the top of the
+# home page and the News desk - both went over their length checks. More than six lines: the first two players and two lines each
+# show, and one button shows the rest ("Show all 22 lines (4 players out)"). Kickoff still removes a game's lines by itself.
+JS = ("(function(){var open=false;function t(){var n=Date.now(),any=false,w=document.getElementById('bsstale');if(!w)return;"
+      "w.querySelectorAll('li[data-ko]').forEach(function(e){var live=+e.getAttribute('data-ko')>n;e.hidden=!live;if(live)any=true;});"
+      "var its=[].slice.call(w.querySelectorAll('.stit'));its.forEach(function(it){it.hidden=!it.querySelector('li:not([hidden])');});w.hidden=!any;"
+      "var live=its.filter(function(it){return !it.hidden;}),rows=w.querySelectorAll('li[data-ko]:not([hidden])').length,cap=!open&&rows>6,cut=0;"
+      "live.forEach(function(it,i){var k=0;it.classList.toggle('stx',cap&&i>=2);it.querySelectorAll('li[data-ko]').forEach(function(li){if(li.hidden)return;var x=cap&&(i>=2||k>=2);li.classList.toggle('stx',x);if(x)cut++;k++;});});"
+      "var b=w.querySelector('.stmore');if(b){b.hidden=!(rows>6);b.setAttribute('aria-expanded',open?'true':'false');b.textContent=open?'Show fewer':'Show all '+rows+' lines ('+live.length+' player'+(live.length===1?'':'s')+' out)';}}"
+      "document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#bsstale .stmore');if(!b)return;open=!open;t();});"
       "t();setInterval(t,60000);})();")
 
 
@@ -154,7 +165,7 @@ def card(out_dir="out"):
         h.append(f'<div class="stit"><p class="who"><b>{E(o["pl"])} is out</b> <small>{E(o["tm"])} {E(o["pos"])} · {E(o["when"])} CT · {E(str(o.get("src") or ""))}</small></p><ul>{rows}</ul></div>')
     return (f'<style>{CSS}</style><section class="stsec" id="bsstale" hidden><div class="stbox"><h2>Lines to check</h2>'
             f'<p class="stsub">Ruled out since our last FanDuel price pull ({E(str(d.get("pulled") or ""))} CT). If the app still shows these prices, the line has not caught up with the news.</p>'
-            + "".join(h) + f'</div></section><script>{JS}</script>')
+            + "".join(h) + f'<button type="button" class="stmore" hidden></button></div></section><script>{JS}</script>')
 
 
 if __name__ == "__main__":

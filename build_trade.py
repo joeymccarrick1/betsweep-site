@@ -283,6 +283,36 @@ CSS = r"""
 .tc .team h3{cursor:pointer;user-select:none}.tc .team h3 i.cv{font-style:normal;color:var(--mute);font-size:12px}
 .tc .team.shut .pb,.tc .team.shut ul{display:none}
 .tc .tgl{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+/* 11/18: one player in every league (the Find a player tab). Four tabs on a phone: tighter buttons, so the row does not slide. */
+@media (max-width:480px){ #tcTabs{gap:4px} #tcTabs .tab{padding:0 6px;letter-spacing:.02em;font-size:12px} }
+.tc .fp h2{margin:0 0 10px;font-family:var(--display);font-size:20px;letter-spacing:.01em}
+.tc .fp h2 small{color:var(--mute);font-family:var(--body);font-weight:500;font-size:12.5px;margin-left:6px}
+.tc .fp .add input{min-height:46px;font-size:16px}
+.tc .fp > .meth{margin:10px 0 0} .tc .fp > .meth[hidden]{display:none}
+.tc .fpwho{display:flex;align-items:center;gap:10px;margin:14px 0 2px}
+.tc .fpwho .who{flex:1;min-width:0} .tc .fpwho b{display:block;font-family:var(--display);font-size:22px;line-height:1.15} .tc .fpwho small{color:var(--mute);font-size:12.5px}
+.tc .fpsum{margin:6px 0 10px;font-size:13.5px;line-height:1.45;color:var(--mute)} .tc .fpsum b{color:var(--ink)}
+.tc .fpnone{margin:6px 0 10px;font-size:13.5px;line-height:1.5;color:var(--mute)}
+.tc .fpl{border-top:1px solid var(--line)}
+.tc .fplh{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;padding:8px 0;font:inherit;text-align:left;color:var(--ink);background:none;border:0;cursor:pointer}
+.tc .fplh .tx{flex:1;min-width:0} .tc .fplh b{display:block;font-size:15.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc .fplh small{display:block;color:var(--mute);font-size:12.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc .fplh .chev{flex:none;color:var(--mute);transition:transform .15s} .tc .fpl.open .fplh .chev{transform:rotate(180deg)}
+.tc .fplh:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.tc .fplb{padding:0 0 14px} .tc .fplb[hidden]{display:none}
+.tc .fpmeta{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--mute)} .tc .fpmeta b{color:var(--ink)} .tc .fpmeta small{font-size:12px}
+.tc .fpo{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.tc .fpo > li{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;background:color-mix(in srgb,var(--chalk) 40%,transparent)}
+.tc .fpp{list-style:none;margin:0;padding:0}
+.tc .fpp li{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:14.5px}
+.tc .fpp .nm{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc .fpp .vv{font-variant-numeric:tabular-nums;color:var(--mute);font-size:13px}
+.tc .fpt{margin:6px 0 0;padding-top:6px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)} .tc .fpt b{color:var(--ink);font-variant-numeric:tabular-nums}
+.tc .fpx{margin:3px 0 10px;font-size:13px;line-height:1.45;color:var(--mute)} .tc .fpx b{color:var(--ink);font-variant-numeric:tabular-nums} .tc .fpx b.up{color:var(--good)} .tc .fpx b.dn{color:var(--bad)}
+.tc .fpgo{min-height:40px;padding:6px 14px;font-size:13px;font-weight:600;border-color:var(--red);border-radius:10px;margin:0}
+.tc .fpalso{margin:0;padding:10px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--mute)} .tc .fpalso b{color:var(--ink)} .tc .fpalso small{font-size:12px}
+.tc details.fphow > summary h3{font-size:14px;font-family:var(--body);font-weight:600}
+@media (prefers-reduced-motion:reduce){ .tc .fplh .chev{transition:none} }
 /* 11/17 evening (owner: "more intuitive and maybe condensed ... I have a ton of sleeper teams"): league bar on top, three tabs, format folded */
 .tc .lgzone{margin:0 0 2px}
 .tc .lgzone .row{margin:0 0 10px} .tc .lgzone .row[hidden]{display:none}
@@ -330,8 +360,8 @@ JS = r"""
   var D = window.__BS, P = D.players, WEEK = D.week;
   var st = {sf:false, tep:0, ppr:1, teams:12, dyn:false, A:[], B:[], rkpos:'ALL', sortk:'v', rkAll:false};
   // 11/17 evening: one section on screen at a time. /trade/#league (the Fantasy page's Buy or sell? button) opens on the league.
-  var TABS = bsTabs.mount(document.getElementById('tcTabs'), [{id:'calc', label:'Calculator'}, {id:'league', label:'My league'}, {id:'rank', label:'Rankings'}],
-                          {root: document.querySelector('.tc'), key: 'bs_tab_trade', start: location.hash === '#league' ? 'league' : null});
+  var TABS = bsTabs.mount(document.getElementById('tcTabs'), [{id:'calc', label:'Calculator'}, {id:'league', label:'My league'}, {id:'find', label:'Find a player'}, {id:'rank', label:'Rankings'}],
+                          {root: document.querySelector('.tc'), key: 'bs_tab_trade', start: location.hash === '#league' ? 'league' : /^#find(=|$)/.test(location.hash) ? 'find' : null});
   function toCalc(){ TABS.show('calc', true); window.scrollTo({top:0,behavior:'smooth'}); }
   function fmtLine(){ var e = document.getElementById('fmtSum'); if(e) e.textContent = (st.dyn?'Dynasty':'Redraft')+' · '+(st.sf?'Superflex':'1QB')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'Half PPR':'Standard')+(st.tep?' · TE +'+st.tep:'')+' · '+st.teams+' teams'; }
   var DYN = D.dyn, DISC = 0.8, YEARS = 3, SEASON_G = 17;
@@ -436,9 +466,11 @@ JS = r"""
       + '<div class="tot"><small>'+(list.length? list.length+' player'+(list.length>1?'s':'') : 'add players')+'</small><b>'+tot.toLocaleString()+'</b></div>'; }
   function verdict(){ var a = st.A.reduce(function(s,n){ return s+(byName[n]?byName[n].v:0); },0), b = st.B.reduce(function(s,n){ return s+(byName[n]?byName[n].v:0); },0);
     var el = document.getElementById('verdict'); if(!a && !b){ el.innerHTML = '<h3>Add players to both sides</h3><p>'+(D.mkt_w ? 'Values are '+Math.round(D.mkt_w*100)+'% the trade market and '+Math.round((1-D.mkt_w)*100)+'% our model. A player\'s chip shows where the two disagree.' : 'Values are rest-of-season, from the model\'s own game data - not a vote.')+'</p>'; return; }
-    var t=a+b, pa = t? a/t*100 : 50, diff = Math.abs(a-b), pct = t? diff/Math.max(a,b)*100 : 0;
-    var who = diff/Math.max(a,b,1) < 0.05 ? 'Fair trade' : (a>b ? 'Side A wins' : 'Side B wins');
-    el.innerHTML = '<h3>'+who+(who==='Fair trade'?'':' by '+pct.toFixed(0)+'%')+'</h3><div class="bar"><i class="a" style="width:'+pa.toFixed(1)+'%"></i><i class="b" style="width:'+(100-pa).toFixed(1)+'%"></i></div><p>Side A '+a.toLocaleString()+' · Side B '+b.toLocaleString()+' · '+(st.dyn?'dynasty (3-year)':'rest of season')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+st.teams+' teams</p>'; }
+    // 11/18: the headline says who GIVES more. It used to read "Side A wins by 9%" when Side A's pile was the bigger one - under
+    // "Side A gives" that is the side coming out behind, and an offer opened from the Find a player tab read backwards.
+    var t=a+b, pa = t? a/t*100 : 50, diff = Math.abs(a-b), fair = diff/Math.max(a,b,1) < 0.05, more = Math.round(diff/Math.max(Math.min(a,b),1)*100);
+    var who = (!a || !b) ? 'Add players to Side '+(a ? 'B' : 'A') : fair ? 'Fair trade' : (a>b ? 'Side A' : 'Side B')+' gives '+(more > 300 ? 'far' : more+'%')+' more';
+    el.innerHTML = '<h3>'+who+'</h3><div class="bar"><i class="a" style="width:'+pa.toFixed(1)+'%"></i><i class="b" style="width:'+(100-pa).toFixed(1)+'%"></i></div><p>'+((a && b && !fair) ? (a>b ? 'Side B' : 'Side A')+' comes out ahead · ' : '')+'Side A '+a.toLocaleString()+' · Side B '+b.toLocaleString()+' · '+(st.dyn?'dynasty (3-year)':'rest of season')+' · '+(st.sf?'superflex':'1QB')+(st.tep?' · TE +'+st.tep:'')+' · '+(st.ppr===1?'PPR':st.ppr===0.5?'half PPR':'standard')+' · '+st.teams+' teams</p>'; }
   function render(){ compute(); document.getElementById('sideA').innerHTML = sideHtml('A'); document.getElementById('sideB').innerHTML = sideHtml('B'); verdict(); rankings(); save(); if (window.__bsLeague && !document.getElementById('slOut').hidden) window.__bsLeague();
     document.querySelectorAll('.opts label').forEach(function(l){ var i=l.querySelector('input'); if(i) l.classList.toggle('on', i.checked); }); fmtLine(); }
   function rankings(){ var pos = st.rkpos, list = ALL.filter(function(p){ return (pos==='ALL' || p.pos===pos) && (st.dyn || !p.pick); }).sort(function(a,b){ return st.sortk==='adj'? b.adj-a.adj : st.sortk==='pts'? b.pts-a.pts : b.v-a.v; }).slice(0, pos==='ALL'?150:60);
@@ -501,18 +533,18 @@ JS = r"""
         $('#slRow').hidden = true; bsLg.set(S.user, u, ls, null); if(byHand) TABS.show('league', true);
         var box = $('#slLeagues'), last = ''; try{ last = localStorage.getItem('bs_sleeper_league')||''; }catch(e){}
         ls.forEach(function(l){ var b = document.createElement('button'); b.type='button'; b.innerHTML = esc(l.name)+'<small>'+l.total_rosters+' teams'+(l.settings && l.settings.type===2 ? ' · dynasty' : '')+((l.roster_positions||[]).indexOf('SUPER_FLEX')>=0 ? ' · superflex' : '')+'</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
-        var auto = ls.filter(function(l){ return l.league_id===last; })[0] || ls[0]; if(auto) pick(auto, box.children[ls.indexOf(auto)]); })
+        var auto = ls.filter(function(l){ return l.league_id===last; })[0] || ls[0]; if(auto) pick(auto, box.children[ls.indexOf(auto)]);
+        if(FP.p) findPlayer(FP.p); })
       .catch(function(e){ $('#slRow').hidden = false; say('Could not find that Sleeper username (it is the username, not the team name).', true); console.error(e); })
       .then(function(){ $('#slGo').disabled = false; }); }
     function pick(l, btn){ S.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){} bsLg.current(l);
       Array.prototype.forEach.call($('#slLeagues').children, function(b){ b.classList.toggle('on', b===btn); }); say('Loading '+l.name+'…'); $('#slOut').hidden = true;
       // the league's format drives the toggles: superflex slot, TE premium bonus, PPR value, dynasty type, team count
-      var sc = l.scoring_settings || {}, rp = l.roster_positions || [];
-      st.sf = rp.indexOf('SUPER_FLEX') >= 0; st.tep = (sc.bonus_rec_te || 0) >= 0.75 ? 1 : (sc.bonus_rec_te || 0) > 0 ? 0.5 : 0; st.ppr = (sc.rec||0) >= 0.75 ? 1 : (sc.rec||0) > 0 ? 0.5 : 0;
-      st.dyn = !!(l.settings && l.settings.type === 2); st.teams = [10,12,14].reduce(function(b,x){ return Math.abs(x-(l.total_rosters||12)) < Math.abs(b-(l.total_rosters||12)) ? x : b; }, 12);
+      var f0 = fmtOf(l); st.sf = f0.sf; st.tep = f0.tep; st.ppr = f0.ppr; st.dyn = f0.dyn; st.teams = f0.teams;
       $('#sf').checked = st.sf; $('#dyn').checked = st.dyn; $('#tep').value = String(st.tep); $('#ppr').value = String(st.ppr); $('#teams').value = String(st.teams);
       if(window.__bsRender) window.__bsRender();   // 11/17 evening: the calculator (its format line, the sides, the verdict) follows the league the moment it is picked
       Promise.all([players(), get('league/'+l.league_id+'/rosters'), get('league/'+l.league_id+'/users'), get('league/'+l.league_id+'/traded_picks').catch(function(){ return null; })]).then(function(r){ S.pm = r[0]; S.rosters = r[1]; S.users = r[2]; S.traded = r[3]; S.sched = undefined; say(''); bsLg.note(l.league_id, S.rosters);
+        FP.cache[l.league_id] = {t: Date.now(), ros: S.rosters || [], users: S.users || [], traded: fmtOf(l).dyn ? S.traded : null};
         // owner 11/17 (buy or sell): the weeks left on the league's own schedule, for the playoff odds. Rosters and values show at once; the outlook waits for the schedule.
         var gp = Math.max.apply(null, S.rosters.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
         if(!ws.length){ S.sched = {}; render(); return; }
@@ -521,6 +553,142 @@ JS = r"""
           ms.forEach(function(m, i){ var by = {}; (m||[]).forEach(function(x){ if(x.matchup_id == null) return; (by[x.matchup_id] = by[x.matchup_id] || []).push(x.roster_id); }); sc[ws[i]] = Object.keys(by).map(function(k){ return by[k]; }).filter(function(p){ return p.length === 2; }); });
           if(S.league === l){ S.sched = sc; render(); } }); })
       .catch(function(e){ say('Sleeper did not answer for that league. Try again in a moment.', true); console.error(e); }); }
+    // ---- 11/18, one player in every league (owner 4:00 PM: "look for a player and see who I should attach in a trade for each
+    // league ... someone reach out that they wanted to trade me Jaxon Smith-Njigba in League of Ordinary Gentleman. I want to be able
+    // to see which players I could send him easily"). For each league the player is valued in that league's own format, the roster
+    // holding him is found, and the reader's own players (plus, where rookie picks are priced, the picks he holds) are packaged into
+    // offers the calculator would call fair: one for one within about 10%, two for one adding up to about 10% more than the one best
+    // player (the side that gets the best player pays for the roster spot), three for one about 20% more. Each offer carries what it
+    // does to both starting lineups (bsOutlook.lineup, the model's points a week) - the reader's, so he sees what the deal costs him
+    // now, and the other manager's, because the offer that fills his lineup is the one he says yes to. Read-only, like the rest.
+    var FP = {p: null, tok: 0, res: {}, done: 0, open: {}, cache: {}}, RD = ['', '1st', '2nd', '3rd'];
+    var FAIR = {1: [0.90, 1.00, 1.12], 2: [0.98, 1.10, 1.25], 3: [1.06, 1.20, 1.36]};   // pieces sent: lowest, centre and highest total as a share of his value
+    function fmtOf(l){ var sc = l.scoring_settings || {}, rp = l.roster_positions || [];
+      return {sf: rp.indexOf('SUPER_FLEX') >= 0, tep: (sc.bonus_rec_te || 0) >= 0.75 ? 1 : (sc.bonus_rec_te || 0) > 0 ? 0.5 : 0, ppr: (sc.rec||0) >= 0.75 ? 1 : (sc.rec||0) > 0 ? 0.5 : 0,
+              dyn: !!(l.settings && l.settings.type === 2), teams: [10,12,14].reduce(function(b,x){ return Math.abs(x-(l.total_rosters||12)) < Math.abs(b-(l.total_rosters||12)) ? x : b; }, 12)}; }
+    // values in another league's format: the toggles are set, the values recomputed, fn() reads what it needs into plain numbers, and
+    // the format on screen is put back before anything else runs (nothing inside waits)
+    function inFormat(l, fn){ var keep = {sf: st.sf, tep: st.tep, ppr: st.ppr, dyn: st.dyn, teams: st.teams}, f = fmtOf(l), out;
+      st.sf = f.sf; st.tep = f.tep; st.ppr = f.ppr; st.dyn = f.dyn; st.teams = f.teams; compute();
+      try{ out = fn(f); } finally { st.sf = keep.sf; st.tep = keep.tep; st.ppr = keep.ppr; st.dyn = keep.dyn; st.teams = keep.teams; compute(); }
+      return out; }
+    // a league's rosters (kept ten minutes); names and pick ownership are asked only where another manager has the player
+    function lgRos(l){ var c = FP.cache[l.league_id]; if(c && Date.now() - c.t < 6e5) return Promise.resolve(c);
+      return get('league/'+l.league_id+'/rosters').then(function(ros){ return FP.cache[l.league_id] = {t: Date.now(), ros: ros || [], users: null, traded: undefined}; }); }
+    function lgMore(l, c){ var w = [];
+      if(!c.users) w.push(get('league/'+l.league_id+'/users').then(function(u){ c.users = u || []; }, function(){ c.users = []; }));
+      if(c.traded === undefined){ if(fmtOf(l).dyn) w.push(get('league/'+l.league_id+'/traded_picks').then(function(t){ c.traded = t; }, function(){ c.traded = null; })); else c.traded = null; }
+      return Promise.all(w).then(function(){ return c; }); }
+    function isMine(r){ var me = S.user.user_id; return r.owner_id === me || (r.co_owners || []).indexOf(me) >= 0; }
+    function holderOf(ros, pm, p){ for(var i = 0; i < ros.length; i++){ var ids = ros[i].players || []; for(var j = 0; j < ids.length; j++) if(modelFor(ids[j], pm) === p) return ros[i]; } return null; }
+    function offersFor(l, c, pm, p){ return inFormat(l, function(f){
+        var teams = teamsOf(c.ros, c.users || [], pm), me = teams.filter(function(t){ return t.me; })[0];
+        var own = teams.filter(function(t){ return t.ps.some(function(x){ return x.mp === p; }); })[0] || null;
+        var out = {id: l.league_id, v: p.v, kind: !me ? 'none' : !own ? 'fa' : own === me ? 'mine' : 'theirs',
+                   fmt: (f.dyn ? 'dynasty' : (l.settings && l.settings.type === 1) ? 'keeper' : 'redraft') + (f.sf ? ', superflex' : '') + (f.tep ? ', TE premium' : '')};
+        if(out.kind !== 'theirs') return out;
+        var T = p.v, sl = bsOutlook.slots(l), tx = own.ps.filter(function(x){ return x.mp === p; })[0], POS = ['QB','RB','WR','TE'];
+        out.team = own.name; out.rec = own.rec; out.offers = []; out.near = null; out.thin = [];
+        if(!(T > 0)) return out;
+        // what that roster is short of once he is gone: a position worth under 80% of the league's average roster there
+        var avg = {}, rest = {QB: 0, RB: 0, WR: 0, TE: 0};
+        POS.forEach(function(k){ avg[k] = teams.reduce(function(s, t){ return s + t.byp[k]; }, 0) / teams.length; });
+        own.ps.forEach(function(x){ if(x.mp && x !== tx) rest[x.mp.pos] += x.v; });
+        out.thin = POS.filter(function(k){ return (k !== 'QB' || f.sf) && avg[k] > 0 && rest[k] < avg[k] * 0.8; });
+        var floor = Math.max(60, T * 0.03), pieces = me.ps.filter(function(x){ return x.mp && x.v >= floor; }).map(function(x){ return {x: x, n: x.mp.n, label: x.mp.n, pos: x.mp.pos, v: x.v}; });
+        // rookie picks the reader holds, where the page prices them (dynasty) and Sleeper said who holds what. A first is early, mid
+        // or late by where its original team sits in the standings today.
+        if(Array.isArray(c.traded)){
+          teams.slice().sort(function(a, b){ var sa = a.r.settings || {}, sb = b.r.settings || {}; return (sb.wins || 0) - (sa.wins || 0) || bsOutlook.pf(b.r) - bsOutlook.pf(a.r); }).forEach(function(t, i){ t.er = i + 1; });
+          if(bsOutlook.ownPicks(l, teams, c.traded, PICKS)) (me.picks || []).forEach(function(q){ if(q.a && q.v >= floor) pieces.push({pick: q, n: q.a.n, pos: 'PICK', v: q.v, label: (q.mine ? 'your ' : '') + q.y + ' ' + RD[q.rd] + (q.mine ? '' : ' (' + q.from.name + '\'s)')}); }); }
+        pieces.sort(function(a, b){ return b.v - a.v; });
+        var myBase = bsOutlook.lineup(me.ps, sl).pts, thBase = bsOutlook.lineup(own.ps, sl).pts, all = [], near = null;
+        function band(sum, n){ var r = sum / T; return r >= FAIR[n][0] && r <= FAIR[n][2]; }
+        function seeNear(set, sum){ var d = Math.abs(sum / T - FAIR[set.length][1]); if(!near || d < near.d) near = {d: d, names: set.map(function(q){ return q.label; }), sum: sum, r: sum / T}; }
+        function rate(set){ var sum = 0, give = []; set.forEach(function(q){ sum += q.v; if(q.x) give.push(q.x); });
+          var n = set.length, r = sum / T;
+          var mine = bsOutlook.lineup(me.ps.filter(function(x){ return give.indexOf(x) < 0; }).concat([tx]), sl).pts - myBase;
+          var tl = bsOutlook.lineup(own.ps.filter(function(x){ return x !== tx; }).concat(give), sl), theirs = tl.pts - thBase;
+          var fit = set.filter(function(q){ return out.thin.indexOf(q.pos) >= 0; }).length;
+          return {set: set, sum: sum, r: r, n: n, mine: mine, theirs: theirs, starts: give.filter(function(x){ return tl.st.indexOf(x) >= 0; }).map(function(x){ return x.mp.n; }),
+                  // best for the reader's lineup first; then the other lineup (it weighs most in a redraft league, where this season is
+                  // all there is, and little in a dynasty league, where a rebuilding roster takes picks and youth), how close the totals
+                  // are, fewer pieces, a filled need
+                  score: mine + (f.dyn ? 0.3 : 0.8) * Math.max(-10, Math.min(4, theirs)) - 8 * Math.abs(r - FAIR[n][1]) - 0.4 * (n - 1) + 0.5 * fit}; }
+        var top = pieces.slice(0, 18), i, j, k;
+        pieces.forEach(function(a){ seeNear([a], a.v); if(band(a.v, 1)) all.push(rate([a])); });
+        // two or three for one: no piece worth as much as the player himself (a better player plus a throw-in is not an offer for him)
+        var CAP = T * 0.97;
+        for(i = 0; i < top.length; i++) for(j = i + 1; j < top.length; j++){ if(top[i].v > CAP) continue; var s2 = top[i].v + top[j].v; seeNear([top[i], top[j]], s2); if(band(s2, 2)) all.push(rate([top[i], top[j]])); }
+        // three for one: two of his dozen best pieces and a smaller third (a third piece worth over a third of the player is a different trade)
+        for(i = 0; i < Math.min(12, pieces.length); i++) for(j = i + 1; j < Math.min(12, pieces.length); j++) for(k = j + 1; k < pieces.length; k++){
+          if(pieces[i].v > CAP || pieces[k].v > T * 0.35) continue; var s3 = pieces[i].v + pieces[j].v + pieces[k].v; if(band(s3, 3)) all.push(rate([pieces[i], pieces[j], pieces[k]])); }
+        all.sort(function(a, b){ return b.score - a.score; });
+        var lead = {}, kept = [];
+        all.forEach(function(o){ if(kept.length >= 4) return; var names = o.set.map(function(q){ return q.label; });
+          if((lead[names[0]] || 0) >= 2) return;   // no more than two offers built on the same main piece
+          if(kept.some(function(q){ var same = q.filter(function(nm){ return names.indexOf(nm) >= 0; }).length; return same >= 2 || same === q.length || same === names.length; })) return;   // not an offer already listed with a throw-in added or swapped
+          lead[names[0]] = (lead[names[0]] || 0) + 1; kept.push(names);
+          out.offers.push({parts: o.set.map(function(q){ return {n: q.n, label: q.label, pos: q.pos, v: q.v, pick: !!q.pick}; }), sum: o.sum, r: o.r, n: o.n, mine: o.mine, theirs: o.theirs, starts: o.starts}); });
+        if(!out.offers.length) out.near = near;
+        out.np = pieces.length; out.picks = pieces.filter(function(q){ return q.pick; }).map(function(q){ return q.label; });
+        return out; }); }
+    function findPlayer(p){ FP.p = p; var tok = ++FP.tok; FP.res = {}; FP.done = 0; FP.open = {}; try{ sessionStorage.setItem('bs_trade_find', p.n); }catch(e){}
+      fpRender(); if(!S.user || !S.leagues.length) return;
+      var q = S.leagues.slice(), cur = S.league && S.league.league_id, busy = 0; q.sort(function(a, b){ return (b.league_id === cur) - (a.league_id === cur); });   // the league on screen is read first
+      function next(){ while(busy < 4 && q.length){ (function(l){ busy++;
+          Promise.all([players(), lgRos(l)]).then(function(r){ var pm = r[0], c = r[1], h = holderOf(c.ros, pm, p);
+              return (h && !isMine(h)) ? lgMore(l, c).then(function(){ return offersFor(l, c, pm, p); }) : offersFor(l, c, pm, p); })
+            .then(function(res){ if(tok === FP.tok) FP.res[l.league_id] = res; }, function(e){ console.error(e); if(tok === FP.tok) FP.res[l.league_id] = {id: l.league_id, kind: 'err'}; })
+            .then(function(){ busy--; if(tok !== FP.tok) return; FP.done++; fpRender(); next(); }); })(q.shift()); } }
+      next(); }
+    function sgn(x){ var r = Math.round(x * 10) / 10; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(1); }
+    function ud(x){ return x >= 0.05 ? 'up' : x <= -0.05 ? 'dn' : ''; }
+    function shortN(q){ return q.pick ? q.label : q.n.indexOf(' ') > 0 ? q.n.slice(q.n.indexOf(' ') + 1) : q.n; }
+    function fpRender(){ var box = $('#fpOut'), hint = $('#fpHint'), p = FP.p; if(!box) return; if(hint) hint.hidden = !!p; if(!p){ box.innerHTML = ''; return; }
+      var h = '<div class="fpwho"><span class="pos ' + p.pos + '">' + p.pos + '</span><span class="who"><b>' + esc(p.n) + '</b><small>' + esc(p.tm) + (p.Re === 0 || p.st === 'OUT' ? ' · ' + esc(p.why || 'out') : p.st === 'QUESTIONABLE' ? ' · questionable' : '') + '</small></span></div>';
+      if(!S.user || !S.leagues.length){ box.innerHTML = h + '<p class="fpnone">Type your Sleeper username at the top of this page. Every league on the account is read, and this shows who has him and what you could send in each one.</p>'; return; }
+      var ls = S.leagues, n = ls.length, rows = {theirs: [], mine: [], fa: [], none: [], err: []}, cur = S.league && S.league.league_id, busy = FP.done < n;
+      ls.forEach(function(l){ var r = FP.res[l.league_id]; if(r) rows[r.kind].push([l, r]); });
+      var T = rows.theirs.length, def = rows.theirs.filter(function(x){ return x[0].league_id === cur; })[0] || (busy ? null : rows.theirs[0]);
+      h += '<p class="fpsum' + (busy ? ' busy' : '') + '">' + (busy ? 'Reading your ' + n + ' league' + (n === 1 ? '' : 's') + '… ' + FP.done + ' of ' + n
+            : T ? 'Another manager has him in <b>' + (n === 1 ? 'your league' : T + ' of your ' + n + ' leagues') + '</b>. Tap a league for what you could send.'
+            : 'Nobody else has him in ' + (n === 1 ? 'your league' : 'your ' + n + ' leagues') + '.') + '</p>';
+      h += rows.theirs.map(function(x){ var l = x[0], r = x[1], open = FP.open[l.league_id] != null ? FP.open[l.league_id] : !!(def && def[0] === l), best = r.offers[0];
+        var body = '<p class="fpmeta"><b>' + esc(r.team) + '</b>' + (r.rec ? ' (' + esc(r.rec) + ')' : '') + ' has him. He is worth <b>' + r.v.toLocaleString() + '</b> here <small>(' + esc(r.fmt) + ')</small>.'
+              + (r.thin.length ? ' Without him that roster is thin at <b>' + r.thin.join(' and ') + '</b>.' : '') + '</p>';
+        if(!r.offers.length) body += '<p class="fpnone">' + (!(r.v > 0) ? 'He has no trade value in this format right now.' : r.near ? 'Nothing on your roster adds up to a fair offer. Closest: ' + esc(r.near.names.join(' + ')) + ' (' + r.near.sum.toLocaleString() + ', ' + Math.round(r.near.r * 100) + '% of his value).' : 'Nothing on your roster adds up to a fair offer.') + '</p>';
+        else body += '<ol class="fpo">' + r.offers.map(function(o, i){ var d = o.r - FAIR[o.n][1];
+            var size = o.n === 2 ? 'two for one' : 'three for one';
+            var tag = o.n === 1 ? (Math.abs(d) <= 0.05 ? 'about even' : d < 0 ? 'a little light' : 'you give a little more') : (Math.abs(d) <= 0.05 ? 'about right for ' + size : d < 0 ? 'light for ' + size : 'a strong offer');
+            return '<li><ul class="fpp">' + o.parts.map(function(q){ return '<li><span class="pos ' + (q.pick ? '' : q.pos) + '">' + (q.pick ? 'PK' : q.pos) + '</span><span class="nm">' + esc(q.label) + '</span><span class="vv">' + q.v.toLocaleString() + '</span></li>'; }).join('') + '</ul>'
+              + '<p class="fpt"><b>' + o.sum.toLocaleString() + '</b> for his ' + r.v.toLocaleString() + ' · ' + tag + '</p>'
+              + '<p class="fpx">Your lineup <b class="' + ud(o.mine) + '">' + sgn(o.mine) + '</b> a week · ' + esc(r.team) + '\'s <b class="' + ud(o.theirs) + '">' + sgn(o.theirs) + '</b>' + (o.starts.length ? ' · ' + esc(o.starts.join(' and ')) + (o.starts.length > 1 ? ' start there' : ' starts there') : '') + '</p>'
+              + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
+        return '<div class="fpl' + (open ? ' open' : '') + '" data-id="' + esc(l.league_id) + '" data-kind="theirs"><button type="button" class="fplh" aria-expanded="' + open + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + esc(r.team) + ' has him · '
+          + (best ? 'send ' + esc(best.parts.map(shortN).join(' + ')) : 'no fair offer from your roster') + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
+      function also(k, lead){ if(!rows[k].length) return ''; return '<p class="fpalso" data-kind="' + k + '"><b>' + lead + '</b> ' + rows[k].map(function(x){ return esc(x[0].name) + (k === 'mine' ? ' <small>(' + x[1].v.toLocaleString() + ')</small>' : ''); }).join(', ') + '</p>'; }
+      h += also('mine', 'On your roster in:') + also('fa', 'Free agent in:') + also('none', 'You are not on a roster in:') + also('err', 'Sleeper did not answer for:');
+      box.innerHTML = h; }
+    window.__bsFind = FP;   // read by tests/trade_find.py
+    document.addEventListener('click', function(e){ var t = e.target; if(!t.closest) return;
+      var hd = t.closest('#fpOut .fplh'); if(hd){ FP.open[hd.parentNode.dataset.id] = !hd.parentNode.classList.contains('open'); fpRender(); return; }
+      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], o = r && r.offers && r.offers[+k[1]]; if(!l || !o) return;
+      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; window.__bsRender(); toCalc(); });
+    (function(){ var inp = $('#inF'), sug = $('#sugF'), cur = [], k = -1; if(!inp) return;
+      function ini(n){ return String(n).split(/[\s-]+/).map(function(w){ return w.charAt(0); }).join('').toLowerCase(); }   // "jsn" finds Jaxon Smith-Njigba
+      function show(){ var q = normn(inp.value); if(q.length < 2){ sug.hidden = true; return; } var qi = q.replace(/\s+/g, '');
+        cur = P.filter(function(p){ return normn(p.n).indexOf(q) >= 0 || (qi.length >= 3 && ini(p.n).indexOf(qi) === 0); }).sort(function(a, b){ return b.v - a.v; }).slice(0, 8); k = -1;
+        sug.innerHTML = cur.map(function(p, i){ return '<button type="button" data-i="' + i + '"><span class="pos ' + p.pos + '">' + p.pos + '</span><span>' + esc(p.n) + ' <small>' + esc(p.tm) + ' · ' + p.prk + '</small></span></button>'; }).join(''); sug.hidden = !cur.length; }
+      function choose(i){ if(!cur[i]) return; inp.value = cur[i].n; sug.hidden = true; inp.blur(); findPlayer(cur[i]); }
+      inp.addEventListener('input', show); inp.addEventListener('focus', function(){ try{ inp.select(); }catch(e){} show(); });
+      inp.addEventListener('keydown', function(e){ if(sug.hidden) return; if(e.key === 'ArrowDown'){ k = Math.min(k + 1, cur.length - 1); } else if(e.key === 'ArrowUp'){ k = Math.max(k - 1, 0); } else if(e.key === 'Enter'){ e.preventDefault(); choose(k < 0 ? 0 : k); return; } else if(e.key === 'Escape'){ sug.hidden = true; return; } else return;
+        e.preventDefault(); sug.querySelectorAll('button').forEach(function(b, i){ b.classList.toggle('k', i === k); }); });
+      sug.addEventListener('mousedown', function(e){ var b = e.target.closest('button'); if(b){ e.preventDefault(); choose(+b.dataset.i); } });
+      document.addEventListener('click', function(e){ if(!sug.contains(e.target) && e.target !== inp) sug.hidden = true; });
+      // a player kept from earlier in the visit, or named in the address (/trade/#find=Name), is looked up once the leagues are in
+      var m = /^#find=(.+)$/.exec(location.hash), keep = null; try{ keep = m ? decodeURIComponent(m[1]) : sessionStorage.getItem('bs_trade_find'); }catch(e){}
+      if(keep){ var p0 = P.filter(function(p){ return p.n === keep || normn(p.n) === normn(keep); })[0]; if(p0){ inp.value = p0.n; FP.p = p0; fpRender(); } } })();
     var OPEN = {me: true, opp: false};   // my roster open, opponents collapsed by default; a single card's own toggle overrides the group
     document.addEventListener('click', function(e){ var tg = e.target.closest('[data-tg]'); if (tg){ var k = tg.dataset.tg; OPEN[k] = !OPEN[k]; if (k==='opp') Object.keys(OPEN).forEach(function(x){ if (x!=='me' && x!=='opp') delete OPEN[x]; }); render(); return; }
       var h = e.target.closest('.team h3'); if (h && !e.target.closest('button')){ var c = h.parentNode; if (c.dataset.me==='1') OPEN.me = !OPEN.me; else { var rid = c.dataset.rid; var cur = OPEN[rid] != null ? OPEN[rid] : OPEN.opp; OPEN[rid] = !cur; } render(); } });
@@ -555,7 +723,8 @@ JS = r"""
     // The league sheet's verdict for a league that is not on screen: its rosters (given), the weeks left on its schedule, then the same
     // odds and cut-offs as the card (bsOutlook.quick). Lineup strength uses the scoring toggles of the league on screen; the odds lean on
     // records and points scored far more than on that, so a chip can sit a few points from the card the league shows when opened.
-    function leagueChip(l, ros){ return players().then(function(pm){
+    function leagueChip(l, ros){ if(!FP.cache[l.league_id]) FP.cache[l.league_id] = {t: Date.now(), ros: ros || [], users: null, traded: undefined};   // the finder reuses the rosters this read already has
+      return players().then(function(pm){
         var gp = Math.max.apply(null, ros.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
         return Promise.all(ws.map(function(w){ return get('league/'+l.league_id+'/matchups/'+w).catch(function(){ return []; }); })).then(function(ms){ var sc = {};
           ms.forEach(function(m, i){ var by = {}; (m||[]).forEach(function(x){ if(x.matchup_id == null) return; (by[x.matchup_id] = by[x.matchup_id] || []).push(x.roster_id); }); sc[ws[i]] = Object.keys(by).map(function(k){ return by[k]; }).filter(function(p){ return p.length === 2; }); });
@@ -585,7 +754,7 @@ JS = r"""
       pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); TABS.show('league', true); var a = $('#lgbar'); if(a && a.scrollIntoView) a.scrollIntoView({block: 'start'}); });
     bsLg.mount({bar: $('#lgbar'), get: get, extra: leagueChip, onUpdate: function(){ allTrade(); if(!ALLSCAN && S.leagues && S.leagues.length > 1){ ALLSCAN = true; bsLg.scan(); } },
       onPick: function(l){ pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); TABS.show('league', true); window.scrollTo({top:0}); },
-      onChange: function(){ bsLg.clear(); ALLSCAN = false; allTrade(); $('#slRow').hidden = false; $('#slOut').hidden = true; $('#slEmpty').hidden = false; S.rosters = null; var i = $('#slUser'); i.value = ''; i.focus(); } });
+      onChange: function(){ bsLg.clear(); ALLSCAN = false; allTrade(); FP.tok++; FP.res = {}; FP.done = 0; FP.cache = {}; var fo = $('#fpOut'); if(fo) fo.innerHTML = ''; $('#slRow').hidden = false; $('#slOut').hidden = true; $('#slEmpty').hidden = false; S.rosters = null; var i = $('#slUser'); i.value = ''; i.focus(); } });
     document.addEventListener('click', function(e){ var b = e.target.closest('[data-idea]'); if(!b) return; var k = b.dataset.idea.split('|'); st.A = [k[0]]; st.B = [k[1]]; window.__bsRender(); toCalc(); });
     document.addEventListener('click', function(e){ var b = e.target.closest('[data-ol]'); if(!b) return; var k = b.dataset.ol.split('|'); st.A = k[0] ? k[0].split(';') : []; st.B = k[1] ? k[1].split(';') : []; window.__bsRender(); toCalc(); });
     window.__bsLeague = render;
@@ -645,6 +814,18 @@ body = f'''<div class="tc">
     <div class="teams" id="slTeams"></div>
     </details>
    </div>
+  </section>
+ </div>
+ <div data-tab="find">
+  <section class="panel fp" id="fp">
+   <h2>Trade for a player <small>every league at once</small></h2>
+   <div class="add"><input id="inF" placeholder="Player name, like Jaxon Smith-Njigba" autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Player to trade for"><div class="sug" id="sugF" hidden></div></div>
+   <p class="meth" id="fpHint">Type a player. For each of your Sleeper leagues you see who has him and which of your players add up to a fair offer.</p>
+   <div id="fpOut"></div>
+   <details class="fold fphow"><summary><h3>How the offers are picked</h3></summary>
+    <p class="meth" style="margin:0 0 6px">He is valued in each league's own format, so the same player can be worth more in a dynasty or superflex league. An offer is listed when the calculator would call it fair: one player for him within about 10%, two players adding up to about 10% more than he is worth, three about 20% more, because the side getting the best player pays for the roster spot. Rookie picks you hold are used where the league is dynasty.</p>
+    <p class="meth" style="margin:0">The lineup numbers are the model's points a week for each starting lineup, before and after. Offers that help your lineup most come first; an offer that fills the other roster's lineup is the one that gets a yes. Nothing is sent to Sleeper.</p>
+   </details>
   </section>
  </div>
  <div data-tab="rank">
