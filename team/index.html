@@ -40,6 +40,19 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .mimp .hint{margin:0;flex:1 1 220px}
 
 .tm-wrap{max-width:1360px;margin:0 auto;display:grid;gap:14px}
+/* 11/17 evening: the page had two intro cards filling a phone's first screen and 8.2 screens in all. Two small buttons, the league bar
+   once Sleeper is connected (the connect form goes), and the graded team in four tabs. */
+.tm-wrap .quick{display:flex;gap:8px;flex-wrap:wrap}
+.tm-wrap .quick a{flex:1 1 150px;text-decoration:none}
+.tm-wrap #sleeperBox.conn > h2,.tm-wrap #sleeperBox.conn .connect,.tm-wrap #sleeperBox .leagues{display:none}
+.tm-wrap #sleeperBox .lgbar{margin:12px 14px}
+.tm-wrap details.howd{flex-basis:100%;color:var(--mute);font-size:13px}
+.tm-wrap details.howd > summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--mute);text-decoration:underline}
+.tm-wrap #out{display:grid;gap:14px;min-width:0}
+.tm-wrap #out[hidden]{display:none}
+.tm-wrap #out > [data-tab]{display:grid;gap:14px;min-width:0}
+.tm-wrap #out .fxtabs{margin:0}
+body:has(#tmTabs) .top .nav{position:static}   /* the page-links row scrolls away here; the section tabs are the row that stays */
 .sscta{display:flex;align-items:center;gap:4px 14px;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 20px;margin:0 0 12px;position:relative}.sscta::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 2px 2px 0;background:var(--red)}.sscta b{font-family:var(--brand);font-style:italic;font-weight:800;font-size:22px;letter-spacing:-.01em;flex-basis:100%}.sscta span{color:var(--mute);font-size:14px;line-height:1.45;flex:1 1 260px}.sscta i{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--red);white-space:nowrap}
 .tm-wrap .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .tm-wrap h2{font-family:var(--display);font-weight:700;letter-spacing:.01em;text-transform:none;font-size:18px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -105,6 +118,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .waiv ul{list-style:none;margin:0;padding:0}
 .waiv li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 14px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
 .waiv li b{font-weight:600} .waiv li span{display:block;color:var(--mute);font-size:11.5px}
+.waiv li span.bt{display:inline-block;vertical-align:middle;margin-left:6px}   /* 11/17: the matchup chip was stretched across the row by the rule above */
 .waiv li .pts{font-family:var(--display);font-size:16px;text-align:right}
 .waiv li .pts small{display:block;font-family:var(--body);font-size:10.5px;color:var(--good)}
 .note{padding:8px 14px;color:var(--mute);font-size:12px;line-height:1.5;border-top:1px solid var(--line);margin:0}
@@ -155,6 +169,48 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 #out[hidden]{display:none} #out{scroll-margin-top:175px}
 @media (max-width:760px){ .roster{columns:1} .tiles b{font-size:24px} }
 
+/* ---- section tabs (fantasy_nav.py) ---- */
+.fxtabs{position:sticky;top:calc((53px + env(safe-area-inset-top,0px)) / 1.1);z-index:6;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0;margin:0 0 12px;border-bottom:1px solid var(--line)}
+.fxtabs::-webkit-scrollbar{display:none}
+.fxtabs .tab{flex:1 0 auto;white-space:nowrap;min-height:40px}
+.fxtabs .tab small{font:inherit;font-size:11.5px;opacity:.75;margin-left:2px}
+.fxoff{display:none!important}
+@media (min-width:900px){ .fxtabs{top:0} .fxtabs .tab{flex:0 0 auto} }
+/* ---- league bar + sheet ---- */
+.lgbar{margin:0 0 10px}
+.lgbar[hidden]{display:none}
+.lgbar .lgcur{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:54px;cursor:pointer}
+.lgbar .lgcur .lgtx,.lgrow .lgtx{flex:1;min-width:0}
+.lgbar .lgcur b,.lgrow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgbar .lgcur b{font-family:var(--display);font-size:18px;line-height:1.15;letter-spacing:.01em}
+.lgbar .lgcur small,.lgrow small{display:block;color:var(--mute);font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgbar .lgcur .lgsx{flex:none;font-family:var(--ctl,var(--display));font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--red);white-space:nowrap}
+.lgchip{flex:none;display:inline-block;font-size:11.5px;font-weight:700;line-height:1;border-radius:999px;padding:4px 8px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.lgchip.buy{color:var(--good);border-color:var(--good)} .lgchip.sell{color:var(--bad);border-color:var(--bad)}
+html.lgopen{overflow:hidden}
+.lgov{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.lgsheet{width:100%;max-width:560px;max-height:84vh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (min-width:700px){ .lgov{align-items:center} .lgsheet{border-bottom:1px solid var(--line);border-radius:16px;max-height:78vh} }
+.lgsheet header{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
+.lgsheet header h3{flex:1;margin:0;font-family:var(--display);font-size:20px;letter-spacing:.01em}
+.lgsheet header h3 small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--mute);margin-left:6px}
+.lgsheet .lgx{font:inherit;font-size:18px;line-height:1;color:var(--ink);background:none;border:1px solid var(--line);border-radius:8px;width:40px;height:40px;cursor:pointer}
+.lgsheet .lgwho{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:0 16px 10px;color:var(--mute);font-size:13px;text-align:left}
+.lgsheet .lgwho span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgsheet .lgwho b{display:inline;color:var(--ink);font-weight:600}
+.lgsheet .lgchg{flex:none;display:inline-block;width:auto;min-height:36px;margin:0;font:inherit;font-size:13px;color:var(--red);background:none;border:0;padding:6px 4px;cursor:pointer;text-decoration:underline}
+.lgsheet .lgq{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;margin:0 16px 8px}
+.lgsheet .lgq:focus{outline:none;border-color:var(--red)}
+.lgsheet ul{list-style:none;margin:0;padding:0 8px 10px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.lgsheet li.none{padding:18px 8px;color:var(--mute);font-size:14px}
+.lgrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:var(--ink);background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:9px 8px;min-height:54px;cursor:pointer}
+.lgsheet li:last-child .lgrow{border-bottom:0}
+.lgrow.on{background:var(--card);border-radius:10px;border-bottom-color:transparent;box-shadow:inset 3px 0 0 var(--red)}
+.lgrow b{font-size:15px;font-weight:600}
+.lgrow .lgrc{flex:none;text-align:right;font-variant-numeric:tabular-nums;font-size:14px;font-weight:600;min-width:52px}
+.lgrow .lgrc i{display:block;font-style:normal;font-weight:400;color:var(--mute);font-size:11.5px}
+.lgrow:focus-visible,.lgbar .lgcur:focus-visible,.lgsheet .lgx:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
 </style>
 
 <link rel="stylesheet" href="/s/site-3217789327.css"></head>
@@ -166,7 +222,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Fantasy</b></h1>
-    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Tue 11/17 7:17 PM CT.</p>
+    <p>Import your Sleeper league and the model grades it: the lineup it would start under your league's scoring, how many points you are leaving on the bench, your matchup odds, and the best free agents available. 295 players projected for Week 11. Built Tue 11/17 7:44 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="/team/compare/">Who should I start?</a> <a href="/trade/">Trade calculator</a> <a href="/dfs/">DFS</a></nav>
   
@@ -175,8 +231,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 
 <div class="grid" style="display:block">
 <div class="tm-wrap">
- <a class="sscta" href="/team/compare/"><b>Who should I start?</b><span>Stuck on your flex? Compare two or more players - projection, matchup, recent games, risks - and get the model's pick with the reasons.</span><i>Open</i></a>
- <a class="sscta" href="/trade/#league"><b>Buy or sell?</b><span>Your record and your odds of making the playoffs decide it. Import a Sleeper league and see who to trade for if you are in the hunt, and which veterans to sell - and to whom - if you are not.</span><i>Open</i></a>
+ <div class="quick"><a class="bsbtn sec" href="/team/compare/">Who should I start?</a><a class="bsbtn sec" href="/trade/#league">Buy or sell?</a></div>
  <section class="panel">
   <div class="mode"><button type="button" class="on" data-m="sleeper">From Sleeper</button><button type="button" data-m="manual">Build it by hand</button></div>
   <div id="sleeperBox">
@@ -185,8 +240,9 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
    <label for="user">Sleeper username</label>
    <input id="user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your Sleeper username">
    <button type="button" id="go">Grade my team</button>
-   <p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p>
+   <details class="howd"><summary>How this works</summary><p class="how">Sleeper publishes leagues, rosters and scoring rules through a public read-only feed, so there is nothing to log into. We pull your leagues, apply <b>your league's scoring</b> (PPR, half, TE premium, 6-point passing TDs, all of it) to the model's stat projections for every player, then show the lineup the model would start, what it is worth over your current one, and the best free agents in your league.</p></details>
   </div>
+  <div class="lgbar" id="lgbar" hidden></div>
   <div class="leagues" id="leagues"></div>
   </div>
   <div id="manualBox" hidden>
@@ -211,24 +267,30 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <div class="msg" id="msg" hidden></div>
  </section>
  <div id="out" hidden>
-  <section class="panel" style="margin-bottom:14px">
+  <div id="tmTabs"></div>
+  <div data-tab="lineup">
+  <section class="panel">
    <h2 id="leagueH"></h2>
    <div class="tiles" id="tiles"></div>
    <div class="oppbar" id="oppbar"></div>
    <div class="meter" id="meter" hidden></div>
    <div class="ins" id="ins" hidden></div>
   </section>
-  <section class="panel" style="margin-bottom:14px">
+  <section class="panel">
    <h2 id="lineupH"><b>Lineup check</b></h2>
    <div class="fdm" id="fdm" hidden></div>
    <ul class="lineup" id="lineup"></ul>
    <p class="note">Green bar = a player the model would start who is not in your lineup right now. Points are the model's projection under this league's scoring. Players Sleeper lists as Out, IR or Doubtful, players on bye, and players the model has inactive are scored 0 and never recommended. Sleeper has no public way to set a lineup from here, so make the swaps in the Sleeper app.</p>
   </section>
-  <section class="panel" style="margin-bottom:14px">
+  </div>
+  <div data-tab="roster">
+  <section class="panel">
    <h2><b>Your roster</b> <span class="r">highlighted = model starter</span></h2>
    <ul class="roster" id="roster"></ul>
   </section>
-  <section class="panel" style="margin-bottom:14px" id="leaguePanel" hidden>
+  </div>
+  <div data-tab="league">
+  <section class="panel" id="leaguePanel" hidden>
    <h2 id="prH"><b>The league, by the model</b> <span class="r">every roster's best lineup under this league's scoring · this week's matchups with a win chance</span><button type="button" class="share" id="prShare" title="Share this as an image to the league chat">Share to the chat</button></h2>
    <div class="prwrap" id="prwrap">
     <div class="prcard" id="prcard">
@@ -240,14 +302,105 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
    </div>
    <p class="note">Power rankings = each team's best possible lineup this week by the model (bye and out players score 0). Win chance assumes about 5 points of noise per starter. Drop the image in the league chat and let them argue.</p>
   </section>
+  </div>
+  <div data-tab="waivers">
   <section class="panel">
    <h2 id="waivH"><b>Waiver wire</b></h2>
    <div class="waiv" id="waiv"></div>
    <p class="note" id="waivNote"></p>
   </section>
+  </div>
  </div>
 </div>
-<script src="/team/data-6659728a7f78.js"></script>
+<script src="/team/data-253ec946859c.js"></script>
+<script>
+(function(){
+  function $(s, r){ return (r || document).querySelector(s); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function ord(n){ var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+  // ---------- section tabs ----------
+  // mount(host, [{id, label}], {root, key, start, onShow}) -> {show(id, quiet), cur(), count(id, n)}
+  function tabsMount(host, tabs, opt){ opt = opt || {}; var root = opt.root || document, cur = null;
+    host.classList.add('tabs'); host.classList.add('fxtabs'); host.setAttribute('role', 'tablist');
+    var anchor = document.createElement('div'); anchor.className = 'fxanchor'; host.parentNode.insertBefore(anchor, host);   // where the row sits when it is not pinned
+    host.innerHTML = tabs.map(function(t){ return '<button type="button" class="tab" role="tab" data-t="' + esc(t.id) + '">' + esc(t.label) + '<small></small></button>'; }).join('');
+    function show(id, quiet){ if(!tabs.some(function(t){ return t.id === id; })) id = tabs[0].id; cur = id;
+      Array.prototype.forEach.call(host.children, function(b){ var on = b.dataset.t === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      Array.prototype.forEach.call(root.querySelectorAll('[data-tab]'), function(el){ el.classList.toggle('fxoff', el.dataset.tab !== id); });
+      if(opt.key){ try{ sessionStorage.setItem(opt.key, id); }catch(e){} }
+      // a tap while the row is pinned: bring the new section's start up under it instead of leaving the reader mid-way down
+      if(!quiet){ var off = parseFloat(getComputedStyle(host).top) || 0, y = anchor.getBoundingClientRect().top + window.scrollY - off; if(window.scrollY > y) window.scrollTo(0, Math.max(0, y)); }
+      if(opt.onShow) opt.onShow(id); }
+    host.addEventListener('click', function(e){ var b = e.target.closest('.tab'); if(b) show(b.dataset.t); });
+    var first = opt.start; if(!first && opt.key){ try{ first = sessionStorage.getItem(opt.key); }catch(e){} }
+    show(first || tabs[0].id, true);
+    return { show: show, cur: function(){ return cur; }, count: function(id, n){ var b = host.querySelector('[data-t="' + id + '"] small'); if(b) b.textContent = n ? ' ' + n : ''; } }; }
+  window.bsTabs = { mount: tabsMount };
+
+  // ---------- league bar + sheet ----------
+  var LG = { opt: null, user: null, uname: '', leagues: [], cur: null, rec: {}, chip: {}, q: '', busy: 0, queue: [] };
+  function meta(l){ var rp = l.roster_positions || [], sc = l.scoring_settings || {}, t = l.settings ? l.settings.type : 0, rec = sc.rec || 0;
+    var b = [(l.total_rosters || '?') + ' teams', t === 2 ? 'dynasty' : t === 1 ? 'keeper' : 'redraft'];
+    if(rp.indexOf('SUPER_FLEX') >= 0) b.push('superflex');
+    b.push(rec >= 0.75 ? 'PPR' : rec > 0 ? 'half PPR' : 'standard'); if((sc.bonus_rec_te || 0) > 0) b.push('TE premium');
+    return b.join(' · '); }
+  function kind(l){ var t = l.settings ? l.settings.type : 0; return (t === 2 ? 'dynasty' : t === 1 ? 'keeper' : 'redraft') + ((l.roster_positions || []).indexOf('SUPER_FLEX') >= 0 ? ' · superflex' : ''); }
+  function ckey(){ return 'bs_lg_rec_' + ((LG.user && LG.user.user_id) || ''); }
+  function load(){ LG.rec = {}; LG.chip = {}; try{ var c = JSON.parse(sessionStorage.getItem(ckey()) || 'null'); if(c && Date.now() - c.t < 18e5){ LG.rec = c.rec || {}; LG.chip = c.chip || {}; } }catch(e){} }
+  function save(){ try{ sessionStorage.setItem(ckey(), JSON.stringify({ t: Date.now(), rec: LG.rec, chip: LG.chip })); }catch(e){} }
+  function byId(id){ return LG.leagues.filter(function(l){ return l.league_id === id; })[0]; }
+  function recOf(ros){ var me = LG.user && LG.user.user_id, r = (ros || []).filter(function(x){ return x.owner_id === me || (x.co_owners || []).indexOf(me) >= 0; })[0];
+    if(!r) return null; var s = r.settings || {}, f = function(x){ var q = x.settings || {}; return (q.fpts || 0) + (q.fpts_decimal || 0) / 100; };
+    var order = ros.slice().sort(function(a, b){ return ((b.settings || {}).wins || 0) - ((a.settings || {}).wins || 0) || f(b) - f(a); });
+    return { txt: (s.wins || 0) + '-' + (s.losses || 0) + (s.ties ? '-' + s.ties : ''), rank: order.indexOf(r) + 1, n: ros.length }; }
+  function bar(){ var h = LG.opt && LG.opt.bar; if(!h) return; if(!LG.leagues.length){ h.hidden = true; h.innerHTML = ''; return; }
+    var l = LG.cur, r = l && LG.rec[l.league_id], c = l && LG.chip[l.league_id]; h.hidden = false;
+    h.innerHTML = '<button type="button" class="lgcur" aria-haspopup="dialog"><span class="lgtx"><b>' + esc(l ? l.name : 'Pick a league') + '</b><small>' + (l ? (r ? esc(r.txt) + ' · ' + ord(r.rank) + ' of ' + r.n + ' · ' + esc(kind(l)) : esc(meta(l))) : LG.leagues.length + ' leagues on this account') + '</small></span>'
+      + (c ? '<span class="lgchip ' + esc(c.cls || '') + '"' + (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + esc(c.txt) + '</span>' : '')
+      + '<span class="lgsx">' + (LG.leagues.length > 1 ? 'Switch · ' + LG.leagues.length : 'League') + ' ▾</span></button>';
+    h.firstChild.addEventListener('click', open); }
+  function rowHtml(l){ var r = LG.rec[l.league_id], c = LG.chip[l.league_id], on = LG.cur && LG.cur.league_id === l.league_id;
+    return '<button type="button" class="lgrow' + (on ? ' on' : '') + '" data-id="' + esc(l.league_id) + '"' + (on ? ' aria-current="true"' : '') + '><span class="lgtx"><b>' + esc(l.name) + '</b><small>' + esc(meta(l)) + '</small></span>'
+      + (c ? '<span class="lgchip ' + esc(c.cls || '') + '"' + (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + esc(c.txt) + '</span>' : '')
+      + '<span class="lgrc">' + (r ? esc(r.txt) + '<i>' + ord(r.rank) + ' of ' + r.n + '</i>' : r === null ? '<i>not on a roster</i>' : '<i>…</i>') + '</span></button>'; }
+  function list(){ var ul = $('#lgov .lglist'); if(!ul) return;
+    var ls = LG.leagues.filter(function(l){ return !LG.q || String(l.name).toLowerCase().indexOf(LG.q) >= 0; });
+    ul.innerHTML = ls.length ? ls.map(function(l){ return '<li>' + rowHtml(l) + '</li>'; }).join('') : '<li class="none">No league matches that.</li>'; }
+  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); }
+  function pump(){ while(LG.busy < 3 && LG.queue.length){ (function(l){ LG.busy++;
+      LG.opt.get('league/' + l.league_id + '/rosters').then(function(ros){ ros = ros || []; LG.rec[l.league_id] = recOf(ros);
+          if(LG.opt.extra && LG.rec[l.league_id] && LG.chip[l.league_id] === undefined) return Promise.resolve(LG.opt.extra(l, ros)).then(function(c){ LG.chip[l.league_id] = c || null; }, function(){ LG.chip[l.league_id] = null; });
+          if(LG.chip[l.league_id] === undefined) LG.chip[l.league_id] = null; })
+        .catch(function(){ })   // left unset: the next open asks again
+        .then(function(){ LG.busy--; save(); refresh(l.league_id); pump(); }); })(LG.queue.shift()); } }
+  function fill(){ LG.queue = LG.leagues.filter(function(l){ return LG.rec[l.league_id] === undefined || (LG.opt.extra && LG.rec[l.league_id] && LG.chip[l.league_id] === undefined); }); pump(); }
+  function close(){ var ov = $('#lgov'); if(ov){ ov.remove(); document.documentElement.classList.remove('lgopen'); var b = $('.lgbar .lgcur'); if(b) b.focus({ preventScroll: true }); } }
+  function open(){ close(); LG.q = ''; var ov = document.createElement('div'); ov.className = 'lgov'; ov.id = 'lgov';
+    ov.innerHTML = '<div class="lgsheet" role="dialog" aria-modal="true" aria-label="Your Sleeper leagues"><header><h3>Your leagues<small>' + LG.leagues.length + '</small></h3><button type="button" class="lgx" aria-label="Close">✕</button></header>'
+      + '<div class="lgwho"><span>Sleeper username <b>' + esc(LG.uname) + '</b></span><button type="button" class="lgchg">Use another</button></div>'
+      + (LG.leagues.length > 8 ? '<input type="search" class="lgq" placeholder="Search your leagues" autocomplete="off" aria-label="Search your leagues">' : '')
+      + '<ul class="lglist"></ul></div>';
+    document.body.appendChild(ov); document.documentElement.classList.add('lgopen');
+    ov.addEventListener('click', function(e){
+      if(e.target === ov || e.target.closest('.lgx')){ close(); return; }
+      if(e.target.closest('.lgchg')){ close(); if(LG.opt.onChange) LG.opt.onChange(); return; }
+      var row = e.target.closest('.lgrow'); if(row){ var l = byId(row.dataset.id); close(); if(l && LG.opt.onPick) LG.opt.onPick(l); } });
+    var q = $('.lgq', ov); if(q) q.addEventListener('input', function(){ LG.q = q.value.trim().toLowerCase(); list(); });
+    list(); fill(); var on = $('.lgrow.on', ov); if(on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' }); }
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && $('#lgov')) close(); });
+  window.bsLg = {
+    // mount({bar: element, get: function(path) -> Promise, onPick(league), onChange(), extra(league, rosters) -> {txt, cls, title} | Promise})
+    mount: function(opt){ LG.opt = opt; bar(); },
+    // after the page has the account's leagues
+    set: function(user, uname, leagues, cur){ var same = LG.user && user && LG.user.user_id === user.user_id; LG.user = user; LG.uname = uname || ''; LG.leagues = leagues || []; LG.cur = cur || null; if(!same) load(); bar(); },
+    current: function(l){ LG.cur = l; bar(); },
+    // the page already has this league's rosters (and maybe its verdict): no second request for it
+    note: function(id, ros, chip){ if(ros) LG.rec[id] = recOf(ros); if(chip !== undefined) LG.chip[id] = chip; save(); refresh(id); },
+    open: open, close: close, meta: meta, clear: function(){ LG.leagues = []; LG.cur = null; bar(); }
+  };
+})();
+</script>
 <script>
 (function(){
   var D = window.__BS, P = D.players, WEEK = D.week;
@@ -377,8 +530,14 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   var msg = $('#msg'), out = $('#out');
   function say(t, err){ msg.hidden = !t; msg.textContent = t || ''; msg.classList.toggle('err', !!err); }
 
-  $('#go').addEventListener('click', connect); $('#user').addEventListener('keydown', function(e){ if(e.key === 'Enter') connect(); });
-  function connect(){
+  $('#go').addEventListener('click', function(){ connect(true); }); $('#user').addEventListener('keydown', function(e){ if(e.key === 'Enter') connect(true); });
+  // 11/17 evening. One row of tabs for the graded team; the league bar and its sheet replace the wall of league buttons.
+  var TABS = bsTabs.mount($('#tmTabs'), [{id: 'lineup', label: 'Lineup'}, {id: 'roster', label: 'Roster'}, {id: 'league', label: 'League'}, {id: 'waivers', label: 'Waivers'}], {root: out, key: 'bs_tab_team'});
+  var QUIET = false;   // true while the page loads a league by itself (a saved username, a league picked from the sheet): no jump down the page
+  bsLg.mount({bar: $('#lgbar'), get: get,
+    onPick: function(l){ QUIET = true; pick(l, $('#leagues').children[state.leagues.indexOf(l)]); },
+    onChange: function(){ bsLg.clear(); $('#sleeperBox').classList.remove('conn'); out.hidden = true; var i = $('#user'); i.value = ''; i.focus(); } });
+  function connect(byHand){ QUIET = !byHand;
     var u = $('#user').value.trim().replace(/^@/, ''); if(!u) return;
     $('#go').disabled = true; say('Looking up ' + u + ' on Sleeper…'); out.hidden = true; $('#leagues').innerHTML = ''; $('#leagues').classList.remove('picked');
     get('state/nfl').then(function(st){ state.season = String(st.season || new Date().getFullYear()); state.week = st.week || WEEK; return get('user/' + encodeURIComponent(u)); })
@@ -387,6 +546,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
     .then(function(ls){ ls = (ls || []).filter(function(l){ return l.status !== 'pre_draft'; }); state.leagues = ls;
       if(!ls.length){ say('No ' + state.season + ' NFL leagues on that account.', true); return; }
       say(''); var box = $('#leagues'); var last = ''; try{ last = localStorage.getItem('bs_sleeper_league') || ''; }catch(e){}
+      $('#sleeperBox').classList.add('conn'); bsLg.set(state.user, u, ls, null);
       ls.forEach(function(l){ var b = document.createElement('button'); b.type = 'button'; b.className = 'lgo'; b.innerHTML = esc(l.name) + '<small>' + l.total_rosters + ' teams · ' + esc(scoringLabel(l.scoring_settings)) + '</small>'; b.addEventListener('click', function(){ pick(l, b); }); box.appendChild(b); });
       if(ls.length > 1){ var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'lgsw'; sw.textContent = 'Switch league (' + ls.length + ') ▾'; sw.addEventListener('click', function(){ box.classList.remove('picked'); }); box.appendChild(sw); }
       var auto = ls.filter(function(l){ return l.league_id === last; })[0] || ls[0];
@@ -395,13 +555,13 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
     .then(function(){ $('#go').disabled = false; });
   }
   function pick(l, btn){
-    state.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){}
+    state.league = l; try{ localStorage.setItem('bs_sleeper_league', l.league_id); }catch(e){} bsLg.current(l);
     Array.prototype.forEach.call($('#leagues').children, function(b){ b.classList.toggle('on', b === btn); });
     $('#leagues').classList.add('picked');
     say('Loading ' + l.name + '…'); out.hidden = true;
     var wk = Math.min(Math.max(state.week || WEEK, 1), 18);
     Promise.all([playersMap(), get('league/' + l.league_id + '/rosters'), get('league/' + l.league_id + '/users'), get('league/' + l.league_id + '/matchups/' + wk).catch(function(){ return []; }), get('players/nfl/trending/add?lookback_hours=24&limit=40').catch(function(){ return []; })])
-    .then(function(r){ render(l, r[0], r[1], r[2], r[3], r[4], wk); say(''); })
+    .then(function(r){ bsLg.note(l.league_id, r[1]); render(l, r[0], r[1], r[2], r[3], r[4], wk); say(''); })
     .catch(function(e){ say('Sleeper did not answer for that league. Try again in a moment.', true); console.error(e); });
   }
 
@@ -545,7 +705,9 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
       } else { $('#leaguePanel').hidden = true; }
     } catch(e){ console.warn('league block', e); }
     $('#leagueH').innerHTML = '<b>' + esc(l.name) + '</b> <span class="r">' + esc(scoringLabel(s)) + ' · Week ' + wk + (wk !== WEEK ? ' (model is on Week ' + WEEK + ')' : '') + (manual ? ' · built by hand' : '') + '</span>';
-    out.hidden = false; out.scrollIntoView({block: 'start', behavior: 'smooth'});
+    // a hand-built team has no league to rank: that tab goes, and the reader is not left on it
+    var lt = $('#tmTabs [data-t="league"]'); if(lt){ lt.hidden = $('#leaguePanel').hidden; if(lt.hidden && TABS.cur() === 'league') TABS.show('lineup', true); }
+    out.hidden = false; if(!QUIET) out.scrollIntoView({block: 'start', behavior: 'smooth'}); QUIET = false;
   }
   function sosTag(mp){ var d = mp && mp.sos; if(!d || Math.abs(d) < 0.3) return ''; return '<span class="bt sos ' + (d > 0 ? 'up' : 'dn') + '" title="Strength of schedule: the defenses this player has faced so far made his season numbers look ' + (d > 0 ? 'worse' : 'better') + ' than they are; projection ' + (d > 0 ? 'raised' : 'lowered') + ' ' + Math.abs(d).toFixed(1) + ' pts for this matchup">SOS ' + (d > 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + '</span>'; }
   function snapTag(mp){ return mp && mp.sd ? '<span class="bt sd" title="Snap share down: ' + mp.sd[0] + '% of snaps over the last 2 games vs ' + mp.sd[1] + '% for the season; projection trimmed ' + mp.sd[2] + '%">snaps ↓' + mp.sd[2] + '%</span>' : ''; }
@@ -685,7 +847,10 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   chips(); renderTeams();
   try{ if(localStorage.getItem('bs_team_mode') === 'manual' && !new URLSearchParams(location.search).get('u')) $('.mode button[data-m="manual"]').click(); }catch(e){}
   try{ var saved = localStorage.getItem('bs_sleeper_user'); if(saved){ $('#user').value = saved; } }catch(e){}
-  var q = new URLSearchParams(location.search).get('u'); if(q){ $('#user').value = q; connect(); }
+  var q = new URLSearchParams(location.search).get('u'); if(q){ $('#user').value = q; connect(true); }
+  // 11/17 evening: a username already on this device grades the last league by itself - no typing, no button - unless the reader
+  // works from a hand-built team.
+  else if($('#user').value && !$('#sleeperBox').hidden) connect(false);
 })();
 </script>
 </div>
