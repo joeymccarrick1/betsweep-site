@@ -2160,8 +2160,10 @@ row; on, thirteen.
   the first two players and two lines each show, and one button shows the rest ("Show all 14 lines (3 players out)" / "Show fewer").
   Home 6.9 -> 6.0 screens, News 5.1 -> 4.2. tests/page_tight.py checks it when the block is long (55 checks on such a day); its home
   length limit is 6.5 now - the block comes and goes with the news.
-- The block's own line read "Ruled out since our last FanDuel price pull (Wed 6:34 AM CT)" at 4:40 PM: the sheet's props pull had not
-  run since the morning. Not changed here (the pull is the sheet's Apps Script on its own schedule); worth a look if it repeats.
+- The block's own line read "Ruled out since our last FanDuel price pull (Wed 6:34 AM CT)" at 4:40 PM. That is the normal cadence,
+  not a fault: FanDuel player props are pulled into the sheet once a day (about 6:30 AM CT; game lines every six hours - see the
+  11/10 note "What the hourly run can and cannot freshen"). Midweek practice reports land after it, which is what this block is
+  for. Suggested to the owner 11/18: a second props pull mid-afternoon Wednesday to Saturday (his Apps Script trigger, his credits).
 
 ## 11/18, 4:45-5:15 PM CT: Boards and the builder on a phone, second pass (owner 3:52 PM)
 
