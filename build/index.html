@@ -107,7 +107,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .altcol h4{margin:0 0 2px;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);text-align:center}
 .altpair{display:grid;grid-template-columns:1fr 1fr;gap:6px} .altcol.mid .glb{min-height:46px}
 @media (max-width:560px){ .altpanel{grid-template-columns:minmax(0,1fr) 82px minmax(0,1fr);gap:6px} .altcol{max-width:82px} .altpair{grid-template-columns:1fr;gap:5px} }
-.gll{display:none} @media (max-width:760px){ .gcard.glz > .glgrid{display:none} .gcard.glz > .gll{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--card);border:0;border-top:1px solid var(--line);cursor:pointer} .gll:focus-visible{outline:2px solid var(--red);outline-offset:-2px} }
+.gsw{display:none}
 @media (max-width:560px){ .glgrid{grid-template-columns:minmax(0,1fr) 82px minmax(0,1fr);gap:6px;padding:8px 10px} .glside{gap:5px;width:82px} .glb b{font-size:14px} .glb small{font-size:11px} .glb{min-height:46px;padding:4px 2px} }
 .gteamlist h3{margin:0;padding:8px 14px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:color-mix(in srgb,var(--chalk) 60%,transparent);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
 .gteamlist h3 .hint{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:3px 10px;white-space:nowrap} .gteamlist h3 .hint .car{font-style:normal} @media (max-width:560px){ .gteamlist h3 .hint span{display:none} .gteamlist h3 .hint{font-size:10.5px;padding:3px 8px} }
@@ -119,6 +119,16 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .ghd:focus{outline:none} .ghd:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
 .ghd .gsum .opn .car{margin:0;font-style:normal}
 @media (max-width:560px){ .ghd{grid-template-columns:1fr 1fr;grid-template-areas:"a b" "m m" "s s";row-gap:6px} .ghd .gteam b{font-size:24px} .ghd .gteam small{display:none} .ghd .gmid b{font-size:24px} .ghd .gsum{font-size:11px;margin-top:2px} }
+/* 11/18, second pass: on a phone every game card carries the same two buttons under its header - Game lines, Player legs - in the
+   look of the board cards' Game Script / Projections pair; each opens its own part of the card. The header's pill steps aside. */
+@media (max-width:760px){
+  .gcard.glz > .glgrid{display:none}
+  .gsw{display:flex;gap:8px;padding:8px 10px 10px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--ink) 7%,var(--card))}
+  .gsw .gswb{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 8px;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;cursor:pointer}
+  .gsw .gswb.on{background:var(--ink);border-color:var(--ink);color:var(--bg)} .gsw .gswb .car{font-style:normal;font-size:11px}
+  .gsw .gswb:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  .gcard .ghd .gsum{justify-content:center;text-align:center} .gcard .ghd .gsum .opn{display:none}
+}
 .lg{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto auto;gap:4px 10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}
 .lg:nth-child(even){background:color-mix(in srgb,var(--chalk) 35%,transparent)}
 .lg > .pz{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;color:var(--red);width:22px}
@@ -421,7 +431,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 
 </style>
 
-<link rel="stylesheet" href="/s/site-dfee8a8243.css"></head>
+<link rel="stylesheet" href="/s/site-cc55fdfb47.css"></head>
 <body>
 <nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><div class="navask" id="navask" data-eg="Stefon Diggs 60+ rec yds" data-team="Commanders"><form id="navaskf" role="search" action="/build/" method="get"><label for="navaskq">Ask BetSweep</label><div class="navaskr"><input type="search" id="navaskq" name="ask" maxlength="400" placeholder="Ask BetSweep" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"><button type="submit">Ask</button></div><p class="navaskh">Try <b>Stefon Diggs 60+ rec yds</b>, <b>Commanders</b> or <b>best td</b>.</p></form><div class="navaskout" id="navaskout" hidden aria-live="polite"></div></div><a href="/" class="">Today</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Games <i aria-hidden="true">▾</i></button><span class="ddh">Games</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/dossier/" class="">Game previews<small>The read before the bet</small></a><a href="/news/" class="">News desk<small>Who is out, limited or back</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd on"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/best/" class="">Model's Best<small>The week's edges in one list</small></a><a href="/build/" class="on">Parlay Builder<small>Every prop, priced</small></a><a href="/sweep/" class="">Sweep my slip<small>A verdict from a screenshot</small></a><a href="/pairs/" class="">Either-or TDs<small>Two names, one leg</small></a><a href="/shop/" class="">Line shop<small>Same leg, better price</small></a><a href="/boost/" class="">Boost finder<small>The best slip for a boost</small></a><a href="/teasers/" class="">Teaser finder<small>6, 6.5 and 7 points, priced</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Play <i aria-hidden="true">▾</i></button><span class="ddh">Play</span><div class="ddm"><a href="/beat/" class="">Beat the model<small>Your five vs its five</small></a><a href="/survivor/" class="">Survivor planner<small>Your pick, and who to save</small></a><a href="/social/" class="">Social<small>Slips people posted this week</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/teams/" class="">Teams<small>Stats, results, box scores</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/targets/" class="">Trade desk<small>Buy low, sell high</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/badbeats/" class="">Missed by one<small>The week's bad beats</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/all/" class="">Every page<small>The whole site on one screen</small></a></div></div></div></div></nav>
 <script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
@@ -430,7 +440,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Wed 11/18 4:48 PM CT.</p>
+    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Wed 11/18 5:25 PM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-HOU-IND">HOU·IND</a> <a href="#g-ARI-KC">ARI·KC</a> <a href="#g-BAL-CAR">BAL·CAR</a> <a href="#g-BUF-MIA">BUF·MIA</a> <a href="#g-CHI-NO">CHI·NO</a> <a href="#g-DAL-TEN">DAL·TEN</a> <a href="#g-DET-TB">DET·TB</a> <a href="#g-JAX-NYG">JAX·NYG</a> <a href="#g-LAC-NYJ">LAC·NYJ</a> <a href="#g-DEN-LV">DEN·LV</a> <a href="#g-PHI-PIT">PHI·PIT</a> <a href="#g-MIN-SF">MIN·SF</a> <a href="#g-CIN-WAS">CIN·WAS</a></nav>
   
@@ -505,7 +515,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Wed 11/18 4:48 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Wed 11/18 5:25 PM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -530,7 +540,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-e8f6423714d2.js"></script>
+<script src="/build/data-95e86cba0336.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -718,7 +728,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function snChip(l){ if(l.sn == null) return ''; var l3 = (l.sn3 || []).map(function(x){ return Math.round(x*100); }).join(' · ');
     return '<span class="snchip" title="Projected offensive snap share for this game; last three games newest first' + (l.snw ? '; ' + esc(l.snw) : '') + '">Snaps ~' + Math.round(l.sn*100) + '%' + (l3 ? ' (' + l3 + ')' : '') + '</span>'; }
   var openG = {};   // game cards opened on the Games view
-  var openL = {};   // 11/18: game cards whose price grid was opened on a phone (the next game and an opened game show theirs anyway)
+  var openL = {};   // 11/18: game cards whose price grid is open on a phone (the "Game lines" button; wide screens always show the grid)
   var openAlt = {}; // Alt game lines panel open per game
   function lum(h){ h = h.replace('#',''); var r = parseInt(h.substr(0,2),16)/255, g = parseInt(h.substr(2,2),16)/255, b = parseInt(h.substr(4,2),16)/255; return 0.2126*r + 0.7152*g + 0.0722*b; }
   function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
@@ -1070,11 +1080,16 @@ window.BSBooks = { attach: function(btn, panel, getText){
       }
       var lv = LV[gid], tk = (lv && window.BSLive) ? window.BSLive.tickHtml(g, lv) : '';
       // 11/18 (owner: "Tighten all of those"): midweek thirteen games each carried a grid of prices - six phone screens of the page's
-      // eight. On a phone the next game and any opened game show the grid; the rest show one row, "Game lines", that opens it.
-      var showL = open || gid === up[0] || !!openL[gid];
-      var glt = (finished(gid) || showL) ? '' : '<button type="button" class="gll" data-gl="' + gid + '" aria-expanded="false">Game lines <i class="car">▾</i></button>';
-      return '<section class="gcard' + (open ? ' open' : '') + (showL ? '' : ' glz') + (off ? ' off' : '') + (finished(gid) ? ' done' : '') + (lv && lv.st === 'in' ? ' live' : '') + '" id="g-' + gid + '">' + head + glt +
-        '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + (finished(gid) ? '' : glGrid(g, off)) + body + '</section>';
+      // eight - so on a phone the grid opens on a tap. Second pass the same afternoon (owner 3:52 PM: "I don't really like how you have
+      // packaged and condensed the parlay builder and the matchup boards ... make it make a little more sense"): the first pass left
+      // two different openers on a card (a pill inside the header for the player legs, a "Game lines" row under it) and treated the
+      // next game differently from the rest. Every card now carries the same two buttons side by side, and each opens its own part
+      // of the card: game lines first, player legs under them. The header still opens the player legs, as it always has.
+      var grid = finished(gid) ? '' : glGrid(g, off), showL = !!openL[gid];
+      var bL = grid ? '<button type="button" class="gswb' + (showL ? ' on' : '') + '" data-gl="' + gid + '" aria-expanded="' + showL + '">Game lines <i class="car">' + (showL ? '▴' : '▾') + '</i></button>' : '';
+      var bP = (off || !gl.length) ? '' : '<button type="button" class="gswb' + (open ? ' on' : '') + '" data-gp="' + gid + '" aria-expanded="' + open + '">Player legs <i class="car">' + (open ? '▴' : '▾') + '</i></button>';
+      return '<section class="gcard' + (open ? ' open' : '') + (showL ? '' : ' glz') + (off ? ' off' : '') + (finished(gid) ? ' done' : '') + (lv && lv.st === 'in' ? ' live' : '') + '" id="g-' + gid + '">' + head + (bL || bP ? '<div class="gsw">' + bL + bP + '</div>' : '') +
+        '<div class="tick' + (lv && lv.st === 'post' ? ' final' : '') + '" id="tk-' + gid + '" aria-live="polite"' + (tk ? '' : ' hidden') + '>' + tk + '</div>' + grid + body + '</section>';
     }
     wrap.innerHTML = up.map(one).join('') + (dn.length ? '<details class="gdone"' + (doneOpen || !up.length ? ' open' : '') + '><summary><b>' + dn.length + ' game' + (dn.length === 1 ? '' : 's') + ' already played</b> <small>finals and what the model projected</small></summary>' + dn.map(one).join('') + '</details>' : '');
     chipState();
@@ -1618,8 +1633,8 @@ window.BSBooks = { attach: function(btn, panel, getText){
     if(cardsClick(ev)) return;
     var gb = ev.target.closest('.glb[data-i]'); if(gb){ if(!gb.disabled) toggle(+gb.dataset.i); return; }
     var ab = ev.target.closest('.altbtn'); if(ab){ var ag = ab.dataset.g; if(openAlt[ag]) delete openAlt[ag]; else openAlt[ag] = true; renderGames(); return; }
-    var gll = ev.target.closest('.gll'); if(gll){ openL[gll.dataset.gl] = true; renderGames(); return; }
-    var gh = ev.target.closest('.ghd'); if(gh){ var gid = gh.dataset.g; if(openG[gid]) delete openG[gid]; else openG[gid] = true; renderGames(); if(openG[gid]) $('#g-' + gid).scrollIntoView({block:'start', behavior:'smooth'}); return; }
+    var gsl = ev.target.closest('.gswb[data-gl]'); if(gsl){ var lg = gsl.dataset.gl; if(openL[lg]) delete openL[lg]; else openL[lg] = true; renderGames(); return; }
+    var gh = ev.target.closest('.ghd, .gswb[data-gp]'); if(gh){ var gid = gh.dataset.g || gh.dataset.gp; if(openG[gid]) delete openG[gid]; else openG[gid] = true; renderGames(); if(openG[gid]) $('#g-' + gid).scrollIntoView({block:'start', behavior:'smooth'}); return; }
     var pn = ev.target.closest('.pn.cyc'); if(pn){ var ok = pn.dataset.orig; var li = pn.closest('.lg'); var cur = legs[+li.dataset.i];
       var orig = legs.filter(function(x){ return x.pl + '|' + x.m === ok; })[0]; if(!orig) return; var cl = cycleList(orig); var j = cl.findIndex(function(x){ return x.i === cur.i; }); var nx = cl[(j + 1) % cl.length];
       if(nx.i === orig.i) delete CYC[ok]; else CYC[ok] = nx.i; var html = row(orig); var tmp = document.createElement('ul'); tmp.innerHTML = html; li.replaceWith(tmp.firstElementChild); return; }
@@ -2340,6 +2355,6 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   });
 })();</script><nav class="nx" aria-label="Where to next"><h2>Where to next</h2><div class="nxl"><a href="/sweep/"><b>Sweep my slip</b><small>A verdict before you place it</small></a><a href="/shop/"><b>Line shop</b><small>The same leg at a better price</small></a><a href="/live/"><b>Live</b><small>Track it once it kicks off</small></a></div></nav>
 <p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/" class=""><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Today</span></a><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class="on"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Builder</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a></nav>
-<script src="/s/app-ab8b7a9850.js" defer></script>
+<script src="/s/app-a69ab56e8f.js" defer></script>
 </body>
 </html>
