@@ -545,7 +545,7 @@ except Exception as _e: print("warn: questionable translator skipped:", _e)
 import calib as CALIB
 for l in LEGS:
     if l.get("p") is None or l.get("bk") is None: continue
-    l["raw_p"] = l["p"]; l["p"] = round(CALIB.shown(l["p"], l["bk"], l.get("m")), 4); l["e"] = round(l["p"] - l["bk"], 4)
+    l["raw_p"] = l["p"]; l["p"] = round(CALIB.shown(l["p"], l["bk"], l.get("m"), line=l.get("ln"), proj=l.get("proj")), 4); l["e"] = round(l["p"] - l["bk"], 4)
 # ---- FanDuel UNDERS on the main lines (owner 10/27) ------------------------------------------------------------------------------------
 # 'AUTO - FanDuel Unders' (FanDuelOdds.gs v2026-10-27) carries each main line's Under price + betslip ids. A main line X.5 is the same event as
 # the alt rung (X+1)+ on the Leg Board, so the under's model chance = 1 - that rung's model chance (raw = 1 - raw over; shown = the same
@@ -589,7 +589,7 @@ try:
         # the over at 50%+ the under still hit 59%, its 70%+ unders hit 41% (n=17), its 60%+ went 13-15 at real prices in Week 9. raw_p
         # keeps the model's number so the Tuesday unders freeze and grade go on unchanged. Re-fit RUSH_UNDER_RATE when a week is graded.
         _flat = RUSH_UNDER_RATE if mk == "Rushing Yards" else None
-        _shown = _flat if _flat is not None else CALIB.shown(raw_u, bku, "Under " + mk)
+        _shown = _flat if _flat is not None else CALIB.shown(raw_u, bku, "Under " + mk, line=pt, proj=base.get("proj"))
         LEGS.append({"i": len(LEGS), "pl": base["pl"], "pos": base["pos"], "tm": base["tm"], "opp": base["opp"], "g": base["g"], "m": "Under " + mk, "ms": SHORT.get(mk, mk),
                      "ln": pt, "o": int(uo), "raw_p": raw_u, "p": round(_shown, 4), "bk": round(bku, 4), "e": round(_shown - bku, 4), "u": 1, **({"flat": 1} if _flat is not None else {}),
                      "bko": round(bko, 4) if bko is not None else None, "w": "",
@@ -902,7 +902,7 @@ for _l in LEGS:
     if _l.get("gl") or _l.get("m") in ("Anytime TD", "First TD", "2+ TD") or _l.get("p") is None or _l.get("bk") is None or _l.get("raw_p") is None: continue
     _l["pm"] = _l["raw_p"]
     if _l.get("flat"): continue   # 11/11: a rushing under keeps the flat graded rate (see RUSH_UNDER_RATE)
-    _l["p"] = round(CALIB.shown(_l["raw_p"], _l["bk"], _l.get("m")), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
+    _l["p"] = round(CALIB.shown(_l["raw_p"], _l["bk"], _l.get("m"), line=_l.get("ln"), proj=_l.get("proj")), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
 # owner 11/5 ("how each team does against each stat percentage wise ... WR1 ... considered in our projections and parlays"): defense vs
 # role (defrole.py) - the opposing QB1 / RB1 / WR1 / WR2 / TE1's record vs this defense (beat his own average; FanDuel main line when
 # graded). Small tested weight (logit +0.25 x shrunk rate gap, research/def_role.py) on p, plus a flag with the numbers on the leg.
@@ -931,7 +931,7 @@ try:
         if str(_r[_H["Latest Snapshot"]]).upper() != "TRUE" or _r[_H["Result"]] not in ("HIT", "MISS"): continue
         _rp, _bk = num(_r[_H["Raw model %"]]), num(_r[_H["Book implied %"]])
         if _rp is None or _bk is None: continue
-        _sp = CALIB.shown(_rp, _bk, _r[_H["Market"]]); _bd = str(min(80, max(10, int(_sp * 10) * 10)))
+        _sp = CALIB.shown(_rp, _bk, _r[_H["Market"]], line=num(_r[_H["Line (X+)"]]) if "Line (X+)" in _H else None, proj=num(_r[_H["Projection"]]) if "Projection" in _H else None); _bd = str(min(80, max(10, int(_sp * 10) * 10)))
         _x = REC.setdefault(_r[_H["Market"]], {}).setdefault(_bd, [0, 0]); _x[0] += int(_r[_H["Result"]] == "HIT"); _x[1] += 1
     print("track record:", {m: sum(v[1] for v in d.values()) for m, d in REC.items()})
 except Exception as _e: print("warn: track record skipped:", _e)

@@ -81,6 +81,20 @@ async def trade(b, players, theme):
     rows = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow')].map(r => [r.querySelector('b').textContent, r.querySelector('.lgrc').innerText.replace(/\\n/g, ' '), r.querySelector('.lgchip').textContent, r.classList.contains('on')])")
     want = [f"{x[3][0]}-{x[3][1]}" for x in LS]; check([r[1].split(" ")[0] for r in rows] == want, f"{T}: the sheet lists all 14 leagues with the reader's record in each ({[r[1].split(' ')[0] for r in rows][:5]}...)")
     check(all(re.fullmatch(r"(Buy|Hold|Sell|Out) · (\d+%\+?|under 1%|in|out)", r[2]) for r in rows) and rows[0][3] and sum(r[3] for r in rows) == 1, f"{T}: every league carries buy / hold / sell with its playoff odds; the one on screen is marked ({[r[2] for r in rows][:4]}...)")
+    # 11/18: how much this week matters in each league, and "Biggest week first"
+    sw = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow')].map(r => { var s = r.querySelector('.lgsw'); return [r.querySelector('b').textContent, s ? s.textContent : null, s ? s.className : '']; })")
+    num = lambda x: int(re.match(r"(\d+)-pt week", x).group(1)) if x and re.match(r"(\d+)-pt week", x) else (0 if x == "no swing" else None)
+    sws = [num(x[1]) for x in sw]
+    check(all(v is not None for v in sws), f"{T}: every league says how many points of playoff odds this week moves ({[x[1] for x in sw][:5]}...)")
+    mid = [v for v, x in zip(sws, LS) if 4 <= x[3][0] <= 6]; edge = [v for v, x in zip(sws, LS) if x[3][0] >= 8 or x[3][0] <= 1]
+    check(mid and edge and max(mid) >= 15 and max(mid) > max(edge) and all(("big" in x[2]) == (v >= 25) for v, x in zip(sws, sw)), f"{T}: a bubble team's week swings more than an 8-2 or 1-9 team's (bubble {mid}, the ends {edge}); 25+ is marked")
+    check(await pg.evaluate(VIS, "#lgov .lgsort"), f"{T}: with the weeks read, the list can be ordered by them")
+    await pg.click('#lgov .lgsort [data-s="sw"]'); await pg.wait_for_timeout(200)
+    srt = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow')].map(r => [r.querySelector('b').textContent, (r.querySelector('.lgsw') || {textContent: ''}).textContent, r.getAttribute('data-id')])")
+    got = [num(x[1]) for x in srt]
+    check(got == sorted(got, reverse=True) and sorted(x[2] for x in srt) == sorted(x[0]["league_id"] for x in LS) and got[0] == max(sws), f"{T}: Biggest week first puts the {got[0]}-point week on top and keeps all 14 ({got[:5]}...)")
+    await pg.click('#lgov .lgsort [data-s=""]'); await pg.wait_for_timeout(200)
+    back = await pg.evaluate("[...document.querySelectorAll('#lgov .lgrow')].map(r => r.getAttribute('data-id'))"); check(back == [x[0]["league_id"] for x in LS], f"{T}: Sleeper order puts them back")
     good = [r for r, x in zip(rows, LS) if x[3][0] >= 7]; poor = [r for r, x in zip(rows, LS) if x[3][0] <= 2]
     check(good and all(r[2].startswith("Buy") for r in good) and poor and all(r[2].startswith(("Sell", "Out")) for r in poor), f"{T}: 7+ win teams read Buy, 2-win teams Sell or Out ({[r[2] for r in good][:2]} / {[r[2] for r in poor][:2]})")
     ros = [u for u in asked if u.endswith("/rosters")]; check(len(set(ros)) == 14 and len(ros) <= 15, f"{T}: one rosters request per league ({len(ros)} for 14; the league on screen was already loaded)")

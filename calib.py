@@ -38,10 +38,39 @@ def _lg(p): p = min(max(p, 1e-4), 1 - 1e-4); return _m.log(p / (1 - p))
 # (pooled best 0.5; 0.5 matched or beat the picked weight in all four held-out weeks). Anytime TD 0.65 -> 0.5 (pooled best 0.2-0.3, but 0.5
 # beat the picked weight in every held-out week and the pooled gap is 0.001 - so half-way, not 0.2). Both gaps are small: this sizes the
 # edge numbers more honestly, it does not by itself make legs hit. Passing and receiving yards unchanged.
-W_MARKET = {"Passing Yards": 0.1, "Receptions": 0.5, "Receiving Yards": 0.25, "Anytime TD": 0.5}
+# owner 11/18 ("strengthening our probabilities when choosing legs"): Week 10 graded (five weeks, 678 touchdown legs). FanDuel alone beat
+# the 0.5 touchdown blend in Week 9 AND Week 10 (log loss by 0.012 and 0.0145; the best single-week weight was 0 both times, after 1.0, 0.7
+# and 0.5 in Weeks 6-8) - the second straight week the rule asks for. Pooled best is 0.1 and the leave-one-week-out picks are 0-0.3, so
+# Anytime TD 0.5 -> 0.3: a step, not the whole way (0.3 still beat 0.5 in Weeks 9-10 and gave back under 0.007 in Weeks 6-8). Where the
+# model had a scorer 8+ points over the price he scored 26.5% of the time against a 26.5% price (34 legs): the lead has not been an edge.
+# Receptions 0.5, receiving yards 0.25, passing 0.1 and both RECAL rows beat FanDuel alone in Week 10 again and stay.
+W_MARKET = {"Passing Yards": 0.1, "Receptions": 0.5, "Receiving Yards": 0.25, "Anytime TD": 0.3}
 
-def shown(p, book, market=None, w=W_MODEL):
-    """The shown % for a leg: per-market recalibration where research/recal.py found one (unders use the over side), else shrink()."""
+# ---- owner 11/18 ("strengthening our probabilities when choosing legs"): research/floor_depth.py, graded frozen legs Weeks 6-10 ----
+# Receiving-yards floors: where the line sits at 55-85% of the player's projection the shown % has run about 4.5 points above the hit
+# rate (1,040 legs; high in every one of the five weeks at 55-70%, and at 70-85%). Deeper lines (under 55%) and lines at or over the
+# projection were fine. Leave-one-week-out, taking HALF the bias measured on the other four weeks off the shown number: log loss better in
+# all 5 held-out weeks (0.6841 -> 0.6814 on 1,328 legs). The full-size cut was better in 4 of 5, so half it is. The band tapers over
+# 50-55% and 85-90% so a one-yard move in a line cannot jump the number.
+# NOT adopted (re-run floor_depth.py on Tuesdays): the same cut on Receptions at 70-85% (4 of 5 weeks); a heavier model weight on deep
+# receiving lines (2-3 of 5 weeks once the weight is fitted off-week; Week 7 carries it); deep line + model 10+ over the price (32 of 50
+# player-weeks against a 52.9% price, z 1.6, cell picked after looking) - tracked, not a lead. Rushing floors need no cut (RECAL does it).
+FLOOR_CUT = {"Receiving Yards": 0.0225}
+FLOOR_BAND = (0.50, 0.55, 0.85, 0.90)
+
+def floor_cut(market, line, proj):
+    """What comes off an over's shown % (as a fraction) for how deep its line sits under the projection; 0 outside the band."""
+    c = FLOOR_CUT.get(market)
+    if not c or line is None or proj is None: return 0.0
+    try: r = float(line) / float(proj)
+    except Exception: return 0.0
+    a, b, hi, d = FLOOR_BAND
+    if not (a < r < d): return 0.0
+    return c * ((r - a) / (b - a) if r < b else (1.0 if r <= hi else (d - r) / (d - hi)))
+
+def shown(p, book, market=None, w=W_MODEL, line=None, proj=None):
+    """The shown % for a leg: per-market recalibration where research/recal.py found one (unders use the over side), else shrink().
+    line / proj (the X of an X+ rung and the player's projection) switch on the floor cut above; without them the number is the plain blend."""
     if p is None: return None
     if book is None: return p
     mk = str(market or ""); under = mk.startswith("Under "); base = mk[6:] if under else mk
@@ -51,4 +80,6 @@ def shown(p, book, market=None, w=W_MODEL):
         v = 1 / (1 + _m.exp(-(c + a * _lg(po) + b * _lg(bo))))
         return max(0.01, min(0.99, 1 - v if under else v))
     if w == W_MODEL: w = W_MARKET.get(base, w)
-    return shrink(p, book, w)
+    v = shrink(p, book, w); cut = floor_cut(base, line, proj)
+    if cut: v = max(0.01, min(0.99, v + cut if under else v - cut))   # the under is the other side of the same line
+    return v

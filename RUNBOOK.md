@@ -1874,3 +1874,62 @@ page; what changed is how much opens at once. Phone lengths (390x844), live copy
   check by the owner (Safari reports color-mix() the same way, so it very likely failed there too - not verified from here).
 - tests/page_fold.py is 126: receipt tabs on Weeks 5-10, the four pictures against their cards' proportions, the Story frame's width. Its server falls back to
   the published copy for a /s/ file a local ./site lacks (CLONE env), the way the publish step's merge does.
+
+## 11/18, 1:00-1:40 AM CT: "how much does this week matter" for every league, and two calibration moves (owner 12:23 AM: "strengthening our probabilities when choosing legs ... like how we're making our sleeper teams better")
+
+**Fantasy: the week's swing.**
+- The outlook's simulation already plays the rest of every league's season (fantasy_outlook.py `sim()`, 3,000 seeded runs; `quick()`
+  1,500). It now also remembers, per run, who won the NEXT week to be played, so each team gets
+  `t.wk = {w, pw, win, lose, opp}`: the week, how often he wins it, and his playoff odds in the runs he won it and in the runs he lost
+  it. `swing(t)` is the gap in points. Only set with 200+ runs holding a game that week and 20+ on each side (a 99% favourite has no
+  honest "if you lose" number). `opp` is the real opponent when Sleeper's matchups for that week are in.
+- Trade page: one line under the playoff odds (`p.olwk`, `weekLine()`): "Week 11 vs Team 12 · you win it about 56% of the time · win and
+  you are 51% to make the playoffs, lose and you are 19% · 33-point week · A big one." 25+ points reads "A big one." (red chip),
+  10+ "It matters.", under that "A small one." / "You are close to in either way." / "It barely moves your odds."
+- League switcher (fantasy_nav.py): every league row shows its swing under the record ("37-pt week", red at 25+), and with three or more
+  leagues a two-button row sorts them "Sleeper order" / "Biggest week first" (kept for the visit, `bs_lg_sort`). The bar's small line
+  adds "· N-pt week" at 10+. For someone with many leagues this is the answer to "which lineup do I set first".
+- Checks: tests/trade_outlook.py 49 (the line sits under the odds, names the real opponent, `lose <= odds <= win`, and
+  `pw*win + (1-pw)*lose` returns the playoff odds within a point); tests/fantasy_nav.py 92 (every row shows a swing, a bubble team swings
+  more than an 8-2 or 1-9 one, the sort is descending and keeps all 14 leagues, "Sleeper order" puts them back).
+- Limit: tested against mocked Sleeper leagues only, like the rest of the Fantasy pages - the owner's real leagues are the real test.
+
+**Calibration (calib.py), from research/floor_depth.py on the 8,094 graded frozen legs, Weeks 6-10.**
+- New study, re-run every Tuesday with blend_weight.py and recal.py: `python3 research/floor_depth.py <legsnaps.json>`. Section 1 is the
+  live rule against FanDuel alone week by week (it prints "lost N straight" - the two-straight-weeks rule in one glance); 2 is shown %
+  minus hit rate by how deep the line sits under the projection; 3 is the floor cut, leave-one-week-out; 4 is the watch list.
+- **Anytime TD weight 0.5 -> 0.3.** FanDuel alone beat the 0.5 blend in Week 9 and Week 10 (log loss by 0.012 and 0.0145; best
+  single-week weight 0 both times, after 1.0 / 0.7 / 0.5 in Weeks 6-8). Pooled best 0.1, leave-one-week-out picks 0-0.3. A step, not
+  the whole way. Where the model had a scorer 8+ points over the price he scored 26.5% against a 26.5% price (34 legs). Effect this week:
+  88 touchdown legs moved; a long shot's shown edge shrinks by 40% (Giddens +3300: +8.5 -> +5.1). Tier membership did not change (the
+  tiers gate on the raw lead and the 11/17 role rule), the shown edges and every parlay's fair odds did.
+- **Receiving-yards floor cut** (`FLOOR_CUT`, `FLOOR_BAND`, `floor_cut()`, `shown(..., line=, proj=)`): where the line is 55-85% of the
+  player's projection the shown % ran 4.5 points above the hit rate (1,040 legs; high in all five weeks at 55-70%). Half of the bias
+  measured on the other four weeks, taken off the held-out week: better in 5 of 5 (log loss 0.6841 -> 0.6814, 1,328 legs). So 2.25
+  points come off inside the band, tapering to nothing over 50-55% and 85-90%; the under on the same line goes up by the same amount.
+  Deeper floors (under 55%) and lines at or over the projection were already fine and are untouched.
+  Every caller passes the line and the projection so all pages agree: builder (both blends, the unders, the track-record bands),
+  boards, home's top plays, the other-book swap (hrswap.py), the face-off ceilings. Without them `shown()` is the plain blend, as before.
+  Effect this week: 27 receiving-yards legs down up to 2.25, 6 unders up; two games' best parlays changed (BUF-MIA swapped Shakir 25+
+  yards for Shakir 3+ catches; CIN-WAS kept its legs at a lower fair number). build_builder's defense-vs-role step still tilts the
+  calibrated number afterwards (up to 1.6 points), as before.
+- How BetSweep picks says both in plain words (how_stats.weights_text(): "about a third on touchdowns", and one sentence on the cut,
+  written from calib.py's constants).
+- tests/calib_floor.py (16): the cut inside / outside the band, no jump along it, the under mirrors, no other market touched, bad input
+  falls back, and on the built board every receiving-yards and touchdown leg shows the calibrated number and no player's ladder is
+  turned upside down. Added to the pre-publish set.
+
+**Tested and NOT adopted (each is printed by floor_depth.py so Tuesday's run settles it).**
+- The same cut on Receptions. The over-statement is bigger there (55-85% of projection: shown 69.5%, price 69.3%, hit 60.6% on 277 legs
+  from 269 player-weeks) but the half-cut was better in 4 of 5 held-out weeks, not all (Week 6 lost 0.0022). Precedent: passing yards
+  was held back on 11/6 for missing one week. Until it passes: in chat-built slips treat a receptions line sitting a little under the
+  projection as over-priced, whatever the shown edge says.
+- A heavier model weight on deep receiving lines (line at or under 45-60% of the projection). Fitted off-week it wins 2-3 of 5; Week 7
+  carries the pooled gain.
+- "Deep line, model well over the price" as a tier: receiving yards, line at or under 55% of the projection, raw model 10+ points over
+  FanDuel, one rung per player-week: 32 of 50 against a 52.9% average price (+0.24 units a leg, z 1.57; weeks 5/12, 8/11, 5/7, 7/10,
+  7/10). The cell was picked after looking at a grid of them, mostly fringe receivers at 5-20 yard lines (median price -113), which is
+  exactly the thin-role floor leg the 11/15 slip rules keep out. Tracked, not a lead: floor_depth.py prints a "SINCE IT WAS PICKED"
+  line from Week 11 on, and that line - not the 32 of 50 - decides whether it ever becomes a tier.
+- Rushing and passing floors: the cut made them worse (0 of 5, 1 of 5). Rushing already has its RECAL row.
+- Still untestable: DraftKings / Hard Rock consensus as "the market" (only 23 graded tier picks carry the other books' prices).

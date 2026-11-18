@@ -127,7 +127,16 @@ def weights_text():
     if not groups: return DEFAULT["WEIGHTS"]
     parts = [f"{p} on {_join(ms)}" for p, ms in groups.items()]
     txt = _join(parts) if len(parts) < 3 else ", ".join(parts[:-1]) + ", and " + parts[-1]
-    return txt + (", where FanDuel's number alone graded better" if "very little" in groups else "")
+    return txt + (", where FanDuel's number alone graded better" if "very little" in groups else "") + _floor_text(calib)
+
+def _floor_text(calib):
+    """One more sentence when calib.py takes points off floor lines (FLOOR_CUT / FLOOR_BAND), so the page says what the numbers do."""
+    try:
+        cut = (getattr(calib, "FLOOR_CUT", {}) or {}).get("Receiving Yards"); band = getattr(calib, "FLOOR_BAND", None)
+        if not cut or not band: return ""
+        return (f". Receiving-yards lines that sit at {band[1] * 100:.0f} to {band[2] * 100:.0f} percent of a player's projection also come down about "
+                f"{_word(max(1, round(cut * 100)))} point{'s' if round(cut * 100) != 1 else ''}, because the shown number ran above the hit rate there in every graded week it was tested on")
+    except Exception: return ""
 
 def stats(in_dir="in"):
     L = legs(in_dir)

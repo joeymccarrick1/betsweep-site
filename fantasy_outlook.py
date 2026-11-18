@@ -18,7 +18,11 @@ What it does, in the browser, for a Sleeper league the reader has imported on th
      position, or with 70%+ of their value in this season) matched to the contender whose lineup they improve most, with a young
      player of similar value to ask for - and the draft slot the team is tracking for, since selling points also moves the pick.
 
-JS exposes window.bsOutlook = {sim, plan, quick, lineup, slots, games, pf, html}; html(league, teams, sched, esc) returns the card. The
+  4. How much this week matters (11/18). The first week left is in every run, so the same 3,000 seasons give the reader's chance to
+     win it and the playoff odds on each side of the result: "win and you are 71%, lose and you are 39%" - a 32-point week. A
+     manager with many leagues can sort the league list by that number (fantasy_nav.py) and see which matchups to sweat.
+
+JS exposes window.bsOutlook = {sim, plan, quick, lineup, slots, games, pf, html, swing, weekLine}; html(league, teams, sched, esc) returns the card. The
 caller owns the data: teams = [{r: Sleeper roster, name, me, ps: [{mp: model player or null, v: trade value}]}] where a model player
 carries n, pos, age, adj (points per game), Re (games left he is expected to play), st, ros, fut.
 """
@@ -31,6 +35,10 @@ CSS = r"""
 .tc .olk h3{display:inline;font-family:var(--display);font-size:19px;line-height:1.2;margin:0;vertical-align:middle}
 .tc .olk .olline{margin:8px 0 2px;font-size:14px;line-height:1.5} .tc .olk .olline b{font-family:var(--display);font-size:16px}
 .tc .olk .olwhy{margin:2px 0 8px;color:var(--mute);font-size:13.5px;line-height:1.5}
+.tc .olk .olwk{margin:8px 0 6px;padding:9px 11px;border-radius:10px;background:var(--chalk);font-size:13.5px;line-height:1.55}
+.tc .olk .olwk b{font-family:var(--display);font-size:15.5px} .tc .olk .olwk b.up{color:var(--good)} .tc .olk .olwk b.dn{color:var(--bad)} .tc .olk .olwk i{font-style:normal;color:var(--mute)}
+.tc .olk .olsw{display:inline-block;margin:0 2px 0 4px;font-family:var(--display);font-weight:800;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;line-height:1;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;vertical-align:1px}
+.tc .olk .olsw.mid{color:var(--ink);border-color:var(--ink)} .tc .olk .olsw.big{color:#fff;background:var(--red);border-color:var(--red)}
 .tc .olk h4{font-family:var(--display);font-weight:700;font-size:15px;margin:10px 0 0}
 .tc .olk ul{list-style:none;margin:0;padding:0} .tc .olk li{padding:9px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.45}
 .tc .olk li:first-child{border-top:0} .tc .olk li b.t{font-family:var(--display);font-size:15px} .tc .olk li small{color:var(--mute)}
@@ -69,19 +77,33 @@ window.bsOutlook = (function(){
     teams.forEach(function(t, i){ idx[t.r.roster_id] = i; });
     var seed = 7 + gp; String(l.league_id || '').split('').forEach(function(c){ seed = (seed * 31 + c.charCodeAt(0)) >>> 0; });
     var R = rng(seed), res = teams.map(function(){ return {inn: 0, w: 0, rank: 0}; }); n = weeks.length ? (n || 3000) : 1;
+    // 11/18 (owner: "cool ways to keep upgrading" the Sleeper side): how much THIS week matters. The first week left is played in every
+    // run anyway, so each team's result in it and whether the run ended in the playoffs are counted together: its chance to win the
+    // week, and its playoff odds on each side of that result. The opponent is the real one when Sleeper gave the week's pairings.
+    var w0 = weeks.length ? weeks[0] : null, real0 = !!(w0 != null && sched && sched[w0] && sched[w0].length), opp = {}, sw = teams.map(function(){ return {g: 0, w: 0, wi: 0, li: 0}; });
+    if(real0) sched[w0].forEach(function(p){ var a = idx[p[0]], b = idx[p[1]]; if(a != null && b != null){ opp[a] = b; opp[b] = a; } });
     for(var k = 0; k < n; k++){
-      var W = teams.map(function(t){ var s = t.r.settings || {}; return (s.wins || 0) + 0.5 * (s.ties || 0); }), F = teams.map(function(t){ return pf(t.r); });
+      var W = teams.map(function(t){ var s = t.r.settings || {}; return (s.wins || 0) + 0.5 * (s.ties || 0); }), F = teams.map(function(t){ return pf(t.r); }), won = {};
       weeks.forEach(function(wk){ var sc = teams.map(function(t){ return t.mu + sd * gauss(R); }), pairs = sched && sched[wk];
         if(!pairs || !pairs.length){ var o = teams.map(function(_, i){ return i; }); for(var i = o.length - 1; i > 0; i--){ var j = Math.floor(R() * (i + 1)), tmp = o[i]; o[i] = o[j]; o[j] = tmp; }
           pairs = []; for(i = 0; i + 1 < o.length; i += 2) pairs.push([teams[o[i]].r.roster_id, teams[o[i + 1]].r.roster_id]); }
-        pairs.forEach(function(p){ var a = idx[p[0]], b = idx[p[1]]; if(a == null || b == null) return; if(sc[a] > sc[b]) W[a]++; else W[b]++; });
+        pairs.forEach(function(p){ var a = idx[p[0]], b = idx[p[1]]; if(a == null || b == null) return; var aw = sc[a] > sc[b]; if(aw) W[a]++; else W[b]++; if(wk === w0){ won[a] = aw; won[b] = !aw; } });
         if(median){ var m = sc.slice().sort(function(x, y){ return x - y; }), med = (m[Math.floor((T - 1) / 2)] + m[Math.ceil((T - 1) / 2)]) / 2; sc.forEach(function(s, i){ if(s > med) W[i]++; }); }
         sc.forEach(function(s, i){ F[i] += s; }); });
-      teams.map(function(_, i){ return i; }).sort(function(a, b){ return (W[b] - W[a]) || (F[b] - F[a]); }).forEach(function(i, pos){ res[i].rank += pos + 1; res[i].w += W[i]; if(pos < spots) res[i].inn++; });
+      teams.map(function(_, i){ return i; }).sort(function(a, b){ return (W[b] - W[a]) || (F[b] - F[a]); }).forEach(function(i, pos){ res[i].rank += pos + 1; res[i].w += W[i]; var inn = pos < spots; if(inn) res[i].inn++;
+        if(won[i] != null){ sw[i].g++; if(won[i]){ sw[i].w++; if(inn) sw[i].wi++; } else if(inn) sw[i].li++; } });
     }
-    teams.forEach(function(t, i){ t.po = res[i].inn / n; t.ew = res[i].w / n; t.er = res[i].rank / n; });
+    teams.forEach(function(t, i){ t.po = res[i].inn / n; t.ew = res[i].w / n; t.er = res[i].rank / n;
+      var s = sw[i], ls = s.g - s.w; t.wk = (w0 != null && s.g >= 200 && s.w >= 20 && ls >= 20) ? {w: w0, pw: s.w / s.g, win: s.wi / s.w, lose: s.li / ls, opp: real0 && opp[i] != null ? teams[opp[i]] : null} : null; });
     return {weeks: weeks, spots: spots, last: last, gp: gp, L: L, sd: sd, median: median};
   }
+  // "How much does this week matter": the sentence under the playoff odds, and the number a league list can sort by (swing, in points
+  // of playoff odds between winning and losing this week). null when the regular season is over or the week has no game for this team.
+  function swing(t){ return t && t.wk ? Math.round((t.wk.win - t.wk.lose) * 100) : null; }
+  function weekLine(t){ var k = t && t.wk; if(!k) return ''; var s = swing(t), p = function(x){ return x >= 0.995 ? '99%+' : x < 0.005 ? 'under 1%' : Math.round(x * 100) + '%'; };
+    var say = s >= 25 ? 'A big one.' : s >= 10 ? 'It matters.' : t.po >= 0.9 ? 'You are close to in either way.' : t.po <= 0.1 ? 'It barely moves your odds.' : 'A small one.';
+    return '<p class="olwk" data-sw="' + s + '" data-pw="' + k.pw.toFixed(3) + '" data-win="' + k.win.toFixed(4) + '" data-lose="' + k.lose.toFixed(4) + '"><b>Week ' + k.w + (k.opp ? ' vs ' + E(k.opp.name) : '') + '</b> · you win it about <b>' + Math.round(k.pw * 100) + '%</b> of the time · win and you are <b class="up">' + p(k.win) + '</b> to make the playoffs, lose and you are <b class="dn">' + p(k.lose) + '</b>'
+      + ' <span class="olsw' + (s >= 25 ? ' big' : s >= 10 ? ' mid' : '') + '">' + (s >= 1 ? s + '-point week' : 'no swing') + '</span> <i>' + say + '</i></p>'; }
   function nowShare(p){ var a = p.ros || 0, b = p.fut || 0; return a + b > 0 ? a / (a + b) : 1; }
   function nearPick(picks, want){ var best = null; (picks || []).forEach(function(p){ if(!(p.v > 0)) return; var r = p.v / Math.max(want, 1); if(r >= 0.6 && r <= 1.25 && (!best || Math.abs(p.v - want) < Math.abs(best.v - want))) best = p; }); return best; }
   // Who holds which rookie picks (owner 11/17: "who owns which draft picks"). Sleeper lists only the picks that changed hands
@@ -155,9 +177,9 @@ window.bsOutlook = (function(){
                bubble: 'Close enough to chase, not safe enough to pay up. Add points where the price is small and keep what you have.',
                long: pl.keep ? 'About a 1 in ' + one + ' shot. Contenders still pay full price for veterans who will not matter to you next year - sell before the deadline.' : 'About a 1 in ' + one + ' shot. Nothing carries over in a redraft league, so there is nothing to sell: play your best lineup and take the upside plays.',
                out: pl.keep ? 'Turn veterans into younger players and picks while contenders will pay. Fewer points now also moves your draft slot up: you are tracking for the ' + ord(pl.slot) + ' pick of ' + pl.n + (pl.kind === 'keeper' ? ' (if your league drafts in reverse order of finish).' : ' in a reverse-standings rookie draft.') : 'Nothing carries over in a redraft league, so there is nothing to sell and no pick to play for. Set your best lineup and play spoiler.'}[pl.v];
-    var h = '<div class="olk" id="olk" data-v="' + pl.v + '" data-kind="' + pl.kind + '" data-po="' + me.po.toFixed(4) + '"><span class="vd ' + chip[1] + '">' + chip[0] + '</span><h3>' + title + '</h3>' +
+    var h = '<div class="olk" id="olk" data-v="' + pl.v + '" data-kind="' + pl.kind + '" data-po="' + me.po.toFixed(4) + '"' + (live && me.wk ? ' data-sw="' + swing(me) + '" data-wk="' + me.wk.w + '"' : '') + '><span class="vd ' + chip[1] + '">' + chip[0] + '</span><h3>' + title + '</h3>' +
       '<p class="olline"><b>' + rec + '</b> · ' + ord(pfr) + ' of ' + pl.n + ' in points · <b>' + pct(me.po, live) + '</b>' + (live ? ' to make the playoffs' : ' of the playoffs') + ' (' + info.spots + ' of ' + pl.n + ' get in)' +
-      (live ? ' · about ' + me.ew.toFixed(1) + ' wins · regular season ends Week ' + info.last : '') + '</p><p class="olwhy">' + why + '</p>' +
+      (live ? ' · about ' + me.ew.toFixed(1) + ' wins · regular season ends Week ' + info.last : '') + '</p>' + (live ? weekLine(me) : '') + '<p class="olwhy">' + why + '</p>' +
       (pl.owned && me.picks.length ? '<p class="olpk"><b>Your picks</b> ' + pickLine(me) + '</p>' : pl.owned ? '<p class="olpk"><b>Your picks</b> none in the next two drafts (rounds 1-3)</p>' : '');
     if(pl.buys.length){ h += '<h4>Who to trade for</h4><ul>' + pl.buys.map(function(b){ var o = b.offer, q = pk(b.pick, true), ot = !o ? (q ? 'Nobody on your bench matches him. ' + (q.own ? 'A pick of yours worth about the same: ' : 'A pick worth about the same: ') + E(q.label) + ' (' + q.v.toLocaleString() + ')' : pl.owned ? 'Nobody on your bench matches him and no pick you hold is near his value - build the offer in the calculator' : 'Nobody on your bench matches his value - build the offer above')
           : 'Offer ' + o.map(function(c){ return E(c.mp.n) + ' (' + c.mp.pos + ', ' + c.v.toLocaleString() + ')'; }).join(' and ') + ' off your bench', give = o ? o.map(function(c){ return c.mp.n; }).join(';') : (q ? q.n : '');
@@ -179,7 +201,7 @@ window.bsOutlook = (function(){
     var info = sim(l, teams, sched, n || 1500), ty = l.settings ? l.settings.type : 0, keep = ty === 1 || ty === 2, live = info.weeks.length > 0;
     var v = !live ? (me.po >= 0.5 ? 'in' : 'out') : me.po >= 0.7 ? 'buy' : me.po >= 0.35 ? 'bubble' : me.po >= 0.12 ? 'long' : 'out';
     var chip = {buy: ['Buy', 'buy'], 'in': ['Buy', 'buy'], bubble: ['Hold', 'hold'], long: [keep ? 'Sell' : 'Hold', keep ? 'sell' : 'hold'], out: [keep ? 'Sell' : 'Out', keep ? 'sell' : 'hold']}[v];
-    return {v: v, txt: chip[0], cls: chip[1], po: me.po, pct: pct(me.po, live), live: live}; }
-  return {sim: sim, plan: plan, quick: quick, ownPicks: ownPicks, lineup: lineup, slots: slots, games: games, pf: pf, html: html};
+    return {v: v, txt: chip[0], cls: chip[1], po: me.po, pct: pct(me.po, live), live: live, sw: live ? swing(me) : null, wk: live && me.wk ? me.wk.w : null, pw: live && me.wk ? me.wk.pw : null}; }
+  return {sim: sim, plan: plan, quick: quick, ownPicks: ownPicks, lineup: lineup, slots: slots, games: games, pf: pf, html: html, swing: swing, weekLine: weekLine};
 })();
 """

@@ -116,3 +116,15 @@
   Not yet published on its own - it rides the next rebuild.
 - Still open: FanDuel same-game discount table; the page pass (step 9); gameday.yml fetch retry; Cold L3 at 100 player-weeks; Thursday checks (availfix after the IND / HOU final report, inactive Void on Live).
 
+
+# Added 11/18 (calibration round, RUNBOOK "11/18, 1:00-1:40 AM CT")
+
+- **Run `python3 research/floor_depth.py in/legsnaps.json` once Week 11 is graded**, next to blend_weight.py and recal.py. Read four things:
+  1. Section 1, "lost N straight": any market where the live rule lost to FanDuel alone two weeks running gets its weight moved a step
+     (calib.py's rule). Anytime TD went 0.5 -> 0.3 on 11/18; if FanDuel alone beats 0.3 again in Week 11 the next step is 0.2.
+  2. Section 3, the receiving-yards floor cut: it must still be better in every held-out week with Week 11 in. If Week 11 is worse,
+     halve `FLOOR_CUT` or take it out - do not explain the week away.
+  3. Section 3, "same test, Receptions": 4 of 5 on 11/18. If Week 11 makes it 5 of 6 it still has not passed; all weeks or nothing.
+     Its over-statement was the largest on the board (277 legs: price 69.3%, hit 60.6%), so look at it first.
+  4. Section 4b, the "SINCE IT WAS PICKED" line: deep receiving line + model 10 points over the price. 32 of 50 through Week 10 means
+     nothing on its own (picked after looking). Two or three graded weeks on that line decide whether it becomes a tracked tier.

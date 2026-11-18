@@ -57,6 +57,8 @@ html.lgopen{overflow:hidden}
 .lgrow b{font-size:15px;font-weight:600}
 .lgrow .lgrc{flex:none;text-align:right;font-variant-numeric:tabular-nums;font-size:14px;font-weight:600;min-width:52px}
 .lgrow .lgrc i{display:block;font-style:normal;font-weight:400;color:var(--mute);font-size:11.5px}
+.lgrow .lgrc i.lgsw{white-space:nowrap} .lgrow .lgrc i.lgsw.mid{color:var(--ink);font-weight:600} .lgrow .lgrc i.lgsw.big{color:var(--red);font-weight:700}
+.lgsheet .lgsort{display:flex;gap:6px;margin:0 16px 8px} .lgsheet .lgsort[hidden]{display:none} .lgsheet .lgsort .tab{flex:1 0 0;min-height:36px;font-size:12.5px;padding:0 8px}
 .lgrow:focus-visible,.lgbar .lgcur:focus-visible,.lgsheet .lgx:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 """
 
@@ -89,7 +91,7 @@ JS = r"""
   window.bsTabs = { mount: tabsMount };
 
   // ---------- league bar + sheet ----------
-  var LG = { opt: null, user: null, uname: '', leagues: [], cur: null, rec: {}, chip: {}, q: '', busy: 0, queue: [] };
+  var LG = { opt: null, user: null, uname: '', leagues: [], cur: null, rec: {}, chip: {}, q: '', busy: 0, queue: [], sort: '' };
   function meta(l){ var rp = l.roster_positions || [], sc = l.scoring_settings || {}, t = l.settings ? l.settings.type : 0, rec = sc.rec || 0;
     var b = [(l.total_rosters || '?') + ' teams', t === 2 ? 'dynasty' : t === 1 ? 'keeper' : 'redraft'];
     if(rp.indexOf('SUPER_FLEX') >= 0) b.push('superflex');
@@ -106,18 +108,25 @@ JS = r"""
     return { txt: (s.wins || 0) + '-' + (s.losses || 0) + (s.ties ? '-' + s.ties : ''), rank: order.indexOf(r) + 1, n: ros.length }; }
   function bar(){ var h = LG.opt && LG.opt.bar; if(!h) return; if(!LG.leagues.length){ h.hidden = true; h.innerHTML = ''; return; }
     var l = LG.cur, r = l && LG.rec[l.league_id], c = l && LG.chip[l.league_id]; h.hidden = false;
-    h.innerHTML = '<button type="button" class="lgcur" aria-haspopup="dialog"><span class="lgtx"><b>' + esc(l ? l.name : 'Pick a league') + '</b><small>' + (l ? (r ? esc(r.txt) + ' · ' + ord(r.rank) + ' of ' + r.n + ' · ' + esc(kind(l)) : esc(meta(l))) : LG.leagues.length + ' leagues on this account') + '</small></span>'
+    h.innerHTML = '<button type="button" class="lgcur" aria-haspopup="dialog"><span class="lgtx"><b>' + esc(l ? l.name : 'Pick a league') + '</b><small>' + (l ? (r ? esc(r.txt) + ' · ' + ord(r.rank) + ' of ' + r.n + (c && c.sw >= 10 ? ' · ' + c.sw + '-pt week' : '') + ' · ' + esc(kind(l)) : esc(meta(l))) : LG.leagues.length + ' leagues on this account') + '</small></span>'
       + (c ? '<span class="lgchip ' + esc(c.cls || '') + '"' + (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + esc(c.txt) + '</span>' : '')
       + '<span class="lgsx">' + (LG.leagues.length > 1 ? 'Switch · ' + LG.leagues.length : 'League') + ' ▾</span></button>';
     h.firstChild.addEventListener('click', open); }
   function rowHtml(l){ var r = LG.rec[l.league_id], c = LG.chip[l.league_id], on = LG.cur && LG.cur.league_id === l.league_id;
     return '<button type="button" class="lgrow' + (on ? ' on' : '') + '" data-id="' + esc(l.league_id) + '"' + (on ? ' aria-current="true"' : '') + '><span class="lgtx"><b>' + esc(l.name) + '</b><small>' + esc(meta(l)) + '</small></span>'
       + (c ? '<span class="lgchip ' + esc(c.cls || '') + '"' + (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + esc(c.txt) + '</span>' : '')
-      + '<span class="lgrc">' + (r ? esc(r.txt) + '<i>' + ord(r.rank) + ' of ' + r.n + '</i>' : r === null ? '<i>not on a roster</i>' : '<i>…</i>') + '</span></button>'; }
+      + '<span class="lgrc">' + (r ? esc(r.txt) + '<i>' + ord(r.rank) + ' of ' + r.n + '</i>' : r === null ? '<i>not on a roster</i>' : '<i>…</i>')
+      + (c && c.sw != null ? '<i class="lgsw' + (c.sw >= 25 ? ' big' : c.sw >= 10 ? ' mid' : '') + '" title="Points of playoff odds between winning and losing this week">' + (c.sw >= 1 ? c.sw + '-pt week' : 'no swing') + '</i>' : '') + '</span></button>'; }
+  // 11/18: "Biggest week first" - the leagues where this week moves the reader's playoff odds the most lead; leagues not read yet,
+  // or with nothing at stake (season over, no roster), keep their order after them.
+  function swOf(l){ var c = LG.chip[l.league_id]; return c && c.sw != null ? c.sw : -1; }
   function list(){ var ul = $('#lgov .lglist'); if(!ul) return;
     var ls = LG.leagues.filter(function(l){ return !LG.q || String(l.name).toLowerCase().indexOf(LG.q) >= 0; });
+    if(LG.sort === 'sw') ls = ls.map(function(l, i){ return [l, i]; }).sort(function(a, b){ return (swOf(b[0]) - swOf(a[0])) || (a[1] - b[1]); }).map(function(x){ return x[0]; });
     ul.innerHTML = ls.length ? ls.map(function(l){ return '<li>' + rowHtml(l) + '</li>'; }).join('') : '<li class="none">No league matches that.</li>'; }
-  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); }
+  function refresh(id){ var b = $('#lgov .lgrow[data-id="' + id + '"]'), l = byId(id); if(LG.sort === 'sw' && $('#lgov')) list(); else if(b && l) b.parentNode.innerHTML = rowHtml(l); if(LG.cur && LG.cur.league_id === id) bar(); sortBtn(); }
+  function sortBtn(){ var s = $('#lgov .lgsort'); if(!s) return; var n = LG.leagues.filter(function(l){ return swOf(l) >= 0; }).length; s.hidden = n < 2;
+    [].forEach.call(s.querySelectorAll('.tab'), function(b){ var on = (b.getAttribute('data-s') || '') === (LG.sort || ''); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
   function pump(){ while(LG.busy < 3 && LG.queue.length){ (function(l){ LG.busy++;
       LG.opt.get('league/' + l.league_id + '/rosters').then(function(ros){ ros = ros || []; LG.rec[l.league_id] = recOf(ros);
           if(LG.opt.extra && LG.rec[l.league_id] && LG.chip[l.league_id] === undefined) return Promise.resolve(LG.opt.extra(l, ros)).then(function(c){ LG.chip[l.league_id] = c || null; }, function(){ LG.chip[l.league_id] = null; });
@@ -130,14 +139,17 @@ JS = r"""
     ov.innerHTML = '<div class="lgsheet" role="dialog" aria-modal="true" aria-label="Your Sleeper leagues"><header><h3>Your leagues<small>' + LG.leagues.length + '</small></h3><button type="button" class="lgx" aria-label="Close">✕</button></header>'
       + '<div class="lgwho"><span>Sleeper username <b>' + esc(LG.uname) + '</b></span><button type="button" class="lgchg">Use another</button></div>'
       + (LG.leagues.length > 8 ? '<input type="search" class="lgq" placeholder="Search your leagues" autocomplete="off" aria-label="Search your leagues">' : '')
+      + (LG.opt.extra && LG.leagues.length > 2 ? '<div class="tabs lgsort" role="group" aria-label="Order" hidden><button type="button" class="tab" data-s="">Sleeper order</button><button type="button" class="tab" data-s="sw">Biggest week first</button></div>' : '')
       + '<ul class="lglist"></ul></div>';
     document.body.appendChild(ov); document.documentElement.classList.add('lgopen');
     ov.addEventListener('click', function(e){
       if(e.target === ov || e.target.closest('.lgx')){ close(); return; }
       if(e.target.closest('.lgchg')){ close(); if(LG.opt.onChange) LG.opt.onChange(); return; }
+      var sb = e.target.closest('.lgsort .tab'); if(sb){ LG.sort = sb.getAttribute('data-s') || ''; try{ sessionStorage.setItem('bs_lg_sort', LG.sort); }catch(x){} list(); sortBtn(); return; }
       var row = e.target.closest('.lgrow'); if(row){ var l = byId(row.dataset.id); close(); if(l && LG.opt.onPick) LG.opt.onPick(l); } });
     var q = $('.lgq', ov); if(q) q.addEventListener('input', function(){ LG.q = q.value.trim().toLowerCase(); list(); });
-    list(); fill(); var on = $('.lgrow.on', ov); if(on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' }); }
+    try{ LG.sort = sessionStorage.getItem('bs_lg_sort') || ''; }catch(x){ LG.sort = ''; }
+    list(); sortBtn(); fill(); var on = $('.lgrow.on', ov); if(on && on.scrollIntoView && LG.sort !== 'sw') on.scrollIntoView({ block: 'nearest' }); }
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && $('#lgov')) close(); });
   window.bsLg = {
     // mount({bar: element, get: function(path) -> Promise, onPick(league), onChange(), extra(league, rosters) -> {txt, cls, title} | Promise})

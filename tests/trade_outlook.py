@@ -58,7 +58,7 @@ async def run(b, theme, players, me_good, kind, auto=False, traded=None):
     await pg.wait_for_selector("#olk", timeout=15000); await pg.wait_for_timeout(500)
     d = await pg.evaluate(r"""() => { const o = document.querySelector('#olk'), de = document.documentElement; const lis = h => { const hd = [...o.querySelectorAll('h4')].find(x => x.textContent.indexOf(h) === 0); return hd ? [...hd.nextElementSibling.querySelectorAll('li')].map(li => li.innerText.replace(/\s+/g, ' ')) : []; };
         return {v: o.dataset.v, kind: o.dataset.kind, po: +o.dataset.po, chip: o.querySelector('.vd').textContent, title: o.querySelector('h3').textContent, line: o.querySelector('.olline').innerText, why: o.querySelector('.olwhy').innerText,
-                buys: lis('Who to trade for'), sells: lis('Who to sell'), picks: (o.querySelector('.olpk') || {}).innerText || '', rows: [...o.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.textContent)), over: de.scrollWidth - de.clientWidth, top: Math.round(o.getBoundingClientRect().top + scrollY)}; }""")
+                buys: lis('Who to trade for'), sells: lis('Who to sell'), picks: (o.querySelector('.olpk') || {}).innerText || '', wk: (function(){ const w = o.querySelector('.olwk'); return w ? {sw: +w.dataset.sw, pw: +w.dataset.pw, win: +w.dataset.win, lose: +w.dataset.lose, text: w.innerText.replace(/\s+/g, ' '), cardSw: o.dataset.sw, big: !!w.querySelector('.olsw.big'), after: w.previousElementSibling.className, before: w.nextElementSibling.className} : null; })(), rows: [...o.querySelectorAll('table tr')].map(tr => [...tr.children].map(td => td.textContent)), over: de.scrollWidth - de.clientWidth, top: Math.round(o.getBoundingClientRect().top + scrollY)}; }""")
     if os.environ.get("SHOT"):   # a picture of the card for a human to look at
         await pg.evaluate("document.querySelector('#olk').scrollIntoView({block: 'start'}); window.scrollBy(0, -64)"); await pg.wait_for_timeout(300)
         await pg.screenshot(path=os.path.join(os.environ["SHOT"], f"outlook_{int(me_good)}{kind}_{theme}.png"))
@@ -88,6 +88,12 @@ async def main():
             await pg.evaluate("document.querySelector('#olk [data-ol]').scrollIntoView({block: 'center'})"); await pg.click("#olk [data-ol]"); await pg.wait_for_timeout(400)
             stt = await pg.evaluate("(() => { for (const k of Object.keys(localStorage)) if (k.indexOf('bs_trade_') === 0) return JSON.parse(localStorage.getItem(k)); return null; })()")
             check(bool(stt) and stt.get("B") == [names[0]], f"{theme}: Load puts the target on the calculator's other side ({stt and stt.get('B')})")
+            # 11/18: how much this week matters - the reader's chance to win it, and the playoff odds on each side of the result
+            w = d["wk"]
+            check(bool(w) and re.search(r"Week 11 vs Team \d+", w["text"]) and w["after"] == "olline" and w["before"] == "olwhy", f"{theme}: under the odds, this week's game against the real opponent ({w and w['text'][:96]})")
+            if w:
+                check(0.05 < w["pw"] < 0.95 and w["lose"] <= d["po"] <= w["win"] and abs(w["pw"] * w["win"] + (1 - w["pw"]) * w["lose"] - d["po"]) <= 0.01, f"{theme}: win {w['win']:.0%} / lose {w['lose']:.0%} at {w['pw']:.0%} to win averages back to the {d['po']:.0%} on the card")
+                check(w["sw"] == round((w["win"] - w["lose"]) * 100) and ((f"{w['sw']}-point week" in w["text"].lower()) if w["sw"] >= 1 else ("no swing" in w["text"].lower())) and str(w["sw"]) == str(w["cardSw"]), f"{theme}: the swing is the gap between the two, in points ({w['sw']}; the card carries {w['cardSw']} for the league list)")
             check(d["over"] <= 0 and not errs, f"{theme}: no sideways scroll, no script errors ({d['over']}, {errs[:1]})")
             if theme == "dark":
                 # 11/17 evening: a saved username imports by itself on a return visit; the page comes back on the tab it was left on (the

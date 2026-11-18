@@ -548,7 +548,8 @@ JS = r"""
       $('#slIdeas').innerHTML = ideas.length ? ideas.map(function(i){ return '<li><b class="t">'+esc(i.give.n)+'</b> <small>('+i.give.pos+', '+i.give.v.toLocaleString()+')</small> for <b class="t">'+esc(i.get.n)+'</b> <small>('+i.get.pos+', '+i.get.v.toLocaleString()+') with '+esc(i.team)+' · '+(i.gain>=0?'+':'')+i.gain.toLocaleString()+' for you</small><button class="addbtn" data-idea="'+esc(i.give.n)+'|'+esc(i.get.n)+'">Load</button></li>'; }).join('') : '<li><small>'+(mine? 'No balanced 1-for-1 swaps from a surplus position right now - use the +A / +B buttons on the rosters to build one by hand.' : 'You are not on a roster in this league.')+'</small></li>';
       var okc = $('#olk'), vd = okc && okc.querySelector('.vd');
       if(vd && S.sched !== undefined){ var po = +okc.dataset.po, live = Object.keys(S.sched).length > 0;
-        bsLg.note(l.league_id, null, {txt: vd.textContent+' · '+(live ? (po >= 0.995 ? '99%+' : po < 0.005 ? 'under 1%' : Math.round(po*100)+'%') : (po >= 0.5 ? 'in' : 'out')), cls: vd.classList.contains('sell') ? 'sell' : vd.classList.contains('hold') ? 'hold' : 'buy', title: 'Playoff odds'}); }
+        bsLg.note(l.league_id, null, {txt: vd.textContent+' · '+(live ? (po >= 0.995 ? '99%+' : po < 0.005 ? 'under 1%' : Math.round(po*100)+'%') : (po >= 0.5 ? 'in' : 'out')), cls: vd.classList.contains('sell') ? 'sell' : vd.classList.contains('hold') ? 'hold' : 'buy', title: 'Playoff odds',
+          sw: okc.dataset.sw != null && okc.dataset.sw !== '' ? +okc.dataset.sw : null, wk: okc.dataset.wk ? +okc.dataset.wk : null}); }   // sw: how many points of playoff odds this week moves (11/18) - the league list can sort by it
       $('#ideasCt').textContent = ideas.length ? String(ideas.length) : ''; $('#slEmpty').hidden = true;
       $('#slOut').hidden = false; }
     // The league sheet's verdict for a league that is not on screen: its rosters (given), the weeks left on its schedule, then the same
@@ -558,7 +559,7 @@ JS = r"""
         var gp = Math.max.apply(null, ros.map(function(x){ return bsOutlook.games(x, l); })), last = ((l.settings && l.settings.playoff_week_start) || 15) - 1, ws = []; for(var w = gp + 1; w <= last; w++) ws.push(w);
         return Promise.all(ws.map(function(w){ return get('league/'+l.league_id+'/matchups/'+w).catch(function(){ return []; }); })).then(function(ms){ var sc = {};
           ms.forEach(function(m, i){ var by = {}; (m||[]).forEach(function(x){ if(x.matchup_id == null) return; (by[x.matchup_id] = by[x.matchup_id] || []).push(x.roster_id); }); sc[ws[i]] = Object.keys(by).map(function(k){ return by[k]; }).filter(function(p){ return p.length === 2; }); });
-          var q = bsOutlook.quick(l, teamsOf(ros, [], pm), sc, 1500); return q ? {txt: q.txt+' · '+q.pct, cls: q.cls, title: 'Playoff odds'} : null; }); }); }
+          var q = bsOutlook.quick(l, teamsOf(ros, [], pm), sc, 1500); return q ? {txt: q.txt+' · '+q.pct, cls: q.cls, title: 'Playoff odds', sw: q.sw, wk: q.wk} : null; }); }); }
     bsLg.mount({bar: $('#lgbar'), get: get, extra: leagueChip,
       onPick: function(l){ pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); TABS.show('league', true); window.scrollTo({top:0}); },
       onChange: function(){ bsLg.clear(); $('#slRow').hidden = false; $('#slOut').hidden = true; $('#slEmpty').hidden = false; S.rosters = null; var i = $('#slUser'); i.value = ''; i.focus(); } });
