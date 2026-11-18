@@ -907,6 +907,11 @@ if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ s
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
     shutil.copytree(os.path.join(OUT, "promo"), os.path.join(SITE, "promo"), dirs_exist_ok=True)
+# 11/18 (owner: "Can you do the promo studio"): the Promo Studio at /studio/ - the owner's tool for putting a promo's exact legs and
+# prices on his own art (assets/studio: one page and its fonts; built 11/3 on a side branch, never published until now). It reads the
+# home page's promo cards in the browser, so nothing is built into it; it is noindex, left out of the sitemap and not in the menu.
+if os.path.isdir(os.path.join(HERE, "assets", "studio")):
+    shutil.copytree(os.path.join(HERE, "assets", "studio"), os.path.join(SITE, "studio"), dirs_exist_ok=True)
 # ---- /b/ short bet links (shortlinks.py, owner 10/27): one landing page per promoted bet at /b/w<week>-<slot>/ with its square poster
 # as the X / OG card, plus /b/ which lists this week's promoted bets and renders builder slips from Supabase (?s=<code>).
 # The clone's b/ folder is copied over, never emptied, so last week's links keep working after their promo/ posters are replaced.
@@ -1415,7 +1420,7 @@ _today = _dt.date.today().isoformat(); _urls = []
 for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
-    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/")): continue
+    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/")): continue
     try:
         if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
     except Exception: pass

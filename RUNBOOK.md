@@ -2191,3 +2191,25 @@ row; on, thirteen.
   524px. Builder 7.7 -> 5.4 -> 5.4. The boards gave back most of the first pass's saving on purpose: the stub was short because
   it hid the page. Next lever if the owner wants it shorter: each best parlay's legs on one line until tapped (about 6.5 screens).
 - tests/page_tight.py (68): both pages re-written for the second pass; receipts cards are not folded or trimmed.
+
+## 11/18, 5:20-5:45 PM CT: the Promo Studio goes onto the site (owner 4:09 PM: "Can you do the promo studio")
+
+- What it is: the owner's tool at /studio/ for promo graphics - pick one of the week's promos (or type legs by hand) and it puts the
+  exact legs and FanDuel prices on a 1080 canvas, either as a slip card dropped onto art he made in ChatGPT ("Slip on my art", drag
+  to place) or as a full BetSweep poster (square, 4:5, story); it also writes the ChatGPT prompt. Built 11/3 on the site repo's
+  `promo-studio` branch and never published. It lives in the generators now: assets/studio (one page, seven fonts with their
+  licences); build_site.py copies it to site/studio. It is `noindex`, out of the sitemap, and not in the menu or on "Every page".
+- It reads promos from the home page in the browser (`fetch('/')`, `parsePromos`: `article.promo`, `ul.pl li[data-who][data-mk]`,
+  `.o`, `.mp`, `.pf .big`, `.cap`, `.slink code`). home.promo_card still writes exactly that. New: each leg carries `data-at` (the
+  game as the schedule has it, "IND @ HOU") - the studio had been drawing a game id ("HOU-IND", alphabetical) as away-at-home.
+- Changed before publishing, and why: the slip was drawn as a look-alike of a sportsbook's betslip (white card, blue header, yellow
+  "SGP" chip, the book's market names, "TOTAL WAGER / TOTAL PAYOUT"), and the "ChatGPT draws it all" prompt asked for the same. A
+  graphic like that reads as a screenshot of a bet placed at that book. It is BetSweep's own card now - cream, navy header with the
+  wordmark, red marks; plain leg words; "EXAMPLE STAKE / WOULD PAY"; a last line "BETSWEEP PICK · FANDUEL PRICES WHEN POSTED ·
+  PRICES MOVE" - and the prompt asks for that card and says it is not a sportsbook's betslip. Told the owner. (His standing ask from
+  October was one BetSweep slip look everywhere; this follows it.)
+- tests/studio.py (26, in the pre-publish set): a home page whose promo cards are made by home.promo_card itself (so markup drift
+  fails here); every string the canvas paints is recorded and checked (legs, prices, boost arithmetic, game orientation, the example
+  and source lines, no sportsbook wording); pixel colours of the card; three poster sizes; the PNG download; the two prompts; a
+  multi-game promo; `?p=w11-5`; today's real home page (no promos up: says so, legs by hand still draw); a phone.
+- Week 11 has no promos posted yet (Wednesday), so the live page will say "No promoted bets found" until Thursday's are up.

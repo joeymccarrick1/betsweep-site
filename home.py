@@ -591,7 +591,8 @@ def promo_card(p, kicker="Promoted", hero=False):
         if l.get("hp") is not None and l.get("p") is not None: mp = f'<span class="mp" title="Legs at this price have hit about {l["hp"]*100:.0f}% this season. Our model alone says {l["p"]*100:.0f}%.">graded {l["hp"]*100:.0f}%</span>'
         else: mp = f'<span class="mp">model {l["p"]*100:.0f}%</span>' if l.get("p") is not None else ""
         _gx = f' data-glx="{E(json.dumps(l["glx"]))}"' if l.get("glx") else ""
-        legs += f'<li data-g="{E(l.get("gid") or "")}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
+        # data-at (11/18): the game the way the schedule has it ("IND @ HOU") - the Promo Studio draws it; a game id is alphabetical, not away-at-home
+        legs += f'<li data-g="{E(l.get("gid") or "")}" data-at="{at_gid(l.get("gid")) if l.get("gid") else ""}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
     res = (p.get("result") or "").upper()
     st = '<span class="st win">Cashed</span>' if res in ("W", "WIN", "HIT") else ('<span class="st loss">Missed</span>' if res in ("L", "LOSS", "MISS") else _pst(p))
     # audit 10/26: a +11825 lotto showing "Model 0.1% to hit · fair +181169" read like the site arguing against its own post -
