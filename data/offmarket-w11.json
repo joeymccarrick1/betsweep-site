@@ -12,6 +12,90 @@
    "gap": 3.8,
    "p": 0.2782,
    "seen": "2026-11-18 6:34"
+  },
+  "Kyle Monangai|Receptions|2": {
+   "pl": "Kyle Monangai",
+   "m": "Receptions",
+   "ln": 2.0,
+   "g": "CHI-NO",
+   "fd": 210.0,
+   "dk": 178.0,
+   "hr": 170.0,
+   "gap": 3.7,
+   "p": 0.365,
+   "seen": "2026-11-18 6:34"
+  },
+  "Brenton Strange|Receptions|5": {
+   "pl": "Brenton Strange",
+   "m": "Receptions",
+   "ln": 5.0,
+   "g": "JAX-NYG",
+   "fd": 300.0,
+   "dk": 252.0,
+   "hr": 250.0,
+   "gap": 3.4,
+   "p": 0.2731,
+   "seen": "2026-11-18 6:34"
+  },
+  "Nate Boerkircher|Receiving Yards|25": {
+   "pl": "Nate Boerkircher",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "JAX-NYG",
+   "fd": 320.0,
+   "dk": 237.0,
+   "hr": 225.0,
+   "gap": 5.9,
+   "p": 0.2592,
+   "seen": "2026-11-18 6:34"
+  },
+  "Kalif Raymond|Receiving Yards|40": {
+   "pl": "Kalif Raymond",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "CHI-NO",
+   "fd": 320.0,
+   "dk": 271.0,
+   "hr": 250.0,
+   "gap": 3.1,
+   "p": 0.2592,
+   "seen": "2026-11-18 6:34"
+  },
+  "Xavier Worthy|Receiving Yards|40": {
+   "pl": "Xavier Worthy",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "ARI-KC",
+   "fd": 220.0,
+   "dk": 187.0,
+   "hr": 180.0,
+   "gap": 3.6,
+   "p": 0.3223,
+   "seen": "2026-11-18 6:34"
+  },
+  "Tee Higgins|Receptions|7": {
+   "pl": "Tee Higgins",
+   "m": "Receptions",
+   "ln": 7.0,
+   "g": "CIN-WAS",
+   "fd": 188.0,
+   "dk": 165.0,
+   "hr": 165.0,
+   "gap": 3.0,
+   "p": 0.331,
+   "seen": "2026-11-18 6:34"
+  },
+  "Bhayshul Tuten|Receptions|3": {
+   "pl": "Bhayshul Tuten",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "JAX-NYG",
+   "fd": 162.0,
+   "dk": 142.0,
+   "hr": 140.0,
+   "gap": 3.2,
+   "p": 0.299,
+   "seen": "2026-11-18 6:34"
   }
  }
 }
