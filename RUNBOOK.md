@@ -2335,3 +2335,13 @@ row; on, thirteen.
 - **Open:** tests/page_tight fails on home (8.4 phone screens against 6.5) on the published site too - two long promo cards today. Not
   caused by these changes; look at folding promo captions on Today.
 - **Hunches:** chat-only first pass so far (scratch in /tmp/hunch, not kept). The site feature is not built.
+
+## 11/19 3:25 PM: one identity - the Social profile lives on My BetSweep (owner: "My BetSweep and my profile on the social page need to combine")
+- **My BetSweep** opens on a profile card (`#mep`, `MEP_JS` / `_mep_js()` in account.py, styles at the top of ME_CSS): avatar, @username,
+  posted record and followers, **Edit profile** (the same username / colour / avatar / team editor) and **My posted slips**
+  (`/social/#u=<id>`). The avatar lists are read out of social.py at build time, so the two editors cannot drift.
+- **Header pill:** shows the chosen emoji, else the username's initial (account.js `prof()`, `profLoad()`, `bsAccount.setProfile`).
+  The profile is remembered per browser in `bs_prof` (not a synced key) and re-read at most every 10 minutes per tab.
+- **Social:** the bar button is now **My slips** (opens your posted slips, as before). Editing there still works and updates the header.
+- Do not put a `//` comment in the middle of a one-line script statement in social.py - it cut off the rest of the line once today.
+- tests/me_profile.py (21 checks; the real account script against a stand-in client) is in the full set (34 tests).

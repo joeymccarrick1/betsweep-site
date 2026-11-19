@@ -93,7 +93,7 @@ async def main():
             check(m2["over"] == 0, f"[{theme}] no sideways scroll with six tabs")
             # ---- own username and avatar (v4) ----
             await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(300)
-            check(await pg.is_visible('#mebtn'), f"[{theme}] a signed-in account gets a My profile button")
+            check(await pg.is_visible('#mebtn'), f"[{theme}] a signed-in account gets a My slips button")
             await pg.click('#mebtn'); await pg.wait_for_timeout(700); await pg.click('[data-edit="1"]'); await pg.wait_for_timeout(300)
             tm = await pg.evaluate("(function(){ var a = [...document.querySelectorAll('.pedit input[name=e]')].map(function(i){ return i.value; }), t = [...document.querySelectorAll('.pedit label[title]')]; return [a.length, new Set(a).size, t.length, t.filter(function(l){ return l.getBoundingClientRect().width >= 44; }).length, document.documentElement.scrollWidth - innerWidth]; })()")
             check(tm[0] == 49 and tm[1] == 49 and tm[2] == 32 and tm[3] == 32 and tm[4] <= 0, f"the avatar picker offers initials, 16 fun emoji and one for each of the 32 teams, none twice, each a 44px target, no sideways scroll ({tm})")

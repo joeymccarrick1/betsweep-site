@@ -109,7 +109,12 @@ ACCOUNT_JS = r"""
   // ---- UI ----
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   var slot = document.getElementById('bsacct'); if(!slot) return;
-  function paint(){ if (user){ var e = user.email||'', ini = (e[0]||'?').toUpperCase(); slot.innerHTML = '<a class="me" href="/me/" title="'+esc(e)+'"><i>'+esc(ini)+'</i>My BetSweep</a><button type="button" class="out" title="Sign out">Out</button>'; slot.querySelector('.out').addEventListener('click', function(){ sb.auth.signOut().then(function(){ location.reload(); }); });
+  function prof(){ if (!user) return null; if (window.bsAccount.profile && window.bsAccount.profile.user_id === user.id) return window.bsAccount.profile; try { var p = JSON.parse(localStorage.getItem('bs_prof') || 'null'); return p && p.user_id === user.id ? p : null; } catch(e){ return null; } }
+  // 11/19 (owner: "My BetSweep and my profile on the social page need to combine"): one identity. The header shows the avatar picked on My BetSweep.
+  window.bsAccount.setProfile = function(p){ if (!p || !p.handle) return; window.bsAccount.profile = p; try { localStorage.setItem('bs_prof', JSON.stringify({user_id: p.user_id, handle: p.handle, color: p.color, emoji: p.emoji || null})); } catch(e){} paint(); document.dispatchEvent(new CustomEvent('bs-profile', {detail: p})); };
+  function profLoad(){ if (!user || !sb.rpc) return; var c = prof(), fresh = 0; try { fresh = +sessionStorage.getItem('bs_prof_at') || 0; } catch(e){} if (c) window.bsAccount.profile = c; if (c && Date.now() - fresh < 600000) return;
+    sb.rpc('feed_profile_me').then(function(r){ if (r && r.data && r.data.user_id && user && r.data.user_id === user.id){ try { sessionStorage.setItem('bs_prof_at', String(Date.now())); } catch(e){} window.bsAccount.setProfile(r.data); } }, function(){}); }
+  function paint(){ if (user){ var e = user.email||'', pf = prof(), ini = pf && pf.emoji ? pf.emoji : ((pf && pf.handle ? pf.handle[0] : e[0])||'?').toUpperCase(); slot.innerHTML = '<a class="me" href="/me/" title="'+esc(e)+'"><i>'+esc(ini)+'</i>My BetSweep</a><button type="button" class="out" title="Sign out">Out</button>'; slot.querySelector('.out').addEventListener('click', function(){ sb.auth.signOut().then(function(){ location.reload(); }); });
       var tabs = document.querySelector('.sitenav .tabs'); if (tabs && !tabs.querySelector('.mout')){ var mo = document.createElement('a'); mo.href = '#'; mo.className = 'mout'; mo.textContent = 'Sign out'; mo.addEventListener('click', function(e){ e.preventDefault(); sb.auth.signOut().then(function(){ location.reload(); }); }); tabs.appendChild(mo); }
       var mm0 = tabs && tabs.querySelector('.mme'); if (mm0) mm0.parentNode.removeChild(mm0); }
     else { slot.innerHTML = '<button type="button" class="in">Sign in</button>'; slot.querySelector('.in').addEventListener('click', openDlg);
@@ -138,7 +143,7 @@ ACCOUNT_JS = r"""
       var g = dlg.querySelector('#bsgoogle'); if (g) g.addEventListener('click', function(){ sb.auth.signInWithOAuth({provider: 'google', options: {redirectTo: location.origin + location.pathname}}); }); }
     dlg.hidden = false; setTimeout(function(){ var i = dlg.querySelector('#bsemail'); if(i) i.focus(); }, 50); }
   function toast(t){ var el = document.createElement('div'); el.textContent = t; el.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120;box-shadow:0 8px 24px rgba(0,0,0,.3)'; document.body.appendChild(el); setTimeout(function(){ el.remove(); }, 3500); }
-  function onSession(s){ var u = s && s.user; if (u && (!user || user.id !== u.id)){ user = u; window.bsAccount.user = u; paint(); pull().then(function(changed){ ready = true; document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: u, changed: changed}})); if (changed && !/\/me\//.test(location.pathname)){ toast('Synced from your account');
+  function onSession(s){ var u = s && s.user; if (u && (!user || user.id !== u.id)){ user = u; window.bsAccount.user = u; paint(); profLoad(); pull().then(function(changed){ ready = true; document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: u, changed: changed}})); if (changed && !/\/me\//.test(location.pathname)){ toast('Synced from your account');
         // 11/15 (owner video: the builder "freaking out flashing"): a page that rewrote a synced key on load made every pull look like a change, so
         // the page reloaded itself over and over. One sync reload per tab per 2 minutes; past that the synced data shows on the next visit.
         var last = 0; try { last = +sessionStorage.getItem('bs_sync_rl') || 0; } catch(e){}
@@ -151,6 +156,21 @@ ACCOUNT_JS = r"""
 """
 
 ME_CSS = """
+/* 11/19 the profile card: the Social username and avatar live here now (one identity for the header, My BetSweep and Social) */
+.me .mep{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;align-items:center;margin:12px 0 10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.me .mep[hidden]{display:none}
+.me .mep .pav{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;font-style:normal;color:#fff;letter-spacing:.02em} .me .mep .pav.em{font-size:29px;letter-spacing:0}
+.me .pav.c0{background:#c2410c}.me .pav.c1{background:#0f766e}.me .pav.c2{background:#1d4ed8}.me .pav.c3{background:#7e22ce}.me .pav.c4{background:#be123c}.me .pav.c5{background:#4d7c0f}.me .pav.c6{background:#b45309}.me .pav.c7{background:#334155}
+.me .mep h2{margin:0;font-family:var(--display);font-size:22px;line-height:1.1;color:var(--ink);overflow-wrap:anywhere} .me .mep .pn p{margin:3px 0 0;color:var(--mute);font-size:13px;line-height:1.35}
+.me .mep .pb{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px} .me .mep .pb a,.me .mep .pb button{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer}
+.me .pedit{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:12px} .me .pedit label[for]{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px}
+.me .pedit input#peh{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.me .pedit .hint{margin:5px 0 10px;font-size:12.5px;color:var(--mute)} .me .pedit fieldset{border:0;padding:0;margin:0 0 10px;min-width:0} .me .pedit legend{font-size:12px;font-weight:700;color:var(--mute);padding:0;margin-bottom:6px}
+.me .pedit .sw,.me .pedit .em{display:flex;flex-wrap:wrap;gap:8px} .me .pedit .sw label,.me .pedit .em label{position:relative;cursor:pointer} .me .pedit input[type=radio]{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.me .pedit .sw i{display:block;width:40px;height:40px;border-radius:50%;border:3px solid transparent} .me .pedit .sw input:checked + i{border-color:var(--ink)} .me .pedit .sw input:focus-visible + i,.me .pedit .em input:focus-visible + i{outline:2px solid var(--red);outline-offset:2px}
+.me .pedit .em i{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);font-style:normal;font-size:22px;color:var(--ink)} .me .pedit .em input:checked + i{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.me .pedit .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)} .me .pedit .msg{min-height:18px;margin:4px 0 8px;font-size:13.5px;color:var(--mute)} .me .pedit .msg.err{color:var(--bad);font-weight:700}
+.me .pedit .pbtn{display:flex;gap:8px} .me .pedit .pbtn button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .me .pedit .pbtn .sv{background:var(--red);border-color:var(--red);color:#fff}
 /* 11/16 the hub: three numbers and profit by week, before any scrolling */
 .me .hub{margin:14px 0 4px}
 .me .hubt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -429,6 +449,52 @@ def _base_css():
         css = t[t.index("<style>") + 7: t.index("/* ---- masthead ---- */")]
         return link, css + "a{color:var(--ink)}\n"
     except Exception: return "", ""
+MEP_JS = r"""
+(function(){
+  var box = document.getElementById('mep'); if(!box) return;
+  var EMOJI = __EMOJI__, TEAMS = __TEAMS__, EDIT = false, P = null, REC = null, FANS = null, FOR = null;
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
+  function hcol(){ if(P.color != null) return P.color; var h = 0, t = String(P.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
+  function acc(){ return window.bsAccount || null; }
+  function form(){ var c = hcol();
+    return '<form class="pedit" id="pedit" autocomplete="off"><label for="peh">Username</label><input id="peh" name="h" value="' + esc(P.handle) + '" maxlength="20" inputmode="text" autocapitalize="off" spellcheck="false">' +
+      '<p class="hint">3 to 20 letters, numbers or underscores. You can change it once every 30 days. It is the name on the slips you post to Social.</p>' +
+      '<fieldset><legend>Colour</legend><div class="sw">' + [0,1,2,3,4,5,6,7].map(function(i){ return '<label><input type="radio" name="c" value="' + i + '"' + (i === c ? ' checked' : '') + '><i class="pav c' + i + '" aria-hidden="true"></i><span class="sr">Colour ' + (i + 1) + '</span></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Avatar</legend><div class="em"><label><input type="radio" name="e" value=""' + (!P.emoji ? ' checked' : '') + '><i>Aa</i><span class="sr">My initials</span></label>' + EMOJI.map(function(x){ return '<label><input type="radio" name="e" value="' + x + '"' + (P.emoji === x ? ' checked' : '') + '><i>' + x + '</i></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Team</legend><div class="em">' + TEAMS.map(function(t){ return '<label title="' + t[0] + '"><input type="radio" name="e" value="' + t[1] + '"' + (P.emoji === t[1] ? ' checked' : '') + '><i>' + t[1] + '</i><span class="sr">' + t[0] + '</span></label>'; }).join('') + '</div></fieldset>' +
+      '<p class="msg" id="pemsg" role="status"></p><div class="pbtn"><button type="submit" class="sv">Save profile</button><button type="button" data-pe="0">Cancel</button></div></form>'; }
+  function paint(){ var A = acc(), u = A && A.user; if(!u || !P || P.user_id !== u.id){ box.hidden = true; box.innerHTML = ''; return; }
+    var r = REC, un = r ? +r.units || 0 : 0, n = r ? (r.posts || 0) : 0;
+    var line = r && r.graded ? 'Posted slips: ' + r.won + '-' + r.lost + ', ' + (un >= 0 ? '+' : '') + un.toFixed(1) + ' units' : (n ? n + ' slip' + (n === 1 ? '' : 's') + ' posted to Social, none graded yet' : 'No slips posted to Social yet');
+    box.hidden = false;
+    box.innerHTML = '<i class="pav c' + hcol() + (P.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(P.emoji || inits(P.handle)) + '</i><div class="pn"><h2>@' + esc(P.handle) + '</h2><p>' + esc(line) + (FANS != null ? ' · ' + FANS + ' follower' + (FANS === 1 ? '' : 's') : '') + '</p></div>' +
+      (EDIT ? form() : '<div class="pb"><button type="button" data-pe="1">Edit profile</button><a href="/social/#u=' + esc(u.id) + '">My posted slips</a></div>'); }
+  function load(){ var A = acc(), u = A && A.user; if(!u || !A.client || !A.client.rpc){ P = null; paint(); return; } if(A.profile && A.profile.user_id === u.id){ P = A.profile; paint(); } if(FOR === u.id) return; FOR = u.id;
+    A.client.rpc('feed_profile_me').then(function(r){ if(r && r.data && r.data.user_id === u.id){ P = r.data; if(A.setProfile) A.setProfile(P); paint(); } }, function(){});
+    A.client.from('feed_records').select('user_id,graded,won,lost,units,posts').eq('user_id', u.id).then(function(r){ REC = ((r && r.data) || [])[0] || null; paint(); }, function(){});
+    A.client.from('feed_follows').select('follower').eq('followee', u.id).then(function(r){ if(r && r.data) FANS = r.data.length; paint(); }, function(){}); }
+  box.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-pe]'); if(!b) return; EDIT = b.dataset.pe === '1'; paint(); if(EDIT){ var i = document.getElementById('peh'); if(i) i.focus(); } });
+  box.addEventListener('submit', function(e){ if(e.target.id !== 'pedit') return; e.preventDefault(); var A = acc();
+    var f = e.target, msg = document.getElementById('pemsg'), h = f.h.value.trim(), c = +(f.querySelector('input[name=c]:checked') || {}).value || 0, em = (f.querySelector('input[name=e]:checked') || {}).value || null, sv = f.querySelector('.sv');
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(h)){ msg.textContent = 'Usernames are 3 to 20 letters, numbers or underscores.'; msg.className = 'msg err'; return; }
+    sv.disabled = true; msg.textContent = 'Saving…'; msg.className = 'msg';
+    A.client.rpc('feed_profile_set', {p_handle: h, p_color: c, p_emoji: em}).then(function(r){ sv.disabled = false;
+      if(r.error){ msg.textContent = /avatar from the list/i.test(r.error.message || '') ? 'Team avatars are being switched on. Pick another for now.' : (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
+      P = r.data && r.data.user_id ? r.data : Object.assign({}, P, {handle: h, color: c, emoji: em}); EDIT = false; if(A.setProfile) A.setProfile(P); paint(); },
+      function(){ sv.disabled = false; msg.textContent = 'Could not save. Check your connection and try again.'; msg.className = 'msg err'; }); });
+  document.addEventListener('bs-account', function(){ FOR = null; REC = null; FANS = null; load(); });
+  document.addEventListener('bs-profile', function(e){ var A = acc(); if(e.detail && A && A.user && e.detail.user_id === A.user.id && !EDIT){ P = e.detail; paint(); } });
+  var n = 0; (function wait(){ var A = acc(); if(A && A.user) return load(); if(++n < 40) setTimeout(wait, 150); })();
+})();
+"""
+def _mep_js():
+    """The avatar lists come from social.py's own picker, so the two editors can never offer different sets."""
+    import re, os
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "social.py"), encoding="utf-8").read()
+    em = re.search(r"EMOJI = (\[.*?\]), TEAMS = (\[.*?\]);", src)
+    return MEP_JS.replace("__EMOJI__", em.group(1)).replace("__TEAMS__", em.group(2))
+
 def me_page():
     _link, _base = _base_css()
     return f"""<title>My BetSweep</title>
@@ -437,6 +503,7 @@ def me_page():
 <style>{_base}{ME_CSS}{__import__("slipimport").IMPORT_CSS}</style>
 <div class="me">
  <h1>My BetSweep</h1>
+ <section class="mep" id="mep" aria-label="Your profile" hidden></section>
  <p class="m" id="who"></p>
  <section class="hub" id="hub" aria-label="Your bets at a glance">
   <div class="hubt"><a class="ht" href="#crec"><small>Open slips</small><b id="hopen">&ndash;</b><span id="hopens"></span></a><a class="ht" href="#crec"><small>Record</small><b id="hrec">&ndash;</b><span id="hunits"></span></a><a class="ht" href="#crec"><small id="hweekl">This week</small><b id="hweek">&ndash;</b><span id="hweeks"></span></a></div>
@@ -455,6 +522,7 @@ def me_page():
  <p class="m">Accounts are optional and free. Sign out from the header at any time; to delete your account and everything saved with it, email support@betsweep.co from the signed-in address.</p>
 </div>
 <script>{ME_JS}</script>
+<script>{_mep_js()}</script>
 <script defer src="/import.js"></script>
 <script>{PUSH_JS.replace("__VAPID__", VAPID_PUBLIC).replace("__SB__", SUPABASE_URL)}</script>"""
 
