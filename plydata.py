@@ -72,7 +72,7 @@ class Season:
             sp = self.snap.get((norm(nm), t, w))
             p["games"].append({"w": w, "opp": _t(r["opponent_team"]), "snap": sp, "tgt": _f(r["targets"]), "rec": _f(r["receptions"]),
                                "recy": _f(r["receiving_yards"]), "car": _f(r["carries"]), "rush": _f(r["rushing_yards"]),
-                               "pass": _f(r["passing_yards"]), "att": _f(r["attempts"]), "ptd": _f(r["passing_tds"]),
+                               "pass": _f(r["passing_yards"]), "att": _f(r["attempts"]), "cmp": _f(r.get("completions")), "ptd": _f(r["passing_tds"]),
                                "td": _f(r["rushing_tds"]) + _f(r["receiving_tds"]), "int": _f(r["passing_interceptions"]),
                                "ts": _f(r["target_share"]) if r.get("target_share") not in ("", "NA", None) else (_f(r["targets"]) / ttgt[(t, w)] if ttgt[(t, w)] else 0.0),
                                "cs": (_f(r["carries"]) / tcar[(t, w)]) if tcar[(t, w)] else 0.0,

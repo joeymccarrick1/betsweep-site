@@ -36,6 +36,10 @@ try:
     import flag_stats as _FLS; _FS = _FLS.text(globals().get("IN", "in"))   # 11/17: the graded numbers quoted in flags, counted on every build
 except Exception as _e: import flag_stats as _FLS; _FS = dict(_FLS.DEFAULT); print("warn: flag numbers not counted, the 11/17 ones stay:", _e)
 NEW_CODE = {"Passing TDs": "PTD", "Completions": "CMP", "Interceptions": "INT", "Rush Attempts": "ATT"}
+# 11/19: these legs carried "sk": "nm", a key no game log has - so a Passing TDs leg opened to "0 of his last 0" with no picture and "No
+# defensive game log". Each market now reads its own column of the sheet's game log (GL / DEF below).
+NEW_SK = {"Passing TDs": "ptd", "Completions": "cmp", "Interceptions": "int", "Rush Attempts": "att"}
+NEW_COL = {"ptd": ("Pass TD", "QB"), "cmp": ("Completions", "QB"), "int": ("INT", "QB"), "att": ("Rush Att", "RB")}   # stat key -> (game-log column, the position that gets it)
 try:
     _NMC = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "research", "newmkt_corr.json")))
     for _k, _rho, _ev in _NMC.get("rows", []): CORR.setdefault(_k, _rho)
@@ -157,6 +161,7 @@ try:
 except Exception: DCOL = {}
 def rank_col(pos, m):
     if m == "Passing Yards": return "QB Pass Yds"
+    if m == "Passing TDs" and pos == "QB": return "QB Pass TD"   # 11/19: the passing-TD legs get the matchup pill their table row already had
     if m == "Rushing Yards": return f"{pos} Rush Yds"
     if m in ("Receiving Yards", "Longest Reception"): return f"{pos} Rec Yds"
     if m == "Receptions": return f"{pos} Receptions"
@@ -181,6 +186,10 @@ try:
         GL.setdefault(r[1], []).append({"w": wk, "opp": r[GH["Opponent"]] if "Opponent" in GH else "", "pass": gv(r, "Pass Yds"), "rush": gv(r, "Rush Yds"),
                                          "rec": gv(r, "Receptions"), "recy": gv(r, "Rec Yds"), "long": gv(r, "Longest Rec") if "Longest Rec" in GH else None,
                                          "rr": (gv(r, "Rush Yds") or 0) + (gv(r, "Rec Yds") or 0), "td": (gv(r, "Rush TD") or 0) + (gv(r, "Rec TD") or 0)})
+        _gpos = r[GH["Pos"]] if "Pos" in GH else ""
+        if _gpos == "QB" and (gv(r, "Pass Att") or 0) < 15: _gpos = ""   # the same games the price counts (newmkt.py): 15+ attempts, so a cameo is not drawn as a zero
+        for _sk, (_col, _p) in NEW_COL.items():
+            if _p == _gpos and _col in GH: GL[r[1]][-1][_sk] = gv(r, _col)
     GL_KEEP = 10   # alpha plan step 6 (11/16): the leg-details picture draws up to ten games (was six; nothing else reads GL)
     for k in GL: GL[k] = sorted(GL[k], key=lambda g: -g["w"])[:GL_KEEP]
 except Exception: pass
@@ -197,6 +206,8 @@ try:
         if pos not in ("QB", "RB", "WR", "TE") or not opp: continue
         vals_ = {"pass": gv(r, "Pass Yds"), "rush": gv(r, "Rush Yds"), "rec": gv(r, "Receptions"), "recy": gv(r, "Rec Yds"),
                  "long": gv(r, "Longest Rec") if "Longest Rec" in GH else None, "td": (gv(r, "Rush TD") or 0) + (gv(r, "Rec TD") or 0)}
+        for _sk, (_col, _p) in NEW_COL.items():   # 11/19: what a defence allowed in the newer markets (passing TDs, completions, interceptions thrown, carries)
+            if _p == pos and _col in GH and (pos != "QB" or (gv(r, "Pass Att") or 0) >= 1): vals_[_sk] = gv(r, _col)
         for sk, v in vals_.items():
             if v is None: continue
             d = tmp.setdefault((opp, pos, sk, wk), {"w": wk, "vs": tm, "tot": 0.0, "top": "", "topv": None, "pl": []})
@@ -356,8 +367,8 @@ except Exception as e: print("warn: returning-starter legs skipped:", e)
 NNM = 0
 try:
     import newmkt as _NM
-    _NMP = _NM.Pricer(IN, WEEK); _opp_of = {}
-    for _g in GAMES: _opp_of[_g["a"]] = (_g["b"], _g["gid"]); _opp_of[_g["b"]] = (_g["a"], _g["gid"])
+    _NMP = _NM.Pricer(IN, WEEK); _opp_of = {}; _ip_of = {}
+    for _g in GAMES: _opp_of[_g["a"]] = (_g["b"], _g["gid"]); _opp_of[_g["b"]] = (_g["a"], _g["gid"]); _ip_of[_g["a"]] = _g.get("pa"); _ip_of[_g["b"]] = _g.get("pb")
     for r in vals("links.json")[1:]:
         if len(r) < 8 or r[2] not in _NM.P: continue
         name, mk = r[1], r[2]; ln = num(r[3]); odds = num(r[7])
@@ -370,17 +381,21 @@ try:
         if _gt and tm not in _gt:
             tm = next((t for t in _gt if any(normname(x[0]) == normname(name) and x[1] == t for x in (vals("proj_qb.json")[1:] + vals("proj_rb.json")[1:] + vals("proj_wr.json")[1:] + vals("proj_te.json")[1:]) if len(x) > 1)), None)
         if not tm or tm not in _opp_of: continue
-        opp, gid = _opp_of[tm]; res = _NMP.prob(nm2, mk, ln, opp)
+        opp, gid = _opp_of[tm]; _ip = _ip_of.get(tm) if mk == "Passing TDs" else None
+        res = _NMP.prob(nm2, mk, ln, opp, _ip)
         if not res: continue
         raw, mean, ng, avg = res
         bk = (100 / (odds + 100)) if odds > 0 else (-odds / (-odds + 100)); pm = raw   # the calibration pass below blends it toward the price, like every leg
         pos = _NMP.pos.get(nm2, "")
         try: fl = leg_flags(name, mk, ln, tm, opp)
         except Exception: fl = []
-        fl = list(fl) + [["info", "New market", f"Projection {mean:.1f} ({avg:.1f} per game over {ng} games, shrunk toward the league and adjusted for {opp}); tested 2023-26, calibrated."]]
+        if mk == "Passing TDs":   # 11/19: priced off the market's team total (research/ptd_model.py), not his average alone
+            _nt = (f"Projection {mean:.1f} passing TDs: {tm}'s {_ip:.1f}-point team total at FanDuel and his {avg:.1f} a game over {ng} starts. " if _ip else f"Projection {mean:.1f} passing TDs from his {avg:.1f} a game over {ng} starts (no team total posted yet, so a league-average one is assumed). ") + "Tested on 570 quarterback games, 2025-26: better than the league base rate at 1+, 2+, 3+ and 4+."
+            fl = list(fl) + [["info", "How it is priced", _nt]]
+        else: fl = list(fl) + [["info", "New market", f"Projection {mean:.1f} ({avg:.1f} per game over {ng} games, shrunk toward the league and adjusted for {opp}); tested 2023-26, calibrated."]]
         LEGS.append({"i": len(LEGS), "pl": name, "pos": pos, "tm": tm, "opp": opp, "g": gid, "m": mk, "ms": SHORT.get(mk, mk), "ln": ln, "o": int(odds),
                      "p": round(pm, 4), "bk": round(bk, 4), "e": round(pm - bk, 4), "w": "; ".join(f[2] for f in fl if f[0] == "bad"), "fh": line_flags(fl, name),
-                     "proj": round(mean, 2), "avg": round(avg, 2), "n": ng, "c": (f"{pos}_{NEW_CODE[mk]}" if pos and mk in NEW_CODE else ""), "gd": GAMEDAY.get(name.lower(), ""), "fd": LINKS.get(r[0]), "sk": "nm"})
+                     "proj": round(mean, 2), "avg": round(avg, 2), "n": ng, "c": (f"{pos}_{NEW_CODE[mk]}" if pos and mk in NEW_CODE else ""), "gd": GAMEDAY.get(name.lower(), ""), "fd": LINKS.get(r[0]), "dr": dranks(pos, opp, mk), "sk": NEW_SK.get(mk, "nm")})
         NNM += 1
     print(f"new markets: {NNM} legs (passing TDs / INTs / completions / rush attempts)")
 except Exception as e: print("warn: new markets skipped:", e)
@@ -1558,7 +1573,8 @@ BUILDER_JS = r"""
   function toAm(p){ if(p <= 0 || p >= 1) return '—'; return p < 0.5 ? '+' + Math.round((1/p - 1) * 100) : '-' + Math.round(p/(1-p) * 100); }
   function decToAm(d){ return d >= 2 ? '+' + Math.round((d-1)*100) : '-' + Math.round(100/(d-1)); }
   function pc(p){ return Math.round(p*100) + '%'; }
-  function legText(l){ if(isGL(l)) return l.pl + (l.m === 'Moneyline' ? '' : '') ; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : isTD(l) ? 'anytime TD' : l.ms.toLowerCase() + ' ' + lnTxt(l)); }
+  function lms(l){ return String(l.ms || '').toLowerCase().replace(/\btds\b/, 'TDs').replace(/\bints\b/, 'INTs'); }   // "pass TDs", "INTs": the short names read lower-cased inside a sentence
+  function legText(l){ if(isGL(l)) return l.pl + (l.m === 'Moneyline' ? '' : '') ; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : isTD(l) ? 'anytime TD' : lms(l) + ' ' + lnTxt(l)); }
   // ---- normal helpers + Gaussian copula Monte Carlo (same math as the boards' slips) ----
   function nppf(p){ var a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00],b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01],c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00],d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00],q,r;
     if(p<0.02425){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
@@ -1738,11 +1754,12 @@ BUILDER_JS = r"""
     var items = shownG.map(function(g){ var v = g[l.sk]; var ok = wonH(v); return '<span class="gm"><i class="' + (ok ? 'ok' : '') + '"></i>Wk ' + g.w + ' <small>' + esc(g.opp || '') + '</small> <b>' + (v == null ? '—' : (isTD(l) ? (v >= 1 ? 'TD' : 'no TD') : Math.round(v))) + '</b></span>'; }).join('');
     var l3 = gs.slice(0, 3).filter(function(g){ return g[l.sk] != null; }), l3hit = l3.filter(function(g){ return wonH(g[l.sk]); }).length;
     var all = gs.filter(function(g){ return g[l.sk] != null; }), allhit = all.filter(function(g){ return wonH(g[l.sk]); }).length;
-    var line = l.u ? 'under ' + l.ln + ' ' + l.ms.toLowerCase() : l.m === '2+ TD' || l.m === '3+ TD' ? 'scored ' + need + '+ TDs' : isTD(l) ? 'scored a TD' : Math.round(l.ln) + '+ ' + l.ms.toLowerCase();
+    var lowms = lms(l);
+    var line = l.u ? 'under ' + l.ln + ' ' + lowms : l.m === '2+ TD' || l.m === '3+ TD' ? 'scored ' + need + '+ TDs' : isTD(l) ? 'scored a TD' : Math.round(l.ln) + '+ ' + lowms;
     var chart = l10(l, gs, need, wonH);   // the picture replaces the five-game text row when there are two or more games to draw
     var body = gs.length ? (chart || items) + '<span class="sum"><b>' + l3hit + '</b> of his last ' + l3.length + (l.u ? ' stayed ' : isTD(l) ? ' ' : ' cleared ') + esc(line) + ' · <b>' + allhit + ' of ' + all.length + '</b> ' + (l.n != null && l.n > all.length ? 'of his last ' + all.length : 'this season') + (l.avg != null && l.m !== 'Anytime TD' ? ' · season avg ' + l.avg : '') + (l.proj != null && l.m !== 'Anytime TD' ? ' · model proj ' + l.proj : '') + '</span>' : '<span class="sum">No game log yet this season for ' + esc(l.pl) + '.</span>';
     var dgs = ((D.def[l.opp] || {})[l.pos] || {})[l.sk] || []; var lgavg = (D.lg[l.pos] || {})[l.sk];
-    var posLabel = l.pos + 's', unit = isTD(l) ? 'TDs' : l.ms.toLowerCase();
+    var posLabel = l.pos + 's', unit = isTD(l) ? 'TDs' : lowms;
     var cleared = function(g){ var c = (g.pl || []).some(function(x){ return x[1] >= need; }) || (g.topv != null && g.topv >= need); return l.u ? !c : c; };   // unders: nobody cleared the line
     var dItems = dgs.slice(0, 5).map(function(g){ var ok = cleared(g); var who = (g.pl || []).filter(function(x){ return x[1] >= need; });
       var detail = l.sk === 'td' ? '' : (who.length ? ' <small>(' + who.map(function(x){ return esc(x[0]) + ' ' + Math.round(x[1]); }).join(', ') + ')</small>' : (g.top ? ' <small>(best ' + esc(g.top.split(' ').slice(-1)[0]) + ' ' + Math.round(g.topv) + ')</small>' : ''));
@@ -1750,7 +1767,7 @@ BUILDER_JS = r"""
     var nHit = dgs.filter(cleared).length, n3 = dgs.slice(0, 3).filter(cleared).length, n3tot = Math.min(3, dgs.length);
     var dAvg = dgs.length ? dgs.reduce(function(a,g){ return a + g.tot; }, 0) / dgs.length : null;
     var lineTxt = l.u ? 'stayed under ' + l.ln + ' ' + esc(unit) : l.sk === 'td' ? (need > 1 ? 'scored ' + need + '+ TDs' : 'scored') : 'cleared ' + Math.round(l.ln) + '+ ' + esc(unit);
-    var defBody = dgs.length ? dItems + '<span class="sum">A ' + l.pos + ' has ' + lineTxt + ' against ' + esc(l.opp) + ' in <b>' + nHit + ' of ' + dgs.length + '</b> games this season (<b>' + n3 + ' of ' + n3tot + '</b> of the last ' + n3tot + '). Green = someone at the position hit this line that week; names in parentheses are who did it. ' + esc(l.opp) + ' allows ' + (l.sk === 'td' ? dAvg.toFixed(1) : Math.round(dAvg)) + ' ' + esc(unit) + ' per game to ' + posLabel + '.</span>' : '<span class="sum">No defensive game log for ' + esc(l.opp) + ' yet.</span>';
+    var defBody = dgs.length ? dItems + '<span class="sum">A ' + l.pos + ' has ' + lineTxt + ' against ' + esc(l.opp) + ' in <b>' + nHit + ' of ' + dgs.length + '</b> games this season (<b>' + n3 + ' of ' + n3tot + '</b> of the last ' + n3tot + '). Green = someone at the position hit this line that week; names in parentheses are who did it. ' + esc(l.opp) + ' allows ' + (l.sk === 'td' || l.sk === 'ptd' || l.sk === 'int' ? dAvg.toFixed(1) : Math.round(dAvg)) + ' ' + esc(unit) + ' per game to ' + posLabel + '.</span>' : '<span class="sum">No defensive game log for ' + esc(l.opp) + ' yet.</span>';
     return '<div class="hist"><b class="t">Recent games · ' + esc(l.ms) + ' ' + (isTD(l) ? '' : lnTxt(l)) + '</b>' + body + (snChip(l) ? '<div class="snrow">' + snChip(l) + '</div>' : '') +
       '<b class="t" style="margin-top:8px">' + esc(l.opp) + ' defense vs ' + posLabel + ' · ' + esc(unit) + ' allowed (total, who cleared ' + (l.sk === 'td' ? 'a TD' : lnTxt(l)) + ')' + (l.dr && l.dr[0] != null ? ' ' + dpill(l) : '') + '</b>' + defBody + mbsTable(l) + '</div>';
   }
@@ -1762,8 +1779,8 @@ BUILDER_JS = r"""
       if(g[0].gd.indexOf('CONFIRMED') === 0) return;
       var x = shown(k); if(!x) return; if(st.clean && x.w && !sel[x.i]){ var c = g.filter(function(y){ return !y.w; }); if(c.length){ var b = c[0]; c.forEach(function(y){ if(y.e > b.e) b = y; }); x = b; } }
       rows.push(x); });
-    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
-           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
+    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Passing TDs', 'Completions', 'Interceptions', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
+           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush Attempts', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
            : ['Anytime TD', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Passing Yards', 'First TD'];
     rows.sort(function(a,b){ var ia = MO.indexOf(a.m), ib = MO.indexOf(b.m); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
     return rows;
@@ -1783,8 +1800,8 @@ BUILDER_JS = r"""
       rows.push(x); });
     // fixed market order per position (not by edge): the headline leg is Anytime TD; then QB pass yds, rush yds; RB rush yds, rec yds,
     // receptions, longest rec; WR/TE rec yds, receptions, longest rec; First TD last
-    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
-           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
+    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Passing TDs', 'Completions', 'Interceptions', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
+           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush Attempts', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
            : ['Anytime TD', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Passing Yards', 'First TD'];
     rows.sort(function(a,b){ var ia = MO.indexOf(a.m), ib = MO.indexOf(b.m); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
     var snrow = snChip(l) ? '<div class="snrow">' + snChip(l) + '</div>' : '';
@@ -1965,7 +1982,7 @@ BUILDER_JS = r"""
   function swKeys(ls){ return ls.map(legKey).sort().join('~'); }
   function swWhy(l){ var b = (l.fl || []).filter(function(f){ return f[0] === 'bad'; }).map(function(f){ return f[1]; }), w = (l.fl || []).filter(function(f){ return f[0] === 'watch'; }).map(function(f){ return f[1]; });
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v && v.level !== 'good') b.unshift(v.label); return b.concat(w).slice(0, 3); }
-  function swName(l){ return l.pl + ' ' + (isGL(l) ? '' : l.m === 'First TD' ? 'first TD' : isTD(l) ? (l.m === 'Anytime TD' ? 'anytime TD' : l.m) : lnTxt(l) + ' ' + l.ms.toLowerCase()); }
+  function swName(l){ return l.pl + ' ' + (isGL(l) ? '' : l.m === 'First TD' ? 'first TD' : isTD(l) ? (l.m === 'Anytime TD' ? 'anytime TD' : l.m) : lnTxt(l) + ' ' + lms(l)); }
   function swPrice(ls){ return slipPrice(ls).d; }
   function sweepBlock(ls, fair, bookDec, flags){
     var box = $('#sweepv'), btn = $('#sweepbtn'); if(!box) return;
@@ -2076,7 +2093,7 @@ BUILDER_JS = r"""
     if(scb){ try { scb.innerHTML = ls.length ? scenBlock(ls) : ''; } catch(e){ scb.innerHTML = ''; } }
     $$('.slipbar .n').forEach(function(n){ n.textContent = ls.length; });
     if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; try { sweepBlock([], 0, 1, []); } catch(e){} $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
-    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
+    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(lms(l)) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
     var bls = bookLegs(ls), implied = ls.length - bls.length;
     var sp = slipPrice(ls), bookDec = sp.d, bookP = 1/bookDec;
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls);
@@ -2328,6 +2345,11 @@ BUILDER_JS = r"""
   var gsel = $('#fGame'); gorder.forEach(function(gid){ if(started(gid)) return; var g = games[gid]; var o = document.createElement('option'); o.value = gid; o.textContent = g.a + ' · ' + g.b + '  ' + g.kick; gsel.appendChild(o); });
   $('#fGame').addEventListener('change', function(){ st.game = this.value; st.limit = 80; renderList(); });
   $('#fMarket').addEventListener('change', function(){ st.market = this.value; st.limit = 80; renderList(); });
+  // 11/19: any other player market on the board gets a filter option of its own, so a market FanDuel starts posting never sits unlisted
+  (function(){ var sel = $('#fMarket'), have = {}, extra = {}; $$('#fMarket option').forEach(function(o){ have[o.value || o.textContent] = 1; });
+    legs.forEach(function(l){ var m = String(l.m || ''); if(l.gl || /^Under /.test(m) || have[m] || m === '2+ TD' || m === '3+ TD') return; extra[m] = 1; });
+    var before = Array.prototype.filter.call(sel.options, function(o){ return o.textContent === 'Moneyline'; })[0];
+    Object.keys(extra).sort().forEach(function(m){ var o = document.createElement('option'); o.textContent = m; sel.insertBefore(o, before || null); }); })();
   $('#fPos').addEventListener('change', function(){ st.pos = this.value; st.limit = 80; renderList(); });
   $('#fSort').addEventListener('change', function(){ st.sort = this.value; renderList(); });
   $('#fClean').addEventListener('change', function(){ st.clean = this.checked; renderList(); });
@@ -2348,8 +2370,9 @@ BUILDER_JS = r"""
   var BOX = {}, OPENP = {}, UND = {};
   legs.forEach(function(l){ if(l.u) UND[l.pl + '|' + l.m.replace(/^Under /, '')] = l; });
   var TDM = ['Anytime TD', 'First TD', '2+ TD', '3+ TD'];
-  var MORD = {QB: ['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'],
-              RB: ['Rushing Yards', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards'],
+  // 11/19: the newer markets were on no list here, so a quarterback's "All props" never showed his Passing TDs box (the legs existed since 11/5)
+  var MORD = {QB: ['Passing Yards', 'Passing TDs', 'Completions', 'Interceptions', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'],
+              RB: ['Rushing Yards', 'Rush Attempts', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards'],
               WR: ['Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Rush + Rec Yards', 'Passing Yards'],
               TE: ['Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Rush + Rec Yards', 'Passing Yards']};
   function ladder(pl, m){ return (GROUPS[pl + '|' + m] || []).filter(function(x){ return !x.u; }); }
@@ -2555,7 +2578,7 @@ BUILDER_JS = r"""
     if(gh && games[gh[1]]) setTimeout(function(){ var el = $('#g-' + gh[1]); if(el) el.scrollIntoView({block: 'start'}); }, 80);
   }
   if(ADDED){
-    var msg = ADDED.ok.length ? 'Added to your slip: ' + ADDED.ok.map(function(l){ return l.pl + ' ' + (l.m === 'Anytime TD' ? 'anytime TD' : l.m === 'First TD' ? 'first TD' : l.ms.toLowerCase() + ' ' + lnTxt(l)); }).join(', ') : '';
+    var msg = ADDED.ok.length ? 'Added to your slip: ' + ADDED.ok.map(function(l){ return l.pl + ' ' + (l.m === 'Anytime TD' ? 'anytime TD' : l.m === 'First TD' ? 'first TD' : lms(l) + ' ' + lnTxt(l)); }).join(', ') : '';
     if(ADDED.late.length) msg += (msg ? ' · ' : '') + 'Already kicked off, not added: ' + ADDED.late.map(function(l){ return l.pl; }).join(', ');
     if(ADDED.missing.length) msg += (msg ? ' · ' : '') + ADDED.missing.length + ' leg' + (ADDED.missing.length > 1 ? 's are' : ' is') + ' not on this board any more';
     if(msg){ var n = document.createElement('div'); n.className = 'addnote'; n.textContent = msg; document.body.appendChild(n); setTimeout(function(){ n.classList.add('out'); setTimeout(function(){ n.remove(); }, 400); }, 4200); }
@@ -2582,7 +2605,7 @@ body = f'''<div class="bld">
   <div class="filters" id="filters" hidden>
    <input id="fQ" type="search" placeholder="Search player or team" autocomplete="off">
    <select id="fGame" aria-label="game"><option value="all">All games</option></select>
-   <select id="fMarket" aria-label="market"><option value="all">All markets</option><option value="UNDERS">Unders</option><option>Anytime TD</option><option>First TD</option><option>Receiving Yards</option><option>Receptions</option><option>Rushing Yards</option><option>Rush + Rec Yards</option><option>Passing Yards</option><option>Longest Reception</option><option>Moneyline</option><option>Spread</option><option>Total</option></select>
+   <select id="fMarket" aria-label="market"><option value="all">All markets</option><option value="UNDERS">Unders</option><option>Anytime TD</option><option>First TD</option><option>Receiving Yards</option><option>Receptions</option><option>Rushing Yards</option><option>Rush + Rec Yards</option><option>Passing Yards</option><option>Passing TDs</option><option>Longest Reception</option><option>Moneyline</option><option>Spread</option><option>Total</option></select>
    <select id="fPos" aria-label="position"><option value="all">All positions</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select>
    <span class="seg" id="fOdds"><button type="button" class="on" data-v="all">Any odds</button><button type="button" data-v="anchor">Anchors ≤ −200</button><button type="button" data-v="mid">−200 to +200</button><button type="button" data-v="long">+200 and up</button></span>
    <select id="fSort" aria-label="sort"><option value="edge">Sort: edge</option><option value="model">Sort: model %</option><option value="odds">Sort: odds</option><option value="kick">Sort: kickoff</option></select>

@@ -41,6 +41,7 @@ def am(o):
     except Exception: return "—"
     return ("+" if o > 0 else "−") + str(int(abs(round(o))))
 
+def _low(x): return re.sub(r"\bints\b", "INTs", re.sub(r"\btds\b", "TDs", str(x).lower()))   # "pass TDs", "INTs": short market names inside a sentence
 def pc(x): return "—" if x is None else f"{100 * x:.0f}%"
 
 def jsround(x): return int(math.floor(float(x) + 0.5))
@@ -52,10 +53,17 @@ def _stat(m):
     base = m[6:] if m.startswith("Under ") else m
     return {"Receiving Yards": lambda g: g["recy"], "Receptions": lambda g: g["rec"], "Rushing Yards": lambda g: g["rush"],
             "Passing Yards": lambda g: g["pass"], "Rush + Rec Yards": lambda g: g["rush"] + g["recy"], "Anytime TD": lambda g: g["td"],
-            "2+ TD": lambda g: g["td"], "3+ TD": lambda g: g["td"]}.get(base)
+            "2+ TD": lambda g: g["td"], "3+ TD": lambda g: g["td"],
+            # 11/19: the newer markets - a quarterback's page listed no passing-TD rung though the board had priced one since 11/5
+            "Passing TDs": lambda g: g.get("ptd", 0), "Completions": lambda g: g.get("cmp", 0), "Interceptions": lambda g: g.get("int", 0),
+            "Rush Attempts": lambda g: g.get("car", 0)}.get(base)
+QB_START = ("Passing TDs", "Completions", "Interceptions")   # counted over his starts (15+ attempts), the games newmkt.py prices from
+def _games_for(m, games):
+    base = m[6:] if m.startswith("Under ") else m
+    return [g for g in games if (g.get("att") or 0) >= 15] if base in QB_START else games
 
 def cleared(l, games):
-    f = _stat(l["m"])
+    f = _stat(l["m"]); games = _games_for(l["m"], games)
     if not f or not games: return None
     ln = float(l.get("ln") or 1)
     if l["m"] == "2+ TD": ln = 2
@@ -64,7 +72,7 @@ def cleared(l, games):
     else: hit = sum(1 for g in games if f(g) >= ln)
     return hit, len(games)
 
-MORDER = ["Passing Yards", "Rushing Yards", "Receiving Yards", "Receptions", "Rush + Rec Yards", "Longest Reception", "Anytime TD", "First TD", "2+ TD", "3+ TD",
+MORDER = ["Passing Yards", "Passing TDs", "Completions", "Interceptions", "Rushing Yards", "Rush Attempts", "Receiving Yards", "Receptions", "Rush + Rec Yards", "Longest Reception", "Anytime TD", "First TD", "2+ TD", "3+ TD",
           "Under Passing Yards", "Under Rushing Yards", "Under Receiving Yards", "Under Receptions"]
 
 # ESPN news link (same rule as the boards: ESPN player news by id from the nflverse roster, else Google News)
@@ -277,8 +285,8 @@ def head(title, desc):
 
 PGROUPS = {"td": ("Touchdowns", ["Anytime TD", "First TD", "2+ TD", "3+ TD"]),
            "rec": ("Receiving", ["Receiving Yards", "Receptions", "Longest Reception"]),
-           "rush": ("Rushing", ["Rushing Yards", "Rush + Rec Yards"]),
-           "pass": ("Passing", ["Passing Yards"]),
+           "rush": ("Rushing", ["Rushing Yards", "Rush Attempts", "Rush + Rec Yards"]),
+           "pass": ("Passing", ["Passing Yards", "Passing TDs", "Completions", "Interceptions"]),
            "und": ("Unders", ["Under Passing Yards", "Under Rushing Yards", "Under Receiving Yards", "Under Receptions"])}
 PORDER = {"QB": ["pass", "rush", "td", "und"], "RB": ["rush", "rec", "td", "und"], "WR": ["rec", "td", "rush", "und"], "TE": ["rec", "td", "rush", "und"]}
 TDLAB = {"Anytime TD": "Anytime", "First TD": "First TD", "2+ TD": "2+ TDs", "3+ TD": "3+ TDs"}
@@ -299,16 +307,18 @@ def _leg_row(p, l, m, lab, played, ko):
 # One small bar chart per main market for his position: a bar a game (oldest to newest, up to ten), the line drawn across, each bar
 # marked over or under it by colour AND by a tick or a dash under the bar, and the count in words. The line is the FanDuel rung priced
 # closest to even money this week; with no props on the board the season average is drawn instead and nothing is called a hit.
-L10_MARKETS = {"QB": ["Passing Yards", "Rushing Yards"], "RB": ["Rushing Yards", "Receiving Yards", "Receptions"], "WR": ["Receiving Yards", "Receptions"], "TE": ["Receiving Yards", "Receptions"]}
-L10_UNIT = {"Passing Yards": "passing yards", "Rushing Yards": "rushing yards", "Receiving Yards": "receiving yards", "Receptions": "catches"}
+L10_MARKETS = {"QB": ["Passing Yards", "Passing TDs", "Rushing Yards"], "RB": ["Rushing Yards", "Receiving Yards", "Receptions"], "WR": ["Receiving Yards", "Receptions"], "TE": ["Receiving Yards", "Receptions"]}
+L10_UNIT = {"Passing Yards": "passing yards", "Passing TDs": "passing TDs", "Rushing Yards": "rushing yards", "Receiving Yards": "receiving yards", "Receptions": "catches"}
 def _imp(o):
     try: o = float(o); return 100 / (o + 100) if o > 0 else -o / (-o + 100)
     except Exception: return None
 def last10_block(p):
-    gs = sorted(p["games"] + p.get("prev_games", []), key=lambda g: g["w"])[-10:]
-    if len(gs) < 2: return ""
+    gs_all = sorted(p["games"] + p.get("prev_games", []), key=lambda g: g["w"])[-10:]
+    if len(gs_all) < 2: return ""
     charts = []
     for m in L10_MARKETS.get(p["pos"], []):
+        gs = _games_for(m, gs_all)
+        if len(gs) < 2: continue
         f = _stat(m); vals = [float(f(g) or 0) for g in gs]
         if max(vals) <= 0: continue
         rungs = [l for l in p["legs"] if l["m"] == m and l.get("ln") is not None and _imp(l.get("o")) is not None]
@@ -320,12 +330,12 @@ def last10_block(p):
             f'<li class="{("ov" if v >= line else "un") if main else "na"}" title="Week {g["w"]} vs {E(g["opp"])}: {v:.0f}"><span class="v">{v:.0f}</span><span class="b" style="height:{max(2, v / top * 100):.1f}%"></span>'
             f'<span class="k">{("✓" if v >= line else "–") if main else ""}</span><span class="o">{E(g["opp"])}</span></li>' for g, v in zip(gs, vals))
         if main: cap = f'Cleared <b>{line:.0f}+</b> in <b>{hits} of {len(vals)}</b> <small>FanDuel {am(main["o"])}</small>'; lab = f'{line:.0f}+'
-        else: cap = f'Averaging <b>{line:.1f}</b> <small>no FanDuel line on the board this week</small>'; lab = f'avg {line:.0f}'
-        charts.append(f'<figure class="l10c"><figcaption><span class="mk">{E(L10_UNIT[m].capitalize())}</span><span class="ct">{cap}</span></figcaption>'
+        else: cap = f'Averaging <b>{line:.1f}</b> <small>no FanDuel line on the board this week</small>'; lab = f'avg {line:.0f}' if line >= 10 else f'avg {line:.1f}'
+        charts.append(f'<figure class="l10c"><figcaption><span class="mk">{E(L10_UNIT[m][:1].upper() + L10_UNIT[m][1:])}</span><span class="ct">{cap}</span></figcaption>'
                       f'<div class="plot" role="img" aria-label="{E(p["name"])} {L10_UNIT[m]}, last {len(vals)} games: {", ".join(f"{v:.0f}" for v in vals)}. {("Line " + lab + ", cleared " + str(hits) + " of " + str(len(vals))) if main else ("Average " + f"{line:.1f}")}.">'
                       f'<ol>{bars}</ol><span class="ln" style="bottom:calc(34px + (100% - 52px) * {line / top:.4f})"><i>{lab}</i></span></div></figure>')
     if not charts: return ""
-    return (f'<section class="l10"><h2>Last {len(gs)} games <small>oldest to newest · the line is this week\'s FanDuel number</small></h2>'
+    return (f'<section class="l10"><h2>Last {len(gs_all)} games <small>oldest to newest · the line is this week\'s FanDuel number</small></h2>'
             f'<div class="l10w">{"".join(charts)}</div></section>')
 
 def props_block(p):
@@ -359,7 +369,7 @@ def props_block(p):
                     rows.append(_leg_row(p, l, m, lab, played, ko))
         best = max(gl, key=lambda l: (l.get("e") if l.get("e") is not None else -9))
         be = best.get("e") or 0
-        bl = TDLAB.get(best["m"]) or (("under " + str(best["ln"])) if best["m"].startswith("Under ") else f'{jsround(best["ln"])}+ {str(best.get("ms") or best["m"]).lower()}')
+        bl = TDLAB.get(best["m"]) or (("under " + str(best["ln"])) if best["m"].startswith("Under ") else f'{jsround(best["ln"])}+ {_low(best.get("ms") or best["m"])}')
         summ = (f'<summary><b class="gt">{gname}</b><span class="gs">{len(gl)} line{"s" if len(gl) != 1 else ""} · best edge <i class="{"up" if be > 0 else "dn"}">{"+" if be >= 0 else ""}{100 * be:.1f}</i> {E(bl)}</span>{mup}</summary>')
         blocks.append(f'<details class="pg"{" open" if first else ""}>{summ}<div class="tw"><table class="props"><thead><tr><th>Line</th><th>Bet it</th><th>Model</th><th>Book</th><th>Edge</th><th>This season</th><th>Slip</th></tr></thead><tbody>'
                       + "".join(rows) + '</tbody></table></div></details>')

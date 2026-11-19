@@ -2241,3 +2241,54 @@ row; on, thirteen.
   the automation on main and writes his sheet, so a session does not do it unasked.
 - Left for Thursday's scheduled run on purpose: Jordan Addison (thumb surgery, no stated absence), Sunday's questionables, and the
   stale QB role proposals (Cousins / Mayfield / Milton).
+
+## 11/19, 1:35-2:40 AM CT: passing TDs become a real market - the ladder, a market-anchored price, and why nobody could find them (owner 1:08 AM: "Can we have passing tds and alternate passing tds available as betting options. Honestly any legs we don't currently offer that we could offer would be great to add")
+
+- What was true before. Passing TDs legs had been on the board since 11/5 (19 this week, one rung a quarterback), but:
+  (a) the market was on NO list the pages draw from - not the builder's market filter, not a quarterback's "All props" (MORD), not the
+  other-markets arrows (MO), not the player pages (MORDER / PGROUPS). They could only be met by search or by sorting the whole board.
+  (b) Their leg details read "0 of his last 0", no picture, "No defensive game log": the legs carried "sk": "nm", a key no game log has.
+  (c) Only FanDuel's main rung was pulled. (d) The price was no better than a base rate (below).
+- What FanDuel sends through The Odds API - facts, from b/books.json as published 11/8, 11/12, 11/13, 11/15 and 11/16 and from the
+  11/18 links tab: `player_pass_tds` = the main rung only; `player_pass_interceptions`, `player_pass_completions` (+ alternate) and
+  `player_rush_attempts` have NEVER returned one FanDuel row (DraftKings and Hard Rock return them). The main request had paid about
+  4 credits a game, every refresh since 11/5, for DraftKings / Hard Rock rows no leg could use. So "more legs" is bounded by the feed,
+  and which of the other 50-odd market keys FanDuel posts through it was unknown - hence the one-time check below.
+- FanDuelOdds.gs v2026-11-19 (the owner pastes it; nothing to re-install):
+  - `player_pass_tds_alternate` joins the main request -> every quarterback's 1+ / 2+ / 3+ / 4+ rungs in 'AUTO - FanDuel Links' (the
+    site prices any rung). A 422 from the feed drops the new key for that pull instead of failing every game (FDO_NEW_MAIN_KEYS).
+  - The four dead keys leave the main request. Net about 3 credits a game LESS (harness week: 3,160 -> 2,686 credits).
+  - EXTRA_MARKETS: those four, their alternates and every other NFL player key in the Odds API list. The keys switched on are asked
+    of FanDuel ALONE in a second request (a market FanDuel does not post costs nothing), only for a game inside 40 hours whose extra
+    rows are 20+ hours old (5+ on game day); in between the rows stay in the links tab with their own stamp (`keepExtra`). Skipped when
+    the credits left would not cover the fixed schedule. A menu refresh always asks.
+  - 'AUTO - Market Coverage' (new tab, not mirrored - read it with the Sheets connector): one row a key. Column C "Pull" = Y is the
+    switch, so a market can be turned on from the sheet with no new paste - only switch on what the site prices (column D). The first
+    refresh with a game inside 12 hours runs a one-time CHECK of every listed key (player and game markets) against FanDuel for that one
+    game and writes rows / players / a sample per key (menu: "Check which other FanDuel markets exist"; property BS_MARKET_CHECK). A key
+    the API rejects is isolated by halving the request and marked "error 422".
+  - CREDITS_PER_GAME 21 -> 18, CORE_PER_DAY 580 -> 520 (re-measure from the credits-left readings after a week).
+  - tests/gs/harness.js: the fake feed now answers as FanDuel really does; 49 checks against tests/gs/FanDuelOdds-2026-11-10.gs.txt (the
+    file being replaced). RUN IT before handing over any new version.
+- The price (research/ptd_model.py -> research/ptd_model.json, read by newmkt.py). Checked rung by rung on 2025-26 (570 QB games),
+  the 11/5 number (shrunk season average, Poisson) was no better than the league base rate at 1+, 2+ or 4+, and Poisson was the wrong
+  shape: TD counts are under-dispersed (variance 1.36, mean 1.51). Now: mean = exp(-3.614 + 1.253 ln(the market's implied team points)
+  + 0.343 ln(his average shrunk k = 10 toward the league)), count ~ Binomial(8, mean / 8). Test seasons, Brier against the base rate:
+  -0.005 at 1+, -0.014 at 2+, -0.010 at 3+, -0.001 at 4+; calibrated by thirds at every rung. The team total carries nearly all of it
+  (a TDs-per-implied-point term for run-heavy quarterbacks added nothing). Still no leg on a quarterback with fewer than two 15-attempt
+  games: on those the fit says 72% for 1+ and 58% happen. The builder passes the game's `pa` / `pb` (FanDuel's implied team points).
+  This week the raw number sits a mean 3.9 points from FanDuel's price over the 19 main rungs.
+- The site: build_builder.py - NEW_SK / NEW_COL (each newer market reads its own game-log column: ptd, cmp, int for quarterbacks'
+  15+ attempt games, att for backs), the same keys in DEF / LG, `rank_col` gives Passing TDs the "QB Pass TD" ranks (matchup pill), MO
+  and MORD list the newer markets, #fMarket lists Passing TDs and appends by itself any player market on the board it does not know,
+  `lms()` writes "pass TDs" / "INTs" in sentences. build_players.py - the newer markets in MORDER / PGROUPS / `_stat`, counted over
+  starts (`_games_for`), a Passing TDs chart for quarterbacks; plydata.py adds "cmp".
+- tests/new_markets.py (55, in the pre-publish set): the pricer's formula and rules on a made-up season; the built board; the phone
+  builder (light and dark) with a full ladder put on each quarterback - filter, All props, slider, picture, defence block, slip, Search;
+  a quarterback's player page.
+- NEXT, once the coverage check has run (the owner must paste first): price and switch on what FanDuel really posts (candidates: pass
+  attempts, longest completion / rush, pass + rush yards, kicking points, tackles + assists). Each needs a tested pricer in newmkt.py,
+  a game-log column (NEW_COL), live tracking (build_live statFor) and grading (home.py, social.py, social_grade.py, grade_promos.py)
+  before its switch goes to Y. Team totals / first-half lines are game markets: FanDuelGameLines.gs and gamelines.py, another paste.
+  Owner decision, not taken: offering completions / interceptions / rush attempts at DraftKings' price (FanDuel's is not in the feed)
+  would mean pulling those keys from all three books again, about 600 credits a week.

@@ -1,0 +1,41 @@
+k=3: train n=799 test n=570  train logloss (shrunk avg, Poisson) 1.4973
+k=6: train n=799 test n=570  train logloss (shrunk avg, Poisson) 1.4904
+k=10: train n=799 test n=570  train logloss (shrunk avg, Poisson) 1.4888
+k=15: train n=799 test n=570  train logloss (shrunk avg, Poisson) 1.4894
+k=25: train n=799 test n=570  train logloss (shrunk avg, Poisson) 1.4917
+best k on 2023-24: 10
+--- k=3  (test 2025-26, n=570; base rates in the second number of each pair)
+  A shrunk avg, Poisson                        logloss 1.5265 | 1+ 0.775/0.804 B 0.1593 (+0.0014) | 2+ 0.451/0.467 B 0.2492 (+0.0003) | 3+ 0.206/0.207 B 0.1631 (-0.0010) | 4+ 0.078/0.060 B 0.0562 (+0.0001)
+   B coefficients: b0=-3.609 implied-points exponent=1.270 QB-average exponent=0.184
+  B implied points + shrunk avg, Poisson       logloss 1.4891 | 1+ 0.779/0.804 B 0.1530 (-0.0048) | 2+ 0.459/0.467 B 0.2347 (-0.0142) | 3+ 0.214/0.207 B 0.1547 (-0.0095) | 4+ 0.083/0.060 B 0.0553 (-0.0008)
+  C implied points only, Poisson               logloss 1.4870 | 1+ 0.774/0.804 B 0.1529 (-0.0050) | 2+ 0.452/0.467 B 0.2339 (-0.0150) | 3+ 0.208/0.207 B 0.1543 (-0.0099) | 4+ 0.079/0.060 B 0.0553 (-0.0008)
+   binomial n fitted on 2023-24: n=8 (train logloss 1.4547 vs Poisson 1.4641)
+  B + Binomial(n=8)                            logloss 1.4786 | 1+ 0.811/0.804 B 0.1526 (-0.0053) | 2+ 0.480/0.467 B 0.2348 (-0.0141) | 3+ 0.204/0.207 B 0.1545 (-0.0097) | 4+ 0.062/0.060 B 0.0548 (-0.0013)
+  A + Binomial(n=8)                            logloss 1.5247 | 1+ 0.807/0.804 B 0.1588 (+0.0010) | 2+ 0.471/0.467 B 0.2505 (+0.0016) | 3+ 0.195/0.207 B 0.1637 (-0.0005) | 4+ 0.058/0.060 B 0.0556 (-0.0004)
+      1+ thirds model/actual: 0.714/0.721 (n=190)   0.826/0.795 (n=190)   0.893/0.895 (n=190)
+      2+ thirds model/actual: 0.332/0.353 (n=190)   0.487/0.442 (n=190)   0.620/0.605 (n=190)
+      3+ thirds model/actual: 0.103/0.116 (n=190)   0.197/0.174 (n=190)   0.312/0.332 (n=190)
+      4+ thirds model/actual: 0.021/0.016 (n=190)   0.054/0.058 (n=190)   0.111/0.105 (n=190)
+--- k=10  (test 2025-26, n=570; base rates in the second number of each pair)
+  A shrunk avg, Poisson                        logloss 1.5177 | 1+ 0.778/0.804 B 0.1576 (-0.0003) | 2+ 0.448/0.467 B 0.2465 (-0.0024) | 3+ 0.198/0.207 B 0.1616 (-0.0026) | 4+ 0.071/0.060 B 0.0556 (-0.0005)
+   B coefficients: b0=-3.614 implied-points exponent=1.253 QB-average exponent=0.343
+  B implied points + shrunk avg, Poisson       logloss 1.4895 | 1+ 0.781/0.804 B 0.1530 (-0.0049) | 2+ 0.463/0.467 B 0.2348 (-0.0141) | 3+ 0.217/0.207 B 0.1547 (-0.0095) | 4+ 0.084/0.060 B 0.0554 (-0.0007)
+  C implied points only, Poisson               logloss 1.4870 | 1+ 0.774/0.804 B 0.1529 (-0.0050) | 2+ 0.452/0.467 B 0.2339 (-0.0150) | 3+ 0.208/0.207 B 0.1543 (-0.0099) | 4+ 0.079/0.060 B 0.0553 (-0.0008)
+   binomial n fitted on 2023-24: n=8 (train logloss 1.4544 vs Poisson 1.4638)
+  B + Binomial(n=8)                            logloss 1.4790 | 1+ 0.813/0.804 B 0.1527 (-0.0052) | 2+ 0.484/0.467 B 0.2351 (-0.0138) | 3+ 0.207/0.207 B 0.1544 (-0.0097) | 4+ 0.064/0.060 B 0.0547 (-0.0014)
+  A + Binomial(n=8)                            logloss 1.5140 | 1+ 0.811/0.804 B 0.1571 (-0.0008) | 2+ 0.466/0.467 B 0.2463 (-0.0026) | 3+ 0.185/0.207 B 0.1620 (-0.0022) | 4+ 0.050/0.060 B 0.0555 (-0.0005)
+      1+ thirds model/actual: 0.718/0.716 (n=190)   0.828/0.805 (n=190)   0.894/0.889 (n=190)
+      2+ thirds model/actual: 0.337/0.353 (n=190)   0.491/0.447 (n=190)   0.624/0.600 (n=190)
+      3+ thirds model/actual: 0.105/0.116 (n=190)   0.200/0.179 (n=190)   0.317/0.326 (n=190)
+      4+ thirds model/actual: 0.022/0.016 (n=190)   0.055/0.058 (n=190)   0.114/0.105 (n=190)
+   chosen: {'k': 10, 'b': [-3.6144, 1.2533, 0.3433], 'n': 8, 'test_n': 570, 'logloss': 1.479, 'brier_vs_base': {'1': -0.0052, '2': -0.0138, '3': -0.0097, '4': -0.0014}}
+0-1 prior games, all seasons n = 180 mean implied pts 19.0 mean TDs 0.92
+    B + Binomial                               logloss 1.3231 | 1+ 0.723/0.578 B 0.2635 (+0.0195) | 2+ 0.352/0.267 B 0.2070 (+0.0115) | 3+ 0.118/0.056 B 0.0591 (+0.0066) | 4+ 0.028/0.017 B 0.0162 (-0.0002)
+0-1 prior games, 2025-26 n = 77 mean implied pts 19.6 mean TDs 0.82
+    B + Binomial                               logloss 1.2944 | 1+ 0.739/0.532 B 0.2901 (+0.0412) | 2+ 0.373/0.247 B 0.2007 (+0.0148) | 3+ 0.130/0.026 B 0.0346 (+0.0093) | 4+ 0.032/0.013 B 0.0123 (-0.0005)
+2-4 prior games, 2025-26 n = 183 mean implied pts 22.0 mean TDs 1.47
+    B + Binomial                               logloss 1.3880 | 1+ 0.793/0.825 B 0.1349 (-0.0093) | 2+ 0.450/0.426 B 0.2291 (-0.0155) | 3+ 0.181/0.169 B 0.1340 (-0.0067) | 4+ 0.052/0.049 B 0.0458 (-0.0009)
+5+ prior games, 2025-26 n = 387 mean implied pts 23.3 mean TDs 1.59
+    B + Binomial                               logloss 1.5221 | 1+ 0.823/0.793 B 0.1611 (-0.0029) | 2+ 0.500/0.486 B 0.2379 (-0.0119) | 3+ 0.219/0.225 B 0.1641 (-0.0101) | 4+ 0.069/0.065 B 0.0589 (-0.0015)
+mean implied team points, QB games 2023-24: 21.77  all: 22.07
+wrote research/ptd_model.json
