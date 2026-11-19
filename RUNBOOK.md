@@ -2286,6 +2286,9 @@ row; on, thirteen.
 - tests/new_markets.py (55, in the pre-publish set): the pricer's formula and rules on a made-up season; the built board; the phone
   builder (light and dark) with a full ladder put on each quarterback - filter, All props, slider, picture, defence block, slip, Search;
   a quarterback's player page.
+- Published 2:27 AM CT (site 96dba206; pre-publish set 33 of 33; new_markets, builder_fold and page_tight re-run on the published copy).
+  MASTER row 616. The owner's copy of the script: owner_send/FanDuelOdds-2026-11-19.txt (identical to FanDuelOdds.gs). A check-in is set for
+  11:05 AM to read 'AUTO - Market Coverage'; if the tab is not there the script has not been pasted yet.
 - NEXT, once the coverage check has run (the owner must paste first): price and switch on what FanDuel really posts (candidates: pass
   attempts, longest completion / rush, pass + rush yards, kicking points, tackles + assists). Each needs a tested pricer in newmkt.py,
   a game-log column (NEW_COL), live tracking (build_live statFor) and grading (home.py, social.py, social_grade.py, grade_promos.py)
