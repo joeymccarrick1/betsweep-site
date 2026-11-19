@@ -1,9 +1,9 @@
 {
  "news": [],
  "week": 11,
- "built": "Thu 11/19 8:02 AM",
- "checked": "2026-11-19T16:42:12Z",
- "legs_checked": 1270,
+ "built": "Thu 11/19 11:08 AM",
+ "checked": "2026-11-19T17:12:11Z",
+ "legs_checked": 1259,
  "moves": [
   {
    "key": "Foster Moreau|Receptions|1",
@@ -19,8 +19,25 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Foster Moreau rec 1+: FanDuel -225 at build -> -148 now (-9.6 implied pts against us)"
+  },
+  {
+   "key": "Foster Moreau|Under Receptions|1",
+   "pl": "Foster Moreau",
+   "m": "Under Receptions",
+   "ln": 0.5,
+   "gid": "HOU-IND",
+   "ko": 1795137300000,
+   "built": 164,
+   "now": 112.0,
+   "pts": 9.3,
+   "p": 0.3334,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-19 10:36",
+   "detail": "Foster Moreau under rec 0.5: FanDuel +164 at build -> +112 now (+9.3 implied pts toward the model)"
   },
   {
    "key": "Jonathan Taylor|Receiving Yards|30",
@@ -36,8 +53,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Jonathan Taylor rec yds 30+: FanDuel +194 at build -> +140 now (+7.7 implied pts toward the model)"
+  },
+  {
+   "key": "Ashton Dulin|Under Receptions|2",
+   "pl": "Ashton Dulin",
+   "m": "Under Receptions",
+   "ln": 1.5,
+   "gid": "HOU-IND",
+   "ko": 1795137300000,
+   "built": -215,
+   "now": -154.0,
+   "pts": -7.6,
+   "p": 0.6378,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-19 10:36",
+   "detail": "Ashton Dulin under rec 1.5: FanDuel -215 at build -> -154 now (-7.6 implied pts against us)"
   },
   {
    "key": "Ashton Dulin|Receptions|2",
@@ -53,7 +87,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Ashton Dulin rec 2+: FanDuel +158 at build -> +116 now (+7.5 implied pts toward the model)"
   },
   {
@@ -70,7 +104,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Laquon Treadwell long rec 20+: FanDuel +125 at build -> +170 now (-7.4 implied pts against us)"
   },
   {
@@ -87,7 +121,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Jonathan Taylor long rec 15+: FanDuel +195 at build -> +145 now (+6.9 implied pts toward the model)"
   },
   {
@@ -104,7 +138,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Foster Moreau rec yds 5+: FanDuel -113 at build -> +116 now (-6.8 implied pts against us)"
   },
   {
@@ -121,8 +155,25 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Laquon Treadwell rec yds 40+: FanDuel +162 at build -> +210 now (-5.9 implied pts against us)"
+  },
+  {
+   "key": "Tank Dell|Under Receptions|3",
+   "pl": "Tank Dell",
+   "m": "Under Receptions",
+   "ln": 2.5,
+   "gid": "HOU-IND",
+   "ko": 1795137300000,
+   "built": -108,
+   "now": 112.0,
+   "pts": -4.8,
+   "p": 0.5106,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-19 10:36",
+   "detail": "Tank Dell under rec 2.5: FanDuel -108 at build -> +112 now (-4.8 implied pts against us)"
   },
   {
    "key": "Tank Dell|Receptions|3",
@@ -138,8 +189,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Tank Dell rec 3+: FanDuel -122 at build -> -148 now (+4.7 implied pts toward the model)"
+  },
+  {
+   "key": "Jonathan Taylor|Under Receptions|4",
+   "pl": "Jonathan Taylor",
+   "m": "Under Receptions",
+   "ln": 3.5,
+   "gid": "HOU-IND",
+   "ko": 1795137300000,
+   "built": -154,
+   "now": -130.0,
+   "pts": -4.1,
+   "p": 0.6602,
+   "value": true,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-19 10:36",
+   "detail": "Jonathan Taylor under rec 3.5: FanDuel -154 at build -> -130 now (-4.1 implied pts against us)"
   },
   {
    "key": "Tyler Warren|Receptions|7",
@@ -155,7 +223,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Tyler Warren rec 7+: FanDuel +210 at build -> +255 now (-4.1 implied pts against us)"
   },
   {
@@ -172,7 +240,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Ashton Dulin rec yds 10+: FanDuel -152 at build -> -180 now (+4.0 implied pts toward the model)"
   },
   {
@@ -189,7 +257,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 10:25",
+   "pulled": "2026-11-19 10:36",
    "detail": "Jonathan Taylor rec 5+: FanDuel +230 at build -> +200 now (+3.0 implied pts toward the model)"
   }
  ]
