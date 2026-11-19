@@ -2215,3 +2215,29 @@ row; on, thirteen.
   and source lines, no sportsbook wording); pixel colours of the card; three poster sizes; the PNG download; the two prompts; a
   multi-game promo; `?p=w11-5`; today's real home page (no promos up: says so, legs by hand still draw); a phone.
 - Week 11 has no promos posted yet (Wednesday), so the live page will say "No promoted bets found" until Thursday's are up.
+
+## 11/19, 1:05-1:30 AM CT: a Wednesday rule-out the model did not have until the owner asked (owner 1:06 AM: "Woody marks is out. We need to adjust.")
+
+- What the owner saw: David Montgomery back, Woody Marks ruled out, FanDuel already pricing Montgomery as the lead back - and the
+  site still projecting Marks at 44.5 rushing yards with Montgomery behind him at 30.
+- Why: the hourly reprice only FLAGS injury news (the news desk, "Lines to check", the OUT chips) and PROPOSES availability rows
+  (`out/news_rows.json`, `out/depth_rows.json`). Nothing in the hourly job writes 'AUTO - Weekly Availability'; only a model run
+  (Tue/Thu/Sat/Sun) or a session does. The rule-out came in the ESPN team report Wed 11/18 2:51 PM - after Tuesday's run, before
+  Thursday's - and the session read that line at about 4:40 PM Wednesday and went on with page work. That second part is the
+  session's miss. RULE FROM NOW ON: when a session sees a "ruled out / placed on IR" line for a game inside 48 hours, it writes the
+  row (Step 2a rules), re-mirrors and republishes before anything else.
+- Sheet writes (Step 2a wording rules; every row read back; `avail_check.py`: 79 rows reach the model, 0 ignored): rows 52 and 66
+  upgraded QUESTIONABLE -> OUT (Will Mallory IND TE, Marvin Harrison Jr. HOU WR); new OUT rows for Woody Marks HOU RB (concussion),
+  Brevin Jordan HOU TE and Jake Ferguson DAL TE; Jawhar Jordan HOU RB set to Forced Role "DEPTH / CONTEXT" - he is not on ESPN's
+  Texans RB chart and the fill-in logic had handed him 38 rushing yards.
+- After the projection tabs recalculated: Montgomery RB1 44.4 rush / 16.3 rec yds, 0.31 rush TD; Demercado 22.0 / 8.7; Marks and
+  Jordan 0. Builder: Montgomery rushing 45.8 vs FanDuel's 50.5, anytime TD 51% vs 56% implied. Game numbers unchanged (HOU 28-15.5).
+  `voice/voice-w11.json` HOU-IND rewritten (pick Dell 30+ receiving yards). Published 1:27 AM (site 45f5152a). MASTER row 615.
+- Structural limit this exposed: a back who steps into the lead role gets his carries from season averages and the fill-in share
+  ("last-4 carries/targets: diagnostic only"), so the number runs low (consensus had Marks at 66.9 when we had 44.5; FanDuel has
+  Montgomery at 50.5 against our 45.8). Tuesday research item, with the consensus-as-market test.
+- Not built, waiting on the owner's yes: the hourly job writing official rule-outs into the availability tab itself (ESPN "ruled
+  out" / IR wording, game not kicked off, never a downgrade, never an "OWNER" row), then re-mirroring before it reprices. It changes
+  the automation on main and writes his sheet, so a session does not do it unasked.
+- Left for Thursday's scheduled run on purpose: Jordan Addison (thumb surgery, no stated absence), Sunday's questionables, and the
+  stale QB role proposals (Cousins / Mayfield / Milton).
