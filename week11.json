@@ -40,7 +40,12 @@
    "caption": "Thursday best bet: Tank Dell 37+ receiving yards (-114).\nMarvin Harrison Jr. is out, Dell has averaged 56 yards a game, model projects 55.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
    "ig_caption": "Thursday best bet: Tank Dell 37+ receiving yards (-114).\nMarvin Harrison Jr. is out, Dell has averaged 56 yards a game, model projects 55.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
    "script": null,
-   "post": false
+   "post": false,
+   "check": {
+    "run": "check_thursday 2026-11-19 ~9:30 AM CT",
+    "status": "OK",
+    "why": "-114 -> -113 (0.2 pts, flat); still risk 0 and the best edge at -150..+150 with 50%+; projection up to 58.4."
+   }
   },
   {
    "slot": "thursday",
@@ -50,6 +55,66 @@
    "game": "HOU-IND",
    "date": "11/19",
    "legs": [
+    {
+     "pl": "HOU -10.5",
+     "m": "Spread",
+     "ln": -10.5,
+     "o": -136,
+     "p": 0.552,
+     "bk": 0.5763,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840164",
+      "s": "12246853"
+     },
+     "why": "Model HOU 28-15.5; HOU by 10+ is the likeliest ending at 59%."
+    },
+    {
+     "pl": "Tank Dell",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "o": 104,
+     "p": 0.4995,
+     "bk": 0.49,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291750",
+      "s": "60303884"
+     },
+     "why": "Sweep says 'Dell draws the softest matchup on Clay's chart'; raw model 61.8% vs FanDuel 49.0% (Model's Best even tier); projected 58.4, avg 56.3."
+    },
+    {
+     "pl": "C.J. Stroud",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -140,
+     "p": 0.5605,
+     "bk": 0.583,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840250",
+      "s": "60303894"
+     },
+     "why": "Swap for the Collins/Hutchinson pair: 303.7 yds/g vs defenses like Indy's (DAL/CIN/CLE), 273.6 season; Ward OUT and Gardner Q in the IND secondary. Weakest leg: projection 246.8 is under the line."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=12246853&marketId[1]=42.626291750&selectionId[1]=60303884&marketId[2]=42.625840250&selectionId[2]=60303894",
+   "price": "+416",
+   "price_is_estimate": true,
+   "chance": 0.1545,
+   "caption": "Texans Takeover. Thursday night, Houston rolls.\nHOU -10.5 | Tank Dell 40+ yds | C.J. Stroud 250+ pass yds\nModel: HOU by 10+ in 59% of endings.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Texans Takeover. Thursday night, Houston rolls.\nHOU -10.5 | Tank Dell 40+ yds | C.J. Stroud 250+ pass yds\nModel: HOU by 10+ in 59% of endings.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Thursday night. Three Texans legs, about +420, here's why.",
+    "LEGS: Texans minus ten and a half. Dell forty plus. Stroud two-fifty plus.",
+    "WHY: Indy is missing two starting corners - Stroud has averaged 304 against defenses like theirs.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false,
+   "drafted_legs": [
     {
      "pl": "HOU -10.5",
      "m": "Spread",
@@ -111,19 +176,11 @@
      "why": "3+ catches in 8 of 9 games; snaps up, 'Reliable'."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=12246853&marketId[1]=42.626291750&selectionId[1]=73619054&marketId[2]=42.625847705&selectionId[2]=40988195&marketId[3]=42.626291755&selectionId[3]=41075117",
-   "price": "+447",
-   "price_is_estimate": true,
-   "chance": 0.1151,
-   "caption": "Texans Takeover. Thursday night, Houston rolls.\nHOU -10.5 | Tank Dell 30+ yds | Nico Collins 60+ yds | Xavier Hutchinson 3+ catches\nModel: HOU by 10+ in 59% of endings.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Texans Takeover. Thursday night, Houston rolls.\nHOU -10.5 | Tank Dell 30+ yds | Nico Collins 60+ yds | Xavier Hutchinson 3+ catches\nModel: HOU by 10+ in 59% of endings.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": [
-    "HOOK: Thursday night. Four Texans legs, about +450, here's why.",
-    "LEGS: Texans minus ten and a half. Dell thirty plus. Collins sixty plus. Hutchinson three catches.",
-    "WHY: Harrison Jr. is out - Collins has averaged 89 yards against defenses like Indy's.",
-    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
-   ],
-   "post": false
+   "check": {
+    "run": "check_thursday 2026-11-19 ~9:30 AM CT",
+    "status": "FLAG -> swapped",
+    "why": "Nico Collins 60+ and Xavier Hutchinson 3+ rec picked up bad flags since Wednesday (Collins Cold L3 45 yds/g last 3 + Targets down 4.7/g, risk 7; Hutchinson Cold L3 19 yds/g last 3, risk 4). Low-confidence game (model total 43.5 = FanDuel 43.5; Gardner Q) -> shrunk to 3 legs."
+   }
   },
   {
    "slot": "thursday",
@@ -133,6 +190,91 @@
    "game": "HOU-IND",
    "date": "11/19",
    "legs": [
+    {
+     "pl": "HOU -14.5",
+     "m": "Spread",
+     "ln": -14.5,
+     "o": 122,
+     "p": 0.4305,
+     "bk": 0.4505,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840164",
+      "s": "15469209"
+     },
+     "why": "Blowout script: model margin 12.5, HOU by 10+ 59%."
+    },
+    {
+     "pl": "C.J. Stroud",
+     "m": "Passing Yards",
+     "ln": 300.0,
+     "o": 225,
+     "p": 0.2934,
+     "bk": 0.308,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840250",
+      "s": "60303913"
+     },
+     "why": "Ceiling leg: 303.7 yds/g vs DAL/CIN/CLE-type defenses; IND down two starting corners (Ward OUT, Gardner Q)."
+    },
+    {
+     "pl": "C.J. Stroud",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -225,
+     "p": 0.6835,
+     "bk": 0.6923,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840252",
+      "s": "41158959"
+     },
+     "why": "Stroud 2.11 pass TDs/g, projected 2.14 - the TD leg (no clean anytime scorer left on Houston)."
+    },
+    {
+     "pl": "Tank Dell",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "o": 104,
+     "p": 0.4995,
+     "bk": 0.49,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291750",
+      "s": "60303884"
+     },
+     "why": "Dell 40+: raw model 61.8% vs FanDuel 49.0%; projected 58.4."
+    },
+    {
+     "pl": "Over 44.5",
+     "m": "Total",
+     "ln": 44.5,
+     "o": 100,
+     "p": 0.4714,
+     "bk": 0.5,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840167",
+      "s": "12194312"
+     },
+     "why": "Texans by 15 + Stroud 300 needs points: 31-14 clears it; model total 43.5."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=15469209&marketId[1]=42.625840250&selectionId[1]=60303913&marketId[2]=42.625840252&selectionId[2]=41158959&marketId[3]=42.626291750&selectionId[3]=60303884&marketId[4]=42.625840167&selectionId[4]=12194312",
+   "price": "+3512",
+   "price_is_estimate": true,
+   "chance": 0.0203,
+   "caption": "Thursday Night Thievery (LOTTERY). Texans by 15, Stroud 300 and two TDs.\nHOU -14.5 | Stroud 300+ | Stroud 2+ TDs | Dell 40+ | Over 44.5\nSmall stake only.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Thursday Night Thievery (LOTTERY). Texans by 15, Stroud 300 and two TDs.\nHOU -14.5 | Stroud 300+ | Stroud 2+ TDs | Dell 40+ | Over 44.5\nSmall stake only.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false,
+   "drafted_legs": [
     {
      "pl": "HOU -14.5",
      "m": "Spread",
@@ -224,14 +366,11 @@
      "why": "Hutchinson 35+: 47.0 avg vs similar defenses, 38.3 season."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=15469209&marketId[1]=42.625840250&selectionId[1]=60303908&marketId[2]=42.625847705&selectionId[2]=40988200&marketId[3]=42.625840218&selectionId[3]=26919599&marketId[4]=42.626291750&selectionId[4]=60303884&marketId[5]=42.626291749&selectionId[5]=41075117",
-   "price": "+5609",
-   "price_is_estimate": true,
-   "chance": 0.0113,
-   "caption": "Thursday Night Thievery (LOTTERY). Texans by 15, Stroud 275, Collins scores.\nHOU -14.5 | Stroud 275+ | Collins 70+ yds | Collins TD | Dell 40+ | Hutchinson 35+\nSmall stake only.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Thursday Night Thievery (LOTTERY). Texans by 15, Stroud 275, Collins scores.\nHOU -14.5 | Stroud 275+ | Collins 70+ yds | Collins TD | Dell 40+ | Hutchinson 35+\nSmall stake only.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": null,
-   "post": false
+   "check": {
+    "run": "check_thursday 2026-11-19 ~9:30 AM CT",
+    "status": "FLAG -> swapped",
+    "why": "Collins 70+, Collins ATD (Cold L3 + Targets down, risk 7) and Hutchinson 35+ (Cold L3, risk 4; line now 36) fail the leg filter. Stroud 275+ drifted +118 -> +132 (2.8 pts against, under the 3-pt flag) and his projection fell to 246.8 -> moved to the 300 rung as the ceiling leg. No clean anytime TD left on either team."
+   }
   },
   {
    "slot": "saturday",
@@ -867,5 +1006,14 @@
   "LAC_NYJ": "props not posted yet",
   "PHI_PIT": "HIGH weather, no clean leg",
   "snf_lottery": "low-confidence game (rule 13)"
+ },
+ "checks": {
+  "check_thursday": {
+   "run": "2026-11-19 ~9:30 AM CT, builder Thu 11/19 8:02 AM CT, feeds 15:20 UTC",
+   "sweep_thu": "still none: Tank Dell 30+ (-174) now qualifies on rule 3(b) (raw 74.4% vs FanDuel 63.5%, +10.9) and is the Sweep says leg, but it is the only qualifying leg; no clean Houston TD for an either-or pair; low-confidence game -> no Sweep",
+   "thu_single": "OK",
+   "thu_500": "FLAG swapped",
+   "thu_lot": "FLAG swapped"
+  }
  }
 }

@@ -5,6 +5,29 @@ Builder data: Wed 11/18 5:53 PM CT. Feeds mirrored 11/19 02:10 UTC. Nothing post
 Rule 3 trial shape needs 3 legs at -130 to -199 the model likes (Model's Best short pick shown 65%+, or raw model 8+ pts over FanDuel). After the low-risk filter (risk 0-1, no bad flag, overs, no backup-QB legs) **zero legs on the whole Week 11 board qualify**. The builder's own Sweep pool (`sp`) has 2 legs - Dalton Kincaid 25+ rec yds (risk 10) and Isaac TeSlaa 10+ rec yds (risk 9) - both High risk. The only clean legs the raw model rates 8+ over price are unders with Role-Up/Hot-L3/Targets-up flags (blocked by the 11/13 unders rule) or Kittle U5.5 rec (no Sweep says unders call). Per the recipe: a day without a Sweep beats a forced one.
 Your call (closest miss): **Tank Dell 30+ rec yds -178** (Thu) - raw model 70.8% vs FanDuel 64.0% (+6.8, short of +8), risk 0, MHJ OUT. Sunday's closest: Rome Odunze 40+ rec yds -154 (+4.5). Monday: none within 5 pts.
 
+## CHECK THURSDAY - Thu 11/19 ~9:30 AM CT (builder Thu 8:02 AM CT, ESPN feeds 9:20 AM CT)
+IND @ HOU 7:15 PM CT. Roof can close, weather LOW. No inactives yet. Nothing posted. Low-confidence game (rule 13): model total 43.5 = FanDuel 43.5, Sauce Gardner Q -> slips shrunk.
+- **Daily Sweep Thu: still none.** Tank Dell 30+ (-174) now qualifies (raw 74.4% vs FanDuel 63.5%) and is the Sweep says leg, but it is the only one - no second model-liked leg, no clean Houston TD for a pair.
+- **Dell's Night (single): OK** - -114 -> -113, risk 0, projection up to 58.4.
+- **Texans Takeover: FLAG -> swapped.** Collins 60+ (Cold L3 45 yds/g, Targets down 4.7/g, risk 7) and Hutchinson 3+ rec (Cold L3 19 yds/g, risk 4) picked up bad flags. Prices were flat.
+- **Thursday Night Thievery: FLAG -> swapped.** Collins 70+, Collins ATD, Hutchinson 35+ fail the same flags. Stroud 275+ drifted +118 -> +132 (2.8 pts against).
+
+### Texans Takeover (swapped) - +416 est. SGP (15.5% independent floor)
+- HOU -10.5 (-136, BetSweep 55.2%, FD 57.6%, risk 0) - HOU by 10+ is the likeliest ending at 59%.
+- Tank Dell 40+ rec yds (+104, BetSweep 49.9%, FD 49.0%, risk 0) - raw model 61.8%; Sweep says Dell has the softest matchup; proj 58.4.
+- C.J. Stroud 250+ pass yds (-140, BetSweep 56.0%, FD 58.3%, risk 0) - 303.7 yds/g vs DAL/CIN/CLE-type defenses; IND without Ward, Gardner Q.
+- Same-game: check FanDuel's SGP price. Estimate +416 (legs multiplied +507) - not FanDuel's quote.
+- Sweep-says version: Dell 30+ instead of 40+ -> about +299 est.
+- Argue against it: Stroud's projection (246.8) is under 250 and the raw model has it at 48%; with a big lead Houston runs late. Every leg needs Houston's offense.
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=12246853&marketId[1]=42.626291750&selectionId[1]=60303884&marketId[2]=42.625840250&selectionId[2]=60303894
+X: Texans Takeover. Thursday night, Houston rolls. / HOU -10.5 | Tank Dell 40+ yds | C.J. Stroud 250+ pass yds / Model: HOU by 10+ in 59% of endings. / Comment @Playbook to tail this on your book / 21+ | gamble responsibly
+Video: HOOK Thursday night. Three Texans legs, about +420. / LEGS Texans minus ten and a half. Dell forty plus. Stroud two-fifty plus. / WHY Indy is missing two starting corners - Stroud has averaged 304 against defenses like theirs. / CALL Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.
+
+### Thursday Night Thievery (swapped) - +3512 est. SGP (2.0% independent floor)  LOTTERY
+- HOU -14.5 (+122, 43.0%) | C.J. Stroud 300+ pass yds (+225, 29.3%) | C.J. Stroud 2+ pass TDs (-225, 68.4%) | Tank Dell 40+ rec yds (+104, 49.9%) | Over 44.5 (+100, 47.1%)
+- Script: Houston by 15 through the air; no clean anytime scorer left, so Stroud's 2 TDs is the TD leg. Legs multiplied +4152; FanDuel's 5-6 leg SGPs have paid ~68% of that.
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=15469209&marketId[1]=42.625840250&selectionId[1]=60303913&marketId[2]=42.625840252&selectionId[2]=41158959&marketId[3]=42.626291750&selectionId[3]=60303884&marketId[4]=42.625840167&selectionId[4]=12194312
+
 ## Thursday - IND @ HOU, 7:15 PM CT
 Preview: Marvin Harrison Jr. and Woody Marks OUT; model HOU 28.5-16, HOU by 10+ 59%. No clean Colts leg (every IND prop carries a bad flag - Taylor Cold L3/Carries down, Warren Cold L3, Jones FD pass yds 4/10), so all slips are Texans-side.
 Argue against it: every Thursday slip needs C.J. Stroud's passing night (Stroud vs IND is 0.94x, rank 25) - if Houston leads early and runs it, Collins/Dell/Hutchinson stall together. Answer: the +500 carries the spread as its non-passing leg; keep the lottery to a small stake.
@@ -28,7 +51,7 @@ Tail on FanDuel: link in bio
 21+ | gamble responsibly
 ```
 
-### Texans Takeover - +447 est. SGP (11.5% independent floor)
+### Texans Takeover - +447 (SUPERSEDED by check_thursday above) est. SGP (11.5% independent floor)
 - HOU -10.5 (-136, BetSweep 55.2%, FD 57.6%, risk 0) - Model HOU 28.5-16.0; HOU by 10+ is the likeliest ending at 59%.
 - Tank Dell 30+ rec yds (-178, BetSweep 63.7%, FD 64.0%, risk 0) - MHJ out = more targets; 56.3 yds/g avg, 30+ is 45% under his 55.0 projection (lowest rung that is clean - the 10-25% rungs carry flags).
 - Nico Collins 60+ rec yds (-182, BetSweep 58.7%, FD 64.5%, risk 1) - Projection 71.2 (avg 68.3); 89.3 yds/g vs defenses like Indy's (DAL/CLE/TEN). Corner-questionable flag = 1 watch point.
@@ -61,7 +84,7 @@ WHY: Harrison Jr. is out - Collins has averaged 89 yards against defenses like I
 CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.
 ```
 
-### Thursday Night Thievery - +5609 est. SGP (1.1% independent floor)  LOTTERY
+### Thursday Night Thievery - +5609 (SUPERSEDED by check_thursday above) est. SGP (1.1% independent floor)  LOTTERY
 - HOU -14.5 (+120, BetSweep 43.2%, FD 45.5%, risk 0) - Blowout script: model margin 12.5, HOU by 10+ 59%.
 - C.J. Stroud 275+ pass yds (+118, BetSweep 44.0%, FD 45.9%, risk 0) - Stroud 273.6 avg, 303.7 vs DAL/CIN/CLE-type defenses; needs a shootout-ish passing night.
 - Nico Collins 70+ rec yds (-118, BetSweep 51.8%, FD 54.1%, risk 1) - Collins at his projection (71.2).
