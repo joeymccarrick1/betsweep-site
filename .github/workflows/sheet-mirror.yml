@@ -12,6 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install -q cryptography
+      # owner 11/19: official rule-outs (ESPN team report: IR, or Out with "ruled out" wording) are written to 'AUTO - Weekly Availability'
+      # here, before the pull, so the mirror below already holds the recalculated projections. Narrow by design - see the file's header.
+      # It reports in out/in/AVAIL_AUTO.json and can never fail this job. Remove this step to turn it off.
+      - run: python3 .github/avail_auto.py
+        env: {SHEETS_SA_JSON: "${{ secrets.SHEETS_SA_JSON }}"}
       - run: python3 .github/sheets_pull.py
         env: {SHEETS_SA_JSON: "${{ secrets.SHEETS_SA_JSON }}"}
       - run: |
