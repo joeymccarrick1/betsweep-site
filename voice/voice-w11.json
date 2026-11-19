@@ -1,6 +1,6 @@
 {
  "week": 11,
- "built": "2026-11-17T17:15:42.157066Z",
+ "built": "2026-11-19T07:22:00Z",
  "games": {
   "ARI-KC": "Chiefs -15.5 with Carson Beck making the start for Arizona. Model has KC by 10+ at 67%. Big number, big gap.",
   "BAL-CAR": "Panthers -1.5 at 43.5. Model has it 22.5-21 and calls Close, low scoring the likeliest script at 36%.",
@@ -10,7 +10,7 @@
   "DAL-TEN": "Biggest total on the slate at 54.5, model DAL 31-23.5. Tennessee allows the most to wideouts and Clay gives Lamb and Pickens the edge.",
   "DEN-LV": "Broncos -9.5 at 40.5. Bowers is day-to-day with an ankle and the model gives DEN by 10+ a 50% shot.",
   "DET-TB": "Lions -6.5 off a bye, model 26.5-20 indoors. On Clay's chart St. Brown has the softest matchup in the game.",
-  "HOU-IND": "Thursday night, Texans -11.5, model HOU by 10+ at 56%. On Clay's chart the softest matchup in the game goes to Tank Dell.",
+  "HOU-IND": "Thursday night, Texans -12.5, model HOU by 10+ at 59%. Marks and Harrison Jr. are out, Montgomery is back to lead the backfield, and Dell has the softest matchup on Clay's chart. Play Dell 30+ receiving yards.",
   "JAX-NYG": "Jaguars -5.5 at 46.5, model 26-20.5. On Clay's chart Nabers draws the soft corner; Fields and Mooney get the tough ones.",
   "LAC-NYJ": "40.5 at SoFi and the model's top script is Close, low scoring at 39%. Chargers -2.5.",
   "MIN-SF": "Niners -3 in Mexico City, model 24.75-21.75. Minnesota is stingy to wideouts by rank, but Clay gives Evans the softest matchup here.",
@@ -23,9 +23,10 @@
  },
  "picks": {
   "BUF-MIA": "James Cook|Anytime TD|1",
-  "CIN-WAS": "Stefon Diggs|Receptions|5"
+  "CIN-WAS": "Stefon Diggs|Receptions|5",
+  "HOU-IND": "Tank Dell|Receiving Yards|30"
  },
  "leans": {},
  "owner_ok": [],
- "note": "11/17 midday: rewritten with the Week 11 WR-CB chart in hand; picks pass the builder's risk score (hard-risk tags count)"
+ "note": "11/19 1:40 AM: HOU-IND rewritten for Wednesday's rule-outs (Marks, Harrison Jr.), Montgomery's return and the line move to -12.5; pick Dell 30+ receiving yards (no risk flags, model 66% vs FanDuel 64% at Wednesday morning's -178 - no price in the text, FanDuel's props are re-pulled at 6:30 AM). Other lines as written 11/17 midday."
 }
