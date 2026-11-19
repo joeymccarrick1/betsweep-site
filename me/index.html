@@ -53,6 +53,21 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 
 a{color:var(--ink)}
 
+/* 11/19 the profile card: the Social username and avatar live here now (one identity for the header, My BetSweep and Social) */
+.me .mep{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;align-items:center;margin:12px 0 10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.me .mep[hidden]{display:none}
+.me .mep .pav{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;font-style:normal;color:#fff;letter-spacing:.02em} .me .mep .pav.em{font-size:29px;letter-spacing:0}
+.me .pav.c0{background:#c2410c}.me .pav.c1{background:#0f766e}.me .pav.c2{background:#1d4ed8}.me .pav.c3{background:#7e22ce}.me .pav.c4{background:#be123c}.me .pav.c5{background:#4d7c0f}.me .pav.c6{background:#b45309}.me .pav.c7{background:#334155}
+.me .mep h2{margin:0;font-family:var(--display);font-size:22px;line-height:1.1;color:var(--ink);overflow-wrap:anywhere} .me .mep .pn p{margin:3px 0 0;color:var(--mute);font-size:13px;line-height:1.35}
+.me .mep .pb{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px} .me .mep .pb a,.me .mep .pb button{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer}
+.me .pedit{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:12px} .me .pedit label[for]{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px}
+.me .pedit input#peh{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.me .pedit .hint{margin:5px 0 10px;font-size:12.5px;color:var(--mute)} .me .pedit fieldset{border:0;padding:0;margin:0 0 10px;min-width:0} .me .pedit legend{font-size:12px;font-weight:700;color:var(--mute);padding:0;margin-bottom:6px}
+.me .pedit .sw,.me .pedit .em{display:flex;flex-wrap:wrap;gap:8px} .me .pedit .sw label,.me .pedit .em label{position:relative;cursor:pointer} .me .pedit input[type=radio]{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.me .pedit .sw i{display:block;width:40px;height:40px;border-radius:50%;border:3px solid transparent} .me .pedit .sw input:checked + i{border-color:var(--ink)} .me .pedit .sw input:focus-visible + i,.me .pedit .em input:focus-visible + i{outline:2px solid var(--red);outline-offset:2px}
+.me .pedit .em i{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);font-style:normal;font-size:22px;color:var(--ink)} .me .pedit .em input:checked + i{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.me .pedit .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)} .me .pedit .msg{min-height:18px;margin:4px 0 8px;font-size:13.5px;color:var(--mute)} .me .pedit .msg.err{color:var(--bad);font-weight:700}
+.me .pedit .pbtn{display:flex;gap:8px} .me .pedit .pbtn button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .me .pedit .pbtn .sv{background:var(--red);border-color:var(--red);color:#fff}
 /* 11/16 the hub: three numbers and profit by week, before any scrolling */
 .me .hub{margin:14px 0 4px}
 .me .hubt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -139,6 +154,7 @@ a{color:var(--ink)}
 <script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>
 <div class="me">
  <h1>My BetSweep</h1>
+ <section class="mep" id="mep" aria-label="Your profile" hidden></section>
  <p class="m" id="who"></p>
  <section class="hub" id="hub" aria-label="Your bets at a glance">
   <div class="hubt"><a class="ht" href="#crec"><small>Open slips</small><b id="hopen">&ndash;</b><span id="hopens"></span></a><a class="ht" href="#crec"><small>Record</small><b id="hrec">&ndash;</b><span id="hunits"></span></a><a class="ht" href="#crec"><small id="hweekl">This week</small><b id="hweek">&ndash;</b><span id="hweeks"></span></a></div>
@@ -357,6 +373,45 @@ a{color:var(--ink)}
       var g = e.target.closest && e.target.closest('.lgt'); if (g){ g.parentNode.classList.toggle('lo'); } }); })();
   document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.ldb'); if (!b) return; var ks = [], gm = {}; try{ ks = JSON.parse(b.getAttribute('data-keys')) || []; gm = JSON.parse(b.getAttribute('data-g') || '{}') || {}; }catch(x){}
     if (window.BSLoadSlip) window.BSLoadSlip(ks, gm); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks, gm); }, 800); } });
+})();
+</script>
+<script>
+(function(){
+  var box = document.getElementById('mep'); if(!box) return;
+  var EMOJI = ['🏈','🔥','🔒','💰','🎯','🚀','🐐','👑','💎','🍀','🧠','🎲','🤠','😎','🥶','🤑'], TEAMS = [['Cardinals','🌵'],['Falcons','🍑'],['Ravens','🐦‍⬛'],['Bills','🦬'],['Panthers','🐈‍⬛'],['Bears','🐻'],['Bengals','🐯'],['Browns','🐶'],['Cowboys','⭐'],['Broncos','🐴'],['Lions','🦁'],['Packers','🧀'],['Texans','🐂'],['Colts','🐎'],['Jaguars','🐆'],['Chiefs','🏹'],['Raiders','🏴‍☠️'],['Chargers','⚡'],['Rams','🐏'],['Dolphins','🐬'],['Vikings','🪓'],['Patriots','🇺🇸'],['Saints','⚜️'],['Giants','🗽'],['Jets','✈️'],['Eagles','🦅'],['Steelers','⚒️'],['49ers','⛏️'],['Seahawks','🐦'],['Buccaneers','☠️'],['Titans','⚔️'],['Commanders','🪖']], EDIT = false, P = null, REC = null, FANS = null, FOR = null;
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
+  function hcol(){ if(P.color != null) return P.color; var h = 0, t = String(P.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
+  function acc(){ return window.bsAccount || null; }
+  function form(){ var c = hcol();
+    return '<form class="pedit" id="pedit" autocomplete="off"><label for="peh">Username</label><input id="peh" name="h" value="' + esc(P.handle) + '" maxlength="20" inputmode="text" autocapitalize="off" spellcheck="false">' +
+      '<p class="hint">3 to 20 letters, numbers or underscores. You can change it once every 30 days. It is the name on the slips you post to Social.</p>' +
+      '<fieldset><legend>Colour</legend><div class="sw">' + [0,1,2,3,4,5,6,7].map(function(i){ return '<label><input type="radio" name="c" value="' + i + '"' + (i === c ? ' checked' : '') + '><i class="pav c' + i + '" aria-hidden="true"></i><span class="sr">Colour ' + (i + 1) + '</span></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Avatar</legend><div class="em"><label><input type="radio" name="e" value=""' + (!P.emoji ? ' checked' : '') + '><i>Aa</i><span class="sr">My initials</span></label>' + EMOJI.map(function(x){ return '<label><input type="radio" name="e" value="' + x + '"' + (P.emoji === x ? ' checked' : '') + '><i>' + x + '</i></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Team</legend><div class="em">' + TEAMS.map(function(t){ return '<label title="' + t[0] + '"><input type="radio" name="e" value="' + t[1] + '"' + (P.emoji === t[1] ? ' checked' : '') + '><i>' + t[1] + '</i><span class="sr">' + t[0] + '</span></label>'; }).join('') + '</div></fieldset>' +
+      '<p class="msg" id="pemsg" role="status"></p><div class="pbtn"><button type="submit" class="sv">Save profile</button><button type="button" data-pe="0">Cancel</button></div></form>'; }
+  function paint(){ var A = acc(), u = A && A.user; if(!u || !P || P.user_id !== u.id){ box.hidden = true; box.innerHTML = ''; return; }
+    var r = REC, un = r ? +r.units || 0 : 0, n = r ? (r.posts || 0) : 0;
+    var line = r && r.graded ? 'Posted slips: ' + r.won + '-' + r.lost + ', ' + (un >= 0 ? '+' : '') + un.toFixed(1) + ' units' : (n ? n + ' slip' + (n === 1 ? '' : 's') + ' posted to Social, none graded yet' : 'No slips posted to Social yet');
+    box.hidden = false;
+    box.innerHTML = '<i class="pav c' + hcol() + (P.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(P.emoji || inits(P.handle)) + '</i><div class="pn"><h2>@' + esc(P.handle) + '</h2><p>' + esc(line) + (FANS != null ? ' · ' + FANS + ' follower' + (FANS === 1 ? '' : 's') : '') + '</p></div>' +
+      (EDIT ? form() : '<div class="pb"><button type="button" data-pe="1">Edit profile</button><a href="/social/#u=' + esc(u.id) + '">My posted slips</a></div>'); }
+  function load(){ var A = acc(), u = A && A.user; if(!u || !A.client || !A.client.rpc){ P = null; paint(); return; } if(A.profile && A.profile.user_id === u.id){ P = A.profile; paint(); } if(FOR === u.id) return; FOR = u.id;
+    A.client.rpc('feed_profile_me').then(function(r){ if(r && r.data && r.data.user_id === u.id){ P = r.data; if(A.setProfile) A.setProfile(P); paint(); } }, function(){});
+    A.client.from('feed_records').select('user_id,graded,won,lost,units,posts').eq('user_id', u.id).then(function(r){ REC = ((r && r.data) || [])[0] || null; paint(); }, function(){});
+    A.client.from('feed_follows').select('follower').eq('followee', u.id).then(function(r){ if(r && r.data) FANS = r.data.length; paint(); }, function(){}); }
+  box.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-pe]'); if(!b) return; EDIT = b.dataset.pe === '1'; paint(); if(EDIT){ var i = document.getElementById('peh'); if(i) i.focus(); } });
+  box.addEventListener('submit', function(e){ if(e.target.id !== 'pedit') return; e.preventDefault(); var A = acc();
+    var f = e.target, msg = document.getElementById('pemsg'), h = f.h.value.trim(), c = +(f.querySelector('input[name=c]:checked') || {}).value || 0, em = (f.querySelector('input[name=e]:checked') || {}).value || null, sv = f.querySelector('.sv');
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(h)){ msg.textContent = 'Usernames are 3 to 20 letters, numbers or underscores.'; msg.className = 'msg err'; return; }
+    sv.disabled = true; msg.textContent = 'Saving…'; msg.className = 'msg';
+    A.client.rpc('feed_profile_set', {p_handle: h, p_color: c, p_emoji: em}).then(function(r){ sv.disabled = false;
+      if(r.error){ msg.textContent = /avatar from the list/i.test(r.error.message || '') ? 'Team avatars are being switched on. Pick another for now.' : (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
+      P = r.data && r.data.user_id ? r.data : Object.assign({}, P, {handle: h, color: c, emoji: em}); EDIT = false; if(A.setProfile) A.setProfile(P); paint(); },
+      function(){ sv.disabled = false; msg.textContent = 'Could not save. Check your connection and try again.'; msg.className = 'msg err'; }); });
+  document.addEventListener('bs-account', function(){ FOR = null; REC = null; FANS = null; load(); });
+  document.addEventListener('bs-profile', function(e){ var A = acc(); if(e.detail && A && A.user && e.detail.user_id === A.user.id && !EDIT){ P = e.detail; paint(); } });
+  var n = 0; (function wait(){ var A = acc(); if(A && A.user) return load(); if(++n < 40) setTimeout(wait, 150); })();
 })();
 </script>
 <script defer src="/import.js"></script>

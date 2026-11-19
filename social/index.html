@@ -155,7 +155,7 @@ a{color:var(--ink)}
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="mebtn" hidden>My profile</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="mebtn" hidden>My slips</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  <section class="shot" id="shot" hidden aria-label="Post a slip from a screenshot">
   <h2>Post from a screenshot</h2>
   <p>Screenshot your FanDuel betslip and choose the picture. Your phone reads it; the picture never leaves this device.</p>
@@ -351,7 +351,7 @@ a{color:var(--ink)}
     sv.disabled = true; msg.textContent = 'Saving…'; msg.className = 'msg';
     A.client.rpc('feed_profile_set', {p_handle: h, p_color: c, p_emoji: em}).then(function(r){ sv.disabled = false;
       if(r.error){ msg.textContent = /avatar from the list/i.test(r.error.message || '') ? 'Team avatars are being switched on. Pick another for now.' : (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
-      var me = A.user.id; PROF[me] = r.data && r.data.user_id ? r.data : Object.assign(PROF[me] || {}, {handle: h, color: c, emoji: em});
+      var me = A.user.id; PROF[me] = r.data && r.data.user_id ? r.data : Object.assign(PROF[me] || {}, {handle: h, color: c, emoji: em}); if(A.setProfile) A.setProfile(Object.assign({user_id: me}, PROF[me]));
       POSTS.concat((UPOSTS || {}).posts || []).forEach(function(p){ if(p.user_id === me) p.handle = PROF[me].handle; });
       if(UPOSTS && UPOSTS.u === me){ UPOSTS.prof = PROF[me]; if(UPOSTS.rec) UPOSTS.rec.handle = PROF[me].handle; }
       EDIT = false; render(); }); });
