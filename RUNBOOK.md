@@ -2295,3 +2295,23 @@ row; on, thirteen.
   before its switch goes to Y. Team totals / first-half lines are game markets: FanDuelGameLines.gs and gamelines.py, another paste.
   Owner decision, not taken: offering completions / interceptions / rush attempts at DraftKings' price (FanDuel's is not in the feed)
   would mean pulling those keys from all three books again, about 600 credits a week.
+
+## 11/19, 9:35-9:45 AM CT: the hourly job now writes official rule-outs itself (owner 9:35 AM: "Yes on the hourly job")
+
+- What runs: `.github/avail_auto.py` on MAIN (beside sheets_pull.py), as a step of the sheet-mirror job (:05 and :35) BEFORE the pull, so
+  the mirror that follows holds the recalculated projection tabs and the next reprice prices from them. The reprice job itself still
+  never writes the sheet.
+- What it writes: OUT in 'AUTO - Weekly Availability' for a player on a projection tab (exact name + team) whose game this week has not
+  kicked off, when the feeds' ESPN team report (injuries.json) lists him Injured Reserve / suspended / PUP / NFI, or Out AND the report
+  line itself states the absence ("ruled out", "will not play", "won't be available for Sunday's game", "placed on injured reserve").
+  ESPN's Out tag alone writes nothing (11/19 dry run left Jordan Addison, Kyler Murray, Josh Jacobs, Sam Darnold, Zachariah Branch to a
+  session). Only E, J, K, L change on an existing row; the old status and reason are kept at the end of J. Its rows start
+  "AUTO HOURLY:".
+- What it never does: touch a row whose J starts "OWNER"; lower a status a person or a model run wrote; delete a row. It lifts only its
+  OWN rows (ESPN now Questionable / Doubtful -> QUESTIONABLE, Active -> blank) before kickoff. More than 10 changes in one run, a stale
+  or short ESPN feed, or an unexpected header = it writes nothing and says why.
+- Where to look: `in/AVAIL_AUTO.json` in the sheet mirror (ran, status, wrote, held, can_write). First real run 9:41 AM: "nothing to
+  write", can_write true (an empty update was accepted, so the service account can edit). It can never fail the mirror job.
+- Sessions: treat an "AUTO HOURLY:" row like a NEWS DESK row - an official designation or the owner replaces it. Depth-chart demotions
+  (the Jawhar Jordan case) and wire-only reports are still proposals for a session. `python3 .github/avail_auto.py --selftest` (11
+  cases) before changing its wording rules. To turn it off: remove the step from sheet-mirror.yml.
