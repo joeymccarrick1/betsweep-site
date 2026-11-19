@@ -1,9 +1,9 @@
 {
  "news": [],
  "week": 11,
- "built": "Thu 11/19 1:19 PM",
- "checked": "2026-11-19T19:42:17Z",
- "legs_checked": 1271,
+ "built": "Thu 11/19 1:59 PM",
+ "checked": "2026-11-19T20:12:15Z",
+ "legs_checked": 1272,
  "moves": [
   {
    "key": "Laquon Treadwell|Receiving Yards|40",
@@ -19,7 +19,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 12:35",
+   "pulled": "2026-11-19 13:35",
    "detail": "Laquon Treadwell rec yds 40+: FanDuel +210 at build -> +178 now (+3.7 implied pts toward the model)"
   },
   {
@@ -36,7 +36,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-19 12:35",
+   "pulled": "2026-11-19 13:35",
    "detail": "Laquon Treadwell long rec 10+: FanDuel -280 at build -> -340 now (+3.6 implied pts toward the model)"
   }
  ]
