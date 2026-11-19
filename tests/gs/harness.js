@@ -182,7 +182,7 @@ if (require.main === module) {
     'DraftKings / Hard Rock rows: only the three markets no FanDuel leg could use are gone; the passing-TD rungs are added; the rest identical', ba.length + ' -> ' + bb.length + ' (' + gone.length + ' gone, ' + came.length + ' new)');
   ok(lb.some(r => r[2] === 'Passing TDs') && !b.tab('AUTO - FanDuel Odds', 9).some(r => r[2] === 'Passing TDs' || DEAD.includes(r[2])), '  passing TDs stay off the Leg Board');
   // the safety net: a feed that rejects the new key must not cost the whole pull
-  const sn = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19 done'}}); sn.api.badKeys.player_pass_tds_alternate = true; sn.run('refreshFanDuelOdds()', T0);
+  const sn = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19b done'}}); sn.api.badKeys.player_pass_tds_alternate = true; sn.run('refreshFanDuelOdds()', T0);
   ok(j(sn.tab(LINKS, 10)) === j(la) && j(sn.tab('AUTO - FanDuel Odds', 9)) === j(a.tab('AUTO - FanDuel Odds', 9)) && /the feed rejected a market key/.test(sn.cell('AUTO - FanDuel Odds', 'L5')),
     'safety net: if the feed rejected the alternate passing-TD key, the pull goes on without it - every tab as the 11/10 file wrote it - and the notes say so');
   // game-line rows survive an odds refresh (the 10/22 rule the 11/5 file lost)
@@ -201,7 +201,7 @@ if (require.main === module) {
   w.run('refreshBookGameLines()', T0); const before = TABS.map(snap), c0 = w.api.credits;
   EVENTS.forEach(e => w.api.version[e.id] = 1);   // every price moves at the book
   const thu = EVENTS[0].away_team + ' @ ' + EVENTS[0].home_team;
-  w.props.BS_MARKET_CHECK = '2026-11-19 done';   // the one-time market check has its own test below
+  w.props.BS_MARKET_CHECK = '2026-11-19b done';   // the one-time market check has its own test below
   w.run('gameDayRefresh()', '2026-11-12T20:05:00Z');
   const after = TABS.map(snap), cost = w.api.credits - c0;
   ok(cost > 0 && cost <= 18, "Thursday 2 PM: the hourly trigger refreshes tonight's game only", `${cost} credits (a full refresh: ${full})`);
@@ -227,7 +227,7 @@ if (require.main === module) {
   const c8 = w.api.credits; w.run('gameDayRefresh()', '2026-11-13T00:05:00Z');   // Thursday 6:05 PM CT
   ok(w.api.credits - c8 > 200 && !/today's games only/.test(w.cell('AUTO - FanDuel Odds', 'L1')), 'Thursday 6 PM: the fixed window is a full refresh', (w.api.credits - c8) + ' credits');
   // 6. the credit guard
-  const g = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19 done'}}); g.run('refreshFanDuelOdds()', T0); const gs = j(TABS.map(t => g.tab(t[0], t[1])));
+  const g = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19b done'}}); g.run('refreshFanDuelOdds()', T0); const gs = j(TABS.map(t => g.tab(t[0], t[1])));
   g.props.BS_CREDITS_LEFT = '9000'; const gc = g.api.credits; g.run('gameDayRefresh()', '2026-11-12T20:05:00Z');   // 18.2 days to Dec 1 need ~10,900
   ok(g.api.credits === gc && /held back/.test(g.cell('AUTO - FanDuel Odds', 'L7')) && j(TABS.map(t => g.tab(t[0], t[1]))) === gs, 'credit guard: 9,000 left with 18 days to go - the extra pull is held back', g.cell('AUTO - FanDuel Odds', 'L7'));
   const gc2 = g.api.credits; g.run('gameDayRefresh()', '2026-11-13T00:05:00Z');
@@ -239,7 +239,7 @@ if (require.main === module) {
   delete g.props.BS_CREDITS_LEFT; const gc5 = g.api.credits; g.run('gameDayRefresh()', '2026-11-12T22:05:00Z');
   ok(g.api.credits - gc5 > 0, '  an unknown balance (first run after the paste) does not block it');
   // 7. a failed game keeps its rows
-  const f = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19 done'}}); f.run('refreshFanDuelOdds()', T0); const fb = j(TABS.map(t => f.tab(t[0], t[1]))); f.api.fail.ev0 = true; EVENTS.forEach(e => f.api.version[e.id] = 2);
+  const f = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19b done'}}); f.run('refreshFanDuelOdds()', T0); const fb = j(TABS.map(t => f.tab(t[0], t[1]))); f.api.fail.ev0 = true; EVENTS.forEach(e => f.api.version[e.id] = 2);
   f.run('gameDayRefresh()', '2026-11-12T20:05:00Z');
   ok(j(TABS.map(t => f.tab(t[0], t[1]))) === fb, "tonight's game fails at the API: its rows stay as they were instead of vanishing");
   // 8. after kickoff a started game drops out, as in a full refresh
@@ -247,7 +247,7 @@ if (require.main === module) {
   const goneK = TABS.every(t => !k.tab(t[0], t[1]).some(r => r[t[3]] === thu)), have = TABS.every(t => k.tab(t[0], t[1]).some(r => r[t[3]] === EVENTS[13].away_team + ' @ ' + EVENTS[13].home_team));
   ok(goneK && have, 'Sunday night: games that already kicked off are gone from every tab, Monday night\'s is still there');
   // 9. a week of the hourly trigger: what the schedule costs, old file against new
-  const week = file => { const wk = world(file, {props: {BS_MARKET_CHECK: '2026-11-19 done'}}); let fullN = 0, extraN = 0, extraC = 0, fullC = 0;
+  const week = file => { const wk = world(file, {props: {BS_MARKET_CHECK: '2026-11-19b done'}}); let fullN = 0, extraN = 0, extraC = 0, fullC = 0;
     for (let t = Date.parse('2026-11-10T06:05:00Z'); t < Date.parse('2026-11-17T06:05:00Z'); t += 3600e3) { const c1 = wk.api.credits; wk.run('gameDayRefresh()', new Date(t).toISOString()); const d = wk.api.credits - c1; if (!d) continue;
       if (/today's games only/.test(wk.cell('AUTO - FanDuel Odds', 'L1')) && d <= 4 * 21) { extraN++; extraC += d; } else { fullN++; fullC += d; } }
     return {fullN, extraN, extraC, fullC, total: fullC + extraC, api: wk.api}; };
@@ -259,7 +259,7 @@ if (require.main === module) {
 
   // ---------- 11/19: the extra markets (FanDuel only) ----------
   const EX = ['Interceptions', 'Completions', 'Rush Attempts'], exRows = wd => wd.tab(LINKS, 10).filter(r => EX.includes(r[2]));
-  const x = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19 done'}}); x.api.fdExtra = true;   // suppose FanDuel starts posting them
+  const x = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19b done'}}); x.api.fdExtra = true;   // suppose FanDuel starts posting them
   x.run('refreshFanDuelOdds()', T0);   // Thursday 6:10 AM: tonight's game is 13 hours out, Sunday's are three days out
   const x0 = exRows(x), costFull = x.api.credits;
   ok(x0.length > 0 && x0.every(r => r[8] === thu) && EX.every(m => x0.some(r => r[2] === m)) && x0.some(r => r[2] === 'Interceptions' && r[3] === 2) && x0.every(r => /marketId=/.test(r[4])),
@@ -288,7 +288,7 @@ if (require.main === module) {
   ok(exRows(x).filter(r => r[9] === '2026-11-15 10:05').length > 0 && exRows(x).every(r => r[9] === '2026-11-15 10:05' || r[8] === EVENTS[13].away_team + ' @ ' + EVENTS[13].home_team), '  Sunday 10 AM: refreshed before kickoff (and Monday night\'s game, now inside 40 hours, joins)');
   x.run('gameDayRefresh()', '2026-11-15T19:05:00Z');   // Sunday 1:05 PM: early games have kicked off
   ok(exRows(x).every(r => new Date(EVENTS.find(e => e.away_team + ' @ ' + e.home_team === r[8]).commence_time) > new Date('2026-11-15T19:05:00Z')), '  after kickoff a game\'s extra rows are gone with the rest of its rows');
-  x.api.fail.ev13 = false; const xf = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19 done'}}); xf.api.fdExtra = true; xf.run('refreshFanDuelOdds()', T0); const xf0 = j(exRows(xf));
+  x.api.fail.ev13 = false; const xf = world(NEW, {props: {BS_MARKET_CHECK: '2026-11-19b done'}}); xf.api.fdExtra = true; xf.run('refreshFanDuelOdds()', T0); const xf0 = j(exRows(xf));
   xf.api.badKeys.player_rush_attempts = true; EVENTS.forEach(e => xf.api.version[e.id] = 5); xf.run('gameDayRefresh()', '2026-11-13T00:05:00Z');
   ok(j(exRows(xf)) === xf0 && /requests failed \(rows kept\)/.test(xf.cell('AUTO - FanDuel Odds', 'L5')), '  a rejected extra request keeps the rows it had and says so');
 
@@ -300,7 +300,7 @@ if (require.main === module) {
   const isCheck = u => /\/events\/[^/]+\/odds/.test(u) && !/includeLinks/.test(u), nChecks = () => c.api.urls.filter(isCheck).length;
   const cc = c.api.credits; c.run('gameDayRefresh()', '2026-11-12T17:05:00Z');   // 11:05 AM: 8 hours to kickoff
   const ckCost = c.api.credits - cc, nCk = nChecks();
-  ok(/^2026-11-19 /.test(c.props.BS_MARKET_CHECK || '') && row(c, 'player_kicking_points')[4] === 2 && row(c, 'player_kicking_points')[5] === 1 && /"point":7.5/.test(row(c, 'player_kicking_points')[6]) && row(c, 'player_sacks')[4] === 0 && row(c, 'team_totals')[4] === 2 && row(c, 'player_pass_interceptions')[4] === 2 && row(c, 'player_kicking_points')[8] === thu,
+  ok(/^2026-11-19b /.test(c.props.BS_MARKET_CHECK || '') && row(c, 'player_kicking_points')[4] === 2 && row(c, 'player_kicking_points')[5] === 1 && /"point":7.5/.test(row(c, 'player_kicking_points')[6]) && row(c, 'player_sacks')[4] === 0 && row(c, 'team_totals')[4] === 2 && row(c, 'player_pass_interceptions')[4] === 2 && row(c, 'player_kicking_points')[8] === thu,
     'market check: runs by itself once a game is inside 12 hours and writes what FanDuel posted, market by market', `${ckCost} credits in that pull; ${c.cell(COV, 'L1')}`);
   ok(/market check \(.*\): \d+ of \d+ other markets posted at FanDuel, \d+ credits/.test(c.cell('AUTO - FanDuel Odds', 'L5')), '  the odds tab notes say so too', (String(c.cell('AUTO - FanDuel Odds', 'L5')).match(/market check[^|]*/) || [''])[0]);
   const cc2 = c.api.credits; c.run('gameDayRefresh()', '2026-11-12T18:05:00Z');

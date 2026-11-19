@@ -14,6 +14,8 @@
  * and two menu items that write legs to 'BET - My Legs Log' with the model numbers frozen at that moment:
  *   "Log slip from Slip Builder"  - legs marked Y in column A of V2 - Slip Builder
  *   "Log legs from Alt Line Checker" - legs with Use = Y in V2 - Alt Line Checker
+ * (Version 2026-11-19b: the first run of 11/19 hit the 6-minute limit before it wrote the unders and odds tabs. The four big sorts now use a
+ *  plain comparison, and the one-time market check runs after everything else, once, inside a 60-second budget.)
  * (Version 2026-11-19: (a) ALTERNATE PASSING TDs. player_pass_tds_alternate joins the main request, so every quarterback's 1+ / 2+ / 3+ / 4+
  *  passing-TD rungs reach 'AUTO - FanDuel Links' (the site already prices them). (b) FOUR MARKETS LEAVE THE MAIN REQUEST: interceptions,
  *  completions (+ alternate) and rush attempts have been asked of all three books since 11/5 and FanDuel has not returned one row of them
@@ -139,7 +141,7 @@ const CHECK_GAME_MARKETS = {
 };
 const FDO_NEW_MAIN_KEYS = ['player_pass_tds_alternate'];   // keys this version added to the main request (dropped for the pull if the feed rejects the request)
 const FDO_COVERAGE_SHEET = 'AUTO - Market Coverage';
-const FDO_VERSION = '2026-11-19';
+const FDO_VERSION = '2026-11-19b';
 const EXTRA_HOURS = 40;          // extra markets only for a game kicking off within this many hours
 const EXTRA_AGE_HOURS = 20;      // ... whose extra rows are at least this old
 const EXTRA_AGE_GAMEDAY = 5;     // ... or this old once it is inside TODAY_HOURS of kickoff
@@ -261,7 +263,7 @@ function refreshFanDuelOdds(opts) {
   const now = new Date(), until = new Date(now.getTime() + DAYS_AHEAD * 864e5);
   const stamp = Utilities.formatDate(now, 'America/Chicago', 'yyyy-MM-dd HH:mm');
   const rows = [], seen = {}, notes = [];
-  let remaining = '', sample = '', carry = null, nToday = 0, nAll = 0, nCarried = 0;
+  let remaining = '', sample = '', carry = null, nToday = 0, nAll = 0, nCarried = 0, gotX = null;
   const add = function (player, mk, xplus, price, game, kick, upd) {
     if (!player || !mk || !isFinite(xplus) || !isFinite(price)) return 0;
     if (LINKS_ONLY[mk]) return 0;   // Rush + Rec Yards: links tab only (the Leg Board cannot price it)
@@ -304,7 +306,7 @@ function refreshFanDuelOdds(opts) {
   let provider = '';
   if (oKey) {
     // ---------- The Odds API: full FanDuel ladders + betslip IDs, one call per game ----------
-    const got = oddsApiLadders_(oKey, add, notes, now, until, stamp, todayHours, opts || {});
+    const got = oddsApiLadders_(oKey, add, notes, now, until, stamp, todayHours, opts || {}); gotX = got;
     if (got.skip) { extraNote_(sh, stamp + ' CT: no pull - ' + got.skip); return got.skip; }   // nothing fetched, nothing written
     if (got.rows > 0 || (todayHours && !got.error)) { provider = 'The Odds API'; remaining = got.remaining; sample = got.sample; carry = got.carry; nToday = got.games; nAll = got.total; }
     else notes.push('The Odds API returned no rows' + (got.error ? ' (' + got.error + ')' : '') + (pKey ? ' - falling back to Parlay API' : ''));
@@ -388,7 +390,7 @@ function refreshFanDuelOdds(opts) {
     }
     notes.push('trimmed ' + dropped.length + ' rungs from the deepest ladders to fit the Leg Board' + (rows.length > keep ? ' (' + (rows.length - keep) + ' over; the tab holds them but the board scores the first ' + BOARD_ROWS + ')' : ''));
   }
-  rows.sort(function (a, b) { return (a[5] + a[1] + a[2]).localeCompare(b[5] + b[1] + b[2]) || a[3] - b[3]; });
+  rows.sort(function (a, b) { return cmpS_(a[5] + a[1] + a[2], b[5] + b[1] + b[2]) || a[3] - b[3]; });
   const last = Math.max(sh.getLastRow(), 2);
   sh.getRange(2, 1, last - 1, 9).clearContent();
   if (rows.length) sh.getRange(2, 1, rows.length, 9).setValues(rows);
@@ -401,10 +403,13 @@ function refreshFanDuelOdds(opts) {
     ['Sample raw row', sample]
   ]);
   saveCredits_(remaining);
+  marketCheckOnce_(gotX, now, stamp, sh);
   if (todayHours) { const sp = creditsSpare_(now); extraNote_(sh, stamp + " CT: today's games - " + nToday + ' of ' + nAll + ' refreshed' + (sp === null ? '' : ' · ' + sp + ' credits to spare beyond the fixed schedule')); }
   return '';
 }
 
+// v2026-11-19b: a plain comparison. localeCompare on several thousand long strings took minutes of the 6-minute limit on a busy day.
+function cmpS_(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
 // ---------- v2026-11-10 helpers ----------
 function saveCredits_(remaining) {
   const n = Number(remaining); if (remaining === '' || remaining === null || !isFinite(n)) return;
@@ -605,19 +610,24 @@ function oddsApiLadders_(key, add, notes, now, until, stamp, todayHours, opts) {
   try { notes.push('first TD prices: ' + writeFirstTdTab_(firstTd, gamesTxt, failed, stamp, cy)); } catch (e) { notes.push('first TD tab: ' + e); }
   try { notes.push('book odds: ' + writeBookOddsTab_(otherBooks, gamesTxt, failed, stamp, cy) + ' rows'); } catch (e) { notes.push('book odds tab FAILED: ' + e); }
   try { unders.forEach(function (u) { if (u[0] in overMain) u[5] = overMain[u[0]]; }); notes.push('unders: ' + writeUndersTab_(unders, stamp, cy) + ' rows'); } catch (e) { notes.push('unders tab FAILED: ' + e); }
-  // v2026-11-19: once per script version, with a game inside FDO_CHECK_HOURS, ask FanDuel about every market in the coverage tab for that one game
-  try {
-    const doneV = String(propsX.getProperty(FDO_CHECK_PROP) || '');
-    if (doneV.indexOf(FDO_VERSION) !== 0) {
-      const soon = allEvents.slice().sort(function (a, b) { return new Date(a.commence_time) - new Date(b.commence_time); })[0];
-      if (soon && (new Date(soon.commence_time).getTime() - now.getTime()) / 36e5 <= FDO_CHECK_HOURS) {
-        const ck = checkFanDuelMarkets_(key, soon, stamp);
-        if (ck.remaining !== '') out.remaining = ck.remaining;
-        notes.push('market check (' + nameOf(soon) + '): ' + ck.have + ' of ' + ck.asked + ' other markets posted at FanDuel, ' + ck.cost + ' credits - see ' + FDO_COVERAGE_SHEET);
-      }
-    }
-  } catch (eK) { notes.push('market check failed: ' + eK); }
+  out.soon = allEvents.slice().sort(function (a, b) { return new Date(a.commence_time) - new Date(b.commence_time); })[0] || null; out.key = key;
   return out;
+}
+
+// v2026-11-19b: the one-time market check runs LAST, after every tab and the status block are written, so it can never cost a refresh.
+// It is marked done before it starts (one attempt per version; the menu item runs it again), is skipped when the refresh itself has
+// already used 3 minutes, and gives up after 60 seconds or 30 requests, writing what it has.
+function marketCheckOnce_(got, now, stamp, sh) {
+  try {
+    if (!got || !got.soon || !got.key) return;
+    const props = PropertiesService.getScriptProperties();
+    if (String(props.getProperty(FDO_CHECK_PROP) || '').indexOf(FDO_VERSION) === 0) return;
+    if ((new Date(got.soon.commence_time).getTime() - now.getTime()) / 36e5 > FDO_CHECK_HOURS) return;
+    if (Date.now() - now.getTime() > 180e3) return;   // a slow refresh: next time
+    props.setProperty(FDO_CHECK_PROP, FDO_VERSION + ' started ' + stamp);
+    const ck = checkFanDuelMarkets_(got.key, got.soon, stamp, Date.now() + 60e3);
+    const cell = sh.getRange('L5'); cell.setValues([[String(cell.getValues()[0][0] || '') + ' | market check (' + got.soon.away_team + ' @ ' + got.soon.home_team + '): ' + ck.have + ' of ' + ck.asked + ' other markets posted at FanDuel, ' + ck.cost + ' credits - see ' + FDO_COVERAGE_SHEET]]);
+  } catch (eK) {}
 }
 
 // ---------- v2026-11-19: 'AUTO - Market Coverage' - which other markets FanDuel posts through this feed, and which ones the refresh asks for ----------
@@ -654,18 +664,20 @@ function extraKeysOn_() {
 }
 // One game, every key in the coverage tab, FanDuel only. A request with a key the API rejects is split in two until the bad key stands alone
 // (a rejected request costs nothing), so one unsupported key cannot hide the rest.
-function checkFanDuelMarkets_(key, e, stamp) {
+function checkFanDuelMarkets_(key, e, stamp, deadline) {
   const base = 'https://api.the-odds-api.com/v4', auth = '?apiKey=' + key, opt = {muteHttpExceptions: true};
-  const found = {}, bad = {}; let cost = 0, remaining = '';
+  const found = {}, bad = {}, asked = {}; let cost = 0, remaining = '', calls = 0;
   const ask = function (keys) {
     if (!keys.length) return;
+    if (calls >= 30 || (deadline && Date.now() > deadline)) return;   // out of budget: these keys stay "not checked"
+    calls++;
     const r = UrlFetchApp.fetch(base + '/sports/' + SPORT + '/events/' + e.id + '/odds' + auth + '&bookmakers=fanduel&markets=' + keys.join(',') + '&oddsFormat=american', opt);
     const h = r.getHeaders(); remaining = h['x-requests-remaining'] || h['X-Requests-Remaining'] || remaining;
     if (r.getResponseCode() !== 200) {
-      if (keys.length === 1) { bad[keys[0]] = r.getResponseCode(); return; }
+      if (keys.length === 1) { bad[keys[0]] = r.getResponseCode(); asked[keys[0]] = true; return; }
       const mid = Math.ceil(keys.length / 2); ask(keys.slice(0, mid)); ask(keys.slice(mid)); return;
     }
-    cost += Number(h['x-requests-last'] || h['X-Requests-Last'] || 0) || 0;
+    cost += Number(h['x-requests-last'] || h['X-Requests-Last'] || 0) || 0; keys.forEach(function (k) { asked[k] = true; });
     const d = JSON.parse(r.getContentText());
     (d.bookmakers || []).forEach(function (b) { if (b.key !== 'fanduel') return; (b.markets || []).forEach(function (m) {
       const f = found[m.key] = found[m.key] || {n: 0, pl: {}, sample: ''};
@@ -673,17 +685,17 @@ function checkFanDuelMarkets_(key, e, stamp) {
         if (!f.sample) f.sample = JSON.stringify({name: o.name, description: o.description, point: o.point, price: o.price}).slice(0, 180); });
     }); });
   };
-  const all = coverageKeys_(); let cur = [], len = 0;
-  all.forEach(function (k) { if (len + k.length + 1 > 1400) { ask(cur); cur = []; len = 0; } cur.push(k); len += k.length + 1; }); ask(cur);   // UrlFetchApp refuses a URL much over 2,000 characters
+  const all = coverageKeys_();
+  ask(Object.keys(EXTRA_MARKETS)); ask(Object.keys(CHECK_GAME_MARKETS));   // player markets and game markets apart (each list fits one URL)
   const sh = ensureCoverageTab_(), game = e.away_team + ' @ ' + e.home_team, pull = {};
   sh.getRange(2, 1, Math.max(1, sh.getLastRow() - 1), 3).getValues().forEach(function (r) { if (r[0]) pull[String(r[0]).trim()] = r[2]; });   // the switch column is the owner's: keep it
   const rows = all.map(function (k) { const x = EXTRA_MARKETS[k], f = found[k];
     return [k, x ? x[0] : CHECK_GAME_MARKETS[k], (k in pull) ? pull[k] : (x ? (x[1] ? 'Y' : '') : 'game lines'), x && x[2] ? 'yes' : 'not yet',
-      bad[k] ? 'error ' + bad[k] : (f ? f.n : 0), f ? Object.keys(f.pl).length : 0, f ? f.sample : '', stamp, game]; });
+      bad[k] ? 'error ' + bad[k] : (!asked[k] ? 'not checked' : (f ? f.n : 0)), f ? Object.keys(f.pl).length : 0, f ? f.sample : '', stamp, game]; });
   const lastC = Math.max(sh.getLastRow(), 2); sh.getRange(2, 1, lastC - 1, FDO_COVERAGE_HDR.length).clearContent();
   sh.getRange(1, 1, 1, FDO_COVERAGE_HDR.length).setValues([FDO_COVERAGE_HDR]); sh.getRange(2, 1, rows.length, FDO_COVERAGE_HDR.length).setValues(rows);
-  const have = Object.keys(found).length;
-  sh.getRange('K1:L3').setValues([['Last check', stamp + ' CT, ' + game + ': FanDuel posted ' + have + ' of the ' + all.length + ' markets listed; ' + cost + ' credits' + (Object.keys(bad).length ? '; ' + Object.keys(bad).length + ' keys the API rejected' : '')],
+  const have = Object.keys(found).length, left = all.filter(function (k) { return !asked[k]; }).length;
+  sh.getRange('K1:L3').setValues([['Last check', stamp + ' CT, ' + game + ': FanDuel posted ' + have + ' of the ' + all.length + ' markets listed; ' + cost + ' credits' + (Object.keys(bad).length ? '; ' + Object.keys(bad).length + ' keys the API rejected' : '') + (left ? '; ' + left + ' keys not checked (ran out of time) - run the menu item again' : '')],
     ['How it works', 'Column C = Y asks FanDuel for that market on the odds refresh (games inside ' + EXTRA_HOURS + ' hours; a market FanDuel does not post costs nothing). Only switch on a market the site prices (column D), or the credits buy rows nothing reads.'],
     ['Written by', 'FanDuelOdds.gs v' + FDO_VERSION]]);
   try { PropertiesService.getScriptProperties().setProperty(FDO_CHECK_PROP, FDO_VERSION + ' ' + stamp); } catch (eP) {}
@@ -738,7 +750,7 @@ function writeBookOddsTab_(rows, games, failed, stamp, carry) {
     const have = {}; rows.forEach(function (r) { have[r[0] + '|' + r[1]] = true; });
     rows = rows.concat(carried_(sh, 12, 10, carry, have, function (r) { return r[0] + '|' + r[1]; }).filter(function (r) { return String(r[1]).indexOf('gl|') !== 0; }));
   }
-  rows.sort(function (a, b) { return (a[0] + a[10] + a[2] + a[3]).localeCompare(b[0] + b[10] + b[2] + b[3]) || a[4] - b[4]; });
+  rows.sort(function (a, b) { return cmpS_(a[0] + a[10] + a[2] + a[3], b[0] + b[10] + b[2] + b[3]) || a[4] - b[4]; });
   const perBook = {}; rows.forEach(function (r) { perBook[r[0]] = (perBook[r[0]] || 0) + 1; });
   // v2026-10-22: keep the gl| game-line rows refreshBookGameLines() wrote - this refresh only replaces the PROP rows. (Before, every odds
   // refresh wiped the game lines, so no spread / total / ML leg could go to DraftKings or Hard Rock between game-line runs.)
@@ -832,7 +844,7 @@ function writeFanDuelLinksTab_(rows, games, failed, remaining, withId, stamp, ca
       const k = String(r[0] || ''); if (!k || have2[k] || !keepExtra[r[8]] || !extraNames[r[2]]) return;
       have2[k] = true; rows.push(r); if (r[4] || (r[5] && r[6])) withId++; });
   }
-  rows.sort(function (a, b) { return (a[8] + a[1] + a[2]).localeCompare(b[8] + b[1] + b[2]) || a[3] - b[3]; });
+  rows.sort(function (a, b) { return cmpS_(a[8] + a[1] + a[2], b[8] + b[1] + b[2]) || a[3] - b[3]; });
   if (sh.getMaxRows() < rows.length + 1) sh.insertRowsAfter(sh.getMaxRows(), rows.length + 1 - sh.getMaxRows());
   const last = Math.max(sh.getLastRow(), 2);
   sh.getRange(2, 1, last - 1, 10).clearContent();
@@ -860,7 +872,7 @@ function writeFirstTdTab_(rows, games, failed, stamp, carry) {
     sh.setFrozenRows(1);
   }
   if (carry) { const have = {}; rows.forEach(function (r) { have[r[0]] = true; }); rows = rows.concat(carried_(sh, 10, 6, carry, have, function (r) { return String(r[0]); })); }
-  rows.sort(function (a, b) { return (a[6] + a[1]).localeCompare(b[6] + b[1]) || a[2] - b[2]; });
+  rows.sort(function (a, b) { return cmpS_(a[6] + a[1], b[6] + b[1]) || a[2] - b[2]; });
   const last = Math.max(sh.getLastRow(), 2);
   sh.getRange(2, 1, last - 1, 10).clearContent();
   if (rows.length) { sh.getRange(2, 5, rows.length, 2).setNumberFormat('@'); sh.getRange(2, 1, rows.length, 10).setValues(rows); }
