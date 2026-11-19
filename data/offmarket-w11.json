@@ -144,6 +144,18 @@
    "gap": 4.5,
    "p": 0.196,
    "seen": "2026-11-19 6:34"
+  },
+  "Bhayshul Tuten|Receiving Yards|25": {
+   "pl": "Bhayshul Tuten",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "JAX-NYG",
+   "fd": 240.0,
+   "dk": 196.0,
+   "hr": 200.0,
+   "gap": 3.9,
+   "p": 0.277,
+   "seen": "2026-11-19 6:34"
   }
  }
 }
