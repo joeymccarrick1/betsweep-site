@@ -212,7 +212,10 @@ POST_JS = r"""<script>(function(){
 PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
 .soc .hcard{background:var(--card);border:2px solid var(--red);border-radius:14px;padding:14px 14px 12px;margin:0 0 12px}
 .soc .hcard header{display:flex;align-items:center;gap:10px} .soc .hcard header b{display:block;font-weight:700;font-size:16px;line-height:1.1;color:var(--ink)} .soc .hcard header span{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
-.soc .hcard .av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--red);color:#fff;font-family:var(--display);font-weight:700;font-size:14px;font-style:normal}
+.soc .hcard .av{flex:none;width:40px;height:40px;border-radius:50%;display:block;object-fit:cover}
+.soc .hcard header .wm{height:22px;width:auto;display:block} .soc .hcard header .wm.k{display:none}
+:root[data-theme="light"] .soc .hcard header .wm.c{display:none} :root[data-theme="light"] .soc .hcard header .wm.k{display:block}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .soc .hcard header .wm.c{display:none} :root:not([data-theme="dark"]) .soc .hcard header .wm.k{display:block} }
 .soc .hcard h3{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1;margin:12px 0 6px;color:var(--ink)}
 .soc .hcard ul{list-style:none;margin:0;padding:0} .soc .hcard li{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--line);font-size:14.5px;line-height:1.25;color:var(--ink)}
 .soc .hcard li em{margin-left:auto;font-family:var(--display);font-weight:700;font-size:16px;font-style:normal}
@@ -311,7 +314,7 @@ PAGE_JS = r"""<script>(function(){
   function hcol(p){ var q = PROF[p.user_id]; if(q) return q.color; var h = 0, t = String(p.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
   function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
   // alpha 11/16 (owner: "make it so users can create their own username and avatar"): sql/social_v4.sql. V4 turns false if it has not been run.
-  var V4 = true, EDIT = false, EMOJI = ['🏈','🔥','🔒','💰','🎯','🚀','🐐','👑','💎','🍀','⚡','🧠','🎲','🦅','🐻','🦁','🐯','🐬','🐴','🏴‍☠️','🤠','😎','🥶','🤑'];
+  var V4 = true, EDIT = false, EMOJI = ['🏈','🔥','🔒','💰','🎯','🚀','🐐','👑','💎','🍀','🧠','🎲','🤠','😎','🥶','🤑'], TEAMS = [['Cardinals','🌵'],['Falcons','🍑'],['Ravens','🐦‍⬛'],['Bills','🦬'],['Panthers','🐈‍⬛'],['Bears','🐻'],['Bengals','🐯'],['Browns','🐶'],['Cowboys','⭐'],['Broncos','🐴'],['Lions','🦁'],['Packers','🧀'],['Texans','🐂'],['Colts','🐎'],['Jaguars','🐆'],['Chiefs','🏹'],['Raiders','🏴‍☠️'],['Chargers','⚡'],['Rams','🐏'],['Dolphins','🐬'],['Vikings','🪓'],['Patriots','🇺🇸'],['Saints','⚜️'],['Giants','🗽'],['Jets','✈️'],['Eagles','🦅'],['Steelers','⚒️'],['49ers','⛏️'],['Seahawks','🐦'],['Buccaneers','☠️'],['Titans','⚔️'],['Commanders','🪖']];   // 11/19 (owner: "Do more emojis. Pick an emoji for every NFL team"): sql/social_v5.sql widens the database's list
   function av(p, big){ var q = PROF[p.user_id] || {}; return '<i class="av' + (big ? ' big' : '') + ' c' + hcol(p) + (q.emoji ? ' em' : '') + '" aria-hidden="true">' + (q.emoji ? esc(q.emoji) : esc(inits(p.handle))) + '</i>'; }
   function profs(ids){ return A.client.from('feed_profiles').select(V4 ? 'user_id,handle,color,emoji' : 'user_id,handle,color').in('user_id', ids).then(function(r){
       if(r.error && V4){ V4 = false; return profs(ids); } (r.data || []).forEach(function(x){ PROF[x.user_id] = x; }); }); }
@@ -469,13 +472,14 @@ PAGE_JS = r"""<script>(function(){
       '<p class="hint">3 to 20 letters, numbers or underscores. You can change it once every 30 days.</p>' +
       '<fieldset><legend>Colour</legend><div class="sw">' + [0,1,2,3,4,5,6,7].map(function(i){ return '<label><input type="radio" name="c" value="' + i + '"' + (i === c ? ' checked' : '') + '><i class="av c' + i + '" aria-hidden="true"></i><span class="sr">Colour ' + (i + 1) + '</span></label>'; }).join('') + '</div></fieldset>' +
       '<fieldset><legend>Avatar</legend><div class="em"><label><input type="radio" name="e" value=""' + (!q.emoji ? ' checked' : '') + '><i>Aa</i><span class="sr">My initials</span></label>' + EMOJI.map(function(x){ return '<label><input type="radio" name="e" value="' + x + '"' + (q.emoji === x ? ' checked' : '') + '><i>' + x + '</i></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset><legend>Team</legend><div class="em">' + TEAMS.map(function(t){ return '<label title="' + t[0] + '"><input type="radio" name="e" value="' + t[1] + '"' + (q.emoji === t[1] ? ' checked' : '') + '><i>' + t[1] + '</i><span class="sr">' + t[0] + '</span></label>'; }).join('') + '</div></fieldset>' +
       '<p class="msg" id="pemsg" role="status"></p><div class="pbtn"><button type="submit" class="sv">Save profile</button><button type="button" data-edit="0">Cancel</button></div></form>'; }
   list.addEventListener('submit', function(e){ if(e.target.id !== 'pedit') return; e.preventDefault();
     var f = e.target, msg = document.getElementById('pemsg'), h = f.h.value.trim(), c = +(f.querySelector('input[name=c]:checked') || {}).value || 0, em = (f.querySelector('input[name=e]:checked') || {}).value || null, sv = f.querySelector('.sv');
     if(!/^[A-Za-z0-9_]{3,20}$/.test(h)){ msg.textContent = 'Usernames are 3 to 20 letters, numbers or underscores.'; msg.className = 'msg err'; return; }
     sv.disabled = true; msg.textContent = 'Saving…'; msg.className = 'msg';
     A.client.rpc('feed_profile_set', {p_handle: h, p_color: c, p_emoji: em}).then(function(r){ sv.disabled = false;
-      if(r.error){ msg.textContent = (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
+      if(r.error){ msg.textContent = /avatar from the list/i.test(r.error.message || '') ? 'Team avatars are being switched on. Pick another for now.' : (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
       var me = A.user.id; PROF[me] = r.data && r.data.user_id ? r.data : Object.assign(PROF[me] || {}, {handle: h, color: c, emoji: em});
       POSTS.concat((UPOSTS || {}).posts || []).forEach(function(p){ if(p.user_id === me) p.handle = PROF[me].handle; });
       if(UPOSTS && UPOSTS.u === me){ UPOSTS.prof = PROF[me]; if(UPOSTS.rec) UPOSTS.rec.handle = PROF[me].handle; }
@@ -625,7 +629,7 @@ PAGE_JS = r"""<script>(function(){
   }
   client(function(acc){ A = acc; load(); setInterval(poll, 60000); setInterval(load, 180000); });
   setTimeout(poll, 1200);   // house slips grade even before the feed answers
-  document.addEventListener('bs-account', function(){ if(A) load(); });
+  document.addEventListener('bs-account', function(){ if(A){ meBtn(); load(); } });
 })();</script>"""
 
 def fdmap():
@@ -706,7 +710,7 @@ def house_html(OUT, week, limit=3, _records=None, _now=None):
         _pd = str(p.get("posted") or ""); _pd = f"{int(_pd[5:7])}/{int(_pd[8:10])}" if len(_pd) >= 10 and _pd[4] == "-" else _pd
         meta = ("graded chance under 1%" if p["hp"] < 0.01 else f'graded chance about {p["hp"] * 100:.0f}%') if p.get("hp") else (f'model {p["p"] * 100:.0f}% to hit' if p.get("p") else f'{len(p["legs"])} legs')
         tail = f'<a class="tail" href="{E(str(p["link"]))}" target="_blank" rel="noopener">Tail on FanDuel</a>' if p.get("link") else ""
-        cards.append(f'<article class="hcard" id="h{E(hid)}"><header><i class="av">BS</i><div><b>BetSweep</b><span>House slip · {"Daily Sweep" if is_sweep(p) else "Promo"}{(" · posted " + E(_pd)) if _pd else ""}</span></div></header>'
+        cards.append(f'<article class="hcard" id="h{E(hid)}"><header><img class="av" src="/logo.png" alt="" width="40" height="40"><div><b><img class="wm c" src="/wordmark.png" alt="BetSweep" width="102" height="22"><img class="wm k" src="/wordmark-ink.png" alt="BetSweep" width="102" height="22"></b><span>House slip · {"Daily Sweep" if is_sweep(p) else "Promo"}{(" · posted " + E(_pd)) if _pd else ""}</span></div></header>'
                      f'<h3>{E(str(p.get("name") or p.get("title") or ""))}</h3><ul>{legs}</ul><div class="hfoot"><span class="px">{E(am(p.get("fd")))}</span><span class="hst open" data-pre="{E(meta)}">{E(meta)}</span></div>'
                      f'<div class="hacts">{tail}<a href="/#promo">See it on Today</a></div></article>')
     if not cards: return ""

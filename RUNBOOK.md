@@ -2315,3 +2315,23 @@ row; on, thirteen.
 - Sessions: treat an "AUTO HOURLY:" row like a NEWS DESK row - an official designation or the owner replaces it. Depth-chart demotions
   (the Jawhar Jordan case) and wire-only reports are still proposals for a session. `python3 .github/avail_auto.py --selftest` (11
   cases) before changing its wording rules. To turn it off: remove the step from sheet-mirror.yml.
+
+## 11/19 afternoon: script fix, tonight's two slips, house-slip logos, team avatars
+- **FanDuelOdds v2026-11-19b** (sent 10:40 AM): the first paste hit Apps Script's 6-minute limit (stopped after the links tab). Sorts use a
+  plain compare (`cmpS_`) instead of localeCompare, and the market coverage check runs last, once, inside a 60 s / 30 call budget. Whether
+  19b is installed and whether the coverage check has run are still unconfirmed - read 'AUTO - Market Coverage' after the 6 PM refresh.
+- **Slip rules the owner added (11/19):** do not assume a blowout in a prime-time divisional game and include underdog-side legs; know the
+  roster changes behind a player's numbers before citing history (Jones passing after Allen and Downs were traded); no slip where
+  everything hangs on game lines.
+- **Promos:** w11-1 Thursday Night Thievery (six legs, his Montgomery hunch at the core; FanDuel quote for column E still not received) and
+  w11-2 Daily Sweep: Low Bar (his own five-leg FanDuel slip, +484; weak leg flagged: Burks 10+ rec yds, 2 of 8). Always poll the mirror
+  for the new promo row before dispatching the reprice - a dispatch can lag several minutes.
+- **House slips on Social** (owner 2:19 PM): the red "BS" disc is now the circle logo (`/logo.png`) and the name is the wordmark image
+  (cream on dark, ink on light, same two selectors as the theme switch). No new image files - both were already shipped.
+- **Team avatars** (owner 2:34 PM): the picker has a Team row, one emoji per club (`TEAMS` in social.py), 48 emoji in all. The database
+  checks the emoji against a fixed list, so `sql/social_v5.sql` (replaces `feed_profile_set` only; no secret; safe twice) must be run by
+  the owner. Until then a team pick answers "Team avatars are being switched on." Tested on a throwaway Postgres: installs twice, all 48
+  accepted, an off-list emoji refused. `meBtn()` now also runs the moment the account event fires.
+- **Open:** tests/page_tight fails on home (8.4 phone screens against 6.5) on the published site too - two long promo cards today. Not
+  caused by these changes; look at folding promo captions on Today.
+- **Hunches:** chat-only first pass so far (scratch in /tmp/hunch, not kept). The site feature is not built.
