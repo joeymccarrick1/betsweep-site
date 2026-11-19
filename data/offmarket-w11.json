@@ -156,6 +156,18 @@
    "gap": 3.9,
    "p": 0.277,
    "seen": "2026-11-19 6:34"
+  },
+  "Tyler Warren|Receiving Yards|50": {
+   "pl": "Tyler Warren",
+   "m": "Receiving Yards",
+   "ln": 50.0,
+   "g": "HOU-IND",
+   "fd": 194.0,
+   "dk": 154.0,
+   "hr": 160.0,
+   "gap": 4.4,
+   "p": 0.3289,
+   "seen": "2026-11-19 12:35"
   }
  }
 }

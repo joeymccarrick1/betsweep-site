@@ -1,8 +1,43 @@
 {
  "news": [],
  "week": 11,
- "built": "Thu 11/19 12:09 PM",
- "checked": "2026-11-19T18:42:12Z",
- "legs_checked": 1270,
- "moves": []
+ "built": "Thu 11/19 1:07 PM",
+ "checked": "2026-11-19T19:12:16Z",
+ "legs_checked": 1271,
+ "moves": [
+  {
+   "key": "Laquon Treadwell|Receiving Yards|40",
+   "pl": "Laquon Treadwell",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "gid": "HOU-IND",
+   "ko": 1795137300000,
+   "built": 210,
+   "now": 178.0,
+   "pts": 3.7,
+   "p": 0.2968,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-19 12:35",
+   "detail": "Laquon Treadwell rec yds 40+: FanDuel +210 at build -> +178 now (+3.7 implied pts toward the model)"
+  },
+  {
+   "key": "Laquon Treadwell|Longest Reception|10",
+   "pl": "Laquon Treadwell",
+   "m": "Longest Reception",
+   "ln": 10.0,
+   "gid": "HOU-IND",
+   "ko": 1795137300000,
+   "built": -280,
+   "now": -340.0,
+   "pts": 3.6,
+   "p": 0.6755,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-19 12:35",
+   "detail": "Laquon Treadwell long rec 10+: FanDuel -280 at build -> -340 now (+3.6 implied pts toward the model)"
+  }
+ ]
 }
