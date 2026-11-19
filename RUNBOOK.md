@@ -2345,3 +2345,16 @@ row; on, thirteen.
 - **Social:** the bar button is now **My slips** (opens your posted slips, as before). Editing there still works and updates the header.
 - Do not put a `//` comment in the middle of a one-line script statement in social.py - it cut off the rest of the line once today.
 - tests/me_profile.py (21 checks; the real account script against a stand-in client) is in the full set (34 tests).
+
+## 11/19 4:45 PM: Waivers tab - rostered players and stale projections (owner screenshot)
+- **Kenneth Walker shown as a free agent:** Sleeper carries a second, unsigned "Kenneth Walker"; `modelFor()`'s last fallback matched him
+  to the model's back by name alone. Both free-agent lists (Waivers tab and the all-leagues pickup line) now skip a model player some
+  roster already holds (`taken`), any Sleeper entry with no team or another position, and a second entry for the same model player.
+- **Michael Carter 9.3:** the sheet projected him off one game (Week 7: 3 carries) though Tennessee has played since without him. Week 10
+  check: the 13 RB/WR/TE with one or two logged games were projected 6.4 each and scored 2.6; eight never played. build_team.py now adds
+  `gn` / `lw` / `idle` from the game log; `stale()` (two games or fewer AND two or more team games missed since) keeps him off the
+  waiver lists unless Sleeper managers are adding him today; `thinTag()` marks "last played Wk N" / "N games" wherever he still shows.
+  **The projection itself is unchanged** - this is a sheet-model weakness (no recency in LOW SAMPLE projections) to fix at the source.
+- tests/waiver_truth.py (5 checks) joins the full set (35 tests).
+- **Open:** tests/fantasy_nav fails 4 checks on today's data with or without this change (stand-in league: "L. Burden III (out)" while the
+  sheet has him Questionable). Not looked into yet.

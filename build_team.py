@@ -177,6 +177,22 @@ for p in PLAYERS:
     p["k"] = KICK.get(p["t"].replace("LAR", "LA"), "")
     if p.get("ins"): p["ins"].append(KICKTS.get(p["t"].replace("LAR", "LA"), 0))
 
+# 11/19 (owner, on the Waivers tab: "Michael Carter has 0 shot to score 9.3 points"): the sheet projects a skill player off whatever games
+# he has, however old. Carter's one game was Week 7 (3 carries); Tennessee has played three times since without him. In Week 10 the 13
+# RB/WR/TE with one or two games on the log were projected 6.4 a man and scored 2.6 - eight of them never took the field.
+# p["gn"] = games on this season's log, p["lw"] = the last week he played, p["idle"] = his team's games since then.
+try:
+    _gl = vals("gamelog.json"); _gh = {h: i for i, h in enumerate(_gl[0])}; _pw, _tw = {}, {}
+    for _r in _gl[1:]:
+        if len(_r) < 4 or not str(_r[0]).isdigit(): continue
+        _w = int(_r[0])
+        if _w >= int(WEEK): continue
+        _pw.setdefault(_r[_gh["Player"]], set()).add(_w); _tw.setdefault(_r[_gh["Team"]], set()).add(_w)
+    for p in PLAYERS:
+        if p["p"] not in ("RB", "WR", "TE") or p["n"] not in _pw: continue
+        _ws = _pw[p["n"]]; p["gn"] = len(_ws); p["lw"] = max(_ws); p["idle"] = sum(1 for _w in _tw.get(p["t"], ()) if _w > p["lw"])
+except Exception as _e: print("[team] game-log recency skipped:", _e)
+
 stamp = datetime.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%a %-m/%-d %-I:%M %p")
 DATA = {"week": WEEK, "stamp": stamp, "players": PLAYERS, "all_alerts": ALL_LEAGUE_ALERTS}
 n_act = sum(1 for p in PLAYERS if p["act"])
@@ -485,7 +501,9 @@ TEAM_JS = r"""
     if(!bb){ var worst = {}, owned = {}; Object.keys(best).forEach(function(i){ var p = best[i]; if(!(p.pos in worst) || p.pts < worst[p.pos]) worst[p.pos] = p.pts; });
       slots.forEach(function(sl){ if(['QB','RB','WR','TE','K','DEF'].indexOf(sl) >= 0 && !(sl in worst)) worst[sl] = 0; });
       (rosters || []).forEach(function(r){ (r.players || []).forEach(function(id){ owned[id] = 1; }); });
+      var taken = new Set(), seen = new Set(); Object.keys(owned).forEach(function(id){ var m = modelFor(pm[id]); if(m) taken.add(m); });
       Object.keys(pm).forEach(function(id){ if(owned[id]) return; var sp = pm[id], mp = modelFor(sp); if(!mp || !mp.act || mp.o === 'BYE' || badInjury(sp) || !(mp.p in worst)) return;
+        if(taken.has(mp) || seen.has(mp) || stale(mp, 0) || (sp.p !== 'DEF' && (!sp.t || sp.p !== mp.p))) return; seen.add(mp);   // 11/19: same rules as the Waivers tab
         var pts = ptsFor(mp, s), up = pts - worst[mp.p]; if(pts > 1 && up >= PICK_MIN) fa.push([sp.p === 'DEF' ? sp.n + ' D/ST' : sp.n, mp.p, Math.round(up * 10) / 10, mp.t || '', mp.o || '']); });
       fa.sort(function(a, b){ return b[2] - a[2]; }); fa = fa.slice(0, 3); }
     return { fa: fa, txt: bb ? 'Best ball' : !cur.length ? 'No lineup' : need === 2 ? 'Fix ' + (dead.length + open) : need === 1 ? '+' + f1(gain) : 'Set',
@@ -702,12 +720,18 @@ TEAM_JS = r"""
 
     // waivers: best unowned by position, with trending-add flag; compare to your weakest starter at that position
     var worst = {}; Object.keys(best).forEach(function(i){ var p = best[i]; if(!(p.pos in worst) || p.pts < worst[p.pos]) worst[p.pos] = p.pts; });
-    var fa = []; Object.keys(pm).forEach(function(id){ if(owned[id]) return; var sp = pm[id]; var mp = modelFor(sp); if(!mp || !mp.act || mp.o === 'BYE' || badInjury(sp)) return; var pts = ptsFor(mp, s); if(pts > 1) fa.push({id: id, sp: sp, mp: mp, pts: pts, hot: hot[id] || 0}); });
+    // 11/19 (owner: "Ken Walker is not on the waiver wire in ANY league"): Sleeper lists a second, unsigned "Kenneth Walker" and the name match
+    // handed him the Chiefs back's projection. A model player someone already rosters is never a free agent, whatever other entry shares his name.
+    var taken = new Set(); Object.keys(owned).forEach(function(id){ var m = modelFor(pm[id]); if(m) taken.add(m); });
+    var fa = [], faSeen = new Map(); Object.keys(pm).forEach(function(id){ if(owned[id]) return; var sp = pm[id]; var mp = modelFor(sp); if(!mp || !mp.act || mp.o === 'BYE' || badInjury(sp)) return;
+      if(taken.has(mp) || stale(mp, hot[id])) return;
+      if(sp.p !== 'DEF' && (!sp.t || sp.p !== mp.p)) return;   // an entry with no team, or at another position, is not the man the model projects
+      if(faSeen.has(mp)) return; faSeen.set(mp, id); var pts = ptsFor(mp, s); if(pts > 1) fa.push({id: id, sp: sp, mp: mp, pts: pts, hot: hot[id] || 0}); });
     var wh = ''; ['QB','RB','WR','TE','K','DEF'].forEach(function(pos){
       if(!slots.some(function(sl){ return (FLEX[sl] || []).indexOf(pos) >= 0; })) return;
       var list = fa.filter(function(x){ return x.mp.p === pos; }).sort(function(a, b){ return b.pts - a.pts; }).slice(0, 5);
       if(!list.length) return;
-      wh += '<div><h3>' + pos + '</h3><ul>' + list.map(function(x){ var up = (pos in worst) ? x.pts - worst[pos] : null; return '<li><div><b>' + esc(pos === 'DEF' ? x.sp.n + ' D/ST' : x.sp.n) + snapTag(x.mp) + sosTag(x.mp) + (x.hot ? '<span class="bt hot" title="' + x.hot + ' adds on Sleeper in the last 24h">trending</span>' : '') + (/Questionable/i.test(x.sp.i) ? '<span class="bt q">Q</span>' : '') + '</b><span>' + esc(x.mp.t) + ' vs ' + esc(x.mp.o) + (x.mp.role && x.mp.role !== pos ? ' · ' + esc(x.mp.role) : '') + '</span></div><div class="pts">' + f1(x.pts) + (up !== null && up >= 0.05 ? '<small>+' + f1(up) + ' over your ' + pos + (worst[pos] === 0 ? ' hole' : '') + '</small>' : '') + '</div></li>'; }).join('') + '</ul></div>';
+      wh += '<div><h3>' + pos + '</h3><ul>' + list.map(function(x){ var up = (pos in worst) ? x.pts - worst[pos] : null; return '<li><div><b>' + esc(pos === 'DEF' ? x.sp.n + ' D/ST' : x.sp.n) + thinTag(x.mp) + snapTag(x.mp) + sosTag(x.mp) + (x.hot ? '<span class="bt hot" title="' + x.hot + ' adds on Sleeper in the last 24h">trending</span>' : '') + (/Questionable/i.test(x.sp.i) ? '<span class="bt q">Q</span>' : '') + '</b><span>' + esc(x.mp.t) + ' vs ' + esc(x.mp.o) + (x.mp.role && x.mp.role !== pos ? ' · ' + esc(x.mp.role) : '') + '</span></div><div class="pts">' + f1(x.pts) + (up !== null && up >= 0.05 ? '<small>+' + f1(up) + ' over your ' + pos + (worst[pos] === 0 ? ' hole' : '') + '</small>' : '') + '</div></li>'; }).join('') + '</ul></div>';
     });
     $('#waiv').innerHTML = wh || '<div><p class="note">No free agents clear the model this week.</p></div>';
     $('#waivH').innerHTML = manual ? '<b>Players to target</b> <span class="r">best players not on your roster, by the model · the ones your league mates have not grabbed are your waiver claims</span>' : '<b>Waiver wire</b> <span class="r">best free agents in this league by the model · trending = most-added on Sleeper today</span>';
@@ -744,8 +768,12 @@ TEAM_JS = r"""
     out.hidden = false; if(!QUIET) out.scrollIntoView({block: 'start', behavior: 'smooth'}); QUIET = false;
   }
   function sosTag(mp){ var d = mp && mp.sos; if(!d || Math.abs(d) < 0.3) return ''; return '<span class="bt sos ' + (d > 0 ? 'up' : 'dn') + '" title="Strength of schedule: the defenses this player has faced so far made his season numbers look ' + (d > 0 ? 'worse' : 'better') + ' than they are; projection ' + (d > 0 ? 'raised' : 'lowered') + ' ' + Math.abs(d).toFixed(1) + ' pts for this matchup">SOS ' + (d > 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + '</span>'; }
+  // 11/19: thin or old evidence. stale() keeps a man off the Waivers list (one or two games all year and his team has played twice or more
+  // since) unless Sleeper managers are adding him today; thinTag() says so wherever his projection is still shown.
+  function stale(mp, hot){ return !!(mp && mp.gn != null && mp.gn <= 2 && mp.idle >= 2 && !hot); }
+  function thinTag(mp){ if(!mp || mp.gn == null) return ''; if(mp.idle >= 2) return '<span class="bt sd" title="He has not played in his team\'s last ' + mp.idle + ' games. The projection is built on older games - treat it as a guess.">last played Wk ' + mp.lw + '</span>'; if(mp.gn <= 2) return '<span class="bt sd" title="Only ' + mp.gn + ' game' + (mp.gn === 1 ? '' : 's') + ' this season behind this projection.">' + mp.gn + ' game' + (mp.gn === 1 ? '' : 's') + '</span>'; return ''; }
   function snapTag(mp){ return mp && mp.sd ? '<span class="bt sd" title="Snap share down: ' + mp.sd[0] + '% of snaps over the last 2 games vs ' + mp.sd[1] + '% for the season; projection trimmed ' + mp.sd[2] + '%">snaps ↓' + mp.sd[2] + '%</span>' : ''; }
-  function tagFor(e){ return (e.mp ? snapTag(e.mp) + sosTag(e.mp) : '') + (e.flag === 'out' ? '<span class="bt out">' + (e.sp.i && /IR|PUP|Sus/i.test(e.sp.i) ? esc(e.sp.i) : 'OUT') + '</span>' : e.flag === 'bye' ? '<span class="bt bye">BYE</span>' : e.flag === 'q' ? '<span class="bt q" title="' + (e.mp && e.mp.qp ? 'Questionable: players in this spot played ' + Math.round(e.mp.qp * 100) + '% of the time in 2024-25; projection uses the snaps he gets if he plays' : 'Questionable') + '">Q' + (e.mp && e.mp.qp ? ' · plays ~' + Math.round(e.mp.qp * 100) + '%' : '') + '</span>' : e.flag === 'np' ? '<span class="bt np">no proj</span>' : ''); }
+  function tagFor(e){ return (e.mp ? thinTag(e.mp) + snapTag(e.mp) + sosTag(e.mp) : '') + (e.flag === 'out' ? '<span class="bt out">' + (e.sp.i && /IR|PUP|Sus/i.test(e.sp.i) ? esc(e.sp.i) : 'OUT') + '</span>' : e.flag === 'bye' ? '<span class="bt bye">BYE</span>' : e.flag === 'q' ? '<span class="bt q" title="' + (e.mp && e.mp.qp ? 'Questionable: players in this spot played ' + Math.round(e.mp.qp * 100) + '% of the time in 2024-25; projection uses the snaps he gets if he plays' : 'Questionable') + '">Q' + (e.mp && e.mp.qp ? ' · plays ~' + Math.round(e.mp.qp * 100) + '%' : '') + '</span>' : e.flag === 'np' ? '<span class="bt np">no proj</span>' : ''); }
 
 
   // ---- Manual roster builder (no Sleeper) ----
