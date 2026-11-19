@@ -1,0 +1,871 @@
+{
+ "week": 11,
+ "drafted": "2026-11-18 ~20:20 CT (weekly run, builder Wed 11/18 5:53 PM CT)",
+ "sweeps": {
+  "thu": null,
+  "sun": null,
+  "mon": null,
+  "why": "no leg on the board meets rule 3 + risk 0-1 + overs; builder sp pool = Kincaid (risk 10), TeSlaa (risk 9)",
+  "your_call": "Tank Dell 30+ rec yds -178 (raw 70.8% vs 64.0%)"
+ },
+ "promos": [
+  {
+   "slot": "thursday",
+   "key": "thu_single",
+   "name": "Thursday Best Bet: Dell's Night",
+   "type": "single",
+   "game": "HOU-IND",
+   "date": "11/19",
+   "legs": [
+    {
+     "pl": "Tank Dell",
+     "m": "Receiving Yards",
+     "ln": 37.0,
+     "o": -114,
+     "p": 0.5318,
+     "bk": 0.533,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291747",
+      "s": "60303648"
+     },
+     "why": "Marvin Harrison Jr. is OUT (hamstring), so Dell's Role Up flag is live; 56.3 yds/g in his 3 games, projected 55.0. Raw model 61.8% vs FanDuel 53.3% (Model's Best even-money tier); best edge on the Thursday board at -150..+150 with 50%+."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.626291747&selectionId=60303648",
+   "price": "-114",
+   "price_is_estimate": false,
+   "chance": 0.5318,
+   "caption": "Thursday best bet: Tank Dell 37+ receiving yards (-114).\nMarvin Harrison Jr. is out, Dell has averaged 56 yards a game, model projects 55.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Thursday best bet: Tank Dell 37+ receiving yards (-114).\nMarvin Harrison Jr. is out, Dell has averaged 56 yards a game, model projects 55.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false
+  },
+  {
+   "slot": "thursday",
+   "key": "thu_500",
+   "name": "Texans Takeover",
+   "type": "+500",
+   "game": "HOU-IND",
+   "date": "11/19",
+   "legs": [
+    {
+     "pl": "HOU -10.5",
+     "m": "Spread",
+     "ln": -10.5,
+     "o": -136,
+     "p": 0.552,
+     "bk": 0.5763,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840164",
+      "s": "12246853"
+     },
+     "why": "Model HOU 28.5-16.0; HOU by 10+ is the likeliest ending at 59%."
+    },
+    {
+     "pl": "Tank Dell",
+     "m": "Receiving Yards",
+     "ln": 30.0,
+     "o": -178,
+     "p": 0.6366,
+     "bk": 0.64,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291750",
+      "s": "73619054"
+     },
+     "why": "MHJ out = more targets; 56.3 yds/g avg, 30+ is 45% under his 55.0 projection (lowest rung that is clean - the 10-25% rungs carry flags)."
+    },
+    {
+     "pl": "Nico Collins",
+     "m": "Receiving Yards",
+     "ln": 60.0,
+     "o": -182,
+     "p": 0.5871,
+     "bk": 0.645,
+     "game": "HOU-IND",
+     "risk": 1,
+     "fd": {
+      "m": "42.625847705",
+      "s": "40988195"
+     },
+     "why": "Projection 71.2 (avg 68.3); 89.3 yds/g vs defenses like Indy's (DAL/CLE/TEN). Corner-questionable flag = 1 watch point."
+    },
+    {
+     "pl": "Xavier Hutchinson",
+     "m": "Receptions",
+     "ln": 3.0,
+     "o": -188,
+     "p": 0.5578,
+     "bk": 0.653,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291755",
+      "s": "41075117"
+     },
+     "why": "3+ catches in 8 of 9 games; snaps up, 'Reliable'."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=12246853&marketId[1]=42.626291750&selectionId[1]=73619054&marketId[2]=42.625847705&selectionId[2]=40988195&marketId[3]=42.626291755&selectionId[3]=41075117",
+   "price": "+447",
+   "price_is_estimate": true,
+   "chance": 0.1151,
+   "caption": "Texans Takeover. Thursday night, Houston rolls.\nHOU -10.5 | Tank Dell 30+ yds | Nico Collins 60+ yds | Xavier Hutchinson 3+ catches\nModel: HOU by 10+ in 59% of endings.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Texans Takeover. Thursday night, Houston rolls.\nHOU -10.5 | Tank Dell 30+ yds | Nico Collins 60+ yds | Xavier Hutchinson 3+ catches\nModel: HOU by 10+ in 59% of endings.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Thursday night. Four Texans legs, about +450, here's why.",
+    "LEGS: Texans minus ten and a half. Dell thirty plus. Collins sixty plus. Hutchinson three catches.",
+    "WHY: Harrison Jr. is out - Collins has averaged 89 yards against defenses like Indy's.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false
+  },
+  {
+   "slot": "thursday",
+   "key": "thu_lot",
+   "name": "Thursday Night Thievery",
+   "type": "lottery",
+   "game": "HOU-IND",
+   "date": "11/19",
+   "legs": [
+    {
+     "pl": "HOU -14.5",
+     "m": "Spread",
+     "ln": -14.5,
+     "o": 120,
+     "p": 0.4322,
+     "bk": 0.4545,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840164",
+      "s": "15469209"
+     },
+     "why": "Blowout script: model margin 12.5, HOU by 10+ 59%."
+    },
+    {
+     "pl": "C.J. Stroud",
+     "m": "Passing Yards",
+     "ln": 275.0,
+     "o": 118,
+     "p": 0.4404,
+     "bk": 0.459,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.625840250",
+      "s": "60303908"
+     },
+     "why": "Stroud 273.6 avg, 303.7 vs DAL/CIN/CLE-type defenses; needs a shootout-ish passing night."
+    },
+    {
+     "pl": "Nico Collins",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "o": -118,
+     "p": 0.5182,
+     "bk": 0.541,
+     "game": "HOU-IND",
+     "risk": 1,
+     "fd": {
+      "m": "42.625847705",
+      "s": "40988200"
+     },
+     "why": "Collins at his projection (71.2)."
+    },
+    {
+     "pl": "Nico Collins",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 100,
+     "p": 0.462,
+     "bk": 0.5,
+     "game": "HOU-IND",
+     "risk": 1,
+     "fd": {
+      "m": "42.625840218",
+      "s": "26919599"
+     },
+     "why": "Collins scores: 4 of 7 games."
+    },
+    {
+     "pl": "Tank Dell",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "o": 102,
+     "p": 0.4945,
+     "bk": 0.495,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291750",
+      "s": "60303884"
+     },
+     "why": "Dell 40+: 15 under his 55 projection."
+    },
+    {
+     "pl": "Xavier Hutchinson",
+     "m": "Receiving Yards",
+     "ln": 35.0,
+     "o": -114,
+     "p": 0.5001,
+     "bk": 0.533,
+     "game": "HOU-IND",
+     "risk": 0,
+     "fd": {
+      "m": "42.626291749",
+      "s": "41075117"
+     },
+     "why": "Hutchinson 35+: 47.0 avg vs similar defenses, 38.3 season."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.625840164&selectionId[0]=15469209&marketId[1]=42.625840250&selectionId[1]=60303908&marketId[2]=42.625847705&selectionId[2]=40988200&marketId[3]=42.625840218&selectionId[3]=26919599&marketId[4]=42.626291750&selectionId[4]=60303884&marketId[5]=42.626291749&selectionId[5]=41075117",
+   "price": "+5609",
+   "price_is_estimate": true,
+   "chance": 0.0113,
+   "caption": "Thursday Night Thievery (LOTTERY). Texans by 15, Stroud 275, Collins scores.\nHOU -14.5 | Stroud 275+ | Collins 70+ yds | Collins TD | Dell 40+ | Hutchinson 35+\nSmall stake only.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Thursday Night Thievery (LOTTERY). Texans by 15, Stroud 275, Collins scores.\nHOU -14.5 | Stroud 275+ | Collins 70+ yds | Collins TD | Dell 40+ | Hutchinson 35+\nSmall stake only.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false
+  },
+  {
+   "slot": "saturday",
+   "key": "sat_mb",
+   "name": "Model's Best: Air & Ground",
+   "type": "model_best",
+   "game": "multi",
+   "date": "11/22",
+   "legs": [
+    {
+     "pl": "Caleb Williams",
+     "m": "Passing Yards",
+     "ln": 275.0,
+     "o": 162,
+     "p": 0.3878,
+     "bk": 0.382,
+     "game": "CHI-NO",
+     "risk": 0,
+     "fd": {
+      "m": "42.626350386",
+      "s": "48335563"
+     },
+     "why": "Plus-money edge tier: raw model 47.4% vs FanDuel 38.2%; projected 262.5; 257.7 avg; 294 avg vs defenses like New Orleans's (ATL/NE/CAR, 3 of 3 above his average); NO is neutral on QB1s (1.01x)."
+    },
+    {
+     "pl": "Bucky Irving",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 125,
+     "p": 0.4475,
+     "bk": 0.444,
+     "game": "DET-TB",
+     "risk": 1,
+     "fd": {
+      "m": "42.626476321",
+      "s": "58495722"
+     },
+     "why": "TD tier, 5 of 9 games with a TD; Hot L3 + Carries up. Mayfield (foot) is out and Jalon Daniels starts - Tampa leans on the run; DET holds RB1 yardage (0.76x) but this is a TD leg."
+    },
+    {
+     "pl": "Josh Allen",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -175,
+     "p": 0.5955,
+     "bk": 0.636,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140722",
+      "s": "12399650"
+     },
+     "why": "Swapped in for Khalil Shakir 4+ catches (tier plus) because Sweep says 'Miami is stingy in the slot... go to the ground' (rule 12). Allen has scored in 7 of 9."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626350386&selectionId[0]=48335563&marketId[1]=42.626476321&selectionId[1]=58495722&marketId[2]=42.626140722&selectionId[2]=12399650",
+   "price": "+826",
+   "price_is_estimate": false,
+   "chance": 0.1033,
+   "caption": "Model's Best for Sunday.\nCaleb Williams 275+ pass yds | Bucky Irving TD | Josh Allen TD\nThree games, three edges, about +826.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Model's Best for Sunday.\nCaleb Williams 275+ pass yds | Bucky Irving TD | Josh Allen TD\nThree games, three edges, about +826.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Sunday's Model's Best. Three legs, plus 826.",
+    "LEGS: Caleb two seventy-five plus. Bucky Irving scores. Josh Allen scores.",
+    "WHY: The model has Caleb over 275 at 47 percent. FanDuel prices it at 38.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false
+  },
+  {
+   "slot": "saturday",
+   "key": "sat_sgp",
+   "name": "SGP of the Week: Big D Shootout",
+   "type": "lottery",
+   "game": "DAL-TEN",
+   "date": "11/22",
+   "legs": [
+    {
+     "pl": "Dak Prescott",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -220,
+     "p": 0.6885,
+     "bk": 0.688,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626421960",
+      "s": "40856415"
+     },
+     "why": "Proj 283; 316 avg vs WAS/IND/HOU-type defenses (3 of 3 above his average); TEN gives QB1s 1.19x (rank 4)."
+    },
+    {
+     "pl": "Dak Prescott",
+     "m": "Passing TDs",
+     "ln": 3.0,
+     "o": -118,
+     "p": 0.4267,
+     "bk": 0.5413,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320245",
+      "s": "11889993"
+     },
+     "why": "Proj 1.96 TDs - the reach leg."
+    },
+    {
+     "pl": "George Pickens",
+     "m": "Receiving Yards",
+     "ln": 68.0,
+     "o": -114,
+     "p": 0.5166,
+     "bk": 0.533,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320251",
+      "s": "42217164"
+     },
+     "why": "Pickens proj 76.2, 'Hot L3', 'Targets up'; Ferguson OUT frees targets."
+    },
+    {
+     "pl": "George Pickens",
+     "m": "Receptions",
+     "ln": 6.0,
+     "o": 110,
+     "p": 0.4726,
+     "bk": 0.476,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320276",
+      "s": "42217164"
+     },
+     "why": "6+ catches: avg 5.6, proj 5.68."
+    },
+    {
+     "pl": "Tony Pollard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -130,
+     "p": 0.5578,
+     "bk": 0.565,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320181",
+      "s": "16579792"
+     },
+     "why": "Dallas allows RB1s 1.52x (rank 3); Pollard scored in 4 of 9."
+    },
+    {
+     "pl": "Tony Pollard",
+     "m": "Receptions",
+     "ln": 3.0,
+     "o": -148,
+     "p": 0.529,
+     "bk": 0.597,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320279",
+      "s": "26271306"
+     },
+     "why": "Pollard 3+ catches: proj 2.73."
+    },
+    {
+     "pl": "Over 53.5",
+     "m": "Total",
+     "ln": 53.5,
+     "o": -140,
+     "p": 0.5412,
+     "bk": 0.5833,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626041860",
+      "s": "12197179"
+     },
+     "why": "Biggest total on the slate; model 31-23.5 = 54.5."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626421960&selectionId[0]=40856415&marketId[1]=42.626320245&selectionId[1]=11889993&marketId[2]=42.626320251&selectionId[2]=42217164&marketId[3]=42.626320276&selectionId[3]=42217164&marketId[4]=42.626320181&selectionId[4]=16579792&marketId[5]=42.626320279&selectionId[5]=26271306&marketId[6]=42.626041860&selectionId[6]=12197179",
+   "price": "+4472",
+   "price_is_estimate": true,
+   "chance": 0.0115,
+   "caption": "SGP of the Week (LOTTERY): Big D Shootout.\nDak 250+ & 3 TDs | Pickens 68+ & 6 catches | Pollard TD & 3 catches | Over 53.5\nThe slate's biggest total. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "SGP of the Week (LOTTERY): Big D Shootout.\nDak 250+ & 3 TDs | Pickens 68+ & 6 catches | Pollard TD & 3 catches | Over 53.5\nThe slate's biggest total. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false
+  },
+  {
+   "slot": "sunday_main",
+   "key": "sun_favtd",
+   "name": "Paydirt Trio",
+   "type": "+500",
+   "game": "multi",
+   "date": "11/22",
+   "legs": [
+    {
+     "pl": "D'Andre Swift",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -160,
+     "p": 0.6179,
+     "bk": 0.615,
+     "game": "CHI-NO",
+     "risk": 1,
+     "fd": {
+      "m": "42.626331754",
+      "s": "16602381"
+     },
+     "why": "CHI by 10+ 56%; 'Lead script'; proj 0.92 TDs; NO allows RB1s 1.41x (rank 6). Monangai questionable."
+    },
+    {
+     "pl": "Chuba Hubbard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -140,
+     "p": 0.5728,
+     "bk": 0.583,
+     "game": "BAL-CAR",
+     "risk": 0,
+     "fd": {
+      "m": "42.626479868",
+      "s": "22502305"
+     },
+     "why": "6 of 9 games with a TD; model has it 23-20.5 CAR."
+    },
+    {
+     "pl": "Tony Pollard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -130,
+     "p": 0.5578,
+     "bk": 0.565,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320181",
+      "s": "16579792"
+     },
+     "why": "Dallas allows RB1s 1.52x their average (rank 3); slate's biggest total."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626331754&selectionId[0]=16602381&marketId[1]=42.626479868&selectionId[1]=22502305&marketId[2]=42.626320181&selectionId[2]=16579792",
+   "price": "+393",
+   "price_is_estimate": false,
+   "chance": 0.1974,
+   "caption": "Paydirt Trio. Three backs, three games.\nD'Andre Swift TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +393.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Paydirt Trio. Three backs, three games.\nD'Andre Swift TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +393.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Sunday's Paydirt Trio. Three touchdowns, plus 393.",
+    "LEGS: Swift scores. Hubbard scores. Pollard scores.",
+    "WHY: Dallas gives lead backs 52 percent over their average - third-most in football.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false
+  },
+  {
+   "slot": "sunday_main",
+   "key": "sun_single",
+   "name": "Sunday Best Single: Cook's Kitchen",
+   "type": "single",
+   "game": "BUF-MIA",
+   "date": "11/22",
+   "legs": [
+    {
+     "pl": "James Cook",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -185,
+     "p": 0.6477,
+     "bk": 0.649,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140722",
+      "s": "42200635"
+     },
+     "why": "Sweep says pick for BUF-MIA. Scored in 8 of 9; Miami allows RB1s 1.41x their average (rank 5); BUF by 10+ 70%."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.626140722&selectionId=42200635",
+   "price": "-185",
+   "price_is_estimate": false,
+   "chance": 0.6477,
+   "caption": "Sunday best single: James Cook anytime TD (-185).\nScored in 8 of 9. Miami gives RB1s 41% over their average.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Sunday best single: James Cook anytime TD (-185).\nScored in 8 of 9. Miami gives RB1s 41% over their average.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false
+  },
+  {
+   "slot": "sunday_main",
+   "key": "sun_best",
+   "name": "Best Legs: Four Quarters",
+   "type": "+500",
+   "game": "multi",
+   "date": "11/22",
+   "legs": [
+    {
+     "pl": "Bo Nix",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -172,
+     "p": 0.6267,
+     "bk": 0.632,
+     "game": "DEN-LV",
+     "risk": 0,
+     "fd": {
+      "m": "42.626436909",
+      "s": "48103720"
+     },
+     "why": "Proj 225 (avg 192); DEN by 10+ 50%; LV gives QB1s 1.10x."
+    },
+    {
+     "pl": "Luther Burden III",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "o": -186,
+     "p": 0.6262,
+     "bk": 0.65,
+     "game": "CHI-NO",
+     "risk": 0,
+     "fd": {
+      "m": "42.626350400",
+      "s": "48334953"
+     },
+     "why": "7 of 9 at 50+; 95.3 avg vs ATL/NE/PHI-type defenses; NO allows WR1s 1.30x (rank 6); Hot L3, Role Up."
+    },
+    {
+     "pl": "Patrick Mahomes",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -188,
+     "p": 0.6173,
+     "bk": 0.6528,
+     "game": "ARI-KC",
+     "risk": 0,
+     "fd": {
+      "m": "42.626552938",
+      "s": "16593717"
+     },
+     "why": "KC by 10+ 67%; 2.11 TDs/g; ARI gives QB1s 1.14x (rank 7)."
+    },
+    {
+     "pl": "George Pickens",
+     "m": "Receptions",
+     "ln": 5.0,
+     "o": -188,
+     "p": 0.6174,
+     "bk": 0.653,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626421975",
+      "s": "61449340"
+     },
+     "why": "Proj 5.68; 'Hot L3', 'Targets up'; Ferguson OUT."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626436909&selectionId[0]=48103720&marketId[1]=42.626350400&selectionId[1]=48334953&marketId[2]=42.626552938&selectionId[2]=16593717&marketId[3]=42.626421975&selectionId[3]=61449340",
+   "price": "+471",
+   "price_is_estimate": false,
+   "chance": 0.1496,
+   "caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Luther Burden 50+ | Mahomes 2+ pass TDs | Pickens 5+ catches\nAbout +471.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Luther Burden 50+ | Mahomes 2+ pass TDs | Pickens 5+ catches\nAbout +471.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Sunday, four legs, plus 471, here's why.",
+    "LEGS: Nix two hundred. Burden fifty plus. Mahomes two TDs. Pickens five catches.",
+    "WHY: Burden has averaged 95 yards against defenses like New Orleans.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false
+  },
+  {
+   "slot": "snf",
+   "key": "snf_mini",
+   "name": "Mexico City McCaffrey",
+   "type": "small",
+   "game": "MIN-SF",
+   "date": "11/22",
+   "legs": [
+    {
+     "pl": "Christian McCaffrey",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -165,
+     "p": 0.596,
+     "bk": 0.623,
+     "game": "MIN-SF",
+     "risk": 0,
+     "fd": {
+      "m": "42.626099593",
+      "s": "10609932"
+     },
+     "why": "Scored in 8 of 9; MIN QB Kyler Murray listed OUT (hamstring) - Cousins."
+    },
+    {
+     "pl": "Christian McCaffrey",
+     "m": "Rush + Rec Yards",
+     "ln": 89.0,
+     "o": -114,
+     "p": 0.5427,
+     "bk": 0.5327,
+     "game": "MIN-SF",
+     "risk": 0,
+     "fd": {
+      "m": "42.626102232",
+      "s": "14807737"
+     },
+     "why": "Proj 93.7, avg 105.6; MIN allows RB1s 1.19x."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626099593&selectionId[0]=10609932&marketId[1]=42.626102232&selectionId[1]=14807737",
+   "price": "+156",
+   "price_is_estimate": true,
+   "chance": 0.3234,
+   "caption": "SNF: Christian McCaffrey scores + 89 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "SNF: Christian McCaffrey scores + 89 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false
+  },
+  {
+   "slot": "mnf",
+   "key": "mnf_500",
+   "name": "Monday Stripes",
+   "type": "+500",
+   "game": "CIN-WAS",
+   "date": "11/23",
+   "legs": [
+    {
+     "pl": "Ja'Marr Chase",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -150,
+     "p": 0.564,
+     "bk": 0.6,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626103726",
+      "s": "26809165"
+     },
+     "why": "Scored in 6 of 9; Hot L3, Targets up; WAS allows WR1s 1.21x."
+    },
+    {
+     "pl": "Stefon Diggs",
+     "m": "Receptions",
+     "ln": 5.0,
+     "o": -102,
+     "p": 0.502,
+     "bk": 0.505,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626107192",
+      "s": "11890083"
+     },
+     "why": "Sweep says pick (was +110, now -102); WAS WR1 vs CIN 1.19x; proj 5.03."
+    },
+    {
+     "pl": "Chase Brown",
+     "m": "Rush + Rec Yards",
+     "ln": 75.0,
+     "o": -114,
+     "p": 0.5355,
+     "bk": 0.5327,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626104589",
+      "s": "41072627"
+     },
+     "why": "Proj 78.2, 6 of 9 at 75+."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626103726&selectionId[0]=26809165&marketId[1]=42.626107192&selectionId[1]=11890083&marketId[2]=42.626104589&selectionId[2]=41072627",
+   "price": "+427",
+   "price_is_estimate": true,
+   "chance": 0.1516,
+   "caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 75+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 75+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Monday night. Three legs, about plus 425.",
+    "LEGS: Chase scores. Diggs five catches. Chase Brown seventy-five.",
+    "WHY: Cincinnati gives slot receivers the third-most in the league - Diggs lives there.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false
+  },
+  {
+   "slot": "mnf",
+   "key": "mnf_pmm",
+   "name": "PISS MISSILE MONDAY",
+   "type": "lottery",
+   "game": "CIN-WAS",
+   "date": "11/23",
+   "legs": [
+    {
+     "pl": "Ja'Marr Chase",
+     "m": "Receiving Yards",
+     "ln": 80.0,
+     "o": -210,
+     "p": 0.619,
+     "bk": 0.677,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626338361",
+      "s": "40905950"
+     },
+     "why": "WR1 rung 16% under proj 95.2."
+    },
+    {
+     "pl": "Ja'Marr Chase",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -150,
+     "p": 0.564,
+     "bk": 0.6,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626103726",
+      "s": "26809165"
+     },
+     "why": "Scored in 6 of 9."
+    },
+    {
+     "pl": "Stefon Diggs",
+     "m": "Receptions",
+     "ln": 4.0,
+     "o": -235,
+     "p": 0.6679,
+     "bk": 0.702,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626338364",
+      "s": "61354865"
+     },
+     "why": "4+ catches in 6 of 8."
+    },
+    {
+     "pl": "Stefon Diggs",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 175,
+     "p": 0.3502,
+     "bk": 0.364,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626103726",
+      "s": "10288139"
+     },
+     "why": "Diggs TD 5 of 8."
+    },
+    {
+     "pl": "Jayden Daniels",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -128,
+     "p": 0.4928,
+     "bk": 0.5614,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626103757",
+      "s": "41161339"
+     },
+     "why": "CIN gives QB1s 1.30x (rank 1)."
+    },
+    {
+     "pl": "Chase Brown",
+     "m": "Rush + Rec Yards",
+     "ln": 75.0,
+     "o": -114,
+     "p": 0.5355,
+     "bk": 0.5327,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626104589",
+      "s": "41072627"
+     },
+     "why": "Proj 78.2."
+    },
+    {
+     "pl": "Over 52.5",
+     "m": "Total",
+     "ln": 52.5,
+     "o": -130,
+     "p": 0.5333,
+     "bk": 0.5652,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626039163",
+      "s": "12194314"
+     },
+     "why": "Model total 53.5, shootout 28%."
+    },
+    {
+     "pl": "Antonio Williams",
+     "m": "Receptions",
+     "ln": 3.0,
+     "o": -270,
+     "p": 0.662,
+     "bk": 0.73,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626338363",
+      "s": "102913941"
+     },
+     "why": "3+ catches 7 of 9."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626338361&selectionId[0]=40905950&marketId[1]=42.626103726&selectionId[1]=26809165&marketId[2]=42.626338364&selectionId[2]=61354865&marketId[3]=42.626103726&selectionId[3]=10288139&marketId[4]=42.626103757&selectionId[4]=41161339&marketId[5]=42.626104589&selectionId[5]=41072627&marketId[6]=42.626039163&selectionId[6]=12194314&marketId[7]=42.626338363&selectionId[7]=102913941",
+   "price": "+6537",
+   "price_is_estimate": true,
+   "chance": 0.0076,
+   "caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 75+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 75+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false
+  }
+ ],
+ "not_drafted": {
+  "LAC_NYJ": "props not posted yet",
+  "PHI_PIT": "HIGH weather, no clean leg",
+  "snf_lottery": "low-confidence game (rule 13)"
+ }
+}
