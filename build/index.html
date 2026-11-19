@@ -440,7 +440,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 11</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Thu 11/19 1:23 AM CT.</p>
+    <p>Every FanDuel player prop on the Week 11 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Thu 11/19 2:24 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-HOU-IND">HOU·IND</a> <a href="#g-ARI-KC">ARI·KC</a> <a href="#g-BAL-CAR">BAL·CAR</a> <a href="#g-BUF-MIA">BUF·MIA</a> <a href="#g-CHI-NO">CHI·NO</a> <a href="#g-DAL-TEN">DAL·TEN</a> <a href="#g-DET-TB">DET·TB</a> <a href="#g-JAX-NYG">JAX·NYG</a> <a href="#g-LAC-NYJ">LAC·NYJ</a> <a href="#g-DEN-LV">DEN·LV</a> <a href="#g-PHI-PIT">PHI·PIT</a> <a href="#g-MIN-SF">MIN·SF</a> <a href="#g-CIN-WAS">CIN·WAS</a></nav>
   
@@ -466,7 +466,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="filters" id="filters" hidden>
    <input id="fQ" type="search" placeholder="Search player or team" autocomplete="off">
    <select id="fGame" aria-label="game"><option value="all">All games</option></select>
-   <select id="fMarket" aria-label="market"><option value="all">All markets</option><option value="UNDERS">Unders</option><option>Anytime TD</option><option>First TD</option><option>Receiving Yards</option><option>Receptions</option><option>Rushing Yards</option><option>Rush + Rec Yards</option><option>Passing Yards</option><option>Longest Reception</option><option>Moneyline</option><option>Spread</option><option>Total</option></select>
+   <select id="fMarket" aria-label="market"><option value="all">All markets</option><option value="UNDERS">Unders</option><option>Anytime TD</option><option>First TD</option><option>Receiving Yards</option><option>Receptions</option><option>Rushing Yards</option><option>Rush + Rec Yards</option><option>Passing Yards</option><option>Passing TDs</option><option>Longest Reception</option><option>Moneyline</option><option>Spread</option><option>Total</option></select>
    <select id="fPos" aria-label="position"><option value="all">All positions</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select>
    <span class="seg" id="fOdds"><button type="button" class="on" data-v="all">Any odds</button><button type="button" data-v="anchor">Anchors ≤ −200</button><button type="button" data-v="mid">−200 to +200</button><button type="button" data-v="long">+200 and up</button></span>
    <select id="fSort" aria-label="sort"><option value="edge">Sort: edge</option><option value="model">Sort: model %</option><option value="odds">Sort: odds</option><option value="kick">Sort: kickoff</option></select>
@@ -515,7 +515,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Thu 11/19 1:23 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Thu 11/19 2:24 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -540,7 +540,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-a71f306d6bc3.js"></script>
+<script src="/build/data-a339582eaa49.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -750,7 +750,8 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function toAm(p){ if(p <= 0 || p >= 1) return '—'; return p < 0.5 ? '+' + Math.round((1/p - 1) * 100) : '-' + Math.round(p/(1-p) * 100); }
   function decToAm(d){ return d >= 2 ? '+' + Math.round((d-1)*100) : '-' + Math.round(100/(d-1)); }
   function pc(p){ return Math.round(p*100) + '%'; }
-  function legText(l){ if(isGL(l)) return l.pl + (l.m === 'Moneyline' ? '' : '') ; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : isTD(l) ? 'anytime TD' : l.ms.toLowerCase() + ' ' + lnTxt(l)); }
+  function lms(l){ return String(l.ms || '').toLowerCase().replace(/\btds\b/, 'TDs').replace(/\bints\b/, 'INTs'); }   // "pass TDs", "INTs": the short names read lower-cased inside a sentence
+  function legText(l){ if(isGL(l)) return l.pl + (l.m === 'Moneyline' ? '' : '') ; return l.pl + ' ' + (l.m === 'First TD' ? 'first TD' : isTD(l) ? 'anytime TD' : lms(l) + ' ' + lnTxt(l)); }
   // ---- normal helpers + Gaussian copula Monte Carlo (same math as the boards' slips) ----
   function nppf(p){ var a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00],b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01],c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00],d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00],q,r;
     if(p<0.02425){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
@@ -930,11 +931,12 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var items = shownG.map(function(g){ var v = g[l.sk]; var ok = wonH(v); return '<span class="gm"><i class="' + (ok ? 'ok' : '') + '"></i>Wk ' + g.w + ' <small>' + esc(g.opp || '') + '</small> <b>' + (v == null ? '—' : (isTD(l) ? (v >= 1 ? 'TD' : 'no TD') : Math.round(v))) + '</b></span>'; }).join('');
     var l3 = gs.slice(0, 3).filter(function(g){ return g[l.sk] != null; }), l3hit = l3.filter(function(g){ return wonH(g[l.sk]); }).length;
     var all = gs.filter(function(g){ return g[l.sk] != null; }), allhit = all.filter(function(g){ return wonH(g[l.sk]); }).length;
-    var line = l.u ? 'under ' + l.ln + ' ' + l.ms.toLowerCase() : l.m === '2+ TD' || l.m === '3+ TD' ? 'scored ' + need + '+ TDs' : isTD(l) ? 'scored a TD' : Math.round(l.ln) + '+ ' + l.ms.toLowerCase();
+    var lowms = lms(l);
+    var line = l.u ? 'under ' + l.ln + ' ' + lowms : l.m === '2+ TD' || l.m === '3+ TD' ? 'scored ' + need + '+ TDs' : isTD(l) ? 'scored a TD' : Math.round(l.ln) + '+ ' + lowms;
     var chart = l10(l, gs, need, wonH);   // the picture replaces the five-game text row when there are two or more games to draw
     var body = gs.length ? (chart || items) + '<span class="sum"><b>' + l3hit + '</b> of his last ' + l3.length + (l.u ? ' stayed ' : isTD(l) ? ' ' : ' cleared ') + esc(line) + ' · <b>' + allhit + ' of ' + all.length + '</b> ' + (l.n != null && l.n > all.length ? 'of his last ' + all.length : 'this season') + (l.avg != null && l.m !== 'Anytime TD' ? ' · season avg ' + l.avg : '') + (l.proj != null && l.m !== 'Anytime TD' ? ' · model proj ' + l.proj : '') + '</span>' : '<span class="sum">No game log yet this season for ' + esc(l.pl) + '.</span>';
     var dgs = ((D.def[l.opp] || {})[l.pos] || {})[l.sk] || []; var lgavg = (D.lg[l.pos] || {})[l.sk];
-    var posLabel = l.pos + 's', unit = isTD(l) ? 'TDs' : l.ms.toLowerCase();
+    var posLabel = l.pos + 's', unit = isTD(l) ? 'TDs' : lowms;
     var cleared = function(g){ var c = (g.pl || []).some(function(x){ return x[1] >= need; }) || (g.topv != null && g.topv >= need); return l.u ? !c : c; };   // unders: nobody cleared the line
     var dItems = dgs.slice(0, 5).map(function(g){ var ok = cleared(g); var who = (g.pl || []).filter(function(x){ return x[1] >= need; });
       var detail = l.sk === 'td' ? '' : (who.length ? ' <small>(' + who.map(function(x){ return esc(x[0]) + ' ' + Math.round(x[1]); }).join(', ') + ')</small>' : (g.top ? ' <small>(best ' + esc(g.top.split(' ').slice(-1)[0]) + ' ' + Math.round(g.topv) + ')</small>' : ''));
@@ -942,7 +944,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var nHit = dgs.filter(cleared).length, n3 = dgs.slice(0, 3).filter(cleared).length, n3tot = Math.min(3, dgs.length);
     var dAvg = dgs.length ? dgs.reduce(function(a,g){ return a + g.tot; }, 0) / dgs.length : null;
     var lineTxt = l.u ? 'stayed under ' + l.ln + ' ' + esc(unit) : l.sk === 'td' ? (need > 1 ? 'scored ' + need + '+ TDs' : 'scored') : 'cleared ' + Math.round(l.ln) + '+ ' + esc(unit);
-    var defBody = dgs.length ? dItems + '<span class="sum">A ' + l.pos + ' has ' + lineTxt + ' against ' + esc(l.opp) + ' in <b>' + nHit + ' of ' + dgs.length + '</b> games this season (<b>' + n3 + ' of ' + n3tot + '</b> of the last ' + n3tot + '). Green = someone at the position hit this line that week; names in parentheses are who did it. ' + esc(l.opp) + ' allows ' + (l.sk === 'td' ? dAvg.toFixed(1) : Math.round(dAvg)) + ' ' + esc(unit) + ' per game to ' + posLabel + '.</span>' : '<span class="sum">No defensive game log for ' + esc(l.opp) + ' yet.</span>';
+    var defBody = dgs.length ? dItems + '<span class="sum">A ' + l.pos + ' has ' + lineTxt + ' against ' + esc(l.opp) + ' in <b>' + nHit + ' of ' + dgs.length + '</b> games this season (<b>' + n3 + ' of ' + n3tot + '</b> of the last ' + n3tot + '). Green = someone at the position hit this line that week; names in parentheses are who did it. ' + esc(l.opp) + ' allows ' + (l.sk === 'td' || l.sk === 'ptd' || l.sk === 'int' ? dAvg.toFixed(1) : Math.round(dAvg)) + ' ' + esc(unit) + ' per game to ' + posLabel + '.</span>' : '<span class="sum">No defensive game log for ' + esc(l.opp) + ' yet.</span>';
     return '<div class="hist"><b class="t">Recent games · ' + esc(l.ms) + ' ' + (isTD(l) ? '' : lnTxt(l)) + '</b>' + body + (snChip(l) ? '<div class="snrow">' + snChip(l) + '</div>' : '') +
       '<b class="t" style="margin-top:8px">' + esc(l.opp) + ' defense vs ' + posLabel + ' · ' + esc(unit) + ' allowed (total, who cleared ' + (l.sk === 'td' ? 'a TD' : lnTxt(l)) + ')' + (l.dr && l.dr[0] != null ? ' ' + dpill(l) : '') + '</b>' + defBody + mbsTable(l) + '</div>';
   }
@@ -954,8 +956,8 @@ window.BSBooks = { attach: function(btn, panel, getText){
       if(g[0].gd.indexOf('CONFIRMED') === 0) return;
       var x = shown(k); if(!x) return; if(st.clean && x.w && !sel[x.i]){ var c = g.filter(function(y){ return !y.w; }); if(c.length){ var b = c[0]; c.forEach(function(y){ if(y.e > b.e) b = y; }); x = b; } }
       rows.push(x); });
-    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
-           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
+    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Passing TDs', 'Completions', 'Interceptions', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
+           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush Attempts', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
            : ['Anytime TD', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Passing Yards', 'First TD'];
     rows.sort(function(a,b){ var ia = MO.indexOf(a.m), ib = MO.indexOf(b.m); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
     return rows;
@@ -975,8 +977,8 @@ window.BSBooks = { attach: function(btn, panel, getText){
       rows.push(x); });
     // fixed market order per position (not by edge): the headline leg is Anytime TD; then QB pass yds, rush yds; RB rush yds, rec yds,
     // receptions, longest rec; WR/TE rec yds, receptions, longest rec; First TD last
-    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
-           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
+    var MO = l.pos === 'QB' ? ['Anytime TD', 'Passing Yards', 'Passing TDs', 'Completions', 'Interceptions', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'First TD']
+           : l.pos === 'RB' ? ['Anytime TD', 'Rushing Yards', 'Rush Attempts', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards', 'First TD']
            : ['Anytime TD', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Passing Yards', 'First TD'];
     rows.sort(function(a,b){ var ia = MO.indexOf(a.m), ib = MO.indexOf(b.m); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
     var snrow = snChip(l) ? '<div class="snrow">' + snChip(l) + '</div>' : '';
@@ -1157,7 +1159,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function swKeys(ls){ return ls.map(legKey).sort().join('~'); }
   function swWhy(l){ var b = (l.fl || []).filter(function(f){ return f[0] === 'bad'; }).map(function(f){ return f[1]; }), w = (l.fl || []).filter(function(f){ return f[0] === 'watch'; }).map(function(f){ return f[1]; });
     var v = window.BSRisk && window.BSRisk.verdict(l.pl, l.m); if(v && v.level !== 'good') b.unshift(v.label); return b.concat(w).slice(0, 3); }
-  function swName(l){ return l.pl + ' ' + (isGL(l) ? '' : l.m === 'First TD' ? 'first TD' : isTD(l) ? (l.m === 'Anytime TD' ? 'anytime TD' : l.m) : lnTxt(l) + ' ' + l.ms.toLowerCase()); }
+  function swName(l){ return l.pl + ' ' + (isGL(l) ? '' : l.m === 'First TD' ? 'first TD' : isTD(l) ? (l.m === 'Anytime TD' ? 'anytime TD' : l.m) : lnTxt(l) + ' ' + lms(l)); }
   function swPrice(ls){ return slipPrice(ls).d; }
   function sweepBlock(ls, fair, bookDec, flags){
     var box = $('#sweepv'), btn = $('#sweepbtn'); if(!box) return;
@@ -1268,7 +1270,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     if(scb){ try { scb.innerHTML = ls.length ? scenBlock(ls) : ''; } catch(e){ scb.innerHTML = ''; } }
     $$('.slipbar .n').forEach(function(n){ n.textContent = ls.length; });
     if(!ls.length){ ul.innerHTML = '<li class="empty">Tap <b>+ Add</b> on any leg. The slip prices the combination against the model, with same-game legs correlated the way the boards do it.</li>'; $('#price').innerHTML = ''; $('#take').style.display='none'; $('#flags').innerHTML=''; try { sweepBlock([], 0, 1, []); } catch(e){} $('.slipbar b').textContent = 'Your slip'; $('#tgt').hidden = true; fdButton(ls); dkButton(ls); hrButton(ls); bookNote(ls); save(); if (typeof renderSaved === 'function') renderSaved(); return; }
-    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
+    ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + riskTag(l) + ' ' + (isGL(l) ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(lms(l)) + ' ' + (ladderOf(l).length > 1 ? fader(l, 'sl') : lnTxt(l))) + flagMark(l) + '</b><span>' + (started(l.g) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-i="' + l.i + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('');
     var bls = bookLegs(ls), implied = ls.length - bls.length;
     var sp = slipPrice(ls), bookDec = sp.d, bookP = 1/bookDec;
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls);
@@ -1520,6 +1522,11 @@ window.BSBooks = { attach: function(btn, panel, getText){
   var gsel = $('#fGame'); gorder.forEach(function(gid){ if(started(gid)) return; var g = games[gid]; var o = document.createElement('option'); o.value = gid; o.textContent = g.a + ' · ' + g.b + '  ' + g.kick; gsel.appendChild(o); });
   $('#fGame').addEventListener('change', function(){ st.game = this.value; st.limit = 80; renderList(); });
   $('#fMarket').addEventListener('change', function(){ st.market = this.value; st.limit = 80; renderList(); });
+  // 11/19: any other player market on the board gets a filter option of its own, so a market FanDuel starts posting never sits unlisted
+  (function(){ var sel = $('#fMarket'), have = {}, extra = {}; $$('#fMarket option').forEach(function(o){ have[o.value || o.textContent] = 1; });
+    legs.forEach(function(l){ var m = String(l.m || ''); if(l.gl || /^Under /.test(m) || have[m] || m === '2+ TD' || m === '3+ TD') return; extra[m] = 1; });
+    var before = Array.prototype.filter.call(sel.options, function(o){ return o.textContent === 'Moneyline'; })[0];
+    Object.keys(extra).sort().forEach(function(m){ var o = document.createElement('option'); o.textContent = m; sel.insertBefore(o, before || null); }); })();
   $('#fPos').addEventListener('change', function(){ st.pos = this.value; st.limit = 80; renderList(); });
   $('#fSort').addEventListener('change', function(){ st.sort = this.value; renderList(); });
   $('#fClean').addEventListener('change', function(){ st.clean = this.checked; renderList(); });
@@ -1540,8 +1547,9 @@ window.BSBooks = { attach: function(btn, panel, getText){
   var BOX = {}, OPENP = {}, UND = {};
   legs.forEach(function(l){ if(l.u) UND[l.pl + '|' + l.m.replace(/^Under /, '')] = l; });
   var TDM = ['Anytime TD', 'First TD', '2+ TD', '3+ TD'];
-  var MORD = {QB: ['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'],
-              RB: ['Rushing Yards', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards'],
+  // 11/19: the newer markets were on no list here, so a quarterback's "All props" never showed his Passing TDs box (the legs existed since 11/5)
+  var MORD = {QB: ['Passing Yards', 'Passing TDs', 'Completions', 'Interceptions', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'],
+              RB: ['Rushing Yards', 'Rush Attempts', 'Rush + Rec Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Passing Yards'],
               WR: ['Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Rush + Rec Yards', 'Passing Yards'],
               TE: ['Receiving Yards', 'Receptions', 'Longest Reception', 'Rushing Yards', 'Rush + Rec Yards', 'Passing Yards']};
   function ladder(pl, m){ return (GROUPS[pl + '|' + m] || []).filter(function(x){ return !x.u; }); }
@@ -1747,7 +1755,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     if(gh && games[gh[1]]) setTimeout(function(){ var el = $('#g-' + gh[1]); if(el) el.scrollIntoView({block: 'start'}); }, 80);
   }
   if(ADDED){
-    var msg = ADDED.ok.length ? 'Added to your slip: ' + ADDED.ok.map(function(l){ return l.pl + ' ' + (l.m === 'Anytime TD' ? 'anytime TD' : l.m === 'First TD' ? 'first TD' : l.ms.toLowerCase() + ' ' + lnTxt(l)); }).join(', ') : '';
+    var msg = ADDED.ok.length ? 'Added to your slip: ' + ADDED.ok.map(function(l){ return l.pl + ' ' + (l.m === 'Anytime TD' ? 'anytime TD' : l.m === 'First TD' ? 'first TD' : lms(l) + ' ' + lnTxt(l)); }).join(', ') : '';
     if(ADDED.late.length) msg += (msg ? ' · ' : '') + 'Already kicked off, not added: ' + ADDED.late.map(function(l){ return l.pl; }).join(', ');
     if(ADDED.missing.length) msg += (msg ? ' · ' : '') + ADDED.missing.length + ' leg' + (ADDED.missing.length > 1 ? 's are' : ' is') + ' not on this board any more';
     if(msg){ var n = document.createElement('div'); n.className = 'addnote'; n.textContent = msg; document.body.appendChild(n); setTimeout(function(){ n.classList.add('out'); setTimeout(function(){ n.remove(); }, 400); }, 4200); }
