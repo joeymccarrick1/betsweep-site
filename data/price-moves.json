@@ -1,27 +1,10 @@
 {
  "news": [],
  "week": 11,
- "built": "Thu 11/19 5:22 PM",
- "checked": "2026-11-20T00:12:14Z",
- "legs_checked": 1268,
+ "built": "Thu 11/19 6:21 PM",
+ "checked": "2026-11-20T00:42:14Z",
+ "legs_checked": 1270,
  "moves": [
-  {
-   "key": "David Montgomery|Under Receptions|2",
-   "pl": "David Montgomery",
-   "m": "Under Receptions",
-   "ln": 1.5,
-   "gid": "HOU-IND",
-   "ko": 1795137300000,
-   "built": -148,
-   "now": -114.0,
-   "pts": -6.4,
-   "p": 0.5334,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-19 17:35",
-   "detail": "David Montgomery under rec 1.5: FanDuel -148 at build -> -114 now (-6.4 implied pts against us)"
-  },
   {
    "key": "David Montgomery|Receiving Yards|15",
    "pl": "David Montgomery",
