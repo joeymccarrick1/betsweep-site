@@ -8,6 +8,81 @@
    "st": "Out",
    "ts": "2026-11-20T03:39:26Z",
    "legs": {}
+  },
+  "Dalton Kincaid|2026-11-20T18:30": {
+   "pl": "Dalton Kincaid",
+   "tm": "BUF",
+   "pos": "TE",
+   "st": "Doubtful",
+   "ts": "2026-11-20T18:30:14Z",
+   "legs": {
+    "Khalil Shakir|Receptions|4": {
+     "pl": "Khalil Shakir",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": 178,
+     "p": 0.396,
+     "first": null,
+     "moved": null,
+     "now": 178.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "Khalil Shakir|Receiving Yards|40": {
+     "pl": "Khalil Shakir",
+     "m": "Receiving Yards",
+     "ln": 40.0,
+     "built": 130,
+     "p": 0.4468,
+     "first": null,
+     "moved": null,
+     "now": 130.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "DJ Moore|Receiving Yards|50": {
+     "pl": "DJ Moore",
+     "m": "Receiving Yards",
+     "ln": 50.0,
+     "built": -104,
+     "p": 0.4685,
+     "first": null,
+     "moved": null,
+     "now": -104.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "Khalil Shakir|Longest Reception|15": {
+     "pl": "Khalil Shakir",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -190,
+     "p": 0.5987,
+     "first": null,
+     "moved": null,
+     "now": -190.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "DJ Moore|Longest Reception|30": {
+     "pl": "DJ Moore",
+     "m": "Longest Reception",
+     "ln": 30.0,
+     "built": 190,
+     "p": 0.2781,
+     "first": null,
+     "moved": null,
+     "now": 190.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "DJ Moore|Receptions|4": {
+     "pl": "DJ Moore",
+     "m": "Receptions",
+     "ln": 4.0,
+     "built": -102,
+     "p": 0.4028,
+     "first": null,
+     "moved": null,
+     "now": -102.0,
+     "pulled": "2026-11-20 6:35"
+    }
+   }
   }
  }
 }
