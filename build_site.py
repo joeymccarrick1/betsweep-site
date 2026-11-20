@@ -829,6 +829,7 @@ if os.path.exists(os.path.join(OUT, "shop.html")) and os.path.exists(os.path.joi
 if os.path.exists(os.path.join(OUT, "hunches.html")):
     made.append(place_plain(os.path.join(OUT, "hunches.html"), os.path.join(SITE, "hunches"), "/hunches/"))
     os.makedirs(os.path.join(SITE, "b"), exist_ok=True); os.makedirs(os.path.join(SITE, "data"), exist_ok=True); shutil.copy(os.path.join(OUT, "hunches.json"), os.path.join(SITE, "b", "hunches.json"))
+    if os.path.exists(os.path.join(OUT, "hunch-looks.json")): shutil.copy(os.path.join(OUT, "hunch-looks.json"), os.path.join(SITE, "b", "hunch-looks.json"))
     for _fn in glob.glob(os.path.join(OUT, "hunches-w*.json")): shutil.copy(_fn, os.path.join(SITE, "data", os.path.basename(_fn)))
 # owner 11/10 (deep dive): /boost/ - the Boost finder (build_boost.py); /b/boost.json is its board
 if os.path.exists(os.path.join(OUT, "boost.html")) and os.path.exists(os.path.join(OUT, "boost.json")):

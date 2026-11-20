@@ -332,6 +332,124 @@ def eng_rematch(BD, games, log, season):
     return out
 
 
+# ---------------------------------------------------------------- earlier seasons, and a look at any player
+NV = "https://github.com/nflverse/nflverse-data/releases/download"
+FIXT = {"LAR": "LA", "JAC": "JAX", "WSH": "WAS", "OAK": "LV", "SD": "LAC", "STL": "LA", "ARZ": "ARI", "BLT": "BAL", "CLV": "CLE", "HST": "HOU"}
+KINDS = {"rb": ("RB", "ryd", "car", 10, "Rushing Yards", "run"), "wr": ("WR", "recy", "tgt", 4, "Receiving Yards", "pass"), "te": ("TE", "recy", "tgt", 4, "Receiving Yards", "tight-end"), "qb": ("QB", "ptd", "att", 15, "Passing TDs", "pass")}
+
+
+def past_seasons(years=(2024, 2025)):
+    """Earlier seasons' player games in the game-log shape (downloaded once into in/, like the other season files)."""
+    import urllib.request
+    out = []
+    for y in years:
+        p = os.path.join(IN, f"stats_player_week_{y}.csv")
+        if not os.path.exists(p):
+            try: urllib.request.urlretrieve(f"{NV}/stats_player/stats_player_week_{y}.csv", p)
+            except Exception as e: print(f"[hunches] no {y} history: {e}"); continue
+        for r in csv.DictReader(open(p, newline="")):
+            if r.get("season_type") != "REG" or r.get("position") not in ("QB", "RB", "WR", "TE"): continue
+            out.append({"s": y, "w": int(num(r["week"])), "pl": r["player_display_name"], "tm": FIXT.get(r["team"], r["team"]), "pos": r["position"], "opp": FIXT.get(r["opponent_team"], r["opponent_team"]),
+                        "att": num(r.get("attempts")), "ptd": num(r.get("passing_tds")), "car": num(r.get("carries")), "ryd": num(r.get("rushing_yards")), "tgt": num(r.get("targets")), "recy": num(r.get("receiving_yards"))})
+    return out
+
+
+def def_pct(rows, kind):
+    """{defense: share of defenses that allow less} for one season's rows. rb: yards a carry to backs; wr / te: yards a game; qb: pass TDs a game."""
+    pos = KINDS[kind][0]; v = {}
+    for d in {r["opp"] for r in rows}:
+        x = [r for r in rows if r["opp"] == d and r["pos"] == pos]; g = len({(r["w"], r["tm"]) for r in x})
+        if g < 4: continue
+        if kind == "rb": c = sum(r["car"] for r in x); v[d] = sum(r["ryd"] for r in x) / c if c >= 60 else None
+        elif kind == "qb": v[d] = sum(r["ptd"] for r in x) / g
+        else: v[d] = sum(r["recy"] for r in x) / g
+    v = {d: x for d, x in v.items() if x is not None}; order = sorted(v, key=lambda d: v[d]); n = len(order)
+    return {d: i / (n - 1) for i, d in enumerate(order)} if n > 1 else {}
+
+
+def similar_line(pl, kind, opp, line, cur_pct, past, past_pct, band=0.15):
+    """What this player did in earlier seasons against defenses in the same band as this opponent is now (owner 11/19: "Back this up
+    with stats from last year included using similar defenses from his time on Detroit")."""
+    pos, stat, vol, floor, market, word = KINDS[kind]; p0 = cur_pct.get(opp)
+    if p0 is None: return None
+    gms = [r for r in past if r["pl"] == pl and r[vol] >= floor and abs(past_pct.get((r["s"], kind), {}).get(r["opp"], 9) - p0) <= band]
+    if len(gms) < 4: return None
+    avg = sum(r[stat] for r in gms) / len(gms); yrs = sorted({r["s"] for r in gms}); span = str(yrs[0]) if len(yrs) == 1 else f"{yrs[0]}-{str(yrs[-1])[2:]}"
+    hit = sum(1 for r in gms if r[stat] >= line) if line else None; unit = "passing TDs" if kind == "qb" else "yards"
+    return {"n": len(gms), "avg": avg, "hit": hit, "t": f"Against {word} defenses like this one in {span} ({len(gms)} games with a real workload) he averaged {avg:.1f} {unit}" + (f" and cleared {int(line) if float(line).is_integer() else line} in {hit}." if line else ".")}
+
+
+def looks(BD, log, W, wrcb, wind, past, q):
+    """One card for every player with a main leg, whether or not the evidence clears the bar - the answer to "check my hunch"."""
+    cur = {k: def_pct([dict(r, s=0) for r in log], k) for k in KINDS}
+    ppct = {}
+    for y in {r["s"] for r in past}:
+        yr = [r for r in past if r["s"] == y]
+        for k in KINDS: ppct[(y, k)] = def_pct(yr, k)
+    L = {"rb": leads(log, "RB", "car", 12), "wr": leads(log, "WR", "tgt", 6), "te": leads(log, "TE", "tgt", 4)}
+    qbd = {}
+    for r in log:
+        if r["pos"] == "QB" and r["att"] >= 15: qbd.setdefault(r["opp"], {})[(r["w"], r["tm"])] = r
+    cb = {}
+    if wrcb and len(wrcb) > 1:
+        h = {k: i for i, k in enumerate(wrcb[0])}
+        for r in wrcb[1:]:
+            g = lambda k: r[h[k]] if h.get(k) is not None and h[k] < len(r) else ""
+            if str(g("Week")) == str(W): cb[g("WR")] = (g("CB Matchup Flag"), g("Flag Confidence"), g("Primary CB"))
+    out = {}
+    for kind, (pos, stat, vol, floor, market, word) in KINDS.items():
+        for pl, l0 in {l["pl"]: l for l in BD["legs"] if not l.get("gl") and l["m"] == market and l.get("pos") == pos}.items():
+            tm, opp = l0["tm"], l0["opp"]; gm = game_of(BD, tm)
+            if not gm or gm.get("fin"): continue
+            last, allr = recent(log, pl); ev = []; ag = []; strength = 0
+            n_all = len(cur[kind]); rk = None
+            if opp in cur[kind]: rk = round((1 - cur[kind][opp]) * (n_all - 1)) + 1
+            if kind == "qb":
+                rows = list(qbd.get(opp, {}).values()); n = len(rows)
+                if n >= 4:
+                    two = sum(1 for r in rows if r["ptd"] >= 2); strength += (1 if two / n >= 0.6 else 0) + (1 if rk and rk <= 8 else 0)
+                    ev.append(f"{opp} has allowed {sum(r['ptd'] for r in rows) / n:.1f} passing TDs a game" + (f", {ordinal(rk)} most" if rk else "") + f": {two} of {n} starting quarterbacks threw 2 or more.")
+                imp = gm["pa"] if tm == gm["a"] else gm["pb"]; strength += 1 if imp >= 24 else 0; ev.append(f"The betting lines put {tm} at about {imp:.0f} points.")
+                if last: ev.append(f"His last {len(last)} games: {', '.join(str(int(r['ptd'])) for r in last)} passing TDs.")
+                if wind.get(gm["gid"], 0) >= 15: ag.append({"t": f"Wind is forecast around {wind[gm['gid']]:.0f} mph.", "s": 1})
+                if len(allr) >= 4 and sum(r["ptd"] for r in allr) / len(allr) < 1.2: ag.append({"t": f"He has averaged {sum(r['ptd'] for r in allr) / len(allr):.1f} passing TDs a game this season.", "s": 1})
+                leg = pick_leg(BD, pl, market, lo=-400, hi=250, want=-120, line=2)
+            else:
+                rows = L[kind].get(opp, []); n = len(rows); bar = 60 if kind != "te" else 45; who = {"rb": "lead backs", "wr": "lead receivers", "te": "lead tight ends"}[kind]; fl = {"rb": "12+ carries", "wr": "6+ targets", "te": "4+ targets"}[kind]
+                if n >= 4:
+                    hit = sum(1 for r in rows if r[stat] >= bar); avg = sum(r[stat] for r in rows) / n
+                    strength += (1 if hit / n >= (0.7 if kind == "rb" else 0.6) else 0) + (1 if rk and rk <= (8 if kind == "rb" else 10) else 0)
+                    ev.append(f"{n} {who} have had {fl} against {opp}: {hit} cleared {bar} yards, average {avg:.0f}.")
+                if rk: ev.append(f"{opp} ranks {ordinal(rk)} in what it allows to the position ({'yards a carry' if kind == 'rb' else 'yards a game'}; 1st = most).")
+                if kind == "wr" and pl in cb:
+                    f, cf, c = cb[pl]; ev.insert(0, f"The WR-vs-CB chart rates his matchup {f.lower()} ({cf.lower()} confidence)" + (f": mostly {c}" if c else "") + ".")
+                    if f == "FAVORABLE": strength += 1
+                    if f == "DIFFICULT": ag.append({"t": "The chart calls his cornerback matchup difficult.", "s": 1})
+                if last:
+                    v = sum(r[vol] for r in last) / len(last); ev.append(f"He has averaged {v:.1f} {'carries' if kind == 'rb' else 'targets'} over his last {len(last)} games ({', '.join(str(int(r[stat])) for r in last)} yards).")
+                    need = 12 if kind == "rb" else 5
+                    if v < need: ag.append({"t": f"That is a light workload for a {'lead back' if kind == 'rb' else 'featured pass catcher'}.", "s": 1})
+                    if kind == "rb" and sum(r["car"] for r in last) and sum(r["ryd"] for r in last) / sum(r["car"] for r in last) < 3.4: ag.append({"t": f"He has averaged {sum(r['ryd'] for r in last) / sum(r['car'] for r in last):.1f} yards a carry over those games.", "s": 1})
+                    if kind != "rb" and len(allr) >= 5 and v < sum(r["tgt"] for r in allr) / len(allr) * 0.75: ag.append({"t": "His targets are trending down.", "s": 1})
+                else: ag.append({"t": "He has fewer than two games on this season's log.", "s": 1})
+                if kind == "rb" and script_against(gm, tm) >= 40: ag.append({"t": f"The model has {tm} losing by 10+ in {script_against(gm, tm):.0f}% of endings.", "s": 1})
+                leg = pick_leg(BD, pl, market)
+            hl = similar_line(pl, kind, opp, (leg or {}).get("ln"), cur[kind], past, ppct)
+            if hl:
+                ev.append(hl["t"])
+                if hl["hit"] is not None and hl["n"] >= 5: strength += 1 if hl["hit"] / hl["n"] >= 0.65 else 0
+                if hl["hit"] is not None and hl["n"] >= 5 and hl["hit"] / hl["n"] <= 0.35: ag.append({"t": "His own record against this kind of defense is poor.", "s": 1})
+            if leg and leg["bad"]: ag.append({"t": "The builder flags this leg: " + ", ".join(leg["bad"]) + ".", "s": 1})
+            st = q.get(pl)
+            if st: ag.insert(0, {"t": f"He is listed {st} on the injury report.", "s": 1})
+            if not ag: ag.append({"t": "A few games against one defense is a small sample.", "s": 0})
+            serious = [a for a in ag if a.get("s")]
+            v = "Backed" if strength >= 2 and not serious else "Mixed" if strength >= 2 or (strength == 1 and len(serious) <= 1) else "Not backed"
+            if st in ("Doubtful", "Out"): v, leg = "Not backed", None
+            out[pl] = {"kind": kind, "g": gm["gid"], "tm": tm, "opp": opp, "verdict": v, "ev": ev, "vs": ag, "leg": leg if v != "Not backed" else None, "hist": hl["t"] if hl else None}
+    return out
+
+
 # ---------------------------------------------------------------- freeze, grade, page
 STAT = {"Rushing Yards": "ryd", "Receiving Yards": "recy", "Passing TDs": "ptd"}
 
@@ -358,14 +476,18 @@ def build(clone=None, week=None):
     except Exception: wx = []
     try: wrcb = json.load(open(os.path.join(IN, "wrcb.json")))["values"]
     except Exception: wrcb = []
-    wh, wind = eng_wind(BD, games, wx, W)
-    H = eng_rb(BD, log, W) + eng_wr(BD, log, W, wrcb) + eng_te(BD, log, W) + eng_qb(BD, log, W, wind) + eng_back(BD, log, W) + wh + eng_streak(BD, games, season) + eng_rematch(BD, games, log, season)
-    # the injury report is a case against any hunch that leans on the player (owner rule: read injuries before a slip)
     try:
         av = json.load(open(os.path.join(IN, "avail.json")))["values"]
         q = {r[1]: r[4].title() for r in av[1:] if len(r) > 4 and str(r[0]) == str(W) and r[4] in ("QUESTIONABLE", "DOUBTFUL", "OUT")}
     except Exception: q = {}
+    wh, wind = eng_wind(BD, games, wx, W)
+    try: LK = looks(BD, log, W, wrcb, wind, past_seasons(), q)
+    except Exception as e: print("[hunches] looks skipped:", e); LK = {}
+    H = eng_rb(BD, log, W) + eng_wr(BD, log, W, wrcb) + eng_te(BD, log, W) + eng_qb(BD, log, W, wind) + eng_back(BD, log, W) + wh + eng_streak(BD, games, season) + eng_rematch(BD, games, log, season)
+    # the injury report is a case against any hunch that leans on the player (owner rule: read injuries before a slip)
     for hch in H:
+        lk = LK.get(hch["who"])
+        if lk and lk.get("hist") and hch["kind"] in ("rb", "wr", "te", "qb") and not hch["id"].startswith("wrx"): hch["ev"].append(lk["hist"])
         st = q.get(hch["who"])
         if st and hch["kind"] in ("rb", "wr", "te", "qb") and hch["verdict"] in ("Backed", "Mixed"):
             hch["vs"] = [{"t": f"He is listed {st} on the injury report.", "s": 1}] + [a for a in hch["vs"] if a.get("s")]
@@ -390,8 +512,9 @@ def build(clone=None, week=None):
     frozen = {"week": W, "hunches": [{"id": h["id"], "kind": h["kind"], "g": h["g"], "who": h["who"], "title": h["title"], "verdict": h.get("verdict0") or h["verdict"], "leg": h.get("leg0"), "leg0": h.get("leg0"), "verdict0": h.get("verdict0"), "first": h.get("first")} for h in H + keep]}
     json.dump(data, open(os.path.join(OUT, "hunches.json"), "w"), separators=(",", ":"), ensure_ascii=False)
     json.dump(frozen, open(os.path.join(OUT, f"hunches-w{W}.json"), "w"), separators=(",", ":"), ensure_ascii=False)
+    json.dump({"week": W, "built": BD.get("built"), "games": data["games"], "looks": LK}, open(os.path.join(OUT, "hunch-looks.json"), "w"), separators=(",", ":"), ensure_ascii=False)
     if last and last.get("graded"): json.dump(last, open(os.path.join(OUT, f"hunches-w{W - 1}.json"), "w"), separators=(",", ":"), ensure_ascii=False)
-    open(os.path.join(OUT, "hunches.html"), "w").write(page(data, last))
+    open(os.path.join(OUT, "hunches.html"), "w").write(page(data, last, sorted(LK)))
     k = {}
     for h in H: k[h["kind"]] = k.get(h["kind"], 0) + 1
     return f"wrote out/hunches.html + hunches.json: {len(H)} hunches, week {W} ({', '.join(f'{v} {a}' for a, v in sorted(k.items()))}); {sum(1 for h in H if h['verdict'] == 'Backed')} backed"
@@ -416,7 +539,7 @@ def card(h):
             f'<p class="hvs"><b>The case against.</b> {" ".join(E(a["t"]) for a in h["vs"])}</p>{lg}</article>')
 
 
-def page(data, last=None):
+def page(data, last=None, names=()):
     W = data["week"]; G = data["games"]; live = [h for h in data["hunches"] if not h.get("gone")]
     by = {}
     for h in live: by.setdefault(h["g"], []).append(h)
@@ -442,6 +565,7 @@ def page(data, last=None):
 <div class="hx">
 <div class="hhead"><h1>Hunches</h1><span class="sub">Week {W}. Reasons to like or doubt a spot that the projection does not spell out. Each comes with its evidence, the case against, and a verdict. {len(live)} this week, {nb} backed.</span></div>
 {rec}
+{('<section class="hask"><h2>Got a hunch of your own?</h2><p>Type a player and see whether the evidence backs him this week: the matchup, his workload, and what he did against defenses like this one in earlier seasons.</p><label for="hq" class="sr">Player</label><input id="hq" list="hql" placeholder="Player name" autocomplete="off" autocapitalize="words" spellcheck="false"><datalist id="hql">' + "".join(f'<option value="{E(n)}">' for n in names) + '</datalist><div id="hres" aria-live="polite"></div></section>') if names else ""}
 <div class="hchips" id="hchips" role="group" aria-label="Filter hunches">{chips}</div>
 {"".join(secs) if secs else '<p class="hnone">No hunches clear the bar yet this week. Prop prices fill in by Thursday.</p>'}
 <p class="hnone" id="hempty" hidden>Nothing of that kind this week.</p>
@@ -456,6 +580,10 @@ CSS = """
 .hx .hhead{margin:0 4px 12px} .hx h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1}
 .hx .sub{display:block;margin-top:6px;color:var(--mute);font-size:14px;line-height:1.45}
 .hx .hrec{margin:0 4px 12px;font-size:14px;line-height:1.45;color:var(--ink)}
+.hx .hask{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:14px;margin:0 0 14px} .hx .hask h2{margin:0 0 4px;font-family:var(--display);font-weight:700;font-size:20px;color:var(--ink)}
+.hx .hask p{margin:0 0 10px;color:var(--mute);font-size:14px;line-height:1.45} .hx .hask input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.hx .hask #hres{margin-top:10px} .hx .hask #hres .hc{margin:0} .hx .hask .hmiss{margin:0;color:var(--mute);font-size:14px;line-height:1.45} .hx .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.hx .hc.vnot{border-left-color:var(--mute)}
 .hx .hchips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin:0 0 4px;scrollbar-width:none} .hx .hchips::-webkit-scrollbar{display:none}
 .hx .hchips button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
 .hx .hchips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -478,6 +606,20 @@ CSS = """
 
 JS = r"""
 (function(){
+  // "Got a hunch of your own?": the same card for any player with a main prop this week, backed or not (/b/hunch-looks.json)
+  var q = document.getElementById('hq'), res = document.getElementById('hres'), LK = null, asked = false;
+  var KIND = {rb: 'Run game', wr: 'Wide receiver', te: 'Tight end', qb: 'Quarterback'};
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function amo(o){ return o > 0 ? '+' + o : '\u2212' + (-o); }
+  function norm(s){ return String(s).toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+(jr|sr|ii|iii|iv)$/, '').trim(); }
+  function show(){ var v = q.value.trim(); if(!v){ res.innerHTML = ''; return; } if(!LK){ if(!asked){ asked = true; fetch('/b/hunch-looks.json').then(function(r){ return r.json(); }).then(function(d){ LK = d; show(); }).catch(function(){ asked = false; res.innerHTML = '<p class="hmiss">Could not load the data. Check your connection and try again.</p>'; }); } return; }
+    var k = Object.keys(LK.looks), n = norm(v), hit = k.filter(function(x){ return norm(x) === n; })[0] || (n.length >= 4 ? (function(){ var c = k.filter(function(x){ return norm(x).indexOf(n) >= 0; }); return c.length === 1 ? c[0] : null; })() : null);
+    if(!hit){ res.innerHTML = n.length >= 4 ? '<p class="hmiss">No main prop posted for that name this week, so there is nothing to check him against yet.</p>' : ''; return; }
+    var h = LK.looks[hit], g = LK.games[h.g] || {}, cls = h.verdict === 'Backed' ? 'vbacked' : h.verdict === 'Mixed' ? 'vmixed' : 'vnot', leg = h.leg;
+    res.innerHTML = '<article class="hc ' + cls + '"><header><span class="hk">' + esc(KIND[h.kind] || '') + ' \u00b7 ' + esc(h.tm) + ' vs ' + esc(h.opp) + (g.kick ? ' \u00b7 ' + esc(g.kick) : '') + '</span><span class="hv">' + esc(h.verdict) + '</span></header><h3>' + esc(hit) + '</h3><ul class="hev">' + h.ev.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+      '<p class="hvs"><b>The case against.</b> ' + h.vs.map(function(a){ return esc(a.t); }).join(' ') + '</p>' +
+      (leg ? '<div class="hleg"><span><small>The leg</small><b>' + esc(leg.t) + '</b></span><span class="hpr">' + amo(leg.o) + '</span><a class="bsbtn" href="https://sportsbook.fanduel.com/addToBetslip?marketId[0]=' + encodeURIComponent(leg.fm) + '&selectionId[0]=' + encodeURIComponent(leg.fs) + '" target="_blank" rel="noopener sponsored">Open on FanDuel</a></div>' : '') + '</article>'; }
+  if(q){ q.addEventListener('input', show); q.addEventListener('change', show); var m = /[?&]p=([^&]+)/.exec(location.search); if(m){ q.value = decodeURIComponent(m[1].replace(/\+/g, ' ')); show(); } }
   var chips = document.getElementById('hchips'); if(!chips) return;
   function apply(k){ var any = false;
     document.querySelectorAll('.hx .hg').forEach(function(sec){ var n = 0; sec.querySelectorAll('.hc').forEach(function(c){ var ok = !k || c.getAttribute('data-kind') === k || c.getAttribute('data-v') === k; c.hidden = !ok; if(ok) n++; }); sec.hidden = !n; if(n) any = true; });
@@ -527,7 +669,7 @@ def selftest():
     check(len(Wd) == 1 and wind["SOFT-XXX"] == 18 and Wd[0]["verdict"] == "Caution", "18 mph outdoors is a Caution hunch")
     wx[1][3] = "dome"; check(eng_wind(BD, games, wx, 6)[0] == [], "a dome game gets no wind hunch")
     pg = page({"week": 6, "hunches": H + S + Wd, "games": {"SOFT-XXX": {"a": "SOFT", "b": "XXX", "kick": "Sun", "ko": 1}}})
-    check("Open on FanDuel" in pg and "marketId[0]=1.1&amp;selectionId[0]=22" in pg and pg.count('class="hc ') == 3 and "The case against." in pg, "the page carries every card, the case against and the FanDuel link by ids")
+    check("Open on FanDuel" in pg and "marketId[0]=1.1&amp;selectionId[0]=22" in pg and pg.count(' data-kind="') == 3 and "The case against." in pg, "the page carries every card, the case against and the FanDuel link by ids")
     print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
 
 

@@ -2386,3 +2386,14 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   final box is in the game log. Promo result cells are left to the Tuesday grader.
 - **Market coverage check has never run.** The tab still says "Written by FanDuelOdds.gs v2026-11-19" and "not run yet": the sheet is
   on the first paste, not 19b. New markets (interceptions, completions, rush attempts) stay blocked until the owner pastes 19b.
+
+## 11/20 5:15-5:40 PM: "Got a hunch of your own?" and earlier-season history (owner: "Alright next")
+- hunches.py `looks()`: one card for every player with a main prop (RB rushing, WR / TE receiving, QB passing TDs), whether or not the
+  evidence clears the bar - verdict Backed / Mixed / **Not backed** (no leg offered). Written to /b/hunch-looks.json (about 100 KB,
+  143 players this week); the page's box (`#hq`, a datalist of names; `/hunches/?p=Name` opens on a player) reads it on first use.
+- `similar_line()`: what the player did in 2024-25 against defenses in the same band as this opponent is now (share of defenses that
+  allow less, within 0.15; games with a real workload: 10+ carries, 4+ targets, 15+ attempts; 4+ games to show). It is appended to the
+  matching hunch card too. 65%+ of 5+ games clearing the leg's line adds a point of strength; 35% or less is a serious case against.
+  `past_seasons()` downloads stats_player_week_2024/2025 from nflverse into in/ when missing (as the other generators do) and is skipped
+  quietly if that fails. Rosters change between seasons - the card does not know who his teammates were.
+- Not built: saving the owner's own hunches to the page for everyone (needs a sheet tab in the mirror = a change on main).
