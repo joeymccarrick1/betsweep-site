@@ -83,6 +83,81 @@
      "pulled": "2026-11-20 6:35"
     }
    }
+  },
+  "Dontayvion Wicks|2026-11-20T21:10": {
+   "pl": "Dontayvion Wicks",
+   "tm": "PHI",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-20T21:10:10Z",
+   "legs": {
+    "DeVonta Smith|Receptions|6": {
+     "pl": "DeVonta Smith",
+     "m": "Receptions",
+     "ln": 6.0,
+     "built": 194,
+     "p": 0.3852,
+     "first": null,
+     "moved": null,
+     "now": 194.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "Dallas Goedert|Receptions|5": {
+     "pl": "Dallas Goedert",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 225,
+     "p": 0.3379,
+     "first": null,
+     "moved": null,
+     "now": 225.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "DeVonta Smith|Receiving Yards|49": {
+     "pl": "DeVonta Smith",
+     "m": "Receiving Yards",
+     "ln": 49.0,
+     "built": -114,
+     "p": 0.5146,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "Dallas Goedert|Receiving Yards|31": {
+     "pl": "Dallas Goedert",
+     "m": "Receiving Yards",
+     "ln": 31.0,
+     "built": -114,
+     "p": 0.5046,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "DeVonta Smith|Longest Reception|15": {
+     "pl": "DeVonta Smith",
+     "m": "Longest Reception",
+     "ln": 15.0,
+     "built": -300,
+     "p": 0.702,
+     "first": null,
+     "moved": null,
+     "now": -300.0,
+     "pulled": "2026-11-20 6:35"
+    },
+    "Dallas Goedert|Longest Reception|20": {
+     "pl": "Dallas Goedert",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 190,
+     "p": 0.2892,
+     "first": null,
+     "moved": null,
+     "now": 190.0,
+     "pulled": "2026-11-20 6:35"
+    }
+   }
   }
  }
 }
