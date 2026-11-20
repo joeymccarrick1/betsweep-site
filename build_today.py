@@ -352,6 +352,9 @@ TODAY_CSS = r"""
 .tdact{display:flex;gap:8px;align-items:center}
 @media (max-width:560px){ .tdhead{flex-direction:column;align-items:stretch} .tdact{flex-wrap:wrap} } .tdshare,.tdlive{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none} .tdlive{background:var(--red);border-color:var(--red);color:#fff}
 .tdday .tdgames{display:grid;gap:12px}
+/* 11/20: a Sunday slate put 11 cards (4.6 phone screens) on Today. Past five games the first three show and one button opens the rest. */
+.tdday:not(.all) .tdgame.tdx{display:none} .tdallb{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:12px;font:inherit;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
+@media (min-width:900px){ .tdday:not(.all) .tdgame.tdx{display:flex} .tdallb{display:none} }
 .tdgame{display:none;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px} .tdgame.show{display:flex} .tdgame.post{opacity:.72}
 .tdgame header{display:flex;align-items:center;justify-content:space-between;gap:10px} .tdm{display:flex;align-items:baseline;gap:8px;font-family:var(--brand);font-style:italic;font-weight:800;font-size:30px;letter-spacing:-.01em;line-height:1} .tdm .at{font-size:16px;color:var(--mute);font-weight:600}
 .tdk{text-align:right} .tdk b{display:block;font-family:var(--display);font-weight:700;font-size:15px;color:var(--mute)} .tdk .gl{display:block;font-family:var(--display);font-weight:800;font-size:17px;color:var(--ink)} .tdk .gl i{font-style:normal;color:var(--red);font-size:11px;letter-spacing:.14em;margin-right:6px}
@@ -428,6 +431,12 @@ TODAY_JS = r"""<script>
   if(shown.length > 2){ document.querySelectorAll('.tdgame.show').forEach(function(el){ if(el.querySelector('.tdmore')) el.classList.add('compact'); });
     var plays = [].slice.call(document.querySelectorAll('.tdgame.show .play[data-gap]')).sort(function(a, b){ return (+b.getAttribute('data-gap')) - (+a.getAttribute('data-gap')); }).slice(0, 3);
     if(plays.length){ var grid = document.getElementById('tdlooksgrid'); plays.forEach(function(p, i){ var c = p.cloneNode(true); c.classList.toggle('lead', i === 0); grid.appendChild(c); }); document.getElementById('tdlooks').hidden = false; } }
+  if(shown.length > 5){ var day = document.getElementById('tdday'), cs = [].slice.call(document.querySelectorAll('.tdgame.show'));
+    cs.slice(3).forEach(function(el){ el.classList.add('tdx'); });
+    var ab = document.createElement('button'); ab.type = 'button'; ab.className = 'tdallb'; ab.id = 'tdallb'; ab.setAttribute('aria-expanded', 'false'); ab.textContent = 'Show all ' + cs.length + ' games';
+    document.getElementById('tdgames').after(ab);
+    ab.addEventListener('click', function(){ var on = day.classList.toggle('all'); ab.setAttribute('aria-expanded', on); ab.textContent = on ? 'Show fewer games' : 'Show all ' + cs.length + ' games'; if(!on) day.scrollIntoView(); });
+    if(location.hash && /^#td-/.test(location.hash) && document.querySelector(location.hash + '.tdx')){ day.classList.add('all'); ab.setAttribute('aria-expanded', 'true'); ab.textContent = 'Show fewer games'; } }
   document.addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('.tdtog'); if(!b) return; var card = b.closest('.tdgame'); card.classList.toggle('open'); b.setAttribute('aria-expanded', card.classList.contains('open')); });
   if(!shown.length){ none.hidden = false; none.innerHTML = '<div class="tdempty"><b>No games on the board.</b> The week is graded on the <a href="/receipts/" style="color:var(--ink)">receipts</a> page; next week\'s board posts Tuesday and its prop prices fill in by Thursday. Your <a href="/team/" style="color:var(--ink)">fantasy team</a> and the <a href="/trade/" style="color:var(--ink)">trade calculator</a> work all week.</div>'; }
   // the rest of the week

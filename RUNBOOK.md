@@ -2358,3 +2358,31 @@ row; on, thirteen.
 - tests/waiver_truth.py (5 checks) joins the full set (35 tests).
 - **Open:** tests/fantasy_nav fails 4 checks on today's data with or without this change (stand-in league: "L. Burden III (out)" while the
   sheet has him Questionable). Not looked into yet.
+
+## 11/20 4:15-5:00 PM: the open list (owner: "get working on all of these") - what was really open, and Hunches
+**Read this first: three items I listed as "not built" were already built.** The per-player/per-team reliability score (flags.py REL /
+TREL, data/reliability.json, 11/15), either-or TD pairs scored as a pair (pairs.py `risk()` = the safer player's score, /pairs/, 11/10)
+and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check this file before telling the owner something is missing.
+
+- **Hunches, /hunches/ (hunches.py, new).** Engines: rb (lead back vs a defense lead backs ran on), wr (the owner's WR-vs-CB chart:
+  FAVORABLE = a hunch, DIFFICULT = a caution; the chart writes target share as 0.24 some weeks and 24% others), te, qb (pass TDs allowed
+  + implied team total), back (first game back after missing 2+ team games, with what this season's returns did - the median), streak
+  (3+ straight, with the next-week cover rate from games.csv: 52% / 50%, i.e. no edge, and the card says so), wind (15+ mph outdoors:
+  56% unders over 649 games), rematch. Verdict: Backed = strength 2+ and no serious case against; Mixed; Caution; Info. A builder "bad"
+  flag on the leg, a losing-big script (40%+), a low yards-per-carry run, a flagged QB, or a Questionable tag (in/avail.json) each count
+  as a serious case against. The leg is the FanDuel rung nearest -150 (QB: the 2+ rung). The first verdict and leg of the week are
+  frozen in data/hunches-w<W>.json; `grade()` marks last week's from the game log and the page shows "x of y backed legs hit".
+  reprice step "hunches" (soft), build_site place_plain + /b/hunches.json, Betting menu, API page. `python3 hunches.py --selftest` (10),
+  tests/hunches_page.py (10). NOT built: the owner's own entry box, history from earlier seasons for a named player (the Montgomery /
+  Detroit kind of look), hunches on the game cards.
+- **Today was 9.6 phone screens** on a no-game Friday: it lists the next game day, and Sunday is 11 cards. Past five games the first
+  three show and "Show all N games" opens the rest (build_today.py `.tdx` / `#tdallb`; a #td-GAME link opens the list). 6.5 or under now.
+- **"passing TDs" in sentences:** mktxt.low() keeps TD / TDs / INTs capitalised; used by home, boards, short, boost, shop, stale lines.
+- **Tests that broke on the data, not the site:** page_tight took the first board card, which today is a game-lines-only parlay with no
+  reasoning to open; fantasy_nav needed a receiver who plays in the first stand-in league on a heavy bye week. Both now choose a card /
+  player that fits. Yesterday's "L. Burden III (out)" was the test's own injected injury, not a page bug.
+- **Thursday's slips:** HOU 26, IND 3. The Thievery lost (Taylor could not have scored: one field goal); slip log row 61 graded by hand.
+  The Daily Sweep is almost certainly lost (last feed snapshot 3:04 left: Burks 0, Dell 27, Taylor 21) but is NOT marked until the
+  final box is in the game log. Promo result cells are left to the Tuesday grader.
+- **Market coverage check has never run.** The tab still says "Written by FanDuelOdds.gs v2026-11-19" and "not run yet": the sheet is
+  on the first paste, not 19b. New markets (interceptions, completions, rush attempts) stay blocked until the owner pastes 19b.

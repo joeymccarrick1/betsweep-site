@@ -23,6 +23,7 @@ out/boost.json (served as /b/boost.json): the pool - per game, the legs with Fan
 are not unders or first-TD, main moneylines, spreads and totals), each with its risk score - and the per-game best parlays.
 """
 import html, json, os, sys
+from mktxt import low as _mlow
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out"); E = html.escape
 sys.path.insert(0, HERE)
@@ -41,7 +42,7 @@ def leg_txt(l, G):
     if l.get("gl"):
         return l["pl"] if l["m"] != "Total" else f"{l['pl']} ({at(G[l['g']])})"
     if l["m"] == "Anytime TD": return f"{l['pl']} to score"
-    return f"{l['pl']} {int(round(l['ln']))}+ {l['m'].lower()}"
+    return f"{l['pl']} {int(round(l['ln']))}+ {_mlow(l['m'])}"
 
 
 def pool(BD):

@@ -11,6 +11,7 @@ left out (no second price is stored for them). Reads out/builder_data.json; writ
 out/shop.json (served as /b/shop.json).
 """
 import html, json, os, sys
+from mktxt import low as _mlow
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out"); E = html.escape
 sys.path.insert(0, HERE)
@@ -27,7 +28,7 @@ def at(g): return f"{g['away']} {'vs' if g.get('nt') else '@'} {g['home']}" if g
 def leg_txt(l):
     if l.get("gl"): return l["pl"]
     if l["m"] == "Anytime TD": return f"{l['pl']} to score"
-    return f"{l['pl']} {int(round(l['ln']))}+ {l['m'].lower()}"
+    return f"{l['pl']} {int(round(l['ln']))}+ {_mlow(l['m'])}"
 
 
 def rows(BD):

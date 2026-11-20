@@ -16,6 +16,7 @@ build_site.py calls build() itself right before placing the page, so it always s
 Writes out/simple.html and out/simple.json (what the page shows, for the checks).
 """
 import json, os, html, sys
+from mktxt import low as _mlow
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out"); sys.path.insert(0, HERE)
 import sweep as SW
 import booklinks as BL
@@ -33,7 +34,7 @@ def at(g): return f"{g['away']} {'vs' if g.get('nt') else '@'} {g['home']}" if g
 def leg_txt(l):
     if l.get("gl"): return l["pl"]
     if l["m"] == "Anytime TD": return f"{l['pl']} to score"
-    return f"{l['pl']} {int(round(l['ln']))}+ {l['m'].lower()}"
+    return f"{l['pl']} {int(round(l['ln']))}+ {_mlow(l['m'])}"
 def fav_pool(BD):
     """every favorite the three-favorites card may use, best chance first: -350..-140, shown at or within two points of FanDuel's
     break-even, no risk flag (house rule: low-risk legs only), overs only, with its FanDuel ids"""

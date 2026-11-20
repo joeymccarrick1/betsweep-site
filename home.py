@@ -9,6 +9,7 @@ Games that have kicked off drop out of the plays lists in the browser (ESPN feed
 slate shows LIVE / FINAL badges, so the page stays honest on game day without a rebuild.
 """
 import calib as CALIB
+from mktxt import low as _mlow
 import json, math, os, html
 from collections import defaultdict
 
@@ -125,11 +126,11 @@ import how_stats as _HOWS   # 11/17: the plus tier's record is counted from the 
 import bp_pick as _BPK   # fit_note: the lead parlay's reason, true to the model's ending odds (11/17 evening)
 def leg_line(m, ln):
     if m in ("Anytime TD", "First TD", "2+ TD", "3+ TD"): return m
-    if str(m).startswith("Under "): return f"under {float(ln):g} {m[6:].lower()}"   # FanDuel main-line unders (owner 10/27)
+    if str(m).startswith("Under "): return f"under {float(ln):g} {_mlow(m[6:])}"   # FanDuel main-line unders (owner 10/27)
     if m in ("Total", "Spread", "Moneyline"): return {"Total": "game total", "Spread": "spread", "Moneyline": "moneyline"}[m]   # the name already carries the line ("Under 51.5", "CLE +6.5")
     if m == "Receptions": return f"{int(ln)}+ receptions" if float(ln).is_integer() else f"over {ln} receptions"
     if m == "Rush + Rec Yards": return f"{int(ln) if float(ln).is_integer() else ln}+ rush + rec yards"
-    return f"{int(ln) if float(ln).is_integer() else ln}+ {m.lower()}" if ln else m
+    return f"{int(ln) if float(ln).is_integer() else ln}+ {_mlow(m)}" if ln else m
 
 def leg_key(pl, m, ln):
     """the builder's slip key (player|market|rounded line) - must match legKey() in build_builder.py / template.html"""
@@ -929,7 +930,7 @@ def winners_block(IN, limit=6):
             who = _re.sub(r"\s*\([A-Z]{2,3}-[A-Z]{2,3}\)", "", who)
             m = _re.match(r"^(.*?)\s+(\d+(?:\.\d+)?)\+$", mk)
             if mk in ("Spread", "Total", "Moneyline", ""): text = who
-            elif m: text = f"{who} {m.group(2)}+ {m.group(1).lower()}"
+            elif m: text = f"{who} {m.group(2)}+ {_mlow(m.group(1))}"
             else: text = f"{who} {mk[0].lower() + mk[1:]}"
             act = ""
             if m and m.group(1) in _WSTAT and (str(wk), who) in GL:

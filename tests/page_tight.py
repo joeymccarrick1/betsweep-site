@@ -41,7 +41,8 @@ async def main():
             check(d["work"] == n and d["add"] == n, f"boards, {theme}: on every card the leg-by-leg reasoning waits under \"Show the work\" and \"+ Add\" sits beside the parlay's price")
             check(d["dots"] == n and max(d["lines"]) <= 60 and sum(1 for h in d["lines"] if h <= 32) >= n // 2, f"boards, {theme}: the kickoff line is one line on most cards, two at most, with no stray dots (heights {sorted(set(d['lines']))})")
             check(d["card"] <= 600 and await pg.evaluate(OVER) <= 0, f"boards, {theme}: a card averages {d['card']}px tall (it was about 710 with everything open); the page is {scr} screens for {n} games")
-            first = d["first"]; await pg.click(f"#{first} > .bestslip > .bpmore"); await pg.wait_for_timeout(200)
+            first = await pg.evaluate("(([...document.querySelectorAll('section.card.bstidy')].find(s => s.querySelector(':scope > .bestslip > .bpmore')) || {}).id)") or d["first"]   # 11/20: a parlay made only of game lines has no reasoning to fold, so take the first card that has some
+            await pg.click(f"#{first} > .bestslip > .bpmore"); await pg.wait_for_timeout(200)
             check(await pg.evaluate(VIS, f"#{first} > .bestslip > .bpwork") and await pg.evaluate(f"document.querySelector('#{first} > .bestslip > .bpmore').getAttribute('aria-expanded')") == "true" and "Hide the work" in await pg.evaluate(f"document.querySelector('#{first} > .bestslip > .bpmore').textContent")
                   and not await pg.evaluate(f"document.querySelector('#{first}').classList.contains('expanded')"), f"boards, {theme}: \"Show the work\" opens the reasoning in place (the board itself stays shut)")
             await pg.click(f"#{first} > .bestslip > .bpmore"); await pg.wait_for_timeout(150); shut = not await pg.evaluate(VIS, f"#{first} > .bestslip > .bpwork")

@@ -18,6 +18,7 @@ Inputs (ranges to dump, exactly):
 Assets next to this script: template.html, logo_b64.txt, logo_small_b64.txt, banner_b64.txt, probit.json
 """
 import json, html, re, csv, datetime, math, os, sys
+from mktxt import low as _mlow
 from collections import defaultdict
 from zoneinfo import ZoneInfo
 
@@ -253,7 +254,7 @@ def sweep_card(gid, line):
         if mk == "Anytime TD": lt = f'{leg["player"]} anytime TD'
         elif mk.startswith("Under "): lt = f'{leg["player"]} under {leg["line"]:g} {mk[6:].lower()}'
         elif mk in ("Moneyline", "Spread", "Total") or leg["player"].startswith(("Over ", "Under ")): lt = leg["player"]
-        else: lt = f'{leg["player"]} {int(leg["line"] or 1)}+ {mk.lower()}'
+        else: lt = f'{leg["player"]} {int(leg["line"] or 1)}+ {_mlow(mk)}'
         lo = odds_str(leg["odds"]); ids = fd_ids(leg)
         if ids: lu = f"https://sportsbook.fanduel.com/addToBetslip?marketId={ids[0]}&selectionId={ids[1]}"
     try: _gi = game_for(a, b)   # audit 11/10: "WAS @ NYG" from the schedule; a-b is the scripts tab's order, not away-home
@@ -1275,7 +1276,7 @@ def bp_grade(rec, a, b):
                 except Exception: ok = None
         if ok is None: unknown += 1
         elif ok: hits += 1
-        else: return ("L", hits, len(legs), f"{name}" + (f" {int(ln) if float(ln) == int(ln) else ln}+ {mk.lower()}" if mk in _HM._GSTAT and mk not in ("Anytime TD", "2+ TD") else (" TD" if mk == "Anytime TD" else "")))
+        else: return ("L", hits, len(legs), f"{name}" + (f" {int(ln) if float(ln) == int(ln) else ln}+ {_mlow(mk)}" if mk in _HM._GSTAT and mk not in ("Anytime TD", "2+ TD") else (" TD" if mk == "Anytime TD" else "")))
     return ("W", hits, len(legs), "") if legs and not unknown else (None, hits, len(legs), "")
 def _bp_locked(fz, a, b):
     """the filed card with its state: locked at kickoff, then Cashed / Missed"""

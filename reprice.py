@@ -58,6 +58,7 @@ BUILD = [
     ("sweep my slip", "build_slipcheck.py", "soft"),
     ("pairs", "build_pairs.py", "soft"),
     ("boost finder", "build_boost.py", "soft"),
+    ("hunches", "hunches.py {clone} {W}", "soft"),
     ("line shop", "build_shop.py", "soft"),
     ("beat the model", "build_beat.py", "soft"),
     ("missed by one", "badbeats.py {Wprev}", "soft"),

@@ -145,7 +145,7 @@ NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay 
 # (build_today.py #tdsimple) and from nowhere else: no line here, no door in NEXT, no entry on /all/.
 NAV_GROUPS = [("/", "Today", None),
               (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
-              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
+              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/hunches/", "Hunches", "Matchups, streaks, weather"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
               (None, "Play", [("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high"), ("/dfs/", "DFS", "Lineup builder")]),
@@ -166,6 +166,7 @@ NEXT = {
  "/firsttd/": [("/pairs/", "Either-or TDs", "Two scorers, one leg"), ("/build/", "Parlay Builder", "Add a scorer to a slip"), ("/boards/", "Matchup Boards", "The full read on each game")],
  "/pairs/": [("/firsttd/", "First TD", "Who scores first"), ("/build/", "Parlay Builder", "Add a scorer to a slip"), ("/boost/", "Boost finder", "Make a boost count")],
  "/teasers/": [("/boost/", "Boost finder", "Make a boost count"), ("/shop/", "Line shop", "The same leg at a better price"), ("/build/", "Parlay Builder", "Spreads and totals are in there too")],
+ "/hunches/": [("/build/", "Parlay Builder", "Build a slip from a hunch"), ("/boards/", "Matchup Boards", "The whole game in one card"), ("/best/", "Model's Best", "The week's edges in one list")],
  "/boost/": [("/shop/", "Line shop", "The same leg at a better price"), ("/sweep/", "Sweep my slip", "Check the slip before you place it"), ("/build/", "Parlay Builder", "Build it yourself")],
  "/shop/": [("/boost/", "Boost finder", "Make a boost count"), ("/build/", "Parlay Builder", "Three books on every leg"), ("/best/", "Model's Best", "The week's edges in one list")],
  "/live/": [("/me/", "My BetSweep", "Your slips, record and bankroll"), ("/receipts/", "Receipts", "How every week graded"), ("/badbeats/", "Missed by one", "The week's bad beats")],
@@ -824,6 +825,11 @@ if os.path.exists(os.path.join(OUT, "slipcheck.html")):
 if os.path.exists(os.path.join(OUT, "shop.html")) and os.path.exists(os.path.join(OUT, "shop.json")):
     made.append(place_plain(os.path.join(OUT, "shop.html"), os.path.join(SITE, "shop"), "/shop/"))
     os.makedirs(os.path.join(SITE, "b"), exist_ok=True); shutil.copy(os.path.join(OUT, "shop.json"), os.path.join(SITE, "b", "shop.json"))
+# owner 11/19: /hunches/ (hunches.py) - evidence-backed leads by game; the week's frozen list goes to data/ so Tuesday can grade it
+if os.path.exists(os.path.join(OUT, "hunches.html")):
+    made.append(place_plain(os.path.join(OUT, "hunches.html"), os.path.join(SITE, "hunches"), "/hunches/"))
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True); os.makedirs(os.path.join(SITE, "data"), exist_ok=True); shutil.copy(os.path.join(OUT, "hunches.json"), os.path.join(SITE, "b", "hunches.json"))
+    for _fn in glob.glob(os.path.join(OUT, "hunches-w*.json")): shutil.copy(_fn, os.path.join(SITE, "data", os.path.basename(_fn)))
 # owner 11/10 (deep dive): /boost/ - the Boost finder (build_boost.py); /b/boost.json is its board
 if os.path.exists(os.path.join(OUT, "boost.html")) and os.path.exists(os.path.join(OUT, "boost.json")):
     made.append(place_plain(os.path.join(OUT, "boost.html"), os.path.join(SITE, "boost"), "/boost/"))
@@ -1163,6 +1169,7 @@ def landing(weeks):
         ("/firsttd/", "First TD", f"{nftd} players" if nftd else f"Week {week}", "Who scores first in every game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price with the edge.", None),
         ("/pairs/", "Either-or TDs", "Two names, one leg", "FanDuel sells \"A or B to score\" as one leg. Pick the two players and see the chance one of them scores, the fair price, and whether the pair is worth more or less than its two singles. Type FanDuel's price and it says what you are paying.", None),   # owner 11/8-11/10
         ("/shop/", "Line Shop", "Same leg, better price", "Every leg on the board where DraftKings or Hard Rock pays more than FanDuel, biggest gap first, with a button straight to the better price.", None),
+        ("/hunches/", "Hunches", "Leads with the evidence", "Lead backs against soft run defences, receivers with the cornerback matchup, quarterbacks against leaky secondaries, streaks, weather and returns from injury. Every hunch shows its evidence, the case against it and a verdict.", None),
         ("/boost/", "Boost Finder", "Make a boost count", "Got a profit boost? Enter its rules and the model finds the slip that was closest to fair before the boost, so the boost does the most work. A checker for same-game boosts too.", None),
         ("/teasers/", "Teaser Finder", "6, 6.5 and 7 points", "Every spread and total teased 6, 6.5 and 7 points, scored by the model: which teased legs clear your book's two-leg price, and the classic pairs that cross both 3 and 7.", None),
         ("/sweep/", "Sweep My Slip", "Before you place it", "Screenshot any FanDuel slip, yours or one somebody posted, and get a plain verdict: its chance against its price, the weakest leg, and an easier swap one tap applies. The picture is read on your phone and never leaves it.", None),   # owner 11/10
@@ -1362,6 +1369,7 @@ _API = [
     ("/b/shop.json", "Line shop: every leg where DraftKings or Hard Rock pays more than FanDuel at the same line (both prices, the gap in points of break-even chance, the link), plus how many legs have a second price.", "every rebuild"),
     ("/b/stale.json", "Lines to check: players the news desk has ruled out since the last FanDuel props pull, with their position-room teammates' legs as the site is still showing them (price, model chance, FanDuel link) and the time of that pull.", "every rebuild"),
     ("/data/under-day.json", "Under of the day: one under per game day since 11/10 (player, line, FanDuel price, the chance shown), frozen at kickoff and graded HIT / MISS / VOID from the game log.", "every rebuild"),
+    ("/b/hunches.json", "The week's hunches: per game, the kind, the verdict (Backed / Mixed / Caution / Info), the evidence lines, the case against and the suggested leg with its FanDuel ids.", "every rebuild"),
     ("/b/boost.json", "The boost finder's board: per game, the legs with FanDuel ids whose chance times price is highest (chance, price, risk score, ids) and each game's best parlay with the model's chance that it lands.", "every rebuild"),
     ("/b/teasers.json", "The teaser finder: every spread and total teased 6, 6.5 and 7 points with the model's chance before and after the move, which cross 3 and 7, and the best pairs.", "every rebuild"),
     ("/b/beat.json", "Beat the model: the week's pool (every player prop priced -150 to +150, as [key, player, team, opp, game, market, line, odds, model chance, kickoff]) and the model's five keys.", "every rebuild"),

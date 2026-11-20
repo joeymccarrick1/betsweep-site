@@ -156,7 +156,7 @@ async def checklist(b, players, theme):
     check(not await pg.evaluate(VIS, "#allg"), f"{T}: nothing about other leagues before a username is given")
     # the player to hurt: a wide receiver I start in the first league who is playing this week (not on bye, active in the model)
     playing = set(await pg.evaluate("window.__BS.players.filter(p => p.o !== 'BYE' && p.act).map(p => p.n)")); byid = {p["id"]: p for p in players}
-    hurt = next(i for i in LS[0][1][0]["starters"] if i != "0" and byid[i]["pos"] == "WR" and byid[i]["n"] in playing); hname = byid[hurt]["n"]; hold["pm"][hurt]["injury_status"] = "Out"
+    hurt = next((i for i in LS[0][1][0]["starters"] if i != "0" and byid[i]["pos"] == "WR" and byid[i]["n"] in playing), None) or next(i for i in LS[0][1][0]["starters"] if i != "0" and byid[i]["pos"] in ("RB", "TE", "WR", "QB") and byid[i]["n"] in playing); hname = byid[hurt]["n"]; hold["pm"][hurt]["injury_status"] = "Out"
     where = [li for li, x in enumerate(LS) if hurt in x[1][0]["starters"] and li != 9]
     await pg.fill("#user", "mock"); await pg.click("#go"); await pg.wait_for_function("!document.querySelector('#out').hidden", timeout=15000)
     await pg.wait_for_function("document.querySelector('#allg') && !document.querySelector('#allg').hidden && !document.querySelector('#allg').classList.contains('busy')", timeout=25000); await pg.wait_for_timeout(300)
@@ -182,7 +182,7 @@ async def checklist(b, players, theme):
         g1 = re.search(r"\+(\d+\.\d) pts", r["why"]); g2 = re.search(r"\+(\d+\.\d) pts", lh)
         dead = re.findall(r"([^,:·]+?) \((?:out|bye|IR|PUP|Sus)\)", r["why"].split("can't play:")[1].split("·")[0]) if "can't play" in r["why"] else []
         agree.append(tab == "lineup" and -5 <= top <= 140 and (not g1 or (g2 and abs(float(g1.group(1)) - float(g2.group(1))) < 0.11)) and all(d.strip().split(". ", 1)[-1] in li for d in dead))
-        if not agree[-1]: print("   mismatch:", r, "|", lh.replace("\n", " "), "| tab", tab, "top", top)
+        if not agree[-1]: print("   mismatch:", r, "|", lh.replace("\n", " "), "| tab", tab, "top", top); print("   lineup text:", li.replace("\n", " / ")[:900])
     check(all(agree), f"{T}: a tap opens that league on its Lineup tab, and the tab shows the same points and the same sidelined starters ({len(agree)} leagues)")
     cur = await pg.evaluate("[...document.querySelectorAll('#allg .allgr.on')].map(b => b.dataset.id)"); check(cur == [rows[-1]["id"]] if len(rows) > 1 else True, f"{T}: the league on screen is marked in the list")
     # free agents who would start (the mock's draft leaves a few top players unpicked in most leagues, so the fold is never empty here)

@@ -19,6 +19,7 @@ A quarterback going out is not listed: that moves every pass-catcher DOWN, which
   card(out_dir)          -> the home-page block, or "" when there is nothing to check
 """
 import datetime, html, json, os
+from mktxt import low as _mlow
 from zoneinfo import ZoneInfo
 
 CT = ZoneInfo("America/Chicago"); E = html.escape
@@ -68,7 +69,7 @@ def pulls_by_player(in_dir):
 
 def leg_txt(l):
     if l["m"] == "Anytime TD": return f"{l['pl']} to score"
-    return f"{l['pl']} {int(round(l['ln']))}+ {l['m'].lower()}"
+    return f"{l['pl']} {int(round(l['ln']))}+ {_mlow(l['m'])}"
 
 
 def build(in_dir="in", out_dir="out", now=None):
