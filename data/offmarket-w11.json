@@ -168,6 +168,30 @@
    "gap": 4.4,
    "p": 0.3289,
    "seen": "2026-11-19 12:35"
+  },
+  "Khalil Shakir|Receptions|4": {
+   "pl": "Khalil Shakir",
+   "m": "Receptions",
+   "ln": 4.0,
+   "g": "BUF-MIA",
+   "fd": 178.0,
+   "dk": 149.0,
+   "hr": 150.0,
+   "gap": 4.0,
+   "p": 0.3985,
+   "seen": "2026-11-19 18:34"
+  },
+  "Caleb Williams|Rushing Yards|25": {
+   "pl": "Caleb Williams",
+   "m": "Rushing Yards",
+   "ln": 25.0,
+   "g": "CHI-NO",
+   "fd": 182.0,
+   "dk": 158.0,
+   "hr": 160.0,
+   "gap": 3.0,
+   "p": 0.2871,
+   "seen": "2026-11-19 18:34"
   }
  }
 }
