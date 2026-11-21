@@ -450,6 +450,36 @@ def looks(BD, log, W, wrcb, wind, past, q):
     return out
 
 
+# ---------------------------------------------------------------- the owner's own hunches
+TEAMWORDS = {"cardinals": "ARI", "falcons": "ATL", "ravens": "BAL", "bills": "BUF", "panthers": "CAR", "bears": "CHI", "bengals": "CIN", "browns": "CLE", "cowboys": "DAL", "broncos": "DEN", "lions": "DET", "packers": "GB",
+             "texans": "HOU", "colts": "IND", "jaguars": "JAX", "chiefs": "KC", "raiders": "LV", "chargers": "LAC", "rams": "LA", "dolphins": "MIA", "vikings": "MIN", "patriots": "NE", "saints": "NO", "giants": "NYG",
+             "jets": "NYJ", "eagles": "PHI", "steelers": "PIT", "49ers": "SF", "niners": "SF", "seahawks": "SEA", "buccaneers": "TB", "bucs": "TB", "titans": "TEN", "commanders": "WAS"}
+
+
+def _nn(x): return re.sub(r"\s+(jr|sr|ii|iii|iv|v)$", "", re.sub(r"[.'\u2019]", "", str(x)).strip().lower())
+
+
+def owner_cards(BD, W, LK, rows):
+    """The owner's own hunches from the sheet tab 'ASSIST - Hunches' (owner 11/21: "Yeah add own hunches"): Week | Player or team | his
+    words | Show (Y) | Added. A player with a main prop gets the site's evidence, case against, verdict and leg under his words - the
+    verdict is the evidence's, not his, so a hunch the numbers do not support says so. A team, or a player with no prop, posts as his
+    words alone, marked as a call."""
+    out = []; byn = {_nn(k): k for k in LK}
+    for i, r in enumerate(rows[1:] if rows else []):
+        r = list(r) + [""] * 5
+        if str(r[0]).strip() != str(W) or not str(r[3]).strip().upper().startswith("Y") or not str(r[2]).strip(): continue
+        who = str(r[1]).strip(); words = str(r[2]).strip()[:220]; k = byn.get(_nn(who))
+        if k:
+            lk = LK[k]; out.append({"id": f"own|{k}|{i}", "kind": "own", "g": lk["g"], "tm": lk["tm"], "who": k, "title": words, "strength": 9, "ev": [f"{k}, {lk['tm']} against {lk['opp']}."] + lk["ev"], "vs": lk["vs"], "leg": lk["leg"], "verdict": lk["verdict"]})
+            continue
+        code = who.upper() if (who.upper() in set(TEAMWORDS.values()) or game_of(BD, who.upper())) else next((c for w, c in TEAMWORDS.items() if w in who.lower()), None)
+        gm = game_of(BD, code) if code else None
+        if not gm or gm.get("fin"): continue        # nothing to hang it on this week: left off rather than guessed at
+        out.append({"id": f"own|{code}|{i}", "kind": "own", "g": gm["gid"], "tm": code, "who": who, "title": words, "strength": 9, "ev": ["A call from the BetSweep desk. No model numbers sit behind this one."],
+                    "vs": [{"t": "It is a read on the game, not a projection. Size it that way.", "s": 0}], "leg": None, "verdict": "Our call"})
+    return out
+
+
 # ---------------------------------------------------------------- freeze, grade, page
 STAT = {"Rushing Yards": "ryd", "Receiving Yards": "recy", "Passing TDs": "ptd"}
 
@@ -484,6 +514,9 @@ def build(clone=None, week=None):
     try: LK = looks(BD, log, W, wrcb, wind, past_seasons(), q)
     except Exception as e: print("[hunches] looks skipped:", e); LK = {}
     H = eng_rb(BD, log, W) + eng_wr(BD, log, W, wrcb) + eng_te(BD, log, W) + eng_qb(BD, log, W, wind) + eng_back(BD, log, W) + wh + eng_streak(BD, games, season) + eng_rematch(BD, games, log, season)
+    try: own_rows = json.load(open(os.path.join(IN, "owner_hunches.json")))["values"]
+    except Exception: own_rows = []
+    OWN = owner_cards(BD, W, LK, own_rows)
     # the injury report is a case against any hunch that leans on the player (owner rule: read injuries before a slip)
     for hch in H:
         lk = LK.get(hch["who"])
@@ -493,6 +526,7 @@ def build(clone=None, week=None):
             hch["vs"] = [{"t": f"He is listed {st} on the injury report.", "s": 1}] + [a for a in hch["vs"] if a.get("s")]
             hch["verdict"] = "Caution" if st in ("Doubtful", "Out") else verdict(hch["strength"], hch["vs"])
             if st in ("Doubtful", "Out"): hch["leg"] = None
+    H = OWN + H
     # freeze: a hunch keeps the leg and verdict it first appeared with (so the grade is of what was shown), evidence refreshes
     ddir = os.path.join(clone, "data") if clone else None; prev = {}; last = None
     if ddir:
@@ -520,8 +554,8 @@ def build(clone=None, week=None):
     return f"wrote out/hunches.html + hunches.json: {len(H)} hunches, week {W} ({', '.join(f'{v} {a}' for a, v in sorted(k.items()))}); {sum(1 for h in H if h['verdict'] == 'Backed')} backed"
 
 
-KIND = {"rb": "Run game", "wr": "WR vs CB", "te": "Tight end", "qb": "Quarterback", "back": "Back from injury", "wind": "Weather", "streak": "Streak", "rematch": "Rematch"}
-ORDER = {"Backed": 0, "Mixed": 1, "Caution": 2, "Info": 3}
+KIND = {"own": "From the desk", "rb": "Run game", "wr": "WR vs CB", "te": "Tight end", "qb": "Quarterback", "back": "Back from injury", "wind": "Weather", "streak": "Streak", "rematch": "Rematch"}
+ORDER = {"Backed": 0, "Mixed": 1, "Our call": 1, "Not backed": 2, "Caution": 2, "Info": 3}
 
 
 def amo(o): return f"+{o}" if o > 0 else f"−{-o}"
@@ -534,7 +568,7 @@ def card(h):
         url = f"https://sportsbook.fanduel.com/addToBetslip?marketId[0]={E(str(leg['fm']))}&amp;selectionId[0]={E(str(leg['fs']))}"
         lg = f'<div class="hleg"><span><small>The leg</small><b>{E(leg["t"])}</b></span><span class="hpr">{amo(leg["o"])}</span><a class="bsbtn" href="{url}" target="_blank" rel="noopener sponsored">Open on FanDuel</a></div>'
     elif h.get("note"): lg = f'<p class="hnote">{E(h["note"])}</p>'
-    return (f'<article class="hc v{v.lower()}" data-kind="{h["kind"]}" data-v="{v}"><header><span class="hk">{E(KIND[h["kind"]])}</span><span class="hv">{E(v)}</span></header>'
+    return (f'<article class="hc v{v.lower().split()[0]}{" own" if h["kind"] == "own" else ""}" data-kind="{h["kind"]}" data-v="{v}"><header><span class="hk">{E(KIND[h["kind"]])}</span><span class="hv">{E(v)}</span></header>'
             f'<h3>{E(h["title"])}</h3><ul class="hev">{"".join(f"<li>{E(x)}</li>" for x in h["ev"])}</ul>'
             f'<p class="hvs"><b>The case against.</b> {" ".join(E(a["t"]) for a in h["vs"])}</p>{lg}</article>')
 
@@ -545,7 +579,7 @@ def page(data, last=None, names=()):
     for h in live: by.setdefault(h["g"], []).append(h)
     secs = []
     for gid in sorted(by, key=lambda g: (G.get(g, {}).get("ko") or 0, g)):
-        hs = sorted(by[gid], key=lambda h: (ORDER[h["verdict"]], -h.get("strength", 0))); g = G.get(gid, {})
+        hs = sorted(by[gid], key=lambda h: (h["kind"] != "own", ORDER[h["verdict"]], -h.get("strength", 0))); g = G.get(gid, {})
         secs.append(f'<section class="hg" id="h-{E(gid)}"><h2>{E(g.get("a", ""))} at {E(g.get("b", ""))} <small>{E(g.get("kick", ""))}</small></h2>{"".join(card(h) for h in hs)}</section>')
     kinds = [k for k in KIND if any(h["kind"] == k for h in live)]
     chips = '<button type="button" class="on" data-k="">All</button><button type="button" data-k="Backed">Backed only</button>' + "".join(f'<button type="button" data-k="{k}">{E(KIND[k])}</button>' for k in kinds)
@@ -583,7 +617,7 @@ CSS = """
 .hx .hask{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:14px;margin:0 0 14px} .hx .hask h2{margin:0 0 4px;font-family:var(--display);font-weight:700;font-size:20px;color:var(--ink)}
 .hx .hask p{margin:0 0 10px;color:var(--mute);font-size:14px;line-height:1.45} .hx .hask input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .hx .hask #hres{margin-top:10px} .hx .hask #hres .hc{margin:0} .hx .hask .hmiss{margin:0;color:var(--mute);font-size:14px;line-height:1.45} .hx .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.hx .hc.vnot{border-left-color:var(--mute)}
+.hx .hc.vnot{border-left-color:var(--mute)} .hx .hc.vour{border-left-color:var(--red)} .hx .hc.own{background:color-mix(in srgb,var(--red) 7%,var(--card))} .hx .hc.own .hk{color:var(--red)}
 .hx .hchips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin:0 0 4px;scrollbar-width:none} .hx .hchips::-webkit-scrollbar{display:none}
 .hx .hchips button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
 .hx .hchips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -668,6 +702,9 @@ def selftest():
     Wd, wind = eng_wind(BD, games, wx, 6)
     check(len(Wd) == 1 and wind["SOFT-XXX"] == 18 and Wd[0]["verdict"] == "Caution", "18 mph outdoors is a Caution hunch")
     wx[1][3] = "dome"; check(eng_wind(BD, games, wx, 6)[0] == [], "a dome game gets no wind hunch")
+    LKt = {"Lead Guy": {"kind": "rb", "g": "SOFT-XXX", "tm": "XXX", "opp": "SOFT", "verdict": "Not backed", "ev": ["e1"], "vs": [{"t": "v1", "s": 1}], "leg": None, "hist": None}}
+    oc = owner_cards(BD, 6, LKt, [["Week", "Who", "Words", "Show", "Added"], ["6", "lead guy", "He eats tonight", "Y", ""], ["6", "Xxx", "Hidden one", "", ""], ["6", "Cowboys", "No game this week", "Y", ""], ["5", "Lead Guy", "Old week", "Y", ""], ["6", "SOFT", "Soft keep it close", "y", ""]])
+    check([(c["who"], c["verdict"], c["title"]) for c in oc] == [("Lead Guy", "Not backed", "He eats tonight"), ("SOFT", "Our call", "Soft keep it close")] and oc[0]["ev"][1] == "e1" and oc[0]["leg"] is None, f"the owner's hunch on a player carries the evidence's own verdict (Not backed stays Not backed); a team call posts as his words; hidden, old-week and no-game rows stay off ({[(c['who'], c['verdict']) for c in oc]})")
     pg = page({"week": 6, "hunches": H + S + Wd, "games": {"SOFT-XXX": {"a": "SOFT", "b": "XXX", "kick": "Sun", "ko": 1}}})
     check("Open on FanDuel" in pg and "marketId[0]=1.1&amp;selectionId[0]=22" in pg and pg.count(' data-kind="') == 3 and "The case against." in pg, "the page carries every card, the case against and the FanDuel link by ids")
     print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

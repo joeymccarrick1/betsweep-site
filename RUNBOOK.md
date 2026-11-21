@@ -2472,3 +2472,24 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   finished game's final box score; the live log stops when a game stops being live, so no FINAL box was ever stored - Thursday's last
   snapshot was 3:04 left). With it the build could write box-w<W> the same night and the promo / hunch graders would not wait for
   Tuesday. The push to main was refused without his say-so; the clone was restored.
+
+## 11/21 noon: own hunches, picks in a trade return, stale small-sample projections (owner 11:14 AM)
+- **Own hunches.** New sheet tab 'ASSIST - Hunches' (Week | Player or team | his words | Show = Y | Added), mirrored as
+  in/owner_hunches.json (sheets_pull.py on main - his yes: "Yeah add own hunches"). hunches.py `owner_cards()`: a player with a main prop
+  gets his words as the title over the site's own evidence, case against, verdict and leg (the verdict is the evidence's: a hunch the
+  numbers do not support reads Not backed); a team posts as his words alone, verdict "Our call", no leg. Shown first in the game, kind
+  "From the desk". A row for a team with no game left this week is left off. The mirror runs at :05 / :35, the site at :20 when prices
+  move - for a hunch to show quickly, dispatch both.
+- **Picks in a trade return** (build_trade.py sells): in a dynasty league where Sleeper says who holds which pick, the other roster's
+  rookie picks are pieces. A pick adds nothing to this week's lineup so the ranking never shows one on its own: the best return that
+  includes a pick takes the last of the five places. tests/trade_find.py 107 (a dynasty return with "2027 2nd").
+- **Stale small samples (Step 2a-iii, do this every week after the game log updates).** A back or pass catcher with two games or fewer
+  on the log who has no stat line in his team's last 2+ games is given Forced Role "DEPTH / CONTEXT" in 'AUTO - Weekly Availability'
+  (Availability blank, reason starting "STALE SAMPLE:"), which zeroes him and shares his work out - the same lever used for Jawhar Jordan
+  on 11/19. Evidence, Weeks 4-10: 309 such player-weeks, a stat line in 19%, 0.75 PPR points on average; the sheet projected them at
+  3 to 9 because the prior-season blend carries a player who is no longer playing (Michael Carter: 1 game, 3 carries, projected 8.74).
+  Week 11 rows 126-130: Michael Carter TEN, Xavier Legette CAR, Kevin Austin Jr. NO, Tim Patrick NYJ, Elijah Sarratt BAL - all read
+  back at 0 / not active; avail_check 0 ignored. DJ Giddens IND also fits but his game was Thursday. Remove the row when the player
+  gets a stat line again. Not automated: adding it to the hourly job is a change on main (ask).
+- **Other sports:** the groundwork is on the `multisport` branch since 11/15 (NBA, EPL, college football: shared core, baselines,
+  walk-forward results; sports/README.md). MLB has nothing yet. Nothing from it is on the site.

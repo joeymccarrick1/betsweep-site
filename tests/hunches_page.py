@@ -10,8 +10,8 @@ async def main():
     bdir = os.path.join(ROOT, "build"); bf = [f for f in os.listdir(bdir) if f.startswith("data") and f.endswith((".js", ".json"))]
     blob = open(os.path.join(bdir, sorted(bf)[-1])).read() if bf else ""
     legs = [h["leg"] for h in live if h.get("leg")]
-    check(len(live) >= 1 and all(h["ev"] and h["vs"] and h["verdict"] in ("Backed", "Mixed", "Caution", "Info") for h in live), f"every hunch has evidence, a case against and a verdict ({len(live)} this week)")
-    check(all(not h.get("leg") for h in live if h["verdict"] in ("Caution", "Info")) and all(not (h["leg"] or {}).get("bad") for h in live if h["verdict"] == "Backed"), "a Backed hunch never carries a leg the builder flags; cautions carry no leg")
+    check(len(live) >= 1 and all(h["ev"] and h["vs"] and h["verdict"] in ("Backed", "Mixed", "Caution", "Info", "Not backed", "Our call") for h in live), f"every hunch has evidence, a case against and a verdict ({len(live)} this week)")
+    check(all(not h.get("leg") for h in live if h["verdict"] in ("Caution", "Info", "Not backed", "Our call")) and all(not (h["leg"] or {}).get("bad") for h in live if h["verdict"] == "Backed"), "a Backed hunch never carries a leg the builder flags; cautions carry no leg")
     check(not blob or all(str(l["fs"]) in blob for l in legs), f"every suggested leg's FanDuel selection id is on the builder's board ({len(legs)} legs)")
     fz = json.load(open(os.path.join(ROOT, "data", f"hunches-w{W}.json")))
     check({h["id"] for h in live} <= {h["id"] for h in fz["hunches"]}, f"the week's list is frozen in data/hunches-w{W}.json for grading ({len(fz['hunches'])})")

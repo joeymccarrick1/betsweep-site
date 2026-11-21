@@ -209,6 +209,17 @@ async def main():
             check(int(c["ta"].replace(",", "")) == o["sum"], f"{theme}: Side A's total in the calculator ({c['ta']}) is the total the offer showed ({o['sum']:,})")
             T = VB[target["n"]]["v"]; gap = abs(o["sum"] - T) / max(o["sum"], T); exp = "Fair trade" if gap < 0.05 else ("Side A" if o["sum"] > T else "Side B") + f" gives {round(abs(o['sum'] - T) / min(o['sum'], T) * 100)}% more"
             check(c["verdict"] == exp and "wins" not in c["verdict"], f"{theme}: the calculator's headline says who gives more, not who 'wins' ('{c['verdict']}')")
+            # 11/21 picks inside a return: a player the reader holds in the dynasty league, where Sleeper says who holds which pick
+            mine_lb = sorted(LG["LB"]["ros"][1], key=lambda p: -VB.get(p["n"], {"v": 0})["v"]); got_pick = None
+            for cand in mine_lb[:6]:
+                await pg.click('#tcTabs .tab[data-t="find"]') if await pg.query_selector('#tcTabs .tab[data-t="find"]') else None
+                await search(pg, cand["n"][:6], cand["n"]); await pg.wait_for_timeout(1500)
+                sells = await pg.evaluate("((window.__bsFind.res.LB || {}).sells) || []")
+                if os.environ.get("DBG"): print("   dbg", cand["n"], VB[cand["n"]]["v"], [[(q["label"], q["v"]) for q in o["parts"]] for o in sells])
+                bad = [o for o in sells if not (FAIR[o["n"]][0] - 1e-9 <= o["sum"] / VB[cand["n"]]["v"] <= FAIR[o["n"]][1] + 1e-9 and o["sum"] == sum(q["v"] for q in o["parts"]))]
+                if bad: got_pick = ("bad", cand["n"], bad[:1]); break
+                if any(q.get("pick") for o in sells for q in o["parts"]): got_pick = (cand["n"], [[q["label"] for q in o["parts"]] for o in sells if any(q.get("pick") for q in o["parts"])][0]); break
+            check(got_pick is not None and got_pick[0] != "bad", f"{theme}: in the dynasty league a return can include the other roster's rookie pick, still inside the fair band ({got_pick})")
             check(not errs, f"{theme}: no script errors ({errs[:2]})")
             await ctx.close()
 

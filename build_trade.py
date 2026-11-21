@@ -592,16 +592,29 @@ JS = r"""
         // pieces is the other manager adding a piece. Best for the reader's lineup first; no more than two ideas from one roster.
         if(out.kind === 'mine'){ out.sells = []; var Tm = p.v, slm = bsOutlook.slots(l), mx = me.ps.filter(function(x){ return x.mp === p; })[0];
           if(!(Tm > 0) || !mx) return out;
-          var mBase = bsOutlook.lineup(me.ps, slm).pts, fl = Math.max(60, Tm * 0.03), cand = [], capm = Tm * 0.97;
-          teams.forEach(function(t){ if(t === me) return; var pcs = t.ps.filter(function(x){ return x.mp && x.v >= fl; }).sort(function(a, b){ return b.v - a.v; }).slice(0, 14), tB = bsOutlook.lineup(t.ps, slm).pts;
-            function rt(set){ var sum = set.reduce(function(a, x){ return a + x.v; }, 0), n = set.length, r = sum / Tm; if(r < FAIR[n][0] || r > FAIR[n][2]) return;
-              var mine = bsOutlook.lineup(me.ps.filter(function(x){ return x !== mx; }).concat(set), slm).pts - mBase, theirs = bsOutlook.lineup(t.ps.filter(function(x){ return set.indexOf(x) < 0; }).concat([mx]), slm).pts - tB;
+          var mBase = bsOutlook.lineup(me.ps, slm).pts, fl = Math.max(60, Tm * 0.03), cand = [], capm = Tm * 0.97, pk = false;
+          // 11/21 (owner: "Yes do picks inside trade return"): in a dynasty league where Sleeper says who holds which pick, the other
+          // roster's rookie picks count as pieces too (priced as on the calculator; early / mid / late by today's standings)
+          if(Array.isArray(c.traded)){ teams.slice().sort(function(a, b){ var sa = a.r.settings || {}, sb = b.r.settings || {}; return (sb.wins || 0) - (sa.wins || 0) || bsOutlook.pf(b.r) - bsOutlook.pf(a.r); }).forEach(function(t, i){ t.er = i + 1; });
+            pk = !!bsOutlook.ownPicks(l, teams, c.traded, PICKS); }
+          teams.forEach(function(t){ if(t === me) return; var tB = bsOutlook.lineup(t.ps, slm).pts;
+            var pcs = t.ps.filter(function(x){ return x.mp && x.v >= fl; }).map(function(x){ return {x: x, n: x.mp.n, label: x.mp.n, pos: x.mp.pos, v: x.v}; });
+            if(pk) (t.picks || []).forEach(function(q){ if(q.a && q.v >= fl) pcs.push({pick: q, n: q.a.n, pos: 'PICK', v: q.v, label: q.y + ' ' + RD[q.rd] + (q.from && q.from !== t ? ' (' + q.from.name + '\'s)' : '')}); });
+            pcs.sort(function(a, b){ return b.v - a.v; }); pcs = pcs.slice(0, 16);
+            function rt(set){ var sum = set.reduce(function(a, q){ return a + q.v; }, 0), n = set.length, r = sum / Tm; if(r < FAIR[n][0] || r > FAIR[n][2]) return;
+              var got = set.filter(function(q){ return q.x; }).map(function(q){ return q.x; });
+              var mine = bsOutlook.lineup(me.ps.filter(function(x){ return x !== mx; }).concat(got), slm).pts - mBase, theirs = bsOutlook.lineup(t.ps.filter(function(x){ return got.indexOf(x) < 0; }).concat([mx]), slm).pts - tB;
               cand.push({t: t, set: set, sum: sum, r: r, n: n, mine: mine, theirs: theirs, score: mine + (f.dyn ? 0.3 : 0.8) * Math.max(-10, Math.min(4, theirs)) - 8 * Math.abs(r - FAIR[n][1]) - 0.4 * (n - 1)}); }
             pcs.forEach(function(a){ rt([a]); });
             for(var i2 = 0; i2 < pcs.length; i2++) for(var j2 = i2 + 1; j2 < pcs.length; j2++){ if(pcs[i2].v > capm) continue; rt([pcs[i2], pcs[j2]]); } });
           cand.sort(function(a, b){ return b.score - a.score; }); var per = {}, lead2 = {};
-          cand.forEach(function(o){ if(out.sells.length >= 5) return; var k0 = o.t.name, m0 = o.set[0].mp.n; if((per[k0] || 0) >= 2 || lead2[m0]) return; per[k0] = (per[k0] || 0) + 1; lead2[m0] = 1;
-            out.sells.push({team: o.t.name, rec: o.t.rec, parts: o.set.map(function(x){ return {n: x.mp.n, label: x.mp.n, pos: x.mp.pos, v: x.v}; }), sum: o.sum, r: o.r, n: o.n, mine: o.mine, theirs: o.theirs}); });
+          function sellOf(o){ return {team: o.t.name, rec: o.t.rec, parts: o.set.map(function(q){ return {n: q.n, label: q.label, pos: q.pos, v: q.v, pick: !!q.pick}; }), sum: o.sum, r: o.r, n: o.n, mine: o.mine, theirs: o.theirs}; }
+          cand.forEach(function(o){ if(out.sells.length >= 5) return; var k0 = o.t.name, m0 = o.t.name + '|' + o.set[0].label; if((per[k0] || 0) >= 2 || lead2[m0]) return; per[k0] = (per[k0] || 0) + 1; lead2[m0] = 1; out.sells.push(sellOf(o)); });
+          // a pick adds nothing to this week's lineup, so the ranking alone never shows one: where picks are in play, the best return
+          // that includes a pick takes the last place (a rebuilding roster often wants exactly that)
+          if(pk && out.sells.length && !out.sells.some(function(o){ return o.parts.some(function(q){ return q.pick; }); })){
+            var wp = cand.filter(function(o){ return o.set.some(function(q){ return q.pick; }); })[0];
+            if(wp){ if(out.sells.length >= 5) out.sells.pop(); out.sells.push(sellOf(wp)); } }
           return out; }
         if(out.kind !== 'theirs') return out;
         var T = p.v, sl = bsOutlook.slots(l), tx = own.ps.filter(function(x){ return x.mp === p; })[0], POS = ['QB','RB','WR','TE'];
@@ -708,7 +721,7 @@ JS = r"""
       h += sold.map(function(x){ var l = x[0], r = x[1], open = FP.open[l.league_id] != null ? FP.open[l.league_id] : (!T && sold[0] === x && !busy), best = r.sells[0];
         var body = '<p class="fpmeta">He is worth <b>' + r.v.toLocaleString() + '</b> here <small>(' + esc(r.fmt) + ')</small>. Fair returns from the other rosters, best for your lineup first:</p><ol class="fpo">' + r.sells.map(function(o, i){ var d = o.r - FAIR[o.n][1];
             var tag = Math.abs(d) <= 0.05 ? (o.n === 1 ? 'about even' : 'about right for two') : d < 0 ? 'a little light' : 'they give a little more';
-            return '<li><p class="fpfrom">From <b>' + esc(o.team) + '</b>' + (o.rec ? ' (' + esc(o.rec) + ')' : '') + '</p><ul class="fpp">' + o.parts.map(function(q){ return '<li><span class="pos ' + q.pos + '">' + q.pos + '</span><span class="nm">' + esc(q.label) + '</span><span class="vv">' + q.v.toLocaleString() + '</span></li>'; }).join('') + '</ul>'
+            return '<li><p class="fpfrom">From <b>' + esc(o.team) + '</b>' + (o.rec ? ' (' + esc(o.rec) + ')' : '') + '</p><ul class="fpp">' + o.parts.map(function(q){ return '<li><span class="pos ' + (q.pick ? '' : q.pos) + '">' + (q.pick ? 'PK' : q.pos) + '</span><span class="nm">' + esc(q.label) + '</span><span class="vv">' + q.v.toLocaleString() + '</span></li>'; }).join('') + '</ul>'
               + '<p class="fpt"><b>' + o.sum.toLocaleString() + '</b> for his ' + r.v.toLocaleString() + ' · ' + tag + '</p>'
               + '<p class="fpx">Your lineup <b class="' + ud(o.mine) + '">' + sgn(o.mine) + '</b> a week · theirs <b class="' + ud(o.theirs) + '">' + sgn(o.theirs) + '</b></p>'
               + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|s' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
