@@ -617,6 +617,7 @@ export async function promoUp(W: number, now: number, gone: string[]): Promise<n
 // (sql/push_news.sql adds the column, default false; until it exists the select throws and the caller's try leaves it at zero).
 //   OUT       the sheet's availability rows as mirrored every half hour (sheet-mirror in/avail.json): this week, Availability OUT,
 //             dated today or yesterday (Central), the player on /b/prominent.json, and his team's game still ahead.
+//   TRADED    the same feed and bar as RELEASED, for a trade that has happened (rumour wording is skipped).
 //   RELEASED  the news feed (feeds news.json, every 10 minutes): a headline or first line from the last 36 hours that says a prominent
 //             player was released / waived / cut - one ESPN or RotoWire item, or two from anywhere.
 // newsFinds is pure (no network), so tests run it as deployed. A device gets at most 3 of these a run (the rest follow on the next);
@@ -648,27 +649,82 @@ export function newsFinds(prom: any[], avail: any[][], items: any[], W: number, 
     }
   }
   for (const [name, h] of hits) if (h.strong || h.n >= 2) out.push({ key: `__news__rel|${name}`, title: `${name} has been released`.slice(0, 90), body: h.line.slice(0, 240), url: "/news/" });
+  // TRADED (owner 11/20: "Yes add trades too"): "Bears trade Star Back to the Lions", "acquire Star Back", "Star Back traded to ...".
+  // Same bar as a release: one ESPN or RotoWire item, or two from anywhere, in the last 36 hours. A rumour does not say it happened:
+  // lines with could / might / rumor / asking price / trade deadline talk / "should trade" are skipped.
+  const tr = new Map<string, { n: number; strong: boolean; line: string }>();
+  for (const it of items || []) {
+    const ts = Date.parse(String(it.ts || "").trim().replace(/\s+(AM|PM)\s+(PST|PDT)$/i, " $1 GMT-0800")); if (!ts || now - ts > 36 * 3600e3 || ts - now > 3600e3) continue;
+    const text = String(it.title || "");   // the headline only: a trade mentioned in passing lower down ("newly acquired ...", "after trading for ...") is not news
+    if (!/\b(trad(e|es|ed|ing)|acquir(e|es|ed|ing)|deal(s|t)?)\b/i.test(text)) continue;
+    if (/\b(could|might|may|should|would|rumou?rs?|candidates?|targets?|asking price|interest in|calls? (on|about)|shopping|listening|potential|possible|if the|block|speculat\w*|proposals?|ideas?|need to happen|options?|fits?|deadline:|won't|will not|not (be )?trad\w*|no plans?|couldn|should[’']ve|could[’']ve|why|how|what|who)\b/i.test(text)) continue;
+    for (const [name] of P) {
+      if (text.indexOf(name.split(" ").slice(-1)[0]) < 0) continue;
+      const N = esc(name), role = "(?:(?:star|starting|veteran|former|backup|Pro Bowl|All-Pro|QB|RB|WR|TE|quarterback|running back|wide receiver|tight end)\\s+){0,3}";
+      const re = new RegExp(`\\b(?:trad(?:e|es|ed|ing)(?:\\s+for)?|acquir(?:e|es|ed|ing)|deal(?:s|t|ing)?|send(?:s|ing)?|sent|land(?:s|ed)?)\\s+${role}${N}\\b|\\b${N}(?:['\u2019]s?)?\\s+(?:(?:was|is|has been|being)\\s+)?(?:traded|dealt|acquired)\\b|\\b${N}\\s+trade\\s+grades\\b`, "i");
+      if (!re.test(text)) continue;
+      const h = tr.get(name) || { n: 0, strong: false, line: "" }; h.n++; const strong = it.src === "espn" || it.src === "rotowire"; if (strong && !h.strong) h.line = String(it.title || ""); if (!h.line) h.line = String(it.title || ""); h.strong = h.strong || strong; tr.set(name, h);
+    }
+  }
+  for (const [name, h] of tr) if ((h.strong || h.n >= 2) && !out.some((f) => f.key === `__news__rel|${name}`)) out.push({ key: `__news__trd|${name}`, title: `${name} has been traded`.slice(0, 90), body: h.line.slice(0, 240), url: "/news/" });
   return out;
+}
+// FAVORITE TEAM (owner 11/20: "a favorite team feature so you get all team news pushed also"). push_subs.team holds a team code
+// (sql/push_news.sql). For that team: every player the sheet marks OUT this week (dated today or yesterday, game still ahead), and
+// every ESPN story from the last 12 hours that ESPN itself tags with the team. Other feeds carry no team tag and a lot of fan-site
+// repeats, so they are left out. A device gets at most 3 a run and 6 in any 24 hours.
+const TEAMNAME: Record<string, string> = { ARI: "Arizona Cardinals", ATL: "Atlanta Falcons", BAL: "Baltimore Ravens", BUF: "Buffalo Bills", CAR: "Carolina Panthers", CHI: "Chicago Bears", CIN: "Cincinnati Bengals", CLE: "Cleveland Browns", DAL: "Dallas Cowboys", DEN: "Denver Broncos", DET: "Detroit Lions", GB: "Green Bay Packers", HOU: "Houston Texans", IND: "Indianapolis Colts", JAX: "Jacksonville Jaguars", KC: "Kansas City Chiefs", LV: "Las Vegas Raiders", LAC: "Los Angeles Chargers", LA: "Los Angeles Rams", MIA: "Miami Dolphins", MIN: "Minnesota Vikings", NE: "New England Patriots", NO: "New Orleans Saints", NYG: "New York Giants", NYJ: "New York Jets", PHI: "Philadelphia Eagles", PIT: "Pittsburgh Steelers", SF: "San Francisco 49ers", SEA: "Seattle Seahawks", TB: "Tampa Bay Buccaneers", TEN: "Tennessee Titans", WAS: "Washington Commanders" };
+export function teamFinds(team: string, avail: any[][], items: any[], W: number, now: number, koByTeam: Record<string, number>): { key: string; title: string; body: string; url: string; ts: number }[] {
+  const out: { key: string; title: string; body: string; url: string; ts: number }[] = []; const full = TEAMNAME[team]; if (!full) return out;
+  const ct = (ms: number) => { const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(ms)); const o: Record<string, string> = {}; for (const x of p) o[x.type] = x.value; return `${o.year}-${o.month}-${o.day}`; };
+  const days = [ct(now), ct(now - 24 * 3600e3)]; const ko = koByTeam[team] || 0;
+  if (ko > now) for (const r of (avail || []).slice(1)) {
+    const name = String(r[1] || "");
+    if (!name || String(r[2] || "") !== team || String(r[0]) !== String(W) || String(r[4] || "").toUpperCase() !== "OUT" || !days.includes(String(r[11] || "").slice(0, 10))) continue;
+    let why = String(r[9] || "").split(" | was:")[0].replace(/^(AUTO HOURLY|NEWS DESK|OWNER)[:\s-]*/i, "").trim();
+    if (why.toLowerCase().startsWith(name.toLowerCase() + ":")) why = why.slice(name.length + 1).trim();
+    out.push({ key: `__news__out|${name}|${W}`, title: `${full.split(" ").slice(-1)[0]}: ${name} is out this week`.slice(0, 90), body: (why || "Ruled out.").slice(0, 240), url: "/news/", ts: now });
+  }
+  for (const it of items || []) {
+    if (it.src !== "espn" || String(it.teams || "").indexOf(full) < 0) continue;
+    if ((String(it.teams || "").match(/'[^']+'/g) || []).length > 2) continue;   // a league-wide piece tagged with half the league is not this team's news
+    const ts = Date.parse(String(it.ts || "").trim()); if (!ts || now - ts > 12 * 3600e3 || ts - now > 3600e3) continue;
+    const link = String(it.link || ""); if (!/\/nfl\/story\//.test(link)) continue;   // NFL news stories only: clips repeat the story above them, and betting / fantasy columns are not team news
+    const id = (/\/id\/(\d+)/.exec(link) || [])[1] || String(it.title || "").slice(0, 60);
+    const text = String(it.text || ""); const title = String(it.title || "");
+    out.push({ key: `__team__${team}|${id}`, title: title.slice(0, 90), body: (text && text !== title ? text : full).slice(0, 240), url: /^https:\/\/www\.espn\.com\//.test(link) ? link : "/news/", ts });
+  }
+  return out.sort((a, b) => b.ts - a.ts);
 }
 export async function newsUp(W: number, now: number, gone: string[], games: any[]): Promise<number> {
   const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth&news=is.true");
-  if (!subs.length) return 0;
+  let fans: any[] = []; try { fans = await rest("push_subs?select=endpoint,user_id,p256dh,auth,team&team=not.is.null"); } catch { fans = []; }   // before the team column exists
+  if (!subs.length && !fans.length) return 0;
   const get = async (u: string) => { try { const r = await fetch(u, { headers: { "cache-control": "no-cache" } }); return r.ok ? await r.json() : null; } catch { return null; } };
-  const prom = await get(`${SITE}/b/prominent.json`); if (!Array.isArray(prom) || !prom.length) return 0;
+  const prom = subs.length ? await get(`${SITE}/b/prominent.json`) : [];
   const av = await get(`${MIRROR}/in/avail.json`);
   const bucket = `__newsfeed__${Math.floor(now / 600e3)}`; let items: any[] = [];
   if (!(await keysDone(bucket)).has(bucket)) { await markKey(bucket); const nj = await get(`${FEEDS}/news.json`); items = (nj && nj.items) || []; }
   const ko: Record<string, number> = {}; for (const g of games || []) { if (g.a) ko[g.a] = g.ko || 0; if (g.b) ko[g.b] = g.ko || 0; }
-  const finds = newsFinds(prom, (av && av.values) || [], items, W, now, ko);
-  if (!finds.length) return 0;
-  const sent: any[] = await rest(`push_sent?select=user_id,player&status=eq.NEWS&player=like.${encodeURIComponent("__news__%")}`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
+  const since = new Date(now - 24 * 3600e3).toISOString();
+  const sent: any[] = await rest(`push_sent?select=user_id,player,status,sent_at&status=in.(NEWS,TEAM)&player=like.${encodeURIComponent("__%")}`);
+  const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`)); const day = new Map<string, number>();
+  for (const x of sent) if (x.status === "TEAM" && String(x.sent_at) >= since) day.set(String(x.user_id), (day.get(String(x.user_id)) || 0) + 1);
   let n = 0; const per = new Map<string, number>();
-  for (const f of finds) {
-    const msg = { title: f.title, body: f.body, url: f.url, tag: `bs-news-${f.key.slice(8, 60)}` }; const told = new Set<string>();
-    for (const s of subs) { if (done.has(`${s.user_id}|${f.key}`) || (per.get(s.endpoint) || 0) >= 3) continue;
-      try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) { n++; told.add(String(s.user_id)); per.set(s.endpoint, (per.get(s.endpoint) || 0) + 1); } } catch (e) { console.warn("push", String(e)); } }
-    for (const uid of told) await mark(uid, W, f.key, "NEWS");
-  }
+  const send = async (s: any, f: { key: string; title: string; body: string; url: string }, status: string): Promise<boolean> => {
+    if (done.has(`${s.user_id}|${f.key}`) || (per.get(s.endpoint) || 0) >= 3) return false;
+    try { const c = await sendPush(s, { title: f.title, body: f.body, url: f.url, tag: `bs-news-${f.key.slice(8, 60)}` }); if (c === 404 || c === 410) { gone.push(s.endpoint); return false; } if (c >= 300) return false; }
+    catch (e) { console.warn("push", String(e)); return false; }
+    n++; per.set(s.endpoint, (per.get(s.endpoint) || 0) + 1); return true; };
+  const finds = Array.isArray(prom) && prom.length ? newsFinds(prom, (av && av.values) || [], items, W, now, ko) : [];
+  for (const f of finds) { const told = new Set<string>();
+    for (const s of subs) if (await send(s, f, "NEWS")) told.add(String(s.user_id));
+    for (const uid of told) { await mark(uid, W, f.key, "NEWS"); done.add(`${uid}|${f.key}`); } }
+  const byTeam = new Map<string, any[]>(); for (const s of fans) { const t = String(s.team || "").toUpperCase(); if (TEAMNAME[t]) byTeam.set(t, (byTeam.get(t) || []).concat([s])); }
+  for (const [team, list] of byTeam) {
+    for (const f of teamFinds(team, (av && av.values) || [], items, W, now, ko)) { const told = new Set<string>();
+      for (const s of list) { const uid = String(s.user_id); if ((day.get(uid) || 0) >= 6 && !told.has(uid)) continue; if (await send(s, f, "TEAM")) told.add(uid); }
+      for (const uid of told) { await mark(uid, W, f.key, "TEAM"); done.add(`${uid}|${f.key}`); day.set(uid, (day.get(uid) || 0) + 1); } } }
   return n;
 }
 export async function keysDone(prefix: string): Promise<Set<string>> {

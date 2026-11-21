@@ -2424,3 +2424,18 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
 - Not built: buy-side offers where the OTHER manager adds a piece back (the reader's piece is worth more than the target), picks in a
   return, IDP / kickers / defenses.
 - tests/trade_find.py 101.
+
+## 11/20 7:55-8:20 PM: news push gains trades and a favorite team; Privacy Policy line (owner 7:51 PM "Yes add trades too and the privacy policy", 7:52 PM "a favorite team feature so you get all team news pushed also")
+- **Trades** (`newsFinds`, key `__news__trd|<name>`): the HEADLINE only says trade / acquire / deal / land next to a big name, or
+  "<name> trade grades"; one ESPN or RotoWire item or two from anywhere, 36 h. Rumour wording (could, should, rumors, candidates,
+  deadline:, why / how / what ...) is skipped. Scanning the first line too produced "Kirk Cousins has been traded" from a rumour piece -
+  hence headline only. The last 16 days of the real feed now give one push: Daniel Jones released. The Allen and Downs trades (11/10)
+  would NOT have fired: neither is on the big-names list and the feed had CBS items only.
+- **Favorite team** (`teamFinds`, `push_subs.team`, status TEAM): every OUT row for that team this week (any player, game still ahead)
+  plus ESPN `/nfl/story/` items ESPN tags with the team (two teams at most on the tag), last 12 h. 3 a run, 6 in 24 h per account.
+  A rule-out shares its key with the big-name push, so a device with both on hears it once. Other feeds are untagged and repetitive.
+- **Owner files re-sent 8:15 PM** (the 7:10 PM pair is superseded): betsweep-push-news.sql now adds `news` and `team` (+ a code check);
+  tested on a throwaway Postgres (runs twice; 'TEN' accepted, 'titans' refused). Still OFF: `NEWS_ALERTS = False` until he confirms.
+  My BetSweep then shows the switch and a team picker (account.py TEAMS32).
+- **Privacy Policy** (his yes): the Alerts bullet names the posted-slip switch, big-name news and the favorite team; dated November 20.
+- tests/news_up.py 20.

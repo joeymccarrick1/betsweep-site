@@ -30,7 +30,14 @@ PROMO_ALERTS = True   # 11/17, 9:23 PM CT: the owner ran sql/push_promo.sql and 
 # 11/20 (owner: "push notifications about prominent players being out or released"): same rule as PROMO_ALERTS. False until the owner
 # has run sql/push_news.sql and redeployed slip-alerts.ts (newsUp).
 NEWS_ALERTS = False
-NEWS_CB = ('<label id="ppnewslab" hidden><input type="checkbox" id="ppnews"> Big-name news: when a star player is ruled out or released, whether or not he is on your slips</label>'
+TEAMS32 = [("ARI", "Arizona Cardinals"), ("ATL", "Atlanta Falcons"), ("BAL", "Baltimore Ravens"), ("BUF", "Buffalo Bills"), ("CAR", "Carolina Panthers"), ("CHI", "Chicago Bears"), ("CIN", "Cincinnati Bengals"),
+           ("CLE", "Cleveland Browns"), ("DAL", "Dallas Cowboys"), ("DEN", "Denver Broncos"), ("DET", "Detroit Lions"), ("GB", "Green Bay Packers"), ("HOU", "Houston Texans"), ("IND", "Indianapolis Colts"),
+           ("JAX", "Jacksonville Jaguars"), ("KC", "Kansas City Chiefs"), ("LV", "Las Vegas Raiders"), ("LAC", "Los Angeles Chargers"), ("LA", "Los Angeles Rams"), ("MIA", "Miami Dolphins"), ("MIN", "Minnesota Vikings"),
+           ("NE", "New England Patriots"), ("NO", "New Orleans Saints"), ("NYG", "New York Giants"), ("NYJ", "New York Jets"), ("PHI", "Philadelphia Eagles"), ("PIT", "Pittsburgh Steelers"), ("SF", "San Francisco 49ers"),
+           ("SEA", "Seattle Seahawks"), ("TB", "Tampa Bay Buccaneers"), ("TEN", "Tennessee Titans"), ("WAS", "Washington Commanders")]
+NEWS_CB = (('<label id="ppnewslab" hidden><input type="checkbox" id="ppnews"> Big-name news: when a star player is ruled out, released or traded, whether or not he is on your slips</label>'
+            '<label id="ppteamlab" class="ppteam" hidden>Favorite team: its rule-outs and ESPN stories, up to six a day <select id="ppteam"><option value="">No team</option>'
+            + "".join(f'<option value="{c}">{n}</option>' for c, n in TEAMS32) + '</select></label>')
            if NEWS_ALERTS else "")
 PROMO_CB = ('<label id="pppromolab" hidden><input type="checkbox" id="pppromo"> When BetSweep posts a slip: the Daily Sweep and the long shots, the moment they go up</label>'
             if PROMO_ALERTS else "")
@@ -161,6 +168,7 @@ ACCOUNT_JS = r"""
 """
 
 ME_CSS = """
+.me .ppteam{display:block} .me .ppteam select{display:block;width:100%;max-width:340px;margin-top:6px;font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 /* 11/19 the profile card: the Social username and avatar live here now (one identity for the header, My BetSweep and Social) */
 .me .mep{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;align-items:center;margin:12px 0 10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
 .me .mep[hidden]{display:none}
@@ -544,8 +552,11 @@ PUSH_JS = r"""
   if(pp) pp.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({promo: pp.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pp.checked = !pp.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pp.checked ? 'On - you will hear when a slip posts.' : 'Saved.', 'ok'); }); });
   var pn = document.getElementById('ppnews'), pnl = document.getElementById('ppnewslab');
   function loadNews(ep){ if(!pn || !client() || !ep) return; client().from('push_subs').select('news').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ pnl.hidden = true; return; } pnl.hidden = false; pn.checked = !!(r.data && r.data.news); }); }
-  if(pn) pn.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({news: pn.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out or released.' : 'Saved.', 'ok'); }); });
-  function loadPrefs(ep){ curEp = ep; loadPromo(ep); loadNews(ep); if(!client() || !ep) return; client().from('push_subs').select('live,weekly').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.data){ pl.checked = r.data.live !== false; pw.checked = r.data.weekly !== false; } }); }
+  if(pn) pn.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({news: pn.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out, released or traded.' : 'Saved.', 'ok'); }); });
+  var pt = document.getElementById('ppteam'), ptl = document.getElementById('ppteamlab');
+  function loadTeam(ep){ if(!pt || !client() || !ep) return; client().from('push_subs').select('team').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ ptl.hidden = true; return; } ptl.hidden = false; pt.value = (r.data && r.data.team) || ''; }); }
+  if(pt) pt.addEventListener('change', function(){ if(!client() || !curEp) return; var v = pt.value || null; client().from('push_subs').update({team: v}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ say('Could not save that: ' + r.error.message, 'err'); } else say(v ? 'On - you will get ' + pt.options[pt.selectedIndex].text + ' news.' : 'Saved.', 'ok'); }); });
+  function loadPrefs(ep){ curEp = ep; loadPromo(ep); loadNews(ep); loadTeam(ep); if(!client() || !ep) return; client().from('push_subs').select('live,weekly').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.data){ pl.checked = r.data.live !== false; pw.checked = r.data.weekly !== false; } }); }
   function savePref(){ if(!client() || !curEp) return; client().from('push_subs').update({live: pl.checked, weekly: pw.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error) say(/column/i.test(r.error.message) ? 'Saved alerts work; these two settings switch on after the next server update.' : r.error.message, 'err'); else say('Saved.', 'ok'); }); }
   if(pl) pl.addEventListener('change', savePref); if(pw) pw.addEventListener('change', savePref);
   function key(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while(s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
