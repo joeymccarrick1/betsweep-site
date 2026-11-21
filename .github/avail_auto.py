@@ -118,6 +118,45 @@ def decide(week, avail, proj, injuries, scoreboard, now):
     return changes, notes
 
 # ---------------- the sheet ----------------
+# ---- STALE SAMPLES (owner 11/21: "I'd like you to update the small sample projections" / "Yes change the hourly job"). The sheet blends
+# last season into a thin sample, so a back or pass catcher who is no longer playing keeps a projection (Michael Carter: one game, three
+# carries, projected 8.74). Weeks 4-10: players with two games or fewer on the log and no stat line in the team's last 2+ games had a stat
+# line 19% of the time and averaged 0.75 PPR points (309 player-weeks). Such a player gets a NEW row with Forced Role "DEPTH / CONTEXT"
+# (availability left blank), which zeroes him and shares his work out. Only for a player with no row of any kind this week, whose team
+# has not kicked off; never more than STALE_MAX a run. Rows are per week, so nothing needs lifting: next week is judged afresh.
+STALE_MAX = 8
+def stale(week, avail, gamelog, tabs, scoreboard, now):
+    """tabs = {"RB": rows, "WR": rows, "TE": rows} as read (a header row with "Player" somewhere near the top). Returns new-row changes."""
+    out = []
+    if not gamelog or gamelog[0][:4] != ["Week", "Player", "Team", "Pos"]: return out
+    pw, tw = {}, {}
+    for r in gamelog[1:]:
+        if len(r) < 4 or not str(r[0]).strip().isdigit(): continue
+        w = int(r[0])
+        if w >= int(week) or r[3] not in ("RB", "WR", "TE"): continue
+        pw.setdefault(str(r[1]).strip(), set()).add(w); tw.setdefault(str(r[2]).strip(), set()).add(w)
+    if len(tw) < 20: return out                                   # not a real game log
+    have = {str(r[1]).strip() for r in avail[1:] if len(r) > 1 and str(r[0]).strip() == str(week)}
+    ko = kickoffs(scoreboard, week); today = now.astimezone(CT).strftime("%Y-%m-%d")
+    for pos in ("RB", "WR", "TE"):
+        rows = tabs.get(pos) or []; hi = next((i for i, r in enumerate(rows[:6]) if r and r[0] == "Player"), None)
+        if hi is None: continue
+        H = {c: i for i, c in enumerate(rows[hi])}
+        if not {"Team", "Weekly Active", "Proj Fantasy Pts"} <= set(H): continue
+        for r in rows[hi + 1:]:
+            if len(r) <= max(H["Weekly Active"], H["Proj Fantasy Pts"]) or str(r[H["Weekly Active"]]).strip() != "YES": continue
+            nm, tm = str(r[0]).strip(), str(r[H["Team"]]).strip(); ws = pw.get(nm)
+            try: pj = float(r[H["Proj Fantasy Pts"]] or 0)
+            except Exception: pj = 0.0
+            if not nm or nm in have or not ws or len(ws) > 2 or pj <= 0: continue
+            idle = sum(1 for w in tw.get(tm, ()) if w > max(ws))
+            if idle < 2 or tm not in ko or ko[tm] <= now: continue
+            why = (f"STALE SAMPLE (auto): {len(ws)} game{'' if len(ws) == 1 else 's'} with a stat line all season (last Week {max(ws)}), none in {tm}'s {idle} games since. "
+                   f"Weeks 4-10: such players had a stat line 19% of the time and averaged 0.75 PPR points; the model had him at {pj:g}.")
+            out.append({"row": None, "player": nm, "what": "new row DEPTH / CONTEXT (stale sample)", "E": "", "J": why, "K": "Game-log recency rule (hourly job)", "L": today,
+                        "new": [int(week), nm, tm, pos, "", "", "DEPTH / CONTEXT", "", "", why, "Game-log recency rule (hourly job)", today, ""]})
+    return out[:STALE_MAX]
+
 def token(sa, scope):
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding
@@ -157,12 +196,18 @@ def main():
             for r in v:
                 if r and str(r[0]).strip(): proj.setdefault(str(r[0]).strip(), []).append((pos, str(r[1]).strip() if len(r) > 1 else ""))
         changes, notes = decide(week, av, proj, inj, sb, now); rep["held"] = notes
+        nreal = len(changes)
+        try:
+            gl, t_rb, t_wr, t_te = get(tok, ["'AUTO - Player Game Log'!A1:D6000", "'AUTO - RB Projections'!A1:BD300", "'AUTO - WR Projections'!A1:BD300", "'AUTO - TE Projections'!A1:BD250"])
+            taken = {c["player"] for c in changes}; st_ch = [c for c in stale(week, av, gl, {"RB": t_rb, "WR": t_wr, "TE": t_te}, sb, now) if c["player"] not in taken]
+            changes += st_ch; rep["stale"] = [c["player"] for c in st_ch]
+        except Exception as e: rep["held"].append("stale-sample check skipped: " + type(e).__name__ + " " + str(e)[:100])
         if not changes:
             # an empty update changes nothing; it only tells us whether the account may write, so "needs Editor" shows before the day it matters
             try: api(tok, "values:batchUpdate", {"valueInputOption": "USER_ENTERED", "data": []}); rep["can_write"] = True
             except urllib.error.HTTPError as e: rep["can_write"] = False if e.code == 403 else None
             return done("nothing to write" + ("" if rep["can_write"] is not False else " (and it could not: needs Editor)"))
-        if len(changes) > MAX_CHANGES: rep["held"].append("would change: " + "; ".join(f"{c['player']} {c['what']}" for c in changes)); return done(f"stopped: {len(changes)} changes in one run is more than {MAX_CHANGES} - left for a session")
+        if nreal > MAX_CHANGES: rep["held"].append("would change: " + "; ".join(f"{c['player']} {c['what']}" for c in changes)); return done(f"stopped: {len(changes)} changes in one run is more than {MAX_CHANGES} - left for a session")
         nxt = len(av) + 1; data = []
         for c in changes:
             if c["row"]: data += [{"range": f"'{TAB}'!E{c['row']}", "values": [[c["E"]]]}, {"range": f"'{TAB}'!J{c['row']}:L{c['row']}", "values": [[c["J"], c["K"], c["L"]]]}]
@@ -210,6 +255,22 @@ def selftest():
                     ("Late News" not in by, "a game that has kicked off is left alone"), ("Bye Guy" not in by and "Some Linebacker" not in by, "a team with no game this week and a player on no projection tab write nothing"),
                     (len(ch) == 3, f"three changes in all ({', '.join(sorted(by))})"),
                     (is_out("Out", "He will miss Sunday's game.", 11) and not is_out("Out", "He will miss practice Thursday.", 11) and not is_out("Out", "He will miss Thursday's practice.", 11) and not is_out("Questionable", "He has been ruled out.", 11) and not is_out("Out", "He has been ruled out for Week 12.", 11) and is_out("Suspension", "", 11), "the wording rule: a missed game counts, a missed practice does not; another week does not; a suspension does")):
+        print(("ok   " if c else "FAIL ") + what); bad += 0 if c else 1
+    # stale samples
+    T = sorted(TEAMS.values())[:24]; glog = [["Week", "Player", "Team", "Pos"]]
+    for t in T:
+        for w in range(1, 11): glog.append([str(w), f"Starter {t}", t, "RB"])
+    glog += [["7", "Stale Guy", "HOU", "RB"], ["9", "Fresh Guy", "HOU", "WR"], ["10", "Fresh Guy", "HOU", "WR"], ["2", "Has Row", "HOU", "WR"], ["3", "Kicked Off", "IND", "RB"], ["4", "Not Active", "HOU", "RB"], ["2", "Vet Back", "HOU", "RB"], ["3", "Vet Back", "HOU", "RB"], ["4", "Vet Back", "HOU", "RB"]]
+    hdr = ["Player", "Team", "Proj Fantasy Pts", "Weekly Active"]
+    tabs = {"RB": [["title"], hdr, ["Stale Guy", "HOU", "8.74", "YES"], ["Kicked Off", "IND", "5", "YES"], ["Not Active", "HOU", "0", "NO"], ["Vet Back", "HOU", "6", "YES"], ["Starter HOU", "HOU", "15", "YES"]],
+            "WR": [hdr, ["Fresh Guy", "HOU", "7", "YES"], ["Has Row", "HOU", "4", "YES"], ["Rookie Zero", "HOU", "3", "YES"]], "TE": []}
+    av2 = [["Projection Week", "Player", "Team", "Pos", "Availability"], ["11", "Has Row", "HOU", "WR", "QUESTIONABLE"]]
+    sb2 = {"events": [{"week": {"number": 11}, "date": "2026-11-22T18:00Z", "competitions": [{"competitors": [{"team": {"displayName": "Houston Texans"}}, {"team": {"displayName": "Tennessee Titans"}}]}]},
+                      {"week": {"number": 11}, "date": "2026-11-20T01:15Z", "competitions": [{"competitors": [{"team": {"displayName": "Indianapolis Colts"}}, {"team": {"displayName": "Dallas Cowboys"}}]}]}]}
+    sc = stale(11, av2, glog, tabs, sb2, dt.datetime(2026, 11, 21, 18, 0, tzinfo=dt.timezone.utc))
+    for c, what in (([x["player"] for x in sc] == ["Stale Guy"], f"stale: only the one-game back idle for 2+ team games gets a row - not a recent player, one with a row already, a team that has played, an inactive player, a three-game veteran or a rookie with no games ({[x['player'] for x in sc]})"),
+                    (bool(sc) and sc[0]["new"][:7] == [11, "Stale Guy", "HOU", "RB", "", "", "DEPTH / CONTEXT"] and sc[0]["new"][9].startswith("STALE SAMPLE (auto): 1 game with a stat line all season (last Week 7), none in HOU's 3 games since.") and len(sc[0]["new"]) == 13, "stale: the row is a 13-column Forced Role DEPTH / CONTEXT row with the reason spelled out"),
+                    (stale(11, av2, [["Week", "Player", "Team", "Pos"], ["7", "Stale Guy", "HOU", "RB"]], tabs, sb2, dt.datetime(2026, 11, 21, 18, 0, tzinfo=dt.timezone.utc)) == [], "stale: a game log that is not a whole league's is ignored")):
         print(("ok   " if c else "FAIL ") + what); bad += 0 if c else 1
     print("availability auto selftest:", "ok" if not bad else f"{bad} FAILED"); return bad
 if __name__ == "__main__":
