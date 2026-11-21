@@ -53,6 +53,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14p
 
 a{color:var(--ink)}
 
+.me .ppteam{display:block} .me .ppteam select{display:block;width:100%;max-width:340px;margin-top:6px;font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 /* 11/19 the profile card: the Social username and avatar live here now (one identity for the header, My BetSweep and Social) */
 .me .mep{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;align-items:center;margin:12px 0 10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
 .me .mep[hidden]{display:none}
@@ -428,8 +429,11 @@ a{color:var(--ink)}
   if(pp) pp.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({promo: pp.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pp.checked = !pp.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pp.checked ? 'On - you will hear when a slip posts.' : 'Saved.', 'ok'); }); });
   var pn = document.getElementById('ppnews'), pnl = document.getElementById('ppnewslab');
   function loadNews(ep){ if(!pn || !client() || !ep) return; client().from('push_subs').select('news').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ pnl.hidden = true; return; } pnl.hidden = false; pn.checked = !!(r.data && r.data.news); }); }
-  if(pn) pn.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({news: pn.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out or released.' : 'Saved.', 'ok'); }); });
-  function loadPrefs(ep){ curEp = ep; loadPromo(ep); loadNews(ep); if(!client() || !ep) return; client().from('push_subs').select('live,weekly').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.data){ pl.checked = r.data.live !== false; pw.checked = r.data.weekly !== false; } }); }
+  if(pn) pn.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({news: pn.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out, released or traded.' : 'Saved.', 'ok'); }); });
+  var pt = document.getElementById('ppteam'), ptl = document.getElementById('ppteamlab');
+  function loadTeam(ep){ if(!pt || !client() || !ep) return; client().from('push_subs').select('team').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ ptl.hidden = true; return; } ptl.hidden = false; pt.value = (r.data && r.data.team) || ''; }); }
+  if(pt) pt.addEventListener('change', function(){ if(!client() || !curEp) return; var v = pt.value || null; client().from('push_subs').update({team: v}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ say('Could not save that: ' + r.error.message, 'err'); } else say(v ? 'On - you will get ' + pt.options[pt.selectedIndex].text + ' news.' : 'Saved.', 'ok'); }); });
+  function loadPrefs(ep){ curEp = ep; loadPromo(ep); loadNews(ep); loadTeam(ep); if(!client() || !ep) return; client().from('push_subs').select('live,weekly').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.data){ pl.checked = r.data.live !== false; pw.checked = r.data.weekly !== false; } }); }
   function savePref(){ if(!client() || !curEp) return; client().from('push_subs').update({live: pl.checked, weekly: pw.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error) say(/column/i.test(r.error.message) ? 'Saved alerts work; these two settings switch on after the next server update.' : r.error.message, 'err'); else say('Saved.', 'ok'); }); }
   if(pl) pl.addEventListener('change', savePref); if(pw) pw.addEventListener('change', savePref);
   function key(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while(s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
