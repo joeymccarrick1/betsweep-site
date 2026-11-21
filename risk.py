@@ -175,10 +175,13 @@ RISK_JS = r"""(function(){
           try{ localStorage.setItem(k, JSON.stringify(keys)); }catch(x){} location.reload(); }
         if (b.dataset.act === 'x') el.classList.remove('open'); }); }
     var nb = rs.filter(function(r){ return r.v.level === 'block'; }).length;
-    el.className = (el.className.indexOf('open') >= 0 ? 'open ' : '') + (nb ? 'bad' : 'warn');
-    el.innerHTML = '<div class="bsrh">' + (nb ? '⛔ ' : '⚠ ') + rs.length + ' leg' + (rs.length === 1 ? '' : 's') + ' in your betslip ' + (rs.length === 1 ? 'is' : 'are') + ' at risk</div>' +
+    // 11/21 (owner: "When I press close, it's not closing"): this runs on every page mutation, and rewriting the box was itself a mutation,
+    // so it redrew itself four times a second. A tap that landed while the Close button was being replaced was lost (iPhone drops the
+    // click when its target leaves the page mid-tap). The box is now rewritten only when what it says has changed.
+    var cls = (el.className.indexOf('open') >= 0 ? 'open ' : '') + (nb ? 'bad' : 'warn'); if (el.className !== cls) el.className = cls;
+    var html = '<div class="bsrh">' + (nb ? '⛔ ' : '⚠ ') + rs.length + ' leg' + (rs.length === 1 ? '' : 's') + ' in your betslip ' + (rs.length === 1 ? 'is' : 'are') + ' at risk</div>' +
       '<div class="bsrb"><ul>' + rs.map(function(r){ return '<li><b>' + esc(r.pl) + '</b> ' + esc(r.m || '') + '<small>' + esc(r.v.why) + '</small></li>'; }).join('') + '</ul>' +
-      (nb ? '<button type="button" data-act="rm">Remove ruled-out legs</button>' : '') + '<button type="button" data-act="x" class="sec">Close</button></div>'; }
+      (nb ? '<button type="button" data-act="rm">Remove ruled-out legs</button>' : '') + '<button type="button" data-act="x" class="sec">Close</button></div>'; if (el.__h !== html){ el.__h = html; el.innerHTML = html; } }
   // ---- block adds of ruled-out players ----
   document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('button.bsrblock, a.bsrblock'); if (!b) return;
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); toast(b.title || 'Ruled out'); }, true);
@@ -222,7 +225,7 @@ button.bsrblock,a.bsrblock{opacity:.35;filter:grayscale(1)}
 #bsrpill.warn{background:#fff4d6;color:#4d3600;border:1px solid #e3c477} #bsrpill.bad{background:#fde7e5;color:#5c120d;border:1px solid #e8a39d}
 #bsrpill .bsrh{padding:10px 14px;font-weight:700} #bsrpill .bsrb{display:none;padding:0 14px 12px} #bsrpill.open .bsrb{display:block}
 #bsrpill ul{margin:0 0 10px;padding:0;list-style:none;display:grid;gap:6px} #bsrpill li small{display:block;opacity:.8;font-size:12.5px}
-#bsrpill button{font:inherit;font-weight:700;font-size:13px;padding:7px 12px;border-radius:8px;border:0;background:#b3261e;color:#fff;margin-right:6px;cursor:pointer} #bsrpill button.sec{background:none;border:1px solid currentColor;color:inherit}
+#bsrpill button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:7px 16px;border-radius:8px;border:0;background:#b3261e;color:#fff;margin-right:6px;cursor:pointer} #bsrpill button.sec{background:none;border:1px solid currentColor;color:inherit}
 .bsrtoast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bs-tabs, 0px) + 20px);z-index:80;background:#141a24;color:#fff;padding:10px 14px;border-radius:10px;font:600 13.5px 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw}
 .bsrnote{margin:12px 0 16px;padding:12px 14px;background:var(--card,#fff);border:1px solid var(--line,#d8d1c2);border-left:4px solid #d7332a;border-radius:10px;font-size:14px;line-height:1.4;font-style:normal;text-align:left}
 .bsrnote .bsrh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}

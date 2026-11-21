@@ -2508,3 +2508,10 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   At most 8 a run, outside the 10-change cap on rule-outs; the report carries `stale`. Replaying this morning's sheet found exactly the
   five entered by hand. First live run 12:27 PM: nothing to write, `stale: []`. `--selftest` has three stale cases.
 - **NBA and EPL stay on hold** (owner 12:22 PM). MLB groundwork has not been started.
+
+## 11/21 12:55 PM: "When I press close, it's not closing" (owner 12:42 PM, the at-risk box on Boards)
+- risk.py `pill()` runs from `decorate()` on every page mutation, and it rewrote its own innerHTML each time - itself a mutation - so the
+  box replaced itself about four times a second forever. On an iPhone a tap whose target is replaced mid-tap never becomes a click, so
+  Close (and Remove ruled-out legs) worked only by luck. The box is now rewritten only when its text changes (`el.__h`), and the class
+  only when it differs. Close is 44px tall (was 37).
+- tests/risk_close.py 3 (stand-in risk feed; fails on the copy published before this: 4 redraws in 2.6 s). In the full set (40).
