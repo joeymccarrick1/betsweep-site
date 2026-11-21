@@ -1,9 +1,9 @@
 {
  "news": [],
  "week": 11,
- "built": "Sat 11/21 1:28 AM",
- "checked": "2026-11-21T13:42:12Z",
- "legs_checked": 1282,
+ "built": "Sat 11/21 8:02 AM",
+ "checked": "2026-11-21T14:12:14Z",
+ "legs_checked": 1354,
  "moves": [
   {
    "key": "Gavin Bartholomew|Anytime TD|1",
@@ -174,23 +174,6 @@
    "tier": "",
    "pulled": "2026-11-21 6:34",
    "detail": "Malik Washington long rec 20+: FanDuel +155 at build -> +230 now (-8.9 implied pts against us)"
-  },
-  {
-   "key": "Ameer Abdullah|Anytime TD|1",
-   "pl": "Ameer Abdullah",
-   "m": "Anytime TD",
-   "ln": 1,
-   "gid": "JAX-NYG",
-   "ko": 1795370400000,
-   "built": 550,
-   "now": 1400.0,
-   "pts": -8.7,
-   "p": 0.1599,
-   "value": true,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-21 6:34",
-   "detail": "Ameer Abdullah anytime TD: FanDuel +550 at build -> +1400 now (-8.7 implied pts against us)"
   },
   {
    "key": "Chimere Dike|Longest Reception|20",
@@ -457,7 +440,7 @@
    "built": 130,
    "now": 102.0,
    "pts": 6.0,
-   "p": 0.4468,
+   "p": 0.4511,
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
@@ -703,23 +686,6 @@
    "detail": "Chimere Dike rec 4+: FanDuel +205 at build -> +255 now (-4.6 implied pts against us)"
   },
   {
-   "key": "Gavin Bartholomew|First TD|1",
-   "pl": "Gavin Bartholomew",
-   "m": "First TD",
-   "ln": 1,
-   "gid": "MIN-SF",
-   "ko": 1795396800000,
-   "built": 1400,
-   "now": 4500.0,
-   "pts": -4.5,
-   "p": 0.0503,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-21 6:34",
-   "detail": "Gavin Bartholomew first TD: FanDuel +1400 at build -> +4500 now (-4.5 implied pts against us)"
-  },
-  {
    "key": "Adonai Mitchell|Receiving Yards|50",
    "pl": "Adonai Mitchell",
    "m": "Receiving Yards",
@@ -839,23 +805,6 @@
    "detail": "Theo Johnson rec yds 15+: FanDuel +178 at build -> +154 now (+3.4 implied pts toward the model)"
   },
   {
-   "key": "Bhayshul Tuten|2+ TD|1",
-   "pl": "Bhayshul Tuten",
-   "m": "2+ TD",
-   "ln": 1,
-   "gid": "JAX-NYG",
-   "ko": 1795370400000,
-   "built": 500,
-   "now": 650.0,
-   "pts": -3.3,
-   "p": 0.1508,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-21 6:34",
-   "detail": "Bhayshul Tuten 2+ TD: FanDuel +500 at build -> +650 now (-3.3 implied pts against us)"
-  },
-  {
    "key": "Malik Nabers|Receiving Yards|70",
    "pl": "Malik Nabers",
    "m": "Receiving Yards",
@@ -899,29 +848,12 @@
    "built": -190,
    "now": -220.0,
    "pts": 3.2,
-   "p": 0.5987,
+   "p": 0.5999,
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
    "pulled": "2026-11-21 6:34",
    "detail": "Khalil Shakir long rec 15+: FanDuel -190 at build -> -220 now (+3.2 implied pts toward the model)"
-  },
-  {
-   "key": "Chris Bell|Anytime TD|1",
-   "pl": "Chris Bell",
-   "m": "Anytime TD",
-   "ln": 1,
-   "gid": "BUF-MIA",
-   "ko": 1795370400000,
-   "built": 600,
-   "now": 800.0,
-   "pts": -3.2,
-   "p": 0.1329,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-21 6:34",
-   "detail": "Chris Bell anytime TD: FanDuel +600 at build -> +800 now (-3.2 implied pts against us)"
   },
   {
    "key": "Saquon Barkley|Receiving Yards|15",
