@@ -29,7 +29,7 @@ PAGE_COUNTS = True
 PROMO_ALERTS = True   # 11/17, 9:23 PM CT: the owner ran sql/push_promo.sql and redeployed slip-alerts ("Ran the sql and slip alerts")
 # 11/20 (owner: "push notifications about prominent players being out or released"): same rule as PROMO_ALERTS. False until the owner
 # has run sql/push_news.sql and redeployed slip-alerts.ts (newsUp).
-NEWS_ALERTS = False
+NEWS_ALERTS = True   # 11/20, 8:22 PM CT: the owner ran betsweep-push-news.sql and redeployed slip-alerts ("Did the sql and slip alerts")
 TEAMS32 = [("ARI", "Arizona Cardinals"), ("ATL", "Atlanta Falcons"), ("BAL", "Baltimore Ravens"), ("BUF", "Buffalo Bills"), ("CAR", "Carolina Panthers"), ("CHI", "Chicago Bears"), ("CIN", "Cincinnati Bengals"),
            ("CLE", "Cleveland Browns"), ("DAL", "Dallas Cowboys"), ("DEN", "Denver Broncos"), ("DET", "Detroit Lions"), ("GB", "Green Bay Packers"), ("HOU", "Houston Texans"), ("IND", "Indianapolis Colts"),
            ("JAX", "Jacksonville Jaguars"), ("KC", "Kansas City Chiefs"), ("LV", "Las Vegas Raiders"), ("LAC", "Los Angeles Chargers"), ("LA", "Los Angeles Rams"), ("MIA", "Miami Dolphins"), ("MIN", "Minnesota Vikings"),

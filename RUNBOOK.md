@@ -2439,3 +2439,11 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   My BetSweep then shows the switch and a team picker (account.py TEAMS32).
 - **Privacy Policy** (his yes): the Alerts bullet names the posted-slip switch, big-name news and the favorite team; dated November 20.
 - tests/news_up.py 20.
+
+## 11/20 8:25 PM: news alerts are ON (owner 8:22 PM: "Did the sql and slip alerts")
+- account.py `NEWS_ALERTS = True`: My BetSweep > Slip alerts shows "Big-name news" and the Favorite team picker on a device that has
+  notifications on (each stays hidden until that device's own setting is read, so a missing column shows nothing). The session cannot
+  reach the database: that the columns and the redeployed function are in is the owner's word.
+- First real check: a device that switches Big-name news on tonight should get "Kenneth Walker III is out this week" and "Daniel
+  Jones has been released" on the next alerts run (both are inside their windows until about Saturday night); the function's summary
+  carries `news`. Nobody has confirmed a delivered push yet.
