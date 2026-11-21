@@ -137,6 +137,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .tc .fpt{margin:6px 0 0;padding-top:6px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)} .tc .fpt b{color:var(--ink);font-variant-numeric:tabular-nums}
 .tc .fpx{margin:3px 0 10px;font-size:13px;line-height:1.45;color:var(--mute)} .tc .fpx b{color:var(--ink);font-variant-numeric:tabular-nums} .tc .fpx b.up{color:var(--good)} .tc .fpx b.dn{color:var(--bad)}
 .tc .fpgo{min-height:40px;padding:6px 14px;font-size:13px;font-weight:600;border-color:var(--red);border-radius:10px;margin:0}
+.tc .fpsell{border-top:1px solid var(--line);padding-top:12px;margin-top:4px} .tc .fpfrom{margin:0 0 6px;font-size:13px;color:var(--mute)} .tc .fpfrom b{color:var(--ink)}
 .tc .fpalso{margin:0;padding:10px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--mute)} .tc .fpalso b{color:var(--ink)} .tc .fpalso small{font-size:12px}
 .tc details.fphow > summary h3{font-size:14px;font-family:var(--body);font-weight:600}
 @media (prefers-reduced-motion:reduce){ .tc .fplh .chev{transition:none} }
@@ -364,11 +365,11 @@ html.lgopen{overflow:hidden}
   <b>How the value is built.</b> Every number starts from this season's game log, games the player actually played and finished (a missed week is not a zero, and a game he left early - under 35% of his normal touches - is dropped rather than counted as a bad game). Per-game averages become fantasy points under the scoring you pick, are blended with the last two seasons' per-game lines (2025 counting double, each aged to this season on the position curve, together weighted like six games - so a star who has missed most of this season is still priced as the player he was, and a hot month does not rewrite him); a player with no history at all (a rookie, a first-year starter) is pulled down toward the average starter when a short sample is running hot - three pseudo-games' worth, because five good games is not yet a career - and left alone otherwise; then multiplied by the games left: regular-season weeks through Week 17, minus the bye, minus the weeks the injury report says he misses (IR "through Week N" and "out for the season" are read from our availability table; an unlisted timeline assumes four weeks). Nobody who plays is a zero: a quarter of a player's own points rides along under the above-baseline term, so bench bodies keep a small value and the table fades to nothing only at the practice-squad end. Value is points above a bench-depth baseline for your format (the 18th QB, 45th RB, 54th WR, 18th TE in a 12-team league - 1.5x the starters, so a fringe starter is worth something); with superflex on, the baseline is the 30th QB instead of the 18th, which is why quarterbacks jump - raised to a power and scaled so the best player is 9,999. The curve is deliberate - one star is worth more than two average starters, which is how real trade markets behave - and its steepness is fitted to the market's own shape when market values are on, so a "vs market" gap is a disagreement about a player, not about scale. With TE premium on, the bonus is added on top of a baseline measured in base scoring, so every tight end goes up and the high-catch ones go up most. Superflex, TE premium, scoring and league size recompute everything on the page.<br><br>
   <b>Dynasty.</b> With the toggle on, value is this season's remainder plus the next two seasons: next year's points per game is this year's times the position's age curve (from every 2012-2025 pair of seasons with 8+ games both years: running backs lose about 11% a year from 25 and 21% a year from 30; receivers hold until 24 then lose 6% at 25 and 15% a year at 30; tight ends peak at 24; quarterbacks are flat to 30), times the chance he is still a relevant player the following year (about 80% in the mid-20s, 60% for a 30-year-old back), above the same replacement starter, discounted 20% a year. Rookie picks are priced from what drafted players actually produced in their first three seasons, busts counted as zero (early firsts about 16.5 ppg at their best, mid firsts 13.4, late firsts 11.2, seconds 10.2, thirds 8.2; NFL round-one pick buckets stand in for early/mid/late fantasy firsts, which is an approximation) priced like any player here: his first three seasons from the draft year (70% of that number as a rookie, then 100%), above the flex baseline, discounted 20% a year from today, then blended 30% with the market's pick prices when they are on. Firsts and seconds land within about 15% of the market; thirds run below it because busts count as zero here and the market prices hope. A player with no birth date on file is treated as 26 and says so. The research, tables and sample sizes are published in the generator bundle (gen/research/dynasty/RESEARCH.md). It is a projection-model view of dynasty value, deliberately blind to hype; contracts and depth charts beyond this season are not in it yet.<br><br>
   <b>Market blend.</b> The value shown is 70% the market and 30% ours. The market is FantasyCalc's values, which come from real trades, for the matching format (redraft or dynasty, 1QB or superflex), each on the 0-9,999 scale. We lean on the market until our own numbers beat it on a weekly check; until 11/17 the mix was the other way round. So far the market has ranked the weeks that followed better in 3 of 3 weekly builds (through Week 10). The chip on each player shows how far our number sits from the market's - that gap is where the model disagrees with the crowd, and it is the part worth reading.<br><br>
-  Built Fri 11/20 7:06 PM CT from data through Week 10; ages on file for 509 of 511 players, prior-season lines for 395, market values for 352. Information only.
+  Built Fri 11/20 7:15 PM CT from data through Week 10; ages on file for 509 of 511 players, prior-season lines for 395, market values for 352. Information only.
  </details>
  </div>
 </div>
-<script src="/trade/data-a2171f2e655b.js"></script>
+<script src="/trade/data-06de547ea457.js"></script>
 <script>
 (function(){
   function $(s, r){ return (r || document).querySelector(s); }
@@ -865,6 +866,22 @@ window.bsOutlook = (function(){
         var own = teams.filter(function(t){ return t.ps.some(function(x){ return x.mp === p; }); })[0] || null;
         var out = {id: l.league_id, v: p.v, kind: !me ? 'none' : !own ? 'fa' : own === me ? 'mine' : 'theirs',
                    fmt: (f.dyn ? 'dynasty' : (l.settings && l.settings.type === 1) ? 'keeper' : 'redraft') + (f.sf ? ', superflex' : '') + (f.tep ? ', TE premium' : '')};
+        // 11/20 the reverse (owner list: "what could I get for a player I have"): he is on the reader's roster, so look through every
+        // other roster for one or two players that add up to a fair return, by the same bands and the same lineup arithmetic. Two
+        // pieces is the other manager adding a piece. Best for the reader's lineup first; no more than two ideas from one roster.
+        if(out.kind === 'mine'){ out.sells = []; var Tm = p.v, slm = bsOutlook.slots(l), mx = me.ps.filter(function(x){ return x.mp === p; })[0];
+          if(!(Tm > 0) || !mx) return out;
+          var mBase = bsOutlook.lineup(me.ps, slm).pts, fl = Math.max(60, Tm * 0.03), cand = [], capm = Tm * 0.97;
+          teams.forEach(function(t){ if(t === me) return; var pcs = t.ps.filter(function(x){ return x.mp && x.v >= fl; }).sort(function(a, b){ return b.v - a.v; }).slice(0, 14), tB = bsOutlook.lineup(t.ps, slm).pts;
+            function rt(set){ var sum = set.reduce(function(a, x){ return a + x.v; }, 0), n = set.length, r = sum / Tm; if(r < FAIR[n][0] || r > FAIR[n][2]) return;
+              var mine = bsOutlook.lineup(me.ps.filter(function(x){ return x !== mx; }).concat(set), slm).pts - mBase, theirs = bsOutlook.lineup(t.ps.filter(function(x){ return set.indexOf(x) < 0; }).concat([mx]), slm).pts - tB;
+              cand.push({t: t, set: set, sum: sum, r: r, n: n, mine: mine, theirs: theirs, score: mine + (f.dyn ? 0.3 : 0.8) * Math.max(-10, Math.min(4, theirs)) - 8 * Math.abs(r - FAIR[n][1]) - 0.4 * (n - 1)}); }
+            pcs.forEach(function(a){ rt([a]); });
+            for(var i2 = 0; i2 < pcs.length; i2++) for(var j2 = i2 + 1; j2 < pcs.length; j2++){ if(pcs[i2].v > capm) continue; rt([pcs[i2], pcs[j2]]); } });
+          cand.sort(function(a, b){ return b.score - a.score; }); var per = {}, lead2 = {};
+          cand.forEach(function(o){ if(out.sells.length >= 5) return; var k0 = o.t.name, m0 = o.set[0].mp.n; if((per[k0] || 0) >= 2 || lead2[m0]) return; per[k0] = (per[k0] || 0) + 1; lead2[m0] = 1;
+            out.sells.push({team: o.t.name, rec: o.t.rec, parts: o.set.map(function(x){ return {n: x.mp.n, label: x.mp.n, pos: x.mp.pos, v: x.v}; }), sum: o.sum, r: o.r, n: o.n, mine: o.mine, theirs: o.theirs}); });
+          return out; }
         if(out.kind !== 'theirs') return out;
         var T = p.v, sl = bsOutlook.slots(l), tx = own.ps.filter(function(x){ return x.mp === p; })[0], POS = ['QB','RB','WR','TE'];
         out.team = own.name; out.rec = own.rec; out.offers = []; out.near = null; out.thin = [];
@@ -917,7 +934,7 @@ window.bsOutlook = (function(){
       var q = S.leagues.slice(), cur = S.league && S.league.league_id, busy = 0; q.sort(function(a, b){ return (b.league_id === cur) - (a.league_id === cur); });   // the league on screen is read first
       function next(){ while(busy < 4 && q.length){ (function(l){ busy++;
           Promise.all([players(), lgRos(l)]).then(function(r){ var pm = r[0], c = r[1], h = holderOf(c.ros, pm, p);
-              return (h && !isMine(h)) ? lgMore(l, c).then(function(){ return offersFor(l, c, pm, p); }) : offersFor(l, c, pm, p); })
+              return h ? lgMore(l, c).then(function(){ return offersFor(l, c, pm, p); }) : offersFor(l, c, pm, p); })   // 11/20: team names are needed for the reader's own player too (what he could bring back)
             .then(function(res){ if(tok === FP.tok) FP.res[l.league_id] = res; }, function(e){ console.error(e); if(tok === FP.tok) FP.res[l.league_id] = {id: l.league_id, kind: 'err'}; })
             .then(function(){ busy--; if(tok !== FP.tok) return; FP.done++; fpRender(); next(); }); })(q.shift()); } }
       next(); }
@@ -946,14 +963,26 @@ window.bsOutlook = (function(){
               + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
         return '<div class="fpl' + (open ? ' open' : '') + '" data-id="' + esc(l.league_id) + '" data-kind="theirs"><button type="button" class="fplh" aria-expanded="' + open + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + esc(r.team) + ' has him · '
           + (best ? 'send ' + esc(best.parts.map(shortN).join(' + ')) : 'no fair offer from your roster') + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
+      // 11/20: leagues where the reader has him open like the others, with what he could bring back
+      var sold = rows.mine.filter(function(x){ return x[1].sells && x[1].sells.length; }); rows.mine = rows.mine.filter(function(x){ return !(x[1].sells && x[1].sells.length); });
+      if(sold.length) h += '<p class="fpsum fpsell">You have him in <b>' + (sold.length === 1 ? esc(sold[0][0].name) : sold.length + ' leagues') + '</b>. What he could bring back:</p>';
+      h += sold.map(function(x){ var l = x[0], r = x[1], open = FP.open[l.league_id] != null ? FP.open[l.league_id] : (!T && sold[0] === x && !busy), best = r.sells[0];
+        var body = '<p class="fpmeta">He is worth <b>' + r.v.toLocaleString() + '</b> here <small>(' + esc(r.fmt) + ')</small>. Fair returns from the other rosters, best for your lineup first:</p><ol class="fpo">' + r.sells.map(function(o, i){ var d = o.r - FAIR[o.n][1];
+            var tag = Math.abs(d) <= 0.05 ? (o.n === 1 ? 'about even' : 'about right for two') : d < 0 ? 'a little light' : 'they give a little more';
+            return '<li><p class="fpfrom">From <b>' + esc(o.team) + '</b>' + (o.rec ? ' (' + esc(o.rec) + ')' : '') + '</p><ul class="fpp">' + o.parts.map(function(q){ return '<li><span class="pos ' + q.pos + '">' + q.pos + '</span><span class="nm">' + esc(q.label) + '</span><span class="vv">' + q.v.toLocaleString() + '</span></li>'; }).join('') + '</ul>'
+              + '<p class="fpt"><b>' + o.sum.toLocaleString() + '</b> for his ' + r.v.toLocaleString() + ' · ' + tag + '</p>'
+              + '<p class="fpx">Your lineup <b class="' + ud(o.mine) + '">' + sgn(o.mine) + '</b> a week · theirs <b class="' + ud(o.theirs) + '">' + sgn(o.theirs) + '</b></p>'
+              + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|s' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
+        return '<div class="fpl' + (open ? ' open' : '') + '" data-id="' + esc(l.league_id) + '" data-kind="mine"><button type="button" class="fplh" aria-expanded="' + open + '"><span class="tx"><b>' + esc(l.name) + '</b><small>you have him · ask '
+          + esc(best.team) + ' for ' + esc(best.parts.map(shortN).join(' + ')) + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
       function also(k, lead){ if(!rows[k].length) return ''; return '<p class="fpalso" data-kind="' + k + '"><b>' + lead + '</b> ' + rows[k].map(function(x){ return esc(x[0].name) + (k === 'mine' ? ' <small>(' + x[1].v.toLocaleString() + ')</small>' : ''); }).join(', ') + '</p>'; }
       h += also('mine', 'On your roster in:') + also('fa', 'Free agent in:') + also('none', 'You are not on a roster in:') + also('err', 'Sleeper did not answer for:');
       box.innerHTML = h; }
     window.__bsFind = FP;   // read by tests/trade_find.py
     document.addEventListener('click', function(e){ var t = e.target; if(!t.closest) return;
       var hd = t.closest('#fpOut .fplh'); if(hd){ FP.open[hd.parentNode.dataset.id] = !hd.parentNode.classList.contains('open'); fpRender(); return; }
-      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], o = r && r.offers && r.offers[+k[1]]; if(!l || !o) return;
-      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; window.__bsRender(); toCalc(); });
+      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], sell = k[1].charAt(0) === 's', o = r && (sell ? r.sells && r.sells[+k[1].slice(1)] : r.offers && r.offers[+k[1]]); if(!l || !o) return;
+      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); if(sell){ st.A = [FP.p.n]; st.B = o.parts.map(function(q){ return q.n; }); } else { st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; } window.__bsRender(); toCalc(); });
     (function(){ var inp = $('#inF'), sug = $('#sugF'), cur = [], k = -1; if(!inp) return;
       function ini(n){ return String(n).split(/[\s-]+/).map(function(w){ return w.charAt(0); }).join('').toLowerCase(); }   // "jsn" finds Jaxon Smith-Njigba
       function show(){ var q = normn(inp.value); if(q.length < 2){ sug.hidden = true; return; } var qi = q.replace(/\s+/g, '');
