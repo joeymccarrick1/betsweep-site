@@ -61,7 +61,8 @@ FMT_JS = r"""(f) => { const set = (id, v, chk) => { const e = document.getElemen
 READ_JS = r"""() => { const de = document.documentElement, box = document.querySelector('#fpOut');
   const num = s => +String(s).replace(/[^0-9.\-−]/g, '').replace('−', '-');
   return {who: (box.querySelector('.fpwho b') || {}).textContent || '', sum: (box.querySelector('.fpsum') || {}).innerText || '', busy: !!box.querySelector('.fpsum.busy'), none: (box.querySelector(':scope > .fpnone') || {}).innerText || '',
-    blocks: [...box.querySelectorAll('.fpl')].map(b => ({id: b.dataset.id, open: b.classList.contains('open'), name: b.querySelector('.fplh b').textContent, sub: b.querySelector('.fplh small').textContent, meta: (b.querySelector('.fpmeta') || {}).innerText || '', none: (b.querySelector('.fpnone') || {}).innerText || '',
+    sells: [...box.querySelectorAll('.fpl[data-kind="mine"]')].map(b => ({id: b.dataset.id, name: b.querySelector('.fplh b').textContent, sub: b.querySelector('.fplh small').textContent, meta: (b.querySelector('.fpmeta') || {}).innerText || '', n: b.querySelectorAll('.fpo > li').length, from: [...b.querySelectorAll('.fpfrom b')].map(x => x.textContent)})),
+    blocks: [...box.querySelectorAll('.fpl:not([data-kind="mine"])')].map(b => ({id: b.dataset.id, open: b.classList.contains('open'), name: b.querySelector('.fplh b').textContent, sub: b.querySelector('.fplh small').textContent, meta: (b.querySelector('.fpmeta') || {}).innerText || '', none: (b.querySelector('.fpnone') || {}).innerText || '',
       offers: [...b.querySelectorAll('.fpo > li')].map(li => ({parts: [...li.querySelectorAll('.fpp li')].map(p => ({pos: p.querySelector('.pos').textContent, n: p.querySelector('.nm').textContent, v: num(p.querySelector('.vv').textContent)})),
         sum: num(li.querySelector('.fpt b').textContent), line: li.querySelector('.fpt').innerText, x: li.querySelector('.fpx').innerText, mine: num(li.querySelectorAll('.fpx b')[0].textContent), theirs: num(li.querySelectorAll('.fpx b')[1].textContent), btn: li.querySelector('.fpgo').getBoundingClientRect().height}))})),
     also: [...box.querySelectorAll('.fpalso')].map(p => [p.dataset.kind, p.innerText]), hint: !document.querySelector('#fpHint').hidden, over: de.scrollWidth - de.clientWidth,
@@ -140,8 +141,16 @@ async def main():
             check(set(by) == {"LA", "LB"} and [x["id"] for x in d["blocks"]] == ["LA", "LB"], f"{theme}: one block for each league where another roster has him, in Sleeper's order ({[x['name'] for x in d['blocks']]})")
             check("2 of your 4 leagues" in d["sum"], f"{theme}: the count line: {d['sum']!r}")
             also = dict(d["also"])
-            check("Mine Here" in also.get("mine", "") and "Nobody Has Him" in also.get("fa", "") and "none" not in also and "err" not in also, f"{theme}: 'On your roster in: Mine Here' and 'Free agent in: Nobody Has Him', one line each ({d['also']})")
-            check(str(f"{VC[target['n']]['v']:,}") in also.get("mine", ""), f"{theme}: the league where he is the reader's shows his value in that league's half-PPR format ({VC[target['n']]['v']:,})")
+            check("Nobody Has Him" in also.get("fa", "") and "none" not in also and "err" not in also, f"{theme}: 'Free agent in: Nobody Has Him' is one line ({d['also']})")
+            sl = d["sells"]; mineline = "Mine Here" in also.get("mine", "")
+            check((len(sl) == 1 and sl[0]["id"] == "LC" and sl[0]["sub"].startswith("you have him")) or mineline, f"{theme}: the league where he is the reader's is its own block - what he could bring back - or, with no fair return, one line ({[x['sub'] for x in sl]})")
+            check(str(f"{VC[target['n']]['v']:,}") in ((sl[0]["meta"] if sl else "") + also.get("mine", "")), f"{theme}: that league shows his value in its half-PPR format ({VC[target['n']]['v']:,})")
+            if sl:
+                rs = await pg.evaluate("window.__bsFind.res.LC.sells"); Tm = VC[target["n"]]["v"]
+                check(1 <= len(rs) <= 5 and all(FAIR[o["n"]][0] - 1e-9 <= o["sum"] / Tm <= FAIR[o["n"]][1] + 1e-9 and o["sum"] == sum(q["v"] for q in o["parts"]) and all(q["v"] == VC[q["n"]]["v"] for q in o["parts"]) for o in rs), f"{theme}: every return is one or two of another roster's players at the calculator's values, inside the fair band ({[(o['team'], [q['n'] for q in o['parts']], round(o['sum'] / Tm, 2)) for o in rs]})")
+                cnt = {}
+                for o in rs: cnt[o["team"]] = cnt.get(o["team"], 0) + 1
+                check(max(cnt.values()) <= 2 and len({o["parts"][0]["n"] for o in rs}) == len(rs) and rs == sorted(rs, key=lambda o: 0) and sl[0]["n"] == len(rs), f"{theme}: no more than two ideas from one roster, no lead player twice ({cnt})")
             check(by["LA"]["open"] and not by["LB"]["open"], f"{theme}: the league on screen opens by itself, the other waits for a tap")
             await pg.click('#fpOut .fpl[data-id="LB"] .fplh'); await pg.wait_for_timeout(150); d = await pg.evaluate(READ_JS); by = {x["id"]: x for x in d["blocks"]}
             check(by["LB"]["open"] and by["LA"]["open"], f"{theme}: a tap opens the second league and leaves the first open")
@@ -176,8 +185,8 @@ async def main():
             fp = await pg.evaluate("(() => { const r = window.__bsFind.res; const o = {}; Object.keys(r).forEach(k => { o[k] = {kind: r[k].kind, np: r[k].np, picks: r[k].picks || [], thin: r[k].thin || []}; }); return o; })()")
             check(fp["LA"]["picks"] == [] and any("2027 1st (Team 5's)" in x for x in fp["LB"]["picks"]) and any(x == "your 2027 1st" for x in fp["LB"]["picks"]) and not any(x == "your 2027 2nd" for x in fp["LB"]["picks"]) and any(x == "your 2028 2nd" for x in fp["LB"]["picks"]),
                   f"{theme}: picks count only in the dynasty league and only the ones he holds - his own firsts, Team 5's 2027 first, not the 2027 second he traded away ({fp['LB']['picks']})")
-            exp = {"league/LB/users", "league/LB/traded_picks"}
-            check(set(new) == exp and len(new) == 2, f"{theme}: the search asked Sleeper for two things only - names and pick ownership in the league not on screen (rosters were already read): {new}")
+            exp = {"league/LB/users", "league/LB/traded_picks", "league/LC/users"}
+            check(set(new) == exp and len(new) == 3, f"{theme}: the search asked Sleeper for three things only - names (and pick ownership in the dynasty league) where a roster has him and the league is not on screen; rosters were already read: {new}")
             after = await pg.evaluate("(() => { const o = {}; window.__BS.players.slice(0, 60).forEach(p => { o[p.n] = [p.v, Math.round(p.adj * 1000)]; }); return o; })()")
             check(after == before, f"{theme}: the calculator's own values are back in the on-screen league's format after reading the others")
             check(d["over"] <= 0, f"{theme}: nothing wider than the phone screen (overflow {d['over']}px)")

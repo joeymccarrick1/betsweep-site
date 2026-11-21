@@ -2414,3 +2414,13 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   whether he wants a line added.
 - **Daniel Jones released (11/20):** no sheet change needed for Week 11 (IND played Thursday). Tuesday's Week 12 roll must have Anthony
   Richardson as the Colts' starter and Jones off the team. Kenneth Walker III was already OUT in the sheet (hourly job, 2:35 PM).
+
+## 11/20 7:25-7:45 PM: Trade page - "what could I get for a player I have" (owner 6:53 PM: "get to work on that")
+- build_trade.py `offersFor()`: a league where the reader HAS the player now returns `sells` (up to 5): one or two players from another
+  roster that add up to a fair return (same `FAIR` bands, same lineup arithmetic, same score), no piece worth 97%+ of him in a pair,
+  at most two ideas from one roster, no lead player twice. Two pieces = the other manager adding a piece. The league opens as its own
+  block ("you have him · ask Team for X"); "Open in the calculator" loads him on Side A and the return on Side B. A league with no fair
+  return stays on the "On your roster in:" line. Team names are now asked for those leagues too (one more Sleeper call each).
+- Not built: buy-side offers where the OTHER manager adds a piece back (the reader's piece is worth more than the target), picks in a
+  return, IDP / kickers / defenses.
+- tests/trade_find.py 101.

@@ -310,6 +310,7 @@ CSS = r"""
 .tc .fpt{margin:6px 0 0;padding-top:6px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)} .tc .fpt b{color:var(--ink);font-variant-numeric:tabular-nums}
 .tc .fpx{margin:3px 0 10px;font-size:13px;line-height:1.45;color:var(--mute)} .tc .fpx b{color:var(--ink);font-variant-numeric:tabular-nums} .tc .fpx b.up{color:var(--good)} .tc .fpx b.dn{color:var(--bad)}
 .tc .fpgo{min-height:40px;padding:6px 14px;font-size:13px;font-weight:600;border-color:var(--red);border-radius:10px;margin:0}
+.tc .fpsell{border-top:1px solid var(--line);padding-top:12px;margin-top:4px} .tc .fpfrom{margin:0 0 6px;font-size:13px;color:var(--mute)} .tc .fpfrom b{color:var(--ink)}
 .tc .fpalso{margin:0;padding:10px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--mute)} .tc .fpalso b{color:var(--ink)} .tc .fpalso small{font-size:12px}
 .tc details.fphow > summary h3{font-size:14px;font-family:var(--body);font-weight:600}
 @media (prefers-reduced-motion:reduce){ .tc .fplh .chev{transition:none} }
@@ -586,6 +587,22 @@ JS = r"""
         var own = teams.filter(function(t){ return t.ps.some(function(x){ return x.mp === p; }); })[0] || null;
         var out = {id: l.league_id, v: p.v, kind: !me ? 'none' : !own ? 'fa' : own === me ? 'mine' : 'theirs',
                    fmt: (f.dyn ? 'dynasty' : (l.settings && l.settings.type === 1) ? 'keeper' : 'redraft') + (f.sf ? ', superflex' : '') + (f.tep ? ', TE premium' : '')};
+        // 11/20 the reverse (owner list: "what could I get for a player I have"): he is on the reader's roster, so look through every
+        // other roster for one or two players that add up to a fair return, by the same bands and the same lineup arithmetic. Two
+        // pieces is the other manager adding a piece. Best for the reader's lineup first; no more than two ideas from one roster.
+        if(out.kind === 'mine'){ out.sells = []; var Tm = p.v, slm = bsOutlook.slots(l), mx = me.ps.filter(function(x){ return x.mp === p; })[0];
+          if(!(Tm > 0) || !mx) return out;
+          var mBase = bsOutlook.lineup(me.ps, slm).pts, fl = Math.max(60, Tm * 0.03), cand = [], capm = Tm * 0.97;
+          teams.forEach(function(t){ if(t === me) return; var pcs = t.ps.filter(function(x){ return x.mp && x.v >= fl; }).sort(function(a, b){ return b.v - a.v; }).slice(0, 14), tB = bsOutlook.lineup(t.ps, slm).pts;
+            function rt(set){ var sum = set.reduce(function(a, x){ return a + x.v; }, 0), n = set.length, r = sum / Tm; if(r < FAIR[n][0] || r > FAIR[n][2]) return;
+              var mine = bsOutlook.lineup(me.ps.filter(function(x){ return x !== mx; }).concat(set), slm).pts - mBase, theirs = bsOutlook.lineup(t.ps.filter(function(x){ return set.indexOf(x) < 0; }).concat([mx]), slm).pts - tB;
+              cand.push({t: t, set: set, sum: sum, r: r, n: n, mine: mine, theirs: theirs, score: mine + (f.dyn ? 0.3 : 0.8) * Math.max(-10, Math.min(4, theirs)) - 8 * Math.abs(r - FAIR[n][1]) - 0.4 * (n - 1)}); }
+            pcs.forEach(function(a){ rt([a]); });
+            for(var i2 = 0; i2 < pcs.length; i2++) for(var j2 = i2 + 1; j2 < pcs.length; j2++){ if(pcs[i2].v > capm) continue; rt([pcs[i2], pcs[j2]]); } });
+          cand.sort(function(a, b){ return b.score - a.score; }); var per = {}, lead2 = {};
+          cand.forEach(function(o){ if(out.sells.length >= 5) return; var k0 = o.t.name, m0 = o.set[0].mp.n; if((per[k0] || 0) >= 2 || lead2[m0]) return; per[k0] = (per[k0] || 0) + 1; lead2[m0] = 1;
+            out.sells.push({team: o.t.name, rec: o.t.rec, parts: o.set.map(function(x){ return {n: x.mp.n, label: x.mp.n, pos: x.mp.pos, v: x.v}; }), sum: o.sum, r: o.r, n: o.n, mine: o.mine, theirs: o.theirs}); });
+          return out; }
         if(out.kind !== 'theirs') return out;
         var T = p.v, sl = bsOutlook.slots(l), tx = own.ps.filter(function(x){ return x.mp === p; })[0], POS = ['QB','RB','WR','TE'];
         out.team = own.name; out.rec = own.rec; out.offers = []; out.near = null; out.thin = [];
@@ -638,7 +655,7 @@ JS = r"""
       var q = S.leagues.slice(), cur = S.league && S.league.league_id, busy = 0; q.sort(function(a, b){ return (b.league_id === cur) - (a.league_id === cur); });   // the league on screen is read first
       function next(){ while(busy < 4 && q.length){ (function(l){ busy++;
           Promise.all([players(), lgRos(l)]).then(function(r){ var pm = r[0], c = r[1], h = holderOf(c.ros, pm, p);
-              return (h && !isMine(h)) ? lgMore(l, c).then(function(){ return offersFor(l, c, pm, p); }) : offersFor(l, c, pm, p); })
+              return h ? lgMore(l, c).then(function(){ return offersFor(l, c, pm, p); }) : offersFor(l, c, pm, p); })   // 11/20: team names are needed for the reader's own player too (what he could bring back)
             .then(function(res){ if(tok === FP.tok) FP.res[l.league_id] = res; }, function(e){ console.error(e); if(tok === FP.tok) FP.res[l.league_id] = {id: l.league_id, kind: 'err'}; })
             .then(function(){ busy--; if(tok !== FP.tok) return; FP.done++; fpRender(); next(); }); })(q.shift()); } }
       next(); }
@@ -667,14 +684,26 @@ JS = r"""
               + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
         return '<div class="fpl' + (open ? ' open' : '') + '" data-id="' + esc(l.league_id) + '" data-kind="theirs"><button type="button" class="fplh" aria-expanded="' + open + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + esc(r.team) + ' has him · '
           + (best ? 'send ' + esc(best.parts.map(shortN).join(' + ')) : 'no fair offer from your roster') + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
+      // 11/20: leagues where the reader has him open like the others, with what he could bring back
+      var sold = rows.mine.filter(function(x){ return x[1].sells && x[1].sells.length; }); rows.mine = rows.mine.filter(function(x){ return !(x[1].sells && x[1].sells.length); });
+      if(sold.length) h += '<p class="fpsum fpsell">You have him in <b>' + (sold.length === 1 ? esc(sold[0][0].name) : sold.length + ' leagues') + '</b>. What he could bring back:</p>';
+      h += sold.map(function(x){ var l = x[0], r = x[1], open = FP.open[l.league_id] != null ? FP.open[l.league_id] : (!T && sold[0] === x && !busy), best = r.sells[0];
+        var body = '<p class="fpmeta">He is worth <b>' + r.v.toLocaleString() + '</b> here <small>(' + esc(r.fmt) + ')</small>. Fair returns from the other rosters, best for your lineup first:</p><ol class="fpo">' + r.sells.map(function(o, i){ var d = o.r - FAIR[o.n][1];
+            var tag = Math.abs(d) <= 0.05 ? (o.n === 1 ? 'about even' : 'about right for two') : d < 0 ? 'a little light' : 'they give a little more';
+            return '<li><p class="fpfrom">From <b>' + esc(o.team) + '</b>' + (o.rec ? ' (' + esc(o.rec) + ')' : '') + '</p><ul class="fpp">' + o.parts.map(function(q){ return '<li><span class="pos ' + q.pos + '">' + q.pos + '</span><span class="nm">' + esc(q.label) + '</span><span class="vv">' + q.v.toLocaleString() + '</span></li>'; }).join('') + '</ul>'
+              + '<p class="fpt"><b>' + o.sum.toLocaleString() + '</b> for his ' + r.v.toLocaleString() + ' · ' + tag + '</p>'
+              + '<p class="fpx">Your lineup <b class="' + ud(o.mine) + '">' + sgn(o.mine) + '</b> a week · theirs <b class="' + ud(o.theirs) + '">' + sgn(o.theirs) + '</b></p>'
+              + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|s' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
+        return '<div class="fpl' + (open ? ' open' : '') + '" data-id="' + esc(l.league_id) + '" data-kind="mine"><button type="button" class="fplh" aria-expanded="' + open + '"><span class="tx"><b>' + esc(l.name) + '</b><small>you have him · ask '
+          + esc(best.team) + ' for ' + esc(best.parts.map(shortN).join(' + ')) + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
       function also(k, lead){ if(!rows[k].length) return ''; return '<p class="fpalso" data-kind="' + k + '"><b>' + lead + '</b> ' + rows[k].map(function(x){ return esc(x[0].name) + (k === 'mine' ? ' <small>(' + x[1].v.toLocaleString() + ')</small>' : ''); }).join(', ') + '</p>'; }
       h += also('mine', 'On your roster in:') + also('fa', 'Free agent in:') + also('none', 'You are not on a roster in:') + also('err', 'Sleeper did not answer for:');
       box.innerHTML = h; }
     window.__bsFind = FP;   // read by tests/trade_find.py
     document.addEventListener('click', function(e){ var t = e.target; if(!t.closest) return;
       var hd = t.closest('#fpOut .fplh'); if(hd){ FP.open[hd.parentNode.dataset.id] = !hd.parentNode.classList.contains('open'); fpRender(); return; }
-      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], o = r && r.offers && r.offers[+k[1]]; if(!l || !o) return;
-      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; window.__bsRender(); toCalc(); });
+      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], sell = k[1].charAt(0) === 's', o = r && (sell ? r.sells && r.sells[+k[1].slice(1)] : r.offers && r.offers[+k[1]]); if(!l || !o) return;
+      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); if(sell){ st.A = [FP.p.n]; st.B = o.parts.map(function(q){ return q.n; }); } else { st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; } window.__bsRender(); toCalc(); });
     (function(){ var inp = $('#inF'), sug = $('#sugF'), cur = [], k = -1; if(!inp) return;
       function ini(n){ return String(n).split(/[\s-]+/).map(function(w){ return w.charAt(0); }).join('').toLowerCase(); }   // "jsn" finds Jaxon Smith-Njigba
       function show(){ var q = normn(inp.value); if(q.length < 2){ sug.hidden = true; return; } var qi = q.replace(/\s+/g, '');
