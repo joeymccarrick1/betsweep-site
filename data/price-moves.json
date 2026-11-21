@@ -1,8 +1,8 @@
 {
  "news": [],
  "week": 11,
- "built": "Sat 11/21 8:02 AM",
- "checked": "2026-11-21T17:12:13Z",
+ "built": "Sat 11/21 11:28 AM",
+ "checked": "2026-11-21T17:42:13Z",
  "legs_checked": 1354,
  "moves": [
   {
@@ -15,7 +15,7 @@
    "built": 250,
    "now": 1100.0,
    "pts": -20.2,
-   "p": 0.249,
+   "p": 0.2487,
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
@@ -100,7 +100,7 @@
    "built": 420,
    "now": 1000.0,
    "pts": -10.1,
-   "p": 0.175,
+   "p": 0.1752,
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
@@ -593,7 +593,7 @@
    "built": 155,
    "now": 190.0,
    "pts": -4.7,
-   "p": 0.361,
+   "p": 0.3615,
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
