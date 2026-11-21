@@ -935,6 +935,12 @@ try:
                 "legs": [{"key": _l.get("key"), "who": _l.get("who"), "market": _l.get("market"), "gid": _l.get("gid"), "ko": _l.get("ko"), "disp": _l.get("disp")} for _l in (_p.get("legs") or [])]}
                for _p in _promos], open(os.path.join(SITE, "b", "promos.json"), "w"))
 except Exception as _e: print("note: /b/promos.json not written:", _e)
+# owner 11/20: /b/prominent.json - the big names the news push watches (prominent.py; slip-alerts newsUp reads it)
+try:
+    import prominent as _PROM
+    _pl = _PROM.build(json.load(open(os.path.join(HERE, "in", "gamelog.json")))["values"])
+    os.makedirs(os.path.join(SITE, "b"), exist_ok=True); json.dump(_pl, open(os.path.join(SITE, "b", "prominent.json"), "w"), separators=(",", ":"), ensure_ascii=False)
+except Exception as _e: print("note: /b/prominent.json not written:", _e)
 # 11/4 (owner: price-move alerts): /b/plus.json - the Model's Best plus-money + TD tier legs with the FanDuel price they were built at, so the
 # price-moves workflow (.github/price_moves.py, every 30 min from the sheet mirror) can push the owner when the market moves toward one
 try:
@@ -1377,6 +1383,7 @@ _API = [
     ("/b/dossier.json", "Game previews: per game, the model script, weather / injury / news flags, situational spots (tested on 2006-2025), each offense's results against the most similar defenses and each defense's leaks by role.", "every rebuild"),
     ("/b/startsit.json", "Who-should-I-start inputs: {week, players:[{n, t, p, o, fp, av}]} - name, team, position, opponent, projected fantasy points, availability.", "every rebuild"),
     ("/b/books.json", "DraftKings / Hard Rock selection ids for the week's legs, keyed like the slip keys, for deep links.", "every rebuild"),
+    ("/b/prominent.json", "The big names the news alert watches: every quarterback with 4+ starts and the top backs, receivers and tight ends by fantasy points a game.", "every rebuild"),
     ("/b/promos.json", "The promo desk's posted slips with their short links and grades.", "every rebuild"),
     ("/data/price-moves.json", "FanDuel price moves of 3+ points since the build on every tracked leg: {built, moves:[{key, pl, m, ln, from, to, pts, dir, tier, detail}]}.", "every 30 min (GitHub Action)"),
     ("/data/risk-notes.json", "Risk flags per player (questionable tags, weather, role changes) refreshed between builds.", "every 30 min (GitHub Action)"),

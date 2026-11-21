@@ -577,8 +577,10 @@ export async function run(now = Date.now()) {
   // unreachable promo file must not cost the run its other alerts.
   let npost = 0;
   try { npost = await promoUp(W, now, gone); } catch (e) { console.warn("promo up", String(e)); }
+  let nnews = 0;   // owner 11/20: a big-name player ruled out or released -> one push to every device that asked for it
+  try { nnews = await newsUp(W, now, gone, D.games || []); } catch (e) { console.warn("news up", String(e)); }
   for (const ep of [...new Set(gone)]) await rest(`push_subs?endpoint=eq.${encodeURIComponent(ep)}`, { method: "DELETE" });
-  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, moves: nmv, risk: nrisk, promoAlerts: npromo, posted: npost, inactives: ninact, removed: gone.length, statuses: ST.size, frozeBeat };
+  return { week: W, subs: subs.length, users: users.length, alerts: nalerts, sent: nsent, kickoff: nko, live: nlive, weather: wxGames, wxSent: nwx, moves: nmv, risk: nrisk, promoAlerts: npromo, posted: npost, news: nnews, inactives: ninact, removed: gone.length, statuses: ST.size, frozeBeat };
 }
 
 // owner 11/5: marks that are not per user (Discord posts, model-wide sends) live in bs_marks (key text primary key; owner/betsweep-11-5.sql)
@@ -607,6 +609,65 @@ export async function promoUp(W: number, now: number, gone: string[]): Promise<n
     for (const s of subs) { if (done.has(`${s.user_id}|${key}`)) continue;
       try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) { n++; told.add(String(s.user_id)); } } catch (e) { console.warn("push", String(e)); } }
     for (const uid of told) await mark(uid, W, key, "POSTED");
+  }
+  return n;
+}
+// BIG-NAME NEWS (owner 11/20: "push notifications about prominent players being out or released. Ken Walker will be inactive this
+// weekend. Daniel Jones got released today."). One push per device per player per event, to devices with push_subs.news = true
+// (sql/push_news.sql adds the column, default false; until it exists the select throws and the caller's try leaves it at zero).
+//   OUT       the sheet's availability rows as mirrored every half hour (sheet-mirror in/avail.json): this week, Availability OUT,
+//             dated today or yesterday (Central), the player on /b/prominent.json, and his team's game still ahead.
+//   RELEASED  the news feed (feeds news.json, every 10 minutes): a headline or first line from the last 36 hours that says a prominent
+//             player was released / waived / cut - one ESPN or RotoWire item, or two from anywhere.
+// newsFinds is pure (no network), so tests run it as deployed. A device gets at most 3 of these a run (the rest follow on the next);
+// the feed is read at most once every 10 minutes.
+const MIRROR = Deno.env.get("MIRROR_URL") ?? "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/sheet-mirror";
+export function newsFinds(prom: any[], avail: any[][], items: any[], W: number, now: number, koByTeam: Record<string, number>): { key: string; title: string; body: string; url: string }[] {
+  const out: { key: string; title: string; body: string; url: string }[] = [];
+  const ct = (ms: number) => { const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(ms)); const o: Record<string, string> = {}; for (const x of p) o[x.type] = x.value; return `${o.year}-${o.month}-${o.day}`; };
+  const days = [ct(now), ct(now - 24 * 3600e3)]; const P = new Map<string, any>(); for (const p of prom || []) P.set(String(p.n), p);
+  const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const r of (avail || []).slice(1)) {
+    const name = String(r[1] || ""), p = P.get(name);
+    if (!p || String(r[0]) !== String(W) || String(r[4] || "").toUpperCase() !== "OUT" || !days.includes(String(r[11] || "").slice(0, 10))) continue;
+    const ko = koByTeam[String(r[2] || p.tm)] || 0; if (!ko || ko <= now) continue;
+    let why = String(r[9] || "").split(" | was:")[0].replace(/^(AUTO HOURLY|NEWS DESK|OWNER)[:\s-]*/i, "").trim();
+    if (why.toLowerCase().startsWith(name.toLowerCase() + ":")) why = why.slice(name.length + 1).trim();
+    out.push({ key: `__news__out|${name}|${W}`, title: `${name} is out this week`.slice(0, 90), body: (why || `${p.tm} ${p.pos}. Check your slips and lineups.`).slice(0, 240), url: "/news/" });
+  }
+  const hits = new Map<string, { n: number; strong: boolean; line: string }>();
+  for (const it of items || []) {
+    const ts = Date.parse(String(it.ts || "").trim().replace(/\s+(AM|PM)\s+(PST|PDT)$/i, " $1 GMT-0800")); if (!ts || now - ts > 36 * 3600e3 || ts - now > 3600e3) continue;
+    const text = `${String(it.title || "")}. ${String(it.text || "").slice(0, 300)}`; if (!/\b(releas|waive|\bcut\b|cuts\b)/i.test(text)) continue;
+    for (const [name] of P) {
+      if (text.indexOf(name.split(" ").slice(-1)[0]) < 0) continue;
+      const N = esc(name), role = "(?:(?:starting|veteran|former|backup|QB|RB|WR|TE|quarterback|running back|wide receiver|tight end)\\s+){0,3}";
+      const re = new RegExp(`\\b(?:releas(?:e|es|ed|ing)|waiv(?:e|es|ed|ing)|cuts?|cutting)\\s+${role}${N}\\b|\\b${N}(?:['’]s?)?\\s+(?:(?:was|is|has been|will be|being)\\s+)?(?:released|waived|cut|release)\\b`, "i");
+      if (!re.test(text)) continue;
+      const h = hits.get(name) || { n: 0, strong: false, line: "" }; h.n++; const strong = it.src === "espn" || it.src === "rotowire"; if (strong && !h.strong) h.line = String(it.title || ""); if (!h.line) h.line = String(it.title || ""); h.strong = h.strong || strong; hits.set(name, h);
+    }
+  }
+  for (const [name, h] of hits) if (h.strong || h.n >= 2) out.push({ key: `__news__rel|${name}`, title: `${name} has been released`.slice(0, 90), body: h.line.slice(0, 240), url: "/news/" });
+  return out;
+}
+export async function newsUp(W: number, now: number, gone: string[], games: any[]): Promise<number> {
+  const subs: Sub[] = await rest("push_subs?select=endpoint,user_id,p256dh,auth&news=is.true");
+  if (!subs.length) return 0;
+  const get = async (u: string) => { try { const r = await fetch(u, { headers: { "cache-control": "no-cache" } }); return r.ok ? await r.json() : null; } catch { return null; } };
+  const prom = await get(`${SITE}/b/prominent.json`); if (!Array.isArray(prom) || !prom.length) return 0;
+  const av = await get(`${MIRROR}/in/avail.json`);
+  const bucket = `__newsfeed__${Math.floor(now / 600e3)}`; let items: any[] = [];
+  if (!(await keysDone(bucket)).has(bucket)) { await markKey(bucket); const nj = await get(`${FEEDS}/news.json`); items = (nj && nj.items) || []; }
+  const ko: Record<string, number> = {}; for (const g of games || []) { if (g.a) ko[g.a] = g.ko || 0; if (g.b) ko[g.b] = g.ko || 0; }
+  const finds = newsFinds(prom, (av && av.values) || [], items, W, now, ko);
+  if (!finds.length) return 0;
+  const sent: any[] = await rest(`push_sent?select=user_id,player&status=eq.NEWS&player=like.${encodeURIComponent("__news__%")}`); const done = new Set(sent.map((x) => `${x.user_id}|${x.player}`));
+  let n = 0; const per = new Map<string, number>();
+  for (const f of finds) {
+    const msg = { title: f.title, body: f.body, url: f.url, tag: `bs-news-${f.key.slice(8, 60)}` }; const told = new Set<string>();
+    for (const s of subs) { if (done.has(`${s.user_id}|${f.key}`) || (per.get(s.endpoint) || 0) >= 3) continue;
+      try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) { n++; told.add(String(s.user_id)); per.set(s.endpoint, (per.get(s.endpoint) || 0) + 1); } } catch (e) { console.warn("push", String(e)); } }
+    for (const uid of told) await mark(uid, W, f.key, "NEWS");
   }
   return n;
 }

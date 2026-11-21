@@ -2397,3 +2397,20 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   `past_seasons()` downloads stats_player_week_2024/2025 from nflverse into in/ when missing (as the other generators do) and is skipped
   quietly if that fails. Rosters change between seasons - the card does not know who his teammates were.
 - Not built: saving the owner's own hunches to the page for everyone (needs a sheet tab in the mirror = a change on main).
+
+## 11/20 7:00-7:25 PM: big-name news push (owner 6:53 PM: "push notifications about prominent players being out or released")
+- **Built, OFF until the owner acts.** push/slip-alerts.ts `newsFinds()` (pure) + `newsUp()`, called from run() in its own try; the
+  summary carries `news`. OUT = this week's OUT rows in the half-hourly sheet mirror (raw sheet-mirror in/avail.json; so NEWS DESK,
+  AUTO HOURLY and OWNER rows all count), dated today or yesterday CT, his team's game still ahead. RELEASED = feeds news.json items from
+  the last 36 h whose title / first line says released / waived / cut next to the player's name: one ESPN or RotoWire item, or two from
+  anywhere. A device gets at most 3 a run; the 1.2 MB feed is read at most once every 10 minutes (bs_marks `__newsfeed__<bucket>`).
+  Dedup: push_sent status NEWS, player `__news__out|<name>|<week>` / `__news__rel|<name>`.
+- **Who is a big name:** prominent.py -> /b/prominent.json (118 this week): every QB with 4+ starts, top 30 RB / 40 WR / 14 TE by
+  fantasy points a game (4+ games), from the season game log so a released player is still on it.
+- **Owner steps (sent 7:10 PM):** run betsweep-push-news.sql (push_subs.news, default false), redeploy slip-alerts.ts. THEN set
+  account.py `NEWS_ALERTS = True` (the switch on My BetSweep > Slip alerts; hidden until then). The switch is per device and off by default.
+- tests/news_up.py 14 (in the full set): made-up rows plus tonight's real mirror and feed - finds "Kenneth Walker III is out this week"
+  and "Daniel Jones has been released". The Privacy Policy lists alert kinds; this adds one setting and no new data - ask the owner
+  whether he wants a line added.
+- **Daniel Jones released (11/20):** no sheet change needed for Week 11 (IND played Thursday). Tuesday's Week 12 roll must have Anthony
+  Richardson as the Colts' starter and Jones off the team. Kenneth Walker III was already OUT in the sheet (hourly job, 2:35 PM).
