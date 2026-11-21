@@ -134,6 +134,46 @@ if sb:
                     "hs": cs.get("home", {}).get("score"), "as": cs.get("away", {}).get("score"), "period": (ev.get("status") or {}).get("period"), "clock": (ev.get("status") or {}).get("displayClock"),
                     "poss": sit.get("possession"), "rz": bool(sit.get("isRedZone")), "dd": sit.get("downDistanceText"), "box": box_of(sm)})
         print("livelog", ev["id"], (ev.get("status") or {}).get("period"), (ev.get("status") or {}).get("displayClock"))
+# ---- finals.json (owner 11/21: "Why haven't the box scores hit yet for Thursday night's game? It's saying game hasn't been played yet on
+# daily sweep and thievery"). The live log above stops when a game stops being live, so nothing ever held the FINAL box score: saved slips
+# waited for the sheet's game log on Tuesday. Each finished game on this week's scoreboard is read once and kept 9 days:
+#   {"games": {eid: {"week", "away", "home", "as", "hs", "ts", "box": {name: [passYds, passTD, int, rushYds, rushTD, rec, recYds, recTD, longRec]}}}}
+# (the same nine numbers as /data/box-w<W>.json; build_mydata.py turns it into that file for a week the sheet has not logged yet).
+def final_box(sm):
+    out = {}
+    def num(v):
+        try: return float(str(v).split("/")[0])
+        except Exception: return 0.0
+    for tm in sm.get("boxscore", {}).get("players", []) or []:
+        for cat in tm.get("statistics", []) or []:
+            keys = cat.get("keys") or []; nm = cat.get("name")
+            for a in cat.get("athletes", []) or []:
+                n = (a.get("athlete") or {}).get("displayName")
+                if not n: continue
+                S_ = dict(zip(keys, a.get("stats", []))); row = out.setdefault(n, [0.0] * 9)
+                if nm == "passing": row[0] = num(S_.get("passingYards", 0)); row[1] = num(S_.get("passingTouchdowns", 0)); row[2] = num(S_.get("interceptions", 0))
+                if nm == "rushing": row[3] = num(S_.get("rushingYards", 0)); row[4] = num(S_.get("rushingTouchdowns", 0))
+                if nm == "receiving": row[5] = num(S_.get("receptions", 0)); row[6] = num(S_.get("receivingYards", 0)); row[7] = num(S_.get("receivingTouchdowns", 0)); row[8] = num(S_.get("longReception", 0))
+    return out
+try:
+    FIN = {}
+    try: FIN = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/finals.json"])).get("games", {})
+    except Exception as e: print("finals: no previous file", e)
+    cut9 = (now - dt.timedelta(days=9)).isoformat(); FIN = {k: v for k, v in FIN.items() if v.get("ts", "") >= cut9}
+    wkn = ((sb or {}).get("week") or {}).get("number")
+    for ev in (sb or {}).get("events") or []:
+        st = ((ev.get("status") or {}).get("type") or {})
+        if st.get("state") != "post" or not st.get("completed", True) or str(ev["id"]) in FIN: continue
+        sm = get(f"{S}/summary?event={ev['id']}")
+        if not sm: continue
+        bx = final_box(sm)
+        if len(bx) < 10: print("finals: thin box for", ev["id"], len(bx)); continue        # not a real final box; try again next run
+        comp = (ev.get("competitions") or [{}])[0]; cs = {c["homeAway"]: c for c in comp.get("competitors", [])}
+        FIN[str(ev["id"])] = {"week": wkn, "away": cs.get("away", {}).get("team", {}).get("abbreviation"), "home": cs.get("home", {}).get("team", {}).get("abbreviation"),
+                              "as": cs.get("away", {}).get("score"), "hs": cs.get("home", {}).get("score"), "ts": now.isoformat(), "box": bx}
+        print("finals", ev["id"], FIN[str(ev["id"])]["away"], "@", FIN[str(ev["id"])]["home"], len(bx), "players")
+    json.dump({"games": FIN, "mirrored": now.isoformat()}, open("out/finals.json", "w"), separators=(",", ":"))
+except Exception as e: print("finals.json skipped:", e)
 # pin the live page's tracked legs (pregame chance) the first time a week has a game in progress; never overwritten, so a later rebuild cannot leak
 # in-game information into the pregame numbers live_grade.py replays against
 if any(x["ts"] >= now.isoformat()[:10] for x in LOG[-50:]):
