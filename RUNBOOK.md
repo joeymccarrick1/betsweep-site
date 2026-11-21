@@ -2447,3 +2447,16 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
 - First real check: a device that switches Big-name news on tonight should get "Kenneth Walker III is out this week" and "Daniel
   Jones has been released" on the next alerts run (both are inside their windows until about Saturday night); the function's summary
   carries `news`. Nobody has confirmed a delivered push yet.
+
+## 11/20 10:25-11:00 PM: trade "piece back" offers; the three failing checks were the tests (owner 10:21 PM: "get to work on what's next")
+- **Trade, the other manager adds a piece back** (build_trade.py `out.backs`, list `.fpo.fpb`, button key `b<i>`): one of the reader's
+  players worth 103-200% of the target, for the target plus one of that roster's smaller players, with (target + add-on) / his piece
+  inside the two-for-one band. Two ideas at most, one per piece sent, under the normal offers ("Or send one bigger piece and ask for
+  one back"); the header says "send X, get one back" when there is no normal offer. Calculator hand-off: Side A his piece, Side B both.
+  Still not built: picks inside a return or an add-back.
+- **All three failing checks were wrong tests, not site bugs:** page_fold counted a kicked-off (dimmed, uncounted by design) parlay on
+  Model's Best; promo_overlap expected the overlap note on Today for promos whose game is over (they stay LIVE in the sheet until
+  Tuesday's grading but are off Today); new_markets expected exactly four passing-TD rungs (FanDuel posts two to five). Full set: 37 of
+  37 pass (11:00 PM).
+- Market coverage check: still "not run yet", and no extra-market rows in the links mirror. Next chance is Sunday morning's refresh.
+- Still ungraded: Thursday's Daily Sweep (no Week 11 rows in the game log yet).

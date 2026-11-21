@@ -112,7 +112,8 @@ async def pages():
               return {boxes: Array.from(c.querySelectorAll('.pb')).map(b => b.dataset.m), rng: r ? [+r.min, +r.max] : null, line: bx.querySelector('.pbline').textContent, pill: !!bx.querySelector('.pbm .dpill, .pbm .mup, .pbm [class*=pill]'), dots: bx.querySelectorAll('.l5 i').length, add: !!bx.querySelector('button.add'), w: bb.width, right: bb.right, over: document.documentElement.scrollWidth - document.documentElement.clientWidth}; }""", qb)
             bx = st.get("boxes", [])
             check("Passing TDs" in bx and "Passing Yards" in bx and bx.index("Passing TDs") == bx.index("Passing Yards") + 1, T + f"All props shows his Passing TDs box right under Passing Yards ({', '.join(bx)})")
-            check(st.get("rng") == [0, 3] and st.get("line", "").startswith("Over "), T + f"the box has a slider over the four rungs and opens on {st.get('line')}")
+            rg = st.get("rng") or [9, 9]   # 11/20: FanDuel posts two to five rungs for a quarterback depending on the week
+            check(rg[0] == 0 and 1 <= rg[1] <= 4 and st.get("line", "").startswith("Over "), T + f"the box has a slider over its rungs ({rg[1] + 1}) and opens on {st.get('line')}")
             check(st.get("dots", 0) >= 2 and st.get("pill") and st.get("add"), T + "it shows his last-games dots, the matchup ranks and + Add")
             check(st.get("over", 9) <= 1 and st.get("right", 999) <= 390 * 1.1 + 2, T + "nothing runs off the side of the phone")
             mv = await pg.evaluate("""(q) => { var out = []; for (var i = 0; i <= 3; i++) { var bx = (""" + CARD + """)(q).querySelector('.pb[data-m="Passing TDs"]'), r = bx.querySelector('.rng'); r.value = i; r.dispatchEvent(new Event('input', {bubbles: true}));

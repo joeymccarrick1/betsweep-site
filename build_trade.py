@@ -647,6 +647,18 @@ JS = r"""
           if(kept.some(function(q){ var same = q.filter(function(nm){ return names.indexOf(nm) >= 0; }).length; return same >= 2 || same === q.length || same === names.length; })) return;   // not an offer already listed with a throw-in added or swapped
           lead[names[0]] = (lead[names[0]] || 0) + 1; kept.push(names);
           out.offers.push({parts: o.set.map(function(q){ return {n: q.n, label: q.label, pos: q.pos, v: q.v, pick: !!q.pick}; }), sum: o.sum, r: o.r, n: o.n, mine: o.mine, theirs: o.theirs, starts: o.starts}); });
+        // 11/20 the other manager adds a piece back (owner list): one of the reader's players worth MORE than the target, for the
+        // target plus one of that roster's smaller players. The side that gets the best player pays the two-for-one premium, so
+        // (target + add-on) / the reader's piece has to sit inside the two-for-one band. Two ideas at most, one per piece sent.
+        out.backs = []; var bc = [];
+        pieces.filter(function(q){ return q.x && q.v > T * 1.03 && q.v <= T * 2; }).slice(0, 8).forEach(function(X){
+          own.ps.filter(function(y){ return y.mp && y !== tx && y.v >= floor && y.v < T; }).sort(function(a, b){ return b.v - a.v; }).slice(0, 14).forEach(function(Y){
+            var sum = T + Y.v, r = sum / X.v; if(r < FAIR[2][0] || r > FAIR[2][2]) return;
+            var mine = bsOutlook.lineup(me.ps.filter(function(x){ return x !== X.x; }).concat([tx, Y]), sl).pts - myBase, theirs = bsOutlook.lineup(own.ps.filter(function(x){ return x !== tx && x !== Y; }).concat([X.x]), sl).pts - thBase;
+            bc.push({X: X, Y: Y, sum: sum, r: r, mine: mine, theirs: theirs, score: mine + (f.dyn ? 0.3 : 0.8) * Math.max(-10, Math.min(4, theirs)) - 8 * Math.abs(r - FAIR[2][1])}); }); });
+        bc.sort(function(a, b){ return b.score - a.score; }); var usedX = {};
+        bc.forEach(function(o){ if(out.backs.length >= 2 || usedX[o.X.n]) return; usedX[o.X.n] = 1;
+          out.backs.push({give: {n: o.X.n, label: o.X.label, pos: o.X.pos, v: o.X.v}, back: {n: o.Y.mp.n, label: o.Y.mp.n, pos: o.Y.mp.pos, v: o.Y.v}, sum: o.sum, r: o.r, mine: o.mine, theirs: o.theirs}); });
         if(!out.offers.length) out.near = near;
         out.np = pieces.length; out.picks = pieces.filter(function(q){ return q.pick; }).map(function(q){ return q.label; });
         return out; }); }
@@ -682,8 +694,14 @@ JS = r"""
               + '<p class="fpt"><b>' + o.sum.toLocaleString() + '</b> for his ' + r.v.toLocaleString() + ' · ' + tag + '</p>'
               + '<p class="fpx">Your lineup <b class="' + ud(o.mine) + '">' + sgn(o.mine) + '</b> a week · ' + esc(r.team) + '\'s <b class="' + ud(o.theirs) + '">' + sgn(o.theirs) + '</b>' + (o.starts.length ? ' · ' + esc(o.starts.join(' and ')) + (o.starts.length > 1 ? ' start there' : ' starts there') : '') + '</p>'
               + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
+        if(r.backs && r.backs.length) body += '<p class="fpmeta fpbk">Or send one bigger piece and ask for one back:</p><ol class="fpo fpb">' + r.backs.map(function(o, i){ var d = o.r - FAIR[2][1];
+            var pl = function(q){ return '<li><span class="pos ' + q.pos + '">' + q.pos + '</span><span class="nm">' + esc(q.label) + '</span><span class="vv">' + q.v.toLocaleString() + '</span></li>'; };
+            return '<li><p class="fpfrom">You send</p><ul class="fpp">' + pl(o.give) + '</ul><p class="fpfrom">You get</p><ul class="fpp">' + pl({pos: FP.p.pos, label: FP.p.n, v: r.v}) + pl(o.back) + '</ul>'
+              + '<p class="fpt"><b>' + o.sum.toLocaleString() + '</b> back for your ' + o.give.v.toLocaleString() + ' · ' + (Math.abs(d) <= 0.05 ? 'about right for two for one' : d < 0 ? 'a little light for you' : 'they give a little more') + '</p>'
+              + '<p class="fpx">Your lineup <b class="' + ud(o.mine) + '">' + sgn(o.mine) + '</b> a week · ' + esc(r.team) + '\'s <b class="' + ud(o.theirs) + '">' + sgn(o.theirs) + '</b></p>'
+              + '<button type="button" class="addbtn fpgo" data-fp="' + esc(l.league_id) + '|b' + i + '">Open in the calculator</button></li>'; }).join('') + '</ol>';
         return '<div class="fpl' + (open ? ' open' : '') + '" data-id="' + esc(l.league_id) + '" data-kind="theirs"><button type="button" class="fplh" aria-expanded="' + open + '"><span class="tx"><b>' + esc(l.name) + '</b><small>' + esc(r.team) + ' has him · '
-          + (best ? 'send ' + esc(best.parts.map(shortN).join(' + ')) : 'no fair offer from your roster') + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
+          + (best ? 'send ' + esc(best.parts.map(shortN).join(' + ')) : (r.backs && r.backs.length) ? 'send ' + esc(shortN(r.backs[0].give)) + ', get one back' : 'no fair offer from your roster') + '</small></span><span class="chev" aria-hidden="true">▾</span></button><div class="fplb"' + (open ? '' : ' hidden') + '>' + body + '</div></div>'; }).join('');
       // 11/20: leagues where the reader has him open like the others, with what he could bring back
       var sold = rows.mine.filter(function(x){ return x[1].sells && x[1].sells.length; }); rows.mine = rows.mine.filter(function(x){ return !(x[1].sells && x[1].sells.length); });
       if(sold.length) h += '<p class="fpsum fpsell">You have him in <b>' + (sold.length === 1 ? esc(sold[0][0].name) : sold.length + ' leagues') + '</b>. What he could bring back:</p>';
@@ -702,8 +720,8 @@ JS = r"""
     window.__bsFind = FP;   // read by tests/trade_find.py
     document.addEventListener('click', function(e){ var t = e.target; if(!t.closest) return;
       var hd = t.closest('#fpOut .fplh'); if(hd){ FP.open[hd.parentNode.dataset.id] = !hd.parentNode.classList.contains('open'); fpRender(); return; }
-      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], sell = k[1].charAt(0) === 's', o = r && (sell ? r.sells && r.sells[+k[1].slice(1)] : r.offers && r.offers[+k[1]]); if(!l || !o) return;
-      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); if(sell){ st.A = [FP.p.n]; st.B = o.parts.map(function(q){ return q.n; }); } else { st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; } window.__bsRender(); toCalc(); });
+      var go = t.closest('#fpOut .fpgo'); if(!go) return; var k = go.dataset.fp.split('|'), l = S.leagues.filter(function(x){ return x.league_id === k[0]; })[0], r = FP.res[k[0]], sell = k[1].charAt(0) === 's', bk = k[1].charAt(0) === 'b', o = r && (sell ? r.sells && r.sells[+k[1].slice(1)] : bk ? r.backs && r.backs[+k[1].slice(1)] : r.offers && r.offers[+k[1]]); if(!l || !o) return;
+      pick(l, $('#slLeagues').children[S.leagues.indexOf(l)]); if(sell){ st.A = [FP.p.n]; st.B = o.parts.map(function(q){ return q.n; }); } else if(bk){ st.A = [o.give.n]; st.B = [FP.p.n, o.back.n]; } else { st.A = o.parts.map(function(q){ return q.n; }); st.B = [FP.p.n]; } window.__bsRender(); toCalc(); });
     (function(){ var inp = $('#inF'), sug = $('#sugF'), cur = [], k = -1; if(!inp) return;
       function ini(n){ return String(n).split(/[\s-]+/).map(function(w){ return w.charAt(0); }).join('').toLowerCase(); }   // "jsn" finds Jaxon Smith-Njigba
       function show(){ var q = normn(inp.value); if(q.length < 2){ sug.hidden = true; return; } var qi = q.replace(/\s+/g, '');

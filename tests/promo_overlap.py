@@ -38,6 +38,7 @@ if os.path.exists(pj):
     hp = os.path.join(SITE, "index.html")
     if os.path.exists(hp):
         home = open(hp, encoding="utf-8").read(); want = [p for p in pr if S.share_note(p) and str(p.get("status")) != "HIDDEN"]
-        check(all("Also riding" in home for _ in want[:1]) and (("pshare" in home) == bool(want) or not want), f"the home page shows the note exactly when a card has one ({len(want)} this build)")
+        want = [p for p in want if f"/b/w{p.get('week')}-{p.get('slot')}" in home]   # 11/20: a promo whose game is over is LIVE in the sheet until Tuesday's grading but no longer on Today
+        check(all("Also riding" in home for _ in want[:1]) and (("pshare" in home) == bool(want) or not want), f"the home page shows the note exactly when a card on it has one ({len(want)} this build)")
 else: print("SKIP built files (no build here)")
 print(f"\n{ok} passed, {bad} failed"); sys.exit(1 if bad else 0)
