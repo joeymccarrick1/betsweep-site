@@ -377,9 +377,49 @@
    "key": "sat_mb",
    "name": "Model's Best: Air & Ground",
    "type": "model_best",
-   "game": "multi",
+   "game": "BUF-MIA, DET-TB",
    "date": "11/22",
    "legs": [
+    {
+     "pl": "Josh Allen",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -180,
+     "p": 0.5988,
+     "bk": 0.643,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140722",
+      "s": "12399650"
+     },
+     "why": "Scored in 7 of 9; BUF by 10+ in 70% of endings; Miami missing 2 secondary players."
+    },
+    {
+     "pl": "Bucky Irving",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 115,
+     "p": 0.478,
+     "bk": 0.465,
+     "game": "DET-TB",
+     "risk": 1,
+     "fd": {
+      "m": "42.626476321",
+      "s": "58495722"
+     },
+     "why": "TD tier; Hot L3 (124 rush yds/g last 3) + Carries up; price came our way +125 -> +115. Mayfield now Q/likely to start and Bowles wants to 'lessen the load' - weakest leg."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626140722&selectionId[0]=12399650&marketId[1]=42.626476321&selectionId[1]=58495722",
+   "price": "+234",
+   "price_is_estimate": false,
+   "chance": 0.2862,
+   "caption": "Model's Best for Sunday.\nJosh Allen TD | Bucky Irving TD\nTwo games, about +234.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Model's Best for Sunday.\nJosh Allen TD | Bucky Irving TD\nTwo games, about +234.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": "HOOK: Sunday's Model's Best. Two touchdowns, plus 234.\nLEGS: Josh Allen scores. Bucky Irving scores.\nWHY: Buffalo wins by 10 or more in 70 percent of the model's endings.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
+   "post": false,
+   "drafted_legs": [
     {
      "pl": "Caleb Williams",
      "m": "Passing Yards",
@@ -426,28 +466,116 @@
      "why": "Swapped in for Khalil Shakir 4+ catches (tier plus) because Sweep says 'Miami is stingy in the slot... go to the ground' (rule 12). Allen has scored in 7 of 9."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626350386&selectionId[0]=48335563&marketId[1]=42.626476321&selectionId[1]=58495722&marketId[2]=42.626140722&selectionId[2]=12399650",
-   "price": "+826",
-   "price_is_estimate": false,
-   "chance": 0.1033,
-   "caption": "Model's Best for Sunday.\nCaleb Williams 275+ pass yds | Bucky Irving TD | Josh Allen TD\nThree games, three edges, about +826.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Model's Best for Sunday.\nCaleb Williams 275+ pass yds | Bucky Irving TD | Josh Allen TD\nThree games, three edges, about +826.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": [
-    "HOOK: Sunday's Model's Best. Three legs, plus 826.",
-    "LEGS: Caleb two seventy-five plus. Bucky Irving scores. Josh Allen scores.",
-    "WHY: The model has Caleb over 275 at 47 percent. FanDuel prices it at 38.",
-    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
-   ],
-   "post": false
+   "check": "check_weekend FLAG: Caleb Williams 275+ picked up a Rain bad flag (93% rain at Soldier Field); no clean CHI-NO player leg and no clean tier leg in a third game -> shrunk to 2 legs (option: + Jared Goff 300+ +270, same game as Irving, +1137)"
   },
   {
    "slot": "saturday",
    "key": "sat_sgp",
-   "name": "SGP of the Week: Big D Shootout",
+   "name": "SGP of the Week: Lions Off the Bye",
    "type": "lottery",
-   "game": "DAL-TEN",
+   "game": "DET-TB",
    "date": "11/22",
    "legs": [
+    {
+     "pl": "DET -7.5",
+     "m": "Spread",
+     "ln": -7.5,
+     "o": 146,
+     "p": 0.3997,
+     "bk": 0.4065,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626041503",
+      "s": "15325379"
+     },
+     "why": "DET by 10+ is the likeliest ending (36%); off a bye, indoors."
+    },
+    {
+     "pl": "Jared Goff",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -114,
+     "p": 0.5332,
+     "bk": 0.533,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626476346",
+      "s": "12135315"
+     },
+     "why": "Proj 256; 347 avg vs BUF/GB/CAR-type defenses (3 of 3 above his average) - the reason to play him despite TB holding QB1s to 0.89x."
+    },
+    {
+     "pl": "Jared Goff",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -166,
+     "p": 0.6098,
+     "bk": 0.6241,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626476348",
+      "s": "12135315"
+     },
+     "why": "2.0 TDs/g; steady floor (170+ yds every game)."
+    },
+    {
+     "pl": "Emeka Egbuka",
+     "m": "Receptions",
+     "ln": 4.0,
+     "o": -174,
+     "p": 0.5725,
+     "bk": 0.635,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626946509",
+      "s": "87758827"
+     },
+     "why": "Trailing-script volume: Targets up + Role Up; DET allows WR1s 1.13x; 49.7 yds vs PIT/CHI/CIN-type defenses."
+    },
+    {
+     "pl": "Emeka Egbuka",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 230,
+     "p": 0.3051,
+     "bk": 0.303,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626476321",
+      "s": "42217794"
+     },
+     "why": "Clean +230 TD; the Bucs' points in a 31-20 type game."
+    },
+    {
+     "pl": "Over 44.5",
+     "m": "Total",
+     "ln": 44.5,
+     "o": -130,
+     "p": 0.5485,
+     "bk": 0.5652,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626041506",
+      "s": "12194312"
+     },
+     "why": "Model total 46.5."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626041503&selectionId[0]=15325379&marketId[1]=42.626476346&selectionId[1]=12135315&marketId[2]=42.626476348&selectionId[2]=12135315&marketId[3]=42.626946509&selectionId[3]=87758827&marketId[4]=42.626476321&selectionId[4]=42217794&marketId[5]=42.626041506&selectionId[5]=12194312",
+   "price": "+5680",
+   "price_is_estimate": true,
+   "chance": 0.0125,
+   "caption": "SGP of the Week (LOTTERY): Lions Off the Bye.\nDET -7.5 | Goff 250+ & 2 TDs | Egbuka 4+ catches & TD | Over 44.5\nLions roll indoors, Bucs chase. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "SGP of the Week (LOTTERY): Lions Off the Bye.\nDET -7.5 | Goff 250+ & 2 TDs | Egbuka 4+ catches & TD | Over 44.5\nLions roll indoors, Bucs chase. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": "",
+   "post": false,
+   "drafted_legs": [
     {
      "pl": "Dak Prescott",
      "m": "Passing Yards",
@@ -554,23 +682,71 @@
      "why": "Biggest total on the slate; model 31-23.5 = 54.5."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626421960&selectionId[0]=40856415&marketId[1]=42.626320245&selectionId[1]=11889993&marketId[2]=42.626320251&selectionId[2]=42217164&marketId[3]=42.626320276&selectionId[3]=42217164&marketId[4]=42.626320181&selectionId[4]=16579792&marketId[5]=42.626320279&selectionId[5]=26271306&marketId[6]=42.626041860&selectionId[6]=12197179",
-   "price": "+4472",
-   "price_is_estimate": true,
-   "chance": 0.0115,
-   "caption": "SGP of the Week (LOTTERY): Big D Shootout.\nDak 250+ & 3 TDs | Pickens 68+ & 6 catches | Pollard TD & 3 catches | Over 53.5\nThe slate's biggest total. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "SGP of the Week (LOTTERY): Big D Shootout.\nDak 250+ & 3 TDs | Pickens 68+ & 6 catches | Pollard TD & 3 catches | Over 53.5\nThe slate's biggest total. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": null,
-   "post": false
+   "check": "check_weekend FLAG: DAL-TEN weather row HIGH (wind 16, gusts 24; roof can close) + Wind bad flag on every Dak/Pickens leg; Dak 250+ risk 2; Pollard 3+ rec drifted -148 -> -114 (6.4 pts against). Rebuilt in DET-TB (dome; next by shootout/total, all others <20%). Mayfield Q: if he is inactive, drop both Egbuka legs. If Dallas confirms the roof closed: Big D Shootout minus Pollard 3+ rec stands (est +2509)."
   },
   {
    "slot": "sunday_main",
    "key": "sun_favtd",
    "name": "Paydirt Trio",
    "type": "+500",
-   "game": "multi",
+   "game": "BUF-MIA, BAL-CAR, DAL-TEN",
    "date": "11/22",
    "legs": [
+    {
+     "pl": "James Cook",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -180,
+     "p": 0.6417,
+     "bk": 0.643,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140722",
+      "s": "42200635"
+     },
+     "why": "Scored in 8 of 9; Miami allows RB1s 1.41x (rank 5); Sweep says 'play Cook to score'."
+    },
+    {
+     "pl": "Chuba Hubbard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -140,
+     "p": 0.5736,
+     "bk": 0.583,
+     "game": "BAL-CAR",
+     "risk": 0,
+     "fd": {
+      "m": "42.626479868",
+      "s": "22502305"
+     },
+     "why": "6 of 9 with a TD; Reliable (42 of 54 lines hit); AJ Dillon back is the watch."
+    },
+    {
+     "pl": "Tony Pollard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -130,
+     "p": 0.5578,
+     "bk": 0.565,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320181",
+      "s": "16579792"
+     },
+     "why": "Dallas allows RB1s 1.52x (rank 3); wind = run game."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626140722&selectionId[0]=42200635&marketId[1]=42.626479868&selectionId[1]=22502305&marketId[2]=42.626320181&selectionId[2]=16579792",
+   "price": "+372",
+   "price_is_estimate": false,
+   "chance": 0.2053,
+   "caption": "Paydirt Trio. Three backs, three games.\nJames Cook TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +372.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Paydirt Trio. Three backs, three games.\nJames Cook TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +372.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": "HOOK: Sunday's Paydirt Trio. Three touchdowns, plus 372.\nLEGS: Cook scores. Hubbard scores. Pollard scores.\nWHY: Cook has scored in 8 of 9 - Miami gives lead backs 41 percent over their average.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
+   "post": false,
+   "drafted_legs": [
     {
      "pl": "D'Andre Swift",
      "m": "Anytime TD",
@@ -617,19 +793,7 @@
      "why": "Dallas allows RB1s 1.52x their average (rank 3); slate's biggest total."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626331754&selectionId[0]=16602381&marketId[1]=42.626479868&selectionId[1]=22502305&marketId[2]=42.626320181&selectionId[2]=16579792",
-   "price": "+393",
-   "price_is_estimate": false,
-   "chance": 0.1974,
-   "caption": "Paydirt Trio. Three backs, three games.\nD'Andre Swift TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +393.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Paydirt Trio. Three backs, three games.\nD'Andre Swift TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +393.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": [
-    "HOOK: Sunday's Paydirt Trio. Three touchdowns, plus 393.",
-    "LEGS: Swift scores. Hubbard scores. Pollard scores.",
-    "WHY: Dallas gives lead backs 52 percent over their average - third-most in football.",
-    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
-   ],
-   "post": false
+   "check": "check_weekend FLAG: D'Andre Swift ATD carries a bad flag (FD rush yds 2/5) and Kyle Monangai is back off the report; no clean CHI-NO scorer -> James Cook ATD (overlaps Cook's Kitchen single)"
   },
   {
    "slot": "sunday_main",
@@ -662,16 +826,87 @@
    "caption": "Sunday best single: James Cook anytime TD (-185).\nScored in 8 of 9. Miami gives RB1s 41% over their average.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
    "ig_caption": "Sunday best single: James Cook anytime TD (-185).\nScored in 8 of 9. Miami gives RB1s 41% over their average.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
    "script": null,
-   "post": false
+   "post": false,
+   "check": "check_weekend OK"
   },
   {
    "slot": "sunday_main",
    "key": "sun_best",
    "name": "Best Legs: Four Quarters",
    "type": "+500",
-   "game": "multi",
+   "game": "DEN-LV, BUF-MIA, DET-TB, BAL-CAR",
    "date": "11/22",
    "legs": [
+    {
+     "pl": "Bo Nix",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -172,
+     "p": 0.6267,
+     "bk": 0.632,
+     "game": "DEN-LV",
+     "risk": 0,
+     "fd": {
+      "m": "42.626436909",
+      "s": "48103720"
+     },
+     "why": "Proj 225 (avg 192); DEN by 10+ 50%; LV gives QB1s 1.10x."
+    },
+    {
+     "pl": "Josh Allen",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -136,
+     "p": 0.638,
+     "bk": 0.5763,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140749",
+      "s": "16503660"
+     },
+     "why": "Raw model 70.0% vs FanDuel 57.6% - the biggest short-price edge on Sunday; McCord starts for Miami, BUF by 10+ 70%."
+    },
+    {
+     "pl": "Jared Goff",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -166,
+     "p": 0.6098,
+     "bk": 0.6241,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626476348",
+      "s": "12135315"
+     },
+     "why": "2.0 TDs/g at home off the bye; 347 pass yds/g vs BUF/GB/CAR-type defenses."
+    },
+    {
+     "pl": "Chuba Hubbard",
+     "m": "Receptions",
+     "ln": 3.0,
+     "o": -200,
+     "p": 0.6075,
+     "bk": 0.667,
+     "game": "BAL-CAR",
+     "risk": 0,
+     "fd": {
+      "m": "42.626486895",
+      "s": "61448098"
+     },
+     "why": "Proj 3.31, avg 3.4; Reliable (42 of 54 lines hit vs 55% priced)."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626436909&selectionId[0]=48103720&marketId[1]=42.626140749&selectionId[1]=16503660&marketId[2]=42.626476348&selectionId[2]=12135315&marketId[3]=42.626486895&selectionId[3]=61448098",
+   "price": "+560",
+   "price_is_estimate": false,
+   "chance": 0.1481,
+   "caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Chuba Hubbard 3+ catches\nAbout +560.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Chuba Hubbard 3+ catches\nAbout +560.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": "HOOK: Sunday, four legs, plus 560, here's why.\nLEGS: Nix two hundred. Allen two TDs. Goff two TDs. Hubbard three catches.\nWHY: The model has Allen at two touchdown passes 70 percent of the time - FanDuel says 58.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
+   "post": false,
+   "drafted_legs": [
     {
      "pl": "Bo Nix",
      "m": "Passing Yards",
@@ -733,19 +968,7 @@
      "why": "Proj 5.68; 'Hot L3', 'Targets up'; Ferguson OUT."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626436909&selectionId[0]=48103720&marketId[1]=42.626350400&selectionId[1]=48334953&marketId[2]=42.626552938&selectionId[2]=16593717&marketId[3]=42.626421975&selectionId[3]=61449340",
-   "price": "+471",
-   "price_is_estimate": false,
-   "chance": 0.1496,
-   "caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Luther Burden 50+ | Mahomes 2+ pass TDs | Pickens 5+ catches\nAbout +471.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Luther Burden 50+ | Mahomes 2+ pass TDs | Pickens 5+ catches\nAbout +471.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": [
-    "HOOK: Sunday, four legs, plus 471, here's why.",
-    "LEGS: Nix two hundred. Burden fifty plus. Mahomes two TDs. Pickens five catches.",
-    "WHY: Burden has averaged 95 yards against defenses like New Orleans.",
-    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
-   ],
-   "post": false
+   "check": "check_weekend FLAG: Burden 50+ (Rain bad flag), Mahomes 2+ TDs (Wind bad flag, risk 2), Pickens 5+ (Wind bad flag, DAL-TEN weather HIGH) swapped; Nix OK"
   },
   {
    "slot": "snf",
@@ -773,27 +996,33 @@
     {
      "pl": "Christian McCaffrey",
      "m": "Rush + Rec Yards",
-     "ln": 89.0,
-     "o": -114,
-     "p": 0.5427,
-     "bk": 0.5327,
+     "ln": 91.0,
+     "o": -113,
+     "p": 0.5313,
+     "bk": 0.5305,
      "game": "MIN-SF",
      "risk": 0,
      "fd": {
       "m": "42.626102232",
       "s": "14807737"
      },
-     "why": "Proj 93.7, avg 105.6; MIN allows RB1s 1.19x."
+     "why": "Proj 93.7, avg 105.6; MIN allows RB1s 1.19x.",
+     "drafted": {
+      "ln": 89.0,
+      "o": -114,
+      "p": 0.5427
+     }
     }
    ],
    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626099593&selectionId[0]=10609932&marketId[1]=42.626102232&selectionId[1]=14807737",
-   "price": "+156",
+   "price": "+157",
    "price_is_estimate": true,
-   "chance": 0.3234,
-   "caption": "SNF: Christian McCaffrey scores + 89 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "SNF: Christian McCaffrey scores + 89 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "chance": 0.3167,
+   "caption": "SNF: Christian McCaffrey scores + 91 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "SNF: Christian McCaffrey scores + 91 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
    "script": null,
-   "post": false
+   "post": false,
+   "check": "check_weekend OK - main-line market moved up 2 yds (link now adds the new line), under 3 implied pts against"
   },
   {
    "slot": "mnf",
@@ -836,32 +1065,38 @@
     {
      "pl": "Chase Brown",
      "m": "Rush + Rec Yards",
-     "ln": 75.0,
-     "o": -114,
-     "p": 0.5355,
-     "bk": 0.5327,
+     "ln": 77.0,
+     "o": -113,
+     "p": 0.5202,
+     "bk": 0.5305,
      "game": "CIN-WAS",
      "risk": 0,
      "fd": {
       "m": "42.626104589",
       "s": "41072627"
      },
-     "why": "Proj 78.2, 6 of 9 at 75+."
+     "why": "Proj 78.2, 6 of 9 at 75+.",
+     "drafted": {
+      "ln": 75.0,
+      "o": -114,
+      "p": 0.5355
+     }
     }
    ],
    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626103726&selectionId[0]=26809165&marketId[1]=42.626107192&selectionId[1]=11890083&marketId[2]=42.626104589&selectionId[2]=41072627",
-   "price": "+427",
+   "price": "+429",
    "price_is_estimate": true,
-   "chance": 0.1516,
-   "caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 75+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 75+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "chance": 0.1473,
+   "caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 77+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 77+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
    "script": [
     "HOOK: Monday night. Three legs, about plus 425.",
-    "LEGS: Chase scores. Diggs five catches. Chase Brown seventy-five.",
+    "LEGS: Chase scores. Diggs five catches. Chase Brown seventy-seven.",
     "WHY: Cincinnati gives slot receivers the third-most in the league - Diggs lives there.",
     "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
    ],
-   "post": false
+   "post": false,
+   "check": "check_weekend OK - main-line market moved up 2 yds (link now adds the new line), under 3 implied pts against"
   },
   {
    "slot": "mnf",
@@ -949,17 +1184,22 @@
     {
      "pl": "Chase Brown",
      "m": "Rush + Rec Yards",
-     "ln": 75.0,
-     "o": -114,
-     "p": 0.5355,
-     "bk": 0.5327,
+     "ln": 77.0,
+     "o": -113,
+     "p": 0.5202,
+     "bk": 0.5305,
      "game": "CIN-WAS",
      "risk": 0,
      "fd": {
       "m": "42.626104589",
       "s": "41072627"
      },
-     "why": "Proj 78.2."
+     "why": "Proj 78.2.",
+     "drafted": {
+      "ln": 75.0,
+      "o": -114,
+      "p": 0.5355
+     }
     },
     {
      "pl": "Over 52.5",
@@ -993,17 +1233,18 @@
     }
    ],
    "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626338361&selectionId[0]=40905950&marketId[1]=42.626103726&selectionId[1]=26809165&marketId[2]=42.626338364&selectionId[2]=61354865&marketId[3]=42.626103726&selectionId[3]=10288139&marketId[4]=42.626103757&selectionId[4]=41161339&marketId[5]=42.626104589&selectionId[5]=41072627&marketId[6]=42.626039163&selectionId[6]=12194314&marketId[7]=42.626338363&selectionId[7]=102913941",
-   "price": "+6537",
+   "price": "+6564",
    "price_is_estimate": true,
-   "chance": 0.0076,
-   "caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 75+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 75+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "chance": 0.0074,
+   "caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 77+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 77+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
    "script": null,
-   "post": false
+   "post": false,
+   "check": "check_weekend OK - main-line market moved up 2 yds (link now adds the new line), under 3 implied pts against"
   }
  ],
  "not_drafted": {
-  "LAC_NYJ": "props not posted yet",
+  "LAC_NYJ": "props posted by Sat; no clean leg for a Sunday promo (every LAC/NYJ TD flagged); not used",
   "PHI_PIT": "HIGH weather, no clean leg",
   "snf_lottery": "low-confidence game (rule 13)"
  },
@@ -1014,6 +1255,20 @@
    "thu_single": "OK",
    "thu_500": "FLAG swapped",
    "thu_lot": "FLAG swapped"
+  },
+  "check_weekend": {
+   "run": "2026-11-21 ~1:30 PM CT, builder Sat 11/21 12:55 PM CT, feeds 19:10 UTC",
+   "sweep_sun": "none: only Josh Allen 2+ pass TDs (-136, raw 70.0% vs 57.6%) qualifies; no second model-liked leg -> no Sweep",
+   "sweep_mon": "none: no CIN-WAS leg at -130..-199 the model likes (only Chase U8.5 rec, an under, no unders call)",
+   "sat_mb": "FLAG swapped (2 legs)",
+   "sat_sgp": "FLAG rebuilt DET-TB",
+   "sun_favtd": "FLAG swapped",
+   "sun_single": "OK",
+   "sun_best": "FLAG swapped 3 legs",
+   "either_or": "CHI-NO pair dropped (Swift bad flag + Monangai back, Burden rain); LAC-NYJ props now posted but no clean scorer -> no pair",
+   "snf_mini": "OK",
+   "mnf_500": "OK",
+   "mnf_pmm": "OK"
   }
  }
 }

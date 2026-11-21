@@ -5,6 +5,54 @@ Builder data: Wed 11/18 5:53 PM CT. Feeds mirrored 11/19 02:10 UTC. Nothing post
 Rule 3 trial shape needs 3 legs at -130 to -199 the model likes (Model's Best short pick shown 65%+, or raw model 8+ pts over FanDuel). After the low-risk filter (risk 0-1, no bad flag, overs, no backup-QB legs) **zero legs on the whole Week 11 board qualify**. The builder's own Sweep pool (`sp`) has 2 legs - Dalton Kincaid 25+ rec yds (risk 10) and Isaac TeSlaa 10+ rec yds (risk 9) - both High risk. The only clean legs the raw model rates 8+ over price are unders with Role-Up/Hot-L3/Targets-up flags (blocked by the 11/13 unders rule) or Kittle U5.5 rec (no Sweep says unders call). Per the recipe: a day without a Sweep beats a forced one.
 Your call (closest miss): **Tank Dell 30+ rec yds -178** (Thu) - raw model 70.8% vs FanDuel 64.0% (+6.8, short of +8), risk 0, MHJ OUT. Sunday's closest: Rome Odunze 40+ rec yds -154 (+4.5). Monday: none within 5 pts.
 
+## CHECK WEEKEND - Sat 11/21 ~1:30 PM CT (builder Sat 12:55 PM CT, ESPN feeds 1:10 PM CT)
+Nothing from the weekend is posted (promos.json: only Thursday's two, both graded). No inactives yet (Sunday check covers them). Weather: CHI-NO 94% rain (every Bears pass/catch leg now carries a Rain bad flag); DAL-TEN row HIGH (wind 16, gusts 24, roof can close) and ARI-KC wind 15/25 put a Wind bad flag on Dak, Pickens and Mahomes. Mayfield (TB) Questionable, Bowles expects him to start. Kyler Murray OUT (MIN) confirmed.
+- **Daily Sweep Sun: still none.** One leg qualifies: Josh Allen 2+ pass TDs -136 (raw model 70.0% vs FanDuel 57.6%, risk 0). No second model-liked leg at -130 to -199. **Mon: none** (only Chase U8.5 rec, an under with no unders call).
+- **Model's Best: Air & Ground - FLAG -> 2 legs.** Caleb Williams 275+ picked up the Rain bad flag. No clean CHI-NO player leg and no clean tier leg in a third game (Mendoza 200+ has a Losing-side bad flag, 2-game sample). Irving OK (+125 -> +115, came our way) but his why changed: Mayfield likely back, Bowles wants to "lessen the load".
+- **SGP of the Week: Big D Shootout - FLAG -> rebuilt in DET-TB.** HIGH weather row + Wind bad flag on all 4 Dak/Pickens legs; Dak 250+ risk 2; Pollard 3+ rec -148 -> -114 (6.4 pts against). Every other Sunday game has shootout under 20%; DET-TB is the dome among the 19% / 46.5 ties. If Dallas confirms the roof closed, Big D minus Pollard 3+ rec stands (est +2509) - your call.
+- **Paydirt Trio - FLAG -> swapped.** Swift ATD has a bad flag (FD rush yds 2/5) and Monangai is back; no clean CHI-NO scorer. Cook ATD in (highest-p clean TD).
+- **Cook's Kitchen (single): OK** (-185 -> -180).
+- **Best Legs: Four Quarters - FLAG -> 3 legs swapped.** Burden 50+ (Rain), Mahomes 2+ TDs (Wind, risk 2), Pickens 5+ (Wind + HIGH row; it had shortened -188 -> -220). Nix 200+ OK.
+- **Either/Or:** CHI-NO Swift/Burden pair dropped (both flagged). BUF-MIA, JAX-NYG, DET-TB pairs OK (DET-TB depends on Mayfield). LAC-NYJ props are up now, but every LAC/NYJ scorer is flagged, so no pair.
+- **Mexico City McCaffrey: OK.** The main-line market moved 89 -> 91 yds at -113 (about 1 pt against); the link now adds 91+.
+- **Monday Stripes: OK. PISS MISSILE MONDAY: OK.** Chase Brown's main line moved 75 -> 77 (about 1.5 pts against); the links now add 77+. Every other leg is within 1 pt.
+
+### Model's Best: Air & Ground (check_weekend) - +234 (28.6%)
+- Josh Allen ATD (-180, BetSweep 59.9%, FD 64.3%, risk 0) - scored in 7 of 9; BUF by 10+ 70%.
+- Bucky Irving ATD (+115, BetSweep 47.8%, FD 46.5%, risk 1) - TD tier; Hot L3 124 rush yds/g, Carries up. Weakest leg (load management, Mayfield back).
+- Option: + Jared Goff 300+ (+270, plus tier, raw 32.4% vs 27.0%) = +1137 (7.9%), but it's the same game as Irving.
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626140722&selectionId[0]=12399650&marketId[1]=42.626476321&selectionId[1]=58495722
+- Argue against it: Allen's goal-line work can go to Cook, and Irving's carries could be cut. Two games and two scripts, so no single thing sinks both.
+
+### SGP of the Week: Lions Off the Bye (check_weekend) - +5680 est. SGP (1.2% independent floor)  LOTTERY
+- DET -7.5 (+146, 40.0%) | Jared Goff 250+ pass yds (-114, 53.3%) | Jared Goff 2+ pass TDs (-166, 61.0%) | Emeka Egbuka 4+ rec (-174, 57.2%) | Emeka Egbuka ATD (+230, 30.5%) | Over 44.5 (-130, 54.9%)
+- Script: DET by 10+ (top ending, 36%). Lions roll indoors off the bye, Tampa chases through Egbuka. TB holds QB1s to 0.89x, but Goff has averaged 347 yds against BUF/GB/CAR-type defenses (3 of 3 above his average). Legs multiplied +6703. On 5-6 leg SGPs FanDuel has paid ~68% of the multiplied price.
+- Low confidence (rule 13): Mayfield is Q. If he's inactive, drop both Egbuka legs or skip.
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626041503&selectionId[0]=15325379&marketId[1]=42.626476346&selectionId[1]=12135315&marketId[2]=42.626476348&selectionId[2]=12135315&marketId[3]=42.626946509&selectionId[3]=87758827&marketId[4]=42.626476321&selectionId[4]=42217794&marketId[5]=42.626041506&selectionId[5]=12194312
+X: SGP of the Week (LOTTERY): Lions Off the Bye. / DET -7.5 | Goff 250+ & 2 TDs | Egbuka 4+ catches & TD | Over 44.5 / Lions roll indoors, Bucs chase. Small stake. / Comment @Playbook to tail this on your book / 21+ | gamble responsibly
+
+### Paydirt Trio (check_weekend) - +372 (20.5%)
+- James Cook ATD (-180, 64.2%) - 8 of 9; Sweep says "play Cook to score". | Chuba Hubbard ATD (-140, 57.4%) - unchanged. | Tony Pollard ATD (-130, 55.8%) - unchanged; wind = run game.
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626140722&selectionId[0]=42200635&marketId[1]=42.626479868&selectionId[1]=22502305&marketId[2]=42.626320181&selectionId[2]=16579792
+- Overlap: Cook is also the best single - post one as the core.
+Video: HOOK Sunday's Paydirt Trio. Three touchdowns, plus 372. / LEGS Cook scores. Hubbard scores. Pollard scores. / WHY Cook has scored in 8 of 9 - Miami gives lead backs 41 percent over their average. / CALL Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.
+
+### Best Legs: Four Quarters (check_weekend) - +560 (14.8%)
+- Bo Nix 200+ pass yds (-172, 62.7%) - unchanged. | Josh Allen 2+ pass TDs (-136, 63.8%; raw 70.0% vs FD 57.6%) | Jared Goff 2+ pass TDs (-166, 61.0%) | Chuba Hubbard 3+ rec (-200, 60.8%; Reliable 42/54)
+- Link: https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626436909&selectionId[0]=48103720&marketId[1]=42.626140749&selectionId[1]=16503660&marketId[2]=42.626476348&selectionId[2]=12135315&marketId[3]=42.626486895&selectionId[3]=61448098
+- Argue against it: four games, no shared script. Weakest is Hubbard 3+ (raw model 54.8% vs a -200 price). Goff 2+ TDs is also in the SGP, and Allen/Cook/Hubbard each appear in two promos.
+Video: HOOK Sunday, four legs, plus 560, here's why. / LEGS Nix two hundred. Allen two TDs. Goff two TDs. Hubbard three catches. / WHY The model has Allen at two touchdown passes 70 percent of the time - FanDuel says 58. / CALL Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.
+
+Slip Log rows (replacing the weekly rows for these four; Result empty):
+```
+2026-11-22 | 11 | BUF-MIA, DET-TB | Model's Best: Air & Ground | Josh Allen ATD | Bucky Irving ATD | 234 | model_best | promo desk check_weekend |  | 
+2026-11-22 | 11 | DET-TB | SGP of the Week: Lions Off the Bye | DET -7.5 | Jared Goff 250+ pass yds | Jared Goff 2+ pass TDs | Emeka Egbuka 4+ rec | Emeka Egbuka ATD | Over 44.5 (DET-TB) | 5680 | lottery | promo desk check_weekend |  | SGP price estimated
+2026-11-22 | 11 | BUF-MIA, BAL-CAR, DAL-TEN | Paydirt Trio | James Cook ATD | Chuba Hubbard ATD | Tony Pollard ATD | 372 | +500 | promo desk check_weekend |  | 
+2026-11-22 | 11 | DEN-LV, BUF-MIA, DET-TB, BAL-CAR | Best Legs: Four Quarters | Bo Nix 200+ pass yds | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Chuba Hubbard 3+ rec | 560 | +500 | promo desk check_weekend |  | 
+```
+Assumed: the Wind/Rain bad flags in the builder's `w` and the weather rows count as leg-filter failures even though the AT&T roof can close.
+Skipped: Caleb Williams, Burden, Swift, Odunze (CHI rain/flags); Dak, Pickens, Mahomes (wind); Pollard 3+ rec (drift); Mendoza 200+ (Losing side, 2 games); Shakir 25+ (MIA holds WR1s 0.84x, -34% vs similar defenses); Bryce Young 225+ (raw 49% vs 66%).
+
 ## CHECK THURSDAY - Thu 11/19 ~9:30 AM CT (builder Thu 8:02 AM CT, ESPN feeds 9:20 AM CT)
 IND @ HOU 7:15 PM CT. Roof can close, weather LOW. No inactives yet. Nothing posted. Low-confidence game (rule 13): model total 43.5 = FanDuel 43.5, Sauce Gardner Q -> slips shrunk.
 - **Daily Sweep Thu: still none.** Tank Dell 30+ (-174) now qualifies (raw 74.4% vs FanDuel 63.5%) and is the Sweep says leg, but it is the only one - no second model-liked leg, no clean Houston TD for a pair.
