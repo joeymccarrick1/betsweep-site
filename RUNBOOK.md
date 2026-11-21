@@ -2460,3 +2460,15 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   37 pass (11:00 PM).
 - Market coverage check: still "not run yet", and no extra-market rows in the links mirror. Next chance is Sunday morning's refresh.
 - Still ungraded: Thursday's Daily Sweep (no Week 11 rows in the game log yet).
+
+## 11/21 11:20 AM-12:00 PM: "Not played yet" on Thursday's slips (owner 11:14 AM)
+- **Cause:** My BetSweep grades saved slips from /data/box-w<W>.json, which build_mydata.py writes from the sheet's game log - and the
+  log gets a week on Tuesday. With no file the label was "Not played yet" for every slip of the week, Thursday's included.
+- **Fix (live):** account.py `espnBox(w)`: with no file for the week, the page reads ESPN's scoreboard for that week and the box score of
+  each FINISHED game and grades from that (names matched without dots / Jr. / III through a Proxy; a game needs 10+ stat lines to count).
+  Unplayed and in-progress games are left out, so nothing grades early; a player with no stat line stays open until Tuesday (he may have
+  had no catch). One read per week per page load (`BOXP`). tests/me_livebox.py 6 (stand-in ESPN), in the full set (38).
+- **Blocked, needs the owner's yes:** pending/feeds-finals.patch adds finals.json to .github/feeds.py on main (the feed job keeps each
+  finished game's final box score; the live log stops when a game stops being live, so no FINAL box was ever stored - Thursday's last
+  snapshot was 3:04 left). With it the build could write box-w<W> the same night and the promo / hunch graders would not wait for
+  Tuesday. The push to main was refused without his say-so; the clone was restored.

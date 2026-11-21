@@ -256,7 +256,31 @@ ME_JS = r"""
   function odds(o){ o = +o; return isNaN(o) ? '' : (o > 0 ? '+' + o : String(o)); }
   var NICK = {"Cardinals":"ARI","Falcons":"ATL","Ravens":"BAL","Bills":"BUF","Panthers":"CAR","Bears":"CHI","Bengals":"CIN","Browns":"CLE","Cowboys":"DAL","Broncos":"DEN","Lions":"DET","Packers":"GB","Texans":"HOU","Colts":"IND","Jaguars":"JAX","Chiefs":"KC","Raiders":"LV","Chargers":"LAC","Rams":"LA","Dolphins":"MIA","Vikings":"MIN","Patriots":"NE","Saints":"NO","Giants":"NYG","Jets":"NYJ","Eagles":"PHI","Steelers":"PIT","49ers":"SF","Seahawks":"SEA","Buccaneers":"TB","Titans":"TEN","Commanders":"WAS"};
   var BOX = {};   // week -> {box, games} once fetched
-  function getBox(w){ if (BOX[w] !== undefined) return Promise.resolve(BOX[w]); return fetch('/data/box-w'+w+'.json').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }).then(function(d){ BOX[w] = d; return d; }); }
+  // 11/21 (owner: "Why haven't the box scores hit yet for Thursday night's game? It's saying game hasn't been played yet on daily sweep and
+  // thievery"): /data/box-w<W>.json is written from the sheet's game log, which gets a week on Tuesday. Until that file exists the page
+  // reads the week's FINISHED games from ESPN itself (scoreboard, then each final's box score) and grades from that: same nine numbers per
+  // player, same game scores. A game still in progress or not yet played is left out, so nothing is graded early; a player with no stat
+  // line stays open until Tuesday's file (he may simply have had no catch). Names are matched without dots, apostrophes or Jr. / III.
+  function nrm(n){ return String(n || '').toLowerCase().replace(/[.'’]/g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/\s+/g, ' ').trim(); }
+  var EAB = {WSH: 'WAS', LAR: 'LA', JAC: 'JAX'};
+  function espnBox(w){ var S = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl', num = function(v){ var x = parseFloat(String(v).split('/')[0]); return isFinite(x) ? x : 0; };
+    return fetch(S + '/scoreboard?seasontype=2&week=' + w, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(sb){
+      var fin = ((sb && sb.events) || []).filter(function(ev){ var t = (ev.status || {}).type || {}; return t.state === 'post' && t.completed !== false; }); if (!fin.length) return null;
+      var d = {week: w, box: {}, games: {}, final: false, live: true}, idx = {};
+      return Promise.all(fin.map(function(ev){ var c = (ev.competitions || [])[0] || {}, by = {}; (c.competitors || []).forEach(function(x){ by[x.homeAway] = x; });
+        var a = by.away && by.away.team ? (EAB[by.away.team.abbreviation] || by.away.team.abbreviation) : null, h = by.home && by.home.team ? (EAB[by.home.team.abbreviation] || by.home.team.abbreviation) : null;
+        return fetch(S + '/summary?event=' + ev.id, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(sm){ if (!sm) return; var n0 = Object.keys(idx).length;
+          (((sm.boxscore || {}).players) || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || [];
+            (cat.athletes || []).forEach(function(at){ var nm = at.athlete && at.athlete.displayName; if (!nm) return; var st = {}; keys.forEach(function(k, i){ st[k] = (at.stats || [])[i]; });
+              var row = idx[nrm(nm)] = idx[nrm(nm)] || [0, 0, 0, 0, 0, 0, 0, 0, 0];
+              if (cat.name === 'passing'){ row[0] = num(st.passingYards); row[1] = num(st.passingTouchdowns); row[2] = num(st.interceptions); }
+              if (cat.name === 'rushing'){ row[3] = num(st.rushingYards); row[4] = num(st.rushingTouchdowns); }
+              if (cat.name === 'receiving'){ row[5] = num(st.receptions); row[6] = num(st.receivingYards); row[7] = num(st.receivingTouchdowns); row[8] = num(st.longReception); } }); }); });
+          if (a && h && Object.keys(idx).length - n0 >= 10) d.games[a + '-' + h] = [num(by.away.score), num(by.home.score)]; }).catch(function(){}); })).then(function(){
+        if (!Object.keys(d.games).length) return null;
+        d.box = (typeof Proxy === 'function') ? new Proxy(idx, {get: function(t, k){ return typeof k === 'string' ? t[nrm(k)] : undefined; }}) : idx; return d; }); }).catch(function(){ return null; }); }
+  var BOXP = {};   // one read per week however many slips ask at once
+  function getBox(w){ if (BOX[w] !== undefined) return Promise.resolve(BOX[w]); if (BOXP[w]) return BOXP[w]; return BOXP[w] = fetch('/data/box-w'+w+'.json').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }).then(function(d){ return d || espnBox(w); }).then(function(d){ BOX[w] = d; return d; }); }
   // owner 11/5 ("your CLV"): closing FanDuel prices per leg key (data/close-w<W>.json from build_mydata.py) + the build prices as the fallback for slips saved before prices were stored
   var CLOSE = {};
   function getClose(w){ if (CLOSE[w] !== undefined) return Promise.resolve(CLOSE[w]); return fetch('/data/close-w'+w+'.json').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }).then(function(d){ CLOSE[w] = d; return d; }); }
