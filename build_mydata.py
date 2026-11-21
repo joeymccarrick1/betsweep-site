@@ -75,8 +75,39 @@ try:
     for w in graded: json.dump({"week": w, "legs": graded[w], "actual": actual[w]}, open(os.path.join(OUT, f"graded-w{w}.json"), "w"), separators=(",", ":"))
     print("wrote out/data/graded-w*.json: " + (", ".join(f"wk {w} {len(graded[w])} legs" for w in sorted(graded)) or "no graded legs in the feed"))
 except Exception as e: print("note: graded-w*.json not written:", e)
+# ---- 11/21 (owner: "Why haven't the box scores hit yet for Thursday night's game?"): the sheet's game log gets a week on Tuesday. Until it
+# does, the week's FINISHED games come from the feeds branch (finals.json, .github/feeds.py: each final's box score, read once), so
+# /data/box-w<W>.json exists the same night. ESPN's names are matched to the model's (dots, apostrophes and Jr. / III ignored). A week
+# built this way is marked "final": false; the sheet's rows replace it when they land.
+PARTIAL = set()
+try:
+    import re, subprocess, sys
+    def _nn(x): return re.sub(r"\s+(jr|sr|ii|iii|iv|v)$", "", re.sub(r"[.'\u2019]", "", str(x)).strip().lower())
+    try: fin = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/finals.json"], stderr=subprocess.DEVNULL))
+    except Exception:
+        clone = next((a for a in sys.argv[1:] if os.path.isdir(os.path.join(a, ".git"))), None)
+        subprocess.run(["git", "-C", clone, "fetch", "-q", "--depth", "1", "origin", "feeds"], check=True)
+        fin = json.loads(subprocess.check_output(["git", "-C", clone, "show", "FETCH_HEAD:finals.json"], stderr=subprocess.DEVNULL))
+    model = {}
+    for r in gl[1:]:
+        if len(r) > 1 and r[1]: model.setdefault(_nn(r[1]), r[1].strip())
+    try:
+        for r in vals("eligible.json")[1:]:
+            for c in r[:3]:
+                if isinstance(c, str) and " " in c: model.setdefault(_nn(c), c.strip())
+    except Exception: pass
+    have = set(box)
+    for eid, gm in (fin.get("games") or {}).items():
+        try: w = int(gm.get("week"))
+        except Exception: continue
+        if w in have or len(gm.get("box") or {}) < 10: continue           # the sheet already logged this week, or not a real box score
+        a, h = ALIAS.get(gm["away"], gm["away"]), ALIAS.get(gm["home"], gm["home"])
+        games[w][f"{a}-{h}"] = [num(gm.get("as")), num(gm.get("hs"))]; PARTIAL.add(w)
+        for n, row in gm["box"].items(): box[w][model.get(_nn(n), n)] = [num(x) for x in row][:9]
+    if PARTIAL: print("box from the finals feed (sheet has no rows yet): " + ", ".join(f"wk {w}: {len(games[w])} game(s), {len(box[w])} players" for w in sorted(PARTIAL)))
+except Exception as e: print("note: finals feed not used:", e)
 weeks = sorted(box)
 for w in weeks:
-    json.dump({"week": w, "box": box[w], "games": games.get(w, {}), "final": True}, open(os.path.join(OUT, f"box-w{w}.json"), "w"), separators=(",", ":"))
+    json.dump({"week": w, "box": box[w], "games": games.get(w, {}), "final": w not in PARTIAL}, open(os.path.join(OUT, f"box-w{w}.json"), "w"), separators=(",", ":"))
 json.dump({"weeks": weeks}, open(os.path.join(OUT, "weeks.json"), "w"))
 print(f"wrote out/data/box-w{{{','.join(str(w) for w in weeks)}}}.json: " + ", ".join(f"wk {w} {len(box[w])} players / {len(games.get(w, {}))} finals" for w in weeks))

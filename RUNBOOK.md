@@ -2493,3 +2493,18 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   gets a stat line again. Not automated: adding it to the hourly job is a change on main (ask).
 - **Other sports:** the groundwork is on the `multisport` branch since 11/15 (NBA, EPL, college football: shared core, baselines,
   walk-forward results; sports/README.md). MLB has nothing yet. Nothing from it is on the site.
+
+## 11/21 12:25-12:50 PM: the two changes on main the owner approved ("Yes push it. Yes change the hourly job.")
+- **finals.json** (site main .github/feeds.py, pushed 12:23 PM): each finished game on this week's scoreboard is read once and kept 9
+  days - nine numbers a player, the box-w shape. build_mydata.py (now `build_mydata.py {clone}`) writes /data/box-w<W>.json from it for a
+  week the sheet has not logged, `"final": false`, ESPN names mapped to the model's; Tuesday's sheet rows replace it. First file: IND 3
+  at HOU 26, 63 players. My BetSweep uses the file when it exists and its own ESPN read (`espnBox`) only when it does not.
+- **Thursday graded from the final box:** Thievery 1 of 6 (Montgomery 107, no TD; Taylor 21; Warren 22; Dell 27). Daily Sweep 2 of 5
+  (Dell 27, Burks 0, Taylor 21 missed). Promo rows 48-49 Result = Missed (status left LIVE for the Tuesday pass); slip log 61-62 LOST
+  with reasons.
+- **Stale samples are automatic** (site main .github/avail_auto.py `stale()`, pushed 12:26 PM; RUNBOOK 2a-iii is now a check, not a
+  chore): RB / WR / TE, Weekly Active with a projection, two games or fewer on the log, no stat line in the team's last 2+ games, no
+  availability row of any kind this week, team not kicked off -> a new row, Forced Role DEPTH / CONTEXT, reason "STALE SAMPLE (auto):".
+  At most 8 a run, outside the 10-change cap on rule-outs; the report carries `stale`. Replaying this morning's sheet found exactly the
+  five entered by hand. First live run 12:27 PM: nothing to write, `stale: []`. `--selftest` has three stale cases.
+- **NBA and EPL stay on hold** (owner 12:22 PM). MLB groundwork has not been started.

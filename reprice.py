@@ -64,7 +64,7 @@ BUILD = [
     ("missed by one", "badbeats.py {Wprev}", "soft"),
     ("fantasy", "build_team.py", "soft"),
     ("dfs", "build_dfs.py", "soft"),
-    ("my data", "build_mydata.py", "soft"),
+    ("my data", "build_mydata.py {clone}", "soft"),
     ("trade", "build_trade.py", "soft"),
     ("dossier", "build_dossier.py", "soft"),
     ("teams", "build_teams.py", "soft"),
