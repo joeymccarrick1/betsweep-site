@@ -2515,3 +2515,11 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   Close (and Remove ruled-out legs) worked only by luck. The box is now rewritten only when its text changes (`el.__h`), and the class
   only when it differs. Close is 44px tall (was 37).
 - tests/risk_close.py 3 (stand-in risk feed; fails on the copy published before this: 4 redraws in 2.6 s). In the full set (40).
+
+## 11/21 1:10-1:35 PM: saving a slip is obvious now (owner 1:07 PM)
+- build_builder.py `saveFlow()` / `svPop()`: Save slip opens a centred box (`.svpop`, the old `.namebox` class kept on the inner box) -
+  leg count and FanDuel price, a name field, Cancel / Save - then the same box says **Saved** with a green tick, the name, where it lives
+  and a My BetSweep link. "Already saved" and "Nothing to save yet" use the same box. A tap outside, Esc, Cancel or Done closes it.
+- The open slip on a phone has its own full-width red **Save** (`#savepin`) in the pinned row with the sportsbook buttons, so nothing
+  has to be scrolled to; it is hidden when the slip is closed and on desktop (where Save slip is already in view).
+- tests/builder_save_pop.py 14 (phone, light and dark; a two-leg slip staged through bs_slipk_w<W>). Full set is 41.

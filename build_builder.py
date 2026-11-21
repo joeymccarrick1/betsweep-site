@@ -1351,6 +1351,13 @@ details.gdone>.gcard{margin:0 10px 10px}
 .saved tbody .ops button,.saved tbody .ops a{margin-left:0;padding:6px 12px;font-size:12.5px} .saved tbody .ops button.del{margin-left:auto}
 .saved tbody tr.lgrow{display:block} .saved tbody tr.lgrow td{display:block;padding:0 0 10px}
 .saved tbody tr.cur{background:color-mix(in srgb,var(--red) 8%,transparent)} .saved tbody tr.cur td{background:none}
+#savepin{display:none}
+.svpop{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:18px;background:rgba(8,12,20,.62)}
+.svpop .svbox{display:block;width:100%;max-width:380px;box-sizing:border-box;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.45);text-align:left}
+.svpop h3{margin:0 0 4px;font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;color:var(--ink)} .svpop p{margin:0 0 14px;color:var(--mute);font-size:15px;line-height:1.45} .svpop p b{color:var(--ink)}
+.svpop label{display:block;font-size:13px;font-weight:700;color:var(--mute)} .svpop input{display:block;width:100%;box-sizing:border-box;margin:6px 0 16px;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.svpop .svbt{display:flex;gap:10px;justify-content:flex-end} .svpop .svbt button,.svpop .svbt a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer}
+.svpop .svbt .pri{background:var(--red);border-color:var(--red);color:#fff;flex:1} .svpop .svok{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--good);color:#fff;font-size:28px;font-weight:700;margin:0 0 12px}
 .saved .namebox{display:flex;gap:6px;margin:6px 0}.saved .namebox input{flex:1;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}
 .quick{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .quick button{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
@@ -1392,6 +1399,7 @@ details.gdone>.gcard{margin:0 10px 10px}
   @media (max-width:760px){ body > .slipwrap > .panel{zoom:1.1} }
   .slipwrap .slipbar{position:sticky;top:0;z-index:4;background:var(--card);border-bottom:1px solid var(--line);font-size:14px}
   .slipwrap.open .slipbar::after{content:"Close \25BE";font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
+  .slipwrap.open #savepin{display:flex;align-items:center;justify-content:center;flex:1 1 100%;min-height:44px;padding:0 18px;font-size:15px;font-weight:700;background:var(--red);border:1px solid var(--red);color:#fff;border-radius:8px}
   .slipwrap.open .acts.books3{position:sticky;bottom:0;z-index:3;background:var(--card);grid-column:1/-1;margin:0;padding:10px 14px;box-shadow:0 -8px 14px rgba(0,0,0,.14)}
   .lg{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pz who who" "mk mk add";row-gap:6px}   /* owner 10/28: name + game on top; then the arrow, the prop, its dots and matchup, + Add; the prices; model / book / edge */
   .lg > .pz{grid-area:pz} .lg > .who{grid-area:who} .lg > button{grid-area:add;align-self:start;margin-top:2px} .lg > .nums:not(.bk){display:none} .lg > .mk .d,.lg > .mk small.bks,.lg > .who .dprow{display:none} .lg > .mk .m{display:inline}
@@ -2514,15 +2522,29 @@ BUILDER_JS = r"""
       return '<tr class="' + (isCur ? 'cur' : '') + '"><td class="nm"><b>' + esc(s.name || 'Slip') + (s.promo ? ' <small style="display:inline">· promoted</small>' : '') + '</b><button type="button" class="lgt' + (SLOPEN[s.id] ? ' on' : '') + '" data-tog="' + esc(s.id) + '" aria-expanded="' + (SLOPEN[s.id] ? 'true' : 'false') + '">' + s.keys.length + ' legs <i>▾</i></button>' + (pr && pr.missing ? '<small>' + pr.missing + ' no longer priced' + '</small>' : '') + '</td>'
         + '<td class="r">' + (pr ? decToAm(pr.bookDec) : (s.odds ? am(s.odds) : '—')) + '</td><td class="r">' + (pr ? pc(pr.fair) : '—') + '</td><td class="r e ' + (e!=null && e>=0 ? 'up' : 'dn') + '">' + (e!=null ? (e>=0?'+':'') + (e*100).toFixed(1) : '—') + '</td><td class="r">' + (pr ? '$' + (10*pr.bookDec).toFixed(2) : '—') + '</td>'
         + '<td class="ops">' + (pr && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (s.fd ? '<a class="fd" href="' + esc(s.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (pr && pr.ls.length === s.keys.length && dkUrl(pr.ls) ? '<a class="fd dk" href="' + esc(dkUrl(pr.ls)) + '" target="_blank" rel="noopener">DK</a>' : '') + (pr && pr.ls.length === s.keys.length && hrUrl(pr.ls) ? '<a class="fd hr" href="' + esc(hrUrl(pr.ls)) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(s.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(s.id) + '">×</button></td></tr>' + '<tr class="lgrow"' + (SLOPEN[s.id] ? '' : ' hidden') + '><td colspan="6"><ul class="sllegs">' + s.keys.map(slLeg).join('') + '</ul></td></tr>'; }).join('') + '</tbody></table>'; }
-  $('#savesl').addEventListener('click', function(){ var ks = curKeys(); if(!ks.length){ $('#fdnote').textContent = 'Add a leg or two first.'; return; }
+  // 11/21 (owner: "when you save a betslip when the betslip is open there's a popup or something more obvious instead of having to scroll
+  // down and save"): Save used to drop a small name box above the Saved list, below the fold of the open slip, and confirm with one line
+  // of grey text. It now opens a box in the middle of the screen - name, Save, then a plain "Saved" with where to find it - and the open
+  // slip on a phone has its own Save button pinned beside FanDuel.
+  function svPop(html){ var old = document.querySelector('.svpop'); if(old) old.remove();
+    var ov = document.createElement('div'); ov.className = 'svpop'; ov.innerHTML = '<div class="svbox namebox" role="dialog" aria-modal="true" aria-label="Save this slip">' + html + '</div>'; document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if(e.target === ov || (e.target.closest && e.target.closest('.cx, .dn'))) ov.remove(); });
+    document.addEventListener('keydown', function esc0(e){ if(e.key === 'Escape'){ ov.remove(); document.removeEventListener('keydown', esc0); } });
+    return ov; }
+  function saveFlow(){ var ks = curKeys(); if(!ks.length){ $('#fdnote').textContent = 'Add a leg or two first.'; svPop('<h3>Nothing to save yet</h3><p>Add a leg or two first.</p><div class="svbt"><button type="button" class="pri dn">OK</button></div>'); return; }
     var cg = gmapOf(Object.keys(sel));   // which game each shared total key means in this slip
-    var all = savedSlips(), dup = all.filter(function(s){ return sameSet(s.keys, ks) && JSON.stringify(s.g || {}) === JSON.stringify(cg); })[0]; if (dup){ $('#fdnote').textContent = 'Already saved as "' + (dup.name||'Slip') + '".'; renderSaved(); return; }
-    var box = $('#savedList'); var pr = priceKeys(ks, cg); var dflt = 'Slip ' + (all.length + 1) + (pr ? ' · ' + decToAm(pr.bookDec) : '');
-    var nb = document.createElement('div'); nb.className = 'namebox'; nb.innerHTML = '<input type="text" value="' + esc(dflt) + '" aria-label="slip name" maxlength="60"><button type="button" class="pri">Save</button><button type="button" class="cx">Cancel</button>'; box.parentNode.insertBefore(nb, box);
-    var inp = nb.querySelector('input'); inp.focus(); inp.select();
+    var all = savedSlips(), dup = all.filter(function(s){ return sameSet(s.keys, ks) && JSON.stringify(s.g || {}) === JSON.stringify(cg); })[0];
+    if (dup){ $('#fdnote').textContent = 'Already saved as "' + (dup.name||'Slip') + '".'; renderSaved(); svPop('<h3>Already saved</h3><p>This slip is saved as <b>' + esc(dup.name || 'Slip') + '</b>. It is in Saved slips and on My BetSweep.</p><div class="svbt"><a href="/me/">My BetSweep</a><button type="button" class="pri dn">OK</button></div>'); return; }
+    var pr = priceKeys(ks, cg); var dflt = 'Slip ' + (all.length + 1) + (pr ? ' · ' + decToAm(pr.bookDec) : '');
+    var ov = svPop('<h3>Save this slip</h3><p class="svsub">' + ks.length + ' leg' + (ks.length === 1 ? '' : 's') + (pr ? ' · FanDuel ' + decToAm(pr.bookDec) : '') + '</p><label>Name<input type="text" value="' + esc(dflt) + '" aria-label="slip name" maxlength="60"></label><div class="svbt"><button type="button" class="cx">Cancel</button><button type="button" class="pri">Save</button></div>');
+    var inp = ov.querySelector('input'); try{ inp.focus(); inp.select(); }catch(e){}
     function done(){ var name = inp.value.trim() || dflt; var px = {}; var cl = legsForKeys(ks, cg); ks.forEach(function(k, n){ var l = cl[n]; if(l && l.o != null) px[k] = {o: l.o, p: l.p}; });   // audit 11/10: was byKey (not defined on this page), so Save threw and nothing was saved
-      all.push({id: 'b' + Date.now().toString(36), name: name, keys: ks, odds: pr ? +decToAm(pr.bookDec).replace('+','') : null, stake: 1, fd: pr ? pr.fd : null, fair: pr ? Math.round(pr.fair*10000)/10000 : null, px: px, g: cg, saved: Date.now()}); writeSlips(all); nb.remove(); renderSaved(); $('#fdnote').textContent = 'Saved. It is on My BetSweep too, graded after the games.'; }
-    nb.querySelector('.pri').addEventListener('click', done); inp.addEventListener('keydown', function(e){ if(e.key==='Enter') done(); if(e.key==='Escape') nb.remove(); }); nb.querySelector('.cx').addEventListener('click', function(){ nb.remove(); }); });
+      all.push({id: 'b' + Date.now().toString(36), name: name, keys: ks, odds: pr ? +decToAm(pr.bookDec).replace('+','') : null, stake: 1, fd: pr ? pr.fd : null, fair: pr ? Math.round(pr.fair*10000)/10000 : null, px: px, g: cg, saved: Date.now()}); writeSlips(all); renderSaved(); $('#fdnote').textContent = 'Saved. It is on My BetSweep too, graded after the games.';
+      ov.querySelector('.svbox').innerHTML = '<div class="svok" aria-hidden="true">✓</div><h3>Saved</h3><p><b>' + esc(name) + '</b> is in Saved slips and on My BetSweep, where it is graded after the games.</p><div class="svbt"><a href="/me/">My BetSweep</a><button type="button" class="pri dn">Done</button></div>';
+      var d = ov.querySelector('.dn'); try{ d.focus(); }catch(e){} }
+    ov.querySelector('.pri').addEventListener('click', function(e){ e.stopPropagation(); done(); }); inp.addEventListener('keydown', function(e){ if(e.key==='Enter') done(); }); }
+  $('#savesl').addEventListener('click', saveFlow);
+  (function(){ var p = $('#savepin'); if(p) p.addEventListener('click', saveFlow); })();
   $('#savedList').addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return;
     if (b.dataset.tog){ var id = b.dataset.tog, row = b.closest('tr').nextElementSibling; SLOPEN[id] = !SLOPEN[id]; if(row && row.classList.contains('lgrow')) row.hidden = !SLOPEN[id]; b.classList.toggle('on', !!SLOPEN[id]); b.setAttribute('aria-expanded', SLOPEN[id] ? 'true' : 'false'); return; }
     if (b.dataset.load){ var s = savedSlips().filter(function(x){ return x.id === b.dataset.load; })[0]; if(!s) return; sel = {}; extraKeys = []; var ixs = resolveKeys(s.keys, s.g); s.keys.forEach(function(k, n){ if (ixs[n] != null) sel[ixs[n]] = true; else extraKeys.push(k); }); save(); renderList(); renderSlip(); window.scrollTo({top: $('#slipLegs').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth'}); }
@@ -2647,7 +2669,7 @@ body = f'''<div class="bld">
    <div class="price" id="price"></div>
    <div class="take" id="take" style="display:none"></div>
    <div class="flags" id="flags"></div>
-   <div class="acts books3"><a class="fd" id="sendfd" href="#" target="_blank" rel="noopener" aria-disabled="true">FanDuel</a><a class="fd dk" id="senddk" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">DraftKings</a><a class="fd hr" id="sendhr" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Hard Rock</a></div>
+   <div class="acts books3"><a class="fd" id="sendfd" href="#" target="_blank" rel="noopener" aria-disabled="true">FanDuel</a><a class="fd dk" id="senddk" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">DraftKings</a><a class="fd hr" id="sendhr" href="#" target="_blank" rel="noopener" aria-disabled="true" style="display:none">Hard Rock</a><button type="button" class="pri" id="savepin">Save</button></div>
    <div class="acts"><button type="button" class="pri" id="savesl">Save slip</button><button type="button" class="pri" id="copy">Copy slip</button><button type="button" id="sweepbtn" title="A plain verdict on this slip: its chance against its price, the weakest leg and an easier swap">Sweep this slip</button><button type="button" id="clear">Clear</button></div>
    <div class="acts share"><button type="button" class="social" id="postsl" title="Post this slip to BetSweep Social for others to tail and upvote"><img src="data:image/png;base64,{LOGO_S}" alt=""><span><b>Post to BetSweep Social</b><small>let people tail it · upvotes put it on top</small></span></button>{SHORTL.BTN_HTML}</div>
    <p class="note" id="fdnote" style="padding-top:0"></p>
