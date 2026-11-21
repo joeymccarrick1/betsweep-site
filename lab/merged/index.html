@@ -316,6 +316,13 @@ details.gdone>.gcard{margin:0 10px 10px}
 .saved tbody .ops button,.saved tbody .ops a{margin-left:0;padding:6px 12px;font-size:12.5px} .saved tbody .ops button.del{margin-left:auto}
 .saved tbody tr.lgrow{display:block} .saved tbody tr.lgrow td{display:block;padding:0 0 10px}
 .saved tbody tr.cur{background:color-mix(in srgb,var(--red) 8%,transparent)} .saved tbody tr.cur td{background:none}
+#savepin{display:none}
+.svpop{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:18px;background:rgba(8,12,20,.62)}
+.svpop .svbox{display:block;width:100%;max-width:380px;box-sizing:border-box;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.45);text-align:left}
+.svpop h3{margin:0 0 4px;font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;color:var(--ink)} .svpop p{margin:0 0 14px;color:var(--mute);font-size:15px;line-height:1.45} .svpop p b{color:var(--ink)}
+.svpop label{display:block;font-size:13px;font-weight:700;color:var(--mute)} .svpop input{display:block;width:100%;box-sizing:border-box;margin:6px 0 16px;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.svpop .svbt{display:flex;gap:10px;justify-content:flex-end} .svpop .svbt button,.svpop .svbt a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer}
+.svpop .svbt .pri{background:var(--red);border-color:var(--red);color:#fff;flex:1} .svpop .svok{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--good);color:#fff;font-size:28px;font-weight:700;margin:0 0 12px}
 .saved .namebox{display:flex;gap:6px;margin:6px 0}.saved .namebox input{flex:1;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}
 .quick{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .quick button{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
@@ -357,6 +364,7 @@ details.gdone>.gcard{margin:0 10px 10px}
   @media (max-width:760px){ body > .slipwrap > .panel{zoom:1.1} }
   .slipwrap .slipbar{position:sticky;top:0;z-index:4;background:var(--card);border-bottom:1px solid var(--line);font-size:14px}
   .slipwrap.open .slipbar::after{content:"Close \25BE";font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
+  .slipwrap.open #savepin{display:flex;align-items:center;justify-content:center;flex:1 1 100%;min-height:44px;padding:0 18px;font-size:15px;font-weight:700;background:var(--red);border:1px solid var(--red);color:#fff;border-radius:8px}
   .slipwrap.open .acts.books3{position:sticky;bottom:0;z-index:3;background:var(--card);grid-column:1/-1;margin:0;padding:10px 14px;box-shadow:0 -8px 14px rgba(0,0,0,.14)}
   .lg{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pz who who" "mk mk add";row-gap:6px}   /* owner 10/28: name + game on top; then the arrow, the prop, its dots and matchup, + Add; the prices; model / book / edge */
   .lg > .pz{grid-area:pz} .lg > .who{grid-area:who} .lg > button{grid-area:add;align-self:start;margin-top:2px} .lg > .nums:not(.bk){display:none} .lg > .mk .d,.lg > .mk small.bks,.lg > .who .dprow{display:none} .lg > .mk .m{display:inline}
