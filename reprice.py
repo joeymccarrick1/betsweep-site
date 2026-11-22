@@ -78,6 +78,7 @@ BUILD = [
     ("shadow slips", "shadow_slips.py", "soft"),
     ("promos", "build_promo.py {clone}/promo-slips", "hard"),
     ("today (with promos)", "build_today.py", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
+    ("nba boards (preview)", "build_nba.py {clone}", "soft"),   # owner 11/22: /nba/, from the board the feeds-sports job writes; no board, no page
     ("site", "build_site.py betsweep.co {clone}/posts", "hard"),
 ]
 
@@ -226,6 +227,36 @@ def check_site(W, live):
     return bad
 
 
+def nba_changed(clone):
+    """The NBA preview (owner 11/22): True when this build's board is not the one the live page was drawn from - another day, a game's
+    state or posted line, who is out, or a player's points by a whole number (build_nba.signature). No NBA page in this build: False."""
+    try: new = json.load(open(os.path.join(OUT, "nba_sig.json")))
+    except Exception: return False
+    if not os.path.exists(os.path.join(SITE, "nba", "index.html")): return False
+    try: old = json.load(open(os.path.join(clone, "nba", "sig.json")))
+    except Exception: old = {}
+    return new.get("sig") != old.get("sig")
+
+
+def copy_only(clone, names):
+    """A small publish: only these folders go out, plus any shared stylesheet or script they link that the clone does not hold yet.
+    For the run where too few NFL prices moved to earn a publish but the NBA board changed: the NBA is a daily sport, and a full copy
+    every few hours would add megabytes of NFL pages that differ only in their build stamp. Nothing is pruned and nothing else is touched."""
+    done = []
+    for name in names:
+        src, dst = os.path.join(SITE, name), os.path.join(clone, name)
+        if not os.path.isdir(src) or name in PROTECTED: continue
+        if os.path.isdir(dst): shutil.rmtree(dst)
+        shutil.copytree(src, dst); done.append(name)
+        linked = set()
+        for hf in glob.glob(os.path.join(src, "**", "*.html"), recursive=True):
+            linked.update(re.findall(r"/s/((?:site|app|tpl)-[0-9a-f]{6,}\.(?:css|js))", open(hf, encoding="utf-8", errors="ignore").read()))
+        for f in sorted(linked):
+            if not os.path.exists(os.path.join(clone, "s", f)) and os.path.exists(os.path.join(SITE, "s", f)):
+                os.makedirs(os.path.join(clone, "s"), exist_ok=True); shutil.copy2(os.path.join(SITE, "s", f), os.path.join(clone, "s", f))
+    return done
+
+
 def copy_into_clone(clone):
     """RUNBOOK Step 6c as code.  Every top-level thing the build made replaces the clone's copy, except the MERGE folders (added to)
     and the PROTECTED names (never touched).  A folder the build did not make this run (season/, an older receipt) stays as it is."""
@@ -370,7 +401,11 @@ def main():
     log(f"against the live site: {moved} legs with a new price, {added} new legs, {gone} legs gone ({len(pn)} legs now); {main} of those are player props or main game lines")
     if a.publish == "none": finish(0, "built and checked; nothing copied (--publish none)")
     if failed["flag"]: finish(6, "a flag step failed (" + ", ".join(failed["flag"]) + "); not copied, the live flags stay")
-    if a.publish == "changed" and main < a.min_moves: finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); the clone is left alone")
+    S["nba_changed"] = nba_changed(clone)
+    if a.publish == "changed" and main < a.min_moves:
+        if S["nba_changed"]:
+            S["copied"] = len(copy_only(clone, ["nba"])); finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); the NBA board changed, so /nba/ alone was copied")
+        finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); the clone is left alone")
     S["copied"] = len(copy_into_clone(clone)); finish(0, "built, checked and copied into the clone")
 
 

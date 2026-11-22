@@ -602,7 +602,14 @@ APP_JS = r"""<script>
     window.addEventListener('hashchange', function(){ var k = (location.hash || '').slice(1); if(T && secs.some(function(x){ return x[1][0] === k; })) T.show(k); }); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', homeTabs); else homeTabs();
   // 2. the page's sticky header collapses while scrolling down (CSS: body.bs-scrolled; phones hide the mast, desktop keeps title + chips)
-  var lastY = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if(y > 140 && y > lastY + 4) document.body.classList.add('bs-scrolled'); else if(y < lastY - 12 || y < 80) document.body.classList.remove('bs-scrolled'); lastY = y; }, {passive: true});
+  //    11/22: on a desktop the header keeps its place at the top and gets shorter when it collapses. The browser answers a change of height above the reader by moving
+  //    the scroll position to hold his place (scroll anchoring), and that move is a scroll event in the opposite direction - so the header opened, closed, opened, sixty
+  //    times a second, and after a jump made by a script it never stopped (found by the NBA page's test: nothing on the page could be clicked). After the header changes,
+  //    the scroll events of the next quarter second only record where the page is; they cannot change it back.
+  var lastY = 0, holdTo = 0; window.addEventListener('scroll', function(){ var y = window.scrollY || 0, now = Date.now(), cl = document.body.classList, on = cl.contains('bs-scrolled');
+    if(now < holdTo){ lastY = y; return; }
+    if(!on && y > 140 && y > lastY + 4){ cl.add('bs-scrolled'); holdTo = now + 250; } else if(on && (y < lastY - 12 || y < 80)){ cl.remove('bs-scrolled'); holdTo = now + 250; }
+    lastY = y; }, {passive: true});
   // 3. player search from any page: /b/players.json (name, slug, team, pos, opp, has props) -> player page, builder, boards
   var sb = document.getElementById('bssrchbtn');
   if(sb){ var IDX = null, box = null, list = null, inp = null, sel = 0;
@@ -919,6 +926,17 @@ if os.path.exists(os.path.join(OUT, "stocks.html")):
     for _old in glob.glob(os.path.join(_sd, "data-*.js")): os.remove(_old)
     made.append(place_plain(os.path.join(OUT, "stocks.html"), _sd, "/stocks/"))
     _sp = os.path.join(_sd, "index.html"); _sh = open(_sp).read(); open(_sp, "w").write(externalize(_sh, _sd, "/stocks/"))   # read first: open(.., "w") empties the file
+# owner 11/22 3:27 PM ("Let's start adding nba, college football, and epl. I want each sport to basically look exactly like everything
+# we've built for NFL"): /nba/ - NBA Matchup Boards (build_nba.py), the first page beyond the NFL. A PREVIEW for the owner to look at:
+# nothing links to it, it is not in the menu and it is left out of the sitemap below. A build with no NBA board writes no page, and a
+# page left in site/ by an earlier local build is removed so it cannot be copied out as if it were current.
+_nb = os.path.join(SITE, "nba")
+if os.path.exists(os.path.join(OUT, "nba-boards.html")):
+    made.append(place(os.path.join(OUT, "nba-boards.html"), os.path.join(OUT, "img-none"), _nb, "/nba/"))
+    for _f, _t in (("nba_board.json", "board.json"), ("nba_sig.json", "sig.json")):   # the board the page was drawn from, and its signature (reprice.nba_changed)
+        if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_nb, _t))
+elif os.path.isdir(_nb):
+    shutil.rmtree(_nb)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
@@ -1446,7 +1464,7 @@ _today = _dt.date.today().isoformat(); _urls = []
 for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
-    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/")): continue
+    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
     try:
         if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
     except Exception: pass
