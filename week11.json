@@ -689,39 +689,9 @@
    "key": "sun_favtd",
    "name": "Paydirt Trio",
    "type": "+500",
-   "game": "BUF-MIA, BAL-CAR, DAL-TEN",
+   "game": "DAL-TEN, DET-TB, JAX-NYG",
    "date": "11/22",
    "legs": [
-    {
-     "pl": "James Cook",
-     "m": "Anytime TD",
-     "ln": 1.0,
-     "o": -180,
-     "p": 0.6417,
-     "bk": 0.643,
-     "game": "BUF-MIA",
-     "risk": 0,
-     "fd": {
-      "m": "42.626140722",
-      "s": "42200635"
-     },
-     "why": "Scored in 8 of 9; Miami allows RB1s 1.41x (rank 5); Sweep says 'play Cook to score'."
-    },
-    {
-     "pl": "Chuba Hubbard",
-     "m": "Anytime TD",
-     "ln": 1.0,
-     "o": -140,
-     "p": 0.5736,
-     "bk": 0.583,
-     "game": "BAL-CAR",
-     "risk": 0,
-     "fd": {
-      "m": "42.626479868",
-      "s": "22502305"
-     },
-     "why": "6 of 9 with a TD; Reliable (42 of 54 lines hit); AJ Dillon back is the watch."
-    },
     {
      "pl": "Tony Pollard",
      "m": "Anytime TD",
@@ -736,15 +706,45 @@
       "s": "16579792"
      },
      "why": "Dallas allows RB1s 1.52x (rank 3); wind = run game."
+    },
+    {
+     "pl": "Bucky Irving",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 105,
+     "p": 0.4998,
+     "bk": 0.488,
+     "game": "DET-TB",
+     "risk": 1,
+     "fd": {
+      "m": "42.626476321",
+      "s": "58495722"
+     },
+     "why": "TD tier, risk 1; Mayfield slated to play (Rapoport); Bowles wants to lessen his load - weakest leg."
+    },
+    {
+     "pl": "Cam Skattebo",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 105,
+     "p": 0.4641,
+     "bk": 0.488,
+     "game": "JAX-NYG",
+     "risk": 0,
+     "fd": {
+      "m": "42.626158920",
+      "s": "78488478"
+     },
+     "why": "The clean NYG scorer (risk 0, BetSweep 46.4%); late window 3:25 CT."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626140722&selectionId[0]=42200635&marketId[1]=42.626479868&selectionId[1]=22502305&marketId[2]=42.626320181&selectionId[2]=16579792",
-   "price": "+372",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626320181&selectionId[0]=16579792&marketId[1]=42.626476321&selectionId[1]=58495722&marketId[2]=42.626158920&selectionId[2]=78488478",
+   "price": "+644",
    "price_is_estimate": false,
-   "chance": 0.2053,
-   "caption": "Paydirt Trio. Three backs, three games.\nJames Cook TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +372.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Paydirt Trio. Three backs, three games.\nJames Cook TD | Chuba Hubbard TD | Tony Pollard TD\nAbout +372.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": "HOOK: Sunday's Paydirt Trio. Three touchdowns, plus 372.\nLEGS: Cook scores. Hubbard scores. Pollard scores.\nWHY: Cook has scored in 8 of 9 - Miami gives lead backs 41 percent over their average.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
+   "chance": 0.1297,
+   "caption": "Paydirt Trio. Three backs, three games.\nTony Pollard TD | Bucky Irving TD | Cam Skattebo TD\nAbout +644.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Paydirt Trio. Three backs, three games.\nTony Pollard TD | Bucky Irving TD | Cam Skattebo TD\nAbout +644.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": "HOOK: Sunday's Paydirt Trio. Three touchdowns, plus 644.\nLEGS: Pollard scores. Irving scores. Skattebo scores.\nWHY: Pollard is up to 77% of snaps and Dallas gives lead backs 52 percent over their average.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
    "post": false,
    "drafted_legs": [
     {
@@ -793,16 +793,89 @@
      "why": "Dallas allows RB1s 1.52x their average (rank 3); slate's biggest total."
     }
    ],
-   "check": "check_weekend FLAG: D'Andre Swift ATD carries a bad flag (FD rush yds 2/5) and Kyle Monangai is back off the report; no clean CHI-NO scorer -> James Cook ATD (overlaps Cook's Kitchen single)"
+   "check": "check_sunday 11/22 ~10:40 AM CT (builder Sun 8:33 AM CT, feeds 16:24 UTC; game-day inactives not mirrored yet) FLAG: James Cook ATD + Chuba Hubbard ATD are 2 of the 3 legs of your LIVE \"Best TDs\" (Cook also on Sunday Slate + Either-or) -> swapped for Irving + Skattebo. Prices flat (Cook -180->-185, others unchanged).",
+   "replaced_check_sunday": [
+    {
+     "pl": "James Cook",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -180,
+     "p": 0.6417,
+     "bk": 0.643,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140722",
+      "s": "42200635"
+     },
+     "why": "Scored in 8 of 9; Miami allows RB1s 1.41x (rank 5); Sweep says 'play Cook to score'."
+    },
+    {
+     "pl": "Chuba Hubbard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -140,
+     "p": 0.5736,
+     "bk": 0.583,
+     "game": "BAL-CAR",
+     "risk": 0,
+     "fd": {
+      "m": "42.626479868",
+      "s": "22502305"
+     },
+     "why": "6 of 9 with a TD; Reliable (42 of 54 lines hit); AJ Dillon back is the watch."
+    },
+    {
+     "pl": "Tony Pollard",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": -130,
+     "p": 0.5578,
+     "bk": 0.565,
+     "game": "DAL-TEN",
+     "risk": 0,
+     "fd": {
+      "m": "42.626320181",
+      "s": "16579792"
+     },
+     "why": "Dallas allows RB1s 1.52x (rank 3); wind = run game."
+    }
+   ]
   },
   {
    "slot": "sunday_main",
    "key": "sun_single",
-   "name": "Sunday Best Single: Cook's Kitchen",
+   "name": "Sunday Best Single: Allen's Arm",
    "type": "single",
    "game": "BUF-MIA",
    "date": "11/22",
    "legs": [
+    {
+     "pl": "Josh Allen",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -132,
+     "p": 0.6343,
+     "bk": 0.569,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140749",
+      "s": "16503660"
+     },
+     "why": "Raw model 70.0% vs FanDuel 56.9% - the biggest short-price edge on Sunday; MIA missing 2 DBs (Simpson, Trader doubtful)."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.626140749&selectionId=16503660",
+   "price": "-132",
+   "price_is_estimate": false,
+   "chance": 0.6343,
+   "caption": "Sunday best single: Josh Allen 2+ passing TDs (-132).\nOur model has it at 70%, FanDuel prices 57%. Miami is down two DBs.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Sunday best single: Josh Allen 2+ passing TDs (-132).\nOur model has it at 70%, FanDuel prices 57%. Miami is down two DBs.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false,
+   "check": "check_sunday 11/22 ~10:40 AM CT (builder Sun 8:33 AM CT, feeds 16:24 UTC; game-day inactives not mirrored yet) FLAG: Cook ATD is already on 3 LIVE promos (Sunday Slate, Best TDs, Either-or) -> single swapped to Josh Allen 2+ pass TDs (same game, risk 0). Also leg 2 of Best Legs.",
+   "replaced_check_sunday": [
     {
      "pl": "James Cook",
      "m": "Anytime TD",
@@ -818,16 +891,7 @@
      },
      "why": "Sweep says pick for BUF-MIA. Scored in 8 of 9; Miami allows RB1s 1.41x their average (rank 5); BUF by 10+ 70%."
     }
-   ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId=42.626140722&selectionId=42200635",
-   "price": "-185",
-   "price_is_estimate": false,
-   "chance": 0.6477,
-   "caption": "Sunday best single: James Cook anytime TD (-185).\nScored in 8 of 9. Miami gives RB1s 41% over their average.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Sunday best single: James Cook anytime TD (-185).\nScored in 8 of 9. Miami gives RB1s 41% over their average.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": null,
-   "post": false,
-   "check": "check_weekend OK"
+   ]
   },
   {
    "slot": "sunday_main",
@@ -838,27 +902,27 @@
    "date": "11/22",
    "legs": [
     {
-     "pl": "Bo Nix",
-     "m": "Passing Yards",
-     "ln": 200.0,
-     "o": -172,
-     "p": 0.6267,
-     "bk": 0.632,
+     "pl": "DEN -7.5",
+     "m": "Spread",
+     "ln": -7.5,
+     "o": -174,
+     "p": 0.5889,
+     "bk": 0.635,
      "game": "DEN-LV",
      "risk": 0,
      "fd": {
-      "m": "42.626436909",
-      "s": "48103720"
+      "m": "42.626039921",
+      "s": "12229887"
      },
-     "why": "Proj 225 (avg 192); DEN by 10+ 50%; LV gives QB1s 1.10x."
+     "why": "DEN by 10+ is the top ending (53%); replaces Bo Nix 200+, already on your LIVE Sunday Slate."
     },
     {
      "pl": "Josh Allen",
      "m": "Passing TDs",
      "ln": 2.0,
-     "o": -136,
-     "p": 0.638,
-     "bk": 0.5763,
+     "o": -132,
+     "p": 0.6343,
+     "bk": 0.569,
      "game": "BUF-MIA",
      "risk": 0,
      "fd": {
@@ -871,9 +935,9 @@
      "pl": "Jared Goff",
      "m": "Passing TDs",
      "ln": 2.0,
-     "o": -166,
-     "p": 0.6098,
-     "bk": 0.6241,
+     "o": -170,
+     "p": 0.6126,
+     "bk": 0.6296,
      "game": "DET-TB",
      "risk": 0,
      "fd": {
@@ -883,28 +947,28 @@
      "why": "2.0 TDs/g at home off the bye; 347 pass yds/g vs BUF/GB/CAR-type defenses."
     },
     {
-     "pl": "Chuba Hubbard",
-     "m": "Receptions",
-     "ln": 3.0,
-     "o": -200,
-     "p": 0.6075,
-     "bk": 0.667,
+     "pl": "CAR +2.5",
+     "m": "Spread",
+     "ln": 2.5,
+     "o": -196,
+     "p": 0.6346,
+     "bk": 0.6622,
      "game": "BAL-CAR",
      "risk": 0,
      "fd": {
-      "m": "42.626486895",
-      "s": "61448098"
+      "m": "42.626041263",
+      "s": "12215323"
      },
-     "why": "Proj 3.31, avg 3.4; Reliable (42 of 54 lines hit vs 55% priced)."
+     "why": "Close & low-scoring is the top BAL-CAR ending (36%); BAL without Lamar (IR). Replaces Hubbard 3+ rec, now -205 (past the -200 limit)."
     }
    ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626436909&selectionId[0]=48103720&marketId[1]=42.626140749&selectionId[1]=16503660&marketId[2]=42.626476348&selectionId[2]=12135315&marketId[3]=42.626486895&selectionId[3]=61448098",
-   "price": "+560",
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626039921&selectionId[0]=12229887&marketId[1]=42.626140749&selectionId[1]=16503660&marketId[2]=42.626476348&selectionId[2]=12135315&marketId[3]=42.626041263&selectionId[3]=12215323",
+   "price": "+564",
    "price_is_estimate": false,
-   "chance": 0.1481,
-   "caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Chuba Hubbard 3+ catches\nAbout +560.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Best Legs: four games, four steady lines.\nBo Nix 200+ | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Chuba Hubbard 3+ catches\nAbout +560.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": "HOOK: Sunday, four legs, plus 560, here's why.\nLEGS: Nix two hundred. Allen two TDs. Goff two TDs. Hubbard three catches.\nWHY: The model has Allen at two touchdown passes 70 percent of the time - FanDuel says 58.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
+   "chance": 0.1452,
+   "caption": "Best Legs: four games, four steady lines.\nBroncos -7.5 | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Panthers +2.5\nAbout +564.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Best Legs: four games, four steady lines.\nBroncos -7.5 | Josh Allen 2+ pass TDs | Jared Goff 2+ pass TDs | Panthers +2.5\nAbout +564.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": "HOOK: Sunday's Best Legs. Four games, plus 564.\nLEGS: Broncos minus seven and a half. Allen two touchdowns. Goff two touchdowns. Panthers plus two and a half.\nWHY: Our model has Allen at 70 percent for two scores - FanDuel prices 57.\nCALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus.",
    "post": false,
    "drafted_legs": [
     {
@@ -968,16 +1032,119 @@
      "why": "Proj 5.68; 'Hot L3', 'Targets up'; Ferguson OUT."
     }
    ],
-   "check": "check_weekend FLAG: Burden 50+ (Rain bad flag), Mahomes 2+ TDs (Wind bad flag, risk 2), Pickens 5+ (Wind bad flag, DAL-TEN weather HIGH) swapped; Nix OK"
+   "check": "check_sunday 11/22 ~10:40 AM CT (builder Sun 8:33 AM CT, feeds 16:24 UTC; game-day inactives not mirrored yet) FLAG: Bo Nix 200+ is already on LIVE Sunday Slate -> DEN -7.5; Hubbard 3+ rec moved -200 -> -205 (past the -200 line) -> CAR +2.5. Allen -136->-132 (0.7 pt against), Goff -166->-170 (our way).",
+   "replaced_check_sunday": [
+    {
+     "pl": "Bo Nix",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -172,
+     "p": 0.6267,
+     "bk": 0.632,
+     "game": "DEN-LV",
+     "risk": 0,
+     "fd": {
+      "m": "42.626436909",
+      "s": "48103720"
+     },
+     "why": "Proj 225 (avg 192); DEN by 10+ 50%; LV gives QB1s 1.10x."
+    },
+    {
+     "pl": "Josh Allen",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -136,
+     "p": 0.638,
+     "bk": 0.5763,
+     "game": "BUF-MIA",
+     "risk": 0,
+     "fd": {
+      "m": "42.626140749",
+      "s": "16503660"
+     },
+     "why": "Raw model 70.0% vs FanDuel 57.6% - the biggest short-price edge on Sunday; McCord starts for Miami, BUF by 10+ 70%."
+    },
+    {
+     "pl": "Jared Goff",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -166,
+     "p": 0.6098,
+     "bk": 0.6241,
+     "game": "DET-TB",
+     "risk": 0,
+     "fd": {
+      "m": "42.626476348",
+      "s": "12135315"
+     },
+     "why": "2.0 TDs/g at home off the bye; 347 pass yds/g vs BUF/GB/CAR-type defenses."
+    },
+    {
+     "pl": "Chuba Hubbard",
+     "m": "Receptions",
+     "ln": 3.0,
+     "o": -200,
+     "p": 0.6075,
+     "bk": 0.667,
+     "game": "BAL-CAR",
+     "risk": 0,
+     "fd": {
+      "m": "42.626486895",
+      "s": "61448098"
+     },
+     "why": "Proj 3.31, avg 3.4; Reliable (42 of 54 lines hit vs 55% priced)."
+    }
+   ]
   },
   {
    "slot": "snf",
    "key": "snf_mini",
-   "name": "Mexico City McCaffrey",
+   "name": "Mexico City Kittle",
    "type": "small",
    "game": "MIN-SF",
    "date": "11/22",
    "legs": [
+    {
+     "pl": "George Kittle",
+     "m": "Receiving Yards",
+     "ln": 48.0,
+     "o": -113,
+     "p": 0.5133,
+     "bk": 0.531,
+     "game": "MIN-SF",
+     "risk": 0,
+     "fd": {
+      "m": "42.626104090",
+      "s": "20656770"
+     },
+     "why": "Proj 53.4 (rung 11% under); FD rec yds 7/8; Mike Evans returning = target competition."
+    },
+    {
+     "pl": "49ers ML",
+     "m": "Moneyline",
+     "ln": 0,
+     "o": -172,
+     "p": 0.6042,
+     "bk": 0.6324,
+     "game": "MIN-SF",
+     "risk": 0,
+     "fd": {
+      "m": "42.578347341",
+      "s": "43010249"
+     },
+     "why": "SF by 10+ is the top ending (33%); Kyler Murray OUT, Cousins starts."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626104090&selectionId[0]=20656770&marketId[1]=42.578347341&selectionId[1]=43010249",
+   "price": "+154",
+   "price_is_estimate": true,
+   "chance": 0.3101,
+   "caption": "SNF: George Kittle 48+ receiving yards + 49ers ML.\nKittle cleared his FanDuel yardage line in 7 of 8; Minnesota starts Cousins.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "SNF: George Kittle 48+ receiving yards + 49ers ML.\nKittle cleared his FanDuel yardage line in 7 of 8; Minnesota starts Cousins.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false,
+   "check": "check_sunday 11/22 ~10:40 AM CT (builder Sun 8:33 AM CT, feeds 16:24 UTC; game-day inactives not mirrored yet) FLAG: both McCaffrey legs are already on LIVE promos (ATD on Sunday Slate, 90+ R+R on Favorite 6). Prices fine (ATD -165->-170, R+R line 91->90 at -113, both our way). Swap: Kittle 48+ + SF ML, est SGP +154. Low-confidence game (top ending 33%) - skipping SNF is fine too.",
+   "replaced_check_sunday": [
     {
      "pl": "Christian McCaffrey",
      "m": "Anytime TD",
@@ -1013,16 +1180,7 @@
       "p": 0.5427
      }
     }
-   ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626099593&selectionId[0]=10609932&marketId[1]=42.626102232&selectionId[1]=14807737",
-   "price": "+157",
-   "price_is_estimate": true,
-   "chance": 0.3167,
-   "caption": "SNF: Christian McCaffrey scores + 91 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "SNF: Christian McCaffrey scores + 91 scrimmage yards.\n8 of 9 games with a TD, 105.6 yards a game.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": null,
-   "post": false,
-   "check": "check_weekend OK - main-line market moved up 2 yds (link now adds the new line), under 3 implied pts against"
+   ]
   },
   {
    "slot": "mnf",
@@ -1269,6 +1427,15 @@
    "snf_mini": "OK",
    "mnf_500": "OK",
    "mnf_pmm": "OK"
+  },
+  "check_sunday": {
+   "run": "check_sunday 11/22 ~10:40 AM CT (builder Sun 8:33 AM CT, feeds 16:24 UTC; game-day inactives not mirrored yet)",
+   "sweep_sun": "none: Allen 2+ TDs (-132, +13.1) and Ty Johnson 2+ rec (-130, raw 66.6% vs 56.5%) qualify, both BUF-MIA and both need Bills passing in a game the model has BUF by 10+ 70%; no third leg; next rebuild 12:40 PM is after the first kickoff anyway",
+   "sun_favtd": "FLAG swapped (Cook+Hubbard duplicate LIVE Best TDs)",
+   "sun_single": "FLAG swapped to Allen 2+ pass TDs (Cook on 3 LIVE promos)",
+   "sun_best": "FLAG swapped 2 legs (Nix duplicate; Hubbard rec -205)",
+   "snf_mini": "FLAG swapped (both legs on LIVE promos)",
+   "live_promos": "Sunday Slate: Caleb 225+ (CHI-NO HIGH weather, rain 85%, bad flag) and Pickens 50+ (DAL-TEN wind bad flag, first game back) at risk. Best TDs: Lamb (risk 7), E. Johnson + Coleman (bad flags), P. Washington (risk 3). Either-or: Barkley/D. Smith (backup QB Joe Milton, rule 5), McCaffrey/Jefferson (Jefferson risk 12, Cousins), St. Brown/LaPorta, Downs/E. Johnson, Swift/Tyson, Hampton/Hall all carry flags. Favorite 6: Justice Hill + Breece Hall bad flags. No posted player is inactive/out as of 16:24 UTC."
   }
  }
 }
