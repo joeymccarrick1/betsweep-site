@@ -2528,3 +2528,7 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   (.tdmore, under "Share this take"), shows one line: the game's top hunch (the desk's own first, then Backed, then Mixed, by strength),
   its verdict pill and "+N more", linking to /hunches/#h-<gid>. Caution / Info / Not backed hunches never show there. A game without a
   Backed or Mixed hunch shows nothing. tests/today_hunch.py (17 checks, phone light + dark) is in the pre-publish set (42 tests).
+- **11/21 6:40 PM: hourly job 503s - retry drafted, NOT pushed.** in/AVAIL_AUTO.json read "error: HTTPError HTTP Error 503" at 18:05Z,
+  23:44Z and 00:05Z (11/22); a run that errors skips that half hour's rule-outs and stale checks. pending/avail-retry.patch adds _open()
+  (3 tries on 429/5xx/dropped connection, error names the host only) to site main .github/avail_auto.py + 3 selftest cases. It changes
+  a job on main, so it waits for the owner's yes: `git apply` in the site clone, `python3 .github/avail_auto.py --selftest`, commit, push.
