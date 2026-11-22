@@ -2720,6 +2720,17 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
   options: Cook TD + Nix 200+ pass + G. Wilson 60+ rec (about +308, every leg passes all four checks, model 22% vs 24.5% implied) or
   Allen 2+ pass TDs in place of Wilson (about +328, model 26% vs 23%, against Sweep says "go to the ground"), or skip.
   The four-check scripts are in the repo now: research/slipcheck/statcheck.py (yardage and catch legs) and tdcheck.py (TD legs).
+- **Daily Sweep 11/22 posted: "Let Him Cook", +308** (owner 10:14 AM: "Option 1 for the daily sweep"). PROMO row 64, w11-7: Cook
+  anytime TD -185, Nix 200+ pass yds -172, G. Wilson 60+ rec yds -148; three games, so +308 is the leg prices multiplied (6:34 AM
+  pull; the 10:12 price check showed no moves; FanDuel's slip price not read). Published 10:29 AM, before the noon kickoff.
+- **A wrong "passes matchup", caught after posting.** The owner was told every leg passed the matchup rule. For Cook that came from
+  tdcheck.py's own rank, which counted EVERY touchdown by the position against the defense: Miami had allowed 9 TDs to backs (10th
+  most), but 4 were catches; against rushing TDs by backs it was 25th on the season (13th last three), and all nine of Cook's TDs
+  were runs. The site's card printed "MIA #25 vs RB TDs" on the slip I had just called a clean matchup. Told the owner at 10:32 AM,
+  with the offer to swap before kickoff. **Both check scripts now take the matchup verdict from the board's own rank for the leg's
+  role (`dr` = [season, last 3], 1 = allows the most) and print their own rank beside it.** On that measure Cook, Emmett Johnson
+  (ARI #22) and McCaffrey (MIN #20) fail matchup among the day's posted TD legs. Rule for next time: when a script and the board
+  disagree about a matchup, the board's number is what the public sees - check it before calling a leg clean.
 - **tests/today_hunch.py serves its own pages now.** It expected a server already up on :8802; in the pre-publish set that had been a
   server left running on the working tree's site, so when the set ran on a COPY of the tree this one test was looking at the wrong
   build, and once that server stopped it could only fail (connection refused, 8:20 AM). Ten other tests outside the pre-publish set

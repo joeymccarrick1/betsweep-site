@@ -30,7 +30,12 @@ def nn(x): return HN._nn(x)
 def check(l):
     pos=l['pos']; opp=l['opp']; cp,cv=CUR[pos]; p0=cp.get(opp); rank=1+sum(1 for d in cv if cv[d]>cv[opp])
     fl=tags(l)
-    m_ok = p0 is not None and rank<=16 and 'Tough matchup' not in fl
+    # 11/22: the verdict is the BOARD's own rank for the leg's role (l['dr'] = [season, last 3], 1 = allows the most; a back's TD leg is
+    # ranked on RUSHING TDs to backs). This script's own rank counts every TD by the position, which called Cook v MIA the 10th-softest
+    # spot when Miami was 25th against rushing TDs by backs (4 of the 9 TDs it gave backs were catches) - and a Daily Sweep went up on it.
+    # The all-TD rank is still printed, next to the board's.
+    br = l.get('dr') or [None, None]
+    m_ok = (br[0] is not None and br[0] <= 16 and 'Tough matchup' not in fl) if br[0] is not None else (p0 is not None and rank<=16 and 'Tough matchup' not in fl)
     cb='n/a'; cb_ok=True
     if pos=='WR':
         ev=' '.join((LOOK.get(l['pl']) or {}).get('ev',[])); cb='favorable' if 'favorable' in ev else 'difficult' if 'difficult' in ev else 'neutral' if 'neutral' in ev else 'not on chart'
@@ -42,7 +47,7 @@ def check(l):
     hit=sum(1 for r in gms if r['td']>0)
     sim=None if len(gms)<4 else hit/len(gms)
     d_ok = sim is not None and sim>=max(0.5,l['bk']-0.05)
-    return dict(m_ok=m_ok, rank=rank, tdpg=cv[opp], cb=cb, cb_ok=cb_ok, s_ok=s_ok, sck=sc[k] if sc else None, most=g['most'], sim=sim, n=len(gms), hit=hit, d_ok=d_ok, d_unknown=sim is None)
+    return dict(m_ok=m_ok, rank=rank, brank=br, tdpg=cv[opp], cb=cb, cb_ok=cb_ok, s_ok=s_ok, sck=sc[k] if sc else None, most=g['most'], sim=sim, n=len(gms), hit=hit, d_ok=d_ok, d_unknown=sim is None)
 if __name__=='__main__':
     rows=[]
     for l in bd['legs']:
@@ -54,4 +59,4 @@ if __name__=='__main__':
     rows.sort(key=lambda c:(-(c['m_ok']+c['cb_ok']+c['s_ok']+c['d_ok']), -c['l']['p']))
     for c in rows:
         l=c['l']; ok=lambda b:'PASS' if b else 'fail'
-        print(f"{l['pl']:<20.20} {l['tm']:<3} {l['pos']} {ost(l['o']):>5} p{l['p']*100:3.0f} r{l['r']:<2} scored {c['sg']}/{c['ng']} tot {c['tot']:.0f} L3 {c['l3']:.0f} | matchup {ok(c['m_ok'])} (#{c['rank']}, {c['tdpg']:.2f}/g) | cb {c['cb']} {ok(c['cb_ok'])} | script {ok(c['s_ok'])} ({c['most']}: {c['sck']*100 if c['sck'] else 0:.0f}%) | similar {'none' if c['d_unknown'] else f'{c[chr(104)+chr(105)+chr(116)]}/{c[chr(110)]}'} {ok(c['d_ok'])} | {','.join(tags(l))[:60]}")
+        print(f"{l['pl']:<20.20} {l['tm']:<3} {l['pos']} {ost(l['o']):>5} p{l['p']*100:3.0f} r{l['r']:<2} scored {c['sg']}/{c['ng']} tot {c['tot']:.0f} L3 {c['l3']:.0f} | matchup {ok(c['m_ok'])} (board #{c['brank'][0]} season, #{c['brank'][1]} last 3; all TDs to the position #{c['rank']}, {c['tdpg']:.2f}/g) | cb {c['cb']} {ok(c['cb_ok'])} | script {ok(c['s_ok'])} ({c['most']}: {c['sck']*100 if c['sck'] else 0:.0f}%) | similar {'none' if c['d_unknown'] else f'{c[chr(104)+chr(105)+chr(116)]}/{c[chr(110)]}'} {ok(c['d_ok'])} | {','.join(tags(l))[:60]}")

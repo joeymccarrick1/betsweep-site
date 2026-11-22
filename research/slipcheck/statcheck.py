@@ -49,7 +49,10 @@ def nn(x): return HN._nn(x)
 def check(l, week=11):
     pos = l['pos']; opp = l['opp']; m = l['m']; cp, cv = P(2026, pos, m); p0 = cp.get(opp); rank = (1 + sum(1 for d in cv if cv[d] > cv[opp])) if opp in cv else None
     fl = tags(l)
-    m_ok = p0 is not None and rank <= 16 and 'Tough matchup' not in fl
+    # 11/22: the verdict is the board's own rank for the leg's role (l['dr'] = [season, last 3], 1 = allows the most); this script's
+    # rank (everything the position did against that defense) is printed beside it and only decides when the board has none. See tdcheck.py.
+    br = l.get('dr') or [None, None]
+    m_ok = (br[0] <= 16 and 'Tough matchup' not in fl) if br[0] is not None else (p0 is not None and rank <= 16 and 'Tough matchup' not in fl)
     cb = 'n/a'; cb_ok = True
     if pos == 'WR':
         ev = ' '.join((LOOK.get(l['pl']) or {}).get('ev', [])); cb = 'favorable' if 'favorable' in ev else 'difficult' if 'difficult' in ev else 'neutral' if 'neutral' in ev else 'not on chart'
@@ -64,11 +67,11 @@ def check(l, week=11):
     d_ok = sim is not None and sim >= max(0.5, l['bk'] - 0.05)
     # this season: how often he cleared this line
     cur = [r for r in log if nn(r['pl']) == nn(l['pl']) and r['w'] < week]; ch = sum(1 for r in cur if n0(val(r, m)) >= need)
-    return dict(m_ok=m_ok, rank=rank, allow=cv.get(opp), cb=cb, cb_ok=cb_ok, s_ok=s_ok, sck=sc[k] if sc else None, most=g['most'], sim=sim, n=len(gms), hit=hit, d_ok=d_ok, d_unknown=sim is None, season=f"{ch}/{len(cur)}", l3=[n0(val(r, m)) for r in sorted(cur, key=lambda r: -r['w'])[:3]])
+    return dict(m_ok=m_ok, rank=rank, brank=br, allow=cv.get(opp), cb=cb, cb_ok=cb_ok, s_ok=s_ok, sck=sc[k] if sc else None, most=g['most'], sim=sim, n=len(gms), hit=hit, d_ok=d_ok, d_unknown=sim is None, season=f"{ch}/{len(cur)}", l3=[n0(val(r, m)) for r in sorted(cur, key=lambda r: -r['w'])[:3]])
 def row(l):
     c = check(l); ok = lambda b: 'PASS' if b else 'fail'
     simtxt = 'none' if c['d_unknown'] else f"{c['hit']}/{c['n']}"
-    return (f"{l['g']:<8} {l['pl']:<19.19} {l['pos']} {l['ms']:<9.9} {l['ln']:>5g}+ {ost(l['o']):>5} p{l['p']*100:3.0f} raw{l['raw_p']*100:3.0f} bk{l['bk']*100:3.0f} r{l['r']} season {c['season']} L3 {c['l3']} | matchup {ok(c['m_ok'])} (#{c['rank']}) | cb {c['cb']} {ok(c['cb_ok'])} | script {ok(c['s_ok'])} ({c['most']}: {(c['sck'] or 0)*100:.0f}%) | similar {simtxt} {ok(c['d_ok']) if not c['d_unknown'] else '-'} | {','.join(tags(l))}", c)
+    return (f"{l['g']:<8} {l['pl']:<19.19} {l['pos']} {l['ms']:<9.9} {l['ln']:>5g}+ {ost(l['o']):>5} p{l['p']*100:3.0f} raw{l['raw_p']*100:3.0f} bk{l['bk']*100:3.0f} r{l['r']} season {c['season']} L3 {c['l3']} | matchup {ok(c['m_ok'])} (board #{c['brank'][0]} season, #{c['brank'][1]} last 3; position total #{c['rank']}) | cb {c['cb']} {ok(c['cb_ok'])} | script {ok(c['s_ok'])} ({c['most']}: {(c['sck'] or 0)*100:.0f}%) | similar {simtxt} {ok(c['d_ok']) if not c['d_unknown'] else '-'} | {','.join(tags(l))}", c)
 if __name__ == '__main__':
     import time
     now = time.time() * 1000
