@@ -66,13 +66,18 @@ if not PUB:
 
 # ---------------- 3 + 4. the pages ----------------
 from playwright.async_api import async_playwright
-QB = {}
+QB = {}; QB_ALL = {}
 def ladder_in(src):
     """the page's data with a 1+..4+ ladder on every quarterback who has a Passing TDs leg (prices invented, model numbers from the leg), plus one leg of a market the page has never seen"""
     i, j = src.index("{"), src.rindex("}") + 1; d = json.loads(src[i:j]); legs = d["legs"]
     have = {(l["pl"], int(round(l["ln"]))) for l in legs if l["m"] == "Passing TDs"}
+    # 11/22: a game that has kicked off has no "Player legs" button to open, so the quarterback the page checks use must be in a game still to
+    # come (15 minutes clear, so a run cannot straddle a kickoff). The first quarterback on the board was in a noon game; a run at 12:15 PM on
+    # a Sunday failed on that alone.
+    kos = {g_.get("gid"): g_.get("ko") for g_ in (d.get("games") or []) if isinstance(g_, dict)}; soon = __import__("time").time() * 1000 + 15 * 60e3
     for l in [x for x in legs if x["m"] == "Passing TDs"]:
-        QB.setdefault(l["pl"], l["g"])
+        QB_ALL.setdefault(l["pl"], l["g"])
+        if not kos.get(l["g"]) or kos[l["g"]] > soon: QB.setdefault(l["pl"], l["g"])
         for k, od, p in ((1, -420, 0.86), (2, -135, 0.60), (3, 190, 0.34), (4, 480, 0.15)):
             if (l["pl"], k) in have: continue
             have.add((l["pl"], k)); n = dict(l); n.update({"i": len(legs), "ln": float(k), "o": od, "p": p, "raw_p": p, "bk": round((100 / (od + 100)) if od > 0 else (-od / (-od + 100)), 4)}); n["e"] = round(n["p"] - n["bk"], 4); n["bks"] = {}; n["fd"] = None
@@ -98,7 +103,8 @@ async def pages():
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto("http://127.0.0.1:8874/build/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)
             T = f"[{theme}] "
-            if not QB: check(False, T + "no Passing TDs leg on the board to test with"); await ctx.close(); continue
+            if not QB:
+                check(bool(QB_ALL), T + ("every quarterback's game has kicked off, so there is no game left to open; the page checks wait for a board with an unplayed game" if QB_ALL else "no Passing TDs leg on the board to test with")); await ctx.close(); continue
             qb, gid = next(iter(QB.items()))
             opts = await pg.evaluate("Array.from(document.querySelectorAll('#fMarket option')).map(o => o.textContent)")
             check("Passing TDs" in opts and opts.index("Passing TDs") == opts.index("Passing Yards") + 1, T + "the market filter lists Passing TDs, right after Passing Yards")
