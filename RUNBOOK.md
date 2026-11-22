@@ -2922,3 +2922,19 @@ real defect (the kickoffs, above), two were the tests.
 frozen pages, copied into ./site without the old stylesheet files the live site still holds; the template's stylesheet hash has
 moved on since they were made. It is not a fault of the build: the gate that counts is the one on a copy of the live clone
 (top of tests/prepublish.sh), where those files exist.
+
+## 11/22 5:43 PM CT: the NBA preview does not claim a nightly grading that is not built
+
+The note at the top of /nba/ first said every projection "is being graded". The model has been graded in a walk-forward test (the
+stamp at the foot of the page gives the result), but grading what the page shows, night by night, is not built. The note now reads
+"Nothing here is a pick: the projections have to be graded against results first", and tests/nba_board.py fails if "being graded"
+comes back before the grader exists.
+
+**The grader is the next NBA step** (it is what makes "tracked, not a lead" real):
+- lock each game's projections at tip - the last board built before the tip, from `prev/` in the feeds-sports job;
+- grade them the next morning from the mirrored box scores (`nba/box-<id>.json`): model against the player's season average, by
+  stat, and the chance ladders against how often each line was reached;
+- keep a running record on the feeds-sports branch (the job must carry it forward each run: the branch is rebuilt from nothing).
+Tonight's boards are not lost: every board that was published is in main's history (`git log -- nba/board.json`).
+
+State at 5:45 PM: site faefad74 (the page, the header fix, the kickoff fix), generators d53ac454, MASTER rows 651-654.
