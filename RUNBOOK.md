@@ -2784,3 +2784,13 @@ Test: tests/stocks_page.py, 135 checks (was 105): every card, every number in a 
 tap on each of the eight cards are redone from the game logs the page ships.
 Ideas held back, not built: a volume strip under the fantasy-points graph (touches by game, the way a price chart carries volume);
 team "sectors" (which offenses are heating up); a watch list.
+
+## 11/22 12:15 PM CT: a page test that failed on the clock (tests/new_markets.py)
+The full set for the Social buttons ran 46 of 47: new_markets stopped with "Cannot read properties of null (reading 'click')". It opens a
+game's Player legs for the first quarterback on the board, and a game that has kicked off has no such button; the first quarterback was in
+a noon game and the run was at 12:15 PM on a Sunday. The same build passed once the test took a quarterback whose game is at least 15
+minutes away (and it now says so in words when every game has kicked off, instead of failing).
+Rule for page tests: a test that opens a game, or needs a leg that can still be bet, must pick one whose kickoff is still to come - the
+board keeps started games' legs in its data but the pages close them. A failure in the set on a Sunday afternoon is worth one rerun of
+that test alone before it is read as a regression.
+Both publishes today: Social buttons 12:31 PM CT (site 0bcdb176), Stock Market additions 1:09 PM CT (site bace1169). MASTER rows 648, 649.
