@@ -13,8 +13,11 @@ What the file says and how each part is decided:
   games      tip, teams, venue, the model's team points (the model's own team total; the market's is used once prices are stored),
              ESPN's posted line when the mirror carries one (named by its provider - this is NOT FanDuel), state and score from the mirror
   players    minutes and points / rebounds / assists / threes from sports.nba.model, and the chance of each X+ rung
-  who plays  everyone who played in the team's last game, PLUS a player who sat it out but played 3 of the 9 before and is not listed
-             Out now, MINUS anyone the injury report lists as Out. A day-to-day player stays in, flagged - the NFL rule for Questionable.
+  who plays  everyone who played in the team's last game, PLUS a rotation player who sat it out (played 3 of the 9 before at 15+
+             minutes a night) and is not listed Out or doubtful now, MINUS anyone the injury report lists as Out or whose note says
+             doubtful. A questionable or probable player stays in, flagged - the NFL site's rule. The first real run (11/22) brought
+             35 players "back" without the minutes bar: end-of-bench players who simply had not been used, each taking minutes from
+             the rotation when the team's 240 were shared out.
              With no injury report in reach the list is last game's and the file says so ("injuries": false).
   defense    what each opponent allows to guards / forwards / centers, ranked 1 (allows the most) to 30
 Nothing here is a pick: there are no prices to compare with yet, and the numbers are being graded first ("tracked, not a lead").
@@ -24,6 +27,10 @@ import numpy as np
 import pandas as pd
 from . import data as ND, model as NM, slate as SL
 from ..core import dist as D, legboard as LB
+
+# the shape of board.json. build_nba.py (the page) refuses a board whose number it does not know, so the page and the file can never be half a version apart:
+# raise it here and there together when a field the page reads is renamed or changes meaning.
+FORMAT = 2
 
 STAT_NAMES = {"pts": "Points", "reb": "Rebounds", "ast": "Assists", "fg3": "Threes"}
 RUNGS = SL.RUNGS
@@ -91,14 +98,21 @@ def build(folder, feeds=None, day=None, now=None):
         if ab:
             listed.setdefault(ab, {})[LB.norm_name(x.get("name"))] = x
     have_inj = inj is not None and bool((inj or {}).get("injuries"))
-    is_out = lambda x: str(x.get("status") or "").strip().lower() in ("out", "out for season", "suspension", "suspended") or str(x.get("fs") or "").upper() in ("OUT", "OFS", "SUSP")
+    def tag(x):
+        """Out / Doubtful / Questionable / Probable / Day-to-day, from ESPN's status, its fantasy tag and the words of its own note."""
+        st, fs, note = str(x.get("status") or "").strip().lower(), str(x.get("fs") or "").upper(), str(x.get("note") or "").lower()
+        if st in ("out", "out for season", "suspension", "suspended") or fs in ("OUT", "OFS", "SUSP"): return "Out"
+        for w, t in (("doubtful", "Doubtful"), ("questionable", "Questionable"), ("probable", "Probable")):
+            if w in note: return t
+        return "Day-to-day"
+    is_out = lambda x: tag(x) in ("Out", "Doubtful")
 
-    out_names, back_names, out_rows = [], [], {}
+    out_names, back_names, out_rows, back_by = [], [], {}, {}
     for _, g in games.iterrows():
         for tid, ab in ((g["home_id"], g["home_abbreviation"]), (g["away_id"], g["away_abbreviation"])):
             t = cur[(cur["team_id"] == tid) & (cur["date"] < pd.Timestamp(day))]
             lines = listed.get(ab, {})
-            out_rows[ab] = [{"name": x.get("name"), "status": x.get("status"), "fs": x.get("fs"), "note": (x.get("type") or ""), "why": (x.get("note") or "")[:160], "ret": x.get("ret")} for x in lines.values() if is_out(x)]
+            out_rows[ab] = [{"name": x.get("name"), "tag": tag(x), "note": (x.get("type") or ""), "why": (x.get("note") or "")[:200], "ret": x.get("ret")} for x in lines.values() if is_out(x)]
             out_names += [x.get("name") for x in lines.values() if is_out(x)]
             if t.empty or not have_inj:
                 continue
@@ -107,14 +121,15 @@ def build(folder, feeds=None, day=None, now=None):
             played_last = set(t[(t["game_id"] == last) & t["played"]]["athlete_id"])
             prev = t[t["game_id"].isin(before) & t["played"]]
             cnt = prev.groupby("athlete_id")["game_id"].nunique()
+            mpg = prev.groupby("athlete_id")["min"].mean()
             for aid, n in cnt.items():
-                if aid in played_last or n < 3:
+                if aid in played_last or n < 3 or mpg.get(aid, 0) < 15:
                     continue
                 nm = prev[prev["athlete_id"] == aid]["player"].iloc[-1]
                 line = lines.get(LB.norm_name(nm))
                 if line is not None and is_out(line):
                     continue
-                back_names.append(nm)
+                back_names.append(nm); back_by.setdefault(ab, []).append(nm)
 
     rows, p = SL.build(d, sched, day, out=out_names, back=back_names)
     grid = NM.defense_grid(d, season)
@@ -139,6 +154,7 @@ def build(folder, feeds=None, day=None, now=None):
             x = p[p["team"] == ab] if len(p) else p
             proj[ab] = _r(x["team_pts"].iloc[0], 1) if len(x) and "team_pts" in x.columns and pd.notna(x["team_pts"].iloc[0]) else None
         sc = {t.get("abbr"): t.get("score") for t in (e.get("teams") or [])}
+        look = {t.get("abbr"): t for t in (e.get("teams") or [])}
         row = sched[sched["game_id"] == g["game_id"]].iloc[0]
         G.append({"id": gid, "key": f"{away}-{home}", "tip": g["tip"].isoformat(), "tipct": g["tip"].strftime("%a %-m/%d %-I:%M %p"), "home": home, "away": away,
                   "home_name": g["home_display_name"], "away_name": g["away_display_name"], "venue": (row.get("venue_full_name") if isinstance(row.get("venue_full_name"), str) else None),
@@ -148,7 +164,8 @@ def build(folder, feeds=None, day=None, now=None):
             t = cur[(cur["team_id"] == tid) & (cur["date"] < pd.Timestamp(day))]
             last = t["date"].max() if len(t) else None
             T[ab] = {"name": g["home_display_name"] if ab == home else g["away_display_name"], "opp": opp, "home": ab == home, "games": int(t["game_id"].nunique()),
-                     "rest": (None if last is None or pd.isna(last) else int((pd.Timestamp(day) - last).days)), "out": out_rows.get(ab, []), "opp_def": dgrid.get(opp, {})}
+                     "rest": (None if last is None or pd.isna(last) else int((pd.Timestamp(day) - last).days)), "out": out_rows.get(ab, []), "back": sorted(back_by.get(ab, [])), "opp_def": dgrid.get(opp, {}),
+                     "color": (look.get(ab) or {}).get("color"), "alt": (look.get(ab) or {}).get("alt"), "record": (look.get(ab) or {}).get("record"), "short": (look.get(ab) or {}).get("short")}
     if len(p):
         for _, r in p.sort_values(["team", "proj_min"], ascending=[True, False]).iterrows():
             line = (listed.get(r["team"], {}) or {}).get(LB.norm_name(r["player"]))
@@ -164,9 +181,9 @@ def build(folder, feeds=None, day=None, now=None):
                       "min": _r(r["proj_min"]), "base_min": _r(r["base_min"]),
                       "proj": {s: _r(r["proj_" + s]) for s in STAT_NAMES}, "avg": {s: _r(r["avg_" + s]) for s in STAT_NAMES}, "l10": {s: _r(r["l10_" + s]) for s in STAT_NAMES},
                       "pra": _r(r["proj_pra"]), "ladder": lad, "warn": warn, "recent": recent.get(r["athlete_id"], []),
-                      "status": (None if line is None else {"status": line.get("status"), "fs": line.get("fs"), "why": (line.get("note") or "")[:160]})})
+                      "status": (None if line is None else {"tag": tag(line), "why": (line.get("note") or "")[:200]})})
     through = cur["date"].max()
-    return {"sport": "nba", "built": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "day": str(day), "day_label": pd.Timestamp(day).strftime("%a %-m/%d"), "season": "2026-27",
+    return {"sport": "nba", "format": FORMAT, "built": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "day": str(day), "day_label": pd.Timestamp(day).strftime("%a %-m/%d"), "season": "2026-27",
             "data_through": None if pd.isna(through) else through.strftime("%Y-%m-%d"), "injuries": bool(have_inj), "injuries_at": (inj or {}).get("mirrored"), "scoreboard_at": (sb or {}).get("mirrored"),
             "back": sorted(set(back_names)), "stats": STAT_NAMES, "games": G, "teams": T, "players": P}
 
