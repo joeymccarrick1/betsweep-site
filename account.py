@@ -250,6 +250,7 @@ ME_CSS = """
 .me li.wkh{padding:10px 0 4px} .me .wkt{font:inherit;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.04em;text-transform:uppercase;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;display:flex;gap:8px;align-items:baseline}
 .me .wkt small{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500;font-size:12.5px;text-transform:none;letter-spacing:0;color:var(--mute,#6b655c)} .me .wkt i{font-style:normal;transition:transform .15s} .me li.wkh:not(.on) .wkt i{transform:rotate(-90deg)}
 .me li.sl.wkoff{display:none} .me li.sl .legs{display:none} .me li.sl.lo .legs{display:block}
+.me .sla{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px} .me .sla a.fdl,.me .sla button{display:inline-flex;align-items:center;min-height:34px;padding:0 11px;margin-left:0;font-size:12.5px}
 .me li.sl small.clv,.me li.sl small.away{display:block;margin-top:3px;font-size:12.5px;color:var(--mute)} .me li.sl small.away b{color:var(--ink)} .me li.sl .legs em.cl{font-style:normal;font-size:11.5px;color:var(--mute);margin-left:4px} .me li.sl .legs em.cl.up{color:var(--good)} .me li.sl .legs em.cl.dn{color:var(--bad)}
 .me .lgt{font:inherit;font-size:12px;font-weight:600;color:var(--mute,#6b655c);background:none;border:1px solid var(--line,#d8d1c2);border-radius:12px;padding:1px 9px;cursor:pointer} .me .lgt i{font-style:normal;display:inline-block;transition:transform .15s} .me li.sl.lo .lgt i{transform:rotate(180deg)}
 .me a.fdl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#1493ff;color:#fff;padding:3px 9px;border-radius:4px;text-decoration:none}
@@ -379,8 +380,11 @@ ME_JS = r"""
             extra += '<small class="away">One leg away: <b>' + esc(q0[0]) + ' ' + esc(q0[1].toLowerCase()) + '</b> ' + esc(short) + '</small>'; }
           var bet = (res==='PENDING' && s.fd && !d) ? '<a class="fdl" href="'+esc(s.fd)+'" target="_blank" rel="noopener">Bet on FanDuel</a>' : '';
           if (res==='PENDING') bet += '<button type="button" class="fdl ldb" data-keys="'+esc(JSON.stringify(s.keys||[]))+'" data-g="'+esc(JSON.stringify(s.g||{}))+'">Load into betslip</button>';   // owner 11/1
+          // owner 11/22 ("Make it easier for you to send saved betslips to social"): this week's open slips of your own post from here (social.py SAVED_JS);
+          // a slip saved from someone's post, or a tailed BetSweep promo, is not yours to post. Once posted the row links to it instead.
+          if (res==='PENDING' && x.w === topW && s.id != null && !s.promo && !s.post) bet += s.posted ? '<a class="fdl pon" href="/social/'+(s.posted === true ? '' : '#p'+esc(s.posted))+'">On Social \u2713</a>' : '<button type="button" class="fdl psb" data-psb data-w="'+x.w+'" data-id="'+esc(s.id)+'">Post to Social</button>';   // NOT class ldb: that is Load into betslip's own handler
           if (x.w !== lastW){ lastW = x.w; var wn = sl.filter(function(y){ return y.w === x.w; }).length; html += '<li class="wkh'+(x.w === topW ? ' on' : '')+'" data-w="'+x.w+'"><button type="button" class="wkt">Week '+x.w+' <small>'+wn+' slip'+(wn===1?'':'s')+'</small><i>▾</i></button></li>'; }
-          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+bet+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small>'+extra+'<button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : '')+cv; }).join(' &nbsp; ')+'</span></li>'; });
+          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+(bet ? '<span class="sla">'+bet+'</span>' : '')+'<small>Week '+x.w+' · '+gs.length+' legs'+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small>'+extra+'<button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : '')+cv; }).join(' &nbsp; ')+'</span></li>'; });
         // owner 11/15 ("check the whole day, not each slip"): the same player on more than one open slip means one quiet game costs several bets
         (function(){ var by = {}; OPEN.forEach(function(o, i){ var seen = {}; o.keys.forEach(function(k){ var pl = String(k).split('|')[0]; if (!pl || /\|(Total|Spread|Moneyline)\|/.test(k) || seen[pl]) return; seen[pl] = 1; (by[pl] = by[pl] || []).push(o); }); });
           var rep = Object.keys(by).filter(function(p){ return by[p].length > 1; }).sort(function(a, b){ return by[b].length - by[a].length; });
@@ -565,7 +569,7 @@ def me_page():
     return f"""<title>My BetSweep</title>
 <meta name="description" content="Your saved betslips, built fantasy teams, trade scenarios and Sleeper league - in this browser, or on every device when you sign in.">
 {_link}
-<style>{_base}{ME_CSS}{__import__("slipimport").IMPORT_CSS}</style>
+<style>{_base}{ME_CSS}{__import__("slipimport").IMPORT_CSS}{__import__("social").SAVED_CSS}{__import__("social").POST_CSS}</style>
 <div class="me">
  <h1>My BetSweep</h1>
  <section class="mep" id="mep" aria-label="Your profile" hidden></section>
@@ -589,6 +593,9 @@ def me_page():
 <script>{ME_JS}</script>
 <script>{_mep_js()}</script>
 <script defer src="/import.js"></script>
+{__import__("social").POST_HTML}
+{__import__("social").POST_JS}
+{__import__("social").SAVED_JS}
 <script>{PUSH_JS.replace("__VAPID__", VAPID_PUBLIC).replace("__SB__", SUPABASE_URL)}</script>"""
 
 PUSH_JS = r"""

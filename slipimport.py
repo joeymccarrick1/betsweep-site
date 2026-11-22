@@ -34,6 +34,15 @@ IMPORT_CSS = r"""
 #impout .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 #impout .row input[type=text]{flex:1;min-width:180px;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
 #impout .ok{color:var(--good)} #impout .warn{color:#b7791f}
+#impout .impb{margin:10px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px} #impout .impb.one{margin:0;padding:0;border:0}
+#impout .impb.no{border-style:dashed;color:var(--mute);font-size:14px} #impout .impb.no small{display:block;font-size:12.5px;margin-top:2px}
+#impout .imph{display:flex;align-items:center;gap:9px;font-size:15px;cursor:pointer;min-height:34px;color:var(--ink)} #impout .imph input{width:18px;height:18px;flex:none}
+#impout .impb .st{margin:2px 0 4px} #impout .impb small.dup{display:block;font-size:12.5px;margin:0 0 6px}
+#impout details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--mute);padding:7px 0}
+#impout .impsec{font:inherit;font-weight:700;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+#impout .impact{margin-top:10px} #impout .impnote:empty{display:none} #impout button[disabled]{opacity:.5;cursor:default}
+#impout .impdone li{flex-wrap:wrap !important;align-items:center} #impout .impdone li>span:first-child{flex:1 0 100%} #impout .impdone li>.impdo{flex:1 1 100%;min-width:0;display:flex;gap:8px;flex-wrap:wrap} #impout .impdone .psn{flex:1 0 100%;margin-top:4px}
+#impout button.cta{border:0;font:inherit;font-weight:700;cursor:pointer} #impout .impdone .impdo button{flex:1 1 0;min-width:0;padding:10px 6px;font-size:14px;white-space:nowrap;border-radius:8px}
 .me button.ldb{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:none;color:var(--ink);border:1px solid var(--line);padding:3px 9px;border-radius:4px;margin-left:6px;cursor:pointer}
 """
 
@@ -150,51 +159,98 @@ IMPORT_JS = r"""(function(){
   function am(o){ o = +o; return isNaN(o) || !o ? '' : (o > 0 ? '+' + o : String(o)); }
   function setup(){
     var card = document.getElementById('import'); if (!card) return; var out = document.getElementById('impout'), inp = card.querySelector('input[type=file]');
+    // owner 11/22 2:09 AM ("batch import multiple slips to save multiple betslips all at once"): PEND is the queue of screenshots read
+    // and not saved yet. Several pictures can be chosen at once, or added one after another (a phone pastes one picture at a time);
+    // one picture looks and works as it always has, two or more get a block each and a single "Save N slips" button.
+    var PEND = [], MAXB = 12, busy = false, DONE = {}, DONEBS = null;
     function say(h){ out.innerHTML = '<p class="st">' + h + '</p>'; }
-    function go(file){ if (!file) return; say('Reading your slip… (the first time takes a few seconds to load the reader)');
-      Promise.all([builderData(), loadTess().then(function(T){ return prep(file).then(function(c){ return T.recognize(c, 'eng', {tessedit_pageseg_mode: '4'}); }); })])
-        .then(function(r){ show(parse(r[1].data.text || '', r[0]), r[0]); })
-        .catch(function(e){ say('Could not read that picture (' + esc(e.message || e) + '). Try a full, uncropped screenshot of the slip.'); }); }
-    function show(R, BS){
-      var good = R.legs.filter(function(l){ return l.ok; });
-      if (!R.legs.length){ say('No FanDuel legs found in that picture. Use a screenshot of the betslip or of the bet under My Bets, with the leg names showing.'); return; }
-      var h = '<p class="st">Found ' + good.length + ' of ' + R.legs.length + ' legs' + (R.odds ? ' · FanDuel ' + am(R.odds) : '') + '. Untick anything that is wrong.</p><ul>';
-      R.legs.forEach(function(l, i){ h += l.ok ? '<li><input type="checkbox" checked data-i="' + i + '"><span>' + esc(l.label) + (l.odds ? ' <b>' + am(l.odds) + '</b>' : '') +
-          '<small class="' + (l.unpriced ? 'warn' : 'ok') + '">' + (l.unpriced ? 'saved and graded - not on our board at this exact line, so no model price' : 'matched to this week\'s board') + '</small></span></li>'
-        : '<li class="no"><span>✗ ' + esc(l.raw) + '<small>' + esc(l.why) + ' - not imported</small></span></li>'; });
-      if (!good.length){ out.innerHTML = h + '</ul><p class="st">None of these legs are markets BetSweep prices, so there is nothing to save. Player yards, catches, touchdowns and game lines import fine.</p>'; return; }
-      h += '</ul><div class="row"><input type="text" id="impname" maxlength="60" value="FanDuel ' + (good.length) + '-leg' + (R.odds ? ' ' + am(R.odds) : '') + '"><input type="text" id="impodds" inputmode="text" maxlength="9" style="flex:0 0 110px;min-width:0" placeholder="Odds +650" value="' + (R.odds ? am(R.odds) : '') + '"><button type="button" class="cta" id="impsave">Save slip</button><button type="button" class="sec" id="impload" style="font:inherit;font-weight:700;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer">Load into betslip</button></div>';
-      out.innerHTML = h;
-      function tickedLegs(){ var ls = []; out.querySelectorAll('input[type=checkbox]').forEach(function(c){ if (c.checked) ls.push(R.legs[+c.dataset.i]); }); return ls; }
-      function ticked(){ return tickedLegs().map(function(x){ return x.key; }); }
-      document.getElementById('impload').addEventListener('click', function(){ var ls = tickedLegs(); if (!ls.length){ say('Nothing ticked - nothing to load.'); return; } loadSlip(BS, ls.map(function(x){ return x.key; }), gmapOf(BS, ls)); });
-      document.getElementById('impsave').addEventListener('click', function(){
-        var tl = tickedLegs(), keys = tl.map(function(x){ return x.key; }), gm = gmapOf(BS, tl);
-        if (!keys.length){ say('Nothing ticked - nothing saved.'); return; }
-        var W = BS.week, k = 'bs_slips_w' + W, all = []; try{ all = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(e){ all = []; }
-        var od = parseInt(String(document.getElementById('impodds').value || '').replace(/[^0-9+-]/g, ''), 10); if (isNaN(od) || Math.abs(od) < 100) od = R.odds || null;
-        all.push({id: 'fd' + Date.now(), name: (document.getElementById('impname').value || 'FanDuel slip').trim().slice(0, 60), keys: keys, g: gm, odds: od, stake: R.stake || undefined, saved: Date.now(), src: 'fanduel-screenshot'});
-        try{ localStorage.setItem(k, JSON.stringify(all)); }catch(e){ say('Your browser would not let us save it (private mode?).'); return; }
-        say('<span class="ok">Saved "' + esc(all[all.length-1].name) + '" with ' + keys.length + ' legs.</span> It is in Your record above, graded after the games, and your slip alerts now watch it. <button type="button" class="cta" id="imploaded" style="margin-left:6px;padding:6px 12px;font-size:13px">Load into betslip</button>');
-        var lb = document.getElementById('imploaded'); if (lb) lb.addEventListener('click', function(){ loadSlip(BS, keys, gm); });
-        document.dispatchEvent(new CustomEvent('bs-account', {detail: {imported: true}})); });
-    }
-    inp.addEventListener('change', function(){ go(inp.files && inp.files[0]); inp.value = ''; });
+    function note(h){ var n = out.querySelector('.impnote'); if (n) n.innerHTML = h; else say(h); }
+    function board(){ var BS = null; PEND.forEach(function(x){ if (x.BS) BS = x.BS; }); return BS; }
+    // one picture that never comes back must not jam the queue: 90 seconds, then it counts as unreadable and the next one is read
+    function readT(f){ return new Promise(function(res, rej){ var over = 0, t = setTimeout(function(){ if (!over){ over = 1; rej(new Error('the reader took too long')); } }, 90000);
+      window.BSImport.read(f).then(function(r){ if (!over){ over = 1; clearTimeout(t); res(r); } }, function(e){ if (!over){ over = 1; clearTimeout(t); rej(e); } }); }); }
+    var WAIT = [];   // pictures that arrive while others are being read wait their turn
+    function go(files){ files = (files && typeof files.length === 'number' ? [].slice.call(files) : [files]).filter(Boolean); if (!files.length) return;
+      if (busy){ WAIT = WAIT.concat(files); return; }
+      sync(); var room = Math.max(0, MAXB - PEND.length), cut = files.length > room; files = files.slice(0, room);
+      if (!files.length){ render('That is ' + MAXB + ' screenshots, the most that are read in one go. Save these, then add the rest.'); return; }
+      busy = true; var i = 0, n = files.length;
+      (function next(){
+        if (i >= n){ busy = false; render(cut ? 'Only the first ' + MAXB + ' screenshots were read. Save these, then add the rest.' : ''); if (WAIT.length){ var w = WAIT; WAIT = []; go(w); } return; }
+        say('Reading ' + (n > 1 ? 'slip ' + (i + 1) + ' of ' + n : 'your slip') + '… (the first time takes a few seconds to load the reader)');
+        readT(files[i]).then(function(r){ PEND.push({R: r.R, BS: r.BS}); }, function(e){ PEND.push({err: String((e && e.message) || e || 'unknown')}); }).then(function(){ i++; next(); });
+      })(); }
+    function legRow(l, i, off){ return l.ok ? '<li><input type="checkbox"' + (off ? '' : ' checked') + ' data-i="' + i + '"><span>' + esc(l.label) + (l.odds ? ' <b>' + am(l.odds) + '</b>' : '') +
+        '<small class="' + (l.unpriced ? 'warn' : 'ok') + '">' + (l.unpriced ? 'saved and graded - not on our board at this exact line, so no model price' : 'matched to this week\'s board') + '</small></span></li>'
+      : '<li class="no"><span>✗ ' + esc(l.raw) + '<small>' + esc(l.why) + ' - not imported</small></span></li>'; }
+    // what is typed and ticked survives a repaint (another screenshot arriving)
+    function sync(){ out.querySelectorAll('.impb[data-n]').forEach(function(b){ var x = PEND[+b.dataset.n]; if (!x) return; var on = b.querySelector('.impon'); if (on) x.inc = on.checked;
+      x.nm = b.querySelector('.impname').value; x.od = b.querySelector('.impodds').value; x.un = {}; b.querySelectorAll('li input[type=checkbox]').forEach(function(c){ if (!c.checked) x.un[c.dataset.i] = 1; }); var d = b.querySelector('details'); x.open = !!(d && d.open); }); }
+    function picked(b){ var x = PEND[+b.dataset.n], ls = []; b.querySelectorAll('li input[type=checkbox]').forEach(function(c){ if (c.checked) ls.push(x.R.legs[+c.dataset.i]); }); return ls; }
+    function count(){ var sb = document.getElementById('impsaveall'); if (!sb) return; var n = 0; out.querySelectorAll('.impb[data-n]').forEach(function(b){ var on = b.querySelector('.impon'); if ((!on || on.checked) && picked(b).length) n++; });
+      sb.textContent = 'Save ' + (n === 1 ? '1 slip' : n + ' slips'); sb.disabled = !n; }
+    function render(msg){
+      if (!PEND.length){ out.innerHTML = msg ? '<p class="st">' + msg + '</p>' : ''; return; }
+      var many = PEND.length > 1, BS = board();
+      if (!many){ var x0 = PEND[0], g0 = x0.R ? x0.R.legs.filter(function(l){ return l.ok; }) : [];   // one picture that came to nothing: the answers this card has always given
+        if (x0.err){ PEND = []; say('Could not read that picture (' + esc(x0.err) + '). Try a full, uncropped screenshot of the slip.'); return; }
+        if (!x0.R.legs.length){ PEND = []; say('No FanDuel legs found in that picture. Use a screenshot of the betslip or of the bet under My Bets, with the leg names showing.'); return; }
+        if (!g0.length){ PEND = []; out.innerHTML = '<p class="st">Found 0 of ' + x0.R.legs.length + ' legs.</p><ul>' + x0.R.legs.map(function(l, i){ return legRow(l, i); }).join('') + '</ul><p class="st">None of these legs are markets BetSweep prices, so there is nothing to save. Player yards, catches, touchdowns and game lines import fine.</p>'; return; } }
+      var have = []; try{ have = JSON.parse(localStorage.getItem('bs_slips_w' + (BS ? BS.week : 0)) || '[]') || []; }catch(e){ have = []; }
+      var seen = {}; have.forEach(function(s){ if (s && s.keys) seen[s.keys.slice().sort().join('||')] = '"' + (s.name || 'a saved slip') + '", which is already saved'; });
+      var h = '';
+      PEND.forEach(function(x, n){
+        var legs = x.R ? x.R.legs : [], good = legs.filter(function(l){ return l.ok; });
+        if (x.err || !good.length){ h += '<div class="impb no"><b>Screenshot ' + (n + 1) + '</b><small>' + (x.err ? 'could not be read - try a full, uncropped screenshot of the slip' : !legs.length ? 'no FanDuel legs found in it' : 'none of its legs are markets BetSweep prices') + ' - not imported</small></div>'; return; }
+        var sg = good.map(function(l){ return l.key; }).sort().join('||'), dup = seen[sg] || null; if (!dup) seen[sg] = 'screenshot ' + (n + 1);
+        if (x.inc == null) x.inc = !dup;
+        var odd = legs.length - good.length + good.filter(function(l){ return l.unpriced; }).length, dn = 'FanDuel ' + good.length + '-leg' + (x.R.odds ? ' ' + am(x.R.odds) : '');
+        h += '<div class="impb' + (many ? '' : ' one') + '" data-n="' + n + '">' + (many ? '<label class="imph"><input type="checkbox" class="impon"' + (x.inc ? ' checked' : '') + '><b>Screenshot ' + (n + 1) + '</b></label>' : '') +
+          '<p class="st">Found ' + good.length + ' of ' + legs.length + ' legs' + (x.R.odds ? ' · FanDuel ' + am(x.R.odds) : '') + '.' + (many ? '' : ' Untick anything that is wrong.') + '</p>' +
+          (dup ? '<small class="warn dup">Same legs as ' + esc(dup) + (many ? ' - left out unless you tick it.' : '.') + '</small>' : '') +
+          (many ? '<details' + (odd || x.open || (x.un && Object.keys(x.un).length) ? ' open' : '') + '><summary>Check the legs</summary>' : '') + '<ul>' + legs.map(function(l, i){ return legRow(l, i, x.un && x.un[i]); }).join('') + '</ul>' + (many ? '</details>' : '') +
+          '<div class="row"><input type="text" class="impname"' + (many ? '' : ' id="impname"') + ' maxlength="60" aria-label="Slip name" value="' + esc(x.nm != null ? x.nm : dn) + '"><input type="text" class="impodds"' + (many ? '' : ' id="impodds"') + ' inputmode="text" maxlength="9" aria-label="FanDuel odds" style="flex:0 0 110px;min-width:0" placeholder="Odds +650" value="' + esc(x.od != null ? x.od : (x.R.odds ? am(x.R.odds) : '')) + '"></div></div>'; });
+      h += '<p class="st impnote" aria-live="polite">' + (msg || '') + '</p><div class="row impact">' +
+        (many ? '<button type="button" class="cta" id="impsaveall">Save slips</button>' : '<button type="button" class="cta" id="impsave">Save slip</button><button type="button" class="impsec" id="impload">Load into betslip</button>') +
+        '<button type="button" class="impsec" id="impmore">Add another screenshot</button><button type="button" class="impsec" id="impclear">Clear</button></div>';
+      out.innerHTML = h; count(); }
+    function saveAll(){
+      var BS = board(); if (!BS) return; var W = BS.week, k = 'bs_slips_w' + W, all = []; try{ all = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(e){ all = []; }
+      var t0 = Date.now(), saved = [];
+      out.querySelectorAll('.impb[data-n]').forEach(function(b){ var on = b.querySelector('.impon'); if (on && !on.checked) return; var x = PEND[+b.dataset.n], tl = picked(b); if (!tl.length) return;
+        var od = parseInt(String(b.querySelector('.impodds').value || '').replace(/[^0-9+-]/g, ''), 10); if (isNaN(od) || Math.abs(od) < 100) od = x.R.odds || null;
+        var e = {id: 'fd' + (t0 + saved.length), name: (b.querySelector('.impname').value || 'FanDuel slip').trim().slice(0, 60), keys: tl.map(function(l){ return l.key; }), g: gmapOf(BS, tl), odds: od, stake: x.R.stake || undefined, saved: t0, src: 'fanduel-screenshot'};
+        all.push(e); saved.push(e); });
+      if (!saved.length){ note('Nothing ticked - nothing saved.'); return; }
+      try{ localStorage.setItem(k, JSON.stringify(all)); }catch(e){ note('Your browser would not let us save ' + (saved.length === 1 ? 'it' : 'them') + ' (private mode?).'); return; }
+      PEND = []; DONE = {}; DONEBS = BS; saved.forEach(function(e){ DONE[e.id] = e; });
+      var one = saved.length === 1;
+      out.innerHTML = '<p class="st"><span class="ok">Saved ' + (one ? '"' + esc(saved[0].name) + '" with ' + saved[0].keys.length + ' legs' : saved.length + ' slips') + '.</span> ' + (one ? 'It is' : 'They are') + ' in Your record above, graded after the games, and your slip alerts now watch ' + (one ? 'it' : 'them') + '.</p><ul class="impdone">' +
+        saved.map(function(e){ return '<li><span><b>' + esc(e.name) + '</b><small>' + e.keys.length + ' leg' + (e.keys.length === 1 ? '' : 's') + (e.odds ? ' · ' + am(e.odds) : '') + '</small></span><span class="impdo"><button type="button" class="impsec" data-load="' + esc(e.id) + '">Load into betslip</button><button type="button" class="cta" data-psb data-w="' + W + '" data-id="' + esc(e.id) + '">Post to Social</button></span></li>'; }).join('') + '</ul>';
+      document.dispatchEvent(new CustomEvent('bs-account', {detail: {imported: true}})); }
+    out.addEventListener('change', function(e){ if (e.target && e.target.type === 'checkbox') count(); });
+    out.addEventListener('click', function(e){ var t = e.target.closest && e.target.closest('button'); if (!t) return;
+      if (t.id === 'impmore'){ inp.click(); return; }
+      if (t.id === 'impclear'){ PEND = []; out.innerHTML = ''; return; }
+      if (t.id === 'impsave' || t.id === 'impsaveall'){ saveAll(); return; }
+      if (t.id === 'impload'){ var b = out.querySelector('.impb[data-n]'), ls = b ? picked(b) : []; if (!ls.length){ note('Nothing ticked - nothing to load.'); return; } var BS = board(); loadSlip(BS, ls.map(function(x){ return x.key; }), gmapOf(BS, ls)); return; }
+      var d = t.getAttribute('data-load'); if (d && DONE[d] && DONEBS) loadSlip(DONEBS, DONE[d].keys, DONE[d].g); });
+    inp.addEventListener('change', function(){ var fs = [].slice.call(inp.files || []); inp.value = ''; go(fs); });
     // owner 11/1 "paste import doesn't look like it works": phones only paste into something editable, so the Paste button reads the clipboard
     // directly (Safari shows its own Paste bubble), and when the browser will not allow that it opens a box to long-press and paste into
     var pb = document.getElementById('imppbox'), pbtn = document.getElementById('imppaste');
-    function fromImgEl(){ var im = pb && pb.querySelector('img'); if (!im) return false; var src = im.getAttribute('src') || ''; pb.innerHTML = 'Tap and hold here, then tap Paste.';
-      if (!/^(data:|blob:)/.test(src)) { say('That paste did not include the picture itself - save the screenshot and use Choose screenshot.'); return true; }
-      fetch(src).then(function(r){ return r.blob(); }).then(function(b){ pb.hidden = true; go(b); }).catch(function(){ say('Could not read the pasted picture - use Choose screenshot.'); }); return true; }
+    function fromImgEl(){ var ims = pb ? [].slice.call(pb.querySelectorAll('img')) : []; if (!ims.length) return false; var srcs = ims.map(function(im){ return im.getAttribute('src') || ''; }).filter(function(u){ return /^(data:|blob:)/.test(u); }); pb.innerHTML = 'Tap and hold here, then tap Paste.';
+      if (!srcs.length) { say('That paste did not include the picture itself - save the screenshot and use Choose screenshots.'); return true; }
+      Promise.all(srcs.map(function(u){ return fetch(u).then(function(r){ return r.blob(); }); })).then(function(bs){ pb.hidden = true; go(bs); }).catch(function(){ say('Could not read the pasted picture - use Choose screenshots.'); }); return true; }
     if (pb){ pb.addEventListener('input', function(){ setTimeout(fromImgEl, 50); }); pb.addEventListener('focus', function(){ if (!pb.querySelector('img')) pb.textContent = ''; }); }
     if (pbtn) pbtn.addEventListener('click', function(){
       function box(){ if (!pb) return; pb.hidden = false; pb.textContent = 'Tap and hold here, then tap Paste.'; pb.focus(); }
       if (!(navigator.clipboard && navigator.clipboard.read)) { box(); return; }
-      navigator.clipboard.read().then(function(items){ for (var i = 0; i < items.length; i++){ var t = (items[i].types || []).filter(function(x){ return /^image\//.test(x); })[0];
-          if (t) return items[i].getType(t).then(function(b){ go(b); }); }
-        say('No picture on the clipboard - copy the screenshot first (open it, tap Share, Copy), then tap Paste screenshot.'); })
+      navigator.clipboard.read().then(function(items){ var ps = []; for (var i = 0; i < items.length; i++){ var t = (items[i].types || []).filter(function(x){ return /^image\//.test(x); })[0]; if (t) ps.push(items[i].getType(t)); }
+        if (ps.length) return Promise.all(ps).then(function(bs){ go(bs); });
+        note('No picture on the clipboard - copy the screenshot first (open it, tap Share, Copy), then tap Paste screenshot.'); })
       .catch(function(){ box(); }); });
-    document.addEventListener('paste', function(e){ var it = [].slice.call((e.clipboardData || {}).items || []).filter(function(x){ return /^image\//.test(x.type); })[0]; if (it){ e.preventDefault(); go(it.getAsFile()); } });
+    document.addEventListener('paste', function(e){ var fs = [].slice.call((e.clipboardData || {}).items || []).filter(function(x){ return /^image\//.test(x.type); }).map(function(x){ return x.getAsFile(); }).filter(Boolean); if (fs.length){ e.preventDefault(); go(fs); } });
     if (location.hash === '#import') card.scrollIntoView({block: 'start'});
   }
   // owner 11/10 "Sweep my slip" (/sweep/): the same reader for another page - picture in, {R: parsed legs, BS: this week's board} out
@@ -206,7 +262,7 @@ IMPORT_JS = r"""(function(){
 """
 
 CARD_HTML = ('<div class="card" id="import" data-def="open"><h2>Import a FanDuel slip</h2><p class="m">Took the bet on FanDuel? Screenshot the betslip (or the bet under '
-             'My Bets), then choose the picture here or paste it. Your phone reads it - the picture never leaves this device - and the slip is saved '
-             'with the rest: graded after the games, counted in your exposure, and watched by your slip alerts.</p>'
-             '<div class="imp"><label class="cta">Choose screenshot<input type="file" accept="image/*" hidden></label><button type="button" class="cta" id="imppaste" style="background:none;color:var(--ink);border:1px solid var(--line)">Paste screenshot</button></div><div id="imppbox" contenteditable="true" hidden aria-label="Paste your screenshot here" style="margin-top:10px;min-height:64px;padding:12px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px;line-height:1.4">Tap and hold here, then tap Paste.</div>'
+             'My Bets), then choose the picture here or paste it - several at once is fine, and one button saves them all. Your phone reads them; '
+             'the pictures never leave this device. Each slip is graded after the games, counted in your exposure and watched by your slip alerts.</p>'
+             '<div class="imp"><label class="cta">Choose screenshots<input type="file" accept="image/*" multiple hidden></label><button type="button" class="cta" id="imppaste" style="background:none;color:var(--ink);border:1px solid var(--line)">Paste screenshot</button></div><div id="imppbox" contenteditable="true" hidden aria-label="Paste your screenshot here" style="margin-top:10px;min-height:64px;padding:12px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px;line-height:1.4">Tap and hold here, then tap Paste.</div>'
              '<div id="impout"></div></div>')

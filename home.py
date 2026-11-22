@@ -861,6 +861,7 @@ WINNERS_CSS = """
 .winners li span:first-child::before{content:"\\2713\\00a0";color:var(--good);font-weight:700}
 .winners li .wa{color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
 .winners .wfoot{display:flex;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:13px;color:var(--mute)} .winners .wfoot b{color:var(--ink)} .winners .wfoot a{color:var(--ink)}
+.winners .wnote{margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px;line-height:1.45;color:var(--mute)}
 """
 _WSTAT = {"Receiving Yards": ("Rec Yds", "yds"), "Receptions": ("Receptions", "catches"), "Rushing Yards": ("Rush Yds", "yds"), "Passing Yards": ("Pass Yds", "yds")}
 
@@ -936,6 +937,10 @@ def winners_block(IN, limit=6):
     for wk, slot, n, r in sorted(wins, reverse=True)[:limit]:
         title = SW.name(r[H["Title"]]) if SW.is_sweep(r[H["Title"]]) else str(r[H["Title"]]).strip()
         kind = "The Daily Sweep" if SW.is_sweep(r[H["Title"]]) else "Promoted bet"
+        # owner 11/22 ("Can we add this to our winners? ... a winner that I've posted since we've been running the page"): a slip from
+        # before the PROMO tab existed (sweep.RECORD_FROM). It is shown and says where it was posted; it has no slip page to link to, the
+        # site did not grade it (no stat beside a leg), and no record counts it.
+        pre = wk < SW.RECORD_FROM
         o = SW._num(r[H["FanDuel odds"]]); gids = []; lis = ""
         for ln in str(r[H["Legs"]]).split("\n"):
             parts = [x.strip() for x in ln.split("|")]
@@ -949,7 +954,7 @@ def winners_block(IN, limit=6):
             elif m: text = f"{who} {m.group(2)}+ {_mlow(m.group(1))}"
             else: text = f"{who} {mk[0].lower() + mk[1:]}"
             act = ""
-            if m and m.group(1) in _WSTAT and (str(wk), who) in GL:
+            if not pre and m and m.group(1) in _WSTAT and (str(wk), who) in GL:
                 row, GH = GL[(str(wk), who)]; col, unit = _WSTAT[m.group(1)]
                 try: act = f'<span class="wa">{int(float(row[GH[col]]))} {unit}</span>'
                 except Exception: act = ""
@@ -961,16 +966,20 @@ def winners_block(IN, limit=6):
             import html as _h
             try: when += " · " + _h.unescape(at_gid(gids[0]))
             except Exception: pass
+        elif pre and "Caption" in H:   # no game on this week's board to name it by: the row's caption says which game (first line, kept short)
+            cap = str(r[H["Caption"]]).strip().split("\n")[0].strip()
+            if cap and len(cap) <= 40: when += " · " + cap
         pay = ""
         if o: pay = f'<b>$10 won ${(10 * o / 100 if o > 0 else 1000 / -o):,.2f}</b>'
-        cards.append(f'<article class="wcard"><div class="wtop"><h3>{E(title)}</h3><span class="wo">{E(odds_str(o)) if o else ""}</span></div>'
+        note = (f'<p class="wnote">Posted on our social pages in Week {wk}, before this site kept a record. It is shown here and is not counted in the win-loss record, which starts in Week {SW.RECORD_FROM}.</p>' if pre else "")
+        cards.append(f'<article class="wcard{" pre" if pre else ""}"><div class="wtop"><h3>{E(title)}</h3><span class="wo">{E(odds_str(o)) if o else ""}</span></div>'
                      f'<p class="wmeta">{E(kind)} · {E(when)}</p><ul>{lis}</ul>'
-                     f'<p class="wfoot"><span>{pay}</span><a href="/b/w{wk}-{slot}/">See the slip</a></p></article>')
+                     f'<p class="wfoot"><span>{pay}</span>' + ("" if pre else f'<a href="/b/w{wk}-{slot}/">See the slip</a>') + f'</p>{note}</article>')
     # owner 11/15: "make winners collapsible" - closed by default, one tap opens it; the visitor's choice is remembered (bs_winners_open)
     return (f'<section class="sec winners" id="winners"><style>{WINNERS_CSS}{WINNERS_FOLD_CSS}</style><details class="wfold" id="wfold">'
             f'<summary><h2 class="t">Winners <small class="tsub">{len(wins)} promoted bet{"s" if len(wins) != 1 else ""} cashed</small></h2><span class="wtog" aria-hidden="true"></span></summary>'
             f'<div class="wgrid">{"".join(cards)}</div>'
-            f'<p class="none" style="margin-top:8px;font-size:12.5px">Posted here before kickoff at FanDuel\'s price. Every promoted bet, wins and misses, is on the <a href="/receipts/">receipts</a>.</p></details>'
+            f'<p class="none" style="margin-top:8px;font-size:12.5px">' + (f'Posted before kickoff at FanDuel\'s price. Every promoted bet since Week {SW.RECORD_FROM}, wins and misses, is on the <a href="/receipts/">receipts</a>; a slip from before that says so on its card.' if any(w[0] < SW.RECORD_FROM for w in wins) else 'Posted here before kickoff at FanDuel\'s price. Every promoted bet, wins and misses, is on the <a href="/receipts/">receipts</a>.') + '</p></details>'
             "<script>(function(){var d=document.getElementById('wfold');if(!d)return;try{if(localStorage.getItem('bs_winners_open')==='1')d.open=true;}catch(e){}"
             "d.addEventListener('toggle',function(){try{localStorage.setItem('bs_winners_open',d.open?'1':'0');}catch(e){}});})();</script></section>")
 

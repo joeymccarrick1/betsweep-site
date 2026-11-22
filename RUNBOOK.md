@@ -2620,3 +2620,61 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
 - **Post form takes a list of legs.** social.py POST_JS: `window.BSPostLegs(legs, {week, ko(gid), title, odds, done(postId), say(text)})`
   opens the same "Post to BetSweep Social" form for legs handed to it (the builder's own button still posts the open slip). With
   `done` the page stays put after the post instead of going to Social. This is the hand-off My BetSweep's "Post to Social" uses.
+
+## 11/22 2:30-3:30 AM CT: saved slips go to Social in one tap; several screenshots import at once (owner 2:09 AM)
+- **Post a saved slip from where it is listed** ("Make it easier for you to send saved betslips to social"). Before: Load into
+  betslip, open the slip, Post to Social, Post - four taps and a page change. Now (social.py SAVED_JS, one script on both pages):
+  - My BetSweep: each open slip of this week has **Post to Social** next to Load into betslip (account.py, button `data-psb data-w
+    data-id`; NOT class `ldb` - that class is Load into betslip's own click handler, and sharing it emptied the betslip and left the
+    page). After a post the row shows **On Social** linked to the post; the saved slip carries `posted: <post id>` (synced like the
+    rest of the slip). No button on a slip saved from someone's post (`post`), a tailed promo (`promo`), an older week, a graded slip.
+  - Social: **From saved slips** in the top bar (only when this device has open slips of its own for the week) opens a panel listing
+    them with a Post button each. Opening it closes the screenshot panel and the other way round.
+  - Both look the slip's keys up on this week's board first (`BSSaved.check`, the builder's own data through `BSImport.data()`), the
+    way the builder resolves keys: first leg per key and game; a total or spread goes to the game the slip has on record (`g`) and to
+    no other. Left out, with the reason shown: a game that has kicked off, an either-player TD (not a board leg), a line that came
+    off the board, a total with no game on record that sits in two games. With legs left out it asks first ("Post the 9 legs"); with
+    none left it says so and opens no form. The slip's own name is the title unless the page made the name up ("Slip 3 - +650",
+    "FanDuel 6-leg +3973"); the price is offered only for a screenshot import with every leg kept (a builder save holds an estimate).
+  - The post form now says which legs are going up when it is opened from a list (`#sdL`).
+  - tests/saved_post.py (60): both pages, phone light + dark, the real account script against a stand-in client.
+- **Screenshot panel on Social never caught a started game.** SHOT_JS read the board's games as a map; the board ships a LIST, so
+  no kickoff was ever found and a started leg got as far as the builder (which did stop it). tests/social_shot.py's stand-in had set
+  the fake game as a property on the list, which is why it passed. Both fixed: the page builds a gid map; the stand-in pushes a game
+  in the board's own shape. Lesson: a stand-in must have the shape of the real data, or it tests the stand-in.
+- **Import several screenshots at once** ("batch import multiple slips to save multiple betslips all at once"). slipimport.py:
+  the file input takes several pictures; they are read one after another ("Reading slip 2 of 5") and queue up (`PEND`), one block
+  per screenshot with its own tick box, legs (folded unless something was not imported or was unticked), name and price, and one
+  **Save N slips** button. A second picture chosen or pasted later JOINS the queue instead of replacing the first (a phone pastes
+  one picture at a time); names typed and legs unticked survive the repaint. Left unticked with the reason: the same legs as another
+  screenshot in the queue, or as a slip already saved. A picture with no legs / that cannot be read gets a dashed block and is left
+  out. 12 screenshots a go; 90 seconds per picture, then it counts as unreadable; pictures arriving mid-read wait their turn.
+  After a save the card lists what was saved, each with Load into betslip and Post to Social. One picture alone looks and works as
+  before (same messages, Save slip / Load into betslip), plus Add another screenshot and Clear.
+  tests/import_batch.py (54), reader stubbed. The node checks of the parser (tests/slipimport_*.js) are unchanged.
+- **The pre-publish set is a file now: tests/prepublish.sh** (46 page tests, the two node checks of the importer, the gate). Until
+  today it lived only in a session's scratch folder and was rebuilt from this handbook each time. Its header says how to run it on
+  a copy of the tree and how to run the gate that counts (on a copy of the live clone). A new test joins the TESTS line there.
+
+## 11/22 3:30 AM CT: a winner from before the record began (owner 1:12 AM: "Can we add this to our winners?")
+- **The slip.** Piss Missile Monday, Week 5, Bills @ Rams (Mon 10/12, BUF 37 - LA 34 in overtime): a 10-leg same-game parlay at
+  +6781 (the owner's own ticket was +10174 with a FanDuel 50% profit boost). Posted on BetSweep's social pages before the PROMO tab
+  existed - the tab, and every public count of promoted bets, starts in Week 6.
+- **The rule: shown, never counted** (`sweep.RECORD_FROM = 6`). The tab holds no losses for Weeks 1-5, so counting that one win
+  would be a record with the misses left out: the tracked record through 11/22 is 1-47, -44.0u, and this one slip at +6781 would have
+  turned it into +23.8u. So:
+  - home.py `winners_block`: a W row from a week before RECORD_FROM gets a card marked `pre`: name, posted price, legs, what $10 won,
+    the game from the row's Caption (first line), and "Posted on our social pages in Week 5, before this site kept a record. It is
+    shown here and is not counted in the win-loss record, which starts in Week 6." No See the slip link (no page), no stat beside
+    a leg (the site did not grade that week). The section's footnote then says the record starts in Week 6.
+  - sweep.py `promo_weeks()` is now the season page's "Promoted bets" count (build_season.py calls it) and skips weeks before
+    RECORD_FROM; build_results.py skips them too. It also reads the grader's "Cashed", which the season page used to skip.
+  - If the owner ever wants Weeks 1-5 in the record, it needs every promoted bet of those weeks on the tab, misses included.
+- **The row** is 'PROMO - Promoted Bets' Week 5, Slot 1, Status HIDDEN, Result Hit, Posted 2026-10-12, per-leg odds blank. Written
+  only AFTER this code was live: the old code would have counted it on Tuesday's season page and linked a slip page that does not exist.
+- **Checked, and one thing that does not line up.** All ten legs clear on the site's Week 5 game log (Cook 111 rush yds and 2 TDs,
+  Adams 51 rec yds, Allen 210 pass / 121 rush / 1 rush TD, K. Williams 1 TD, Nacua 138 rec yds and 1 TD, Stafford 383 pass yds). The
+  stat lines on the owner's winner graphic are different (Cook 78, Adams 53, Allen 342 pass / 53 rush, Nacua 111, Stafford 317).
+  Every leg clears on both, so the result stands; which box score is right is NOT settled, which is the second reason the card
+  prints no stats. Told the owner.
+- tests/winner_pre.py (13 on made-up rows + 8 on the built page when the tab carries such a row), in tests/prepublish.sh.

@@ -44,6 +44,12 @@ def is_sweep(title):
 def name(title):
     return PREFIX.sub("", str(title or ""), count=1).strip()
 
+# The PROMO tab - and with it every public win-loss count of promoted bets - starts in Week 6. A row from an earlier week is a slip that
+# was posted on BetSweep's social pages before the site kept a record (owner 11/22: the Week 5 Piss Missile Monday, Bills @ Rams). Such
+# a row may be SHOWN (home page Winners, marked as such); it is never COUNTED in a record: the weeks before 6 have no losses on the tab,
+# so counting their one win would be a record with the misses left out.
+RECORD_FROM = 6
+
 def res_kind(result):
     r = str(result or "").strip().upper()
     return "W" if r in WIN else "L" if r in LOSS else None
@@ -51,6 +57,17 @@ def res_kind(result):
 def _num(x):
     try: return float(str(x).replace("+", "").replace(",", "").strip())
     except Exception: return None
+
+def promo_weeks(v):
+    """Every graded promoted bet on the PROMO tab from RECORD_FROM on, by week: {week: [slips, hits, units at the posted FanDuel price]}.
+    This is the season page's "Promoted bets" line (build_season.py). A row from before RECORD_FROM is never counted, whatever its result."""
+    out = {}
+    for r in v[1:]:
+        r = list(r) + [""] * (10 - len(r)); k = res_kind(r[8]); wk = _num(r[0])
+        if wk is None or k is None or int(wk) < RECORD_FROM: continue
+        fdo = _num(r[4]); dec = (fdo / 100 + 1) if fdo and fdo > 0 else (100 / -fdo + 1) if fdo else None
+        d = out.setdefault(int(wk), [0, 0, 0.0]); d[0] += 1; d[1] += (k == "W"); d[2] += ((dec - 1) if k == "W" else -1.0) if dec else (0.0 if k == "W" else -1.0)
+    return out
 
 def units(odds, kind):
     """profit at 1 unit. A win without a posted price cannot be valued: returns None (the caller reports it, never guesses)."""

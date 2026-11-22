@@ -19,7 +19,7 @@ STUB = """(mode) => window.BSImport.data().then(function(BS){
   function key(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
   var late = BS.legs.filter(function(l){ return l.g === '%s' && !l.gl && /Yards|Receptions/.test(l.m) && !/^Under/.test(l.m); });
   // a leg whose game has kicked off: the board drops finished games' legs, so one is made from a real leg and an hour-old kickoff ('%s' is the week's first game)
-  var a = late[0], b = late.filter(function(l){ return l.pl !== a.pl; })[0], c = Object.assign({}, a, {pl: 'Early Bird', g: '__early'}); BS.games['__early'] = {ko: Date.now() - 3600e3};
+  var a = late[0], b = late.filter(function(l){ return l.pl !== a.pl; })[0], c = Object.assign({}, a, {pl: 'Early Bird', g: '__early'}); BS.games.push({gid: '__early', ko: Date.now() - 3600e3});   // 11/22: in the board's own shape (a list of games) - set as a property on the list, the page's own bug hid behind this stand-in
   function ok(l){ return {ok: true, key: key(l), leg: l, label: l.pl + ' ' + Math.round(l.ln) + '+ ' + l.m, odds: l.o}; }
   var legs = mode === 'all' ? [ok(a), ok(b)] : [ok(a), ok(b), ok(c), {ok: true, unpriced: true, key: 'Nobody Real|Receiving Yards|33', leg: null, label: 'Nobody Real 33+ Receiving Yards'}, {ok: false, raw: 'FIRST DRIVE RESULT - PUNT', why: 'a drive prop'}];
   window.__want = [key(a), key(b)]; window.__early = c.pl;

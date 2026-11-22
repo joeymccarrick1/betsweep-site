@@ -225,6 +225,7 @@ try:
     for r in pv[1:]:
         r = list(r) + [""] * (10 - len(r))
         if num(r[0]) != WEEK or not str(r[2]).strip() or str(r[8]).strip().upper() not in ("HIT", "WON", "WIN", "CASHED", "MISSED", "MISS", "LOST", "LOSS"): continue   # grade_promos writes Cashed/Missed (11/3 audit: Cashed was unreadable here)
+        if WEEK < __import__("sweep").RECORD_FROM: continue   # the tracked record starts Week 6 (sweep.RECORD_FROM); an earlier slip is not a receipt line
         hit = str(r[8]).strip().upper() in ("HIT", "WON", "WIN", "CASHED"); fdo = num(r[4]); nlegs = len([x for x in str(r[3]).splitlines() if x.strip()])
         dec = (fdo / 100 + 1) if fdo and fdo > 0 else (100 / -fdo + 1) if fdo else None
         PR.append({"title": str(r[2]).strip(), "n": nlegs, "fd": fdo, "hit": hit, "u": ((dec - 1) if hit else -1.0) if dec else (0.0 if hit else -1.0)})

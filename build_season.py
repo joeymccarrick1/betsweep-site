@@ -436,12 +436,7 @@ def promo_legs(rows, first_week=6):
 # promoted bets, season to date (the slips we actually posted, at posted FanDuel odds) - the honest headline next to the leg pool
 promo_line = ""
 try:
-    PRW = defaultdict(lambda: [0, 0, 0.0])
-    for r in vals("promos.json")[1:]:
-        r = list(r) + [""] * (10 - len(r)); res = str(r[8]).strip().upper()
-        if num(r[0]) is None or res not in ("HIT", "WON", "WIN", "MISSED", "MISS", "LOST", "LOSS"): continue
-        hit = res in ("HIT", "WON", "WIN"); fdo = num(r[4]); dec = (fdo / 100 + 1) if fdo and fdo > 0 else (100 / -fdo + 1) if fdo else None
-        d = PRW[int(num(r[0]))]; d[0] += 1; d[1] += hit; d[2] += ((dec - 1) if hit else -1.0) if dec else (0.0 if hit else -1.0)
+    PRW = __import__("sweep").promo_weeks(vals("promos.json"))   # from Week 6 on (sweep.RECORD_FROM): a slip from before the tab existed is shown on the home page, never counted
     if PRW:
         n_ = sum(d[0] for d in PRW.values()); h_ = sum(d[1] for d in PRW.values()); u_ = sum(d[2] for d in PRW.values())
         promo_line = f'<span class="k">Promoted bets</span><span>{h_}–{n_-h_} · {u_:+.1f}u at posted odds · ' + ", ".join(f"Wk {w} {d[1]}–{d[0]-d[1]}" for w, d in sorted(PRW.items())) + '</span>'

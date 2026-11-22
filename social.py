@@ -147,12 +147,13 @@ POST_CSS = """
 .sdlg input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--line,#d3cbb8);border-radius:9px;background:var(--bg,#fff);color:var(--ink,#141a24)}
 .sdlg .row{display:flex;gap:8px;margin-top:12px}.sdlg .row button{flex:1;font:inherit;font-weight:700;padding:11px;border-radius:9px;border:1px solid var(--line,#d3cbb8);background:none;color:var(--ink,#141a24);cursor:pointer}
 .sdlg .row button.go{background:#d7332a;border-color:#d7332a;color:#fff}.sdlg .row button[disabled]{opacity:.6}
-.sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700}
+.sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700} .sdlg .sdl{padding:8px 10px;border:1px solid var(--line,#d3cbb8);border-radius:9px;line-height:1.45} .sdlg .sdl[hidden]{display:none}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 """
 POST_HTML = """<div class="sdlg" id="sdlg" hidden><div class="box" role="dialog" aria-modal="true" aria-labelledby="sdlgT">
  <h3 id="sdlgT">Post to BetSweep Social</h3>
  <p>Your slip goes on the Social page for others to tail and upvote. It comes down on its own when a leg loses or every game is over. Keep it clean - posts can be reported and removed.</p>
+ <p class="asn sdl" id="sdL" hidden></p>
  <p class="asn">Posting as <b id="sdH">…</b> <small>(your BetSweep handle - assigned, the same on every post)</small></p>
  <label for="sdT">Title <small>(optional)</small></label><input id="sdT" maxlength="60" placeholder="e.g. Sunday ladder">
  <label for="sdO">FanDuel price you got <small>(optional, e.g. +650)</small></label><input id="sdO" inputmode="text" maxlength="9" placeholder="+650">
@@ -172,9 +173,12 @@ POST_JS = r"""<script>(function(){
   if(btn) btn.addEventListener('click', function(){ SRC = null; openForm(); });
   window.BSPostLegs = function(ls, opt){ opt = opt || {}; SRC = {legs: ls || [], ko: opt.ko, week: opt.week, done: opt.done, say: opt.say};
     $('sdT').value = opt.title || ''; $('sdO').value = opt.odds ? ((+opt.odds > 0 ? '+' : '') + (+opt.odds)) : ''; openForm(); };
+  function legLine(l){ if(l.gl) return l.pl; if(/^(Anytime|First|Either|2\+|3\+) ?TD$/.test(l.m)) return l.pl + ' ' + l.m.toLowerCase(); if(/^Under /.test(l.m)) return l.pl + ' under ' + l.ln + ' ' + l.m.slice(6).toLowerCase(); return l.pl + ' ' + Math.round(l.ln || 1) + '+ ' + String(l.m).toLowerCase(); }
   function openForm(){
     var A = window.bsAccount; var ls = legsNow();
     if(!ls.length){ alertish('Add some legs first.'); return; }
+    // a slip handed over from a list has no betslip on the page to look at, so the form says what is about to go up
+    var L = $('sdL'); if(L){ L.hidden = !SRC; L.textContent = SRC ? ls.length + ' leg' + (ls.length === 1 ? '' : 's') + ': ' + ls.slice(0, 4).map(legLine).join('; ') + (ls.length > 4 ? '; and ' + (ls.length - 4) + ' more' : '') : ''; }
     // a slip read from a screenshot on Social (bs_postnow): the price on the picture is offered only while the slip is exactly those legs
     try{ var pn = JSON.parse(sessionStorage.getItem('bs_postnow') || 'null'), ks = ls.map(function(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }).sort();
       if(pn && pn.odds && Date.now() - (+pn.t || 0) < 30 * 60e3 && !$('sdO').value && pn.keys && pn.keys.length === ks.length && pn.keys.every(function(k, i){ return k === ks[i]; })) $('sdO').value = (pn.odds > 0 ? '+' : '') + pn.odds; }catch(e){}
@@ -216,6 +220,108 @@ POST_JS = r"""<script>(function(){
       msg('Posted! Opening Social…'); setTimeout(function(){ location.href = '/social/#p' + pid; }, 600);
     });
   });
+})();</script>"""
+
+# ---------------- post a saved slip (owner 11/22 2:09 AM: "Make it easier for you to send saved betslips to social") ----------------
+# Before this a saved slip reached Social by way of the builder: Load into betslip, open the slip, Post to Social, Post - four taps and a
+# page change. Now the slip is posted from where it is listed: a "Post to Social" button on each open slip on My BetSweep, and a "From
+# saved slips" panel on Social. Both hand the slip's legs to the same post form (POST_JS, window.BSPostLegs). The legs are looked up on
+# this week's board first (window.BSImport.data(), the builder's own data), so what is posted is exactly what the builder would post:
+# a leg whose game has kicked off, an either-player touchdown (not a board leg) or a line that has come down is left out, and the
+# reader is told which and asked before a shorter slip goes up. After a post the saved slip carries posted: <post id>.
+SAVED_CSS = """.soc .bar #savbtn{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.soc .sav li{display:flex;align-items:center;gap:10px} .soc .sav li>span{flex:1;min-width:0} .soc .sav li b{margin-left:0;display:block;overflow-wrap:anywhere}
+.soc .sav li .go{flex:none;min-height:44px} .soc .sav li a.on{flex:none;font-weight:700;font-size:13.5px;color:var(--good);text-decoration:none;padding:12px 2px}
+.soc .sav #savx{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.soc .sav #savout .st .go{margin-top:8px}
+.me button.psb{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:none;color:var(--ink);border:1px solid var(--line);padding:3px 9px;border-radius:4px;margin-left:6px;cursor:pointer}
+.me a.pon{background:none;color:var(--good);border:1px solid var(--line);margin-left:6px}
+.me button[data-psb][hidden]{display:none !important}
+.me .psn{display:block;margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:13px;line-height:1.45;color:var(--ink)} .me .psn[hidden]{display:none} .me .psn.err{border-color:var(--bad)} .me .psn .ok{color:var(--good);font-weight:700}
+.me .psn button{display:block;margin:8px 0 0;min-height:40px;padding:0 14px;border-radius:8px;border:0;background:var(--red);color:#fff;font:inherit;font-weight:700;cursor:pointer}"""
+SAVED_HTML = """<section class="shot sav" id="sav" hidden aria-label="Post one of your saved slips">
+  <h2>Post a saved slip</h2>
+  <p>Your open slips from My BetSweep this week. Tap Post and it goes up as you saved it.</p>
+  <ul id="savlist"></ul>
+  <div id="savout" aria-live="polite"></div>
+  <div class="row"><button type="button" id="savx">Close</button></div>
+ </section>"""
+SAVED_JS = r"""<script>(function(){
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function am(o){ o = +o; return isNaN(o) || !o ? '' : (o > 0 ? '+' + o : String(o)); }
+  function legKey(l){ return l.pl + '|' + l.m + '|' + Math.round(l.ln || 1); }
+  function read(w){ try{ var a = JSON.parse(localStorage.getItem('bs_slips_w' + w) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+  function legText(k){ var q = String(k).split('|'); return q[1] === 'Anytime TD' || q[1] === 'First TD' || q[1] === 'Either TD' ? q[0] + ' ' + q[1].toLowerCase() : q[1] === 'Moneyline' || q[1] === 'Spread' || q[1] === 'Total' ? q[0] : q[0] + ' ' + q[2] + '+ ' + String(q[1] || '').toLowerCase(); }
+  // someone else's slip (saved from Social, or a tailed BetSweep promo) is not yours to post
+  function mine(s){ return !!(s && !s.promo && !s.post && s.keys && s.keys.length); }
+  // A saved slip's keys -> this week's board legs, the way the builder does it (first leg per key and game). A key that sits in more
+  // than one game (a total, a spread) goes to the game the slip has on record for it and to no other: the wrong game's line under
+  // someone's name is worse than a leg left out.
+  function check(w, id){
+    if(!window.BSImport || !window.BSImport.data) return Promise.reject(new Error('no reader'));
+    return window.BSImport.data().then(function(BS){
+      var s = read(w).filter(function(x){ return x && String(x.id) === String(id); })[0]; if(!s) return {err: 'That slip is no longer saved on this device.'};
+      if(+BS.week !== +w) return {err: 'Only this week’s slips can be posted. This one is from Week ' + w + '.'};
+      var by = {}, G = {}, now = Date.now(); (BS.games || []).forEach(function(g){ if(g && g.gid) G[g.gid] = g; });
+      (BS.legs || []).forEach(function(l){ var k = legKey(l), m = by[k] = by[k] || {}; if(!(l.g in m)) m[l.g] = l; });
+      var seen = {}, used = {}, ok = [], no = [];
+      (s.keys || []).forEach(function(k){ var m = by[k] || {}, all = Object.keys(m), gs = all.filter(function(g){ return !used[k + '@' + g]; }), n = seen[k] = (seen[k] || 0) + 1, want = s.g && s.g[k] ? s.g[k][n - 1] : null;
+        var g = want != null ? (gs.indexOf(want) >= 0 ? want : null) : (gs.length === 1 ? gs[0] : null);
+        if(g == null){ no.push({k: k, why: !all.length ? (/\|Either TD\|/.test(k) ? 'either-player touchdowns are not posted' : 'not on this week’s board') : want != null ? 'that game’s line has come off the board' : 'the same line is in more than one game'}); return; }
+        var ko = G[g] && G[g].ko; if(ko && now >= +ko){ no.push({k: k, why: 'that game has already kicked off'}); return; }
+        used[k + '@' + g] = 1; ok.push(m[g]); });
+      return {w: +w, s: s, G: G, ok: ok, no: no}; });
+  }
+  function form(c, ui, done){
+    if(!window.BSPostLegs){ ui.say('The post form did not load. Reload the page and try again.', 1); return; }
+    var whole = !c.no.length, nm = String(c.s.name || '').trim();
+    if(/^(Slip( \d+)?( · [+\-−]?\d+)?|FanDuel slip|FanDuel \d+-leg( [+\-]\d+)?)$/i.test(nm)) nm = '';   // a name the page made up is not a title
+    // the price is offered only when it is the price of the whole slip as the book gave it (a screenshot import); a builder save holds an estimate
+    window.BSPostLegs(c.ok, {week: c.w, ko: function(g){ return c.G[g] && c.G[g].ko ? +c.G[g].ko : null; }, title: nm.slice(0, 60), odds: whole && c.s.src === 'fanduel-screenshot' && +c.s.odds ? +c.s.odds : null,
+      say: function(t){ ui.say(esc(t), 1); },
+      done: function(pid){ var all = read(c.w), hit = 0; all.forEach(function(x){ if(x && String(x.id) === String(c.s.id)){ x.posted = pid || true; hit = 1; } });
+        if(hit){ try{ localStorage.setItem('bs_slips_w' + c.w, JSON.stringify(all)); }catch(e){} }
+        ui.say('<span class="ok">Posted to Social.</span>' + (pid ? ' <a href="/social/#p' + esc(pid) + '">See it there</a>' : '')); if(done) done(pid); }});
+  }
+  // ui = {say(html, isError), ask(html, buttonLabel, onYes)} - the row on My BetSweep or the panel on Social
+  function start(w, id, ui, done){
+    ui.say('Checking this week’s board…');
+    check(w, id).then(function(c){
+      if(c.err){ ui.say(esc(c.err), 1); return; }
+      var out = c.no.map(function(x){ return esc(legText(x.k)) + ' (' + esc(x.why) + ')'; }).join('; ');
+      if(!c.ok.length){ ui.say('None of this slip’s legs can be posted: ' + out + '.', 1); return; }
+      if(c.no.length){ ui.ask(c.ok.length + ' of ' + (c.ok.length + c.no.length) + ' legs can be posted. Left out: ' + out + '.', 'Post the ' + (c.ok.length === 1 ? 'one leg' : c.ok.length + ' legs'), function(){ ui.say(''); form(c, ui, done); }); return; }
+      ui.say(''); form(c, ui, done);
+    }, function(){ ui.say('Could not load this week’s board. Check your connection and try again.', 1); });
+  }
+  window.BSSaved = {read: read, mine: mine, check: check, start: start};
+
+  // ---- My BetSweep: any button carrying data-psb, data-w and data-id - the one on an open saved slip (account.py) and the ones the
+  // importer lists after a save (slipimport.py). Its answers print under it, in its own row. ----
+  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('button[data-psb]'); if(!b) return;
+    var host = b.closest('li') || b.parentNode; if(!host) return; var note = host.querySelector('.psn');
+    if(!note){ note = document.createElement('span'); note.className = 'psn'; note.setAttribute('aria-live', 'polite'); host.appendChild(note); }
+    var ui = {say: function(h, err){ note.innerHTML = h || ''; note.className = 'psn' + (err ? ' err' : ''); note.hidden = !h; },
+      ask: function(h, label, yes){ note.className = 'psn'; note.hidden = false; note.innerHTML = h + '<button type="button">' + esc(label) + '</button>'; note.querySelector('button').addEventListener('click', yes); }};
+    start(b.getAttribute('data-w'), b.getAttribute('data-id'), ui, function(){ b.hidden = true;   // one post per slip; the saved-slips list repaints and its row now says On Social
+      document.dispatchEvent(new CustomEvent('bs-account', {detail: {posted: true}})); });
+  });
+
+  // ---- Social: "From saved slips" ----
+  var $ = function(id){ return document.getElementById(id); }, btn = $('savbtn'), box = $('sav'); if(!btn || !box) return;
+  var W = +btn.getAttribute('data-w'), list = $('savlist'), out = $('savout');
+  function say(h, err){ out.innerHTML = h ? '<p class="st' + (err ? ' err' : '') + '">' + h + '</p>' : ''; }
+  function rows(){ return read(W).filter(mine); }
+  function paint(){ var rs = rows(); btn.hidden = !rs.length; if(!rs.length){ open(false); return; }
+    list.innerHTML = rs.map(function(s){ var n = s.keys.length; return '<li><span><b>' + esc(s.name || 'Slip') + '</b><small>' + n + ' leg' + (n === 1 ? '' : 's') + (s.odds ? ' · ' + am(s.odds) : '') + '</small></span>' +
+      (s.posted ? '<a class="on" href="/social/' + (s.posted === true ? '' : '#p' + esc(s.posted)) + '">On Social ✓</a>' : '<button type="button" class="go" data-id="' + esc(s.id) + '">Post</button>') + '</li>'; }).join(''); }
+  function open(on){ box.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(on){ if(window.BSShotPanel) window.BSShotPanel(false); say(''); paint(); box.scrollIntoView({block: 'nearest'}); } }
+  window.BSSavedPanel = open;
+  btn.addEventListener('click', function(){ open(box.hidden); }); $('savx').addEventListener('click', function(){ open(false); });
+  list.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('button.go'); if(!b) return;
+    var ui = {say: say, ask: function(h, label, yes){ out.innerHTML = '<p class="st">' + h + '</p><div class="row"><button type="button" class="go">' + esc(label) + '</button></div>'; out.querySelector('button').addEventListener('click', yes); }};
+    start(W, b.getAttribute('data-id'), ui, function(pid){ paint(); if(pid){ try{ history.replaceState(null, '', '#p' + pid); }catch(e){} } location.reload(); }); });
+  paint(); document.addEventListener('bs-account', paint); window.addEventListener('storage', function(e){ if(e.key === 'bs_slips_w' + W) paint(); });
 })();</script>"""
 
 # ---------------- /social/ page ----------------
@@ -873,10 +979,12 @@ SHOT_JS = r"""<script>(function(){
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
   function am(o){ o = +o; return isNaN(o) || !o ? '' : (o > 0 ? '+' + o : String(o)); }
   function say(t, err){ out.innerHTML = '<p class="st' + (err ? ' err' : '') + '">' + t + '</p>'; }
-  function open(on){ box.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(on) box.scrollIntoView({block: 'nearest'}); }
+  function open(on){ box.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(on){ if(window.BSSavedPanel) window.BSSavedPanel(false); box.scrollIntoView({block: 'nearest'}); } }
+  window.BSShotPanel = open;
   btn.addEventListener('click', function(){ open(box.hidden); }); $('shotx').addEventListener('click', function(){ open(false); out.innerHTML = ''; });
   function show(R, BS){
-    var now = Date.now(), G = BS.games || {}, rows = (R.legs || []).map(function(l){
+    var now = Date.now(), G = {}; (BS.games || []).forEach(function(g){ if(g && g.gid) G[g.gid] = g; });   // 11/22: the board ships games as a list - read as a map it never found a kickoff, so a started game's leg got as far as the builder
+    var rows = (R.legs || []).map(function(l){
       if(!l.ok) return {no: 1, text: l.raw, why: l.why || 'not a market BetSweep prices'};
       var g = l.leg && l.leg.g, ko = g && G[g] && G[g].ko;
       if(l.unpriced || !l.leg) return {no: 1, text: l.label, why: "not on this week's board at that exact line, so it cannot be posted"};
@@ -925,11 +1033,11 @@ def page(week, house=""):
 <script>window.__BS_FDMAP = {json.dumps(fdmap(), separators=(",", ":"))};</script>
 <meta name="description" content="Betslips posted by BetSweep users - tail them on FanDuel, upvote the best ones, and see which ones cashed. Graded live from the box score.">
 __BASE__
-<style>__BASECSS__{PAGE_CSS}{SHOT_CSS}</style>
+<style>__BASECSS__{PAGE_CSS}{SHOT_CSS}{SAVED_CSS}{POST_CSS}</style>
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="mebtn" hidden>My slips</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="savbtn" data-w="{int(week)}" aria-controls="sav" aria-expanded="false" hidden>From saved slips</button><button type="button" id="mebtn" hidden>My slips</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  <section class="shot" id="shot" hidden aria-label="Post a slip from a screenshot">
   <h2>Post from a screenshot</h2>
   <p>Screenshot your FanDuel betslip, then choose the picture or paste it. Your phone reads it; the picture never leaves this device.</p>
@@ -937,10 +1045,12 @@ __BASE__
   <div id="shotpbox" contenteditable="true" hidden aria-label="Paste your screenshot here"></div>
   <div id="shotout" aria-live="polite"></div>
  </section>
+ {SAVED_HTML}
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>
  <p class="rules">How it works: the most-upvoted slips sit on top. Save slip keeps a slip on My BetSweep, where it is graded after the games - no account needed. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg moves to Lost right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
 </div>
+{POST_HTML}
 <script defer src="/import.js"></script>
-""" + PAGE_JS.replace("__WEEK__", json.dumps(int(week))) + SHOT_JS)
+""" + PAGE_JS.replace("__WEEK__", json.dumps(int(week))) + SHOT_JS + POST_JS + SAVED_JS)
