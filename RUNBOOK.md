@@ -2532,3 +2532,12 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   23:44Z and 00:05Z (11/22); a run that errors skips that half hour's rule-outs and stale checks. pending/avail-retry.patch adds _open()
   (3 tries on 429/5xx/dropped connection, error names the host only) to site main .github/avail_auto.py + 3 selftest cases. It changes
   a job on main, so it waits for the owner's yes: `git apply` in the site clone, `python3 .github/avail_auto.py --selftest`, commit, push.
+
+## THE MATCHUP RULE (owner 11/21 8:09 PM: "a rule that you always have to follow no matter what the leg")
+Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE sending, and say which legs fail.
+- MUST pass **matchup** (the defense is not bottom-half / no "Tough matchup" flag for the stat the leg is priced on).
+- MUST pass **game script** (not on the likely trailing side for a run/TD leg, no blowout-rest flag; chance in the likeliest script not below the overall chance).
+- **WR/CB**: want the receiver with the better matchup on the weekly chart; never a "difficult" one when a teammate's is better.
+- **Similar defenses**: want legs whose player has a passing record against similar defenses (2024-25); no record (rookie) is a gap to state, not a pass.
+- TD-specific version of all four: /tmp-style script kept as research/tdcheck notes - defense top-16 in TDs allowed to the position, script within 5% of overall and not trailing, scored vs similar defenses at half or his priced rate. Ties in defense ranks must be averaged (a tie-ordering flaw gave unstable counts on 11/21).
+- 11/21 slips: ten Sunday SGPs (slip log 63-72) were built on the risk score only and sent before this rule; the Sunday Slate promo (row 50, +2946) was the owner's slip, posted 8:10 PM.
