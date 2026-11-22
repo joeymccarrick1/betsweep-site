@@ -2678,3 +2678,45 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
   Every leg clears on both, so the result stands; which box score is right is NOT settled, which is the second reason the card
   prints no stats. Told the owner.
 - tests/winner_pre.py (13 on made-up rows + 8 on the built page when the tab carries such a row), in tests/prepublish.sh.
+
+## 11/22 7:35-8:30 AM CT: the owner's answers, Week 5 on the record, the importer moved up, the weather feed
+- **Week 5 is on the record: 1-9** (owner: "Attaching all the promos I did before the winning piss missile so you can add that as a
+  win. All these promos lost." - nine graphics). This SUPERSEDES the "shown, never counted" state of the 3:30 AM entry above.
+  - 'PROMO - Promoted Bets' rows 55-63 are the nine misses (Week 5, slots 1-9, Status HIDDEN, Result Missed, posted prices - the
+    boosted prices are in Notes): The Piss Missile +63120, TNF 3-Leg SGP +485, TNF 6-Leg Sweep +1790 (TB @ DAL, Thu 10/8); 8 Leg
+    Parlay +836, The Either Or Parlay +9906, The Sunday Gauntlet +4192, The Teaser +1800 (Sun 10/11); Keon Control +1916, Monday
+    Night SGP +584 (BUF @ LA, Mon 10/12). Row 54, the winner, is slot 10.
+  - **Each of the nine was graded here**, not taken on the owner's word: every one has at least one leg that misses on the Week 5
+    game log or the final scores, and each row's Notes says which ("x/y legs hit", the missed legs with the stat). Closest: Monday
+    Night SGP 5/6 (Kyren Williams 49 rushing yards on a 50+ leg); Gauntlet had Cam Ward 170 on 175+.
+  - `sweep.RECORD_FROM = 5` (the first week BetSweep posted promos; nothing in Weeks 1-4). `sweep.PAGES_FROM = 6` (the first week
+    promoted bets had /b/w<week>-<slot>/ pages). Tracked record with Week 5: **2-56, +14.8u** at posted prices (it was 1-47, -44.0u;
+    Week 5 alone is 1-9, +58.8u, all of it the one +6781 hit).
+  - home.py Winners: a win from a week the record counts but before PAGES_FROM gets a card marked `soc`: final numbers beside its
+    legs like any winner (the owner confirmed the game log is right and his graphic's stat lines were wrong), no See the slip link,
+    and "Posted on our social pages in Week 5, before promoted bets had their own pages here. It counts in the record along with
+    that week's 9 misses." A win from before RECORD_FROM keeps the `pre` card (shown, not counted, no stats). tests/winner_pre.py.
+  - **The live season page was patched by hand** (main, /season/index.html): only the "Promoted bets" span, to what build_season.py
+    writes for the page's own graded weeks (through Week 10) with Week 5 added: "2-54 · +16.8u ... Wk 5 1-9, Wk 6 0-7 ...". Tuesday's
+    rebuild overwrites it with the same line plus Week 11. Done so the Winners footnote ("counted in the season record") is true today.
+  - Week 5 has no receipt lines for these ten (that receipt was built before they were on the tab) - the footnote says receipts
+    start in Week 6.
+- **Importer moved to the top of Your slips** (owner: "make importing slips more clear and obvious to be something users don't
+  overlook. Also make it clear 12 screenshots max at time"). It was a card of its own under Bankroll, two phone screens down. Now a
+  dashed panel right under the Your slips heading (the first card), titled "Import your FanDuel bets", with Choose screenshots and
+  Paste side by side and "Up to 12 screenshots at a time." in bold under them - all on the first phone screen. The queue says
+  "N of 12 screenshots in this batch" and stops offering Add another at twelve. The empty list leads with an Import FanDuel
+  screenshots button that opens the picker (`[data-impgo]`). Menu: Betting > Import FanDuel slips (/me/#import; the link opens Your
+  slips if it was folded). The element id is still `import`; it is no longer a `.card` (me_hub's "slips come first" still holds).
+  Also: "1 leg" instead of "1 legs" on a slip row. tests/import_batch.py is 72 checks.
+- **Weather feed, with the owner's yes** ("Please fix the weather feed"): .github/feeds.py on main (commit 5a97e0e8) reads the
+  kickoffs the hourly rebuild publishes in the builder's data (`_site_kickoffs`, from the checkout) and uses them for the forecast
+  hour when they differ from nflverse's by 20 minutes to 2 days for the same week and home / away pair (`_kick`). First run 7:50 AM:
+  "weather hour from the site's board: JAX @ NYG Sun 18:00 UTC -> Sun 21:25 UTC" and "PIT @ PHI Sun 21:25 UTC -> Sun 18:00 UTC";
+  JAX-NYG went from 65F, no rain to 58F, 26% rain (still LOW). The check script is /tmp-only: extract the two functions from
+  feeds.py and run them against the clone's board and the mirror's games.csv (8 checks) - worth keeping if this is touched again.
+- **Sunday Slate:** the owner's answer on the three legs that miss the matchup rule is "Leave as posted".
+- **Daily Sweep 11/22:** none drafted (one leg in the price range had the model above FanDuel). Asked at 7:35 AM, the owner got two
+  options: Cook TD + Nix 200+ pass + G. Wilson 60+ rec (about +308, every leg passes all four checks, model 22% vs 24.5% implied) or
+  Allen 2+ pass TDs in place of Wilson (about +328, model 26% vs 23%, against Sweep says "go to the ground"), or skip.
+  The four-check scripts are in the repo now: research/slipcheck/statcheck.py (yardage and catch legs) and tdcheck.py (TD legs).

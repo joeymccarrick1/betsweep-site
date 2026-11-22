@@ -57,7 +57,7 @@ VIEW = """() => { var out = document.getElementById('impout'), sb = document.get
       return {no: b.classList.contains('no'), head: (b.querySelector('.imph b, b') || {}).textContent || '', inc: on ? on.checked : null, st: (b.querySelector('.st') || {}).textContent || '', why: b.classList.contains('no') ? b.querySelector('small').textContent : '', open: d ? d.open : null,
               ticks: b.querySelectorAll('li input[type=checkbox]').length, miss: b.querySelectorAll('li.no').length, name: nm ? nm.value : null, odds: od ? od.value : null, dup: du ? du.textContent : ''}; }),
     all: sb ? sb.textContent + (sb.disabled ? ' (off)' : '') : null, one: !!document.getElementById('impsave'), load: !!document.getElementById('impload'), more: !!document.getElementById('impmore'), clear: !!document.getElementById('impclear'),
-    note: (out.querySelector('.impnote') || {}).textContent || '', st0: (out.querySelector('.st') || {}).textContent || '', over: document.documentElement.scrollWidth - innerWidth,
+    count: (out.querySelector('.impcount') || {}).textContent || '', note: (out.querySelector('.impnote') || {}).textContent || '', st0: (out.querySelector('.st') || {}).textContent || '', over: document.documentElement.scrollWidth - innerWidth,
     hs: Array.from(out.querySelectorAll('.impact button')).map(function(x){ return Math.round(x.getBoundingClientRect().height); })}; }"""
 SAVED = "() => (JSON.parse(localStorage.getItem('bs_slips_w%d') || '[]')).map(function(s){ return {id: s.id, name: s.name, keys: s.keys, odds: s.odds, stake: s.stake, src: s.src, posted: s.posted}; })" % W
 DONE = """() => { var out = document.getElementById('impout'); return {st: (out.querySelector('.st') || {}).textContent || '', rows: Array.from(out.querySelectorAll('.impdone li')).map(function(li){ var p = li.querySelector('button[data-psb]'), n = li.querySelector('.psn');
@@ -87,8 +87,14 @@ async def main():
             FILE = "#import input[type=file]"
             # ---------- the card ----------
             ctx, pg, errs = await fresh()
-            c0 = await pg.evaluate("() => { var i = document.querySelector('#import input[type=file]'), l = i.closest('label'); return {multi: i.multiple, label: l.textContent.trim(), h: Math.round(l.getBoundingClientRect().height), copy: document.querySelector('#import p.m').textContent, over: document.documentElement.scrollWidth - innerWidth}; }")
-            check(c0["multi"] and c0["label"] == "Choose screenshots" and c0["h"] >= 40 and "several at once is fine" in c0["copy"] and c0["over"] <= 0, f"[{theme}] the import card takes several screenshots at once and says so ({c0['label']}, {c0['h']}px)")
+            c0 = await pg.evaluate("""() => { var p = document.getElementById('import'), i = p.querySelector('input[type=file]'), l = i.closest('label'), r = p.getBoundingClientRect(), pb = document.getElementById('imppaste').getBoundingClientRect(), lb = l.getBoundingClientRect();
+              return {multi: i.multiple, label: l.textContent.trim(), h: Math.round(lb.height), title: p.querySelector('h3').textContent, lim: p.querySelector('.implim').textContent, limB: p.querySelector('.implim b').textContent,
+                      inSlips: !!p.closest('#crec'), first: (document.querySelector('.me .card') || {}).id, above: r.top < document.getElementById('slips').getBoundingClientRect().top, top: Math.round(r.top + scrollY), ph: Math.round(r.height),
+                      oneRow: Math.abs(pb.top - lb.top) < 12, dashed: getComputedStyle(p).borderTopStyle, over: document.documentElement.scrollWidth - innerWidth, vh: innerHeight}; }""")
+            print(f"   [{theme}]", json.dumps(c0, ensure_ascii=False)[:500])
+            check(c0["inSlips"] and c0["first"] == "crec" and c0["above"] and c0["top"] < 1.1 * c0["vh"] and c0["dashed"] == "dashed", f"[{theme}] the importer sits at the top of Your slips, above the list, within the first screen or so ({c0['top']}px down, {c0['ph']}px tall)")
+            check(c0["title"] == "Import your FanDuel bets" and c0["multi"] and c0["label"] == "Choose screenshots" and c0["h"] >= 40 and c0["oneRow"] and c0["over"] <= 0, f"[{theme}] it is named for what it does, with Choose screenshots and Paste side by side ({c0['label']}, {c0['h']}px)")
+            check(c0["limB"] == "Up to 12 screenshots at a time." and c0["lim"].startswith("Up to 12 screenshots at a time."), f"[{theme}] the 12-at-a-time limit is spelled out in the panel ({c0['limB']})")
             # ---------- one picture: as it always was, plus Add another ----------
             await pg.set_input_files(FILE, F("a")); await pg.wait_for_timeout(500); v = await pg.evaluate(VIEW)
             print(f"   [{theme}]", json.dumps(v, ensure_ascii=False)[:600])
@@ -96,6 +102,7 @@ async def main():
             check(len(v["blocks"]) == 1 and b0["st"] == "Found 2 of 2 legs · FanDuel +264. Untick anything that is wrong." and b0["inc"] is None and b0["ticks"] == 2 and b0["name"] == "FanDuel 2-leg +264" and b0["odds"] == "+264",
                   f"[{theme}] one screenshot reads as before: the legs to untick, a name, the price ({b0.get('st')})")
             check(v["one"] and v["load"] and v["more"] and v["clear"] and v["all"] is None and min(v["hs"]) >= 40 and v["over"] <= 0, f"[{theme}] Save slip and Load into betslip are there, with Add another screenshot and Clear beside them (heights {v['hs']})")
+            check(v["count"] == "1 of 12 screenshots in this batch.", f"[{theme}] the batch says how many of the twelve are in ({v['count']})")
             if SHOTS: await pg.evaluate("document.getElementById('import').scrollIntoView({block: 'start'}); window.scrollBy(0, -70)"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/import-one-{theme}.png")
             # ---------- a second one joins it: what was typed and unticked in the first stays ----------
             await pg.fill("#impname", "My first"); await pg.evaluate("document.querySelector('#impout li input[data-i=\"1\"]').click()")
@@ -117,9 +124,9 @@ async def main():
             new = [s for s in sv if s["src"] == "fanduel-screenshot"]
             check(len(sv) == 3 and len(new) == 2 and new[0]["name"] == "My first" and new[0]["keys"] == [A] and new[0]["odds"] == 264 and new[1]["name"] == "FanDuel 2-leg +650" and new[1]["keys"] == [A, C] and new[1]["odds"] == 650 and new[1]["stake"] == 5 and new[0]["id"] != new[1]["id"],
                   f"[{theme}] Save 2 slips saves both, each with its own legs, name, price and stake ({[(s['name'], len(s['keys']), s['odds']) for s in new]})")
-            check(dn["st"].startswith("Saved 2 slips. They are in Your record above") and [r["name"] for r in dn["rows"]] == ["My first", "FanDuel 2-leg +650"] and all(r["load"] and (r["post"] or "").startswith("Post to Social") and int(r["post"].split(" ")[-1]) >= 40 for r in dn["rows"]) and dn["over"] <= 0,
+            check(dn["st"].startswith("Saved 2 slips. They are in your list below") and [r["name"] for r in dn["rows"]] == ["My first", "FanDuel 2-leg +650"] and all(r["load"] and (r["post"] or "").startswith("Post to Social") and int(r["post"].split(" ")[-1]) >= 40 for r in dn["rows"]) and dn["over"] <= 0,
                   f"[{theme}] the card then lists what was saved, each with Load into betslip and Post to Social ({dn['st'][:40]} | {[r['post'] for r in dn['rows']]})")
-            check("My first [post]" in dn["list"] and "FanDuel 2-leg +650 [post]" in dn["list"] and "Saved before [post]" in dn["list"], f"[{theme}] and both are in the saved slips list above straight away ({dn['list']})")
+            check("My first [post]" in dn["list"] and "FanDuel 2-leg +650 [post]" in dn["list"] and "Saved before [post]" in dn["list"], f"[{theme}] and both are in the saved slips list under it straight away ({dn['list']})")
             if SHOTS: await pg.evaluate("document.getElementById('import').scrollIntoView({block: 'start'}); window.scrollBy(0, -70)"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/import-saved-{theme}.png")
             # ---------- post one of them to Social from that list ----------
             await pg.evaluate("document.querySelectorAll('#impout .impdone button[data-psb]')[1].click()"); await pg.wait_for_timeout(900)
@@ -129,7 +136,7 @@ async def main():
             po = await pg.evaluate("() => { var r = window.__posted; return r ? {keys: r.legs.map(function(l){ return l.k; }), odds: r.fd_odds, week: r.week} : null; }")
             check(po == {"keys": [A, C], "odds": 650, "week": W} and dn["rows"][1]["post"] == "hidden" and dn["rows"][1]["note"].startswith("Posted to Social.") and dn["rows"][0]["post"].startswith("Post to Social") and [s for s in sv if s["name"] == "FanDuel 2-leg +650"][0]["posted"] == 77,
                   f"[{theme}] it posts that slip, its button goes away and the row says Posted to Social; the other slip can still be posted ({po}, {dn['rows'][1]})")
-            check("FanDuel 2-leg +650 [on social]" in dn["list"] and "My first [post]" in dn["list"], f"[{theme}] the saved slips list above shows it as On Social ({dn['list']})")
+            check("FanDuel 2-leg +650 [on social]" in dn["list"] and "My first [post]" in dn["list"], f"[{theme}] the saved slips list under it shows it as On Social ({dn['list']})")
             check(not errs, f"[{theme}] one, then two: no script errors {errs[:2]}"); await ctx.close()
             # ---------- several chosen at once: good ones, an empty picture, an unreadable one, a repeat, one already saved ----------
             ctx, pg, errs = await fresh()
@@ -159,12 +166,30 @@ async def main():
             # more than twelve
             await pg.evaluate("window.__reads = []"); await pg.set_input_files(FILE, F(*["a%d" % i for i in range(14)])); await pg.wait_for_timeout(1800); v = await pg.evaluate(VIEW); reads = await pg.evaluate("window.__reads.length")
             check(reads == 12 and len(v["blocks"]) == 12 and v["note"] == "Only the first 12 screenshots were read. Save these, then add the rest.", f"[{theme}] past twelve it reads twelve and says to add the rest after ({reads} read; {v['note']})")
+            check(v["count"] == "12 of 12 screenshots in this batch. That is the most in one go: save these, then add more." and not v["more"] and v["clear"], f"[{theme}] at twelve the batch says it is full and stops offering Add another ({v['count'][:40]}; add-another shown: {v['more']})")
             await pg.click("#impclear")
             # pasting two pictures in one go
             await pg.evaluate("""() => { window.__reads = []; var dt = new DataTransfer(); dt.items.add(new File(['x'], 'a.png', {type: 'image/png'})); dt.items.add(new File(['y'], 'b.png', {type: 'image/png'})); document.dispatchEvent(new ClipboardEvent('paste', {clipboardData: dt, bubbles: true, cancelable: true})); }""")
             await pg.wait_for_timeout(700); v = await pg.evaluate(VIEW); reads = await pg.evaluate("window.__reads")
             check(reads == ["a", "b"] and len(v["blocks"]) == 2 and [x["head"] for x in v["blocks"]] == ["Screenshot 1", "Screenshot 2"], f"[{theme}] a paste with two pictures queues both ({reads}, {len(v['blocks'])} blocks)")
             check(not errs, f"[{theme}] several at once: no script errors {errs[:2]}"); await ctx.close()
+            # ---------- nothing saved yet: the empty list itself offers the import; the menu and a link land on it ----------
+            ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+            await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}');localStorage.setItem('t_seeded','1');localStorage.setItem('bs_me_fold2', JSON.stringify({{crec: false}}))}}catch(e){{}}" + FAKE); await ctx.route("**/*", rt)
+            pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
+            await pg.goto(B + "/me/#import", wait_until="domcontentloaded"); await pg.wait_for_timeout(2600)
+            dl = await pg.evaluate("() => { var p = document.getElementById('import'), r = p.getBoundingClientRect(); return {shut: document.getElementById('crec').classList.contains('shut'), top: Math.round(r.top), h: Math.round(r.height), vh: innerHeight}; }")
+            check(not dl["shut"] and dl["h"] > 0 and 0 <= dl["top"] < dl["vh"] * 0.6, f"[{theme}] a link to /me/#import opens Your slips even if it was folded and lands on the importer ({dl})")
+            em = await pg.evaluate("() => { var a = document.querySelector('#slips [data-impgo]'), li = document.querySelector('#slips li.none'); return {btn: a ? a.textContent : null, first: li ? (li.querySelector('.meact a') || {}).textContent : null, text: li ? li.textContent.slice(0, 60) : null, h: a ? Math.round(a.getBoundingClientRect().height) : 0}; }")
+            check(em["btn"] == "Import FanDuel screenshots" and em["first"] == "Import FanDuel screenshots" and em["h"] >= 40, f"[{theme}] with nothing saved, the empty list leads with Import FanDuel screenshots ({em})")
+            try:
+                async with pg.expect_file_chooser(timeout=3000) as fc: await pg.click("#slips [data-impgo]")
+                chooser = await fc.value; opened = chooser.is_multiple()
+            except Exception as e: opened = f"no chooser: {str(e)[:60]}"
+            check(opened is True, f"[{theme}] tapping it opens the picture chooser, several allowed ({opened})")
+            nav = await pg.evaluate("() => { var a = document.querySelector('#sitenav a[href=\"/me/#import\"]'); return a ? a.textContent : null; }")
+            check(nav is not None and nav.startswith("Import FanDuel slips") and "12 at a time" in nav, f"[{theme}] the site menu has Import FanDuel slips ({nav})")
+            check(not errs, f"[{theme}] empty state: no script errors {errs[:2]}"); await ctx.close()
         await b.close()
     srv.shutdown(); print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
 asyncio.run(main())

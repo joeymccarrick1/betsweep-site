@@ -44,11 +44,15 @@ def is_sweep(title):
 def name(title):
     return PREFIX.sub("", str(title or ""), count=1).strip()
 
-# The PROMO tab - and with it every public win-loss count of promoted bets - starts in Week 6. A row from an earlier week is a slip that
-# was posted on BetSweep's social pages before the site kept a record (owner 11/22: the Week 5 Piss Missile Monday, Bills @ Rams). Such
-# a row may be SHOWN (home page Winners, marked as such); it is never COUNTED in a record: the weeks before 6 have no losses on the tab,
-# so counting their one win would be a record with the misses left out.
-RECORD_FROM = 6
+# The public win-loss record of promoted bets starts in Week 5 - the first week BetSweep posted promos. Until 11/22 the tab began at
+# Week 6 and the one Week 5 slip on it (the Piss Missile Monday that hit, Bills @ Rams) was shown but not counted, because the tab had
+# no misses for that week: one win without its week's losses is a record with the misses left out. On 11/22 the owner supplied every
+# other promo of the week ("all the promos I did before the winning piss missile ... All these promos lost": nine slips, each checked
+# against the Week 5 game log), so Week 5 is complete at 1-9 and counts. A row from a week BEFORE this is still shown, never counted.
+RECORD_FROM = 5
+# Promoted bets got their own pages on the site (/b/w<week>-<slot>/) in Week 6. A slip from an earlier week went out on BetSweep's
+# social pages only: the home page's Winners shows it without a "See the slip" link and says where it was posted.
+PAGES_FROM = 6
 
 def res_kind(result):
     r = str(result or "").strip().upper()

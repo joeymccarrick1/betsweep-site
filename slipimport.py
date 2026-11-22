@@ -20,8 +20,13 @@ Parser tested against the owner's own FanDuel screenshots (5-, 6-, 7-, 11- and 1
 """
 
 IMPORT_CSS = r"""
-#import .imp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+.me .impbar{margin:12px 0 16px;padding:14px 14px 12px;border:1.5px dashed color-mix(in srgb,var(--red) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--red) 5%,transparent);scroll-margin-top:70px}
+.me .impbar h3{margin:0;font-size:17px;line-height:1.25;color:var(--ink)} .me .impbar .impsub{margin:5px 0 0;font-size:14px;line-height:1.45;color:var(--mute)}
+.me .impbar .implim{margin:10px 0 0;font-size:13px;line-height:1.45;color:var(--mute)} .me .impbar .implim b{color:var(--ink)}
+#import .imp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
 #import .imp label.cta{cursor:pointer}
+#import .impsec{font:inherit;font-weight:700;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+#import .imp .impsec{padding:10px 16px;border-radius:10px}
 #impout{margin-top:12px}
 #impout .st{font-size:13px;color:var(--mute)}
 #impout ul{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}
@@ -39,7 +44,6 @@ IMPORT_CSS = r"""
 #impout .imph{display:flex;align-items:center;gap:9px;font-size:15px;cursor:pointer;min-height:34px;color:var(--ink)} #impout .imph input{width:18px;height:18px;flex:none}
 #impout .impb .st{margin:2px 0 4px} #impout .impb small.dup{display:block;font-size:12.5px;margin:0 0 6px}
 #impout details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--mute);padding:7px 0}
-#impout .impsec{font:inherit;font-weight:700;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
 #impout .impact{margin-top:10px} #impout .impnote:empty{display:none} #impout button[disabled]{opacity:.5;cursor:default}
 #impout .impdone li{flex-wrap:wrap !important;align-items:center} #impout .impdone li>span:first-child{flex:1 0 100%} #impout .impdone li>.impdo{flex:1 1 100%;min-width:0;display:flex;gap:8px;flex-wrap:wrap} #impout .impdone .psn{flex:1 0 100%;margin-top:4px}
 #impout button.cta{border:0;font:inherit;font-weight:700;cursor:pointer} #impout .impdone .impdo button{flex:1 1 0;min-width:0;padding:10px 6px;font-size:14px;white-space:nowrap;border-radius:8px}
@@ -210,9 +214,11 @@ IMPORT_JS = r"""(function(){
           (dup ? '<small class="warn dup">Same legs as ' + esc(dup) + (many ? ' - left out unless you tick it.' : '.') + '</small>' : '') +
           (many ? '<details' + (odd || x.open || (x.un && Object.keys(x.un).length) ? ' open' : '') + '><summary>Check the legs</summary>' : '') + '<ul>' + legs.map(function(l, i){ return legRow(l, i, x.un && x.un[i]); }).join('') + '</ul>' + (many ? '</details>' : '') +
           '<div class="row"><input type="text" class="impname"' + (many ? '' : ' id="impname"') + ' maxlength="60" aria-label="Slip name" value="' + esc(x.nm != null ? x.nm : dn) + '"><input type="text" class="impodds"' + (many ? '' : ' id="impodds"') + ' inputmode="text" maxlength="9" aria-label="FanDuel odds" style="flex:0 0 110px;min-width:0" placeholder="Odds +650" value="' + esc(x.od != null ? x.od : (x.R.odds ? am(x.R.odds) : '')) + '"></div></div>'; });
+      var full = PEND.length >= MAXB;
       h += '<p class="st impnote" aria-live="polite">' + (msg || '') + '</p><div class="row impact">' +
         (many ? '<button type="button" class="cta" id="impsaveall">Save slips</button>' : '<button type="button" class="cta" id="impsave">Save slip</button><button type="button" class="impsec" id="impload">Load into betslip</button>') +
-        '<button type="button" class="impsec" id="impmore">Add another screenshot</button><button type="button" class="impsec" id="impclear">Clear</button></div>';
+        (full ? '' : '<button type="button" class="impsec" id="impmore">Add another screenshot</button>') + '<button type="button" class="impsec" id="impclear">Clear</button></div>' +
+        '<p class="st impcount">' + PEND.length + ' of ' + MAXB + ' screenshots in this batch.' + (full ? ' That is the most in one go: save these, then add more.' : '') + '</p>';
       out.innerHTML = h; count(); }
     function saveAll(){
       var BS = board(); if (!BS) return; var W = BS.week, k = 'bs_slips_w' + W, all = []; try{ all = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(e){ all = []; }
@@ -225,7 +231,7 @@ IMPORT_JS = r"""(function(){
       try{ localStorage.setItem(k, JSON.stringify(all)); }catch(e){ note('Your browser would not let us save ' + (saved.length === 1 ? 'it' : 'them') + ' (private mode?).'); return; }
       PEND = []; DONE = {}; DONEBS = BS; saved.forEach(function(e){ DONE[e.id] = e; });
       var one = saved.length === 1;
-      out.innerHTML = '<p class="st"><span class="ok">Saved ' + (one ? '"' + esc(saved[0].name) + '" with ' + saved[0].keys.length + ' legs' : saved.length + ' slips') + '.</span> ' + (one ? 'It is' : 'They are') + ' in Your record above, graded after the games, and your slip alerts now watch ' + (one ? 'it' : 'them') + '.</p><ul class="impdone">' +
+      out.innerHTML = '<p class="st"><span class="ok">Saved ' + (one ? '"' + esc(saved[0].name) + '" with ' + saved[0].keys.length + ' legs' : saved.length + ' slips') + '.</span> ' + (one ? 'It is' : 'They are') + ' in your list below, graded after the games, and your slip alerts now watch ' + (one ? 'it' : 'them') + '.</p><ul class="impdone">' +
         saved.map(function(e){ return '<li><span><b>' + esc(e.name) + '</b><small>' + e.keys.length + ' leg' + (e.keys.length === 1 ? '' : 's') + (e.odds ? ' · ' + am(e.odds) : '') + '</small></span><span class="impdo"><button type="button" class="impsec" data-load="' + esc(e.id) + '">Load into betslip</button><button type="button" class="cta" data-psb data-w="' + W + '" data-id="' + esc(e.id) + '">Post to Social</button></span></li>'; }).join('') + '</ul>';
       document.dispatchEvent(new CustomEvent('bs-account', {detail: {imported: true}})); }
     out.addEventListener('change', function(e){ if (e.target && e.target.type === 'checkbox') count(); });
@@ -248,10 +254,13 @@ IMPORT_JS = r"""(function(){
       if (!(navigator.clipboard && navigator.clipboard.read)) { box(); return; }
       navigator.clipboard.read().then(function(items){ var ps = []; for (var i = 0; i < items.length; i++){ var t = (items[i].types || []).filter(function(x){ return /^image\//.test(x); })[0]; if (t) ps.push(items[i].getType(t)); }
         if (ps.length) return Promise.all(ps).then(function(bs){ go(bs); });
-        note('No picture on the clipboard - copy the screenshot first (open it, tap Share, Copy), then tap Paste screenshot.'); })
+        note('No picture on the clipboard - copy the screenshot first (open it, tap Share, Copy), then tap Paste.'); })
       .catch(function(){ box(); }); });
     document.addEventListener('paste', function(e){ var fs = [].slice.call((e.clipboardData || {}).items || []).filter(function(x){ return /^image\//.test(x.type); }).map(function(x){ return x.getAsFile(); }).filter(Boolean); if (fs.length){ e.preventDefault(); go(fs); } });
-    if (location.hash === '#import') card.scrollIntoView({block: 'start'});
+    function reveal(){ var c = card.closest('.card'); if (c) c.classList.remove('shut'); card.scrollIntoView({block: 'start'}); }
+    document.addEventListener('click', function(e){ var t = e.target.closest && e.target.closest('[data-impgo]'); if (!t) return; e.preventDefault(); reveal(); inp.click(); });
+    if (location.hash === '#import') setTimeout(reveal, 60);   // after the page has set which cards are folded
+    window.addEventListener('hashchange', function(){ if (location.hash === '#import') reveal(); });
   }
   // owner 11/10 "Sweep my slip" (/sweep/): the same reader for another page - picture in, {R: parsed legs, BS: this week's board} out
   window.BSImport = {parse: parse, data: builderData, gmap: gmapOf, read: function(file){
@@ -261,8 +270,13 @@ IMPORT_JS = r"""(function(){
 })();
 """
 
-CARD_HTML = ('<div class="card" id="import" data-def="open"><h2>Import a FanDuel slip</h2><p class="m">Took the bet on FanDuel? Screenshot the betslip (or the bet under '
-             'My Bets), then choose the picture here or paste it - several at once is fine, and one button saves them all. Your phone reads them; '
-             'the pictures never leave this device. Each slip is graded after the games, counted in your exposure and watched by your slip alerts.</p>'
-             '<div class="imp"><label class="cta">Choose screenshots<input type="file" accept="image/*" multiple hidden></label><button type="button" class="cta" id="imppaste" style="background:none;color:var(--ink);border:1px solid var(--line)">Paste screenshot</button></div><div id="imppbox" contenteditable="true" hidden aria-label="Paste your screenshot here" style="margin-top:10px;min-height:64px;padding:12px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px;line-height:1.4">Tap and hold here, then tap Paste.</div>'
+# owner 11/22 7:35 AM: "make importing slips more clear and obvious to be something users don't overlook. Also make it clear 12
+# screenshots max at time." It was a card of its own under Bankroll, two phone screens below the slips it adds to. It is now a panel at
+# the top of the Your slips card (the first card on the page), named for what it does, with the limit in its own line. The id stays
+# `import` (links from the builder, the menu and the guide land on it).
+CARD_HTML = ('<div class="impbar" id="import"><h3>Import your FanDuel bets</h3>'
+             '<p class="impsub">Screenshot each betslip on FanDuel and add the pictures here.</p>'
+             '<div class="imp"><label class="cta">Choose screenshots<input type="file" accept="image/*" multiple hidden></label><button type="button" class="impsec" id="imppaste" aria-label="Paste a screenshot">Paste</button></div>'
+             '<p class="implim"><b>Up to 12 screenshots at a time.</b> A bet under My Bets works too. Each one becomes a slip in this list. Your phone reads them; the pictures never leave this device.</p>'
+             '<div id="imppbox" contenteditable="true" hidden aria-label="Paste your screenshot here" style="margin-top:10px;min-height:64px;padding:12px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px;line-height:1.4">Tap and hold here, then tap Paste.</div>'
              '<div id="impout"></div></div>')
