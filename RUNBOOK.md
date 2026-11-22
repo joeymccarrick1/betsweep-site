@@ -2758,3 +2758,29 @@ What it is now (social.py card(): `tailB fdB saveB loadB modB stS`, then three r
 Nothing about what a button does changed: same `data-*` hooks, same handlers.
 Test: tests/social_card.py (149 checks: 390x844 light and dark, desktop, 320px; my slip, their slip, no FanDuel link, live, cashed,
 busted, and Delete after its first tap). It is in tests/prepublish.sh.
+
+## 11/22 11:42 AM-1:00 PM CT: Stock Market, more to look at (owner 11:42 AM: "Anything else you can do to the stock market page to make it a little more interesting? Added stats?")
+Three additions to /stocks/ (build_stocks.py; its header comment has the rules). Nothing here changes a projection or a list.
+1. **Market movers**: a row of cards under the search box, each the leader in one count among players who could make a list (played one of
+   their team's last two games, not out or doubtful). Biggest riser, Biggest faller, Breakout (the biggest riser whose earlier average was
+   under the mark a riser has to reach), Season high (the best latest game that was also his best of four or more), Top-12 streak, Most
+   top-12 weeks, Highest floor (the best worst game of a starter with 6+ games), On the climb (most games running with more points than the
+   game before). A swipe row on a phone (two cards and the edge of a third), four to a row on a wide screen. A card nobody qualifies for is
+   left out. A tap opens that player wherever his tile is: his list, the Falling list (the switch moves), or a search for his name.
+   The cards hide while a search is on.
+2. **The numbers at the top of a player's box**: Rank now (his last-3 average among players at his position who played lately; "was" is his
+   earlier average among the same players), Season (points a game and his rank among players with 4+ games), Top-12 weeks (and the run, or
+   the top-24 count for a back or receiver), then his season's range as a bar: low and high with their weeks, a tick at his average and a
+   dot at his last game, and one line saying so in words ("Last game: 23.9 in Week 10. Average: 15.6. Dropped in 2 straight games.").
+   Ranks count the players on the page; the first player without a page is 72nd at his position, so the ranks people look at are exact.
+3. **Rates**, graphable like every other stat: yards per attempt and completion rate (quarterbacks), yards per carry (backs), yards per
+   target and catch rate (receivers and tight ends). An average over several games is total over total, never the average of the games'
+   own rates; a game with too few chances (under 10 attempts, 5 carries, 3 targets) is left off the graph and the graph says how many.
+New data column: `fr`, where each game finished at his position that week among EVERY player, pages or not (a week still being played
+has none). That is what "top-12 week" counts. It is the one number the test cannot redo from the page alone; it checks the finishes stay
+in step with the shipped scores and that a no-page player moves a top-24 finish by at most a place or two (2 at most today).
+The subtitle is one sentence shorter so the first list still starts on the first phone screen (593px down of 844).
+Test: tests/stocks_page.py, 135 checks (was 105): every card, every number in a box (five kinds of player), a rate's tile and graph, and a
+tap on each of the eight cards are redone from the game logs the page ships.
+Ideas held back, not built: a volume strip under the fantasy-points graph (touches by game, the way a price chart carries volume);
+team "sectors" (which offenses are heating up); a watch list.
