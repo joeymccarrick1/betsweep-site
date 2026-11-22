@@ -363,7 +363,7 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .post .who b.h{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px} .post .who .hot,.soc .prof .hot{display:inline-block;margin-left:6px;font-size:14px;line-height:1;vertical-align:1px} .soc .prof .hot{font-size:18px} .post .who .rec{display:inline-block;margin-left:7px;font-size:12px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
 .post .rx{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 14px 2px} .post .rx button{display:inline-flex;align-items:center;gap:5px;min-height:36px;min-width:44px;justify-content:center;border:1px solid var(--line);border-radius:999px;background:none;color:var(--ink);font:inherit;font-size:14px;padding:4px 10px;cursor:pointer}
 .post .rx button i{font-style:normal} .post .rx button b{font-size:12.5px;font-variant-numeric:tabular-nums} .post .rx button.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)} .post .rx .tn{margin-left:auto;font-size:12.5px;color:var(--mute);font-weight:600}
-.post .pf button.tl.on,.post .pf button.sv.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.post .pa button.tl.on,.post .pa button.sv.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)}
 .soctoast{position:fixed;left:50%;bottom:calc(var(--bs-tabs, 0px) + 78px);transform:translateX(-50%);z-index:120;max-width:88vw;background:#141a24;color:#fff;padding:10px 16px;border-radius:999px;font:600 13.5px/1.3 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);text-align:center}
 .av.em{font-size:17px;letter-spacing:0} .av.big.em{font-size:27px}
 /* 11/22 while the editor is open the picture and name are one bar that stays under the menu, so a tap far down the team list is seen at once */
@@ -388,7 +388,7 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc h2.sec{font-family:var(--display);font-size:20px;margin:22px 0 10px;color:var(--ink)}
 .soc details.bust{margin:6px 0 12px} .soc details.bust summary{cursor:pointer;color:var(--mute);font-weight:700;font-size:14px;padding:12px 2px;min-height:44px} .soc details.bust[open] summary{margin-bottom:6px}
 .post.over.busted{opacity:.78} .post.over.cashed{border-color:var(--good)}
-.post .pf .res{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--mute);margin-right:auto} .post .pf .res.won{color:var(--good)} .post .pf .res.lost{color:var(--bad)}
+.post .pf .res{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--mute)} .post .pf .res.won{color:var(--good)} .post .pf .res.lost{color:var(--bad)}
 .soc .hcard li.hit .dot{background:var(--good);border-color:var(--good)} .soc .hcard li.dead .dot{background:var(--bad);border-color:var(--bad)} .soc .hcard li.dead{opacity:.6}
 .soc .hcard .hst{color:var(--mute);font-size:13px} .soc .hcard .hst.live{color:var(--ink);font-weight:700} .soc .hcard .hst.cashed{color:var(--good);font-weight:800} .soc .hcard .hst.busted{color:var(--bad);font-weight:800}
 .soc .house[hidden],.soc .hcard[hidden]{display:none} .soc .bar .seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:100%} .soc .bar .seg::-webkit-scrollbar{display:none} .soc .bar .seg button{flex:none} .soc .hcard.over{border-color:var(--line)} .soc .hcard a[hidden]{display:none}
@@ -409,11 +409,27 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .post li .lg{flex:1;min-width:0}.post li small{color:var(--mute)}
 .post li.hit .lg::before{content:"✓ ";color:var(--good);font-weight:800}.post li.dead .lg::before{content:"✗ ";color:var(--bad);font-weight:800}
 .post li.dead{opacity:.6}
-.post .pf{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 14px 12px}
-.post .pf a,.post .pf button{font:inherit;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:7px;padding:8px 11px;color:var(--ink);background:none;text-decoration:none;cursor:pointer}
-.post .pf a.fd{background:#1493ff;border-color:#1493ff;color:#0b0f15}
-.post .pf .mini{font-size:11px;text-transform:none;letter-spacing:0;color:var(--mute);border:0;padding:8px 4px}
-.post .st{font-size:12px;font-weight:700;color:var(--mute);margin-left:auto}.post .st.win{color:var(--good)}.post .st.live{color:#d7332a}
+/* the card's actions, three rows (owner 11/22: "They look like they're onto of each other and can be organized better"):
+   .pa  a row of equal buttons - Tail on FanDuel on its own, then Save slip beside Load into my slip
+   .pa.two  Tail on FanDuel with I'm tailing beside it (somebody else's slip)
+   .pm  the quiet last line: the kickoff or the result on the left, Delete / Report and Open slip on the right
+   The buttons wear the site's control face (build_site.py .bsbtn), like the Top / New / Cashed tabs above the feed. */
+.post .pf{display:grid;gap:8px;padding:10px 14px 3px}
+.post .pa{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
+.post .pa.two{grid-auto-flow:row;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+.post .pa a,.post .pa button{display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-width:0;min-height:42px;margin:0;padding:5px 8px;border:1.5px solid var(--line);border-radius:8px;background:none;color:var(--ink);font:inherit;font-family:var(--ctl,var(--display));font-weight:700;font-size:14.5px;letter-spacing:.05em;line-height:1.15;text-transform:uppercase;text-align:center;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.post .pa a.fd{background:#1493ff;border-color:#1493ff;color:#0b0f15}
+.post .pa a.fd small{display:block;margin-top:2px;font-family:var(--body);font-weight:600;font-size:11.5px;letter-spacing:0;line-height:1.25;text-transform:none}
+.post .pa a:focus-visible,.post .pa button:focus-visible,.post .pm a:focus-visible,.post .pm button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.post .pm{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 12px;min-height:40px;margin-top:2px;border-top:1px solid var(--line)}
+.post .pm .pl{display:flex;align-items:center;gap:18px;margin-left:auto}
+.post .pm a.open,.post .pm .mini{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:0;border:0;background:none;font:inherit;text-decoration:none;white-space:nowrap;cursor:pointer}
+.post .pm a.open{font-family:var(--ctl,var(--display));font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.post .pm .mini{font-size:12.5px;font-weight:600;color:var(--mute)}
+.post .st{font-size:12.5px;font-weight:600;color:var(--mute)}.post .st.win{color:var(--good)}.post .st.live{color:#d7332a}
+.post .pm .st,.post .pm .res{display:inline-flex;align-items:center;min-height:40px;white-space:nowrap}
+/* a wide card: the buttons keep a button's width and share one row */
+@media (min-width:761px){ .post .pf{display:flex;flex-wrap:wrap} .post .pa,.post .pa.two{display:flex} .post .pa a,.post .pa button{flex:none;min-width:150px;min-height:40px;padding:5px 16px} .post .pm{flex:1 0 100%} }
 .post.mine{border-color:#d7332a}
 .soc .rules{font-size:12px;color:var(--mute);line-height:1.5;margin-top:18px}
 """
@@ -526,6 +542,16 @@ PAGE_JS = r"""<script>(function(){
   function card(p, me, C, old){
     var ls = p.legs || [], x = p.result ? {st: p.result === 'won' ? 'cashed' : p.result === 'lost' ? 'busted' : 'done', hits: p.result === 'won' ? ls.length : 0, n: ls.length, graded: 1} : stateOf(p, C), over = settled(x), url = over || old ? null : fdUrl(ls), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
     var badge = x.st === 'cashed' ? '<span class="res won">Cashed' + (p.units != null ? ' · +' + (+p.units).toFixed(1) + 'u' : '') + '</span>' : x.st === 'busted' ? '<span class="res lost">Busted' + (x.graded ? '' : ' · ' + x.hits + ' of ' + x.n + ' hit') + '</span>' : x.st === 'done' ? '<span class="res">Final · ' + x.hits + ' of ' + x.n + ' graded hits</span>' : '';
+    /* the card's actions (owner 11/22: "They look like they're onto of each other and can be organized better"). Three rows instead of one
+       wrapping row: Tail on FanDuel (the one filled button) with I'm tailing beside it on somebody else's slip; Save slip and Load into my
+       slip as two equal buttons; then a quiet last line - the kickoff or the result on the left, Delete / Report and Open slip on the right.
+       A row with nothing in it is not written. tests/social_card.py measures every state. */
+    var tailB = V3 && !old && !started && !over && p.user_id !== me ? '<button type="button" class="tl' + (MYT[p.id] ? ' on' : '') + '" data-tail="' + p.id + '" aria-pressed="' + !!MYT[p.id] + '">' + (MYT[p.id] ? 'Tailing ✓' : 'I\'m tailing') + '</button>' : '';
+    var fdB = url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '';
+    var saveB = !started && !old ? '<button type="button" class="sv' + (slHas(p) ? ' on' : '') + '" data-save="' + p.id + '" aria-pressed="' + slHas(p) + '">' + (slHas(p) ? 'Saved ✓' : 'Save slip') + '</button>' : '';
+    var loadB = !started && !old ? '<button type="button" data-load="' + p.id + '">Load into my slip</button>' : '';
+    var modB = old ? '' : (p.user_id === me ? '<button type="button" class="mini" data-del="' + p.id + '">Delete</button>' : (me && !over ? '<button type="button" class="mini" data-rep="' + p.id + '">Report</button>' : ''));
+    var stS = over ? '' : '<span class="st' + (x.st === 'live' ? ' live' : '') + '">' + (x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : 'Kicks off ' + new Date(p.first_ko).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'})) + '</span>';
     return '<article class="post' + (p.user_id === me ? ' mine' : '') + (over ? ' over ' + x.st : '') + '" id="p' + p.id + '" data-id="' + p.id + '">' +
       '<div class="ph">' + (old ? '' : '<button type="button" class="vote' + (MYV[p.id] ? ' on' : '') + '" data-v="' + p.id + '" aria-pressed="' + !!MYV[p.id] + '" aria-label="Upvote"><i>▲</i><b>' + p.score + '</b></button>') +
       av(p) +
@@ -534,11 +560,8 @@ PAGE_JS = r"""<script>(function(){
       '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
       (V3 && !old ? '<div class="rx">' + RXK.map(function(k){ var n = (p.rx || {})[k[0]] || 0; return '<button type="button" data-rx="' + p.id + '|' + k[0] + '" class="' + (MYRX[p.id] === k[0] ? 'on' : '') + '" aria-pressed="' + (MYRX[p.id] === k[0]) + '" aria-label="' + k[2] + (n ? ', ' + n : '') + '"><i>' + k[1] + '</i>' + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
         (p.tails ? '<span class="tn">' + p.tails + ' tailing</span>' : '') + '</div>' : '') +
-      '<div class="pf">' + badge + (V3 && !old && !started && !over && p.user_id !== me ? '<button type="button" class="tl' + (MYT[p.id] ? ' on' : '') + '" data-tail="' + p.id + '" aria-pressed="' + !!MYT[p.id] + '">' + (MYT[p.id] ? 'Tailing ✓' : 'I\'m tailing') + '</button>' : '') + (url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '') +
-      (!started && !old ? '<button type="button" class="sv' + (slHas(p) ? ' on' : '') + '" data-save="' + p.id + '" aria-pressed="' + slHas(p) + '">' + (slHas(p) ? 'Saved ✓' : 'Save slip') + '</button>' : '') +
-      (!started && !old ? '<button type="button" data-load="' + p.id + '">Load into my slip</button>' : '') +
-      (old ? '' : (p.user_id === me ? '<button type="button" class="mini" data-del="' + p.id + '">Delete</button>' : (me && !over ? '<button type="button" class="mini" data-rep="' + p.id + '">Report</button>' : ''))) +
-      '<a class="open" href="/b/?p=' + p.id + '">Open slip →</a>' + (over ? '' : '<span class="st' + (x.st === 'live' ? ' live' : '') + '">' + (x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : 'Kicks off ' + new Date(p.first_ko).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'})) + '</span>') + '</div></article>';
+      '<div class="pf">' + (fdB || tailB ? '<div class="pa' + (fdB && tailB ? ' two' : '') + '">' + fdB + tailB + '</div>' : '') + (saveB || loadB ? '<div class="pa">' + saveB + loadB + '</div>' : '') +
+      '<div class="pm">' + badge + stS + '<span class="pl">' + modB + '<a class="open" href="/b/?p=' + p.id + '">Open slip →</a></span></div></div></article>';
   }
   var POSTBTN = '<a class="act" href="/build/">Build a slip and post it</a>';
   function lastWeekHtml(me){

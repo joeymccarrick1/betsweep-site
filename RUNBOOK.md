@@ -2736,3 +2736,25 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
   build, and once that server stopped it could only fail (connection refused, 8:20 AM). Ten other tests outside the pre-publish set
   still take BASE the same way (beat_leagues, deepdive_pages, home_compact, pairs_page, risk_notout, menu_ask, survivor_plan,
   simple_view, slip_verdict, sweep_hero) - start a server for them, or give them the same few lines, before trusting a result.
+
+## 11/22 11:40 AM-12:20 PM CT: the buttons on a Social slip card (owner 11:40 AM, with a phone screenshot of his own post)
+Owner: "Make these buttons on the slip on social just look a little better. They look like they're onto of each other and can be organized better".
+What was wrong: every action of a card sat in one wrapping row (social.py `.post .pf`, a flex row with 8px gaps), so on a phone the six
+controls broke into ragged lines of different widths, 38px tall, in the body font: Tail on FanDuel + Save slip, then Load into my slip +
+Delete + Open slip, then the kickoff on a line of its own.
+What it is now (social.py card(): `tailB fdB saveB loadB modB stS`, then three rows inside `.pf`):
+- `.pa` row 1: **Tail on FanDuel**, the one filled button, the full width of the card. On somebody else's slip **I'm tailing** sits
+  beside it (`.pa.two`, 1.55fr / 1fr). With no FanDuel link, I'm tailing takes the row.
+- `.pa` row 2: **Save slip** and **Load into my slip**, two equal buttons.
+- `.pm` last line, under a hairline: the kickoff / "Live - 1/3 hit" / Cashed / Busted on the left; Delete or Report, then **Open slip**, on
+  the right, as quiet text links (40px tall to tap, 18px apart). Delete still asks first ("Delete? tap again"); on a phone that longer
+  text takes the line's second row for its three seconds.
+- A row with nothing in it is not written (a live slip has no Save / Load; a settled slip has only the last line).
+- Buttons wear the site's control face (the `.bsbtn` look: Barlow Condensed, 14.5px, 8px corners, 1.5px outline), 42px tall (46 on a
+  phone after the 1.1x zoom). A pressed button (Tailing, Saved) wears the reaction pills' pressed look - ink outline and a light tint -
+  so the blue button stays the only filled one.
+- Desktop (761px+): the buttons keep a button's width (150px min) and share one row; the last line is the same.
+- Smallest phones (320px): "Load into my slip" takes two lines and the last line takes two rows; nothing collides.
+Nothing about what a button does changed: same `data-*` hooks, same handlers.
+Test: tests/social_card.py (149 checks: 390x844 light and dark, desktop, 320px; my slip, their slip, no FanDuel link, live, cashed,
+busted, and Delete after its first tap). It is in tests/prepublish.sh.
