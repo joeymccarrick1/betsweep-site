@@ -2720,3 +2720,8 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
   options: Cook TD + Nix 200+ pass + G. Wilson 60+ rec (about +308, every leg passes all four checks, model 22% vs 24.5% implied) or
   Allen 2+ pass TDs in place of Wilson (about +328, model 26% vs 23%, against Sweep says "go to the ground"), or skip.
   The four-check scripts are in the repo now: research/slipcheck/statcheck.py (yardage and catch legs) and tdcheck.py (TD legs).
+- **tests/today_hunch.py serves its own pages now.** It expected a server already up on :8802; in the pre-publish set that had been a
+  server left running on the working tree's site, so when the set ran on a COPY of the tree this one test was looking at the wrong
+  build, and once that server stopped it could only fail (connection refused, 8:20 AM). Ten other tests outside the pre-publish set
+  still take BASE the same way (beat_leagues, deepdive_pages, home_compact, pairs_page, risk_notout, menu_ask, survivor_plan,
+  simple_view, slip_verdict, sweep_hero) - start a server for them, or give them the same few lines, before trusting a result.

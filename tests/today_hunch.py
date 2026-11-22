@@ -1,10 +1,17 @@
 """A game card on the home page names its best hunch and links to it (11/21: Hunches had its own page but nothing on the day's
 cards pointed at it). Only Backed / Mixed hunches and the owner's own ("From the desk") are shown; the line sits in the opened card.
-  BASE=http://localhost:8802 SITE=<built site dir> python3 tests/today_hunch.py
+  [SITE=<built site dir>] python3 tests/today_hunch.py     (serves SITE itself; BASE=<url> uses a server that is already up)
 """
 import json, os, re, sys
 from playwright.sync_api import sync_playwright
-BASE = os.environ.get("BASE", "http://localhost:8802"); SITE = os.environ.get("SITE", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "site"))
+BASE = os.environ.get("BASE"); SITE = os.environ.get("SITE", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "site"))
+if not BASE:   # 11/22: this needed someone else's server on :8802. In the pre-publish set that was a server left running on ANOTHER tree's
+    # site, so a copy of the tree was never what got tested, and once that server stopped the test could only fail. It serves SITE itself now.
+    import functools, http.server, threading
+    class _Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    _srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8802), functools.partial(_Quiet, directory=SITE)); threading.Thread(target=_srv.serve_forever, daemon=True).start()
+    BASE = "http://127.0.0.1:8802"
 fails = []
 def ok(c, name, extra=""):
     print(("ok  " if c else "FAIL"), name, extra)
