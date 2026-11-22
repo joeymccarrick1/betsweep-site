@@ -1,0 +1,643 @@
+{
+ "params": {
+  "xg_blend": 0.5,
+  "half_life": 240.0,
+  "k_games": 2.0,
+  "rho": -0.12,
+  "k_rate_min": 1200.0,
+  "w_env": 1.0,
+  "start_min_k": 1.0
+ },
+ "tuned_on": "2025-26",
+ "holdout": "2026-27 to date",
+ "data_through": "2026-11-08",
+ "tuning_log": {
+  "team": [
+   {
+    "knob": "xg_blend",
+    "value": 0.0,
+    "logloss_1x2": 1.03841
+   },
+   {
+    "knob": "xg_blend",
+    "value": 0.5,
+    "logloss_1x2": 1.03482
+   },
+   {
+    "knob": "xg_blend",
+    "value": 0.7,
+    "logloss_1x2": 1.03518
+   },
+   {
+    "knob": "xg_blend",
+    "value": 0.85,
+    "logloss_1x2": 1.03612
+   },
+   {
+    "knob": "xg_blend",
+    "value": 1.0,
+    "logloss_1x2": 1.03763
+   },
+   {
+    "knob": "half_life",
+    "value": 120.0,
+    "logloss_1x2": 1.0351
+   },
+   {
+    "knob": "half_life",
+    "value": 240.0,
+    "logloss_1x2": 1.03482
+   },
+   {
+    "knob": "half_life",
+    "value": 365.0,
+    "logloss_1x2": 1.03536
+   },
+   {
+    "knob": "half_life",
+    "value": 730.0,
+    "logloss_1x2": 1.03623
+   },
+   {
+    "knob": "k_games",
+    "value": 1.0,
+    "logloss_1x2": 1.03356
+   },
+   {
+    "knob": "k_games",
+    "value": 2.0,
+    "logloss_1x2": 1.03331
+   },
+   {
+    "knob": "k_games",
+    "value": 4.0,
+    "logloss_1x2": 1.03482
+   },
+   {
+    "knob": "k_games",
+    "value": 8.0,
+    "logloss_1x2": 1.03874
+   },
+   {
+    "knob": "rho",
+    "value": 0.0,
+    "logloss_1x2": 1.03487
+   },
+   {
+    "knob": "rho",
+    "value": -0.04,
+    "logloss_1x2": 1.03356
+   },
+   {
+    "knob": "rho",
+    "value": -0.08,
+    "logloss_1x2": 1.03273
+   },
+   {
+    "knob": "rho",
+    "value": -0.12,
+    "logloss_1x2": 1.03235
+   }
+  ],
+  "player": [
+   {
+    "knob": "k_rate_min",
+    "value": 300.0,
+    "goal_logloss_plus_shots": 0.32099
+   },
+   {
+    "knob": "k_rate_min",
+    "value": 600.0,
+    "goal_logloss_plus_shots": 0.31957
+   },
+   {
+    "knob": "k_rate_min",
+    "value": 1200.0,
+    "goal_logloss_plus_shots": 0.31928
+   },
+   {
+    "knob": "k_rate_min",
+    "value": 2400.0,
+    "goal_logloss_plus_shots": 0.31998
+   },
+   {
+    "knob": "w_env",
+    "value": 0.0,
+    "goal_logloss_plus_shots": 0.32122
+   },
+   {
+    "knob": "w_env",
+    "value": 0.5,
+    "goal_logloss_plus_shots": 0.31964
+   },
+   {
+    "knob": "w_env",
+    "value": 1.0,
+    "goal_logloss_plus_shots": 0.31928
+   },
+   {
+    "knob": "start_min_k",
+    "value": 1.0,
+    "goal_logloss_plus_shots": 0.31912
+   },
+   {
+    "knob": "start_min_k",
+    "value": 3.0,
+    "goal_logloss_plus_shots": 0.31928
+   },
+   {
+    "knob": "start_min_k",
+    "value": 6.0,
+    "goal_logloss_plus_shots": 0.31939
+   }
+  ]
+ },
+ "team": {
+  "2026": {
+   "matches": 380,
+   "h_d_a": {
+    "logloss_model": 1.0323479586683608,
+    "logloss_last_season_rates": 1.0839554286088646,
+    "rps_model": 0.21043886728526123,
+    "rps_last_season_rates": 0.2285076177285319,
+    "said": {
+     "H": 0.4079189553310012,
+     "D": 0.2681869917882152,
+     "A": 0.3238940528807836
+    },
+    "happened": {
+     "H": 0.4263157894736842,
+     "D": 0.2736842105263158,
+     "A": 0.3
+    },
+    "model_pick_home_or_away_won": 0.49736842105263157
+   },
+   "goals_mae": {
+    "model": 0.8984248519409408,
+    "league_average": 0.9592797783933518
+   },
+   "over_2_5": {
+    "brier_model": 0.2541114341577979,
+    "brier_last_season_rate": 0.2478670360110804,
+    "said": 0.5195426572502546,
+    "happened": 0.5473684210526316
+   },
+   "both_score": {
+    "brier_model": 0.2475921959855029,
+    "brier_last_season_rate": 0.24675900277008306,
+    "said": 0.5440849074117897,
+    "happened": 0.5578947368421052
+   }
+  },
+  "2027": {
+   "matches": 100,
+   "h_d_a": {
+    "logloss_model": 1.0198881524249015,
+    "logloss_last_season_rates": 1.0811737301523658,
+    "rps_model": 0.20791907734996293,
+    "rps_last_season_rates": 0.22881994459833788,
+    "said": {
+     "H": 0.4159577378776402,
+     "D": 0.267471590560074,
+     "A": 0.3165706715622859
+    },
+    "happened": {
+     "H": 0.42,
+     "D": 0.27,
+     "A": 0.31
+    },
+    "model_pick_home_or_away_won": 0.51
+   },
+   "goals_mae": {
+    "model": 0.9380425276059093,
+    "league_average": 0.9778157894736843
+   },
+   "over_2_5": {
+    "brier_model": 0.248095928884913,
+    "brier_last_season_rate": 0.2550858725761772,
+    "said": 0.5261304860312648,
+    "happened": 0.47
+   },
+   "both_score": {
+    "brier_model": 0.25134758354020625,
+    "brier_last_season_rate": 0.25450969529085876,
+    "said": 0.5506791076647922,
+    "happened": 0.49
+   }
+  }
+ },
+ "elo_only_benchmark": {
+  "2026": {
+   "matches": 380,
+   "logloss": 1.030934365963585,
+   "rps": 0.2106721170717489
+  },
+  "2027": null
+ },
+ "player": {
+  "2026": {
+   "starts": 6891,
+   "anytime_scorer": {
+    "legs_with_5_games": 5952,
+    "scored_rate": 0.1056450442606298,
+    "said": 0.11543288146775933,
+    "brier_model": 0.08908808580593203,
+    "brier_no_matchup": 0.08951946138778356,
+    "brier_own_scoring_rate": 0.09505151628351634,
+    "logloss_model": 0.3077259710746473,
+    "logloss_own_scoring_rate": 0.33145206191101223,
+    "calibration": [
+     {
+      "bin": "[0.0, 0.05)",
+      "n": 2370,
+      "said": 0.0295,
+      "hit": 0.0371
+     },
+     {
+      "bin": "[0.05, 0.1)",
+      "n": 1713,
+      "said": 0.0714,
+      "hit": 0.0543
+     },
+     {
+      "bin": "[0.1, 0.15)",
+      "n": 898,
+      "said": 0.1227,
+      "hit": 0.1091
+     },
+     {
+      "bin": "[0.15, 0.2)",
+      "n": 567,
+      "said": 0.174,
+      "hit": 0.1852
+     },
+     {
+      "bin": "[0.2, 0.3)",
+      "n": 821,
+      "said": 0.2462,
+      "hit": 0.2229
+     },
+     {
+      "bin": "[0.3, 0.4)",
+      "n": 400,
+      "said": 0.3372,
+      "hit": 0.29
+     },
+     {
+      "bin": "[0.4, 0.5)",
+      "n": 90,
+      "said": 0.437,
+      "hit": 0.3111
+     },
+     {
+      "bin": "[0.5, 1.0)",
+      "n": 32,
+      "said": 0.5672,
+      "hit": 0.5312
+     }
+    ]
+   },
+   "shots": {
+    "mae_model": 0.8533982587683477,
+    "mae_per_appearance_avg": 0.8596345486158133,
+    "phi": 1.1506646057280505,
+    "lines": [
+     {
+      "line": "1+",
+      "legs": 5952,
+      "hit_rate": 0.5782930107526881,
+      "brier_model": 0.2061983748828062,
+      "brier_own_hit_rate": 0.2230914290488943
+     },
+     {
+      "line": "2+",
+      "legs": 5952,
+      "hit_rate": 0.2903225806451613,
+      "brier_model": 0.16509354245048247,
+      "brier_own_hit_rate": 0.17672496139685084
+     },
+     {
+      "line": "3+",
+      "legs": 5952,
+      "hit_rate": 0.13172043010752688,
+      "brier_model": 0.09872370831791878,
+      "brier_own_hit_rate": 0.10421665750653868
+     }
+    ]
+   },
+   "sot": {
+    "mae_model": 0.4478949587435159,
+    "mae_per_appearance_avg": 0.43040473125462725,
+    "phi": 1.0502744609177763,
+    "lines": [
+     {
+      "line": "1+",
+      "legs": 5952,
+      "hit_rate": 0.2925067204301075,
+      "brier_model": 0.18135063397267073,
+      "brier_own_hit_rate": 0.188578977436051
+     },
+     {
+      "line": "2+",
+      "legs": 5952,
+      "hit_rate": 0.06821236559139784,
+      "brier_model": 0.059724724926265516,
+      "brier_own_hit_rate": 0.06332849497602397
+     },
+     {
+      "line": "3+",
+      "legs": 5952,
+      "hit_rate": 0.016129032258064516,
+      "brier_model": 0.015622789454179239,
+      "brier_own_hit_rate": 0.019537348709431857
+     }
+    ]
+   }
+  },
+  "2027": {
+   "starts": 1595,
+   "anytime_scorer": {
+    "legs_with_5_games": 716,
+    "scored_rate": 0.10846394984326019,
+    "said": 0.1133768027743462,
+    "brier_model": 0.09157130868859002,
+    "brier_no_matchup": 0.09281171950248801,
+    "brier_own_scoring_rate": 0.10695849414049599,
+    "logloss_model": 0.3149189703344819,
+    "logloss_own_scoring_rate": 0.368201220215795,
+    "calibration": [
+     {
+      "bin": "[0.0, 0.05)",
+      "n": 542,
+      "said": 0.0299,
+      "hit": 0.0295
+     },
+     {
+      "bin": "[0.05, 0.1)",
+      "n": 413,
+      "said": 0.0719,
+      "hit": 0.0581
+     },
+     {
+      "bin": "[0.1, 0.15)",
+      "n": 233,
+      "said": 0.1235,
+      "hit": 0.1545
+     },
+     {
+      "bin": "[0.15, 0.2)",
+      "n": 123,
+      "said": 0.1704,
+      "hit": 0.1301
+     },
+     {
+      "bin": "[0.2, 0.3)",
+      "n": 163,
+      "said": 0.2454,
+      "hit": 0.2086
+     },
+     {
+      "bin": "[0.3, 0.4)",
+      "n": 95,
+      "said": 0.3441,
+      "hit": 0.3263
+     },
+     {
+      "bin": "[0.4, 0.5)",
+      "n": 18,
+      "said": 0.4445,
+      "hit": 0.6111
+     },
+     {
+      "bin": "[0.5, 1.0)",
+      "n": 8,
+      "said": 0.5674,
+      "hit": 0.625
+     }
+    ]
+   },
+   "shots": {
+    "mae_model": 0.8729661192834891,
+    "mae_per_appearance_avg": 0.9561703985495157,
+    "phi": 1.1506646057280505,
+    "lines": [
+     {
+      "line": "1+",
+      "legs": 716,
+      "hit_rate": 0.6019553072625698,
+      "brier_model": 0.19181026404030319,
+      "brier_own_hit_rate": 0.21814477301497842
+     },
+     {
+      "line": "2+",
+      "legs": 716,
+      "hit_rate": 0.32122905027932963,
+      "brier_model": 0.16719453911645416,
+      "brier_own_hit_rate": 0.18699673229517136
+     },
+     {
+      "line": "3+",
+      "legs": 716,
+      "hit_rate": 0.16201117318435754,
+      "brier_model": 0.11311912468309844,
+      "brier_own_hit_rate": 0.13420862027821615
+     }
+    ]
+   },
+   "sot": {
+    "mae_model": 0.4481999863941701,
+    "mae_per_appearance_avg": 0.45160370852382065,
+    "phi": 1.0502744609177763,
+    "lines": [
+     {
+      "line": "1+",
+      "legs": 716,
+      "hit_rate": 0.29748603351955305,
+      "brier_model": 0.1811800647680852,
+      "brier_own_hit_rate": 0.1934051755588212
+     },
+     {
+      "line": "2+",
+      "legs": 716,
+      "hit_rate": 0.08100558659217877,
+      "brier_model": 0.06775741963661482,
+      "brier_own_hit_rate": 0.07937479669858703
+     },
+     {
+      "line": "3+",
+      "legs": 716,
+      "hit_rate": 0.008379888268156424,
+      "brier_model": 0.009354732140232677,
+      "brier_own_hit_rate": 0.02378016548308605
+     }
+    ]
+   }
+  }
+ },
+ "grid_today": {
+  "league_goals_per_team": 1.3890056058558802,
+  "home_edge": 1.097759346361473,
+  "clubs": [
+   {
+    "club": "Man City",
+    "team": 43,
+    "attack": 1.366,
+    "defence_allowed": 0.827,
+    "goals_for_vs_avg_opp": 1.897,
+    "goals_against_vs_avg_opp": 1.148
+   },
+   {
+    "club": "Brighton",
+    "team": 36,
+    "attack": 1.233,
+    "defence_allowed": 0.862,
+    "goals_for_vs_avg_opp": 1.712,
+    "goals_against_vs_avg_opp": 1.197
+   },
+   {
+    "club": "Liverpool",
+    "team": 14,
+    "attack": 1.205,
+    "defence_allowed": 0.856,
+    "goals_for_vs_avg_opp": 1.674,
+    "goals_against_vs_avg_opp": 1.188
+   },
+   {
+    "club": "Arsenal",
+    "team": 3,
+    "attack": 1.187,
+    "defence_allowed": 0.557,
+    "goals_for_vs_avg_opp": 1.649,
+    "goals_against_vs_avg_opp": 0.773
+   },
+   {
+    "club": "Chelsea",
+    "team": 8,
+    "attack": 1.171,
+    "defence_allowed": 0.987,
+    "goals_for_vs_avg_opp": 1.626,
+    "goals_against_vs_avg_opp": 1.371
+   },
+   {
+    "club": "Bournemouth",
+    "team": 91,
+    "attack": 1.165,
+    "defence_allowed": 0.935,
+    "goals_for_vs_avg_opp": 1.618,
+    "goals_against_vs_avg_opp": 1.299
+   },
+   {
+    "club": "Man Utd",
+    "team": 1,
+    "attack": 1.161,
+    "defence_allowed": 1.03,
+    "goals_for_vs_avg_opp": 1.613,
+    "goals_against_vs_avg_opp": 1.431
+   },
+   {
+    "club": "Brentford",
+    "team": 94,
+    "attack": 1.119,
+    "defence_allowed": 0.975,
+    "goals_for_vs_avg_opp": 1.554,
+    "goals_against_vs_avg_opp": 1.355
+   },
+   {
+    "club": "Aston Villa",
+    "team": 7,
+    "attack": 1.066,
+    "defence_allowed": 1.031,
+    "goals_for_vs_avg_opp": 1.48,
+    "goals_against_vs_avg_opp": 1.433
+   },
+   {
+    "club": "Newcastle",
+    "team": 4,
+    "attack": 1.041,
+    "defence_allowed": 1.036,
+    "goals_for_vs_avg_opp": 1.446,
+    "goals_against_vs_avg_opp": 1.44
+   },
+   {
+    "club": "Crystal Palace",
+    "team": 31,
+    "attack": 0.964,
+    "defence_allowed": 1.152,
+    "goals_for_vs_avg_opp": 1.338,
+    "goals_against_vs_avg_opp": 1.6
+   },
+   {
+    "club": "Leeds",
+    "team": 2,
+    "attack": 0.955,
+    "defence_allowed": 0.906,
+    "goals_for_vs_avg_opp": 1.327,
+    "goals_against_vs_avg_opp": 1.258
+   },
+   {
+    "club": "Nott'm Forest",
+    "team": 17,
+    "attack": 0.941,
+    "defence_allowed": 0.927,
+    "goals_for_vs_avg_opp": 1.306,
+    "goals_against_vs_avg_opp": 1.287
+   },
+   {
+    "club": "Fulham",
+    "team": 54,
+    "attack": 0.895,
+    "defence_allowed": 0.946,
+    "goals_for_vs_avg_opp": 1.244,
+    "goals_against_vs_avg_opp": 1.313
+   },
+   {
+    "club": "Everton",
+    "team": 11,
+    "attack": 0.891,
+    "defence_allowed": 0.934,
+    "goals_for_vs_avg_opp": 1.238,
+    "goals_against_vs_avg_opp": 1.297
+   },
+   {
+    "club": "Spurs",
+    "team": 6,
+    "attack": 0.882,
+    "defence_allowed": 0.985,
+    "goals_for_vs_avg_opp": 1.226,
+    "goals_against_vs_avg_opp": 1.368
+   },
+   {
+    "club": "Ipswich Town",
+    "team": 40,
+    "attack": 0.88,
+    "defence_allowed": 1.401,
+    "goals_for_vs_avg_opp": 1.222,
+    "goals_against_vs_avg_opp": 1.946
+   },
+   {
+    "club": "Sunderland",
+    "team": 56,
+    "attack": 0.842,
+    "defence_allowed": 1.01,
+    "goals_for_vs_avg_opp": 1.17,
+    "goals_against_vs_avg_opp": 1.403
+   },
+   {
+    "club": "Coventry City",
+    "team": 9,
+    "attack": 0.77,
+    "defence_allowed": 1.23,
+    "goals_for_vs_avg_opp": 1.07,
+    "goals_against_vs_avg_opp": 1.709
+   },
+   {
+    "club": "Hull City",
+    "team": 88,
+    "attack": 0.726,
+    "defence_allowed": 0.973,
+    "goals_for_vs_avg_opp": 1.008,
+    "goals_against_vs_avg_opp": 1.351
+   }
+  ]
+ }
+}

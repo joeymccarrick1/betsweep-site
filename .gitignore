@@ -6,3 +6,6 @@ out/
 in/
 research/snapshots/
 site/
+
+# other-sports history downloads (sports/fetch_data.sh, sports/nba/publish.py) - never committed
+sports/_data/
