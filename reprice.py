@@ -328,6 +328,16 @@ def main():
         _af = _AF.clean(IN, W, log=log); S["avail_fixed"] = sum(1 for c in _af if c.get("to")); S["avail_held"] = sum(1 for c in _af if not c.get("to"))
     except Exception as e:
         warns.append(f"availfix did not run ({e})"); log("[availfix] FAILED: " + str(e))
+    # 11/22: a kickoff the schedule file has wrong is taken from FanDuel (kickfix.py). nflverse still had Jaguars @ Giants early and
+    # Steelers @ Eagles late on Sunday morning after the two had traded windows; every kickoff, lock, live window and alert time on the
+    # site comes from in/games.csv, so the row is corrected here, before any step reads it. The mirror and the sheet are not touched.
+    try:
+        import kickfix as _KF
+        _kf = _KF.clean(IN, W, log=log); S["kick_fixed"] = sum(1 for c in _kf if c.get("now")); S["kick_held"] = sum(1 for c in _kf if not c.get("now"))
+        warns += [f"kickoff taken from FanDuel: {c['game']} {c['was']} ET -> {c['now']} ET" for c in _kf if c.get("now")]
+        warns += [f"kickoff differs from FanDuel and was NOT changed: {c['game']} ({c.get('why')})" for c in _kf if not c.get("now")]
+    except Exception as e:
+        warns.append(f"kickfix did not run ({e})"); log("[kickfix] FAILED: " + str(e))
     steps = ([] if a.skip_desk else DESK) + BUILD
     if not a.skip_desk:      # the desk reads the public feeds branch; raw.githubusercontent.com first, this fetch is the fall-back they use
         r = subprocess.run(["git", "-C", clone, "fetch", "-q", "--depth", "1", "origin", "+feeds:refs/remotes/origin/feeds"], capture_output=True, text=True)

@@ -79,7 +79,25 @@ async def main():
             tabs = await pg.evaluate("[...document.querySelectorAll('#hometabs .fxtabs .tab')].map(t => t.textContent.trim())")
             if len(tabs) >= 3:
                 vis = await pg.evaluate("[...document.querySelectorAll('#hometabs > [data-tab]')].filter(e => e.getClientRects().length > 0).map(e => e.id)"); scr = await pg.evaluate(SCR)
-                check(len(vis) == 1 and scr <= 6.5 and await pg.evaluate(OVER) <= 0, f"home, {theme}: the lower sections sit under one row of tabs ({tabs}; showing {vis}; {scr} screens)")
+                # 11/22: the 6.5-screen limit is for the page itself. Three blocks come and go with the day and are measured on their own:
+                # the promos (five were live on Sunday 11/22 and ran the page to 13 screens - they fold now, see below), Lines to check
+                # (its own check further down) and the under of the day.
+                day = await pg.evaluate("['promo', 'bsstale', 'bsunder'].map(function(i){ var e = document.getElementById(i); return e && e.getClientRects().length ? Math.round(e.getBoundingClientRect().height) : 0; })")
+                core = round(scr - sum(day) / 844, 1)
+                check(len(vis) == 1 and core <= 6.5 and await pg.evaluate(OVER) <= 0, f"home, {theme}: the lower sections sit under one row of tabs ({tabs}; showing {vis}; {core} screens without the day's promo, lines-to-check and under blocks, {scr} with them)")
+                pr = await pg.evaluate("(function(){ var c = [...document.querySelectorAll('#promo .promos > .promo')].filter(function(x){ return x.getClientRects().length; }); return {n: c.length, fold: c.filter(function(x){ return x.classList.contains('fold'); }).length, h: c.map(function(x){ return Math.round(x.getBoundingClientRect().height); }), sec: Math.round((document.getElementById('promo') || {getBoundingClientRect: function(){ return {height: 0}; }}).getBoundingClientRect().height),"
+                                       " seen: c.map(function(x){ var f = x.querySelector('.pa a.fd'), t = x.querySelector('.pa .tail'), l = x.querySelector('.pl'); return [!!f && f.getClientRects().length > 0, !t || t.getClientRects().length > 0, !!l && l.getClientRects().length === 0, (x.querySelector('.pfold') || {}).textContent || '']; })}; })()")
+                if pr["n"] >= 2:
+                    check(pr["fold"] == pr["n"] and max(pr["h"]) <= 280 and pr["sec"] <= 230 + 265 * pr["n"] and all(x[0] and x[1] and x[2] and x[3].startswith("Show the ") for x in pr["seen"]),
+                          f"home, {theme}: with {pr['n']} promos live each card starts folded - name, price, Bet it on FanDuel and Tail in {max(pr['h'])}px, legs one tap away (the block is {pr['sec']}px, {round(pr['sec'] / 844, 1)} screens)")
+                    await pg.evaluate("document.querySelector('#promo .promo .pfold').scrollIntoView({block: 'center'})"); await pg.tap("#promo .promo .pfold"); await pg.wait_for_timeout(250)
+                    o1 = await pg.evaluate("(function(){ var c = document.querySelector('#promo .promos > .promo'), b = c.querySelector('.pfold'); return [c.classList.contains('fold'), b.getAttribute('aria-expanded'), b.textContent, c.querySelectorAll('.pl li').length, [...c.querySelectorAll('.pl li')].filter(function(x){ return x.getClientRects().length; }).length, !!c.querySelector('.cap') && c.querySelector('.cap').getClientRects().length > 0, [...document.querySelectorAll('#promo .promos > .promo.fold')].length]; })()")
+                    await pg.tap("#promo .promo .pfold"); await pg.wait_for_timeout(200)
+                    o2 = await pg.evaluate("(function(){ var c = document.querySelector('#promo .promos > .promo'); return [c.classList.contains('fold'), c.querySelector('.pfold').getAttribute('aria-expanded'), document.documentElement.scrollWidth - document.documentElement.clientWidth]; })()")
+                    check(o1[0] is False and o1[1] == "true" and o1[2] == "Hide the legs" and o1[3] >= 2 and o1[4] == o1[3] and o1[5] and o1[6] == pr["n"] - 1 and o2 == [True, "false", 0],
+                          f"home, {theme}: the button opens that one card - all {o1[3]} legs and the reasons - and folds it again; the others stay folded")
+                elif pr["n"] == 1:
+                    check(pr["fold"] == 0 and pr["seen"][0][0] and not pr["seen"][0][2], f"home, {theme}: one promo alone shows open, legs and all ({pr['h'][0]}px)")
                 await pg.evaluate("document.querySelector('#hometabs').scrollIntoView()"); await pg.click("#hometabs .fxtabs .tab:nth-child(2)"); await pg.wait_for_timeout(200)
                 vis2 = await pg.evaluate("[...document.querySelectorAll('#hometabs > [data-tab]')].filter(e => e.getClientRects().length > 0).map(e => e.id)")
                 check(len(vis2) == 1 and vis2 != vis and not errs, f"home, {theme}: a tab shows its section and hides the last ({vis2}; {errs[:1]})")

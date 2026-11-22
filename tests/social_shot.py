@@ -23,7 +23,7 @@ STUB = """(mode) => window.BSImport.data().then(function(BS){
   function ok(l){ return {ok: true, key: key(l), leg: l, label: l.pl + ' ' + Math.round(l.ln) + '+ ' + l.m, odds: l.o}; }
   var legs = mode === 'all' ? [ok(a), ok(b)] : [ok(a), ok(b), ok(c), {ok: true, unpriced: true, key: 'Nobody Real|Receiving Yards|33', leg: null, label: 'Nobody Real 33+ Receiving Yards'}, {ok: false, raw: 'FIRST DRIVE RESULT - PUNT', why: 'a drive prop'}];
   window.__want = [key(a), key(b)]; window.__early = c.pl;
-  window.BSImport.read = function(){ return Promise.resolve({R: {legs: legs, odds: 650}, BS: BS}); };
+  window.__reads = []; window.BSImport.read = function(f){ window.__reads.push(f && f.type ? f.type : String(f)); return Promise.resolve({R: {legs: legs, odds: 650}, BS: BS}); };
   window.BSLoadSlip = function(keys, gm){ window.__loaded = {keys: keys, gm: gm}; };
   return window.__want; })""" % (GL, GD)
 async def main():
@@ -54,6 +54,34 @@ async def main():
             check(r["no"] == ["that game has already kicked off", "not on this week's board at that exact line, so it cannot be posted", "a drive prop"], f"[{theme}] each leg left out says why: kicked off, not on the board, not a market we price")
             check(r["go"] == "Post these 2 legs" and r["goH"] >= 44 and r["over"] == 0 and "for the whole slip" in " ".join(r["st"]), f"[{theme}] one button posts what is left; the slip price is left off because legs were dropped; nothing overflows")
             if SHOTS: await pg.evaluate("document.getElementById('shot').scrollIntoView({block: 'start'}); window.scrollBy(0, -70)"); await pg.wait_for_timeout(250); await pg.screenshot(path=f"{SHOTS}/social-shot-{theme}.png")
+            # ---------- owner 11/22: "Make it so you can paste when importing screenshot too on social page" ----------
+            PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+            st = "() => ({reads: window.__reads.slice(), box: !document.getElementById('shotpbox').hidden, txt: document.getElementById('shotpbox').textContent, st: (document.querySelector('#shotout .st') || {}).textContent || '', active: (document.activeElement || {}).id || ''})"
+            pb0 = await pg.evaluate("() => { var b = document.getElementById('shotpaste'), r = b.getBoundingClientRect(); return [b.textContent, Math.round(r.height), document.getElementById('shotpbox').hidden, document.querySelector('#shot p').textContent, document.documentElement.scrollWidth - innerWidth]; }")
+            check(pb0[0] == "Paste screenshot" and pb0[1] >= 44 and pb0[2] is True and "or paste it" in pb0[3] and pb0[4] <= 0, f"[{theme}] the panel has a Paste screenshot button beside Choose screenshot, a 44px target, and says a picture can be pasted ({pb0[:3]})")
+            n0 = len((await pg.evaluate(st))["reads"])
+            # (a) the browser lets the page read the clipboard: one tap reads the picture
+            await pg.evaluate("(b64) => { var bin = atob(b64), u = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); window.__blob = new Blob([u], {type: 'image/png'}); Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {read: function(){ return Promise.resolve([{types: ['text/plain', 'image/png'], getType: function(t){ return Promise.resolve(window.__blob); }}]); }}}); }", PNG)
+            await pg.tap("#shotpaste"); await pg.wait_for_timeout(500); a = await pg.evaluate(st)
+            check(len(a["reads"]) == n0 + 1 and a["reads"][-1] == "image/png" and not a["box"] and a["st"].startswith("2 of 5 legs can be posted"), f"[{theme}] Paste screenshot reads the picture on the clipboard and shows the legs, the same as choosing a file ({a['st'][:40]})")
+            # (b) a clipboard with no picture says so
+            await pg.evaluate("() => Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {read: function(){ return Promise.resolve([{types: ['text/plain'], getType: function(){ return Promise.resolve(new Blob(['x'])); }}]); }}})")
+            await pg.tap("#shotpaste"); await pg.wait_for_timeout(400); bb = await pg.evaluate(st)
+            check(len(bb["reads"]) == n0 + 1 and "No picture on the clipboard" in bb["st"], f"[{theme}] with no picture on the clipboard it says to copy the screenshot first ({bb['st'][:50]})")
+            # (c) the browser refuses the read (most phones): a box opens to long-press and paste into
+            await pg.evaluate("() => Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {read: function(){ return Promise.reject(new Error('NotAllowedError')); }}})")
+            await pg.tap("#shotpaste"); await pg.wait_for_timeout(400); c0 = await pg.evaluate(st)
+            vis = await pg.evaluate("() => { var b = document.getElementById('shotpbox'), r = b.getBoundingClientRect(); return [b.isContentEditable, Math.round(r.height) >= 60, r.top >= 0 && r.bottom <= innerHeight, parseFloat(getComputedStyle(b).fontSize) >= 16, document.documentElement.scrollWidth - innerWidth <= 0, /Tap and hold here/.test(getComputedStyle(b, '::before').content)]; }")
+            check(c0["box"] and c0["active"] == "shotpbox" and vis == [True, True, True, True, True, True], f"[{theme}] when the browser will not hand over the clipboard, a paste box opens in view and focused, still showing what to do, with no zoom-in on focus ({c0['box']}, {vis})")
+            await pg.evaluate("(b64) => { var b = document.getElementById('shotpbox'); b.innerHTML = '<img src=\"data:image/png;base64,' + b64 + '\">'; b.dispatchEvent(new Event('input', {bubbles: true})); }", PNG)
+            await pg.wait_for_timeout(600); c1 = await pg.evaluate(st)
+            check(len(c1["reads"]) == n0 + 2 and c1["reads"][-1] == "image/png" and not c1["box"] and c1["st"].startswith("2 of 5 legs can be posted"), f"[{theme}] a picture pasted into that box is read and the box goes away ({c1['reads'][-1:]}, box open {c1['box']})")
+            # (d) a plain paste while the panel is open (a keyboard, or the phone's own Paste)
+            PASTE = "(b64) => { var bin = atob(b64), u = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); var dt = new DataTransfer(); dt.items.add(new File([u], 'slip.png', {type: 'image/png'})); var ev = new ClipboardEvent('paste', {clipboardData: dt, bubbles: true, cancelable: true}); document.dispatchEvent(ev); return ev.defaultPrevented; }"
+            dp = await pg.evaluate(PASTE, PNG); await pg.wait_for_timeout(400); d1 = await pg.evaluate(st)
+            await pg.click("#shotx"); await pg.wait_for_timeout(150); dq = await pg.evaluate(PASTE, PNG); await pg.wait_for_timeout(300); d2 = await pg.evaluate(st)
+            check(dp and len(d1["reads"]) == n0 + 3 and not dq and len(d2["reads"]) == n0 + 3, f"[{theme}] a picture pasted anywhere on the page is read while the panel is open, and left alone when it is closed")
+            await pg.click("#shotbtn"); await pg.set_input_files("#shotf", {"name": "slip.png", "mimeType": "image/png", "buffer": b"\x89PNG"}); await pg.wait_for_timeout(700)
             await pg.click("#shotgo"); await pg.wait_for_timeout(300)
             h = await pg.evaluate("() => ({loaded: window.__loaded, flag: JSON.parse(sessionStorage.getItem('bs_postnow') || 'null'), want: window.__want})")
             check(h["loaded"] and h["loaded"]["keys"] == h["want"] and h["flag"] and h["flag"]["odds"] is None and h["flag"]["keys"] == sorted(h["want"]) and h["flag"]["t"] == T, f"[{theme}] the two legs go to the Parlay Builder with a single-use note to open its post form (no price, since legs were dropped)")

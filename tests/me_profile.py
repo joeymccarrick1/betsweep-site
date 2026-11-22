@@ -11,7 +11,8 @@ FAKE = """
 window.__CALLS = []; window.__PROF = {user_id: '%s', handle: 'BlitzRaven42', color: 2, emoji: null};
 (function(){
   function q(table){ var f = {}, P = new Proxy(function(){}, {get: function(_, k){
-      if(k === 'then') return function(res, rej){ var d = table === 'feed_records' ? [{user_id: '%s', graded: 5, won: 3, lost: 2, units: 1.4, posts: 6}] : table === 'feed_follows' ? [{follower: 'a'}, {follower: 'b'}] : []; return Promise.resolve({data: d, error: null}).then(res, rej); };
+      if(k === 'then') return function(res, rej){ var d = table === 'feed_records' ? [{user_id: '%s', graded: 5, won: 3, lost: 2, units: 1.4, posts: 6}] : table === 'feed_follows' ? [{follower: 'a'}, {follower: 'b'}]
+        : (table === 'feed_posts' && localStorage.getItem('t_hot')) ? [{user_id: '%s', result: 'won', last_ko: new Date(Date.now() - 2 * 864e5).toISOString(), created_at: new Date(Date.now() - 3 * 864e5).toISOString()}] : []; return Promise.resolve({data: d, error: null}).then(res, rej); };
       return function(){ return P; }; }}); return P; }
   var S = {user: {id: '%s', email: 'joe@example.com'}};
   window.supabase = {createClient: function(){ return {
@@ -22,7 +23,7 @@ window.__CALLS = []; window.__PROF = {user_id: '%s', handle: 'BlitzRaven42', col
       if(n === 'feed_profile_set'){ if(a.p_emoji === '🍕') return Promise.resolve({data: null, error: {message: 'Pick an avatar from the list'}}); window.__PROF = {user_id: '%s', handle: a.p_handle, color: a.p_color, emoji: a.p_emoji}; return Promise.resolve({data: window.__PROF, error: null}); }
       return Promise.resolve({data: null, error: null}); } }; }};
 })();
-""" % (ME, ME, ME, ME)
+""" % (ME, ME, ME, ME, ME)
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
@@ -42,13 +43,36 @@ async def main():
             await pg.goto("http://127.0.0.1:8861/me/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)
             d = await pg.evaluate("(function(){ var m = document.getElementById('mep'), a = document.querySelector('#bsacct a.me'); return {vis: !m.hidden, h: (m.querySelector('h2') || {}).textContent, av: (m.querySelector('.pav') || {}).textContent, cls: (m.querySelector('.pav') || {}).className, line: (m.querySelector('.pn p') || {}).textContent, links: [...m.querySelectorAll('.pb a, .pb button')].map(function(x){ return x.textContent + '|' + (x.getAttribute('href') || ''); }), pill: a ? a.querySelector('i').textContent : null, first: document.querySelector('.me h1').nextElementSibling.id, over: document.documentElement.scrollWidth - innerWidth}; })()")
             check(d["vis"] and d["h"] == "@BlitzRaven42" and d["av"] == "BR" and "c2" in d["cls"] and d["first"] == "mep", f"[{theme}] signed in, My BetSweep opens on the profile card: username, initials on the chosen colour ({d['h']}, {d['av']}, {d['cls']})")
-            check("3-2" in d["line"] and "+1.4 units" in d["line"] and "2 followers" in d["line"], f"[{theme}] the card carries the posted record and followers ({d['line']})")
+            import re as _re
+            hot0 = await pg.evaluate("!!document.querySelector('#mep h2 .hot')")
+            check(d["line"] == "6 slips posted to Social · 2 followers" and not _re.search(r"\d+-\d+|units", d["line"]) and not hot0, f"[{theme}] the card says how many slips are posted and the followers - no win-loss record, no units, no fire without a recent hit ({d['line']})")
             check(d["links"] == ["Edit profile|", f"My posted slips|/social/#u={ME}"], f"[{theme}] two actions: Edit profile, My posted slips ({d['links']})")
             check(d["pill"] == "B" and d["over"] <= 0, f"[{theme}] the header pill shows the username's initial, no sideways scroll ({d['pill']}, {d['over']})")
             await pg.click('#mep [data-pe="1"]'); await pg.wait_for_timeout(300)
             e = await pg.evaluate("(function(){ var a = [...document.querySelectorAll('#mep input[name=e]')], t = [...document.querySelectorAll('#mep label[title]')]; return [a.length, new Set(a.map(function(i){ return i.value; })).size, t.length, t.filter(function(l){ return l.getBoundingClientRect().width >= 44; }).length, document.querySelectorAll('#mep input[name=c]').length, document.documentElement.scrollWidth - innerWidth]; })()")
             check(e == [49, 49, 32, 32, 8, 0] or (e[:5] == [49, 49, 32, 32, 8] and e[5] <= 0), f"[{theme}] the editor offers 8 colours, initials, 16 emoji and the 32 teams, each a 44px target, no sideways scroll ({e})")
             if SHOTS: await pg.screenshot(path=os.path.join(SHOTS, f"me_profile_edit_{theme}.png"), full_page=False)
+            # ---- owner 11/22: "press a color or emoji make the change in real time on the users profile picture"
+            AV = "(function(){ var a = document.querySelector('#mep .phd > .pav'); if(!a) return null; var r = a.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return {t: a.textContent, c: a.className, top: Math.round(r.top), bottom: Math.round(r.bottom), seen: !!t && (t === a || a.contains(t)), bg: getComputedStyle(a).backgroundColor}; })()"
+            a0 = await pg.evaluate(AV)
+            await pg.click('#mep input[name=c][value="6"]', force=True); await pg.wait_for_timeout(350); a1 = await pg.evaluate(AV)
+            check(bool(a0) and a0["t"] == "BR" and "c2" in a0["c"] and "c6" in a1["c"] and a1["t"] == "BR" and a1["bg"] != a0["bg"], f"[{theme}] tapping a colour repaints the picture at once ({a0['c'] if a0 else None} -> {a1['c']}, {a1['bg']})")
+            await pg.click('#mep .em input[value="🔥"]', force=True); await pg.wait_for_timeout(150); a2 = await pg.evaluate(AV)
+            check(a2["t"] == "🔥" and "em" in a2["c"].split() and "c6" in a2["c"], f"[{theme}] tapping an emoji puts it on the picture at once, on the colour just picked ({a2['t']}, {a2['c']})")
+            await pg.evaluate("document.querySelector('#mep label[title=\"Titans\"]').scrollIntoView({block: 'center'})"); await pg.wait_for_timeout(250)
+            await pg.click('#mep label[title="Titans"] input', force=True); await pg.wait_for_timeout(200); a3 = await pg.evaluate(AV)
+            far = await pg.evaluate("Math.round(document.querySelector('#mep label[title=\"Titans\"]').getBoundingClientRect().top - document.querySelector('#pedit').getBoundingClientRect().top)")
+            check(a3["t"] == "⚔️" and a3["seen"] and 40 <= a3["top"] and a3["bottom"] <= 844 - 64 and far > 500, f"[{theme}] a team picked far down the list ({far}px into the form) still shows on the picture, which stays in view under the menu ({a3['top']}-{a3['bottom']}px)")
+            await pg.click('#mep .em input[value=""]', force=True); await pg.fill('#peh', 'JoeyMac'); await pg.wait_for_timeout(150); a4 = await pg.evaluate(AV)
+            check(a4["t"] == "JM" and "em" not in a4["c"].split(), f"[{theme}] back on initials, the picture follows the username as it is typed ({a4['t']})")
+            await pg.click('#mep .em input[value="🎯"]', force=True); await pg.evaluate("document.dispatchEvent(new Event('bs-account'))"); await pg.wait_for_timeout(500)
+            k = await pg.evaluate("(function(){ var f = document.getElementById('pedit'); return f ? [(f.querySelector('input[name=c]:checked') || {}).value, (f.querySelector('input[name=e]:checked') || {}).value, f.h.value] : null; })()"); a5 = await pg.evaluate(AV)
+            check(k == ["6", "🎯", "JoeyMac"] and a5["t"] == "🎯" and "c6" in a5["c"], f"[{theme}] a refresh of the card while the editor is open keeps what was picked ({k}, {a5['t'] if a5 else None})")
+            check(not any("feed_profile_set" in c for c in await pg.evaluate("window.__CALLS")), f"[{theme}] none of that saved anything")
+            await pg.click('#mep [data-pe="0"]'); await pg.wait_for_timeout(250)
+            c0 = await pg.evaluate("(function(){ var m = document.getElementById('mep'), a = m.querySelector('.pav'); return [a.textContent, a.className, !!m.querySelector('.phd'), !!document.getElementById('pedit'), (m.querySelector('h2') || {}).textContent]; })()")
+            check(c0[0] == "BR" and "c2" in c0[1] and not c0[2] and not c0[3] and c0[4] == "@BlitzRaven42", f"[{theme}] Cancel puts the saved picture and name back ({c0})")
+            await pg.click('#mep [data-pe="1"]'); await pg.wait_for_timeout(300)
             await pg.fill('#peh', 'bad name'); await pg.click('#mep .sv'); await pg.wait_for_timeout(200)
             check("3 to 20" in await pg.inner_text('#pemsg') and not any("feed_profile_set" in c for c in await pg.evaluate("window.__CALLS")), f"[{theme}] a bad username is stopped on the page, nothing is sent")
             await pg.fill('#peh', 'JoeyMac'); await pg.evaluate("document.querySelector('#mep input[name=c][value=\"5\"]').click(); document.querySelector('#mep label[title=\"Titans\"] input').click()")
@@ -61,6 +85,10 @@ async def main():
             await pg.goto("http://127.0.0.1:8861/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1200)
             pill = await pg.evaluate("(document.querySelector('#bsacct a.me i') || {}).textContent"); mb = await pg.evaluate("(function(){ var b = document.getElementById('mebtn'); return b ? [b.hidden, b.textContent] : null; })()")
             check(pill == "⚔️" and mb and mb[1] == "My slips", f"[{theme}] on Social the header shows the same avatar and the shortcut reads My slips ({pill}, {mb})")
+            # a posted slip that cashed two days ago: the card wears the fire Social shows
+            await pg.evaluate("localStorage.setItem('t_hot', '1')"); await pg.goto("http://127.0.0.1:8861/me/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1500)
+            hot1 = await pg.evaluate("(function(){ var h = document.querySelector('#mep h2 .hot'); return h ? [h.textContent, h.getAttribute('aria-label'), document.querySelector('#mep .pn p').textContent] : null; })()")
+            check(bool(hot1) and hot1[0] == "🔥" and hot1[1] == "Hit recently" and not _re.search(r"\d+-\d+|units", hot1[2]), f"[{theme}] after a posted slip cashes, the card wears a fire and still no record ({hot1})")
             check(not errs, f"[{theme}] no script errors ({errs[:2]})")
             await ctx.close()
         # signed out: no card

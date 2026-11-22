@@ -174,8 +174,15 @@ ME_CSS = """
 .me .mep[hidden]{display:none}
 .me .mep .pav{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;font-style:normal;color:#fff;letter-spacing:.02em} .me .mep .pav.em{font-size:29px;letter-spacing:0}
 .me .pav.c0{background:#c2410c}.me .pav.c1{background:#0f766e}.me .pav.c2{background:#1d4ed8}.me .pav.c3{background:#7e22ce}.me .pav.c4{background:#be123c}.me .pav.c5{background:#4d7c0f}.me .pav.c6{background:#b45309}.me .pav.c7{background:#334155}
-.me .mep h2{margin:0;font-family:var(--display);font-size:22px;line-height:1.1;color:var(--ink);overflow-wrap:anywhere} .me .mep .pn p{margin:3px 0 0;color:var(--mute);font-size:13px;line-height:1.35}
+.me .mep h2{margin:0;font-family:var(--display);font-size:22px;line-height:1.1;color:var(--ink);overflow-wrap:anywhere} .me .mep h2 .hot{display:inline-block;margin-left:6px;font-size:18px;line-height:1} .me .mep .pn p{margin:3px 0 0;color:var(--mute);font-size:13px;line-height:1.35}
 .me .mep .pb{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px} .me .mep .pb a,.me .mep .pb button{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer}
+/* 11/22 (owner: "press a color or emoji make the change in real time on the users profile picture"): while the editor is open the
+   picture and name are one bar that stays under the menu, so a tap on a colour, an emoji or a team far down the list is seen at once */
+.me .mep .phd{grid-column:1 / -1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px;align-items:center;position:sticky;top:calc(53px / 1.06);z-index:4;margin:-14px -14px 0;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);border-radius:13px 13px 0 0}
+.me .mep .phd .pav{transition:background-color .15s}
+@media (max-width:760px){ .me .mep .phd{top:calc((53px + env(safe-area-inset-top,0px)) / 1.1)} }
+@media (prefers-reduced-motion: reduce){ .me .mep .phd .pav{transition:none} }
+.me .mep .phd + .pedit{border-top:0;padding-top:4px}
 .me .pedit{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:12px} .me .pedit label[for]{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px}
 .me .pedit input#peh{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .me .pedit .hint{margin:5px 0 10px;font-size:12.5px;color:var(--mute)} .me .pedit fieldset{border:0;padding:0;margin:0 0 10px;min-width:0} .me .pedit legend{font-size:12px;font-weight:700;color:var(--mute);padding:0;margin-bottom:6px}
@@ -489,7 +496,7 @@ def _base_css():
 MEP_JS = r"""
 (function(){
   var box = document.getElementById('mep'); if(!box) return;
-  var EMOJI = __EMOJI__, TEAMS = __TEAMS__, EDIT = false, P = null, REC = null, FANS = null, FOR = null;
+  var EMOJI = __EMOJI__, TEAMS = __TEAMS__, EDIT = false, P = null, REC = null, FANS = null, FOR = null, HOT = false;
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
   function hcol(){ if(P.color != null) return P.color; var h = 0, t = String(P.handle || ''); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 8; return h; }
@@ -502,16 +509,37 @@ MEP_JS = r"""
       '<fieldset><legend>Team</legend><div class="em">' + TEAMS.map(function(t){ return '<label title="' + t[0] + '"><input type="radio" name="e" value="' + t[1] + '"' + (P.emoji === t[1] ? ' checked' : '') + '><i>' + t[1] + '</i><span class="sr">' + t[0] + '</span></label>'; }).join('') + '</div></fieldset>' +
       '<p class="msg" id="pemsg" role="status"></p><div class="pbtn"><button type="submit" class="sv">Save profile</button><button type="button" data-pe="0">Cancel</button></div></form>'; }
   function paint(){ var A = acc(), u = A && A.user; if(!u || !P || P.user_id !== u.id){ box.hidden = true; box.innerHTML = ''; return; }
-    var r = REC, un = r ? +r.units || 0 : 0, n = r ? (r.posts || 0) : 0;
-    var line = r && r.graded ? 'Posted slips: ' + r.won + '-' + r.lost + ', ' + (un >= 0 ? '+' : '') + un.toFixed(1) + ' units' : (n ? n + ' slip' + (n === 1 ? '' : 's') + ' posted to Social, none graded yet' : 'No slips posted to Social yet');
+    // owner 11/22 1:46 AM ("Don't make actual record public knowledge for each user ... I don't want to see 0-23 -23.0u. You can put a fire
+    // emoji for users that have hit recently. Otherwise don't put anything"): the card no longer reads or prints a win-loss record or
+    // units for posted slips. It says how many slips are posted, and wears the same fire Social shows when one cashed in the last 7 days.
+    var r = REC, n = r ? (r.posts || 0) : 0;
+    var line = n ? n + ' slip' + (n === 1 ? '' : 's') + ' posted to Social' : 'No slips posted to Social yet';
     box.hidden = false;
-    box.innerHTML = '<i class="pav c' + hcol() + (P.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(P.emoji || inits(P.handle)) + '</i><div class="pn"><h2>@' + esc(P.handle) + '</h2><p>' + esc(line) + (FANS != null ? ' · ' + FANS + ' follower' + (FANS === 1 ? '' : 's') : '') + '</p></div>' +
-      (EDIT ? form() : '<div class="pb"><button type="button" data-pe="1">Edit profile</button><a href="/social/#u=' + esc(u.id) + '">My posted slips</a></div>'); }
+    var head = '<i class="pav c' + hcol() + (P.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(P.emoji || inits(P.handle)) + '</i><div class="pn"><h2>@' + esc(P.handle) + (HOT ? '<span class="hot" role="img" aria-label="Hit recently" title="One of your posted slips cashed in the last 7 days">🔥</span>' : '') + '</h2><p>' + esc(line) + (FANS != null ? ' · ' + FANS + ' follower' + (FANS === 1 ? '' : 's') : '') + '</p></div>';
+    var keep = EDIT ? picked() : null;   /* a repaint while the editor is open (the record or follower count arriving) must not undo unsaved taps */
+    box.innerHTML = EDIT ? '<div class="phd">' + head + '</div>' + form() : head + '<div class="pb"><button type="button" data-pe="1">Edit profile</button><a href="/social/#u=' + esc(u.id) + '">My posted slips</a></div>';
+    if(keep) restore(keep); }
+  /* the editor's current choices: colour, avatar, username - null when the editor is not on the page */
+  function picked(){ var f = document.getElementById('pedit'); if(!f) return null; var a = document.activeElement;
+    return {c: (f.querySelector('input[name=c]:checked') || {}).value, e: (f.querySelector('input[name=e]:checked') || {}).value, h: f.h.value, foc: a && a.id === 'peh' ? [a.selectionStart, a.selectionEnd] : null}; }
+  function restore(k){ var f = document.getElementById('pedit'); if(!f) return;
+    [['c', k.c], ['e', k.e]].forEach(function(x){ if(x[1] == null) return; [].forEach.call(f.querySelectorAll('input[name=' + x[0] + ']'), function(i){ i.checked = i.value === x[1]; }); });
+    if(k.h != null) f.h.value = k.h;
+    if(k.foc){ f.h.focus(); try{ f.h.setSelectionRange(k.foc[0], k.foc[1]); }catch(e){} }
+    preview(); }
+  /* owner 11/22: the picture follows the form before anything is saved. Cancel repaints it from the saved profile. */
+  function preview(){ var k = picked(), a = box.querySelector('.phd > .pav'); if(!EDIT || !k || !a) return;
+    var em = k.e || '', h = (k.h || '').replace(/^\s+|\s+$/g, '') || P.handle;
+    a.className = 'pav c' + (+k.c || 0) + (em ? ' em' : ''); a.textContent = em || inits(h); }
   function load(){ var A = acc(), u = A && A.user; if(!u || !A.client || !A.client.rpc){ P = null; paint(); return; } if(A.profile && A.profile.user_id === u.id){ P = A.profile; paint(); } if(FOR === u.id) return; FOR = u.id;
     A.client.rpc('feed_profile_me').then(function(r){ if(r && r.data && r.data.user_id === u.id){ P = r.data; if(A.setProfile) A.setProfile(P); paint(); } }, function(){});
-    A.client.from('feed_records').select('user_id,graded,won,lost,units,posts').eq('user_id', u.id).then(function(r){ REC = ((r && r.data) || [])[0] || null; paint(); }, function(){});
+    A.client.from('feed_records').select('user_id,posts').eq('user_id', u.id).then(function(r){ REC = ((r && r.data) || [])[0] || null; paint(); }, function(){});
+    A.client.from('feed_posts').select('user_id,last_ko,created_at,result').eq('status', 'open').eq('result', 'won').eq('user_id', u.id).gte('created_at', new Date(Date.now() - 14 * 864e5).toISOString()).limit(20).then(function(r){
+      var now = Date.now(); HOT = ((r && r.data) || []).some(function(x){ if(!x || x.result !== 'won') return false; var t = Date.parse(x.last_ko) || Date.parse(x.created_at) || 0; return t && t <= now && now - t <= 7 * 864e5; }); paint(); }, function(){});
     A.client.from('feed_follows').select('follower').eq('followee', u.id).then(function(r){ if(r && r.data) FANS = r.data.length; paint(); }, function(){}); }
   box.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-pe]'); if(!b) return; EDIT = b.dataset.pe === '1'; paint(); if(EDIT){ var i = document.getElementById('peh'); if(i) i.focus(); } });
+  box.addEventListener('change', function(e){ var t = e.target; if(t && (t.name === 'c' || t.name === 'e')) preview(); });
+  box.addEventListener('input', function(e){ if(e.target && e.target.id === 'peh') preview(); });
   box.addEventListener('submit', function(e){ if(e.target.id !== 'pedit') return; e.preventDefault(); var A = acc();
     var f = e.target, msg = document.getElementById('pemsg'), h = f.h.value.trim(), c = +(f.querySelector('input[name=c]:checked') || {}).value || 0, em = (f.querySelector('input[name=e]:checked') || {}).value || null, sv = f.querySelector('.sv');
     if(!/^[A-Za-z0-9_]{3,20}$/.test(h)){ msg.textContent = 'Usernames are 3 to 20 letters, numbers or underscores.'; msg.className = 'msg err'; return; }
@@ -520,7 +548,7 @@ MEP_JS = r"""
       if(r.error){ msg.textContent = /avatar from the list/i.test(r.error.message || '') ? 'Team avatars are being switched on. Pick another for now.' : (r.error.message || 'Could not save.').replace(/^.*?: /, ''); msg.className = 'msg err'; return; }
       P = r.data && r.data.user_id ? r.data : Object.assign({}, P, {handle: h, color: c, emoji: em}); EDIT = false; if(A.setProfile) A.setProfile(P); paint(); },
       function(){ sv.disabled = false; msg.textContent = 'Could not save. Check your connection and try again.'; msg.className = 'msg err'; }); });
-  document.addEventListener('bs-account', function(){ FOR = null; REC = null; FANS = null; load(); });
+  document.addEventListener('bs-account', function(){ FOR = null; REC = null; FANS = null; HOT = false; load(); });
   document.addEventListener('bs-profile', function(e){ var A = acc(); if(e.detail && A && A.user && e.detail.user_id === A.user.id && !EDIT){ P = e.detail; paint(); } });
   var n = 0; (function wait(){ var A = acc(); if(A && A.user) return load(); if(++n < 40) setTimeout(wait, 150); })();
 })();

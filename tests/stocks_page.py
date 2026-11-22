@@ -12,6 +12,10 @@ def trend(v):
     k = window(len(v))
     if not k: return 0, sum(v) / len(v), None, None, 0
     r = sum(v[-k:]) / k; b = sum(v[:-k]) / (len(v) - k); return k, r, b, r - b, sum(1 for x in v[-k:] if x > b)
+def under(v):
+    k = window(len(v))
+    if not k: return 0
+    b = sum(v[:-k]) / (len(v) - k); return sum(1 for x in v[-k:] if x < b)
 def dtxt(d, flat=0.5):
     if d is None: return ""
     if abs(d) < flat: return ("" if f"{abs(d):.1f}" == "0.0" else ("+" if d >= 0 else "−")) + f"{abs(d):.1f}"
@@ -34,11 +38,46 @@ async def main():
         want[pos] = [x[2] for x in sorted(c)[:D["top"]]]; rest[pos] = [x[2] for x in sorted(c)[D["top"]:]]
     check(want == D["rise"] and all(len(v) <= D["top"] for v in want.values()), "the riser lists are exactly what the rule gives from the game logs shipped with the page: " + ", ".join(f"{a} {len(v)}" for a, v in D["rise"].items()))
     check(rest == D["more"] and all(p["up"] == (p["k"] in want[p["p"]] or p["k"] in rest[p["p"]]) for p in PL), "the players behind each \"Show all\" button are the rest of the players the rule passes, in order: " + ", ".join(f"{a} +{len(v)}" for a, v in D["more"].items()))
-    btns = dict(re.findall(r'<button type="button" class="skmore" data-pos="([A-Z]+)">([^<]+)</button>', page))
+    allb = {(a, l): t for a, l, t in re.findall(r'<button type="button" class="skmore" data-pos="([A-Z]+)" data-list="(rise|fall)">([^<]+)</button>', page)}
+    btns = {a: t for (a, l), t in allb.items() if l == "rise"}; fbtns = {a: t for (a, l), t in allb.items() if l == "fall"}
     check(set(btns) == {a for a, v in D["more"].items() if v} and all(btns[a].startswith(f"Show all {len(D['rise'][a]) + len(D['more'][a])} rising ") for a in btns), f"a position with more risers than its list has a button that says how many there are in all: {sorted(btns.values())}")
     mp = next((a for a in ("RB", "WR", "TE", "QB") if D["more"].get(a)), None)
-    html_keys = {pos: re.findall(r'<li class="sk [a-z]+" data-k="([^"]+)" data-pos="' + pos + '"', page) for pos in D["rise"]}
+    def written(mode): return {pos: re.findall(r'<li class="sk [a-z]+" data-k="([^"]+)" data-pos="' + pos + '"', "".join(re.findall(r'<ul class="skg" data-list="' + mode + r'">(.*?)</ul>', page, re.S))) for pos in D["rise"]}
+    html_keys = written("rise")
     check(html_keys == D["rise"], "the tiles written into the page are those players, in that order")
+    # ---- owner 11/22 2:11 AM ("any other good information ... that would go hand in hand"): the falling lists, what moved, this week
+    wantf = {}; restf = {}
+    for pos in D["fall"]:
+        c = []
+        for p in PL:
+            if p["p"] != pos: continue
+            v = [g[C["ppr"]] for g in p["g"]]; k, r, b, d, beat = trend(v)
+            if k and d <= -D["min_up"] and b >= D["floor"][pos] and under(v) >= 2 and p["ac"] and p["st"] not in ("Out", "Doubtful"): c.append((round(d, 2), p["n"], p["k"]))
+        wantf[pos] = [x[2] for x in sorted(c)[:D["top"]]]; restf[pos] = [x[2] for x in sorted(c)[D["top"]:]]
+    check(wantf == D["fall"] and restf == D["fmore"] and written("fall") == D["fall"] and all(bool(p["dn"]) == (p["k"] in wantf[p["p"]] or p["k"] in restf[p["p"]]) for p in PL) and not any(p["up"] and p["dn"] for p in PL),
+          "the falling lists are the mirror rule redone from the shipped game logs, written into the page in order, and nobody is on both: " + ", ".join(f"{a} {len(v)}+{len(D['fmore'][a])}" for a, v in D["fall"].items()))
+    check(set(fbtns) == {a for a, v in D["fmore"].items() if v} and all(fbtns[a].startswith(f"Show all {len(D['fall'][a]) + len(D['fmore'][a])} falling ") for a in fbtns), f"a position with more fallers than its list has its own button ({sorted(fbtns.values())})")
+    def moved(p):
+        k = p["kw"]
+        if not k: return []
+        v = [g[C["ppr"]] for g in p["g"]]; _, r, b, d, _ = trend(v); d = round(d, 1); R, B = p["g"][-k:], p["g"][:-k]; av = lambda rows, f: sum(f(g) for g in rows) / len(rows)
+        lab, f = (("Pass attempts", lambda g: g[C["att"]]) if p["p"] == "QB" else ("Carries plus targets", lambda g: g[C["car"]] + g[C["tgt"]]) if p["p"] == "RB" else ("Targets", lambda g: g[C["tgt"]]))
+        a, c = av(R, f), av(B, f); out = [f"{lab}: {a:.1f} a game over his last {k}, " + (f"level with before ({c:.1f})." if abs(a - c) < 1.0 else f"{'up' if a > c else 'down'} from {c:.1f}.")]
+        tp = (lambda g: 4 * g[C["ptd"]] + 6 * g[C["td"]]) if p["p"] == "QB" else (lambda g: 6 * g[C["td"]]); x = av(R, tp) - av(B, tp)
+        if abs(d) >= 2.0 and abs(x) >= 1.0 and (x > 0) == (d > 0):
+            w = "rise" if d > 0 else "drop"
+            out.append(f"Touchdowns are all of the {abs(d):.1f}-point {w}; the rest of his scoring is level or going the other way." if abs(x) > abs(d) + 0.05 else f"Touchdowns are {abs(x):.1f} of the {abs(d):.1f}-point {w}.")
+        return out
+    badm = [(p["n"], p["mv"], moved(p)) for p in PL if p["mv"] != moved(p)]
+    check(not badm and sum(1 for p in PL if len(p["mv"]) == 2) >= 5, f"every 'What moved' line is the arithmetic it says it is, redone from his shipped games ({sum(1 for p in PL if p['mv'])} players, {sum(1 for p in PL if len(p['mv']) == 2)} with a touchdown line; off: {badm[:2]})")
+    try: SS = {(x["n"], x["t"]): x for x in json.load(open(os.path.join(ROOT, "b", "startsit.json")))["players"]}
+    except Exception: SS = {}
+    proj = [(p, float(re.search(r"The model projects (\d+\.\d) fantasy points", " ".join(p["wk"])).group(1))) for p in PL if "The model projects" in " ".join(p["wk"])]
+    offp = [(p["n"], x, SS.get((p["n"], p["t"]), {}).get("fp")) for p, x in proj if (p["n"], p["t"]) in SS and abs(round(SS[(p["n"], p["t"])]["fp"], 1) - x) > 0.051]
+    check(len(proj) >= 100 and sum(1 for p, x in proj if (p["n"], p["t"]) in SS) >= 0.9 * len(proj) and not offp and all(p["wk"] and len(p["wk"]) <= 2 for p in PL) and not any(p["st"] in ("Out", "Doubtful") and "projects" in " ".join(p["wk"]) for p in PL),
+          f"'This week' gives {len(proj)} players a projection, each the number Start / Sit publishes for him; a player listed out gets none; everyone gets a line (bye, played or game) (off: {offp[:3]})")
+    faller = next((BY[k] for v in D["fall"].values() for k in v if len(BY[k]["mv"]) == 2), None) or next((BY[k] for v in D["fall"].values() for k in v), None)
+    fpos = next((a for a in ("RB", "WR", "TE", "QB") if D["fmore"].get(a)), None)
     check(all(BY[k]["st"] not in ("Out", "Doubtful") and BY[k]["ac"] and BY[k]["up"] for v in D["rise"].values() for k in v), "nobody on a list is ruled out, doubtful or two games gone")
     bad = []
     for p in PL:
@@ -84,7 +123,7 @@ async def main():
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto(U, wait_until="domcontentloaded"); await pg.wait_for_selector("#skm[data-ready='1']", timeout=8000); await pg.wait_for_timeout(500)
             T = lambda s: f"[{theme}] " + s
-            d = await pg.evaluate("""(function(){ var t = [...document.querySelectorAll('#sksecs .sk')], g = document.querySelector('#sksecs .skg').children;
+            d = await pg.evaluate("""(function(){ var t = [...document.querySelectorAll('#sksecs [data-for="rise"] .sk')], g = document.querySelector('#sksecs .skg').children;
               var cs = function(e){ return getComputedStyle(e); };
               return {n: t.length, over: document.documentElement.scrollWidth - innerWidth, two: g.length >= 3 && g[0].offsetTop === g[1].offsetTop && g[2].offsetTop > g[0].offsetTop,
                 tap: [...document.querySelectorAll('.skj a')].every(function(a){ return a.getBoundingClientRect().height >= 40; }) && document.getElementById('skq').getBoundingClientRect().height >= 44,
@@ -98,7 +137,7 @@ async def main():
             check(d["up"] != d["mute"] and d["up"] != d["ink"], T("the up arrow wears the up colour, not the text colour"))
             check(d["firsttile"] < 844 * 0.62 and d["screens"] <= 7.5, T(f"the first tiles start on the first screen ({d['firsttile']:.0f}px down) and the page is {d['screens']:.1f} screens long"))
             check(d["menu"], T("the site menu links to Stock Market"))
-            chips = await pg.evaluate("[...document.querySelectorAll('#sksecs .sk')].map(function(x){ var c = x.querySelector('.skst'); return [x.getAttribute('data-k'), c.textContent, getComputedStyle(c).display !== 'none', c.classList.contains('o')]; })")
+            chips = await pg.evaluate("[...document.querySelectorAll('#sksecs [data-for=\"rise\"] .sk')].map(function(x){ var c = x.querySelector('.skst'); return [x.getAttribute('data-k'), c.textContent, getComputedStyle(c).display !== 'none', c.classList.contains('o')]; })")
             check(all(c[1] == BY[c[0]]["f"]["st"] and c[2] == bool(c[1]) and c[3] == (BY[c[0]]["f"]["stc"] == "o") for c in chips), T(f"every tile wears the tag its data gives it and none when it has none ({sum(1 for c in chips if c[1])} of {len(chips)} tagged: {sorted(set(c[1] for c in chips if c[1]))})"))
             t0 = await pg.evaluate("(function(k){ var li = document.querySelector('#sksecs .sk[data-k=\"' + k + '\"]'), b = li.querySelector('.skb'); return {h: li.outerHTML, nm: li.querySelector('.sknm').textContent, tm: li.querySelector('.sktb').textContent, sub: li.querySelector('.sktm span').textContent, val: li.querySelector('.skv b').textContent, lab: li.querySelector('.skv small').textContent, dt: li.querySelector('em').textContent, pts: (li.querySelector('.ska').getAttribute('d').match(/[ML]/g) || []).length, rec: (li.querySelector('.skr').getAttribute('d').match(/[ML]/g) || []).length, d: li.querySelector('.ska').getAttribute('d'), aria: b.getAttribute('aria-label'), ex: b.getAttribute('aria-expanded')}; })", rb["k"])
             vals = [g[C["ppr"]] for g in rb["g"]]; k, r, bs, dd, beat = trend(vals)
@@ -111,10 +150,13 @@ async def main():
               return {after: row[row.length - 1].nextElementSibling === p, full: Math.abs(r.width - li.parentNode.getBoundingClientRect().width) < 2, ex: li.querySelector('.skb').getAttribute('aria-expanded'), h3: p.querySelector('h3').textContent,
                 ids: st.map(function(x){ return x.getAttribute('data-s'); }), two: st.length >= 3 && st[0].offsetTop === st[1].offsetTop && st[2].offsetTop > st[0].offsetTop, tap: Math.min.apply(null, st.map(function(x){ return x.getBoundingClientRect().height; })),
                 sp: st.every(function(x){ return !!x.querySelector('svg.sksp path'); }), fan: p.querySelector('.skt[data-s="ppr"] .ska').getAttribute('d'), fv: p.querySelector('.skt[data-s="ppr"] .sktv b').textContent, fd: p.querySelector('.skt[data-s="ppr"] .sktv em').textContent,
-                link: (p.querySelector('.skpl a') || {}).getAttribute ? p.querySelector('.skpl a').getAttribute('href') : '', chart: !!p.querySelector('.skcw'), notes: [...p.querySelectorAll('.skwn')].map(function(x){ return x.textContent; }), over: document.documentElement.scrollWidth - innerWidth, top: r.top, tiletop: li.getBoundingClientRect().top}; })""", rb["k"])
+                link: (p.querySelector('.skpl a') || {}).getAttribute ? p.querySelector('.skpl a').getAttribute('href') : '', chart: !!p.querySelector('.skcw'), notes: [...p.querySelectorAll('.skwn')].map(function(x){ return x.textContent; }), mv: [...p.querySelectorAll('.skmv p')].map(function(x){ return x.textContent; }), wk: [...p.querySelectorAll('.skwk p')].map(function(x){ return x.textContent; }),
+                fxtop: p.querySelector('.skfx') ? Math.round(p.querySelector('.skfx').getBoundingClientRect().bottom) : -1, sttop: Math.round(p.querySelector('.skt').getBoundingClientRect().top), heads: [...p.querySelectorAll('.skfx b')].map(function(x){ return x.textContent; }), over: document.documentElement.scrollWidth - innerWidth, top: r.top, tiletop: li.getBoundingClientRect().top}; })""", rb["k"])
             offered = [i for i in D["order"][rb["p"]] if any(g[C[next(s for s in D["stats"] if s["id"] == i)["col"]]] is not None for g in rb["g"]) and sum((g[C[next(s for s in D["stats"] if s["id"] == i)["col"]]] or 0) for g in rb["g"]) >= next(s for s in D["stats"] if s["id"] == i)["min"]]
             check(bool(p1) and p1["after"] and p1["full"] and p1["ex"] == "true" and p1["h3"] == rb["n"] and not p1["chart"], T("tapping a tile opens his stats in a full-width panel right under his row; no graph until a stat is picked"))
             check(bool(p1) and p1["notes"] == rb["nt"], T(f"his panel carries exactly the notes his data has ({len(rb['nt'])})"))
+            check(bool(p1) and p1["mv"] == rb["mv"] and p1["wk"] == rb["wk"] and len(rb["mv"]) >= 1 and len(rb["wk"]) >= 1 and p1["heads"] == ["What moved", "This week"] and 0 < p1["fxtop"] <= p1["sttop"] + 1,
+                  T(f"above his stats the panel says what moved and what his week holds: {rb['mv'][0][:60]} | {rb['wk'][0][:50]}"))
             check(bool(p1) and p1["ids"] == offered and p1["two"] and p1["tap"] >= 56 and p1["sp"] and p1["over"] <= 0, T(f"the panel offers his stats to pick from, two to a row, each with its own small graph: {', '.join(p1['ids']) if p1 else ''}"))
             num = lambda s: [float(x) for x in re.findall(r"-?\d+(?:\.\d+)?", s)]
             check(bool(p1) and p1["fv"] == t0["val"] and p1["fd"] == t0["dt"] and len(num(p1["fan"])) == len(num(t0["d"])) and max(abs(a - c) for a, c in zip(num(p1["fan"]), num(t0["d"]))) <= 0.11,
@@ -209,7 +251,7 @@ async def main():
             await pg.fill("#skq", "zzzqq"); await pg.wait_for_timeout(200)
             s5 = await pg.evaluate("[document.querySelectorAll('#skrl .sk').length, document.getElementById('skrn').hidden, document.getElementById('skrn').textContent]")
             await pg.fill("#skq", ""); await pg.wait_for_timeout(200)
-            s6 = await pg.evaluate("[document.getElementById('sksecs').hidden, document.getElementById('skres').hidden, document.querySelectorAll('#sksecs .sk').length]")
+            s6 = await pg.evaluate("[document.getElementById('sksecs').hidden, document.getElementById('skres').hidden, document.querySelectorAll('#sksecs [data-for=\"rise\"] .sk').length]")
             check(s5[0] == 0 and s5[1] is False and "No player matches" in s5[2] and s6 == [False, True, nrise], T("a name nobody has says so, and clearing the box brings the lists back"))
             await pg.fill("#skq", last.lower()); await pg.wait_for_timeout(200); await pg.click(".skj a[href='#sk-te']"); await pg.wait_for_timeout(500)
             j = await pg.evaluate("[document.getElementById('skq').value, document.getElementById('sksecs').hidden, Math.round(document.getElementById('sk-te').getBoundingClientRect().top)]")
@@ -221,10 +263,10 @@ async def main():
                 full = D["rise"][mp] + D["more"][mp]
                 await pg.evaluate("window.scrollTo(0, 0)"); await pg.fill("#skq", ""); await pg.wait_for_timeout(150)
                 if await pg.query_selector("#skp"): await pg.click("#skp .skx"); await pg.wait_for_timeout(200)
-                await pg.click(f'#sk-{mp.lower()} .skmore'); await pg.wait_for_timeout(350)
-                a1 = await pg.evaluate("""(function(pos){ var sec = document.getElementById('sk-' + pos.toLowerCase()), t = [...sec.querySelectorAll('.sk')];
-                  return {keys: t.map(function(x){ return x.getAttribute('data-k'); }), btn: !!sec.querySelector('.skmore'), head: sec.querySelector('h2 small').textContent, two: t[t.length - 2].offsetTop === t[t.length - 1].offsetTop || t.length % 2 === 1,
-                    over: document.documentElement.scrollWidth - innerWidth, focus: (document.activeElement.closest('.sk') || {getAttribute: function(){ return ''; }}).getAttribute('data-k'), other: document.querySelectorAll('#sksecs .skmore').length}; })""", mp)
+                await pg.click(f'#sk-{mp.lower()} [data-for="rise"] .skmore'); await pg.wait_for_timeout(350)
+                a1 = await pg.evaluate("""(function(pos){ var sec = document.getElementById('sk-' + pos.toLowerCase()).querySelector('div[data-for="rise"]'), t = [...sec.querySelectorAll('.sk')], hd = document.getElementById('sk-' + pos.toLowerCase());
+                  return {keys: t.map(function(x){ return x.getAttribute('data-k'); }), btn: !!sec.querySelector('.skmore'), head: hd.querySelector('h2 small[data-for="rise"]').textContent, two: t[t.length - 2].offsetTop === t[t.length - 1].offsetTop || t.length % 2 === 1,
+                    over: document.documentElement.scrollWidth - innerWidth, focus: (document.activeElement.closest('.sk') || {getAttribute: function(){ return ''; }}).getAttribute('data-k'), other: document.querySelectorAll('#sksecs [data-for="rise"] .skmore').length}; })""", mp)
                 check(a1["keys"] == full and not a1["btn"] and a1["head"] == f"all {len(full)} rising" and a1["over"] <= 0 and a1["focus"] == D["more"][mp][0] and a1["other"] == len(btns) - 1,
                       T(f"\"{btns[mp]}\" adds the rest under the list in order, the heading then says all {len(full)}, and the other positions keep their buttons"))
                 await pg.fill("#skq", BY[full[-1]]["n"]); await pg.wait_for_timeout(250)
@@ -235,6 +277,38 @@ async def main():
                 a2 = await pg.evaluate("(function(k){ var li = document.querySelector('#sksecs .sk[data-k=\"' + k + '\"]'), p = document.getElementById('skp'); if(!p) return null; var row = [...li.parentNode.children].filter(function(x){ return x !== p && x.offsetTop === li.offsetTop; }); return [row[row.length - 1].nextElementSibling === p, p.querySelector('h3').textContent, p.querySelectorAll('.skt').length]; })", full[-1])
                 check(bool(hs) and hs == hl and bool(a2) and a2[0] and a2[1] == BY[full[-1]]["n"] and a2[2] >= 3, T(f"a tile added that way is the tile the search gives him, and it opens the same way ({BY[full[-1]]['n']})"))
                 await pg.click("#skp .skx"); await pg.wait_for_timeout(150)
+            # ---- owner 11/22 2:11 AM: the Falling view
+            await pg.evaluate("window.scrollTo(0, 0)"); await pg.fill("#skq", ""); await pg.wait_for_timeout(150)
+            if await pg.query_selector("#skp"): await pg.click("#skp .skx"); await pg.wait_for_timeout(200)
+            VIS = """(function(){ var r = document.getElementById('skm'), vis = function(e){ return e.getClientRects().length > 0; }, t = [...document.querySelectorAll('#sksecs .sk')].filter(vis), g = t.length ? t[0].parentNode.children : [];
+              return {mode: r.getAttribute('data-mode'), keys: t.map(function(x){ return x.getAttribute('data-k'); }), dn: t.every(function(x){ return x.classList.contains('dn') && /^▼ /.test(x.querySelector('em').textContent); }), up: t.every(function(x){ return x.classList.contains('up'); }),
+                pressed: [...document.querySelectorAll('.skmode button')].map(function(b){ return b.getAttribute('aria-pressed'); }), heads: [...document.querySelectorAll('#sksecs h2 small')].filter(vis).map(function(x){ return x.textContent; }),
+                over: document.documentElement.scrollWidth - innerWidth, two: g.length >= 3 && g[0].offsetTop === g[1].offsetTop && g[2].offsetTop > g[0].offsetTop, key: getComputedStyle(document.querySelector('.skkey .k2')).borderTopColor, em: t.length ? getComputedStyle(t[0].querySelector('em')).color : '',
+                sw: Math.round(document.querySelector('.skmode button').getBoundingClientRect().height), panel: !!document.getElementById('skp')}; })()"""
+            v0 = await pg.evaluate(VIS)
+            await pg.tap('.skmode button[data-mode="fall"]'); await pg.wait_for_timeout(300); v1 = await pg.evaluate(VIS)
+            fallkeys = [k for a in D["fall"] for k in D["fall"][a]]
+            check(v0["mode"] == "rise" and v0["pressed"] == ["true", "false"] and v0["sw"] >= 40 and v1["mode"] == "fall" and v1["pressed"] == ["false", "true"] and v1["keys"] == fallkeys and v1["dn"] and v1["two"] and v1["over"] <= 0,
+                  T(f"a Rising / Falling switch sits above the lists; Falling swaps every list for that position's biggest drops, all pointing down ({len(v1['keys'])} tiles)"))
+            check(all(h.endswith("falling") for h in v1["heads"]) and len(v1["heads"]) == len(D["fall"]) and v1["key"] == v1["em"] and v1["key"] != v0["key"], T(f"the headings and the colour key follow the switch ({v1['heads'][:2]})"))
+            if faller:
+                await pg.click(f'#sksecs [data-for="fall"] .sk[data-k="{faller["k"]}"] .skb'); await pg.wait_for_timeout(700)
+                f1 = await pg.evaluate("""(function(k){ var li = document.querySelector('#sksecs [data-for="fall"] .sk[data-k="' + k + '"]'), p = document.getElementById('skp'); if(!p) return null; var row = [...li.parentNode.children].filter(function(x){ return x !== p && x.offsetTop === li.offsetTop; });
+                  return [row[row.length - 1].nextElementSibling === p, p.querySelector('h3').textContent, [...p.querySelectorAll('.skmv p')].map(function(x){ return x.textContent; }), [...p.querySelectorAll('.skwk p')].map(function(x){ return x.textContent; }), p.querySelector('.skt[data-s="ppr"] .sktv em').textContent]; })""", faller["k"])
+                check(bool(f1) and f1[0] and f1[1] == faller["n"] and f1[2] == faller["mv"] and f1[3] == faller["wk"] and f1[4].startswith("▼ "), T(f"a faller opens the same way, with his own what-moved and this-week lines ({faller['n']}: {faller['mv'][-1][:60]})"))
+                await pg.click("#skp .skx"); await pg.wait_for_timeout(150)
+            if fpos:
+                fullf = D["fall"][fpos] + D["fmore"][fpos]
+                await pg.click(f'#sk-{fpos.lower()} [data-for="fall"] .skmore'); await pg.wait_for_timeout(350)
+                fa = await pg.evaluate("""(function(pos){ var sec = document.getElementById('sk-' + pos.toLowerCase()), w = sec.querySelector('div[data-for="fall"]'); return [[...w.querySelectorAll('.sk')].map(function(x){ return x.getAttribute('data-k'); }), !!w.querySelector('.skmore'), sec.querySelector('h2 small[data-for="fall"]').textContent, sec.querySelector('h2 small[data-for="rise"]').textContent]; })""", fpos)
+                check(fa[0] == fullf and not fa[1] and fa[2] == f"all {len(fullf)} falling" and "falling" not in fa[3], T(f"\"{fbtns[fpos]}\" adds the rest of the fallers in order and leaves the rising heading alone"))
+            await pg.tap('.skmode button[data-mode="rise"]'); await pg.wait_for_timeout(300); v2 = await pg.evaluate(VIS)
+            risekeys = [k for a in D["rise"] for k in (D["rise"][a] + (D["more"][a] if a == mp else []))]
+            check(v2["mode"] == "rise" and v2["pressed"] == ["true", "false"] and v2["keys"] == risekeys and v2["up"] and v2["key"] == v0["key"] and not v2["panel"], T("Rising brings the rising lists back as they were left"))
+            if faller:
+                pg3 = await ctx.new_page(); await pg3.goto(U + "#p=" + faller["k"], wait_until="domcontentloaded"); await pg3.wait_for_selector("#skm[data-ready='1']", timeout=8000); await pg3.wait_for_timeout(400)
+                dl = await pg3.evaluate("[document.getElementById('skm').getAttribute('data-mode'), (document.querySelector('.skp h3') || {}).textContent, !!document.querySelector('#sksecs [data-for=\"fall\"] .skp')]")
+                check(dl == ["fall", faller["n"], True], T(f"a link to a player on a falling list opens the Falling view on him ({dl})")); await pg3.close()
             # a link to one player: /stocks/#p=<slug>
             who = cold or out or r0
             pg2 = await ctx.new_page(); await pg2.goto(U + "#p=" + who["k"], wait_until="domcontentloaded"); await pg2.wait_for_selector("#skm[data-ready='1']", timeout=8000); await pg2.wait_for_timeout(400)
@@ -264,7 +338,7 @@ async def main():
             await pg.fill("#skq", ""); await pg.wait_for_timeout(200)
             lastk = D["rise"][mp][-1]
             await pg.click(f'#sksecs .sk[data-k="{lastk}"] .skb'); await pg.wait_for_timeout(500)
-            await pg.click(f'#sk-{mp.lower()} .skmore'); await pg.wait_for_timeout(400)
+            await pg.click(f'#sk-{mp.lower()} [data-for="rise"] .skmore'); await pg.wait_for_timeout(400)
             g = await pg.evaluate("""(function(k){ var li = document.querySelector('#sksecs .sk[data-k="' + k + '"]'), p = document.getElementById('skp'); if(!p) return null;
               var row = [...li.parentNode.children].filter(function(x){ return x !== p && x.offsetTop === li.offsetTop; }), first = [...li.parentNode.children].filter(function(x){ return x.offsetTop === li.parentNode.children[0].offsetTop; }).length;
               return [row[row.length - 1].nextElementSibling === p, row.length, first, li.querySelector('.skb').getAttribute('aria-expanded'), li.parentNode.querySelectorAll('.sk').length, document.querySelectorAll('.skp').length]; })""", lastk)

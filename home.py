@@ -673,7 +673,18 @@ def promos_block(OUT, sweep_exists=False):
     if not ps: return ""
     side = bool(sweep_exists) or any(p.get("sweep") for p in allp)
     cards = [promo_card(p, ("Long shot" if (p.get("fd") or 0) >= 2000 else "Side action") if side else "Promoted") for p in ps]
-    tail_js = PROMO_TAIL_JS
+    # 11/22: five promos were live for one Sunday. A card is a screen and a half on a phone (legs, the reasons, the short link, eight
+    # buttons), so Today ran to 13 screens with the looks and the games under all of it, and the fifth promo was six screens down. With
+    # PROMO_FOLD_AT or more live, every card starts folded: its tag and status, name, legs count, price, Bet it on FanDuel and Tail,
+    # and one button that opens the rest (nothing is removed from the page - the live script still grades the legs). One promo alone
+    # shows open, as it always has.
+    if len(cards) >= PROMO_FOLD_AT:
+        def _fold(c, p):
+            n = len(p["legs"]); tag = '<article class="promo"'
+            if not c.startswith(tag) or not c.endswith("</article>"): return c
+            return (tag[:-1] + ' fold"' + c[len(tag):-len("</article>")] + f'<button type="button" class="pfold" aria-expanded="false" data-n="{n}">Show the {n} legs and why</button></article>')
+        cards = [_fold(c, p) for c, p in zip(cards, ps)]
+    tail_js = PROMO_TAIL_JS + PROMO_FOLD_JS
     head = ('<h2 class="t">Side action <small class="tsub">long shots and extras · small stakes</small></h2>' if side else '<h2 class="t">Promoted bets</h2>')
     return f'<section class="sec" id="promo">{head}<div class="promos">{"".join(cards)}</div>{tail_js}{PROMO_LIVE_JS}<div class="pnote"><style>{PNOTE_CSS}</style><p>{"Long shots and extras, graded Tuesday and counted apart from the Daily Sweep." if side else "The slips we post on X and Instagram, graded Tuesday like everything else."} Sportsbook links may earn BetSweep a commission; it never changes a pick or a grade.</p><details><summary>How tailing and sharing work</summary><p>Tail loads the whole slip on FanDuel in one tap. Share on X pre-fills the legs in plain text with @Playbook tagged, so the Playbook bot replies with a tail link for whichever sportsbook the reader uses.</p></details></div></section>'
 
@@ -705,6 +716,11 @@ def _pst(p, now_ms=None):
 
 # 11/16 (alpha plan step 9, Today): the note under the promos was seven lines of small print. What a reader must see stays in view
 # (what these slips are, and the commission line - a disclosure is never tucked behind a tap); how tailing and sharing work opens on request.
+PROMO_FOLD_AT = 2   # promos_block: this many live promo cards or more and each one starts folded
+PROMO_FOLD_JS = r"""<script>(function(){ if(window.__bsPromoFold) return; window.__bsPromoFold = 1;
+  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.promo .pfold'); if(!b) return; var c = b.closest('.promo'); if(!c) return;
+    var open = c.classList.contains('fold'); c.classList.toggle('fold', !open); b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.textContent = open ? 'Hide the legs' : 'Show the ' + b.getAttribute('data-n') + ' legs and why'; });
+})();</script>"""
 PNOTE_CSS = (".pnote{margin-top:8px;color:var(--mute)} .pnote p{margin:0;font-size:12.5px;line-height:1.45} .pnote summary{font-size:13px} "
              ".pnote summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;list-style:none} "
              ".pnote summary::-webkit-details-marker{display:none} "
@@ -984,6 +1000,16 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .promo .pa a,.promo .pa .tail{text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 11px}.promo .pa .tail{cursor:pointer;background:none;color:var(--ink)}.promo .pa .tail.on{background:var(--good);color:#fff;border-color:var(--good)}
 .promo .pa a.fd{background:#1493ff;border-color:#1493ff;color:#0b0f15} .promo .pa a:hover{border-color:var(--red)}
 .promo .cap{margin:0 16px 10px;color:var(--mute);font-size:13px;line-height:1.5} .promo p.cap.whole{white-space:pre-line}
+/* 11/22 a folded promo card (two or more live): tag and status, name, legs count, the price beside the name, Bet it on FanDuel + Tail, one button for the rest */
+.promo .pfold{display:block;width:100%;box-sizing:border-box;margin:0;padding:0 16px;min-height:44px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:600;font-size:13.5px;text-align:left;cursor:pointer}
+.promo .pfold::after{content:"";float:right;width:8px;height:8px;margin:5px 4px 0 0;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg)} .promo .pfold[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:9px}
+.promo .pfold:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.promo.fold{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:start}
+.promo.fold > .ph,.promo.fold > .pa,.promo.fold > .pfold{grid-column:1 / -1}
+.promo.fold > h3{grid-column:1;font-size:24px;margin-top:6px} .promo.fold > .meta{grid-column:1;margin-bottom:2px}
+.promo.fold > .pf{grid-column:2;grid-row:2 / span 2;align-self:center;display:block;padding:0 16px 0 0} .promo.fold > .pf .md{display:none} .promo.fold > .pf .big{font-size:30px;text-align:right} .promo.fold > .pf .big small{font-size:9.5px;margin-bottom:2px}
+.promo.fold > .pl,.promo.fold > .pshare,.promo.fold > .cap,.promo.fold > .bknote,.promo.fold > .slink,.promo.fold > .pa > :not(.fd):not(.tail){display:none}
+.promo.fold > .pa{padding:8px 16px 10px;margin-top:0;flex-wrap:nowrap;align-items:stretch} .promo.fold > .pa a.fd{flex:1 1 auto;text-align:center;white-space:nowrap;display:flex;align-items:center;justify-content:center;min-height:40px} .promo.fold > .pa .tail{flex:none;min-width:64px;min-height:40px}
 .promo div.cap p{margin:0 0 6px} .promo div.cap .ang{color:var(--ink);font-size:14.5px;line-height:1.4} .promo div.cap .why b{color:var(--ink)}
 .promo .slink{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 16px 10px;font-size:12px;color:var(--mute)} .promo .slink code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink);background:var(--chalk);padding:2px 7px;border-radius:6px} .promo .slink button{font:inherit;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer} .promo .slink a{color:var(--ink)}
 .promo .cap[hidden]{display:none}

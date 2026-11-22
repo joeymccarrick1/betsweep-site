@@ -19,6 +19,15 @@ The rules, all in one place
             this week (plydata status: the model's availability tab first, then the weekly report); has a player page
   order     biggest rise first (the change to two decimals; a tie goes by name). The first TOP at each position are written into the page;
             the rest ride in the data and a "Show all N rising ..." button under the list adds them with the same tile template
+  faller    the mirror (11/22, "any other good information ... that would go hand in hand"): his EARLIER average was FLOOR[pos]+, he is
+            down MIN_UP+ a game, two or more games of the window were under that earlier average, and the same played / not-ruled-out
+            tests. A Rising / Falling switch at the top shows one set of lists at a time; both are written into the page
+  what moved   two sentences of arithmetic in a player's box (what_moved): his chances before and now (pass attempts for a quarterback,
+            carries plus targets for a back, targets for a receiver or tight end) and how much of the fantasy change is touchdowns
+            (6 a rushing or receiving TD, 4 a passing TD) when that is 1+ point of a 2+ point move in the same direction
+  this week    his game (this_week): opponent, kickoff, and the model's projection for him - out/startsit.json, the Start / Sit page's own
+            number, so the two pages cannot disagree - with that defense's rank in yards allowed to his position. A bye, a game already
+            played, or a player listed out says so instead
   points    nflverse fantasy_points_ppr (full PPR) - the number in the player page's game log
   context   injweeks.py (the detection the usage page and the projections use) says which games were shaped by an injury. A player's
             panel says so in words when it bears on his arrow: a game of his window in which he was hurt and played less, a game of his
@@ -165,6 +174,46 @@ def row(g):
 def colors(t):
     p, s = TEAMCOL.get(t, ("#2b3442", "#141a24")); return [p, s, "#101820" if _lum(p) > 0.45 else "#ffffff"]
 
+# ---- this week: the game, and the model's projection (out/startsit.json - the Start / Sit page's own numbers, full PPR) ----
+def _nk(name):
+    try: return IW.norm(name)
+    except Exception: return str(name).lower()
+try: _SS = {(_nk(x["n"]), x["t"]): x for x in json.load(open(os.path.join(OUT, "startsit.json")))["players"]}
+except Exception as _e: print("note: this week's projections not loaded:", _e); _SS = {}
+def _ord(n): n = int(n); return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+PLUR = {"QB": "quarterbacks", "RB": "running backs", "WR": "wide receivers", "TE": "tight ends"}
+def this_week(p, gs, st):
+    """one or two plain sentences on his game this week, or [] when there is nothing certain to say. The projection is the Start / Sit
+    page's number for him (build_team's full-PPR model points) - not a second model."""
+    g = S.game_of(p["team"])
+    if not g: return [f"The {NAMES.get(p['team'], p['team'])} are off this week."]
+    opp = g["b"] if g["a"] == p["team"] else g["a"]; on = NAMES.get(opp, opp)
+    if g.get("fin"): return [f"His Week {W} game is played ({g['fin']}); it is the last point on his graph." if gs and gs[-1]["w"] == W else f"His team's Week {W} game is played ({g['fin']})."]
+    where = "Away at" if g.get("away") == p["team"] else ("Home against" if g.get("home") == p["team"] else "Against")
+    out = [f"{where} the {on}, {g.get('kick') or 'time to come'}."]
+    if st in ("Out", "Doubtful"): out[0] += f" He is listed {st.lower()}."; return out
+    x = _SS.get((_nk(p["name"]), p["team"]))
+    if x and x.get("act") and isinstance(x.get("fp"), (int, float)) and x["fp"] > 0:
+        out.append(f"The model projects {x['fp']:.1f} fantasy points." + (f" The {on} are {_ord(x['dr'])} in yards allowed to {PLUR[p['pos']]} (1st allows the most)." if x.get("dr") else ""))
+    return out
+def what_moved(pos, gs, kw, d):
+    """what is behind the arrow, as arithmetic on the same games: his chances (touches, targets or attempts) before and now, and how much
+    of the change in fantasy points is touchdowns. Uses the whole-number stats the page ships, so the test redoes every sentence."""
+    if not kw or d is None: return []
+    R, B = gs[-kw:], gs[:-kw]; av = lambda rows, f: sum(f(g) for g in rows) / len(rows)
+    i = lambda x: int(round(x or 0))
+    if pos == "QB": lab, f = "Pass attempts", (lambda g: i(g["att"]))
+    elif pos == "RB": lab, f = "Carries plus targets", (lambda g: i(g["car"]) + i(g["tgt"]))
+    else: lab, f = "Targets", (lambda g: i(g["tgt"]))
+    r, b = av(R, f), av(B, f); out = []
+    out.append(f"{lab}: {r:.1f} a game over his last {kw}, " + (f"level with before ({b:.1f})." if abs(r - b) < 1.0 else f"{'up' if r > b else 'down'} from {b:.1f}."))
+    tdp = (lambda g: 4 * i(g["ptd"]) + 6 * i(g["td"])) if pos == "QB" else (lambda g: 6 * i(g["td"]))
+    x = av(R, tdp) - av(B, tdp)
+    if abs(d) >= 2.0 and abs(x) >= 1.0 and (x > 0) == (d > 0):
+        word = "rise" if d > 0 else "drop"
+        out.append(f"Touchdowns are all of the {abs(d):.1f}-point {word}; the rest of his scoring is level or going the other way." if abs(x) > abs(d) + 0.05 else f"Touchdowns are {abs(x):.1f} of the {abs(d):.1f}-point {word}.")
+    return out
+
 PL = []; TC = {}
 for key, p in S.players.items():
     if p.get("old"): continue                      # a traded player's entry for the team he left: his games ride on his current entry
@@ -173,14 +222,15 @@ for key, p in S.players.items():
     if not gs: continue
     vals = [round(g["ppr"], 1) for g in gs]; n = len(vals); kw = window(n)   # the rounded numbers the page shows: anyone can redo the sums from his graph
     if kw:
-        r = mean(vals[-kw:]); b = mean(vals[:-kw]); d = r - b; beat = sum(1 for v in vals[-kw:] if v > b)
+        r = mean(vals[-kw:]); b = mean(vals[:-kw]); d = r - b; beat = sum(1 for v in vals[-kw:] if v > b); under = sum(1 for v in vals[-kw:] if v < b)
     else:
-        r = mean(vals); b = d = None; beat = 0
+        r = mean(vals); b = d = None; beat = under = 0
     tw = S.team_weeks.get(p["team"], [])
     active = bool(tw) and gs[-1]["w"] >= (tw[-2] if len(tw) > 1 else tw[-1])
     st = (p.get("status") or ("",))[0]; st = st if st in ("Out", "Doubtful", "Questionable") else ""
     pos, team = p["pos"], p["team"]; TC.setdefault(team, colors(team))
     rising = bool(kw and d >= MIN_UP and r >= FLOOR[pos] and beat >= 2 and active and st not in ("Out", "Doubtful"))
+    falling = bool(kw and d <= -MIN_UP and b >= FLOOR[pos] and under >= 2 and active and st not in ("Out", "Doubtful"))   # the mirror: he WAS at the floor, is down, and two of the games were under his old average
     dr = "na" if d is None else ("fl" if abs(d) < 0.5 else ("up" if d > 0 else "dn"))
     pa, pr, ex, ey = spark(vals, kw)
     tn = NAMES.get(team, team)
@@ -195,7 +245,7 @@ for key, p in S.players.items():
     if fillin: aria += " There is a note on his recent games."
     aria += " Open his stats."
     PL.append({"k": p["slug"], "n": p["name"], "t": team, "tn": tn, "p": pos, "st": st, "pg": 1 if p["slug"] in PAGES else 0, "ac": 1 if active else 0, "kw": kw, "nt": notes, "fi": 1 if fillin else 0,
-               "r": round(r, 2), "d": (None if d is None else round(d, 2)), "up": rising,
+               "r": round(r, 2), "d": (None if d is None else round(d, 2)), "up": rising, "dn": falling, "mv": what_moved(pos, gs, kw, (None if d is None else round(d, 1))), "wk": this_week(p, gs, st),
                "f": {"dir": dr, "aria": aria, "tg": ("tg" if tag else ""), "st": tag, "stc": ("o" if st in ("Out", "Doubtful") else ""),
                      "val": f"{r:.1f}", "lab": (f"last {kw}" if kw else (f"{n} games" if n != 1 else "1 game")), "dt": delta_text(d), "pa": pa, "pr": pr, "ex": ex, "ey": ey},
                "g": [row(g) for g in gs]})
@@ -205,7 +255,9 @@ def fields(x):
 ALLR = {pos: sorted([x for x in PL if x["p"] == pos and x["up"]], key=lambda x: (-x["d"], x["n"])) for pos, _, _ in POSN}   # everyone the rule passes, biggest rise first
 RISE = {pos: ALLR[pos][:TOP] for pos, _, _ in POSN}    # the tiles written into the page
 MORE = {pos: ALLR[pos][TOP:] for pos, _, _ in POSN}    # the rest: one tap ("Show all 19 rising running backs") adds them under the list
-for x in PL: x["up"] = 1 if x["up"] else 0
+ALLF = {pos: sorted([x for x in PL if x["p"] == pos and x["dn"]], key=lambda x: (x["d"], x["n"])) for pos, _, _ in POSN}    # biggest drop first
+FALL = {pos: ALLF[pos][:TOP] for pos, _, _ in POSN}; FMORE = {pos: ALLF[pos][TOP:] for pos, _, _ in POSN}
+for x in PL: x["up"] = 1 if x["up"] else 0; x["dn"] = 1 if x["dn"] else 0
 
 # how far the games go: "through Week 10" or "through Week 10, plus the Week 11 game already played (HOU, IND)"
 _wk = {}
@@ -229,6 +281,12 @@ CSS = """
 .skm .sksub{display:block;margin-top:6px;color:var(--mute);font-size:14px;line-height:1.45;max-width:700px}
 .skm .skfind{margin:0 0 8px} .skm .skfind input{display:block;width:100%;max-width:520px;box-sizing:border-box;font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
 .skm .skfind input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+/* Rising / Falling: one switch for the whole page; the list that is not picked is not shown */
+.skm .skmode{display:inline-flex;margin:0 0 10px;border:1.5px solid var(--line);border-radius:999px;padding:3px;gap:3px;background:var(--card)}
+.skm .skmode button{font:inherit;font-family:var(--display);font-weight:700;font-size:14.5px;letter-spacing:.04em;min-height:38px;min-width:96px;padding:0 18px;border:0;border-radius:999px;background:none;color:var(--mute);cursor:pointer}
+.skm .skmode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)} .skm .skmode button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.skm[data-mode="rise"] [data-for="fall"],.skm[data-mode="fall"] [data-for="rise"]{display:none}
+.skm[data-mode="fall"] .skkey i.k2{border-top-color:var(--bad)}
 .skm .skbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:0 0 2px}
 .skm .skj{display:flex;gap:6px} .skm .skj a{display:inline-flex;align-items:center;justify-content:center;min-width:46px;min-height:40px;box-sizing:border-box;padding:0 10px;border:1.5px solid var(--line);border-radius:999px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;color:var(--ink);text-decoration:none}
 .skm .skj a:hover{border-color:var(--mute)}
@@ -267,6 +325,9 @@ CSS = """
 .skm .skx:hover{border-color:var(--mute)}
 .skm .skpq{margin:8px 2px;font-size:13.5px;color:var(--mute);line-height:1.4}
 .skm .skwn{margin:8px 2px 0;padding-left:10px;border-left:3px solid var(--warn);font-size:13.5px;line-height:1.4;color:var(--ink)}
+/* what moved, and his game this week: two short fact blocks above the stats */
+.skm .skfx{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin:10px 0 0} .skm .skfx div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);min-width:0}
+.skm .skfx b{display:block;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--mute);margin-bottom:2px} .skm .skfx p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink)} .skm .skfx p + p{margin-top:3px}
 .skm .skts{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px}
 .skm .skt{min-width:0;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:2px 6px;align-items:end;text-align:left;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 9px;min-height:62px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .skm .skt:hover{border-color:var(--mute)} .skm .skt[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
@@ -373,6 +434,8 @@ JS = r"""
     ids.forEach(function(id){ if(SD[id]) b += statBtn(p, SD[id]); });
     var stl = p.st ? ' · ' + esc(p.st) + ' this week' : '', nt = '';
     (p.nt || []).forEach(function(x){ nt += '<p class="skwn">' + esc(x) + '</p>'; });
+    var fx = '', blk = function(cls, title, lines){ return lines && lines.length ? '<div class="' + cls + '"><b>' + title + '</b>' + lines.map(function(x){ return '<p>' + esc(x) + '</p>'; }).join('') + '</div>' : ''; };
+    fx = blk('skmv', 'What moved', p.mv) + blk('skwk', 'This week', p.wk); if(fx) nt += '<div class="skfx">' + fx + '</div>';
     var hint = p.kw ? 'Pick a stat to graph it. Each number is his average over his last ' + p.kw + ' games; the arrow is the change from before.' : 'Pick a stat to graph it. Each number is his average a game.';
     return '<div class="skph"><div><h3 id="skpt">' + esc(p.n) + '</h3><p>' + esc(D.pos[p.p] || p.p) + ' · ' + esc(p.tn) + stl + '</p></div>' +
       '<button type="button" class="skx">Close</button></div>' + nt +
@@ -539,19 +602,22 @@ JS = r"""
   }
   function more(btn){
     /* the rest of that position's risers, same tile template, under the ones the page came with */
-    var pos = btn.getAttribute('data-pos'), sec = btn.closest('.sksec'), ul = sec && sec.querySelector('.skg'), ks = (D.more || {})[pos] || [], h = '', i;
+    var pos = btn.getAttribute('data-pos'), mode = btn.getAttribute('data-list') || 'rise', sec = btn.closest('.sksec'), wrap = btn.closest('[data-for]'), ul = wrap && wrap.querySelector('.skg'),
+        ks = ((mode === 'fall' ? D.fmore : D.more) || {})[pos] || [], h = '', i;
     if(!ul) return;
     for(i = 0; i < ks.length; i++) if(BY[ks[i]]) h += fill(fields(BY[ks[i]]));
     var open = cur && cur.li.parentNode === ul;
     if(open && cur.panel.parentNode) cur.panel.parentNode.removeChild(cur.panel);
     ul.insertAdjacentHTML('beforeend', h);
     if(open) seat(cur.li, cur.panel);
-    var sm = sec.querySelector('h2 small'), n = ul.querySelectorAll('.sk').length;
-    if(sm) sm.textContent = 'all ' + n + ' rising';
+    var sm = sec.querySelector('h2 small[data-for="' + mode + '"]'), n = ul.querySelectorAll('.sk').length;
+    if(sm) sm.textContent = 'all ' + n + (mode === 'fall' ? ' falling' : ' rising');
     var first = ks.length ? ul.querySelector('.sk[data-k="' + ks[0] + '"] .skb') : null;
     btn.parentNode.parentNode.removeChild(btn.parentNode);
     if(first){ try{ first.focus({preventScroll: true}); }catch(e){ first.focus(); } }
   }
+  function setMode(m){ if(m !== 'fall') m = 'rise'; if(root.getAttribute('data-mode') === m) return; closePanel(false); root.setAttribute('data-mode', m);
+    [].forEach.call(root.querySelectorAll('.skmode button'), function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); }); }
   q.addEventListener('input', search);
   q.addEventListener('keydown', function(e){ if(e.key === 'Escape' && q.value){ q.value = ''; search(); } });
 
@@ -561,6 +627,7 @@ JS = r"""
     if((el = t.closest('.skx'))){ closePanel(true); return; }
     if((el = t.closest('.skt'))){ choose(el); return; }
     if((el = t.closest('.skmore'))){ more(el); return; }
+    if((el = t.closest('.skmode button'))){ if(q.value){ q.value = ''; search(); } setMode(el.getAttribute('data-mode')); return; }
     if((el = t.closest('.skj a')) && q.value){ q.value = ''; search(); }
   });
   root.addEventListener('keydown', function(e){
@@ -585,7 +652,8 @@ JS = r"""
   /* /stocks/#p=<player slug> opens that player (links from other pages) */
   var m = /^#p=([a-z0-9-]+)$/.exec(location.hash || '');
   if(m && BY[m[1]]){
-    var li = root.querySelector('.sk[data-k="' + m[1] + '"]');
+    var li = root.querySelector('[data-for="rise"] .sk[data-k="' + m[1] + '"]');
+    if(!li && (li = root.querySelector('[data-for="fall"] .sk[data-k="' + m[1] + '"]'))) setMode('fall');
     if(!li){ q.value = BY[m[1]].n; search(); li = rl.querySelector('.sk[data-k="' + m[1] + '"]'); }
     if(li){ openPanel(li, true); li.scrollIntoView({block: 'start'}); }
   }
@@ -594,13 +662,19 @@ JS = r"""
 """
 
 def section(pos, title, word):
-    rs = RISE[pos]
-    body = ('<ul class="skg">' + "".join(fill(fields(x)) for x in rs) + '</ul>') if rs else f'<p class="sknone">No {word} is clearly rising right now.</p>'
-    if MORE[pos]: body += f'<p class="skmr"><button type="button" class="skmore" data-pos="{pos}">Show all {len(ALLR[pos])} rising {E(title.lower())}</button></p>'
-    return (f'<section class="sksec" id="sk-{pos.lower()}" data-pos="{pos}"><h2>{E(title)} <small>{"top " + str(len(rs)) + " rising" if rs else "nobody rising"}</small></h2>{body}</section>')
+    """one position: its rising list and its falling list (owner 11/22 2:11 AM: "any other good information ... that would go hand in hand"),
+    one shown at a time by the Rising / Falling switch (#skm[data-mode]); both are in the page so the switch is instant and works offline"""
+    def one(mode, top, more, full, verb):
+        body = (f'<ul class="skg" data-list="{mode}">' + "".join(fill(fields(x)) for x in top) + '</ul>') if top else f'<p class="sknone">No {word} is clearly {verb} right now.</p>'
+        if more: body += f'<p class="skmr"><button type="button" class="skmore" data-pos="{pos}" data-list="{mode}">Show all {len(full)} {verb} {E(title.lower())}</button></p>'
+        return f'<div data-for="{mode}">{body}</div>'
+    def small(mode, top, verb): return f'<small data-for="{mode}">{"top " + str(len(top)) + " " + verb if top else "nobody " + verb}</small>'
+    return (f'<section class="sksec" id="sk-{pos.lower()}" data-pos="{pos}"><h2>{E(title)} {small("rise", RISE[pos], "rising")}{small("fall", FALL[pos], "falling")}</h2>'
+            + one("rise", RISE[pos], MORE[pos], ALLR[pos], "rising") + one("fall", FALL[pos], FMORE[pos], ALLF[pos], "falling") + '</section>')
 
 DATA = {"week": W, "cols": COLS, "stats": STATS, "order": ORDER, "pos": {a: c.capitalize() for a, b, c in POSN}, "tc": TC, "tpl": TILE, "top": TOP, "floor": FLOOR, "min_up": MIN_UP,
-        "rise": {pos: [x["k"] for x in RISE[pos]] for pos, _, _ in POSN}, "more": {pos: [x["k"] for x in MORE[pos]] for pos, _, _ in POSN}, "pl": PL}
+        "rise": {pos: [x["k"] for x in RISE[pos]] for pos, _, _ in POSN}, "more": {pos: [x["k"] for x in MORE[pos]] for pos, _, _ in POSN},
+        "fall": {pos: [x["k"] for x in FALL[pos]] for pos, _, _ in POSN}, "fmore": {pos: [x["k"] for x in FMORE[pos]] for pos, _, _ in POSN}, "pl": PL}
 blob = json.dumps(DATA, separators=(",", ":")).replace("</", "<\\/")   # ASCII only: the data file is read right whatever the server says its charset is
 nrise = sum(len(v) for v in RISE.values())
 link, base = __import__("account")._base_css()
@@ -608,19 +682,22 @@ floors = f'{FLOOR["QB"]:g} fantasy points as a quarterback, {FLOOR["RB"]:g} as a
 page = (f'<title>NFL fantasy stock market: rising players at every position · Week {W} · BetSweep</title>\n'
         f'<meta name="description" content="Whose fantasy stock is rising going into Week {W}: the top risers at quarterback, running back, wide receiver and tight end, with a game-by-game graph of fantasy points and every stat.">\n'
         f'{link}\n<style>{base}{CSS}</style>\n'
-        f'<div class="skm" id="skm" data-week="{W}">'
+        f'<div class="skm" id="skm" data-week="{W}" data-mode="rise">'
         '<div class="skhd"><h1>Stock Market</h1>'
-        f'<span class="sksub">Who is rising going into Week {W}. Each graph is a player\'s fantasy points, game by game. Tap one to graph his other stats.</span></div>'
+        f'<span class="sksub">Who is rising and who is falling going into Week {W}. Each graph is a player\'s fantasy points, game by game. Tap one for his stats, what moved, and his game this week.</span></div>'
         '<div class="skfind"><label class="sr" for="skq">Search players</label><input id="skq" type="search" placeholder="Search a player or team" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search"></div>'
+        '<div class="skmode" role="group" aria-label="Show the risers or the fallers"><button type="button" data-mode="rise" aria-pressed="true">Rising</button><button type="button" data-mode="fall" aria-pressed="false">Falling</button></div>'
         '<div class="skbar"><nav class="skj" aria-label="Jump to a position">' + "".join(f'<a href="#sk-{a.lower()}">{a}</a>' for a, b, c in POSN) + '</nav>'
         '<p class="skkey"><span><i class="k2"></i>last 3 games</span><span><i></i>earlier games</span></p></div>'
         '<div id="sksecs">' + "".join(section(a, b, c) for a, b, c in POSN) + '</div>'
         '<div id="skres" hidden><h2 id="skrh">Search results <small></small></h2><ul class="skg" id="skrl"></ul><p class="sknone" id="skrn" role="status" hidden></p></div>'
         '<noscript><p class="sknone">Turn on JavaScript to open a player\'s stats and to search.</p></noscript>'
         f'<p class="skfoot">The big number on a tile is the player\'s fantasy points a game over his last 3 games (his last 2 if he has played only 4 or 5); the arrow is the change from his earlier games. '
-        f'To make a list a player has to average at least {floors} over those games, be up at least {MIN_UP:g} a game, and have beaten his earlier average in at least two of them, so one big game is not a rise. '
+        f'To make a Rising list a player has to average at least {floors} over those games, be up at least {MIN_UP:g} a game, and have beaten his earlier average in at least two of them, so one big game is not a rise. '
+        f'A Falling list is the mirror: he averaged that much before, is down at least {MIN_UP:g} a game, and was under his old average in at least two of those games. '
         'Players ruled out or doubtful this week, and players who missed their team\'s last two games, are left off the lists; the search still finds them. '
+        'In a player\'s box, What moved is arithmetic on those same games (a rushing or receiving touchdown is 6 points, a passing touchdown 4). This week\'s projection is BetSweep\'s model in full PPR, the number Start / Sit shows; a defense ranked 1st in yards allowed gives up the most. '
         f'{E(THRU)}. Fantasy points are full PPR. Stats and snap counts: nflverse.</p></div>\n'
         f'<script>window.__SK = {blob};</script>\n<script>{JS}</script>\n')
 open(os.path.join(OUT, "stocks.html"), "w", encoding="utf-8").write(page)
-print(f"wrote out/stocks.html: {nrise} risers ({', '.join(a + ' ' + str(len(RISE[a])) for a, b, c in POSN)}), {len(PL)} players in the search, week {W}; data {len(blob) // 1024} KB")
+print(f"wrote out/stocks.html: {nrise} risers ({', '.join(a + ' ' + str(len(RISE[a])) for a, b, c in POSN)}), {sum(len(v) for v in FALL.values())} fallers ({', '.join(a + ' ' + str(len(FALL[a])) for a, b, c in POSN)}), {len(PL)} players in the search, week {W}; data {len(blob) // 1024} KB")

@@ -2566,6 +2566,57 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
 - **Phone.** The site zooms 1.1x at 760px and under, so a 390px screen is about 333px of layout: tile minimum 146px = two to a row, stat
   tiles 136px = two to a row. A long name takes a second line; a tagged tile drops the team name (the badge carries it). Tags: NOTE and Q
   amber (white ink on the light theme, dark ink on the dark one: the amber token differs), OUT / D red. A change that rounds to 0.0 has no sign.
-- **Check.** tests/stocks_page.py, 87 checks, phone light + dark and desktop: the lists redone from the shipped game logs, every note
+- **Check.** tests/stocks_page.py (87 checks at launch, 105 after the second pass below), phone light + dark and desktop: the lists redone from the shipped game logs, every note
   pointing at games that are where it says, the tap flows, search parity, show-all, the deep link. In the pre-publish set (43 tests).
-- **Not built.** A Falling list (every player already has his arrow in the data; a Rising / Falling switch is the natural next step).
+- **11/22 2:30 AM, second pass** (owner 2:11 AM: "any other good information for users to know that would go hand in hand ... please add it").
+  (1) **Rising / Falling switch** under the search: the same four position lists for the players going the other way. A faller averaged
+  FLOOR+ over his EARLIER games (he mattered), is down MIN_UP+ a game, was under his earlier average in two or more window games, played
+  one of his team's last two games, is not Out / Doubtful. 8 a position, "Show all N falling". A deep link opens whichever list he is in.
+  (2) **What moved** in the panel: one sentence built from the same rows the graphs draw - his chances a game then and now (pass
+  attempts / carries plus targets / targets), and, when touchdowns explain a point or more of the change in the same direction, how
+  many points of it were touchdowns (6 rush or catch, 4 pass). A rise built on touchdowns reads differently from one built on work.
+  (3) **This week** in the panel: opponent, day and time (kickfix'd), the model's fantasy projection (out/startsit.json, the Start/Sit
+  page's number), where that defense ranks against his position (1st allows the most), or "off this week" / "listed out".
+  tests/stocks_page.py is 105 checks: fall lists redone from the shipped logs, the what-moved sentence redone from the shipped rows,
+  projections equal to /b/startsit.json, the switch, a faller's panel, show-all falling, a deep link to a faller.
+- **Not built.** A watch list (follow a player, see only yours); price moves of his props next to the fantasy trend.
+
+## 11/22 1:00-2:30 AM CT: a run of owner asks while five promos went up (profile preview, at-risk box, Social, kickoffs)
+- **Edit profile shows the picture changing** (1:02 AM: "press a color or emoji make the change in real time on the users profile
+  picture"). account.py MEP_JS `preview()` / social.py `pvw()`: a tap on a colour, an emoji or a team repaints the avatar before anything
+  is saved; with "Aa" picked it follows the username as it is typed; Cancel repaints from the saved profile. While the editor is open
+  the picture and name are one bar (`.phd`) that sticks under the menu - the team list is a screen and a half down on a phone, so
+  without that the change happened off screen. A repaint while the editor is open (the record arriving, the feed's 3-minute reload)
+  now keeps what was picked and typed. tests/me_profile.py 37, tests/social_feed.py (profile part).
+- **The at-risk box closes** (1:47 AM: "still won't close"). Yesterday's fix made Close fold the list reliably; the bar itself stayed
+  on screen, which is what he meant both times. risk.py: Close and a new x on the bar remove the whole box and store what it said
+  (`bs_risk_closed` = leg key + level + label for each at-risk leg). It stays away on every page until that changes (another leg, a
+  caution turning into ruled out, a different kind of reason) and a slip with nothing at risk forgets it. tests/risk_close.py 8 - it
+  FAILS on any copy where the bar survives Close. Lesson: reproduce on a phone and LOOK at the screen after the tap before fixing.
+- **No public records on Social** (1:46 AM: "Don't make actual record public knowledge for each user ... I don't want to see 0-23
+  -23.0u. You can put a fire emoji for users that have hit recently. Otherwise don't put anything"). social.py no longer reads or prints
+  win-loss, units or graded counts (cards, profile); `HOT` = accounts with a posted slip that cashed and whose last game kicked off
+  in the last HOT_DAYS (7) days - they wear a fire next to the name. The My BetSweep profile card says "N slips posted to Social" with
+  the same fire and no record. A slip's own "Cashed" tag stays. The saved-slip record on My BetSweep (private) is untouched. The
+  feed_records view still exists in the database; nothing on the site asks it for won / lost / units.
+- **Save slip on Social** (1:10 AM). social.py `slToggle()`: a card that has not kicked off has Save slip / Saved. It writes the entry
+  the builder's Save writes into bs_slips_w<week> (id "f<post id>", keys, game map for totals, posted price, per-leg prices, FanDuel
+  link), so it is on My BetSweep and Live and graded; no account needed. tests/social_feed.py checks it shows on /me/.
+- **Paste screenshot on Social** (1:48 AM). The "From a screenshot" panel has Paste screenshot beside Choose screenshot: reads the
+  clipboard, falls back to a long-press paste box when the browser refuses (phones), and takes a plain paste while the panel is open -
+  the three ways slipimport.py already had on My BetSweep. tests/social_shot.py 42.
+- **Kickoff times follow FanDuel when the schedule file is behind.** kickfix.py (called from reprice.py beside weekgate / availfix):
+  nflverse's games.csv had JAX @ NYG early and PIT @ PHI late on Sunday 11/22 after the two had traded windows; FanDuel's game-lines
+  tab and two of the owner's betslips had them the other way. Every kickoff, lock, live window and the inactives alert read games.csv,
+  so ./in/games.csv is corrected before any step (only that line; 20+ FanDuel rows that all agree, pulled within 72 hours, within
+  2 days of the schedule's date, 20+ minutes apart). The run summary carries kick_fixed / a warning per change; out/kickfix.json lists
+  them. `python3 kickfix.py --selftest` (15) and tests/kick_times.py (board kickoffs = FanDuel's). NOT fixed: the weather feed on main
+  (.github/feeds.py) still takes its forecast hour from nflverse - it needs the owner's yes.
+- **Home page: promo cards fold when two or more are live.** Five promos on a Sunday made the home page 11 to 13 phone screens,
+  most of it legs and write-ups. home.py PROMO_FOLD_AT = 2: from the second live promo on, each card shows its name, legs count, price,
+  Bet it on FanDuel + Tail, and "Show the N legs and why" (PROMO_FOLD_JS; aria-expanded; one card opens at a time only if tapped - they
+  do not close each other). One promo alone stays open as before. tests/page_tight.py now measures the home page WITHOUT the day's
+  promo / stale / under blocks (core <= 6.5 screens) and checks each folded card (<= 280px, block <= 230 + 265 x n px, toggle works).
+- **Post form takes a list of legs.** social.py POST_JS: `window.BSPostLegs(legs, {week, ko(gid), title, odds, done(postId), say(text)})`
+  opens the same "Post to BetSweep Social" form for legs handed to it (the builder's own button still posts the open slip). With
+  `done` the page stays put after the post instead of going to Social. This is the hand-off My BetSweep's "Post to Social" uses.

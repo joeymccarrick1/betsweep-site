@@ -160,11 +160,19 @@ POST_HTML = """<div class="sdlg" id="sdlg" hidden><div class="box" role="dialog"
  <div class="row"><button type="button" id="sdX">Cancel</button><button type="button" class="go" id="sdGo">Post</button></div>
 </div></div>"""
 POST_JS = r"""<script>(function(){
-  var btn = document.getElementById('postsl'), dlg = document.getElementById('sdlg'); if(!btn || !dlg) return;
+  var btn = document.getElementById('postsl'), dlg = document.getElementById('sdlg'); if(!dlg) return;
   var $ = function(id){ return document.getElementById(id); };
-  function legsNow(){ return (window.bsSlipLegs ? window.bsSlipLegs() : []); }
+  // 11/22 (owner: "Make it easier for you to send saved betslips to social"): the same form can be opened for a list of legs handed to
+  // it - window.BSPostLegs(legs, {week, ko(gid), title, odds, done(postId), say(text)}) - which is how My BetSweep posts a saved slip
+  // without a trip through the builder. SRC is that hand-off; with none, the form posts the open slip exactly as before.
+  var SRC = null;
+  function legsNow(){ return SRC ? SRC.legs : (window.bsSlipLegs ? window.bsSlipLegs() : []); }
+  function koOf(g){ return SRC && SRC.ko ? SRC.ko(g) : (window.bsGameKo ? window.bsGameKo(g) : null); }
   function msg(t, err){ var m = $('sdM'); m.textContent = t || ''; m.className = 'msg' + (err ? ' err' : ''); }
-  btn.addEventListener('click', function(){
+  if(btn) btn.addEventListener('click', function(){ SRC = null; openForm(); });
+  window.BSPostLegs = function(ls, opt){ opt = opt || {}; SRC = {legs: ls || [], ko: opt.ko, week: opt.week, done: opt.done, say: opt.say};
+    $('sdT').value = opt.title || ''; $('sdO').value = opt.odds ? ((+opt.odds > 0 ? '+' : '') + (+opt.odds)) : ''; openForm(); };
+  function openForm(){
     var A = window.bsAccount; var ls = legsNow();
     if(!ls.length){ alertish('Add some legs first.'); return; }
     // a slip read from a screenshot on Social (bs_postnow): the price on the picture is offered only while the slip is exactly those legs
@@ -172,13 +180,13 @@ POST_JS = r"""<script>(function(){
       if(pn && pn.odds && Date.now() - (+pn.t || 0) < 30 * 60e3 && !$('sdO').value && pn.keys && pn.keys.length === ks.length && pn.keys.every(function(k, i){ return k === ks[i]; })) $('sdO').value = (pn.odds > 0 ? '+' : '') + pn.odds; }catch(e){}
     if(!A || !A.client){ alertish('Accounts are not available right now.'); return; }
     if(!A.user){ var s = document.querySelector('#bsacct button'); if(s) s.click(); return; }   // opens the sign-in dialog
-    var started = ls.filter(function(l){ return window.bsGameKo && window.bsGameKo(l.g) && Date.now() >= window.bsGameKo(l.g); });
+    var started = ls.filter(function(l){ var k0 = koOf(l.g); return k0 && Date.now() >= k0; });
     msg(started.length ? 'Remove the legs from games that already kicked off first.' : '', !!started.length);
     $('sdH').textContent = '…'; A.client.from('feed_profiles').select('handle').eq('user_id', A.user.id).then(function(q){ var h = q && q.data && q.data[0] && q.data[0].handle;   // 11/16: the name the account chose (sql/social_v4.sql), else the assigned one
       if(h){ $('sdH').textContent = '@' + h; return; } return A.client.rpc('feed_handle', {u: A.user.id}).then(function(r){ $('sdH').textContent = r.data ? '@' + r.data : '(assigned when you post)'; }); }, function(){ $('sdH').textContent = '(assigned when you post)'; });
     $('sdGo').disabled = !!started.length; dlg.hidden = false; $('sdT').focus();
-  });
-  function alertish(t){ var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = '⚠ ' + t; } }
+  }
+  function alertish(t){ if(SRC && SRC.say){ SRC.say(t); return; } var f = document.getElementById('flags') || document.getElementById('bslipFlags'); if(f){ f.innerHTML = '⚠ ' + t; } }
   // same list and normalisation as feed_clean() in the SQL: instant feedback here, the server has the final say
   var BAD1 = ['fuck','fck','fuk','fvck','phuck','shit','cunt','bitch','asshole','pussy','whore','slut','nigg','retard','kike','chink','wetback','tranny','dyke','twat','jizz','rape','nazi','hitler','porn','blowjob','handjob','motherf','bastard','douche','wank','bollock','arsehole','pedo','paedo'];
   var BAD2 = ['ass','damn','piss','tit','hoe','sex','anal','nig','fag','coon','dick','cock','cum','spic','cox'];
@@ -192,18 +200,20 @@ POST_JS = r"""<script>(function(){
     if(!/^[A-Za-z0-9_.]{2,20}$/.test(h)) h = 'sweeper';   // the server assigns the real one on insert
     if(!clean(t)){ msg('Keep the title clean - that one will not post.', true); return; }
     var odds = o ? parseInt(o, 10) : null; if(o && (isNaN(odds) || Math.abs(odds) < 100)){ msg('Price looks off - use American odds like +650 or -120.', true); return; }
-    var kos = ls.map(function(l){ return window.bsGameKo ? window.bsGameKo(l.g) : null; }).filter(Boolean);
+    var kos = ls.map(function(l){ return koOf(l.g); }).filter(Boolean);
     if(!kos.length){ msg('Could not read kickoff times for these legs.', true); return; }
     var legs = ls.map(function(l){ return {k: l.pl + '|' + l.m + '|' + Math.round(l.ln || 1), pl: l.pl, m: l.m, ms: l.ms, ln: l.ln, o: l.o, g: l.g, tm: l.tm, opp: l.opp,
-      fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: window.bsGameKo ? window.bsGameKo(l.g) : null}; });
+      fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: koOf(l.g)}; });
     var dec = ls.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
-    var row = {handle: h, title: t || null, week: ((window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), legs: legs, fd_odds: odds != null ? odds : Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)),
+    var row = {handle: h, title: t || null, week: ((SRC && SRC.week) || (window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), legs: legs, fd_odds: odds != null ? odds : Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)),
       first_ko: new Date(Math.min.apply(null, kos)).toISOString(), last_ko: new Date(Math.max.apply(null, kos)).toISOString()};
     $('sdGo').disabled = true; msg('Posting…');
     A.client.from('feed_posts').insert(row).select('id').then(function(r){
       $('sdGo').disabled = false;
       if(r.error){ var em = r.error.message || '', ec = r.error.code || ''; msg((ec === '42P01' || ec === 'PGRST205') ? 'Social is still being set up - try again soon.' : /title_check/.test(em) ? 'That title is too long (60 characters max).' : /legs_check/.test(em) ? 'Social posts take 1 to 25 legs.' : /fd_odds_check/.test(em) ? 'That price looks off - check the odds.' : 'Could not post: ' + em + (ec ? ' (' + ec + ')' : ''), true); try{ console.error('feed post', r.error); }catch(e){} return; }
-      msg('Posted! Opening Social…'); setTimeout(function(){ location.href = '/social/#p' + ((r.data && r.data[0] && r.data[0].id) || ''); }, 600);
+      var pid = (r.data && r.data[0] && r.data[0].id) || '';
+      if(SRC && SRC.done){ var d0 = SRC.done; msg('Posted to Social.'); setTimeout(function(){ dlg.hidden = true; msg(''); d0(pid); }, 700); return; }   // My BetSweep: stay here, the slip's row says it is on Social
+      msg('Posted! Opening Social…'); setTimeout(function(){ location.href = '/social/#p' + pid; }, 600);
     });
   });
 })();</script>"""
@@ -244,11 +254,18 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc .empty b{display:block;font-family:var(--display);font-size:20px;color:var(--ink);margin-bottom:4px} .soc .empty .act{display:inline-block;margin-top:14px;background:var(--red);color:#fff;font-weight:700;text-decoration:none;border-radius:10px;padding:12px 18px}
 .post .av,.soc .prof .av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;font-style:normal;color:#fff;letter-spacing:.02em}
 .av.c0{background:#c2410c}.av.c1{background:#0f766e}.av.c2{background:#1d4ed8}.av.c3{background:#7e22ce}.av.c4{background:#be123c}.av.c5{background:#4d7c0f}.av.c6{background:#b45309}.av.c7{background:#334155}
-.post .who b.h{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px} .post .who .rec{display:inline-block;margin-left:7px;font-size:12px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.post .who b.h{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px} .post .who .hot,.soc .prof .hot{display:inline-block;margin-left:6px;font-size:14px;line-height:1;vertical-align:1px} .soc .prof .hot{font-size:18px} .post .who .rec{display:inline-block;margin-left:7px;font-size:12px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
 .post .rx{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 14px 2px} .post .rx button{display:inline-flex;align-items:center;gap:5px;min-height:36px;min-width:44px;justify-content:center;border:1px solid var(--line);border-radius:999px;background:none;color:var(--ink);font:inherit;font-size:14px;padding:4px 10px;cursor:pointer}
 .post .rx button i{font-style:normal} .post .rx button b{font-size:12.5px;font-variant-numeric:tabular-nums} .post .rx button.on{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)} .post .rx .tn{margin-left:auto;font-size:12.5px;color:var(--mute);font-weight:600}
-.post .pf button.tl.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.post .pf button.tl.on,.post .pf button.sv.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.soctoast{position:fixed;left:50%;bottom:calc(var(--bs-tabs, 0px) + 78px);transform:translateX(-50%);z-index:120;max-width:88vw;background:#141a24;color:#fff;padding:10px 16px;border-radius:999px;font:600 13.5px/1.3 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);text-align:center}
 .av.em{font-size:17px;letter-spacing:0} .av.big.em{font-size:27px}
+/* 11/22 while the editor is open the picture and name are one bar that stays under the menu, so a tap far down the team list is seen at once */
+.soc .prof .phd{grid-column:1 / -1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px;align-items:center;position:sticky;top:calc(53px / 1.06);z-index:4;margin:-14px -14px 0;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);border-radius:13px 13px 0 0}
+.soc .prof .phd .av{transition:background-color .15s}
+@media (max-width:760px){ .soc .prof .phd{top:calc((53px + env(safe-area-inset-top,0px)) / 1.1)} }
+@media (prefers-reduced-motion: reduce){ .soc .prof .phd .av{transition:none} }
+.soc .prof .phd + .pedit{border-top:0;padding-top:4px;margin-top:0}
 .soc .pedit{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:12px;margin-top:2px} .soc .pedit label[for]{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
 .soc .pedit input#peh{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .soc .pedit .hint{margin:5px 0 10px;font-size:12.5px;color:var(--mute)} .soc .pedit fieldset{border:0;padding:0;margin:0 0 10px} .soc .pedit legend{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);padding:0;margin-bottom:6px}
@@ -262,8 +279,6 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc .prof{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
 .soc .prof .av.big{width:52px;height:52px;font-size:19px} .soc .prof h2{margin:0;font-family:var(--display);font-size:22px;color:var(--ink);overflow-wrap:anywhere} .soc .prof .pn p{margin:2px 0 0;color:var(--mute);font-size:13px}
 .soc .prof .fol{font:inherit;font-weight:700;font-size:13.5px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--red);background:var(--red);color:#fff;cursor:pointer} .soc .prof .fol.on{background:none;color:var(--ink);border-color:var(--line)}
-.soc .prof .pstats{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 0} .soc .prof .pstats div{border:1px solid var(--line);border-radius:10px;padding:8px 10px} .soc .prof dt{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);font-weight:700} .soc .prof dd{margin:2px 0 0;font-family:var(--display);font-weight:800;font-size:24px;color:var(--ink)} .soc .prof dd.up{color:var(--good)} .soc .prof dd.dn{color:var(--bad)}
-.soc .prof .pnote{grid-column:1 / -1;margin:0;color:var(--mute);font-size:12.5px}
 .soc h2.sec{font-family:var(--display);font-size:20px;margin:22px 0 10px;color:var(--ink)}
 .soc details.bust{margin:6px 0 12px} .soc details.bust summary{cursor:pointer;color:var(--mute);font-weight:700;font-size:14px;padding:12px 2px;min-height:44px} .soc details.bust[open] summary{margin-bottom:6px}
 .post.over.busted{opacity:.78} .post.over.cashed{border-color:var(--good)}
@@ -304,7 +319,7 @@ PAGE_JS = r"""<script>(function(){
   var sort = 'top', POSTS = [], MYV = {}, A = null, G = {}, BOX = {}, FIRST = {}, SUMOK = {};
   // alpha step 2 (11/16, after the owner ran sql/social_v3.sql): people. V3 turns false if the database does not have the new columns,
   // and the page then behaves exactly as before.
-  var V3 = true, PROF = {}, REC = {}, MYT = {}, MYRX = {}, FOL = {}, VIEW = null, UPOSTS = null;
+  var V3 = true, PROF = {}, HOT = {}, HOT_DAYS = 7, MYT = {}, MYRX = {}, FOL = {}, VIEW = null, UPOSTS = null;
   // alpha step 5 (11/16): a game card on Boards links here with #g=<game>; the feed then shows only slips with a leg in that game
   var GF = (function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); return m ? m[1] : null; })();
   function inGame(p){ if(!GF) return true; var alt = GF.split('-').reverse().join('-'); return (p.legs || []).some(function(l){ return l.g === GF || l.g === alt; }); }
@@ -318,7 +333,14 @@ PAGE_JS = r"""<script>(function(){
   function av(p, big){ var q = PROF[p.user_id] || {}; return '<i class="av' + (big ? ' big' : '') + ' c' + hcol(p) + (q.emoji ? ' em' : '') + '" aria-hidden="true">' + (q.emoji ? esc(q.emoji) : esc(inits(p.handle))) + '</i>'; }
   function profs(ids){ return A.client.from('feed_profiles').select(V4 ? 'user_id,handle,color,emoji' : 'user_id,handle,color').in('user_id', ids).then(function(r){
       if(r.error && V4){ V4 = false; return profs(ids); } (r.data || []).forEach(function(x){ PROF[x.user_id] = x; }); }); }
-  function recTxt(uid){ var r = REC[uid]; if(!r || !r.graded) return ''; var u = +r.units || 0; return r.won + '-' + r.lost + ' · ' + (u >= 0 ? '+' : '') + u.toFixed(1) + 'u'; }
+  // owner 11/22 1:46 AM: "Don't make actual record public knowledge for each user. Dont post it on social. I don't want to see 0-23
+  // -23.0u. You can put a fire emoji for users that have hit recently. Otherwise don't put anything." Nobody's win-loss or units is
+  // read or shown on this page any more. HOT = accounts with a posted slip that cashed and whose last game kicked off in the last
+  // HOT_DAYS days; they wear a fire next to their name, everyone else wears nothing.
+  function kms(v){ var t = typeof v === 'number' ? v : Date.parse(v); return isNaN(t) ? 0 : t; }
+  function hotOf(rows){ var now = Date.now(); (rows || []).forEach(function(x){ if(!x || x.result !== 'won') return; var t = kms(x.last_ko) || kms(x.created_at); if(t && t <= now && now - t <= HOT_DAYS * 864e5) HOT[x.user_id] = 1; }); }
+  function hotQ(){ return A.client.from('feed_posts').select('user_id,last_ko,created_at,result').eq('status', 'open').eq('result', 'won').gte('created_at', new Date(Date.now() - (HOT_DAYS + 7) * 864e5).toISOString()); }
+  function hot(uid){ return HOT[uid] ? '<span class="hot" role="img" aria-label="Hit recently" title="Cashed a slip in the last ' + HOT_DAYS + ' days">🔥</span>' : ''; }
   try { sort = localStorage.getItem('bs_social_sort') || 'top'; } catch(e){}
   function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = ''; list.innerHTML = '<div class="empty"><b>The feed did not load.</b>Check your connection and try again.<a class="act" href="/social/">Reload</a></div>'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }   // same box as a failed read (11/17): the old one-line text had no button
   // owner 11/14 ("Can this show the games? How do we tell what under it's taking?"): every leg names its game
@@ -338,6 +360,22 @@ PAGE_JS = r"""<script>(function(){
   function fdIds(l){ var f = l.k && ((l.g && FDMAP[l.k + '@' + l.g]) || (l.gl ? null : FDMAP[l.k])); if(f) return {m: f[0], s: f[1], fresh: true}; return l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s, fresh: false} : null; }
   function fdUrl(ls){ var ok = ls.map(function(l){ return (l.ko && Date.now() >= l.ko) ? null : fdIds(l); }).filter(Boolean); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(f, i){ return 'marketId[' + i + ']=' + encodeURIComponent(f.m) + '&selectionId[' + i + ']=' + encodeURIComponent(f.s); }).join('&'); }
+  // owner 11/22 1:10 AM ("Make it so that you can save slips right from social page"): Save slip on every card that has not kicked
+  // off. It writes the entry the Parlay Builder's Save slip writes into bs_slips_w<week> (leg keys, the game map for totals, the
+  // posted price, each leg's price, the FanDuel link), so the slip shows on My BetSweep and the Live page and is graded after the
+  // games. No account needed; account.js carries the list to the account when one is signed in. A second tap takes it back out.
+  function slKey(p){ return 'bs_slips_w' + (p.week || W); }
+  function slRead(k){ try{ var a = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+  function slHas(p){ var id = 'f' + p.id; return slRead(slKey(p)).some(function(x){ return x && x.id === id; }); }
+  function slToggle(p){ var k = slKey(p), a = slRead(k), id = 'f' + p.id, on = a.some(function(x){ return x && x.id === id; });
+    if(on) a = a.filter(function(x){ return !x || x.id !== id; });
+    else { var ls = (p.legs || []).filter(function(l){ return l && l.k; }), gm = {}, px = {}; if(!ls.length) return null;
+      ls.forEach(function(l){ if(l.gl && l.g) (gm[l.k] = gm[l.k] || []).push(l.g); if(l.o != null) px[l.k] = {o: l.o}; });
+      a.push({id: id, name: String(p.title || ('@' + p.handle + ' slip')).slice(0, 60), keys: ls.map(function(l){ return l.k; }), odds: p.fd_odds != null && !isNaN(+p.fd_odds) ? +p.fd_odds : null, stake: 1,
+              fd: fdUrl(ls), px: px, g: gm, saved: Date.now(), from: p.handle, post: p.id}); }
+    try{ localStorage.setItem(k, JSON.stringify(a)); }catch(e){ return null; }
+    return !on; }
+  function toast(t){ var d = document.createElement('div'); d.className = 'soctoast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2800); }
   function ago(t){ var m = Math.round((Date.now() - new Date(t).getTime()) / 6e4); return m < 60 ? m + 'm ago' : m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'; }
   // ---- owner 11/6 sharp leaderboard: every poster ranked by closing-line value - how much better each posted leg's price was than FanDuel's
   // final price before kickoff (data/closing-w<W>.json, the price-moves job's last pull before each game). Beating the close is the earliest
@@ -385,12 +423,13 @@ PAGE_JS = r"""<script>(function(){
     return '<article class="post' + (p.user_id === me ? ' mine' : '') + (over ? ' over ' + x.st : '') + '" id="p' + p.id + '" data-id="' + p.id + '">' +
       '<div class="ph">' + (old ? '' : '<button type="button" class="vote' + (MYV[p.id] ? ' on' : '') + '" data-v="' + p.id + '" aria-pressed="' + !!MYV[p.id] + '" aria-label="Upvote"><i>▲</i><b>' + p.score + '</b></button>') +
       av(p) +
-      '<div class="who"><b' + (V3 ? ' class="h" data-u="' + esc(p.user_id) + '" role="link" tabindex="0"' : '') + '>@' + esc(p.handle) + '</b>' + (recTxt(p.user_id) ? '<span class="rec">' + esc(recTxt(p.user_id)) + '</span>' : '') + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
+      '<div class="who"><b' + (V3 ? ' class="h" data-u="' + esc(p.user_id) + '" role="link" tabindex="0"' : '') + '>@' + esc(p.handle) + '</b>' + hot(p.user_id) + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
       '<div class="od">' + esc(am(p.fd_odds)) + '</div></div>' +
       '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
       (V3 && !old ? '<div class="rx">' + RXK.map(function(k){ var n = (p.rx || {})[k[0]] || 0; return '<button type="button" data-rx="' + p.id + '|' + k[0] + '" class="' + (MYRX[p.id] === k[0] ? 'on' : '') + '" aria-pressed="' + (MYRX[p.id] === k[0]) + '" aria-label="' + k[2] + (n ? ', ' + n : '') + '"><i>' + k[1] + '</i>' + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
         (p.tails ? '<span class="tn">' + p.tails + ' tailing</span>' : '') + '</div>' : '') +
       '<div class="pf">' + badge + (V3 && !old && !started && !over && p.user_id !== me ? '<button type="button" class="tl' + (MYT[p.id] ? ' on' : '') + '" data-tail="' + p.id + '" aria-pressed="' + !!MYT[p.id] + '">' + (MYT[p.id] ? 'Tailing ✓' : 'I\'m tailing') + '</button>' : '') + (url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '') +
+      (!started && !old ? '<button type="button" class="sv' + (slHas(p) ? ' on' : '') + '" data-save="' + p.id + '" aria-pressed="' + slHas(p) + '">' + (slHas(p) ? 'Saved ✓' : 'Save slip') + '</button>' : '') +
       (!started && !old ? '<button type="button" data-load="' + p.id + '">Load into my slip</button>' : '') +
       (old ? '' : (p.user_id === me ? '<button type="button" class="mini" data-del="' + p.id + '">Delete</button>' : (me && !over ? '<button type="button" class="mini" data-rep="' + p.id + '">Report</button>' : ''))) +
       '<a class="open" href="/b/?p=' + p.id + '">Open slip →</a>' + (over ? '' : '<span class="st' + (x.st === 'live' ? ' live' : '') + '">' + (x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : 'Kicks off ' + new Date(p.first_ko).toLocaleString([], {weekday: 'short', hour: 'numeric', minute: '2-digit'})) + '</span>') + '</div></article>';
@@ -451,22 +490,39 @@ PAGE_JS = r"""<script>(function(){
     info.textContent = '';
     if(!d){ list.innerHTML = '<p class="lede"><span class="skel"></span><span class="skel"></span></p>';
       Promise.all([A.client.from('feed_posts').select(COLS3).eq('status', 'open').eq('user_id', u).order('created_at', {ascending: false}).limit(40),
-                   A.client.from('feed_records').select('user_id,handle,graded,won,lost,units,posts').eq('user_id', u),
+                   A.client.from('feed_records').select('user_id,handle,posts').eq('user_id', u),
                    A.client.from('feed_profiles').select(V4 ? 'user_id,handle,color,emoji' : 'user_id,handle,color').eq('user_id', u),
-                   A.client.from('feed_follows').select('follower').eq('followee', u)])
-        .then(function(r){ UPOSTS = {u: u, posts: ((r[0] || {}).data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; }), rec: (((r[1] || {}).data || [])[0]) || null, prof: (((r[2] || {}).data || [])[0]) || null, fans: (((r[3] || {}).data || []).length)};
-          if(UPOSTS.prof) PROF[u] = UPOSTS.prof; else if(PROF[u]) UPOSTS.prof = PROF[u]; if(UPOSTS.rec) REC[u] = UPOSTS.rec; if(VIEW === u) render(); })
+                   A.client.from('feed_follows').select('follower').eq('followee', u),
+                   hotQ().eq('user_id', u).limit(20)])
+        .then(function(r){ hotOf((r[4] || {}).data); UPOSTS = {u: u, posts: ((r[0] || {}).data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; }), rec: (((r[1] || {}).data || [])[0]) || null, prof: (((r[2] || {}).data || [])[0]) || null, fans: (((r[3] || {}).data || []).length)};
+          if(UPOSTS.prof) PROF[u] = UPOSTS.prof; else if(PROF[u]) UPOSTS.prof = PROF[u]; hotOf(UPOSTS.posts); if(VIEW === u) render(); })
         .catch(function(){ UPOSTS = {u: u, posts: [], rec: null, prof: null, fans: 0}; if(VIEW === u) render(); });
       return; }
-    var h = (d.prof && d.prof.handle) || (d.rec && d.rec.handle) || (d.posts[0] && d.posts[0].handle) || 'user', r = d.rec || {graded: 0, won: 0, lost: 0, units: 0, posts: d.posts.length}, un = +r.units || 0;
+    var h = (d.prof && d.prof.handle) || (d.rec && d.rec.handle) || (d.posts[0] && d.posts[0].handle) || 'user', r = d.rec || {posts: d.posts.length};
+    var hd = av({user_id: u, handle: h}, true) + '<div class="pn"><h2>@' + esc(h) + hot(u) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + ' · ' + (r.posts || d.posts.length) + ' slip' + ((r.posts || d.posts.length) === 1 ? '' : 's') + ' posted</p></div>';
+    var ed = u === me && EDIT, keep = ed ? pick() : null;   // a feed refresh while the editor is open must not undo unsaved taps
     list.innerHTML = '<a class="back" href="#" data-go="back">← Back to the feed</a>' +
-      '<section class="prof">' + av({user_id: u, handle: h}, true) + '<div class="pn"><h2>@' + esc(h) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + ' · ' + (r.posts || d.posts.length) + ' slip' + ((r.posts || d.posts.length) === 1 ? '' : 's') + ' posted</p></div>' +
+      '<section class="prof">' + (ed ? '<div class="phd">' + hd + '</div>' : hd) +
       (u !== me ? '<button type="button" class="fol' + (FOL[u] ? ' on' : '') + '" data-fol="' + esc(u) + '" aria-pressed="' + !!FOL[u] + '">' + (FOL[u] ? 'Following ✓' : 'Follow') + '</button>' : (V4 && !EDIT ? '<button type="button" class="fol on" data-edit="1">Edit profile</button>' : '')) +
       (u === me && EDIT ? editForm(h) : '') +
-      '<dl class="pstats"><div><dt>Record</dt><dd>' + (r.graded ? r.won + '-' + r.lost : '—') + '</dd></div><div><dt>Units</dt><dd class="' + (r.graded ? (un >= 0 ? 'up' : 'dn') : '') + '">' + (r.graded ? (un >= 0 ? '+' : '') + un.toFixed(1) : '—') + '</dd></div><div><dt>Graded</dt><dd>' + (r.graded || 0) + '</dd></div></dl>' +
-      (r.graded ? '' : '<p class="pnote">No graded slips yet. A slip is graded after its last game ends; the record counts one unit a slip.</p>') + '</section>' +
+      '</section>' +
       (d.posts.length ? '<h2 class="sec">Slips</h2>' + d.posts.map(function(p){ return card(p, me, null, p.week !== W); }).join('') : '<div class="empty"><b>No slips posted yet.</b></div>');
+    put(keep);
   }
+  /* owner 11/22 ("When you edit profile and press a color or emoji make the change in real time on the users profile picture"): the
+     picture at the top of your profile follows the editor before anything is saved. Cancel repaints it from the saved profile. */
+  function pick(){ var f = document.getElementById('pedit'); if(!f) return null; var a = document.activeElement;
+    return {c: (f.querySelector('input[name=c]:checked') || {}).value, e: (f.querySelector('input[name=e]:checked') || {}).value, h: f.h.value, foc: a && a.id === 'peh' ? [a.selectionStart, a.selectionEnd] : null}; }
+  function pvw(){ var k = pick(), a = list.querySelector('.prof .phd > .av'); if(!k || !a) return;
+    var em = k.e || '', h = (k.h || '').replace(/^\s+|\s+$/g, '') || (PROF[A.user.id] || {}).handle || 'user';
+    a.className = 'av big c' + (+k.c || 0) + (em ? ' em' : ''); a.textContent = em || inits(h); }
+  function put(k){ var f = document.getElementById('pedit'); if(!f || !k) return;
+    [['c', k.c], ['e', k.e]].forEach(function(x){ if(x[1] == null) return; [].forEach.call(f.querySelectorAll('input[name=' + x[0] + ']'), function(i){ i.checked = i.value === x[1]; }); });
+    if(k.h != null) f.h.value = k.h;
+    if(k.foc){ f.h.focus(); try{ f.h.setSelectionRange(k.foc[0], k.foc[1]); }catch(e){} }
+    pvw(); }
+  list.addEventListener('change', function(e){ var t = e.target; if(t && t.form && t.form.id === 'pedit' && (t.name === 'c' || t.name === 'e')) pvw(); });
+  list.addEventListener('input', function(e){ if(e.target && e.target.id === 'peh') pvw(); });
   function editForm(h){ var q = PROF[A.user.id] || {}, c = q.color == null ? hcol({user_id: A.user.id, handle: h}) : q.color;
     return '<form class="pedit" id="pedit" autocomplete="off"><label for="peh">Username</label><input id="peh" name="h" value="' + esc(h) + '" maxlength="20" inputmode="text" autocapitalize="off" spellcheck="false">' +
       '<p class="hint">3 to 20 letters, numbers or underscores. You can change it once every 30 days.</p>' +
@@ -503,7 +559,7 @@ PAGE_JS = r"""<script>(function(){
   function people(done){
     var ids = {}; POSTS.forEach(function(p){ ids[p.user_id] = 1; }); ids = Object.keys(ids); var me = A.user ? A.user.id : null, jobs = [];
     if(!V3 || !ids.length){ done(); return; }
-    jobs.push(A.client.from('feed_records').select('user_id,graded,won,lost,units').in('user_id', ids).then(function(r){ REC = {}; (r.data || []).forEach(function(x){ REC[x.user_id] = x; }); }));
+    jobs.push(hotQ().in('user_id', ids).limit(400).then(function(r){ HOT = {}; hotOf(r && r.data); hotOf(POSTS); }));
     jobs.push(profs(me && ids.indexOf(me) < 0 ? ids.concat([me]) : ids));
     if(me){ var pids = POSTS.map(function(p){ return p.id; });
       jobs.push(A.client.from('feed_tails').select('post_id').eq('user_id', me).in('post_id', pids).then(function(r){ MYT = {}; (r.data || []).forEach(function(x){ MYT[x.post_id] = 1; }); }));
@@ -549,6 +605,12 @@ PAGE_JS = r"""<script>(function(){
       var q = MYV[id] ? A.client.from('feed_votes').delete().eq('post_id', id).eq('user_id', A.user.id) : A.client.from('feed_votes').insert({post_id: id});
       q.then(function(r){ v.disabled = false; if(r.error) return; if(MYV[id]){ delete MYV[id]; p.score = Math.max(0, p.score - 1); } else { MYV[id] = 1; p.score++; }
         v.classList.toggle('on', !!MYV[id]); v.setAttribute('aria-pressed', !!MYV[id]); v.querySelector('b').textContent = p.score; }); return; }
+    var svb = e.target.closest('[data-save]');
+    if(svb){ var p3 = POSTS.concat((UPOSTS || {}).posts || []).filter(function(x){ return x.id === +svb.dataset.save; })[0]; if(!p3) return;
+      var now = slToggle(p3);
+      if(now == null){ toast('Could not save in this browser - storage is off or full'); return; }
+      svb.classList.toggle('on', now); svb.setAttribute('aria-pressed', now); svb.textContent = now ? 'Saved ✓' : 'Save slip';
+      toast(now ? 'Saved to My BetSweep - graded after the games' : 'Removed from your slips'); return; }
     if(ld){ var p2 = POSTS.filter(function(x){ return x.id === +ld.dataset.load; })[0]; if(!p2) return;
       try { localStorage.setItem('bs_slipk_w' + W, JSON.stringify(p2.legs.map(function(l){ return l.k; }))); localStorage.removeItem('bs_slip_w' + W);
         var gm = {}; p2.legs.forEach(function(l){ if(l.gl && l.g) (gm[l.k] = gm[l.k] || []).push(l.g); });   // 11/14: totals load into their own game (bs_slipg, as the builder keeps it)
@@ -801,7 +863,8 @@ SHOT_CSS = """.soc .bar #shotbtn{font:inherit;font-weight:700;font-size:14px;min
 .soc .shot{margin:0 0 14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)} .soc .shot h2{margin:0 0 4px;font-family:var(--display);font-size:20px;color:var(--ink)}
 .soc .shot p{margin:0 0 10px;color:var(--mute);font-size:14px;line-height:1.45} .soc .shot .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .soc .shot .pick,.soc .shot .go{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:10px;border:0;background:var(--red);color:#fff;font:inherit;font-weight:700;cursor:pointer}
-.soc .shot #shotx{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.soc .shot #shotx,.soc .shot #shotpaste{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.soc .shot #shotpbox{margin-top:10px;min-height:64px;padding:12px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);font-size:16px;line-height:1.4;overflow:hidden} .soc .shot #shotpbox:empty::before{content:"Tap and hold here, then tap Paste.";color:var(--mute);pointer-events:none} .soc .shot #shotpbox:focus{outline:none;border-color:var(--red)} .soc .shot #shotpbox img{max-width:100%;height:auto}
 .soc .shot #shotout{margin-top:10px} .soc .shot #shotout .st{margin:0 0 8px;font-size:14px;color:var(--ink)} .soc .shot #shotout .st.err{color:var(--bad)}
 .soc .shot ul{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px} .soc .shot li{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.35;color:var(--ink)}
 .soc .shot li b{font-variant-numeric:tabular-nums;margin-left:4px} .soc .shot li small{display:block;color:var(--mute);font-size:12.5px} .soc .shot li.no{color:var(--mute)} .soc .shot li.no small{color:var(--bad)}"""
@@ -830,10 +893,31 @@ SHOT_JS = r"""<script>(function(){
       // the builder opens its post form for exactly these legs (single use, two minutes); the price is only carried when every leg came along
       try{ sessionStorage.setItem('bs_postnow', JSON.stringify({odds: part ? null : (R.odds || null), keys: keys.slice().sort(), t: Date.now()})); }catch(e){}
       say('Opening the Parlay Builder with your slip…'); window.BSLoadSlip(keys, window.BSImport.gmap ? window.BSImport.gmap(BS, ls) : {}); }); }
-  f.addEventListener('change', function(){ var file = f.files && f.files[0]; f.value = ''; if(!file) return;
+  function go(file){ if(!file) return;
     if(!window.BSImport){ say('The reader did not load. Check your connection and try again.', 1); return; }
     say('Reading your slip… the first time takes a few seconds.');
-    window.BSImport.read(file).then(function(r){ show(r.R, r.BS); }, function(e){ say('Could not read that picture. Try a full, uncropped screenshot of the slip.', 1); }); });
+    window.BSImport.read(file).then(function(r){ show(r.R, r.BS); }, function(e){ say('Could not read that picture. Try a full, uncropped screenshot of the slip.', 1); }); }
+  f.addEventListener('change', function(){ var file = f.files && f.files[0]; f.value = ''; go(file); });
+  // owner 11/22 1:48 AM ("Make it so you can paste when importing screenshot too on social page"): the same three ways in as the importer
+  // on My BetSweep (slipimport.py). Paste screenshot reads the clipboard; when the browser will not allow that (phones only paste into
+  // something editable) it opens a box to long-press and paste into; and a plain paste works while this panel is open.
+  var pb = $('shotpbox'), pbtn = $('shotpaste');   // the box's hint is CSS (:empty::before), so it still shows when the box is focused and waiting
+  if(pb && pbtn){
+    var fromImg = function(){ var im = pb.querySelector('img'); if(!im) return; var src = im.getAttribute('src') || ''; pb.innerHTML = '';
+      if(!/^(data:|blob:)/.test(src)){ say('That paste did not include the picture itself. Save the screenshot and use Choose screenshot.', 1); return; }
+      fetch(src).then(function(r){ return r.blob(); }).then(function(b){ pb.hidden = true; go(b); }).catch(function(){ say('Could not read the pasted picture. Use Choose screenshot.', 1); }); };
+    var pbox = function(){ pb.hidden = false; pb.innerHTML = ''; try{ pb.focus(); }catch(e){} };
+    pb.addEventListener('input', function(){ setTimeout(function(){ if(pb.querySelector('img')) fromImg(); else if(!pb.textContent.replace(/\s/g, '')) pb.innerHTML = ''; }, 50); });
+    pbtn.addEventListener('click', function(){
+      if(!(navigator.clipboard && navigator.clipboard.read)){ pbox(); return; }
+      navigator.clipboard.read().then(function(items){ for(var i = 0; i < items.length; i++){ var t = (items[i].types || []).filter(function(x){ return /^image\//.test(x); })[0];
+          if(t) return items[i].getType(t).then(function(b){ pb.hidden = true; go(b); }); }
+        say('No picture on the clipboard. Copy the screenshot first (open it, tap Share, then Copy), then tap Paste screenshot.', 1); })
+      .catch(function(){ pbox(); }); });
+    document.addEventListener('paste', function(e){ if(box.hidden) return; var it = [].slice.call((e.clipboardData || {}).items || []).filter(function(x){ return /^image\//.test(x.type); })[0];
+      if(it){ e.preventDefault(); pb.hidden = true; pb.innerHTML = ''; go(it.getAsFile()); } });
+    $('shotx').addEventListener('click', function(){ pb.hidden = true; });
+  }
 })();</script>"""
 
 def page(week, house=""):
@@ -848,14 +932,15 @@ __BASE__
  <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="mebtn" hidden>My slips</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  <section class="shot" id="shot" hidden aria-label="Post a slip from a screenshot">
   <h2>Post from a screenshot</h2>
-  <p>Screenshot your FanDuel betslip and choose the picture. Your phone reads it; the picture never leaves this device.</p>
-  <div class="row"><label class="pick">Choose screenshot<input type="file" accept="image/*" id="shotf" hidden></label><button type="button" id="shotx">Close</button></div>
+  <p>Screenshot your FanDuel betslip, then choose the picture or paste it. Your phone reads it; the picture never leaves this device.</p>
+  <div class="row"><label class="pick">Choose screenshot<input type="file" accept="image/*" id="shotf" hidden></label><button type="button" id="shotpaste">Paste screenshot</button><button type="button" id="shotx">Close</button></div>
+  <div id="shotpbox" contenteditable="true" hidden aria-label="Paste your screenshot here"></div>
   <div id="shotout" aria-live="polite"></div>
  </section>
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>
- <p class="rules">How it works: the most-upvoted slips sit on top. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg moves to Lost right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
+ <p class="rules">How it works: the most-upvoted slips sit on top. Save slip keeps a slip on My BetSweep, where it is graded after the games - no account needed. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg moves to Lost right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
 </div>
 <script defer src="/import.js"></script>
 """ + PAGE_JS.replace("__WEEK__", json.dumps(int(week))) + SHOT_JS)

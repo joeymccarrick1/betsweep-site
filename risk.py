@@ -166,20 +166,30 @@ RISK_JS = r"""(function(){
   function slipKey(){ var best = null, w = -1; try{ for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i), m = /^bs_slipk_w(\d+)$/.exec(k || ''); if (m && +m[1] > w){ w = +m[1]; best = k; } } }catch(e){} return best; }
   function slipRisk(){ var k = slipKey(); if (!k) return []; var keys = []; try{ keys = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(e){}
     return keys.map(function(x){ var q = String(x).split('|'); var v = verdict(q[0], q[1]); return v && v.level !== 'good' ? {k: x, pl: q[0], m: q[1], v: v} : null; }).filter(Boolean); }
+  // owner 11/22 1:47 AM ("Closing the 'leg in your betslip is at risk' popup still won't close"): Close only folded the list - the bar
+  // itself stayed on the screen, over the page (the 11/21 fix made that fold reliable; it was never what he was asking for). Close, and
+  // the x on the bar, now take the whole box away. It stays away on every page until what it would say changes: another leg at risk, a
+  // leg moving from a caution to ruled out, or a different kind of reason. Remembered in this browser (bs_risk_closed); a slip with
+  // nothing at risk forgets it, so the next warning shows.
+  var CLOSED = null;
+  function sig(rs){ return rs.map(function(r){ return r.k + '~' + r.v.level + '~' + (r.v.label || ''); }).sort().join('||'); }
+  function closedSig(){ if (CLOSED != null) return CLOSED; try{ return localStorage.getItem('bs_risk_closed') || ''; }catch(e){ return ''; } }
+  function setClosed(v){ CLOSED = v; try{ if (v) localStorage.setItem('bs_risk_closed', v); else localStorage.removeItem('bs_risk_closed'); }catch(e){} }
   function pill(){ var rs = slipRisk(), el = document.getElementById('bsrpill');
-    if (!rs.length){ if (el) el.remove(); return; }
+    if (!rs.length){ if (el) el.remove(); if (loaded && closedSig()) setClosed(''); return; }
+    if (closedSig() === sig(rs)){ if (el) el.remove(); return; }
     if (!el){ el = document.createElement('div'); el.id = 'bsrpill'; document.body.appendChild(el);
       el.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) { el.classList.toggle('open'); return; }
         if (b.dataset.act === 'rm'){ var k = slipKey(), keys = []; try{ keys = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(x){}
           var bad = {}; slipRisk().forEach(function(r){ if (r.v.level === 'block') bad[r.k] = 1; }); keys = keys.filter(function(x){ return !bad[x]; });
           try{ localStorage.setItem(k, JSON.stringify(keys)); }catch(x){} location.reload(); }
-        if (b.dataset.act === 'x') el.classList.remove('open'); }); }
+        if (b.dataset.act === 'x'){ setClosed(sig(slipRisk())); el.remove(); } }); }
     var nb = rs.filter(function(r){ return r.v.level === 'block'; }).length;
     // 11/21 (owner: "When I press close, it's not closing"): this runs on every page mutation, and rewriting the box was itself a mutation,
     // so it redrew itself four times a second. A tap that landed while the Close button was being replaced was lost (iPhone drops the
     // click when its target leaves the page mid-tap). The box is now rewritten only when what it says has changed.
     var cls = (el.className.indexOf('open') >= 0 ? 'open ' : '') + (nb ? 'bad' : 'warn'); if (el.className !== cls) el.className = cls;
-    var html = '<div class="bsrh">' + (nb ? '⛔ ' : '⚠ ') + rs.length + ' leg' + (rs.length === 1 ? '' : 's') + ' in your betslip ' + (rs.length === 1 ? 'is' : 'are') + ' at risk</div>' +
+    var html = '<div class="bsrh"><span>' + (nb ? '⛔ ' : '⚠ ') + rs.length + ' leg' + (rs.length === 1 ? '' : 's') + ' in your betslip ' + (rs.length === 1 ? 'is' : 'are') + ' at risk</span><button type="button" data-act="x" class="bsrx" aria-label="Close this warning">✕</button></div>' +
       '<div class="bsrb"><ul>' + rs.map(function(r){ return '<li><b>' + esc(r.pl) + '</b> ' + esc(r.m || '') + '<small>' + esc(r.v.why) + '</small></li>'; }).join('') + '</ul>' +
       (nb ? '<button type="button" data-act="rm">Remove ruled-out legs</button>' : '') + '<button type="button" data-act="x" class="sec">Close</button></div>'; if (el.__h !== html){ el.__h = html; el.innerHTML = html; } }
   // ---- block adds of ruled-out players ----
@@ -190,7 +200,7 @@ RISK_JS = r"""(function(){
   function load(){ return fetch(SB + '/rest/v1/risk_feed?select=id,kind,week,player,team,gid,status,level,detail,players,updated_at', {headers: {apikey: KEY, Authorization: 'Bearer ' + KEY}, cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }).then(function(rows){ index(Array.isArray(rows) ? rows : []); loaded = true; decorate(); owner(); document.dispatchEvent(new CustomEvent('bs-risk')); }); }
   var mo = null, tmr = null; function watch(){ if (mo || !window.MutationObserver) return; mo = new MutationObserver(function(){ clearTimeout(tmr); tmr = setTimeout(decorate, 250); }); mo.observe(document.body, {childList: true, subtree: true}); }
-  window.addEventListener('storage', function(e){ if (/^bs_slipk_w/.test(e.key || '')) pill(); });
+  window.addEventListener('storage', function(e){ if (e.key === 'bs_risk_closed') CLOSED = null; if (/^bs_slipk_w/.test(e.key || '') || e.key === 'bs_risk_closed') pill(); });
   // ---- the owner's note panel on player pages ----
   var ownerChecked = false;
   // owner 11/5: "I don't think we need the Your BetSweep note section" - the panel is off; owner notes still come from the sheet (RUNBOOK Step 2a)
@@ -223,9 +233,10 @@ button.bsrblock,a.bsrblock{opacity:.35;filter:grayscale(1)}
 .parlay > .bsrdead{position:relative;z-index:1;background:color-mix(in srgb,#d7332a 22%,var(--card,#fff))}
 #bsrpill{position:fixed;left:12px;right:12px;bottom:calc(var(--bs-tabs, 0px) + 74px);z-index:65;max-width:420px;margin:0 auto;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);font:14px/1.4 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;overflow:hidden}
 #bsrpill.warn{background:#fff4d6;color:#4d3600;border:1px solid #e3c477} #bsrpill.bad{background:#fde7e5;color:#5c120d;border:1px solid #e8a39d}
-#bsrpill .bsrh{padding:10px 14px;font-weight:700} #bsrpill .bsrb{display:none;padding:0 14px 12px} #bsrpill.open .bsrb{display:block}
+#bsrpill .bsrh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 2px 14px;font-weight:700} #bsrpill .bsrh span{padding:8px 0;min-width:0} #bsrpill .bsrb{display:none;padding:0 14px 12px} #bsrpill.open .bsrb{display:block}
 #bsrpill ul{margin:0 0 10px;padding:0;list-style:none;display:grid;gap:6px} #bsrpill li small{display:block;opacity:.8;font-size:12.5px}
 #bsrpill button{font:inherit;font-weight:700;font-size:14px;min-height:44px;padding:7px 16px;border-radius:8px;border:0;background:#b3261e;color:#fff;margin-right:6px;cursor:pointer} #bsrpill button.sec{background:none;border:1px solid currentColor;color:inherit}
+#bsrpill button.bsrx{flex:none;min-width:44px;min-height:44px;margin:0;padding:0;background:none;border:0;color:inherit;font-size:17px;line-height:1}
 .bsrtoast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bs-tabs, 0px) + 20px);z-index:80;background:#141a24;color:#fff;padding:10px 14px;border-radius:10px;font:600 13.5px 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw}
 .bsrnote{margin:12px 0 16px;padding:12px 14px;background:var(--card,#fff);border:1px solid var(--line,#d8d1c2);border-left:4px solid #d7332a;border-radius:10px;font-size:14px;line-height:1.4;font-style:normal;text-align:left}
 .bsrnote .bsrh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}

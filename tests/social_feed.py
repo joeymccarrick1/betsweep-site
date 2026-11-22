@@ -24,7 +24,11 @@ FAKE = """window.__POSTS = %s; window.__LASTW = %s; try{ if(localStorage.getItem
 window.__CALLS = [];
 var U1 = "00000000-0000-0000-0000-000000000001", ME = "00000000-0000-0000-0000-0000000000aa";
 var T = {feed_records: [{user_id: U1, handle: "opener", graded: 20, won: 12, lost: 8, units: 6.4, posts: 21}], feed_profiles: [{user_id: U1, handle: "opener", color: 2}], feed_tails: [], feed_reactions: [], feed_follows: []};
-function Q(rows, t){ var f = {}, q = {select: function(){ return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
+window.__SEL = [];
+// 11/22: winners for the "hit recently" fire. opener cashed two days ago; loser's only win is three weeks old.
+window.__WON = [{user_id: U1, result: 'won', status: 'open', last_ko: new Date(Date.now() - 2 * 864e5).toISOString(), created_at: new Date(Date.now() - 3 * 864e5).toISOString()},
+                {user_id: "00000000-0000-0000-0000-000000000003", result: 'won', status: 'open', last_ko: new Date(Date.now() - 20 * 864e5).toISOString(), created_at: new Date(Date.now() - 21 * 864e5).toISOString()}];
+function Q(rows, t){ var f = {}, q = {select: function(c){ window.__SEL.push(t + ':' + (c || '*')); return q; }, eq: function(k, v){ f[k] = v; if(t === 'feed_posts' && k === 'result') rows = window.__WON.filter(function(p){ return p.result === v; }); return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
   insert: function(o){ window.__CALLS.push(t + ':insert:' + JSON.stringify(o)); return Promise.resolve({error: null}); }, upsert: function(o){ window.__CALLS.push(t + ':upsert:' + o.kind); return Promise.resolve({error: null}); },
   delete: function(){ window.__CALLS.push(t + ':delete'); return q; },
   then: function(cb){ var r = rows.filter(function(p){ return (f.week == null || p.week === f.week) && (f.user_id == null || p.user_id === f.user_id || t !== 'feed_posts' && t !== 'feed_records' && t !== 'feed_profiles'); }); return Promise.resolve({data: r, error: null}).then(cb); }}; return q; }
@@ -56,7 +60,26 @@ async def main():
             check("1 open slip" in (await pg.inner_text("#feedinfo")) and "1 cashed" in (await pg.inner_text("#feedinfo")), f"[{theme}] the count line says 1 open, 1 cashed")
             check("cashed 1" in (await pg.inner_text('.seg button[data-s="cashed"]')).lower(), f"[{theme}] the Cashed tab carries its count")
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-top-{theme}.png")
+            # ---- owner 11/22: "save slips right from social page" - signed out, one tap, the builder's own saved-slip entry
+            sv0 = await pg.evaluate("(function(){ var b = document.querySelector('#p1 [data-save]'); if(!b) return null; var r = b.getBoundingClientRect(); return [b.textContent, b.getAttribute('aria-pressed'), Math.round(r.height), localStorage.getItem('bs_slips_w%d')]; })()" % WEEK)
+            await pg.tap('#p1 [data-save]'); await pg.wait_for_timeout(300)
+            sv1 = await pg.evaluate("(function(){ var b = document.querySelector('#p1 [data-save]'), t = document.querySelector('.soctoast'), a = JSON.parse(localStorage.getItem('bs_slips_w%d') || '[]'); return {btn: [b.textContent, b.getAttribute('aria-pressed'), b.classList.contains('on')], toast: t ? t.textContent : '', n: a.length, s: a[0] || null, over: document.documentElement.scrollWidth - innerWidth}; })()" % WEEK)
+            e = sv1["s"] or {}
+            check(bool(sv0) and sv0[:2] == ["Save slip", "false"] and sv0[2] >= 30 and not sv0[3] and sv1["btn"] == ["Saved ✓", "true", True] and "Saved to My BetSweep" in sv1["toast"] and sv1["over"] <= 0,
+                  f"[{theme}] an open slip has a Save slip button; one tap, signed out, turns it to Saved and says where it went ({sv0}, {sv1['btn']}, {sv1['toast']})")
+            check(sv1["n"] == 1 and e.get("id") == "f1" and e.get("keys") == ["Justin Herbert|Passing Yards|175"] and e.get("odds") == 301 and e.get("stake") == 1 and e.get("name") == "Tonight" and e.get("from") == "opener" and e.get("px") == {"Justin Herbert|Passing Yards|175": {"o": -150}} and isinstance(e.get("saved"), (int, float)),
+                  f"[{theme}] what it saved is the builder's kind of entry: the leg keys, the posted price, each leg's price, a one-unit stake ({ {k: e.get(k) for k in ('id', 'keys', 'odds', 'stake', 'name', 'from')} })")
+            await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            kept = await pg.evaluate("(function(){ var b = document.querySelector('#p1 [data-save]'); return b ? [b.textContent, b.classList.contains('on')] : null; })()")
+            await pg.goto("http://127.0.0.1:8823/me/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
+            onme = await pg.evaluate("(function(){ var t = (document.getElementById('crec') || document.body).textContent; return [t.indexOf('Tonight') >= 0, t.indexOf('Justin Herbert') >= 0, (document.getElementById('hopen') || {}).textContent]; })()")
+            check(kept == ["Saved ✓", True] and onme[0] and onme[1] and onme[2] == "1", f"[{theme}] it is still marked saved after a reload, and My BetSweep lists it as an open slip with its leg ({kept}, {onme})")
+            await pg.goto("http://127.0.0.1:8823/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            await pg.tap('#p1 [data-save]'); await pg.wait_for_timeout(300)
+            un = await pg.evaluate("(function(){ var b = document.querySelector('#p1 [data-save]'), t = [...document.querySelectorAll('.soctoast')].pop(); return [b.textContent, JSON.parse(localStorage.getItem('bs_slips_w%d') || '[]').length, t ? t.textContent : '']; })()" % WEEK)
+            check(un[:2] == ["Save slip", 0] and "Removed" in un[2], f"[{theme}] a second tap takes it back out ({un})")
             await pg.click('.seg button[data-s="cashed"]'); await pg.wait_for_timeout(400)
+            check(not await pg.query_selector('#feed [data-save]'), f"[{theme}] a slip whose games have started has no Save button")
             check(await ids() == ["p2"], f"[{theme}] Cashed lists the winner ({await ids()})")
             check(await pg.inner_text("#p2 .res") == "Cashed" and await pg.locator("#p2 li.hit").count() == 3, f"[{theme}] winner: three legs marked hit (yards, one TD, over)")
             check(await pg.locator("#feed article.post").count() == 1, f"[{theme}] Cashed holds winners only")
@@ -75,15 +98,27 @@ async def main():
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-empty-{theme}.png")
             # ---- people (v3): avatar, record, tail, reactions, profile, follow, Following tab ----
             await pg.evaluate("localStorage.removeItem('t_empty'); localStorage.setItem('t_user', '1'); localStorage.setItem('bs_social_sort', 'top')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
-            c1 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return {av: (c.querySelector('.av')||{}).textContent, rec: (c.querySelector('.rec')||{}).textContent, fire: (c.querySelector('[data-rx=\"1|fire\"] b')||{}).textContent, tn: (c.querySelector('.tn')||{}).textContent, tail: (c.querySelector('[data-tail]')||{}).textContent}; })()")
-            check(c1 == {"av": "OP", "rec": "12-8 · +6.4u", "fire": "3", "tn": "2 tailing", "tail": "I'm tailing"}, f"[{theme}] a post shows avatar, record, reaction count, tail count and a tail button ({c1})")
+            c1 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return {av: (c.querySelector('.av')||{}).textContent, fire: (c.querySelector('[data-rx=\"1|fire\"] b')||{}).textContent, tn: (c.querySelector('.tn')||{}).textContent, tail: (c.querySelector('[data-tail]')||{}).textContent}; })()")
+            check(c1 == {"av": "OP", "fire": "3", "tn": "2 tailing", "tail": "I'm tailing"}, f"[{theme}] a post shows avatar, reaction count, tail count and a tail button ({c1})")
+            # ---- owner 11/22: no public records; a fire for accounts that hit recently, otherwise nothing
+            W_ = "(function(){ var f = document.getElementById('feed'); return {cards: [...f.querySelectorAll('article.post')].map(function(c){ var h = c.querySelector('.who .hot'); return [c.id, !!c.querySelector('.who .rec'), h ? h.textContent : '', h ? h.getAttribute('aria-label') : '']; }), txt: f.textContent}; })()"
+            hr = await pg.evaluate(W_)
+            await pg.click('.seg button[data-s="lost"]'); await pg.wait_for_timeout(400); hl = await pg.evaluate(W_)
+            await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(400)
+            import re as _re
+            check(["p1", False, "🔥", "Hit recently"] in hr["cards"] and any(c[0] == "p3" for c in hl["cards"]) and all(not c[1] and not c[2] for c in hl["cards"]),
+                  f"[{theme}] a poster who cashed in the last week wears a fire; one whose only win is three weeks old wears nothing ({hr['cards']}, {hl['cards']})")
+            hr["txt"] += hl["txt"]
+            check("12-8" not in hr["txt"] and "6.4" not in hr["txt"] and not _re.search(r"\b\d+-\d+ · [+−-]\d", hr["txt"]), f"[{theme}] no win-loss record or units next to any name in the feed")
             await pg.click('#p1 [data-tail]'); await pg.wait_for_timeout(300); await pg.click('#p1 [data-rx="1|lock"]'); await pg.wait_for_timeout(300)
             c2 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return [c.querySelector('[data-tail]').textContent, c.querySelector('.tn').textContent, c.querySelector('[data-rx=\"1|lock\"]').className, (c.querySelector('[data-rx=\"1|lock\"] b')||{}).textContent, window.__CALLS.filter(function(x){ return /tails:insert|reactions:upsert:lock|rpc:feed_profile_me/.test(x); }).length]; })()")
             check(c2 == ["Tailing ✓", "3 tailing", "on", "1", 3], f"[{theme}] tailing and reacting update the card and write to the database ({c2})")
             if SHOTS: await pg.evaluate("document.getElementById('p1').scrollIntoView({block:'center'})"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/social-people-{theme}.png")
             await pg.click('#p1 b.h'); await pg.wait_for_timeout(700)
-            pr = await pg.evaluate("(function(){ var s = document.querySelector('.prof'); return s ? [s.querySelector('h2').textContent, Array.from(s.querySelectorAll('dd')).map(function(d){ return d.textContent; }).join('|'), s.querySelector('.fol').textContent, document.querySelectorAll('#feed article.post').length] : null; })()")
-            check(pr == ["@opener", "12-8|+6.4|20", "Follow", 1], f"[{theme}] tapping a name opens the profile with record, units and their slips ({pr})")
+            pr = await pg.evaluate("(function(){ var s = document.querySelector('.prof'); return s ? [s.querySelector('h2').firstChild.textContent, (s.querySelector('h2 .hot') || {}).textContent || '', s.querySelectorAll('dd, dl, .pstats').length, s.querySelector('.fol').textContent, document.querySelectorAll('#feed article.post').length, s.textContent] : null; })()")
+            check(pr[:5] == ["@opener", "🔥", 0, "Follow", 1], f"[{theme}] tapping a name opens the profile: the name, the fire, a Follow button and their slips ({pr[:5]})")
+            sel = await pg.evaluate("window.__SEL.filter(function(x){ return /^feed_records:/.test(x); })")
+            check(not _re.search(r"Record|Units|Graded|12-8|6\.4", pr[5]) and sel and not any(_re.search(r"won|lost|units|graded", x) for x in sel), f"[{theme}] the profile shows no record, units or graded count, and the page never asks the database for them ({sorted(set(sel))})")
             await pg.click('.prof .fol'); await pg.wait_for_timeout(300)
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-profile-{theme}.png")
             check(await pg.inner_text('.prof .fol') == "Following ✓" and "1 follower" in await pg.inner_text('.prof .pn p'), f"[{theme}] following flips the button and the follower count")
@@ -98,6 +133,22 @@ async def main():
             tm = await pg.evaluate("(function(){ var a = [...document.querySelectorAll('.pedit input[name=e]')].map(function(i){ return i.value; }), t = [...document.querySelectorAll('.pedit label[title]')]; return [a.length, new Set(a).size, t.length, t.filter(function(l){ return l.getBoundingClientRect().width >= 44; }).length, document.documentElement.scrollWidth - innerWidth]; })()")
             check(tm[0] == 49 and tm[1] == 49 and tm[2] == 32 and tm[3] == 32 and tm[4] <= 0, f"the avatar picker offers initials, 16 fun emoji and one for each of the 32 teams, none twice, each a 44px target, no sideways scroll ({tm})")
             await pg.screenshot(path="/tmp/soc/editor.png", full_page=True)
+            # ---- owner 11/22: "press a color or emoji make the change in real time on the users profile picture"
+            SAV = "(function(){ var a = document.querySelector('.prof .phd > .av') || document.querySelector('.prof > .av'); if(!a) return null; var r = a.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return {t: a.textContent, c: a.className, top: Math.round(r.top), bottom: Math.round(r.bottom), seen: !!t && (t === a || a.contains(t)), bar: !!document.querySelector('.prof .phd')}; })()"
+            v0 = await pg.evaluate(SAV); pickc = "6" if "c6" not in v0["c"] else "3"
+            await pg.click(f'.pedit input[name=c][value="{pickc}"]', force=True); await pg.wait_for_timeout(150); v1 = await pg.evaluate(SAV)
+            await pg.click('.pedit .em input[value="🔥"]', force=True); await pg.wait_for_timeout(150); v2 = await pg.evaluate(SAV)
+            check(v0["bar"] and f"c{pickc}" in v1["c"] and v1["t"] == v0["t"] and v2["t"] == "🔥" and "em" in v2["c"].split() and f"c{pickc}" in v2["c"], f"[{theme}] on your own profile a tap on a colour, then an emoji, changes the picture at once ({v0['c']} {v0['t']} -> {v2['c']} {v2['t']})")
+            await pg.evaluate("document.querySelector('.pedit label[title=\"Titans\"]').scrollIntoView({block: 'center'})"); await pg.wait_for_timeout(250)
+            await pg.click('.pedit label[title="Titans"] input', force=True); await pg.wait_for_timeout(200); v3 = await pg.evaluate(SAV)
+            check(v3["t"] == "⚔️" and v3["seen"] and v3["top"] >= 40 and v3["bottom"] <= 844 - 64, f"[{theme}] a team picked far down the list shows on the picture, which stays in view under the menu ({v3['top']}-{v3['bottom']}px)")
+            await pg.evaluate("window.dispatchEvent(new Event('popstate'))"); await pg.wait_for_timeout(300)
+            kp = await pg.evaluate("(function(){ var f = document.getElementById('pedit'); return f ? [(f.querySelector('input[name=c]:checked') || {}).value, (f.querySelector('input[name=e]:checked') || {}).value] : null; })()"); v4 = await pg.evaluate(SAV)
+            check(kp == [pickc, "⚔️"] and v4["t"] == "⚔️" and f"c{pickc}" in v4["c"], f"[{theme}] the feed redrawing while the editor is open keeps what was picked ({kp})")
+            check(not any("feed_profile_set" in c for c in await pg.evaluate("window.__CALLS")), f"[{theme}] none of that saved anything")
+            await pg.click('.pedit [data-edit="0"]'); await pg.wait_for_timeout(250); v5 = await pg.evaluate(SAV)
+            check(v5["t"] == v0["t"] and v5["c"] == v0["c"] and not v5["bar"] and not await pg.query_selector('#pedit'), f"[{theme}] Cancel puts the saved picture back ({v5['c']} {v5['t']})")
+            await pg.evaluate("window.scrollTo(0, 0)"); await pg.click('[data-edit="1"]'); await pg.wait_for_timeout(300)
             await pg.fill('#peh', 'bad name'); await pg.click('.pedit .sv'); await pg.wait_for_timeout(200)
             e1 = await pg.inner_text('#pemsg')
             await pg.fill('#peh', 'TakenName'); await pg.click('.pedit .sv'); await pg.wait_for_timeout(300); e2 = await pg.inner_text('#pemsg')
