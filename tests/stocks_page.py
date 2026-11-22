@@ -74,7 +74,17 @@ async def main():
     except Exception: SS = {}
     proj = [(p, float(re.search(r"The model projects (\d+\.\d) fantasy points", " ".join(p["wk"])).group(1))) for p in PL if "The model projects" in " ".join(p["wk"])]
     offp = [(p["n"], x, SS.get((p["n"], p["t"]), {}).get("fp")) for p, x in proj if (p["n"], p["t"]) in SS and abs(round(SS[(p["n"], p["t"])]["fp"], 1) - x) > 0.051]
-    check(len(proj) >= 100 and sum(1 for p, x in proj if (p["n"], p["t"]) in SS) >= 0.9 * len(proj) and not offp and all(p["wk"] and len(p["wk"]) <= 2 for p in PL) and not any(p["st"] in ("Out", "Doubtful") and "projects" in " ".join(p["wk"]) for p in PL),
+    # 11/22 4:30 PM: this asked for 100 projections and failed with 87 on a Sunday afternoon - seven games were final, and a player whose game is
+    # played gets a line about that game, not a projection. Who should have one is the page's own rule, redone here: a game still to come (his line
+    # is not "is played" or "are off this week"), not listed out or doubtful, and Start / Sit lists him active with points. Every such player must
+    # have one; the page matches names a little more loosely than this test, so up to a tenth more may have one too.
+    _wk = lambda p: " ".join(p["wk"])
+    togo = [p for p in PL if p["st"] not in ("Out", "Doubtful") and "is played" not in _wk(p) and "are off this week" not in _wk(p)]
+    due = [p for p in togo if (SS.get((p["n"], p["t"])) or {}).get("act") and isinstance(SS[(p["n"], p["t"])].get("fp"), (int, float)) and SS[(p["n"], p["t"])]["fp"] > 0]
+    missing = [p["n"] for p in due if "The model projects" not in _wk(p)]
+    late = [p["n"] for p, x in proj if "is played" in _wk(p) or "are off this week" in _wk(p)]
+    check(not missing and not late and len(proj) <= 1.1 * len(due) + 2, f"of {len(togo)} players with a game still to come, the {len(due)} Start / Sit lists active all have a projection ({len(proj)} shown), and nobody whose game is played or who is off has one" + (f" (missing: {missing[:4]}; has one after his game: {late[:4]})" if missing or late else ""))
+    check(sum(1 for p, x in proj if (p["n"], p["t"]) in SS) >= 0.9 * len(proj) and not offp and all(p["wk"] and len(p["wk"]) <= 2 for p in PL) and not any(p["st"] in ("Out", "Doubtful") and "projects" in " ".join(p["wk"]) for p in PL),
           f"'This week' gives {len(proj)} players a projection, each the number Start / Sit publishes for him; a player listed out gets none; everyone gets a line (bye, played or game) (off: {offp[:3]})")
     faller = next((BY[k] for v in D["fall"].values() for k in v if len(BY[k]["mv"]) == 2), None) or next((BY[k] for v in D["fall"].values() for k in v), None)
     fpos = next((a for a in ("RB", "WR", "TE", "QB") if D["fmore"].get(a)), None)
@@ -113,9 +123,15 @@ async def main():
     # ---- owner 11/22 11:42 AM ("Anything else you can do to the stock market page to make it a little more interesting? Added stats?"):
     # weekly finishes, the numbers at the top of a player's box, rates, and the market-movers cards - each redone here from the shipped games
     FR = C["fr"]; WEEK = D["week"]; SDEF = {s_["id"]: s_ for s_ in D["stats"]}; NUM = re.compile(r"\d+(?:\.\d+)?")
-    def same(a, b, tol=0.051):   # the same words with the same numbers; a number may differ by a rounding of its last digit (the page rounds in the browser, this test in Python)
+    def same(a, b):
+        """the same words with the same numbers. A number with decimals may differ by one unit of its last digit: the page rounds in the browser and this test
+        in Python, and an average that falls exactly on a 5 can go either way (11/22 4:30 PM: Kenneth Walker III's season average, 24.55, was 24.5 on the page
+        and 24.6 here; the old allowance of 0.051 let nothing through at one decimal). Whole numbers - ranks, counts, weeks - must be equal."""
         na, nb = NUM.findall(a or ""), NUM.findall(b or "")
-        return NUM.sub("#", a or "") == NUM.sub("#", b or "") and len(na) == len(nb) and all(abs(float(x) - float(y)) <= tol for x, y in zip(na, nb))
+        def near(x, y):
+            dx, dy = len(x.partition(".")[2]), len(y.partition(".")[2])
+            return dx == dy and (x == y if dx == 0 else abs(float(x) - float(y)) <= 10 ** -dx * 1.0001)
+        return NUM.sub("#", a or "") == NUM.sub("#", b or "") and len(na) == len(nb) and all(near(x, y) for x, y in zip(na, nb))
     pts = lambda p: [g[C["ppr"]] for g in p["g"]]
     fins = lambda p: [g[FR] for g in p["g"] if g[FR] is not None]
     badf = []; byw = {}; gap = 0

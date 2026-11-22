@@ -232,6 +232,31 @@ def promo_checks(legs):
             if l["gid"] not in other: block.append(f"game line '{l['who']}' matched {l['gid']} but every other leg is {next(iter(other))}")
     return block, warn
 
+# 11/22: a slip's kickoff times came only from the legs still on FanDuel's board, and FanDuel takes a game's player markets down at
+# kickoff. So an hour into the early games every slip's "first kickoff" jumped to the next window (the cards went back to "Pregame"
+# from 1:22 to 3:05 PM), and once all of a slip's games had started it had no kickoff at all: at 4:22 PM all four Week 11 slips on the
+# live Today page said Pregame with seven games final, and the Daily Sweep, which finds its day by its first kickoff, was drawn as an
+# ordinary card. The week's games stay in builder_data.json all week with their kickoffs; a player is placed in his game by his team
+# in the projection tabs. ONLY the kickoff is filled in (ko, kick): no price and no game id, so to every check and every price the
+# leg is still "not on the board".
+_TEAM_OF = None
+def _pkey(n): return re.sub(r"[^a-z]", "", str(n).lower())
+def kickoff_of(who):
+    """{"ko": ms, "kick": "Sun 12:00 PM"} for the game this leg's player is in this week, or {} when he cannot be placed"""
+    global _TEAM_OF
+    if _TEAM_OF is None:
+        _TEAM_OF = {}
+        for f in ("proj_qb.json", "proj_rb.json", "proj_wr.json", "proj_te.json"):
+            try: rows = json.load(open(os.path.join(IN, f)))["values"][1:]
+            except Exception: continue
+            for r in rows:
+                if len(r) > 1 and r[0] and r[1]: _TEAM_OF.setdefault(_pkey(r[0]), str(r[1]).strip().upper())
+    for name in re.split(r"\s+or\s+|\s*/\s*", str(who).strip()):
+        tm = _TEAM_OF.get(_pkey(name))
+        g = next((g for g in GAMES.values() if tm and tm in (g.get("a"), g.get("b")) and g.get("ko")), None)
+        if g: return {"ko": g["ko"], "kick": g.get("kick", "")}
+    return {}
+
 def parse_rows():
     try: v = json.load(open(os.path.join(IN, "promos.json")))["values"]
     except Exception: return []
@@ -246,7 +271,9 @@ def parse_rows():
             parts = [p.strip() for p in line.split("|")]
             if len(parts) < 2 or not parts[0]: continue
             who, market = parts[0], parts[1]; odds = num(parts[2]) if len(parts) > 2 else None
-            d = price_leg(who, market, odds); d.update(who=who, market=market, o=odds); legs.append(d)
+            d = price_leg(who, market, odds); d.update(who=who, market=market, o=odds)
+            if not d.get("ko"): d.update(kickoff_of(who))   # off the board (his game has kicked off): the slip still knows when that game started
+            legs.append(d)
         if not legs: continue
         fdo = num(fd_odds)
         _gids = [l["gid"] for l in legs if l.get("gid")]
