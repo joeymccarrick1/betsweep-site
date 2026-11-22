@@ -72,6 +72,7 @@ BUILD = [
     ("today (with targets)", "build_today.py", "hard"),
     ("players", "build_players.py", "soft"),
     ("usage", "build_usage.py", "soft"),
+    ("stock market", "build_stocks.py", "soft"),   # owner 11/22: /stocks/ - after the players step (it links the player pages)
     ("guide", "build_guide.py", "soft"),
     ("legal", "build_legal.py", "soft"),
     ("shadow slips", "shadow_slips.py", "soft"),

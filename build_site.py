@@ -96,7 +96,7 @@ open(os.path.join(SITE, "manifest.webmanifest"), "w").write(json.dumps(MANIFEST,
 SW_VERSION = _dt.datetime.now(__import__("zoneinfo").ZoneInfo("America/Chicago")).strftime("%Y%m%d%H%M") if "_dt" in globals() else __import__("datetime").datetime.now().strftime("%Y%m%d%H%M")
 SW = r'''// BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
 // with the last good copy served when the connection drops (stadium wifi). Version: __V__
-var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dossier/', '/dfs/', '/receipts/', '/season/', '/player/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
+var V = 'bs-__V__', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dossier/', '/dfs/', '/receipts/', '/season/', '/player/', '/stocks/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -147,7 +147,7 @@ NAV_GROUPS = [("/", "Today", None),
               (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
               (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/hunches/", "Hunches", "Matchups, streaks, weather"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
               (None, "Play", [("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week")]),
-              (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
+              (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/stocks/", "Stock Market", "Who is rising, in graphs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high"), ("/dfs/", "DFS", "Lineup builder")]),
               (None, "Results", [("/receipts/", "Receipts", "Every week, graded"), ("/season/", "Season", "The running record"), ("/badbeats/", "Missed by one", "The week's bad beats"), ("/how/", "How BetSweep picks", "The method and the record"), ("/guide/", "How to read BetSweep", "Colors, ranks, edge"), ("/all/", "Every page", "The whole site on one screen")])]
 
@@ -177,6 +177,7 @@ NEXT = {
  "/player/": [("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out"), ("/teams/", "Teams", "Stats, results, box scores")],
  "/teams/": [("/player/", "Players", "Lines, hit rates, game logs"), ("/boards/", "Matchup Boards", "One board per game"), ("/usage/", "Usage trends", "Rising and falling roles")],
  "/usage/": [("/benefits/", "Who benefits", "When a starter is out"), ("/player/", "Players", "Lines, hit rates, game logs"), ("/targets/", "Trade desk", "Buy low, sell high")],
+ "/stocks/": [("/usage/", "Usage trends", "Whose role is growing or shrinking"), ("/targets/", "Trade desk", "Buy low, sell high"), ("/player/", "Players", "Lines, hit rates, game logs")],
  "/benefits/": [("/usage/", "Usage trends", "Rising and falling roles"), ("/news/", "News desk", "Who is out, limited or back"), ("/build/", "Parlay Builder", "Price the backup's legs")],
  "/team/compare/": [("/team/", "My team", "Start / sit for the whole roster"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high")],
  "/team/": [("/team/compare/", "Who should I start?", "Two players, one call"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/dfs/", "DFS", "Lineup builder")],
@@ -910,6 +911,14 @@ if os.path.isdir(_TD) and os.path.exists(os.path.join(_TD, "index.html")):
     print(f"team pages: {_nt}")
 for _src, _dir in (("usage.html", "usage"), ("benefits.html", "benefits"), ("guide.html", "guide")):
     if os.path.exists(os.path.join(OUT, _src)): made.append(place_plain(os.path.join(OUT, _src), os.path.join(SITE, _dir), f"/{_dir}/"))
+# owner 11/22: /stocks/ "Stock Market" (build_stocks.py) - the risers at each position as graphs, any player by search. Its data block
+# (window.__SK, every player's game log) is moved out to /stocks/data-<hash>.js the way the builder's board is, so the page stays small
+# and the browser keeps the file; reprice.copy_into_clone keeps the one the outgoing page linked.
+if os.path.exists(os.path.join(OUT, "stocks.html")):
+    _sd = os.path.join(SITE, "stocks"); os.makedirs(_sd, exist_ok=True)
+    for _old in glob.glob(os.path.join(_sd, "data-*.js")): os.remove(_old)
+    made.append(place_plain(os.path.join(OUT, "stocks.html"), _sd, "/stocks/"))
+    _sp = os.path.join(_sd, "index.html"); _sh = open(_sp).read(); open(_sp, "w").write(externalize(_sh, _sd, "/stocks/"))   # read first: open(.., "w") empties the file
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
@@ -1173,6 +1182,7 @@ def landing(weeks):
         ("/player/", "Players", "One page per player", "Every player with a prop or a role: his lines at FanDuel, DraftKings and Hard Rock against the model, how often he has cleared them, his offense vs the defense, snap share and game log.", None),
         ("/benefits/", "Who Benefits", "Injuries this week", "When a starter is ruled out: where his snaps, targets and carries went in the games he already missed, with each teammate's best-priced leg - books are often slow on the backup.", None),
         ("/usage/", "Usage Trends", "Rising and falling roles", "Whose snaps, targets and carries are growing or shrinking over the last three games, with the injury context that explains a fill-in bump or a dip from playing hurt.", None),
+        ("/stocks/", "Stock Market", "Rising players, in graphs", "The top risers at quarterback, running back, wide receiver and tight end, each with a graph of his fantasy points game by game. Tap a player to graph any of his stats; the search finds anyone.", None),   # owner 11/22
         ("/firsttd/", "First TD", f"{nftd} players" if nftd else f"Week {week}", "Who scores first in every game: the model's first-touchdown probability for every active skill player, the fair odds, and FanDuel's first touchdown scorer price with the edge.", None),
         ("/pairs/", "Either-or TDs", "Two names, one leg", "FanDuel sells \"A or B to score\" as one leg. Pick the two players and see the chance one of them scores, the fair price, and whether the pair is worth more or less than its two singles. Type FanDuel's price and it says what you are paying.", None),   # owner 11/8-11/10
         ("/shop/", "Line Shop", "Same leg, better price", "Every leg on the board where DraftKings or Hard Rock pays more than FanDuel, biggest gap first, with a button straight to the better price.", None),

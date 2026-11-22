@@ -1,0 +1,626 @@
+#!/usr/bin/env python3
+"""build_stocks.py - /stocks/ "Stock Market" (owner 11/22 12:04 AM: "I want you to make a 'Stock Market' page. I want to it to kind of
+take from our player pages but I'm basically wanting to add a lot of graphs. I want top rising, trending players of each position. To
+fill up the page. It'd be player, team, and then a graph of their recent games total fantasy points. When you click on the fantasy points
+graph it opens up to where you'd choose his stats. When you click on any stat it opens up to a graph. I want a search bar the top though
+so you can filter players.")
+
+What it writes
+  out/stocks.html   the page. A search box, then the top risers at QB / RB / WR / TE as tiles: player, team, a small graph of his fantasy
+                    points game by game (his last games in colour), his average over those last games and the change from his earlier
+                    ones. Tapping a tile opens his stats under its row; tapping a stat opens that stat's graph under the stat's row.
+                    The search covers every player who has a player page, rising or not.
+  the data          rides in the page as window.__SK (build_site.py moves it to /stocks/data-<hash>.js like the builder's board).
+
+The rules, all in one place
+  window    a player's last 3 games when he has played 6 or more, his last 2 when he has played 4 or 5, none below 4
+  riser     averages FLOOR[pos]+ fantasy points over the window; is up MIN_UP+ a game on his earlier games; beat his earlier average in at
+            least two games of the window (one blow-up is not a rise); played one of his team's last two games; is not Out / Doubtful
+            this week (plydata status: the model's availability tab first, then the weekly report); has a player page
+  order     biggest rise first (the change to two decimals; a tie goes by name). The first TOP at each position are written into the page;
+            the rest ride in the data and a "Show all N rising ..." button under the list adds them with the same tile template
+  points    nflverse fantasy_points_ppr (full PPR) - the number in the player page's game log
+  context   injweeks.py (the detection the usage page and the projections use) says which games were shaped by an injury. A player's
+            panel says so in words when it bears on his arrow: a game of his window in which he was hurt and played less, a game of his
+            window in which he played more snaps than usual with a teammate hurt or out who is not ruled out this week (his tile also
+            wears a NOTE tag; the note ends with what is known about the teammate: questionable, has played since, or not ruled out), and
+            an earlier game in which he was hurt. Each note says what happened to his snaps and why - no forecast. A riser stays a riser;
+            the reader gets the reason.
+
+One tile, two renderers: the lists are written here (so the page shows before any script runs) and the search results are written in the
+browser. Both fill the same TILE template from the same per-player fields, so a searched player's tile is the tile he has in a list.
+The site zooms every page 1.1x on a phone (build_site.py BIGGER_CSS), so a 390px screen is about 333px of layout here: the tile and
+stat-tile minimum widths are set for two columns at that width - check tests/stocks_page.py before changing them.
+Nothing here changes a projection. Run after build_players.py (it links to the player pages through out/players/slugs.json).
+Prints "wrote out/stocks.html: N risers (QB a, RB b, WR c, TE d), M players in the search, week W".
+"""
+import os, json, html, re
+import plydata as PD
+
+HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out")
+E = html.escape
+S = PD.load(HERE); W = S.week
+_ns = {"HERE": HERE, "E": E}; exec(open(os.path.join(HERE, "brand.py")).read(), _ns); NAMES, TEAMCOL, _lum = _ns["NAMES"], _ns["TEAMCOL"], _ns["lum"]
+try: SLUG = json.load(open(os.path.join(OUT, "players", "slugs.json")))
+except Exception: SLUG = {}
+PAGES = set(SLUG.values())
+try:
+    import injweeks as IW
+    INJ = IW.load(os.path.join(HERE, "in"), W)
+except Exception as _e:
+    print("note: injury context not loaded:", _e); INJ = None
+
+TOP = 8                                                  # risers listed per position
+FLOOR = {"QB": 12.0, "RB": 8.0, "WR": 8.0, "TE": 6.0}    # fantasy points a game over the window a riser must reach
+MIN_UP = 1.0                                             # ... and the least he must be up on his earlier games
+POSN = (("QB", "Quarterbacks", "quarterback"), ("RB", "Running backs", "running back"), ("WR", "Wide receivers", "wide receiver"), ("TE", "Tight ends", "tight end"))
+PNAME = {a: c for a, b, c in POSN}
+
+# one row per game, in this column order (the page reads a game as an array)
+COLS = ["w", "opp", "ppr", "snap", "tgt", "rec", "recy", "car", "rush", "td", "pass", "att", "cmp", "ptd", "int", "ts", "cs"]
+# the stats a player's panel offers: id, column, label, the words after a number ("112 rushing yards"), decimals of one game's value,
+# pct (the column is a share, 0-100), inv (up is bad), flat (a change smaller than this is not called up or down), min (the season total
+# below which the stat is not offered - a receiver with one 3-yard carry gets no rushing graph)
+def _st(i, col, lab, unit, dec=0, pct=False, inv=False, flat=0.5, mn=0.0001):
+    return {"id": i, "col": col, "l": lab, "u": unit, "dec": dec, "pct": pct, "inv": inv, "flat": flat, "min": mn}
+STATS = [_st("ppr", "ppr", "Fantasy points", "fantasy points", dec=1, mn=-999),
+         _st("pass", "pass", "Passing yards", "passing yards", flat=3), _st("ptd", "ptd", "Passing TDs", "passing TDs", flat=0.15),
+         _st("cmp", "cmp", "Completions", "completions"), _st("att", "att", "Pass attempts", "pass attempts"),
+         _st("int", "int", "Interceptions", "interceptions", inv=True, flat=0.15),
+         _st("car", "car", "Carries", "carries"), _st("rush", "rush", "Rushing yards", "rushing yards", flat=3),
+         _st("qtd", "td", "Rushing TDs", "rushing TDs", flat=0.15),
+         _st("tgt", "tgt", "Targets", "targets"), _st("rec", "rec", "Catches", "catches"), _st("recy", "recy", "Receiving yards", "receiving yards", flat=3),
+         _st("td", "td", "Touchdowns", "touchdowns", flat=0.15),
+         _st("wrush", "rush", "Rushing yards", "rushing yards", flat=3, mn=20),
+         _st("snap", "snap", "Snap share", "of the snaps", pct=True, flat=2), _st("ts", "ts", "Target share", "of the targets", pct=True, flat=2),
+         _st("cs", "cs", "Carry share", "of the carries", pct=True, flat=2)]
+ORDER = {"QB": ["ppr", "pass", "ptd", "cmp", "att", "int", "rush", "car", "qtd"],
+         "RB": ["ppr", "car", "rush", "td", "tgt", "rec", "recy", "snap", "cs", "ts"],
+         "WR": ["ppr", "tgt", "rec", "recy", "td", "snap", "ts", "wrush"],
+         "TE": ["ppr", "tgt", "rec", "recy", "td", "snap", "ts", "wrush"]}
+
+# ---------------------------------------------------------------------------------------------------------------- the tile
+# Filled by fill() here and by fill() in the page script - same template, same fields. Player, team, then the graph (the owner's order).
+TILE = ('<li class="sk {dir}" data-k="{k}" data-pos="{pos}"><button type="button" class="skb" aria-expanded="false" aria-label="{aria}">'
+        '<b class="sknm">{n}</b>'
+        '<span class="sktm {tg}"><i class="sktb" style="--p:{c1};--s:{c2};--i:{ink}">{t}</i><span class="sksu">{pos}<span> · {tn}</span></span><i class="skst {stc}">{st}</i></span>'
+        '<svg class="sksp" viewBox="0 0 120 40" aria-hidden="true" focusable="false"><path class="ska" d="{pa}"/><path class="skr" d="{pr}"/><circle cx="{ex}" cy="{ey}" r="3.5"/></svg>'
+        '<span class="skpx"><span class="skv"><b>{val}</b><small>{lab}</small></span><em>{dt}</em></span>'
+        '</button></li>')
+def _esc(s): return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+def fill(f):   # one pass, like the page script's fill(): a placeholder with no field is left empty
+    return re.sub(r"\{(\w+)\}", lambda m: _esc("" if f.get(m.group(1)) is None else f[m.group(1)]), TILE)
+
+def window(n): return 3 if n >= 6 else (2 if n >= 4 else 0)
+def mean(v): return sum(v) / len(v)
+def _g(x): return f"{round(x, 1):g}"
+def spark(vals, k):
+    """the tile graph: every game left to right on a zero-based scale, in a 120 x 40 box; the last k games again as their own path"""
+    n = len(vals); lo = min(0.0, min(vals)); hi = max(vals)
+    if hi - lo < 1e-9: hi = lo + 1.0
+    pts = [((60.0 if n == 1 else 4 + 112.0 * i / (n - 1)), 5 + 30.0 * (1 - (v - lo) / (hi - lo))) for i, v in enumerate(vals)]
+    path = lambda ps: ("M" + "L".join(f"{_g(x)} {_g(y)}" for x, y in ps)) if len(ps) > 1 else ""
+    return path(pts), (path(pts[-k:]) if k else ""), _g(pts[-1][0]), _g(pts[-1][1])
+def delta_text(d, flat=0.5):
+    if d is None: return ""
+    if abs(d) < flat: return ("" if f"{abs(d):.1f}" == "0.0" else ("+" if d >= 0 else "−")) + f"{abs(d):.1f}"   # a change that rounds to 0.0 wears no sign
+    return ("▲ " if d > 0 else "▼ ") + f"{abs(d):.1f}"
+
+def games_of(p): return sorted(p["games"] + p.get("prev_games", []), key=lambda g: g["w"])
+def _wks(ws): ws = [f"Week {w}" for w in ws]; return ws[0] if len(ws) == 1 else (", ".join(ws[:-1]) + " and " + ws[-1])
+def _hurt(why):   # "played hurt (Shoulder, Questionable that week) - 57% of snaps ..." -> "shoulder"
+    m = re.search(r"\(([A-Za-z][A-Za-z /]*?)(?:,| on the next|\))", why or ""); return m.group(1).strip().lower() if m else ""
+def _label(why):   # what a limited week is called in its note: the injury on the report, or that he left the game
+    why = str(why or "")
+    if why.startswith("left that game"): return "left the game"
+    return _hurt(why) or "hurt"
+def _wkl(lim, ws):   # "Week 7 and Week 8 (shoulder)" when the weeks share a reason, "Week 5 (ankle), Week 6 (ankle) and Week 7 (illness)" when not
+    labs = [_label(lim[w]) for w in ws]
+    if len(set(labs)) == 1: return f"{_wks(ws)} ({labs[0]})"
+    parts = [f"Week {w} ({l})" for w, l in zip(ws, labs)]
+    return ", ".join(parts[:-1]) + " and " + parts[-1]
+_BY = {}
+def _mate_now(mate, team, after):
+    """what is known about the teammate now, in the page's own terms: his status this week as plydata gives it (the status his own
+    tile wears), else whether he has played a game since the week in question. None = he is Out / Doubtful, so nobody is back."""
+    if not _BY:
+        for q in S.players.values():
+            if not q.get("old"): _BY[(IW.norm(q["name"]), q["team"])] = q
+    q = _BY.get((IW.norm(mate), team)); st = ((q or {}).get("status") or ("",))[0]
+    if st in ("Out", "Doubtful"): return None
+    if st == "Questionable": return "is questionable this week"
+    try: since = any(w > after for w in INJ.snap.get((IW.norm(mate), IW._t(team)), {}))
+    except Exception: since = False
+    return "has played since" if since else "is not ruled out this week"
+def context(p, gs, kw):
+    """the injury notes for a player's panel, and whether a game of his window came with a teammate hurt or out who is back.
+    Each note states what injweeks measured (snap share against his own norm, with an injury on the report) - no forecast, and nothing
+    about his points: a fill-in week with more snaps can still be a 2-point game.  One sentence per teammate (Elic Ayomanor's last three
+    games came with Ridley out, then Tate out twice).  injweeks calls a teammate "back" when this week's report has him as anything but
+    Out / Doubtful, or he is off the report and played the team's latest game - so the note ends with what is actually known about him
+    (_mate_now), never "he is back": Carnell Tate was out in Week 10, the team's latest game, and is questionable for Week 11."""
+    if not INJ or not kw: return [], False
+    win = {g["w"] for g in gs[-kw:]}; early = {g["w"] for g in gs[:-kw]}; notes = []; flag = False
+    try: fil = INJ.fill(p["name"], p["team"], p["pos"]); lim = INJ.limited(p["name"], p["team"])
+    except Exception: return [], False
+    fw = sorted(w for w in fil if w in win); by = {}
+    for w in fw: by.setdefault(fil[w][0], []).append(w)
+    for mate, ws in sorted(by.items(), key=lambda kv: kv[1][0]):
+        now = _mate_now(mate, p["team"], ws[-1])
+        if not now: continue
+        kinds = {("out" if str(fil[w][1]).startswith("out") else "hurt") for w in ws}
+        was = "out" if kinds == {"out"} else ("hurt" if kinds == {"hurt"} else "hurt or out")
+        last = mate.split()[-1]
+        if last.lower().rstrip(".") in ("jr", "sr", "ii", "iii", "iv", "v"): last = mate
+        notes.append(f"He played more snaps than usual in {_wks(ws)}, with {mate} {was}. {last} {now}."); flag = True
+    lw = sorted(w for w in lim if w in win)
+    if lw: notes.append(f"He played less than usual in {_wkl(lim, lw)}.")
+    ew = sorted(w for w in lim if w in early)
+    if ew: notes.append(f"His earlier games include {_wkl(lim, ew)}, when he played less than usual.")
+    return notes, flag
+def row(g):
+    i = lambda x: int(round(x or 0))
+    return [g["w"], g["opp"], round(g["ppr"], 1), (None if g.get("snap") is None else int(round(g["snap"] * 100))), i(g["tgt"]), i(g["rec"]), i(g["recy"]), i(g["car"]), i(g["rush"]),
+            i(g["td"]), i(g["pass"]), i(g["att"]), i(g["cmp"]), i(g["ptd"]), i(g["int"]), int(round((g.get("ts") or 0) * 100)), int(round((g.get("cs") or 0) * 100))]
+def colors(t):
+    p, s = TEAMCOL.get(t, ("#2b3442", "#141a24")); return [p, s, "#101820" if _lum(p) > 0.45 else "#ffffff"]
+
+PL = []; TC = {}
+for key, p in S.players.items():
+    if p.get("old"): continue                      # a traded player's entry for the team he left: his games ride on his current entry
+    if SLUG and p["slug"] not in PAGES: continue   # no player page = no real role this season
+    gs = games_of(p)
+    if not gs: continue
+    vals = [round(g["ppr"], 1) for g in gs]; n = len(vals); kw = window(n)   # the rounded numbers the page shows: anyone can redo the sums from his graph
+    if kw:
+        r = mean(vals[-kw:]); b = mean(vals[:-kw]); d = r - b; beat = sum(1 for v in vals[-kw:] if v > b)
+    else:
+        r = mean(vals); b = d = None; beat = 0
+    tw = S.team_weeks.get(p["team"], [])
+    active = bool(tw) and gs[-1]["w"] >= (tw[-2] if len(tw) > 1 else tw[-1])
+    st = (p.get("status") or ("",))[0]; st = st if st in ("Out", "Doubtful", "Questionable") else ""
+    pos, team = p["pos"], p["team"]; TC.setdefault(team, colors(team))
+    rising = bool(kw and d >= MIN_UP and r >= FLOOR[pos] and beat >= 2 and active and st not in ("Out", "Doubtful"))
+    dr = "na" if d is None else ("fl" if abs(d) < 0.5 else ("up" if d > 0 else "dn"))
+    pa, pr, ex, ey = spark(vals, kw)
+    tn = NAMES.get(team, team)
+    notes, fillin = context(p, gs, kw)
+    tag = {"Out": "OUT", "Doubtful": "D", "Questionable": "Q"}.get(st, "") or ("NOTE" if fillin else "")   # NOTE: a recent game of his came with a teammate hurt or out who is not ruled out this week
+    if kw:
+        how = "about level with" if dr == "fl" else (f"up {abs(d):.1f} from" if d > 0 else f"down {abs(d):.1f} from")
+        aria = f"{p['name']}, {PNAME[pos]}, {tn}. {r:.1f} fantasy points a game over his last {kw} games, {how} his earlier games."
+    else:
+        aria = f"{p['name']}, {PNAME[pos]}, {tn}. {r:.1f} fantasy points a game in {n} game{'s' if n != 1 else ''}."
+    if st: aria += f" {st} this week."
+    if fillin: aria += " There is a note on his recent games."
+    aria += " Open his stats."
+    PL.append({"k": p["slug"], "n": p["name"], "t": team, "tn": tn, "p": pos, "st": st, "pg": 1 if p["slug"] in PAGES else 0, "ac": 1 if active else 0, "kw": kw, "nt": notes, "fi": 1 if fillin else 0,
+               "r": round(r, 2), "d": (None if d is None else round(d, 2)), "up": rising,
+               "f": {"dir": dr, "aria": aria, "tg": ("tg" if tag else ""), "st": tag, "stc": ("o" if st in ("Out", "Doubtful") else ""),
+                     "val": f"{r:.1f}", "lab": (f"last {kw}" if kw else (f"{n} games" if n != 1 else "1 game")), "dt": delta_text(d), "pa": pa, "pr": pr, "ex": ex, "ey": ey},
+               "g": [row(g) for g in gs]})
+PL.sort(key=lambda x: (-x["r"], x["n"]))
+def fields(x):
+    c = TC[x["t"]]; f = {"k": x["k"], "pos": x["p"], "t": x["t"], "tn": x["tn"], "n": x["n"], "c1": c[0], "c2": c[1], "ink": c[2]}; f.update(x["f"]); return f
+ALLR = {pos: sorted([x for x in PL if x["p"] == pos and x["up"]], key=lambda x: (-x["d"], x["n"])) for pos, _, _ in POSN}   # everyone the rule passes, biggest rise first
+RISE = {pos: ALLR[pos][:TOP] for pos, _, _ in POSN}    # the tiles written into the page
+MORE = {pos: ALLR[pos][TOP:] for pos, _, _ in POSN}    # the rest: one tap ("Show all 19 rising running backs") adds them under the list
+for x in PL: x["up"] = 1 if x["up"] else 0
+
+# how far the games go: "through Week 10" or "through Week 10, plus the Week 11 game already played (HOU, IND)"
+_wk = {}
+for t, ws in S.team_weeks.items():
+    for w in ws: _wk.setdefault(w, set()).add(t)
+_last = max(_wk) if _wk else 0
+if _last and len(_wk[_last]) < 20 and (_last - 1) in _wk:
+    _tm = sorted(_wk[_last]); THRU = f"Games through Week {_last - 1}, plus the Week {_last} game{'s' if len(_tm) > 2 else ''} already played ({', '.join(_tm)})"
+else:
+    THRU = f"Games through Week {_last}"
+
+CSS = """
+.skm{max-width:1100px;margin:14px auto 40px;padding:0 6px;--skc:#0f141c}
+/* the tag's ink: the site's amber is light on the dark theme (dark ink, 10:1) and dark on the light theme (white ink, 4.7:1; dark ink there is 3.9:1) */
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .skm{--skc:#fff} }
+:root[data-theme="light"] .skm{--skc:#fff}
+@media (max-width:760px){ .skm .sktm.tg .sksu span{display:none} }
+.skm [hidden]{display:none !important}
+.skm .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skm .skhd{margin:0 2px 10px} .skm h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1}
+.skm .sksub{display:block;margin-top:6px;color:var(--mute);font-size:14px;line-height:1.45;max-width:700px}
+.skm .skfind{margin:0 0 8px} .skm .skfind input{display:block;width:100%;max-width:520px;box-sizing:border-box;font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.skm .skfind input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 22%,transparent)}
+.skm .skbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:0 0 2px}
+.skm .skj{display:flex;gap:6px} .skm .skj a{display:inline-flex;align-items:center;justify-content:center;min-width:46px;min-height:40px;box-sizing:border-box;padding:0 10px;border:1.5px solid var(--line);border-radius:999px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;color:var(--ink);text-decoration:none}
+.skm .skj a:hover{border-color:var(--mute)}
+.skm .skkey{display:flex;flex-wrap:wrap;gap:2px 14px;margin:0 2px;color:var(--mute);font-size:12.5px;line-height:1.4} .skm .skkey span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.skm .skkey i{display:inline-block;width:18px;height:0;border-top:1.5px solid var(--mute);opacity:.8} .skm .skkey i.k2{border-top:3px solid var(--good);opacity:1;border-radius:2px}
+.skm .sksec{margin:0 0 6px;scroll-margin-top:60px}
+.skm h2{margin:16px 2px 9px;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.15;color:var(--ink);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.skm h2 small{font-family:var(--body);font-weight:500;font-size:13.5px;color:var(--mute)}
+.skm .skg{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:8px}
+.skm .sk{min-width:0;display:flex}
+.skm .skb{flex:1;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px 9px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.skm .skb:hover{border-color:var(--mute)} .skm .skb:focus-visible,.skm .skt:focus-visible,.skm .skx:focus-visible,.skm .skj a:focus-visible,.skm .skpl a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.skm .skb[aria-expanded="true"]{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+/* a long name takes a second line instead of losing its end ("Jacory Croskey-Merr…" on a 390px phone); two lines is the cap */
+.skm .sknm{font-weight:600;font-size:14.5px;line-height:1.25;overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.skm .sktm{display:flex;align-items:center;gap:6px;min-width:0;margin-top:3px;color:var(--mute);font-size:12px;line-height:1.2} .skm .sksu{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skm .sktb{flex:none;font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:4px;background:var(--p,#333);box-shadow:inset 0 -3px 0 var(--s,#000);color:var(--i,#fff);font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.03em;line-height:1}
+.skm .skst{flex:none;font-style:normal;font-weight:800;font-size:10px;letter-spacing:.05em;padding:1px 5px;border-radius:3px;background:var(--warn);color:var(--skc)} .skm .skst.o{background:var(--red);color:#fff} .skm .skst:empty{display:none}
+.skm .sksp{display:block;width:100%;height:auto;margin:8px 0 6px;overflow:visible}
+.skm .sksp path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.skm .ska{stroke:var(--mute);stroke-width:1.5;opacity:.7} .skm .skr{stroke:var(--mute);stroke-width:3}
+.skm .sksp circle{fill:var(--mute);stroke:var(--card);stroke-width:2;vector-effect:non-scaling-stroke}
+.skm .up .skr{stroke:var(--good)} .skm .up .sksp circle{fill:var(--good)} .skm .dn .skr{stroke:var(--bad)} .skm .dn .sksp circle{fill:var(--bad)}
+.skm .skpx{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0;margin-top:auto}
+.skm .skv{display:inline-flex;align-items:baseline;gap:5px;min-width:0} .skm .skv b{font-family:var(--display);font-weight:700;font-size:23px;line-height:1}
+.skm .skv small{color:var(--mute);font-size:11.5px;white-space:nowrap}
+.skm em{font-style:normal;font-weight:700;font-size:13px;color:var(--mute);white-space:nowrap} .skm .up em{color:var(--good)} .skm .dn em{color:var(--bad)}
+.skm .sknone{color:var(--mute);font-size:14.5px;line-height:1.5;margin:6px 2px 14px}
+.skm .skmr{margin:10px 0 0} .skm .skmore{display:inline-flex;align-items:center;min-height:42px;box-sizing:border-box;padding:0 16px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.skm .skmore:hover{border-color:var(--mute)} .skm .skmore:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* the open player: one panel under his row, full width */
+.skm .skp{grid-column:1/-1;min-width:0;box-sizing:border-box;background:var(--card);border:1.5px solid var(--ink);border-radius:14px;padding:12px 10px 8px;scroll-margin-top:60px}
+.skm .skph{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:0 2px}
+.skm .skph h3{margin:0;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.1;color:var(--ink)} .skm .skph p{margin:2px 0 0;color:var(--mute);font-size:13px;line-height:1.35}
+.skm .skx{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:40px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.skm .skx:hover{border-color:var(--mute)}
+.skm .skpq{margin:8px 2px;font-size:13.5px;color:var(--mute);line-height:1.4}
+.skm .skwn{margin:8px 2px 0;padding-left:10px;border-left:3px solid var(--warn);font-size:13.5px;line-height:1.4;color:var(--ink)}
+.skm .skts{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px}
+.skm .skt{min-width:0;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:2px 6px;align-items:end;text-align:left;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 9px;min-height:62px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.skm .skt:hover{border-color:var(--mute)} .skm .skt[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.skm .sktl{grid-column:1/-1;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.03em;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skm .skt[aria-pressed="true"] .sktl{color:var(--ink)}
+.skm .sktv{display:flex;flex-direction:column;min-width:0} .skm .sktv b{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05} .skm .sktv em{font-size:12px}
+.skm .skt .sksp{margin:0 0 3px} .skm .skt .sksp circle{stroke:none}
+/* the graph of the picked stat: under that stat's row */
+.skm .skcw{grid-column:1/-1;min-width:0;scroll-margin-top:60px}
+.skm .skc{margin:0;padding:6px 0 8px}
+.skm .skc figcaption{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:0 2px 4px}
+.skm .skct{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.1;color:var(--ink)}
+.skm .skrd{text-align:right;font-size:12.5px;line-height:1.3;color:var(--mute)} .skm .skrd b{display:block;font-family:var(--display);font-weight:700;font-size:26px;line-height:1;color:var(--ink)}
+.skm .skplot{position:relative;border-radius:8px;touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair} .skm .skplot:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.skm .skplot svg{display:block;width:100%;height:auto;overflow:visible}
+.skm .skplot text{font-family:var(--body);font-size:10.5px;fill:var(--mute);font-variant-numeric:tabular-nums}
+.skm .skplot .gr{stroke:var(--line);stroke-width:1} .skm .skplot .wk{font-size:9.5px;opacity:.85}
+.skm .skplot .ar{fill:var(--mute);opacity:.10} .skm .skplot .ar2{fill:var(--mute);opacity:.16}
+.skm .skplot .ln{fill:none;stroke:var(--mute);stroke-width:2;stroke-linecap:round;stroke-linejoin:round} .skm .skplot .ln2{fill:none;stroke:var(--mute);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.skm .skplot .av{stroke:var(--mute);stroke-width:1.5;stroke-dasharray:5 4;opacity:.9} .skm .skplot .av2{stroke:var(--mute);stroke-width:1.5;stroke-dasharray:5 4}
+.skm .skplot .dt{fill:var(--mute);stroke:var(--card);stroke-width:2} .skm .skplot .dt2{fill:var(--mute);stroke:var(--card);stroke-width:2}
+.skm .skc.up .ar2{fill:var(--good)} .skm .skc.up .ln2,.skm .skc.up .av2{stroke:var(--good)} .skm .skc.up .dt2{fill:var(--good)}
+.skm .skc.dn .ar2{fill:var(--bad)} .skm .skc.dn .ln2,.skm .skc.dn .av2{stroke:var(--bad)} .skm .skc.dn .dt2{fill:var(--bad)}
+.skm .skplot .cx{stroke:var(--ink);stroke-width:1;opacity:.55} .skm .skplot .sel{fill:none;stroke:var(--ink);stroke-width:2}
+.skm .skplot .on{fill:var(--ink);font-weight:600}
+.skm .skcc{margin:6px 2px 0;font-size:13.5px;line-height:1.45;color:var(--mute)} .skm .skcc b{color:var(--ink);font-weight:600} .skm .skcc span{display:inline-block;margin-right:14px}
+.skm .skcc i{display:inline-block;width:16px;height:0;border-top:2px dashed var(--mute);vertical-align:middle;margin-right:6px} .skm .skc.up .skcc i.k2{border-top-color:var(--good)} .skm .skc.dn .skcc i.k2{border-top-color:var(--bad)}
+.skm .sktbl{margin:4px 2px 0;font-size:13px} .skm .sktbl summary{cursor:pointer;color:var(--mute);min-height:40px;display:flex;align-items:center;list-style:none} .skm .sktbl summary::-webkit-details-marker{display:none}
+.skm .sktbl summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(-45deg);margin:0 10px 0 2px} .skm .sktbl[open] summary::before{transform:rotate(45deg)}
+.skm .sktbl table{border-collapse:collapse;width:100%;max-width:360px;font-variant-numeric:tabular-nums} .skm .sktbl th,.skm .sktbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+.skm .sktbl th:first-child,.skm .sktbl td:first-child,.skm .sktbl th:nth-child(2),.skm .sktbl td:nth-child(2){text-align:left} .skm .sktbl th{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.05em;color:var(--mute)}
+.skm .skpl{margin:8px 2px 0;font-size:14px} .skm .skpl a{color:var(--ink);display:inline-block;padding:9px 0}
+.skm .skfoot{margin:22px 2px 0;color:var(--mute);font-size:12px;line-height:1.5;max-width:860px}
+@media (min-width:761px){ .skm{padding:0 12px} .skm .skg{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px} .skm .skp{padding:16px 16px 10px} .skm .skts{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .skm .skb{padding:12px 12px 11px} .skm .sknm{font-size:15.5px} .skm .skcw{max-width:760px} }
+@media (max-width:380px){ .skm h1{font-size:34px} }
+@media (prefers-reduced-motion:no-preference){ .skm .skb,.skm .skt{transition:border-color .12s} }
+"""
+
+JS = r"""
+(function(){
+  var root = document.getElementById('skm'), D = window.__SK;
+  if(!root || !D) return;
+  var CI = {}, BY = {}, SD = {};
+  D.cols.forEach(function(c, i){ CI[c] = i; });
+  D.pl.forEach(function(p){ BY[p.k] = p; });
+  D.stats.forEach(function(s){ SD[s.id] = s; });
+  var q = document.getElementById('skq'), secs = document.getElementById('sksecs'), res = document.getElementById('skres'),
+      rl = document.getElementById('skrl'), rh = document.getElementById('skrh'), rn = document.getElementById('skrn');
+  var cur = null, CAP = 24;
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function fields(p){
+    var c = D.tc[p.t] || ['#2b3442', '#141a24', '#ffffff'], f = {k: p.k, pos: p.p, t: p.t, tn: p.tn, n: p.n, c1: c[0], c2: c[1], ink: c[2]}, x;
+    for(x in p.f) f[x] = p.f[x];
+    return f;
+  }
+  function fill(f){ return D.tpl.replace(/\{(\w+)\}/g, function(m, k){ return esc(f[k] == null ? '' : f[k]); }); }
+  function avg(a){ var s = 0; for(var i = 0; i < a.length; i++) s += a[i]; return a.length ? s / a.length : 0; }
+  function win(n){ return n >= 6 ? 3 : (n >= 4 ? 2 : 0); }
+  function series(p, st){
+    var c = CI[st.col], out = [];
+    for(var i = 0; i < p.g.length; i++){ var v = p.g[i][c]; if(v == null) continue; out.push({w: p.g[i][0], o: p.g[i][1], v: v}); }
+    return out;
+  }
+  function trend(vals){
+    var n = vals.length, k = win(n);
+    if(!k) return {k: 0, r: avg(vals), b: null, d: null};
+    var r = avg(vals.slice(n - k)), b = avg(vals.slice(0, n - k));
+    return {k: k, r: r, b: b, d: r - b};
+  }
+  function tone(t, st){ return t.d == null ? 'na' : (Math.abs(t.d) < st.flat ? 'fl' : ((t.d > 0) !== !!st.inv ? 'up' : 'dn')); }
+  function one(v, st){ return st.pct ? Math.round(v) + '%' : (st.dec ? v.toFixed(st.dec) : String(Math.round(v))); }
+  function mid(v, st){ return st.pct ? Math.round(v) + '%' : v.toFixed(1); }
+  function dtxt(d, st){
+    if(d == null) return '';
+    var a = Math.abs(d), s = st.pct ? Math.round(a) + '%' : a.toFixed(1);
+    if(a < st.flat) return (/^0(\.0)?%?$/.test(s) ? '' : (d >= 0 ? '+' : '−')) + s;
+    return (d > 0 ? '▲ ' : '▼ ') + s;
+  }
+  function r1(x){ return Math.round(x * 10) / 10; }
+  function spark(vals, k){
+    /* the same picture as the tile's graph (build_stocks.py spark), with a plain end dot sized for a small box */
+    var n = vals.length, lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max.apply(null, vals);
+    if(hi - lo < 1e-9) hi = lo + 1;
+    var pts = vals.map(function(v, i){ return [r1(n === 1 ? 60 : 4 + 112 * i / (n - 1)), r1(5 + 30 * (1 - (v - lo) / (hi - lo)))]; });
+    function path(ps){ return ps.length > 1 ? 'M' + ps.map(function(p){ return p[0] + ' ' + p[1]; }).join('L') : ''; }
+    return '<svg class="sksp" viewBox="0 0 120 40" aria-hidden="true" focusable="false"><path class="ska" d="' + path(pts) + '"/><path class="skr" d="' + (k ? path(pts.slice(n - k)) : '') +
+      '"/><circle cx="' + pts[n - 1][0] + '" cy="' + pts[n - 1][1] + '" r="5"/></svg>';
+  }
+
+  /* ---- a player's panel: his stats to pick from; the picked stat's graph opens under its row ---- */
+  function statBtn(p, st){
+    var s = series(p, st); if(!s.length) return '';
+    var vals = s.map(function(x){ return x.v; }), tot = 0; vals.forEach(function(v){ tot += v; });
+    if(tot < st.min) return '';
+    var t = trend(vals), d = dtxt(t.d, st), say = st.l + ': ' + mid(t.r, st) + (t.k ? ' over his last ' + t.k + ' games' : ' a game');
+    return '<button type="button" class="skt ' + tone(t, st) + '" data-s="' + st.id + '" aria-pressed="false" aria-label="' + esc(say) + '. Graph it."><span class="sktl">' + esc(st.l) + '</span>' +
+      '<span class="sktv"><b>' + mid(t.r, st) + '</b><em>' + (d || '&nbsp;') + '</em></span>' + spark(vals, t.k) + '</button>';
+  }
+  function panelHTML(p){
+    var ids = D.order[p.p] || ['ppr'], b = '';
+    ids.forEach(function(id){ if(SD[id]) b += statBtn(p, SD[id]); });
+    var stl = p.st ? ' · ' + esc(p.st) + ' this week' : '', nt = '';
+    (p.nt || []).forEach(function(x){ nt += '<p class="skwn">' + esc(x) + '</p>'; });
+    var hint = p.kw ? 'Pick a stat to graph it. Each number is his average over his last ' + p.kw + ' games; the arrow is the change from before.' : 'Pick a stat to graph it. Each number is his average a game.';
+    return '<div class="skph"><div><h3 id="skpt">' + esc(p.n) + '</h3><p>' + esc(D.pos[p.p] || p.p) + ' · ' + esc(p.tn) + stl + '</p></div>' +
+      '<button type="button" class="skx">Close</button></div>' + nt +
+      '<p class="skpq" id="skpq">' + hint + '</p>' +
+      '<div class="skts" role="group" aria-labelledby="skpq">' + b + '</div>' +
+      (p.pg ? '<p class="skpl"><a href="/player/' + encodeURIComponent(p.k) + '/">' + esc(p.n) + '’s player page: props, matchup and game log</a></p>' : '');
+  }
+  function fit(el, keep){
+    /* bring el into view under the sticky menu and above the phone tabs, without pushing `keep` off the top */
+    var vh = window.innerHeight, r = el.getBoundingClientRect(), k = (keep || el).getBoundingClientRect();
+    var d = Math.min(r.bottom - (vh - 84), k.top - 64);
+    if(d > 4) window.scrollBy({top: d, behavior: calm ? 'auto' : 'smooth'});
+  }
+  function seat(item, box){
+    /* box goes after the last item of `item`'s row (a full-width row of its own in the grid) */
+    var last = item, top = item.offsetTop, nx;
+    while((nx = last.nextElementSibling) && nx !== box && nx.offsetTop === top) last = nx;
+    item.parentNode.insertBefore(box, last.nextSibling);
+  }
+  function closePanel(back){
+    if(!cur) return;
+    cur.btn.setAttribute('aria-expanded', 'false'); cur.btn.removeAttribute('aria-controls');
+    if(cur.panel.parentNode) cur.panel.parentNode.removeChild(cur.panel);
+    var b = cur.btn; cur = null;
+    if(back && document.body.contains(b)) b.focus();
+  }
+  function openPanel(li, quiet){
+    var p = BY[li.getAttribute('data-k')], btn = li.querySelector('.skb');
+    if(!p || !btn) return;
+    var same = cur && cur.li === li;
+    closePanel(false);
+    if(same) return;
+    var panel = document.createElement('li');
+    panel.className = 'skp'; panel.id = 'skp'; panel.setAttribute('role', 'region'); panel.setAttribute('aria-labelledby', 'skpt');
+    panel.innerHTML = panelHTML(p);
+    seat(li, panel);
+    btn.setAttribute('aria-expanded', 'true'); btn.setAttribute('aria-controls', 'skp');
+    cur = {li: li, btn: btn, panel: panel, p: p, st: null, sb: null, box: null, i: -1, w: 0};
+    if(!quiet) fit(panel, li);
+  }
+
+  function ticks(lo, hi, whole){
+    var span = (hi - lo) || 1, raw = span / 4, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), nrm = raw / mag;
+    var step = (nrm <= 1 ? 1 : (nrm <= 2 ? 2 : (nrm <= 5 ? 5 : 10))) * mag;
+    if(whole && step < 1) step = 1;
+    var t0 = Math.floor(lo / step + 1e-9) * step, t1 = Math.ceil(hi / step - 1e-9) * step, list = [];
+    if(t1 <= t0) t1 = t0 + step;
+    for(var v = t0; v <= t1 + step / 2; v += step) list.push(Math.round(v * 1000) / 1000);
+    return {min: t0, max: t1, step: step, list: list};
+  }
+  function draw(){
+    /* the graph of cur.st for cur.p, sized to its box */
+    var p = cur.p, st = cur.st, box = cur.box, s = series(p, st), n = s.length;
+    var vals = s.map(function(x){ return x.v; }), t = trend(vals), k = t.k;
+    var Wd = Math.max(250, Math.floor(box.clientWidth)), H = 232, ml = 34, mr = 10, mt = 14, mb = 38, pw = Wd - ml - mr, ph = H - mt - mb;
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var tk = ticks(lo < -0.08 * Math.max(hi, 1) ? lo : 0, hi, !st.dec);
+    function X(i){ return n === 1 ? ml + pw / 2 : ml + 14 + (pw - 28) * i / (n - 1); }
+    function Y(v){ return mt + ph * (1 - (v - tk.min) / (tk.max - tk.min)); }
+    function f1(x){ return (Math.round(x * 10) / 10); }
+    function line(a, b){ var d = ''; for(var i = a; i <= b; i++) d += (i === a ? 'M' : 'L') + f1(X(i)) + ' ' + f1(Y(vals[i])); return d; }
+    function area(a, b){ var y0 = f1(Y(Math.max(tk.min, 0))); return line(a, b) + 'L' + f1(X(b)) + ' ' + y0 + 'L' + f1(X(a)) + ' ' + y0 + 'Z'; }
+    var g = '', i, tl;
+    for(i = 0; i < tk.list.length; i++){
+      tl = st.pct ? tk.list[i] + '%' : (tk.step < 1 ? tk.list[i].toFixed(1) : String(tk.list[i]));
+      g += '<line class="gr" x1="' + ml + '" x2="' + (Wd - mr) + '" y1="' + f1(Y(tk.list[i])) + '" y2="' + f1(Y(tk.list[i])) + '"/><text x="' + (ml - 7) + '" y="' + (f1(Y(tk.list[i])) + 3.5) + '" text-anchor="end">' + tl + '</text>';
+    }
+    if(n > 1){
+      g += '<path class="ar" d="' + area(0, n - 1) + '"/>';
+      if(k) g += '<path class="ar2" d="' + area(n - k, n - 1) + '"/>';
+      g += '<path class="ln" d="' + line(0, k ? n - k : n - 1) + '"/>';
+      if(k) g += '<path class="ln2" d="' + line(n - k, n - 1) + '"/>';
+    }
+    if(k){
+      g += '<line class="av" x1="' + f1(X(0) - 8) + '" x2="' + f1(X(n - k - 1) + 8) + '" y1="' + f1(Y(t.b)) + '" y2="' + f1(Y(t.b)) + '"/>';
+      g += '<line class="av2" x1="' + f1(X(n - k) - 8) + '" x2="' + f1(X(n - 1) + 8) + '" y1="' + f1(Y(t.r)) + '" y2="' + f1(Y(t.r)) + '"/>';
+    }
+    g += '<line class="cx" id="skcx" x1="0" x2="0" y1="' + mt + '" y2="' + (mt + ph) + '"/>';
+    var every = n > 12 ? Math.ceil(n / 12) : 1;
+    for(i = 0; i < n; i++){
+      g += '<circle class="' + (k && i >= n - k ? 'dt2' : 'dt') + '" cx="' + f1(X(i)) + '" cy="' + f1(Y(vals[i])) + '" r="4"/>';
+      if(i % every === 0 || i === n - 1) g += '<text class="xo" data-i="' + i + '" x="' + f1(X(i)) + '" y="' + (H - 21) + '" text-anchor="middle">' + esc(s[i].o) + '</text><text class="wk" x="' + f1(X(i)) + '" y="' + (H - 8) + '" text-anchor="middle">W' + s[i].w + '</text>';
+    }
+    g += '<circle class="sel" id="sksel" cx="0" cy="0" r="7"/>';
+    var per = st.pct ? '' : ' a game', note;
+    if(k) note = '<span><i class="k2"></i>Last ' + k + ' games: <b>' + mid(t.r, st) + '</b> ' + esc(st.u) + per + '.</span> <span><i></i>Before that: <b>' + mid(t.b, st) + '</b>.</span>';
+    else note = '<b>' + mid(t.r, st) + '</b> ' + esc(st.u) + per + ' in ' + n + ' game' + (n === 1 ? '' : 's') + '. A trend needs four.';
+    var rows = '';
+    for(i = n - 1; i >= 0; i--) rows += '<tr><td>' + s[i].w + '</td><td>' + esc(s[i].o) + '</td><td>' + one(s[i].v, st) + '</td></tr>';
+    box.innerHTML = '<figure class="skc ' + tone(t, st) + '"><figcaption><span class="skct" id="skct">' + esc(st.l) + '</span><span class="skrd" id="skrd" aria-live="polite"></span></figcaption>' +
+      '<div class="skplot" id="skplot" tabindex="0" role="group" aria-label="' + esc(p.n + ', ' + st.l.toLowerCase() + ' by game. Left and right arrow keys read each game.') + '">' +
+      '<svg viewBox="0 0 ' + Wd + ' ' + H + '" width="' + Wd + '" height="' + H + '" aria-hidden="true" focusable="false">' + g + '</svg></div>' +
+      '<p class="skcc">' + note + '</p>' +
+      '<details class="sktbl"><summary>Show the numbers</summary><table><thead><tr><th>Week</th><th>Opp</th><th>' + esc(st.l) + '</th></tr></thead><tbody>' + rows + '</tbody></table></details></figure>';
+    cur.w = Wd; cur.geo = {X: X, Y: Y, n: n, s: s, vals: vals};
+    var plot = document.getElementById('skplot');
+    function near(e){
+      var r = plot.getBoundingClientRect(), x = (e.clientX - r.left) * (Wd / r.width), best = 0, bd = 1e9;
+      for(var j = 0; j < n; j++){ var dd = Math.abs(X(j) - x); if(dd < bd){ bd = dd; best = j; } }
+      pick(best);
+    }
+    plot.addEventListener('pointerdown', near);
+    plot.addEventListener('pointermove', function(e){ if(e.pointerType === 'mouse' || e.buttons || e.pressure > 0) near(e); });
+    plot.addEventListener('keydown', function(e){
+      var j = cur.i;
+      if(e.key === 'ArrowLeft') j = Math.max(0, j - 1); else if(e.key === 'ArrowRight') j = Math.min(n - 1, j + 1); else if(e.key === 'Home') j = 0; else if(e.key === 'End') j = n - 1; else return;
+      e.preventDefault(); pick(j);
+    });
+    pick(cur.i >= 0 && cur.i < n ? cur.i : n - 1);
+  }
+  function pick(i){
+    var G = cur.geo, st = cur.st; if(!G) return;
+    cur.i = i;
+    var cx = document.getElementById('skcx'), sel = document.getElementById('sksel'), rd = document.getElementById('skrd'), x = Math.round(G.X(i) * 10) / 10, y = Math.round(G.Y(G.vals[i]) * 10) / 10;
+    cx.setAttribute('x1', x); cx.setAttribute('x2', x); sel.setAttribute('cx', x); sel.setAttribute('cy', y);
+    rd.textContent = '';
+    var a = document.createElement('span'), b = document.createElement('b'), u = document.createElement('span');
+    a.textContent = 'Week ' + G.s[i].w + ' vs ' + G.s[i].o; b.textContent = one(G.vals[i], st); u.className = 'sr'; u.textContent = ' ' + st.u;
+    rd.appendChild(a); rd.appendChild(b); rd.appendChild(u);
+    var xs = cur.box.querySelectorAll('.xo');
+    for(var j = 0; j < xs.length; j++) xs[j].setAttribute('class', 'xo' + (+xs[j].getAttribute('data-i') === i ? ' on' : ''));
+  }
+  function shut(){
+    /* close the open graph, leave the panel */
+    if(!cur || !cur.box) return;
+    if(cur.box.parentNode) cur.box.parentNode.removeChild(cur.box);
+    if(cur.sb) cur.sb.setAttribute('aria-pressed', 'false');
+    cur.box = null; cur.sb = null; cur.st = null; cur.geo = null; cur.i = -1;
+  }
+  function choose(btn){
+    var st = SD[btn.getAttribute('data-s')]; if(!cur || !st) return;
+    var same = cur.sb === btn;
+    shut();
+    if(same) return;
+    var box = document.createElement('div');
+    box.className = 'skcw'; box.id = 'skcw';
+    seat(btn, box);
+    btn.setAttribute('aria-pressed', 'true');
+    cur.st = st; cur.sb = btn; cur.box = box; cur.i = -1;
+    draw();
+    fit(box, btn);
+  }
+
+  /* ---- search: every player with a page, best recent scorer first ---- */
+  function norm(s){ return String(s).toLowerCase().replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/^ +| +$/g, ''); }
+  var IDX = D.pl.map(function(p){ return {p: p, s: ' ' + norm(p.n + ' ' + p.t + ' ' + p.tn + ' ' + p.p + ' ' + (D.pos[p.p] || ''))}; });
+  function search(){
+    var v = norm(q.value);
+    closePanel(false);
+    if(v.length < 2){ res.hidden = true; secs.hidden = false; rl.innerHTML = ''; return []; }
+    var tk = v.split(' '), hits = [], i, j, ok;
+    for(i = 0; i < IDX.length; i++){
+      ok = true;
+      for(j = 0; j < tk.length; j++){ if(IDX[i].s.indexOf(' ' + tk[j]) < 0){ ok = false; break; } }
+      if(ok) hits.push(IDX[i].p);
+    }
+    var h = '';
+    for(i = 0; i < hits.length && i < CAP; i++) h += fill(fields(hits[i]));
+    rl.innerHTML = h; secs.hidden = true; res.hidden = false;
+    rh.querySelector('small').textContent = hits.length ? (hits.length === 1 ? '1 player' : (hits.length > CAP ? 'top ' + CAP + ' of ' + hits.length + ' · keep typing to narrow it' : hits.length + ' players')) : '';
+    rn.hidden = hits.length > 0;
+    if(!hits.length) rn.textContent = 'No player matches “' + q.value.replace(/^\s+|\s+$/g, '') + '”. Try a last name or a team, like Cook or Bills.';
+    return hits;
+  }
+  function more(btn){
+    /* the rest of that position's risers, same tile template, under the ones the page came with */
+    var pos = btn.getAttribute('data-pos'), sec = btn.closest('.sksec'), ul = sec && sec.querySelector('.skg'), ks = (D.more || {})[pos] || [], h = '', i;
+    if(!ul) return;
+    for(i = 0; i < ks.length; i++) if(BY[ks[i]]) h += fill(fields(BY[ks[i]]));
+    var open = cur && cur.li.parentNode === ul;
+    if(open && cur.panel.parentNode) cur.panel.parentNode.removeChild(cur.panel);
+    ul.insertAdjacentHTML('beforeend', h);
+    if(open) seat(cur.li, cur.panel);
+    var sm = sec.querySelector('h2 small'), n = ul.querySelectorAll('.sk').length;
+    if(sm) sm.textContent = 'all ' + n + ' rising';
+    var first = ks.length ? ul.querySelector('.sk[data-k="' + ks[0] + '"] .skb') : null;
+    btn.parentNode.parentNode.removeChild(btn.parentNode);
+    if(first){ try{ first.focus({preventScroll: true}); }catch(e){ first.focus(); } }
+  }
+  q.addEventListener('input', search);
+  q.addEventListener('keydown', function(e){ if(e.key === 'Escape' && q.value){ q.value = ''; search(); } });
+
+  root.addEventListener('click', function(e){
+    var t = e.target, el;
+    if((el = t.closest('.skb'))){ openPanel(el.parentNode); return; }
+    if((el = t.closest('.skx'))){ closePanel(true); return; }
+    if((el = t.closest('.skt'))){ choose(el); return; }
+    if((el = t.closest('.skmore'))){ more(el); return; }
+    if((el = t.closest('.skj a')) && q.value){ q.value = ''; search(); }
+  });
+  root.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || !cur) return;
+    if(cur.box && cur.box.contains(e.target)){ e.preventDefault(); var b = cur.sb; shut(); if(b) b.focus(); return; }
+    if(cur.panel.contains(e.target) || cur.li.contains(e.target)){ e.preventDefault(); closePanel(true); }
+  });
+  var rz = 0;
+  window.addEventListener('resize', function(){
+    clearTimeout(rz);
+    rz = setTimeout(function(){
+      if(!cur) return;
+      if(cur.panel.parentNode) cur.panel.parentNode.removeChild(cur.panel);
+      seat(cur.li, cur.panel);
+      if(cur.box){
+        if(cur.box.parentNode) cur.box.parentNode.removeChild(cur.box);
+        seat(cur.sb, cur.box);
+        if(Math.abs(cur.box.clientWidth - cur.w) > 2) draw();
+      }
+    }, 150);
+  });
+  /* /stocks/#p=<player slug> opens that player (links from other pages) */
+  var m = /^#p=([a-z0-9-]+)$/.exec(location.hash || '');
+  if(m && BY[m[1]]){
+    var li = root.querySelector('.sk[data-k="' + m[1] + '"]');
+    if(!li){ q.value = BY[m[1]].n; search(); li = rl.querySelector('.sk[data-k="' + m[1] + '"]'); }
+    if(li){ openPanel(li, true); li.scrollIntoView({block: 'start'}); }
+  }
+  root.setAttribute('data-ready', '1');
+})();
+"""
+
+def section(pos, title, word):
+    rs = RISE[pos]
+    body = ('<ul class="skg">' + "".join(fill(fields(x)) for x in rs) + '</ul>') if rs else f'<p class="sknone">No {word} is clearly rising right now.</p>'
+    if MORE[pos]: body += f'<p class="skmr"><button type="button" class="skmore" data-pos="{pos}">Show all {len(ALLR[pos])} rising {E(title.lower())}</button></p>'
+    return (f'<section class="sksec" id="sk-{pos.lower()}" data-pos="{pos}"><h2>{E(title)} <small>{"top " + str(len(rs)) + " rising" if rs else "nobody rising"}</small></h2>{body}</section>')
+
+DATA = {"week": W, "cols": COLS, "stats": STATS, "order": ORDER, "pos": {a: c.capitalize() for a, b, c in POSN}, "tc": TC, "tpl": TILE, "top": TOP, "floor": FLOOR, "min_up": MIN_UP,
+        "rise": {pos: [x["k"] for x in RISE[pos]] for pos, _, _ in POSN}, "more": {pos: [x["k"] for x in MORE[pos]] for pos, _, _ in POSN}, "pl": PL}
+blob = json.dumps(DATA, separators=(",", ":")).replace("</", "<\\/")   # ASCII only: the data file is read right whatever the server says its charset is
+nrise = sum(len(v) for v in RISE.values())
+link, base = __import__("account")._base_css()
+floors = f'{FLOOR["QB"]:g} fantasy points as a quarterback, {FLOOR["RB"]:g} as a back or receiver, or {FLOOR["TE"]:g} as a tight end'
+page = (f'<title>NFL fantasy stock market: rising players at every position · Week {W} · BetSweep</title>\n'
+        f'<meta name="description" content="Whose fantasy stock is rising going into Week {W}: the top risers at quarterback, running back, wide receiver and tight end, with a game-by-game graph of fantasy points and every stat.">\n'
+        f'{link}\n<style>{base}{CSS}</style>\n'
+        f'<div class="skm" id="skm" data-week="{W}">'
+        '<div class="skhd"><h1>Stock Market</h1>'
+        f'<span class="sksub">Who is rising going into Week {W}. Each graph is a player\'s fantasy points, game by game. Tap one to graph his other stats.</span></div>'
+        '<div class="skfind"><label class="sr" for="skq">Search players</label><input id="skq" type="search" placeholder="Search a player or team" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search"></div>'
+        '<div class="skbar"><nav class="skj" aria-label="Jump to a position">' + "".join(f'<a href="#sk-{a.lower()}">{a}</a>' for a, b, c in POSN) + '</nav>'
+        '<p class="skkey"><span><i class="k2"></i>last 3 games</span><span><i></i>earlier games</span></p></div>'
+        '<div id="sksecs">' + "".join(section(a, b, c) for a, b, c in POSN) + '</div>'
+        '<div id="skres" hidden><h2 id="skrh">Search results <small></small></h2><ul class="skg" id="skrl"></ul><p class="sknone" id="skrn" role="status" hidden></p></div>'
+        '<noscript><p class="sknone">Turn on JavaScript to open a player\'s stats and to search.</p></noscript>'
+        f'<p class="skfoot">The big number on a tile is the player\'s fantasy points a game over his last 3 games (his last 2 if he has played only 4 or 5); the arrow is the change from his earlier games. '
+        f'To make a list a player has to average at least {floors} over those games, be up at least {MIN_UP:g} a game, and have beaten his earlier average in at least two of them, so one big game is not a rise. '
+        'Players ruled out or doubtful this week, and players who missed their team\'s last two games, are left off the lists; the search still finds them. '
+        f'{E(THRU)}. Fantasy points are full PPR. Stats and snap counts: nflverse.</p></div>\n'
+        f'<script>window.__SK = {blob};</script>\n<script>{JS}</script>\n')
+open(os.path.join(OUT, "stocks.html"), "w", encoding="utf-8").write(page)
+print(f"wrote out/stocks.html: {nrise} risers ({', '.join(a + ' ' + str(len(RISE[a])) for a, b, c in POSN)}), {len(PL)} players in the search, week {W}; data {len(blob) // 1024} KB")

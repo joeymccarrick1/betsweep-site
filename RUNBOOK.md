@@ -2528,10 +2528,10 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
   (.tdmore, under "Share this take"), shows one line: the game's top hunch (the desk's own first, then Backed, then Mixed, by strength),
   its verdict pill and "+N more", linking to /hunches/#h-<gid>. Caution / Info / Not backed hunches never show there. A game without a
   Backed or Mixed hunch shows nothing. tests/today_hunch.py (17 checks, phone light + dark) is in the pre-publish set (42 tests).
-- **11/21 6:40 PM: hourly job 503s - retry drafted, NOT pushed.** in/AVAIL_AUTO.json read "error: HTTPError HTTP Error 503" at 18:05Z,
-  23:44Z and 00:05Z (11/22); a run that errors skips that half hour's rule-outs and stale checks. pending/avail-retry.patch adds _open()
-  (3 tries on 429/5xx/dropped connection, error names the host only) to site main .github/avail_auto.py + 3 selftest cases. It changes
-  a job on main, so it waits for the owner's yes: `git apply` in the site clone, `python3 .github/avail_auto.py --selftest`, commit, push.
+- **11/21 6:40 PM: hourly job 503s - retry, pushed 6:39 PM on the owner's yes ("Yes push the injury job").** in/AVAIL_AUTO.json read
+  "error: HTTPError HTTP Error 503" at 18:05Z, 23:44Z and 00:05Z (11/22); a run that errors skips that half hour's rule-outs and stale
+  checks. Site main .github/avail_auto.py now has _open() (3 tries on 429/5xx/dropped connection, error names the host only) + 3 selftest
+  cases (commit 92eca234). Every report read since has been clean ("nothing to write", last read 06:35Z 11/22).
 
 ## THE MATCHUP RULE (owner 11/21 8:09 PM: "a rule that you always have to follow no matter what the leg")
 Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE sending, and say which legs fail.
@@ -2541,3 +2541,31 @@ Applies to every leg sent in chat or posted, TD legs included. Check it BEFORE s
 - **Similar defenses**: want legs whose player has a passing record against similar defenses (2024-25); no record (rookie) is a gap to state, not a pass.
 - TD-specific version of all four: /tmp-style script kept as research/tdcheck notes - defense top-16 in TDs allowed to the position, script within 5% of overall and not trailing, scored vs similar defenses at half or his priced rate. Ties in defense ranks must be averaged (a tie-ordering flaw gave unstable counts on 11/21).
 - 11/21 slips: ten Sunday SGPs (slip log 63-72) were built on the risk score only and sent before this rule; the Sunday Slate promo (row 50, +2946) was the owner's slip, posted 8:10 PM.
+
+## 11/22 12:05-1:30 AM CT: Stock Market page, /stocks/ (owner 12:04 AM: "a 'Stock Market' page ... basically wanting to add a lot of graphs")
+- **What it is.** A search box, QB / RB / WR / TE jump chips, then the top 8 risers at each position as tiles: player, team badge, a graph
+  of his fantasy points game by game (his last games in colour), his average over those games and the change from his earlier ones.
+  Tap a tile: his stats open under his row, each stat a small tile with its own number, arrow and graph. Tap a stat: that stat's graph
+  opens under the stat's row (line + dots, both averages dashed, a readout that follows a tap or the arrow keys, "Show the numbers" table).
+  "Show all N rising ..." under a list adds the rest of that position's risers. The search finds every player who has a player page,
+  rising or not (393), and writes the same tile from the same template, so a searched tile is the tile he has in a list.
+- **Files.** build_stocks.py (new; soft step "stock market" in reprice.py BUILD, after players and usage) writes out/stocks.html.
+  build_site.py places it at /stocks/ and moves the data to /stocks/data-<hash>.js (externalize(), like the builder's board); menu
+  Players > Stock Market, a tile on "Everything on BetSweep", next-page links, the offline shell. build_players.py: the game log ends with
+  a link to /stocks/#p=<slug>, which opens straight to that player.
+- **The rule** (constants at the top of build_stocks.py; the page's footnote says it in words). Window = last 3 games with 6+ played, last 2
+  with 4 or 5, none below 4. A riser averages FLOOR+ over the window (QB 12, RB / WR 8, TE 6), is up MIN_UP (1.0)+ a game on his earlier
+  games, beat his earlier average in two or more window games (one blow-up is not a rise), played one of his team's last two games, is
+  not Out / Doubtful, has a player page. Biggest rise first; a tie to two decimals goes by name. Everything is computed from the
+  0.1-rounded PPR the page ships, so the test - and a reader - can redo it from a player's graph.
+- **Injury context** (injweeks.py, facts only, no forecast). In a player's panel: "He played more snaps than usual in Week N, with X out.
+  X has played since." (or "is questionable this week" / "is not ruled out this week" - what is actually known about X; his tile wears
+  NOTE), "He played less than usual in Week N (shoulder).", "His earlier games include Week N (ankle), when he played less than usual."
+  One sentence per teammate. A teammate who is Out / Doubtful now makes no note (nobody is back). Do NOT write "X is back": injweeks'
+  back_now() is true for a teammate who was out in the latest game and is only questionable now (Carnell Tate, Week 11).
+- **Phone.** The site zooms 1.1x at 760px and under, so a 390px screen is about 333px of layout: tile minimum 146px = two to a row, stat
+  tiles 136px = two to a row. A long name takes a second line; a tagged tile drops the team name (the badge carries it). Tags: NOTE and Q
+  amber (white ink on the light theme, dark ink on the dark one: the amber token differs), OUT / D red. A change that rounds to 0.0 has no sign.
+- **Check.** tests/stocks_page.py, 87 checks, phone light + dark and desktop: the lists redone from the shipped game logs, every note
+  pointing at games that are where it says, the tap flows, search parity, show-all, the deep link. In the pre-publish set (43 tests).
+- **Not built.** A Falling list (every player already has his arrow in the data; a Rising / Falling switch is the natural next step).

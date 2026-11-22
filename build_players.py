@@ -478,7 +478,9 @@ def log_block(p):
         def row(g): return (f'<td>{g["w"]}{(" <small>" + E(g["tm"]) + "</small>") if g.get("tm") else ""}</td><td><a href="/teams/{g["opp"].lower()}/">{E(g["opp"])}</a></td><td>{("%d%%" % round(g["snap"] * 100)) if g["snap"] is not None else "—"}</td><td>{g["tgt"]:.0f}</td><td>{g["rec"]:.0f}</td><td>{g["recy"]:.0f}</td>'
                             f'<td>{g["car"]:.0f}</td><td>{g["rush"]:.0f}</td><td>{g["td"]:.0f}</td><td>{100 * g["ts"]:.0f}%</td><td>{g["ppr"]:.1f}</td>')
     body = "".join(f"<tr>{row(g)}</tr>" for g in reversed(gs))
-    return f'<section><h2>Game log <small>2026 regular season, newest first</small></h2><div class="tw"><table><thead><tr>{hdr}</tr></thead><tbody>{body}</tbody></table></div></section>'
+    # 11/22: the Stock Market page (build_stocks.py) draws any of these columns game by game; /stocks/#p=<slug> opens straight to him
+    return (f'<section><h2>Game log <small>2026 regular season, newest first</small></h2><div class="tw"><table><thead><tr>{hdr}</tr></thead><tbody>{body}</tbody></table></div>'
+            f'<p class="none glgraph"><a href="/stocks/#p={p["slug"]}">Graph these game by game on the Stock Market page</a></p></section>')
 
 def mates_block(k, p):
     ms = [kk for kk in by_team.get(p["team"], []) if kk != k]
