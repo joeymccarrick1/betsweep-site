@@ -2523,3 +2523,8 @@ and lineup/inactive alerts for every league (ON since 11/18 12:35 PM). Check thi
 - The open slip on a phone has its own full-width red **Save** (`#savepin`) in the pinned row with the sportsbook buttons, so nothing
   has to be scrolled to; it is hidden when the slip is closed and on desktop (where Save slip is already in view).
 - tests/builder_save_pop.py 14 (phone, light and dark; a two-leg slip staged through bs_slipk_w<W>). Full set is 41.
+
+- **11/21 6:00-6:40 PM: a game card names its best hunch.** build_today.py reads out/hunches.json and, inside each card's opened part
+  (.tdmore, under "Share this take"), shows one line: the game's top hunch (the desk's own first, then Backed, then Mixed, by strength),
+  its verdict pill and "+N more", linking to /hunches/#h-<gid>. Caution / Info / Not backed hunches never show there. A game without a
+  Backed or Mixed hunch shows nothing. tests/today_hunch.py (17 checks, phone light + dark) is in the pre-publish set (42 tests).

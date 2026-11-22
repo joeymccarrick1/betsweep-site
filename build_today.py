@@ -21,6 +21,13 @@ TEAM_OF = {"Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Rave
            "Jacksonville Jaguars": "JAX", "Kansas City Chiefs": "KC", "Las Vegas Raiders": "LV", "Los Angeles Chargers": "LAC", "Los Angeles Rams": "LA", "Miami Dolphins": "MIA", "Minnesota Vikings": "MIN",
            "New England Patriots": "NE", "New Orleans Saints": "NO", "New York Giants": "NYG", "New York Jets": "NYJ", "Philadelphia Eagles": "PHI", "Pittsburgh Steelers": "PIT", "San Francisco 49ers": "SF",
            "Seattle Seahawks": "SEA", "Tampa Bay Buccaneers": "TB", "Tennessee Titans": "TEN", "Washington Commanders": "WAS"}
+# hunches by game for the card line (out/hunches.json is written by hunches.py earlier in the build; absent on the very first pass)
+try:
+    HUNCH = {}
+    for _h in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hunches.json")))["hunches"]:
+        if not _h.get("gone"): HUNCH.setdefault(_h["g"], []).append(_h)
+except Exception: HUNCH = {}
+
 def vals(n):
     p = os.path.join(IN, n)
     if not os.path.exists(p): return []
@@ -161,6 +168,11 @@ def sections(IN_, OUT_):
             price = bp.get("price") or bp.get("odds") or ""
             bp_html = ('<div class="tdbp"><small>Best parlay for this game</small><ul>' + "".join(f'<li><b>{E(str(x[0]))}</b> <span>{E(HOME.leg_line(x[1], x[2]))}</span><em>{E(odds(x[3]))}</em></li>' for x in bp["legs"][:4]) + '</ul>'
                        + (f'<a class="more" href="/boards/#g-{E(g["gid"])}">Full card →</a>') + '</div>')
+        # 11/21 the game's lead hunch (hunches.py), inside the fold: the owner's own first, then Backed, then Mixed. Cautions and info stay on /hunches/.
+        hx = [h for h in HUNCH.get(g["gid"], []) if h["kind"] == "own" or h["verdict"] in ("Backed", "Mixed")]
+        hx.sort(key=lambda h: (h["kind"] != "own", h["verdict"] != "Backed", -(h.get("strength") or 0)))
+        hunch_html = (f'<a class="tdhunch" href="/hunches/#h-{E(g["gid"])}"><i>Hunch</i><span>{E(hx[0]["title"])}</span><b class="v{E(hx[0]["verdict"].lower().split()[0])}">{E(hx[0]["verdict"])}</b>'
+                      + (f'<em>+{len(HUNCH[g["gid"]]) - 1} more</em>' if len(HUNCH[g["gid"]]) > 1 else "") + '</a>') if hx else ""
         cards.append(f'''<article class="tdgame" id="td-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-date="{E(ct_date(g.get("ko")) or "")}" data-fin="{E(g.get("fin", ""))}">
  <header><div class="tdm"><span class="tm">{E(away)}</span><span class="at">@</span><span class="tm">{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="tdcd" data-ko="{g.get("ko") or ""}"></span><span class="gl"></span></div></header>
  {stat_strip(g)}
@@ -168,6 +180,7 @@ def sections(IN_, OUT_):
  {(f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>') if say else ""}
  <button type="button" class="tdtog" aria-expanded="false"><span>More<em> on this game</em></span><i>▾</i></button>
  <div class="tdmore">{swb.get(g["gid"], "") if say else ""}
+ {hunch_html}
  {f'<div class="tdchips">{chip_html}</div>' if chip_html else ""}
  {f'<ul class="tdnews">{news_html}</ul>' if news_html else ""}
  {f'<div class="plays tdplays">{legs_html}</div>{bp_html}' if (legs_html or bp_html) else ""}
@@ -352,6 +365,10 @@ TODAY_CSS = r"""
 .tdact{display:flex;gap:8px;align-items:center}
 @media (max-width:560px){ .tdhead{flex-direction:column;align-items:stretch} .tdact{flex-wrap:wrap} } .tdshare,.tdlive{font:inherit;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none} .tdlive{background:var(--red);border-color:var(--red);color:#fff}
 .tdday .tdgames{display:grid;gap:12px}
+.tdhunch{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);font-size:14px;line-height:1.3}
+.tdhunch i{font-style:normal;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--red)} .tdhunch span{font-weight:600;overflow-wrap:anywhere}
+.tdhunch b{font-family:var(--display);font-weight:700;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap} .tdhunch b.vbacked{background:var(--good);border-color:var(--good);color:#fff}
+.tdhunch em{grid-column:2 / -1;font-style:normal;font-size:12.5px;color:var(--mute)}
 /* 11/20: a Sunday slate put 11 cards (4.6 phone screens) on Today. Past five games the first three show and one button opens the rest. */
 .tdday:not(.all) .tdgame.tdx{display:none} .tdallb{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:12px;font:inherit;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
 @media (min-width:900px){ .tdday:not(.all) .tdgame.tdx{display:flex} .tdallb{display:none} }
