@@ -2794,3 +2794,131 @@ Rule for page tests: a test that opens a game, or needs a leg that can still be 
 board keeps started games' legs in its data but the pages close them. A failure in the set on a Sunday afternoon is worth one rerun of
 that test alone before it is read as a regression.
 Both publishes today: Social buttons 12:31 PM CT (site 0bcdb176), Stock Market additions 1:09 PM CT (site bace1169). MASTER rows 648, 649.
+
+## 11/22 3:30-5:00 PM CT: other sports begin - the NBA preview page, /nba/ (owner 3:27 PM)
+
+Owner: "Let's start adding nba, college football, and epl. I want each sport to basically look exactly like everything we've built
+for NFL." His answers the same hour: prices - "I will upgrade but start without prices"; the data jobs - "Yes add them"; college
+football - "Post season game lines". Order agreed in chat: NBA, then EPL, then college football (title games, bowls, playoff: game
+lines only - Tennessee bans college player props). Each sport goes up first at its own address, NOT in the menu, for him to look at.
+New sports' numbers start **tracked, not a lead**: nothing is a pick until it has been graded.
+
+**How the data gets to the page**
+
+1. `feeds-sports` workflow on main (`.github/workflows/feeds-sports.yml`, every 15 minutes at :04 :19 :34 :49, reads no secrets):
+   `.github/feeds_sports.py` mirrors ESPN and the FPL feed to the orphan branch `feeds-sports`:
+   `nba/scoreboard.json` (yesterday to tomorrow), `nba/injuries.json`, `nba/box-<id>.json` (finals kept from run to run),
+   `epl/scoreboard.json`, `epl/lineups.json`, `epl/fpl.json`, `cfb/scoreboard.json` (two days back, sixteen ahead, FBS), `meta.json`.
+   ESPN refuses a date range on these scoreboards (HTTP 400), so each is fetched one day at a time after two tries that fail.
+2. The same job checks out `gen-overrides`, installs pandas/numpy/scipy and runs `python3 -m sports.nba.publish`: the NBA model
+   (`sports/`, the 11/15 groundwork brought over from the `multisport` branch) writes **`nba/board.json`** to the same branch.
+   If the model step fails the job keeps the last board and prints a warning.
+3. The hourly site build (reprice.py BUILD: "nba boards (preview)", soft) runs `build_nba.py {clone}`: it reads
+   `origin/feeds-sports:nba/board.json` through the clone with git and writes `out/nba-boards.html` in pure Python - the reprice job
+   needs no pandas. `build_site.py` places it at `/nba/` with `board.json` and `sig.json` beside it.
+
+**Publishing.** A full publish carries `/nba/` like any page. On an hour when fewer than 3 NFL prices moved, the build still checks
+`reprice.nba_changed(clone)` (the build's `out/nba_sig.json` against the live `nba/sig.json`: the day, each game's state and posted
+line, who is out, each player's points to the whole number) and, if it changed, `reprice.copy_only(clone, ["nba"])` replaces `/nba/`
+alone and adds only the `/s/` files that page links and the live site lacks. Nothing else is touched, nothing is pruned.
+
+**The board file** (`sports/nba/publish.py`, `FORMAT = 2`; `build_nba.py` has the same number and refuses any other):
+day = the Central date four hours ago, or the next day with games; per game the model's points for each team, tip time, ESPN's posted
+line with the book named; per team who is out (ESPN's report: Out and Doubtful are out, Questionable / Probable / Day-to-day stay in
+and are tagged), who is back (played 3 of the previous 9 games at 15+ minutes, sat out the last one, not listed out), what the
+opponent allows to guards / forwards / centers (rank of 30); per player minutes, projections for points, rebounds, assists and
+threes, season and last-10 averages, a ladder of chances, warnings, his last five games.
+
+**Which boards are drawn** (`build_nba.usable`): the right format, at least one game, and not for a day already over. The feed job
+keeps its last good board when a run fails, so an old one can sit on the branch; the build then writes no page and removes the three
+files it would have written. Because a page already live stays until the next publish, the page also checks its own date in the
+browser and shows "This board is for Sun 11/22. A newer one is not up yet..." above the cards when it is read on a later day.
+`python3 build_nba.py --board FILE` draws any board file whatever its day (tests, local work).
+
+**The page** wears the NFL boards' own stylesheet (the `<style>` of template.html, read at build time) and the same markup
+(section.card, header.hd, div.ginfo, .vbtns, ul.col, li.pl > button.prow + div.pdetail, span.sc chips). New things are `.nb*`
+classes in `NB_CSS` on the site's colour variables, and a small script `NB_JS` (template.html's own script is not loaded: it reads
+NFL data). Scorecards first; two buttons a card, Projections and Who's out; tap a player for his four stat chips (coloured by what
+the opponent allows to his position), the chance of each line, his last five games; a Slate card (tonight's games, top projected
+scorers, whose minutes go up); an NFL | NBA switch beside "How to read the board"; a dashed "NBA preview" note. No FanDuel prices,
+no edges, no best parlay, no betslip buttons, no picks, and the page says so. Not in the menu, not in the sitemap.
+
+**Tests** (both in tests/prepublish.sh):
+- `tests/nba_board.py` (port 8882): the publish rule on made-up folders; the stale-board rule; then the page redone from the
+  `board.json` it ships - every score, line, out, back, player row, chip, chance and last game - at 390x844 light and dark and on a
+  desktop, plus the old-board note with the clock moved three days on. With no /nba/ page in the build it says so and passes.
+- `tests/header_scroll.py` (port 8883): see the next section.
+
+**Not built yet:** NBA prices (the owner will upgrade The Odds API plan; `sports/snapshot_prices.py` is a draft that has never run
+live), nightly grading of the projections, NBA Stock Market / player pages / Today / Builder / Live, a sport switch on the NFL pages
+(only after he approves the preview), EPL pages, college football postseason game lines. The hourly workflow's own browser check does
+not open /nba/ (that list lives in the NFL job on main and was left alone).
+
+**When the job runs.** GitHub's own schedule cannot be trusted in this repo (see "GitHub's own schedule cannot be trusted here", 11/16):
+in the job's first hour its `schedule:` did not fire once. The other jobs are started by the database timer (sql/github_timers.sql),
+which is the owner's to run. So that nothing waits on him, `feeds-sports.yml` also has
+`workflow_run: {workflows: [sheet-mirror, price-moves], types: [completed]}`: it starts whenever one of those two timer-started jobs
+finishes - about :07, :12, :37 and :42 every hour, seen working from 22:37 UTC on 11/22. It reads nothing from them and changes
+nothing in them. By hand: `gh api repos/joeymccarrick1/betsweep-site/actions/workflows/feeds-sports.yml/dispatches -X POST -f ref=main`.
+If the job ever needs its own exact times, add a row to sql/github_timers.sql and ask the owner to run the file again.
+
+## 11/22 4:15 PM CT: the page header flickered on a desktop (found by the NBA page's test, fixed for every page)
+
+On every page with the big masthead (Boards, Builder, Live, Trade, Season, now /nba/) the header keeps its place at the top on a
+desktop and gets shorter once you scroll down (`body.bs-scrolled`, build_site.py). The browser answers a change of height above the
+reader by moving the scroll position to hold his place (scroll anchoring); the scroll handler read that move as "he scrolled back
+up" and reopened the header; the browser moved the page again. Measured on the live copy at 1280x900: after a mouse wheel the header
+changed 9 or 10 times before it settled; after a jump made by a script (`scrollTo`, `scrollIntoView`) it changed about 60 times a
+second and never stopped, and nothing on the page could be clicked. Jumps to a game from a chip were not affected (landOnHash sets
+`lastY` itself), and phones were not affected (there the title scrolls away and only the chip row sticks).
+
+Fix (build_site.py, the site-wide script): after the header changes, the scroll events of the next quarter second only record where
+the page is; they cannot change the header back. One change per scroll, and the reader's place does not move.
+
+`tests/header_scroll.py`: on each of those pages, desktop and phone - scroll down to 200, 460 and 900 and a little back up from each,
+three notches of a mouse wheel, and an element that scrolls itself into view from above and from below; the header may change once
+per scroll and the page must come to rest. 44 of 44 on the fixed build; against the live copy before the fix it failed on every
+desktop page (75 changes in the second it watched).
+
+## 11/22 4:25-5:15 PM CT: a posted slip lost its kickoff once its games started (found by the full set, fixed)
+
+**What was wrong (live, every game day until now).** build_promo.py took a slip's first and last kickoff only from the legs still on
+FanDuel's board, and FanDuel takes a game's player markets down at kickoff (the 4:20 PM build: 812 legs gone, only game lines left for
+the ten games under way or final). So:
+- 1:22-3:05 PM: every Week 11 slip's "first kickoff" was the 3:05 PM window, and the cards on Today read **Pregame** with early legs in play.
+- From 4:22 PM: Best TDs and the Daily Sweep had no kickoff at all, the other two had Sunday night's, and all four read Pregame with
+  seven games final. A card with no kickoff can never leave Pregame and is never put away.
+- The Daily Sweep finds its day by its first kickoff (sweep.py `day_of`), so once its games started it was drawn as an ordinary
+  "Side action" card, not as the Sweep.
+(Seen in the published history: `git log -- index.html` on main, the promo cards' `data-first-ko`.)
+
+**Fix.** `build_promo.kickoff_of(who)`: a leg that is off the board gets the kickoff of the game its player is in - his team from the
+projection tabs (in/proj_qb|rb|wr|te.json, there all week), the game from builder_data.json, which keeps every game of the week.
+"A or B" and "A / B" legs use either name. Only `ko` and `kick` are filled in: no price and no game id, so to every check and every
+price the leg is still "not on the board". A player on a bye, a name the tabs do not have, or a game line FanDuel no longer lists
+gets nothing rather than a guess.
+
+**Tests.** `tests/promo_kickoff.py` (new, no browser): the function on made-up tabs and games, compiled from build_promo.py's own
+text (the script builds when it loads, so it cannot be imported); then the slips this tree built - every leg that can be placed has
+its game's kickoff, on the board or off it, and each slip's first and last kickoff are the earliest and latest of ALL its legs.
+`tests/promo_clock.py` now also requires every ungraded slip on the page to carry its kickoff times, and checks "an hour before the
+first kickoff" card by card against the label each card was built with (it was all-or-nothing, and wrong for a page with slips in
+play beside a Sunday-night slip).
+
+## 11/22 4:45 PM CT: two Stock Market checks that failed on the clock (tests/stocks_page.py), not on the page
+
+The 4:20 PM full set ran with seven games final and three under way, and two checks that passed at 1 PM failed:
+- "'This week' gives N players a projection" wanted at least 100 and found 87. A player whose game is played gets a line about that
+  game, not a projection, so the count falls all Sunday. The check now redoes the page's own rule: a game still to come, not out or
+  doubtful, and Start / Sit lists him active with points - every such player must have a projection, and nobody whose game is played
+  or who is off may have one. (At 4:20 PM: 106 with a game to come, 87 due, 87 shown.)
+- "the same numbers hold for every kind of player": Kenneth Walker III's season average is 24.55; the page (JavaScript) showed 24.5
+  and the test (Python) 24.6. `same()` allowed 0.051, which lets nothing through at one decimal. It now allows one unit of the last
+  digit for numbers with decimals and nothing for whole numbers (ranks, counts, weeks).
+Rule kept from this morning: a Sunday-afternoon failure gets looked at before it is called a regression - one of these three was a
+real defect (the kickoffs, above), two were the tests.
+
+**The gate on ./site** said HOLD in that set for /season/ and /receipts/week9|10/ ("404 /s/tpl-....css"). Those are the live site's
+frozen pages, copied into ./site without the old stylesheet files the live site still holds; the template's stylesheet hash has
+moved on since they were made. It is not a fault of the build: the gate that counts is the one on a copy of the live clone
+(top of tests/prepublish.sh), where those files exist.

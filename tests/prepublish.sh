@@ -16,7 +16,7 @@ if [ -z "$SKIPBUILD" ]; then
   echo "reprice exit $? :: $(grep '^REPRICE ' "$LOG" | tail -1 | cut -c1-700)"
   grep -E '^\[(weekgate|availfix|feeds|voice)\]|CHECK FAILED|FAILED' "$LOG" | cut -c1-220 | head -20
 fi
-TESTS="home_filing promo_clock social_feed social_card social_elsewhere social_shot builder_fold boards_fold me_hub social_grade weather_gate finals_build live_finals live_gamemap live_first_screen live_regrade week_end inactive_block reprice_live sgp_price how_stats flag_stats trade_outlook bp_pick fantasy_nav promo_overlap promo_up page_fold calib_floor fantasy_push page_tight trade_find studio new_markets me_profile waiver_truth hunches_page news_up me_livebox risk_close builder_save_pop today_hunch stocks_page kick_times saved_post import_batch winner_pre"
+TESTS="home_filing promo_kickoff promo_clock social_feed social_card social_elsewhere social_shot builder_fold boards_fold me_hub social_grade weather_gate finals_build live_finals live_gamemap live_first_screen live_regrade week_end inactive_block reprice_live sgp_price how_stats flag_stats trade_outlook bp_pick fantasy_nav promo_overlap promo_up page_fold calib_floor fantasy_push page_tight trade_find studio new_markets me_profile waiver_truth hunches_page news_up me_livebox risk_close builder_save_pop today_hunch stocks_page nba_board header_scroll kick_times saved_post import_batch winner_pre"
 for t in $TESTS; do
   out=$(timeout 420 python3 tests/$t.py 2>&1); code=$?
   last=$(echo "$out" | grep -v '^\s*$' | tail -1 | cut -c1-150)
