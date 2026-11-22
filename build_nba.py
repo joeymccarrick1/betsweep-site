@@ -16,7 +16,8 @@ li.pl > button.prow + div.pdetail, span.sc stat chips coloured by what the defen
 no word for is new (.nb* classes, in NB_CSS, on the site's own colour variables).
 
 What is NOT here yet, and the page says so: FanDuel prices (so no edges, no best parlay, no betslip buttons), and any pick. The numbers
-are the model's alone (sports/nba, checked on 2026-27 results) and are being graded before any of them is promoted - the owner's own
+are the model's alone (sports/nba, checked on 2026-27 results in a walk-forward test) and must be graded night by night before any of
+them is promoted (that nightly grading is the next thing to build; the page does not claim it) - the owner's own
 rule that a new tier starts tracked, not a lead.
 
 The board file is written by sports/nba/publish.py in the feeds-sports job (that is where pandas lives). Every number on the page is
@@ -316,7 +317,7 @@ def page(B):
             "who is out, and what each defense allows. A preview: model numbers only.")
     inj = ("the injury report as of " + fmt_ct(B.get("injuries_at"))) if B.get("injuries") else "no injury report was in reach, so each team is the players of its last game"
     pre = ('<div class="nbpre"><b>NBA preview.</b> Model numbers only: FanDuel prices are not connected yet, so there are no edges or betslip buttons. '
-           'Every projection is being graded before any becomes a pick.</div>')
+           'Nothing here is a pick: the projections have to be graded against results first.</div>')
     key = ('<details class="nbkey"><summary>How to read the board</summary><dl>'
            '<dt>Score</dt><dd>The model\'s points for each team tonight. The posted line beside the tip time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
            '<dt>Bar and number</dt><dd>Projected points, with the bar scaled to the game\'s top scorer. The tag after it is his place among tonight\'s guards, forwards or centers.</dd>'

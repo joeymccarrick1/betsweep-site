@@ -130,7 +130,8 @@ async def main():
         fp = os.path.join(ROOT, rel)
         if os.path.exists(fp) and re.search(r'href="/nba/?"', open(fp, encoding="utf-8", errors="ignore").read()): linkers.append(rel)
     check("/nba/" not in sm and not linkers, f"it is a preview: not in the sitemap, and no other page or menu links to it ({linkers})")
-    check("NBA preview" in src and "Model numbers only" in src and "FanDuel prices are not connected yet" in src and "being graded" in src, "the page says it is a preview: model numbers only, no FanDuel prices yet, graded before anything is a pick")
+    check("NBA preview" in src and "Model numbers only" in src and "FanDuel prices are not connected yet" in src and "Nothing here is a pick" in src and "being graded" not in src,
+          "the page says it is a preview: model numbers only, no FanDuel prices yet, nothing is a pick - and it does not claim a nightly grading that is not built yet")
     body = re.sub(r"<style.*?</style>|<script.*?</script>", "", src, flags=re.S)
     cards_html = body[body.find('<div class="grid">'):]
     check(not re.search(r"\b(best bet|best parlay|lock|edge|value|\+EV)\b", re.sub(r"<[^>]+>", " ", cards_html[:cards_html.find('class="nbstamp"')]), re.I) and "sportsbook.fanduel.com" not in cards_html,
