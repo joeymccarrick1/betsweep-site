@@ -109,8 +109,9 @@ def record_block(R):
     missed = len(R.get("missed") or {})
     if not S:
         w = R.get("waiting") or 0
-        return ('<p class="nbrec none" id="nbrec"><b>Grading has started.</b> Each game\'s numbers are locked at tip and scored against the box score when the game ends. '
-                + (f'{w} game{"s" if w != 1 else ""} locked and waiting; ' if w else '') + 'the first results appear here.</p>')
+        return ('<p class="nbrec none" id="nbrec"><b>Grading has started.</b> '
+                + (f'{w} game{"s are" if w != 1 else " is"} locked and waiting for {"their box scores" if w != 1 else "its box score"}; the first results appear here.' if w
+                   else 'Each game is locked at tip and scored against its box score; the first results appear here.') + '</p>')
     T = R["total"]
     f1 = lambda x: f"{x:.1f}"
     lead = S["stats"].get("pts")
@@ -315,7 +316,7 @@ NB_CSS = """
 .nbl5{width:100%;border-collapse:collapse;margin:10px 0 2px;font-size:12.5px;font-variant-numeric:tabular-nums} .nbl5 caption{text-align:left;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.05em;color:var(--mute);padding:0 0 4px}
 .nbl5 th,.nbl5 td{padding:4px 6px;text-align:right;border-top:1px solid var(--line)} .nbl5 th{font-weight:600;color:var(--mute);border-top:0} .nbl5 th:nth-child(-n+2),.nbl5 td:nth-child(-n+2){text-align:left}
 .nbfoot{padding:8px 14px 12px;font-size:11.5px;color:var(--mute);line-height:1.4}
-.nbkey{margin:0 0 0 auto} .nbkey[open]{flex:1 0 100%;margin:0 0 4px} .nbkey summary{cursor:pointer;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;color:var(--mute);list-style:none} .nbkey summary::-webkit-details-marker{display:none}
+.nbkey{margin:0 0 0 auto} .nbkey[open]{flex:1 0 100%;margin:0 0 4px} .nbk-s{display:none} .nbkey summary{cursor:pointer;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;color:var(--mute);list-style:none} .nbkey summary::-webkit-details-marker{display:none} @media (max-width:760px){ .nbk-l{display:none} .nbk-s{display:inline} .nbkey>summary{width:36px;padding:0;justify-content:center;font-weight:700;font-size:15px} .nbkey[open]>summary{width:auto;padding:0 14px} .nbkey[open] .nbk-l{display:inline} .nbkey[open] .nbk-s{display:none} }
 .nbkey dl{margin:10px 2px 0;font-size:13.5px;line-height:1.5;color:var(--mute)} .nbkey dt{font-weight:700;color:var(--ink);margin-top:8px} .nbkey dd{margin:2px 0 0}
 .nbstamp{margin:18px 2px 0;font-size:12px;line-height:1.5;color:var(--mute);max-width:860px}
 body.compact .card:not(.expanded) > .nbstate{display:flex;border-top:0;padding:0 12px 8px}
@@ -388,7 +389,7 @@ def page(B, R=None):
     pre = ('<div class="nbpre"><b>NBA preview.</b> Model numbers only: FanDuel prices are not connected yet, so there are no edges or betslip buttons. '
            + ('Nothing here is a pick: every game is locked at tip and graded against the box score first.' if R and isinstance(R.get("total"), dict)
               else 'Nothing here is a pick: the projections have to be graded against results first.') + '</div>')
-    key = ('<details class="nbkey"><summary>How to read the board</summary><dl>'
+    key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
            '<dt>Score</dt><dd>The model\'s points for each team tonight. The posted line beside the tip time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
            '<dt>Bar and number</dt><dd>Projected points, with the bar scaled to the game\'s top scorer. The tag after it is his place among tonight\'s guards, forwards or centers.</dd>'
            '<dt>Minutes</dt><dd>The model starts from minutes. Each team has 240 to hand out, so when players are out their minutes go to the ones who are left. That is the biggest thing the test results rewarded.</dd>'
@@ -398,9 +399,12 @@ def page(B, R=None):
     stamp = (f'<p class="nbstamp">Built {fmt_ct(B.get("built"))} from games through {E(B.get("data_through") or "?")}; {E(inj)}. Projections: BetSweep\'s NBA model (minutes and per-minute rates, fitted to each team\'s 240 minutes among the active players, '
              'adjusted for what the opponent allows by position). In a test on 2026-27 games through mid-November (2,877 player-games) it was about 7% closer than a player\'s season average on points, rebounds and assists. For entertainment; not betting advice.</p>')
     cards = "\n".join(game_card(g, B, ranks) for g in B["games"])
+    # the NBA's own pages: shown once there is a second one in this build (build_nba_stocks.py runs first and leaves out/nba-stocks.html)
+    pages = ('<div class="nbsw nbpg" role="group" aria-label="NBA pages"><a href="/nba/" aria-current="page">Boards</a><a href="/nba/stocks/">Stocks</a></div>'
+             if os.path.exists(os.path.join(OUT, "nba-stocks.html")) else "")
     return (f'<title>BetSweep · NBA Matchup Boards</title>\n<style>{css}</style>\n<style>{NB_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>NBA · {E(B["day_label"])}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to game">{nav}</nav>\n</div>\n'
-            f'<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/nba/" aria-current="page">NBA</a></div>{key}</div>\n{pre}\n{record_block(R)}\n'
+            f'<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/nba/" aria-current="page">NBA</a></div>{pages}{key}</div>\n{pre}\n{record_block(R)}\n'
             f'<div class="nbold" id="nbold" hidden><b>This board is for {E(B["day_label"])}.</b> A newer one is not up yet, so every number below is from that day.</div>\n'
             f'<div class="grid" data-day="{E(B["day"])}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{NB_JS}\n')
 
@@ -418,10 +422,11 @@ def fmt_ct(iso):
         return "?"
 
 
-def signature(B, R=None):
-    """what a visitor would notice changing: the day, the games and their state, who is out, each player's points to the whole number, and the graded record growing"""
+def signature(B, R=None, extra=None):
+    """what a visitor would notice changing: the day, the games and their state, who is out, each player's points to the whole number, the graded record growing,
+    and anything another NBA page of this build says about itself (the Stock Market: the day its games go through and how many are rising and falling)"""
     t = (R or {}).get("total") or {}
-    return json.dumps([[t.get("games"), t.get("players"), (R or {}).get("waiting")] if R else None, B.get("day"), [(g["key"], g.get("state"), (g.get("line") or {}).get("details")) for g in B["games"]], sorted((ab, sorted(o["name"] for o in t.get("out") or [])) for ab, t in B["teams"].items()),
+    return json.dumps([extra, [t.get("games"), t.get("players"), (R or {}).get("waiting")] if R else None, B.get("day"), [(g["key"], g.get("state"), (g.get("line") or {}).get("details")) for g in B["games"]], sorted((ab, sorted(o["name"] for o in t.get("out") or [])) for ab, t in B["teams"].items()),
                        sorted((p["id"], round(p["proj"].get("pts") or 0)) for p in B["players"])], sort_keys=True)
 
 
@@ -446,7 +451,9 @@ def main():
     # beside the page: the board it was drawn from (tests redo the page from it; later pages will read it) and the signature the hourly
     # job compares with the live one to decide whether the NBA page alone is worth a publish (reprice.nba_changed)
     json.dump(B, open(os.path.join(OUT, "nba_board.json"), "w"), separators=(",", ":"))
-    json.dump({"day": B.get("day"), "built": B.get("built"), "sig": signature(B, R)}, open(os.path.join(OUT, "nba_sig.json"), "w"))
+    sk = load(path=os.path.join(OUT, "nba_stocks.json")) if os.path.exists(os.path.join(OUT, "nba-stocks.html")) and os.path.exists(os.path.join(OUT, "nba_stocks.json")) else None
+    extra = [sk["stocks"].get("data_through"), sum(1 for p in sk["stocks"]["players"] if p.get("dir") == "up"), sum(1 for p in sk["stocks"]["players"] if p.get("dir") == "dn")] if sk else None
+    json.dump({"day": B.get("day"), "built": B.get("built"), "sig": signature(B, R, extra)}, open(os.path.join(OUT, "nba_sig.json"), "w"))
     print(f"nba boards: {B['day_label']}, {len(B['games'])} games, {len(B['players'])} players, {sum(len(t.get('out') or []) for t in B['teams'].values())} out; board built {fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
 
 

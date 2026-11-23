@@ -78,6 +78,7 @@ BUILD = [
     ("shadow slips", "shadow_slips.py", "soft"),
     ("promos", "build_promo.py {clone}/promo-slips", "hard"),
     ("today (with promos)", "build_today.py", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
+    ("nba stocks (preview)", "build_nba_stocks.py {clone}", "soft"),
     ("nba boards (preview)", "build_nba.py {clone}", "soft"),   # owner 11/22: /nba/, from the board the feeds-sports job writes; no board, no page
     ("site", "build_site.py betsweep.co {clone}/posts", "hard"),
 ]

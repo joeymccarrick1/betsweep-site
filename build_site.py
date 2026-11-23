@@ -935,6 +935,12 @@ if os.path.exists(os.path.join(OUT, "nba-boards.html")):
     made.append(place(os.path.join(OUT, "nba-boards.html"), os.path.join(OUT, "img-none"), _nb, "/nba/"))
     for _f, _t in (("nba_board.json", "board.json"), ("nba_sig.json", "sig.json"), ("nba_record.json", "record.json")):   # the board the page was drawn from, its signature (reprice.nba_changed), and the grading record the page shows
         if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_nb, _t))
+    # 11/22 evening: /nba/stocks/ - the NBA Stock Market (build_nba_stocks.py), a preview under the same roof: it goes out only beside the boards
+    # page, with the file it was drawn from. /nba/ is rebuilt whole each time, so a stocks page an earlier build left cannot linger.
+    if os.path.isdir(os.path.join(_nb, "stocks")): shutil.rmtree(os.path.join(_nb, "stocks"))
+    if os.path.exists(os.path.join(OUT, "nba-stocks.html")):
+        made.append(place(os.path.join(OUT, "nba-stocks.html"), os.path.join(OUT, "img-none"), os.path.join(_nb, "stocks"), "/nba/stocks/"))
+        if os.path.exists(os.path.join(OUT, "nba_stocks.json")): shutil.copy(os.path.join(OUT, "nba_stocks.json"), os.path.join(_nb, "stocks", "stocks.json"))
 elif os.path.isdir(_nb):
     shutil.rmtree(_nb)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)

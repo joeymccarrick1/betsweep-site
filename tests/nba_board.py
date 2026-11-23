@@ -76,7 +76,7 @@ def record_states():
     check(N.record_block(None) == "" and N.record_block({}) == "" and N.record_block({"total": "x"}) == "", "with no grading record in reach the page shows no record block")
     empty = {"format": 1, "sport": "nba", "nights": [], "total": G.empty(), "waiting": 3, "missed": {"a": "2026-11-22"}, "graded": {}}
     h = N.record_block(empty)
-    check('class="nbrec none"' in h and "Grading has started" in h and "3 games locked and waiting" in h and "<details" not in h and "off by" not in h,
+    check('class="nbrec none"' in h and "Grading has started" in h and "3 games are locked and waiting for their box scores" in h and "<details" not in h and "off by" not in h,
           "a record with nothing graded yet says grading has started and how many games are locked and waiting - and shows no numbers")
     S = G.empty(); S.update(games=2, players=40, dnp=3)
     S["stats"]["pts"] = {"n": 40, "model": 180.0, "base": 204.0, "err": -20.0}; S["stats"]["reb"] = {"n": 40, "model": 80.0, "base": 76.0, "err": 4.0}
@@ -219,13 +219,17 @@ async def main():
             # ---- scorecards first; a tap opens a game
             st = await pg.evaluate("""(function(){ var cs = [...document.querySelectorAll('.grid > .card[id]:not(.summary)')], c = cs[0], vb = [...c.querySelectorAll('.vbtn')];
               return {compact: document.body.classList.contains('compact'), shown: cs.filter(function(x){ return x.querySelector('.cols').getClientRects().length; }).length, vb: vb.map(function(x){ var r = x.getBoundingClientRect(); return [x.textContent.replace(/\\s+/g, ' ').trim(), r.height, r.top, r.width]; }),
-                over: document.documentElement.scrollWidth - innerWidth, h: document.documentElement.scrollHeight / innerHeight, first: cs[0].getBoundingClientRect().top, sw: [...document.querySelectorAll('.nbsw a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }),
+                over: document.documentElement.scrollWidth - innerWidth, h: document.documentElement.scrollHeight / innerHeight, first: cs[0].getBoundingClientRect().top, pg: [...document.querySelectorAll('.nbsw.nbpg a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }), bar: (function(){ var b = document.querySelector('.nbbar'), ks = [...b.children].map(function(c){ return Math.round(c.getBoundingClientRect().top); }); return [Math.max.apply(null, ks) - Math.min.apply(null, ks), b.getBoundingClientRect().height]; })(),
+                sw: [...document.querySelectorAll('.nbsw:not(.nbpg) a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }),
                 font: getComputedStyle(c.querySelector('.tm b')).fontFamily, sum: document.querySelector('.card.summary .sumgrid').getClientRects().length}; })()""")
             multi = len(want) > 1
             check(st["compact"] == multi and st["shown"] == (0 if multi else 1) and st["over"] <= 0, T(f"scorecards first, as on the NFL boards: {len(want)} games, none opened, no sideways scroll, page {st['h']:.1f} screens long"))
             check(len(st["vb"]) == 2 and st["vb"][0][0] == "Projections" and st["vb"][1][0].startswith("Who's out") and min(v[1] for v in st["vb"]) >= 38 and abs(st["vb"][0][2] - st["vb"][1][2]) < 2 and abs(st["vb"][0][3] - st["vb"][1][3]) < 3,
                   T(f"each card has two equal buttons, Projections and Who's out ({st['vb'][0][1]:.0f}px tall)"))
             check(st["sw"] == [["NFL", "/boards/", None], ["NBA", "/nba/", "page"]], T("a sport switch sits above the cards: NFL (to the NFL boards) and NBA (this page)"))
+            has_sk = os.path.exists(os.path.join(ROOT, "nba", "stocks", "index.html"))
+            check(st["pg"] == ([["Boards", "/nba/", "page"], ["Stocks", "/nba/stocks/", None]] if has_sk else []) and st["bar"][0] <= 6 and st["bar"][1] <= 60,
+                  T(("beside it the NBA's own pages, Boards (this one) and Stocks, " if has_sk else "no second NBA page in this build, so no page switch; ") + f"and the whole bar is one row ({st['bar'][1]:.0f}px)"))
             k0 = want[0]["key"]; w0 = want[0]
             await pg.click(f'#{k0} .vbtn[data-view="proj"]'); await pg.wait_for_timeout(350)
             o = await pg.evaluate("""(function(k){ var c = document.getElementById(k), r = c.querySelectorAll('li.pl'), f = r[0], b = f.querySelector('.prow').getBoundingClientRect(), bar = f.querySelector('.ppr i'), ibar = getComputedStyle(bar).getPropertyValue('--w');

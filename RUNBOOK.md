@@ -2988,3 +2988,42 @@ three states from the builder and against the `record.json` the page ships.
 **Still to do for grading:** a results page (last night player by player from `graded-<day>.json`); grading the game totals and
 margins against the posted line; a by-position and by-minutes-change breakdown (who is out is the model's lead signal - is that
 where it wins?); price snapshots once the Odds API plan is upgraded, so chances can be graded against prices, not only results.
+
+## 11/22 7:40-9:00 PM CT: the NBA Stock Market, /nba/stocks/ (a preview beside /nba/)
+
+Next on the owner's list after the grader ("then NBA Stock Market and Today"). The NFL Stock Market's question - who is up and who
+is down on his recent games - asked of NBA games instead of weeks, in the NFL page's own stylesheet.
+
+**The numbers** (`sports/nba/stocks.py`, pandas, inside the feeds-sports job after the board and the grading; writes
+`nba/stocks.json` on the feeds-sports branch; if it fails the last run's file is kept):
+- fantasy points = FanDuel's NBA scoring: points 1, rebounds 1.2, assists 1.5, steals 3, blocks 3, turnovers -1;
+- recent = his last 5 games played; before = the up-to-10 played before those (at least 3); move = recent average - before;
+- **rising** = up 6.0 or more AND 22+ a game over the recent five; **falling** = down 6.0 or more AND 22+ before;
+  6.0 because five games against ten is noisy (a starter swings 9-10 fantasy points game to game): at 4.0 a quarter of the league
+  was "rising" on 11/22, at 6.0 it was 48 of 279, two thirds of them with minutes up by 2+;
+- listed: 8+ games played this season and a rotation role (15+ minutes a game, or 18+ over the recent five);
+- per player: season / recent / before averages for fantasy points and minutes, the seven stats (season and recent), how many of
+  his team's last five he sat out, and his last 15 listings game by game (a did-not-play row keeps its reason).
+
+**The page** (`build_nba_stocks.py`, plain Python, reprice.py BUILD "nba stocks (preview)", before the boards step):
+reads `nba/stocks.json` and tonight's board through the clone. Styles: `account._base_css()` (fonts, theme colours) + the NFL page's
+`CSS = """..."""` block read out of build_stocks.py's text (that script builds when it loads, so it is not imported) + build_nba's
+`NB_CSS` + a few `.nsk*` rules. Markup is the NFL page's: `.skm`, search box, six mover cards (biggest riser, biggest faller,
+hottest, best game, minutes up, minutes down), Rising / Falling, G F C jumps, tiles with the two-stroke sparkline (first 8 a
+position, "Show all N"), and a player's panel under his row: three key numbers, "What moved" (fantasy points and minutes, in
+sentences), "His next game" (from tonight's board: where and when, the model's numbers, or listed out / team off / not in the
+rotation), seven stat tiles (recent beside season), and his games newest first with fantasy points in the first number column.
+Search finds any listed player by name, team name or team letters. Its own small script (`NSK_JS`); the NFL page's script is not
+used. A stocks file in another shape, with under 50 players, or whose games stop more than five days back is not drawn.
+
+`build_site.py` places it at `/nba/stocks/` with `stocks.json` (the stocks numbers, which board was used, the movers) - only beside
+the boards page, and `/nba/` is rebuilt whole each time. Both NBA pages now carry a bar: NFL | NBA, Boards | Stocks, and on the boards
+page a "?" for "How to read the board" (words on a wide screen). The stocks day and its rising / falling counts are in the NBA
+signature, so a new day of games publishes `/nba/` on its own.
+
+**Tests:** `tests/nba_stocks.py` (port 8884, 56 checks): the builder's rules on made-up data; then the page redone from the file it
+ships - every tile of every position in both modes, the movers, a panel field by field, Show all, Falling, mover cards, search - phone
+light and dark and desktop. `tests/nba_board.py` checks the new bar.
+
+**Not yet:** a graph in the panel like the NFL's, per-stat graphs, a "this week's schedule" line (games in the next 7 days - the
+thing fantasy players set line-ups by), rank at position, and anything priced.
