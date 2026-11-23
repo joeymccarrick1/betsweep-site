@@ -3297,3 +3297,103 @@ redone from the board it ships in both themes and on a desktop. In the pre-publi
 
 **Not built yet:** lock-and-grade for college games (wanted before the title games on 12/4), FanDuel prices, bowl and playoff
 names when ESPN posts them on 12/6 (the page reads whatever ESPN names).
+
+## 11/23 2:05-3:40 AM CT: the Bundesliga, La Liga, Serie A and MLS (previews), and Soccer as one sport with a league row
+
+Owner 1:10 AM: "If college football isn't much work, get to building Bundesliga, La Liga, Serie A, and MLS. We'd have NFL,
+College Football, NBA and Soccer (with these different leagues)."
+
+**The data - on main, in the feeds-sports job** (`.github/feeds_sports.py`, commits a674cab3a and 0cf226c27). For each league
+(`SOCCER`: ESPN's `ger.1` -> `bun/`, `esp.1` -> `lal/`, `ita.1` -> `sea/`, `usa.1` -> `mls/`):
+- `scoreboard.json` - fixtures three days back to ten ahead, one request a day (ESPN answers 400 to a date range), with ESPN's
+  posted three-way prices and total (`odds`: `details`, `total`, `home_ml`, `draw_ml`, `away_ml`, `over`, `under`, book named).
+- `lineups.json` - the confirmed elevens, from 100 minutes before kickoff.
+- `season.json` - every finished match of the season: date, sides, score, each side's shots and shots on target, and a line for
+  every player who took the field (`[team, player, name, place, started, minutes, goals, assists, shots, on target, yellow,
+  red]`). Results come from each club's schedule (read again every six hours) and from finals on the scoreboard; the player
+  lines come from each match's summary, at most 110 summaries a run over all leagues (`SUMMARY_BUDGET`), newest first, carried
+  forward. Filled by 2:20 AM for the three European leagues (90, 128 and 119 matches); MLS (518) fills over about an hour.
+- The grading files of each league are carried forward (`GRADING`), as the NBA's and the Premier League's are. **That went to
+  main before the generators that write them**: the branch is rebuilt from nothing on every run.
+- Nothing is scraped: these are the same public ESPN endpoints the job already reads. No secrets.
+
+**The model** - `sports/soccer/publish.py`, the last step of `sports/job.py`. It is the Premier League's model (a grid of attack
+and defence ratings, players by minutes and per-90 rates against what the opponent allows) with one honest difference: **there
+are no expected goals for these leagues.** A shot-based stand-in takes their place: a shot on target counts three times a shot
+off target, scaled so the league's stand-in total equals its goals (about 0.19 a shot on target, 0.065 off). The grid is fitted
+on half stand-in, half goals. This has NOT been tested on past seasons, and every page says so. No injury list is read, so nobody
+is marked out; the page says that in the note, in the key, in each club's column and in the stamp.
+- A league needs 30 finished matches to be rated at all. A club with no finished match, or a match ESPN calls postponed, is left
+  off with a note. Listed: matches from three hours ago to eight days ahead.
+- A player belongs to the club he last played for; he is listed if he started one of its last five or played 45 minutes in them.
+- These leagues have no gameweek number, so a match's round is its week, Tuesday to Monday on the Central clock, named by its
+  Tuesday (`week_key`: 20261124). The page calls it "Week of Nov 24".
+- Board format: the Premier League's (`FORMAT 1`), with `sport` = the feed folder, `league`, `no_availability`, `standin`,
+  `with_players`, `gameweeks: []`. One league failing keeps its last board and does not stop the next.
+- Local run: `python3 -W ignore -m sports.soccer.publish --feeds DIR --out DIR [--only bun,lal] [--no-grade] [--now ISO]`.
+
+**The grading** - the Premier League's grader (`sports/epl/grade.py`), run per league in its own folder (`run(..., sport="bun")`):
+lock at kickoff from the last board built before it, the match graded from ESPN's final, the starters from the season file
+(usually in the same run). One rule is new and applies to every league: **a knockout match that went to extra time or penalties
+(the MLS playoffs; ESPN's "AET", "FT-Pens") was a draw at ninety minutes, and is graded as one - on home / draw / away alone.**
+Its totals, both-to-score, goals and players are left out, because the final score is not a ninety-minute score. The record
+names those matches (`beyond`) and the page says how many. Before this they were to be set aside altogether, which would have
+taken every draw out of a playoff record.
+
+**The pages** - `build_soccer.py` -> `/bundesliga/`, `/laliga/`, `/seriea/`, `/mls/` (each: index, `board.json`, `sig.json`,
+`record.json` once there is one), drawn by `build_epl.page()` with the league's name. Previews: out of the menu and sitemap. A
+league's page is written only when its board is in reach, was built in the last day and has a match not long over - the
+Premier League page's own rule - so a league out of season simply has no page in the build (its last page stays on the site
+with the "every match has kicked off" note, and nothing links to it).
+
+**Soccer is one sport** - `sport_nav.py`: the row is NFL | CFB | NBA | Soccer. From another sport's page Soccer goes to the
+first league that has a page (the Premier League when it is there); on a soccer page it is the current pill, and a second row
+lists the leagues that have a page in this build, this one marked. On a phone that row scrolls sideways on its own and the
+page brings the current league into view (`LG_JS`). With four sports the first row fills a phone's width, so on the NBA page
+the NBA's own pages (Boards | Stocks) take a second row on a phone too (`.nbtwo`), and the key stays beside the sports. Checked
+at 320, 360, 375, 390 and 414 pixels wide.
+
+**Wired in:** `reprice.py` builds "soccer leagues (preview)" after the Premier League; `PREVIEWS` gains the four folders (the
+small publish sends a league out on its own when its signature moves); `build_site.py` places the four folders and keeps them
+out of the sitemap; `sports/job.py` runs the soccer step last and keeps each league's last board if the whole step fails.
+
+**Tests:** `tests/soccer_leagues.py` - the board builder on a made-up league, the step run as the job runs it (board, lock,
+grade, players), the page builder, the wiring; then every league page in the build read by the Premier League page's own test
+(`LEAGUE=laliga python3 tests/epl_board.py`, ports 8887-8890). `tests/switch_want.py` is not a test: it is the switch every
+sport page must show, worked out from the site's folders, shared by the NBA, college and soccer page tests.
+`tests/epl_grade.py` gains the second league, the week rounds and the past-ninety rule. In the pre-publish set.
+
+**Known limits, said on the pages or here:** the stand-in is weaker than expected goals and untested; no injury list; the MLS
+ratings include playoff matches at their final score (a handful, some with extra-time goals); ESPN's three-way prices are on
+the board (`line`) but the cards show only the favorite's price and the total - showing all three, and using the posted line as
+the bar the model has to beat, is next for soccer. A league's first weeks (under 30 finished matches) have no page.
+
+**A failed run to know about (1:53 AM):** GitHub's own schedule started a rebuild at 07:53Z, two minutes after one I had
+dispatched; it failed on a rebase conflict when both tried to push. Nothing was lost and nothing was published by it. Check
+`gh api .../reprice.yml/runs?per_page=2` before dispatching, as the standing rule says.
+
+## 11/23 3:20 AM CT: five soccer pages must not send themselves out every hour - and the site's repository is 1.76 GB
+
+Found while wiring the leagues in. Every publish stays in the site repository's history for good, and a soccer page is about
+1.3 MB (about 0.15 MB once git has packed it, with its board). Three things made a league page look "changed" on every run:
+- **The model moved with the clock.** Matches were weighed by their age as of *now*, so every number drifted a hair each run.
+  Now they are weighed as of the latest result (`asof` in `sports/soccer/publish.py build()`): between two results the board
+  is exactly the same from run to run. Tested: two boards built thirty minutes apart are identical, stamps aside.
+- **The board was rewritten every run.** Now `same_board()` writes the last run's file again byte for byte when the new one
+  says the same thing (stamps aside) and the last is under six hours old (`KEEP_HOURS`; the page wants a board built in the
+  last day). Same idea on main for each league's `season.json` (stamped only when it changed, commit fd4149327): the MLS season
+  file alone is over a megabyte and was a new file on the branch four times an hour.
+- **A ticking price counted as news.** `build_epl.signature()` now carries each posted line's favorite and total
+  (`line_sig`), not the price itself, so -145 becoming -150 does not send a page out on its own. The page still shows the
+  price as of its stamp, and any real change (a result, the elevens, a match kicking off, a new favorite or total) sends it.
+  This applies to the Premier League page too.
+
+**The larger finding, for the owner:** GitHub reports the site repository at **1,757,915 KB (1.76 GB)** 40 days after it was
+created (main: 1,187 commits). Measured from the last day's commits: a full publish adds about 1 to 2.3 MB to history, a
+one-folder publish 0.1 to 0.5 MB; the orphan data branches (feeds-sports, sheet-mirror) are force-pushed many times an hour
+and their old copies count until GitHub collects them. Nothing is broken and pages publish normally, but GitHub recommends
+keeping a repository under 1 GB (5 GB strongly), and at this rate that matters within months. Two ways to stop the growth,
+both changes to how the site is published and so **the owner's call, not done**: (a) publish from a build artifact instead of
+committing the built pages to main (GitHub Pages' Actions deploy), so history holds only source and data; (b) keep committing
+but squash main's history on a schedule. Until then: previews go out only when their signature moves, and the three rules
+above keep the leagues quiet.

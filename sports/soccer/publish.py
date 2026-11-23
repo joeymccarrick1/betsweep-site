@@ -130,7 +130,9 @@ def build(lg, feeds, now=None):
     # ---- the grid: two rows a match (what each side produced), newest matches weighing most
     ids = sorted({m["h"] for _, m in fin} | {m["a"] for _, m in fin})
     idx = {t: i for i, t in enumerate(ids)}
-    asof = now + dt.timedelta(days=0)
+    # Matches are weighed by their age as of the LATEST RESULT, not as of the clock: between two results every number on the board is then
+    # exactly the same from run to run, so the page changes - and is published again - only when something real does.
+    asof = max(when(m["d"]) for _, m in fin)
     rows = []                                               # team, opp, home(+1/-1), goals-blend, shots (or None), days ago
     for mid, m in fin:
         st = m.get("st") or {}
@@ -299,6 +301,22 @@ def actuals(A, want):
     return out
 
 
+STAMPS = ("built", "espn_at", "lineups_at")
+KEEP_HOURS = 6                     # an unchanged board is written again under a new stamp this often (the page wants one built in the last day)
+
+
+def same_board(b, pb, now):
+    """True when the board just built says exactly what the last run's does (the stamps aside) and that one is under KEEP_HOURS old: the
+    last run's file is then written again byte for byte, so the branch does not gain a new copy of a board that says nothing new."""
+    if not isinstance(pb, dict) or not isinstance(b, dict):
+        return False
+    built = when(pb.get("built"))
+    if not built or (now - built).total_seconds() > KEEP_HOURS * 3600 or (now - built).total_seconds() < 0:
+        return False
+    strip = lambda x: {k: v for k, v in x.items() if k not in STAMPS}
+    return json.dumps(strip(b), sort_keys=True) == json.dumps(strip(pb), sort_keys=True)
+
+
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--feeds", required=True); ap.add_argument("--out", required=True); ap.add_argument("--now"); ap.add_argument("--only")
     ap.add_argument("--prev"); ap.add_argument("--site"); ap.add_argument("--no-grade", action="store_true")
@@ -311,8 +329,11 @@ def main():
         try:
             b = build(lg, a.feeds, now)
             os.makedirs(gdir, exist_ok=True)
+            same = same_board(b, pb, now)
+            if same: b = pb
             json.dump(b, open(path + ".tmp", "w"), separators=(",", ":")); os.replace(path + ".tmp", path)
-            print(f"{lg} board: {len(b['matches'])} matches, {len(b['players'])} player rows, {b['n_clubs']} clubs, {b['played']} finished matches through {b['data_through']} "
+            print(f"{lg} board: " + (f"unchanged since {pb.get('built')}, kept as it is - " if same else "")
+                  + f"{len(b['matches'])} matches, {len(b['players'])} player rows, {b['n_clubs']} clubs, {b['played']} finished matches through {b['data_through']} "
                   f"({b['with_players']} with player lines); line-ups posted for {sum(1 for x in b['matches'] if x['lineups'])}; {len(b['checks'])} check note(s){': ' + ' | '.join(b['checks'])[:300] if b['checks'] else ''}; "
                   f"{os.path.getsize(path) // 1024} KB")
         except Exception as e:

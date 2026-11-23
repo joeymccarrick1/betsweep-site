@@ -251,20 +251,28 @@ async def main():
             # ---- scorecards first; a tap opens a game
             st = await pg.evaluate("""(function(){ var cs = [...document.querySelectorAll('.grid > .card[id]:not(.summary)')], c = cs[0], vb = [...c.querySelectorAll('.vbtn')];
               return {compact: document.body.classList.contains('compact'), shown: cs.filter(function(x){ return x.querySelector('.cols').getClientRects().length; }).length, vb: vb.map(function(x){ var r = x.getBoundingClientRect(); return [x.textContent.replace(/\\s+/g, ' ').trim(), r.height, r.top, r.width]; }),
-                over: document.documentElement.scrollWidth - innerWidth, h: document.documentElement.scrollHeight / innerHeight, first: cs[0].getBoundingClientRect().top, pg: [...document.querySelectorAll('.nbsw.nbpg a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }), bar: (function(){ var b = document.querySelector('.nbbar'), ks = [...b.children].map(function(c){ return Math.round(c.getBoundingClientRect().top); }); return [Math.max.apply(null, ks) - Math.min.apply(null, ks), b.getBoundingClientRect().height]; })(),
-                sw: [...document.querySelectorAll('.nbsw:not(.nbpg) a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }),
+                over: document.documentElement.scrollWidth - innerWidth, h: document.documentElement.scrollHeight / innerHeight, first: cs[0].getBoundingClientRect().top, pg: [...document.querySelectorAll('.nbsw.nbpg a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }), bar: (function(){ var b = document.querySelector('.nbbar'), pgs = b.querySelector('.nbpg'), sp = b.querySelector('.nbsw:not(.nbpg)'), top = function(c){ return Math.round(c.getBoundingClientRect().top); },
+                  ks = [...b.children].filter(function(c){ return c !== pgs; }).map(top); return [Math.max.apply(null, ks) - Math.min.apply(null, ks), b.getBoundingClientRect().height, pgs ? top(pgs) - Math.round(sp.getBoundingClientRect().bottom) : null,
+                  pgs ? pgs.getBoundingClientRect().right <= innerWidth : true]; })(),
+                sw: [...document.querySelectorAll('.nbsw:not(.nbpg):not(.nblg) a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }), lg: document.querySelectorAll('.nblg').length,
                 font: getComputedStyle(c.querySelector('.tm b')).fontFamily, sum: document.querySelector('.card.summary .sumgrid').getClientRects().length}; })()""")
             multi = len(want) > 1
             check(st["compact"] == multi and st["shown"] == (0 if multi else 1) and st["over"] <= 0, T(f"scorecards first, as on the NFL boards: {len(want)} games, none opened, no sideways scroll, page {st['h']:.1f} screens long"))
             check(len(st["vb"]) == 2 and st["vb"][0][0] == "Projections" and st["vb"][1][0].startswith("Who's out") and min(v[1] for v in st["vb"]) >= 38 and abs(st["vb"][0][2] - st["vb"][1][2]) < 2 and abs(st["vb"][0][3] - st["vb"][1][3]) < 3,
                   T(f"each card has two equal buttons, Projections and Who's out ({st['vb'][0][1]:.0f}px tall)"))
-            import sport_nav                                  # 11/23: one switch for every sport page - NFL, CFB, NBA, EPL - linking only to pages in this build
-            others = {k: True for k in ("cfb", "epl") if os.path.exists(os.path.join(ROOT, k, "index.html"))}
-            check(st["sw"] == [[lab, href, ("page" if key == "nba" else None)] for key, lab, href in sport_nav.ORDER if key in ("nfl", "nba") or others.get(key)],
-                  T(f"a sport switch sits above the cards: {' | '.join(x[0] for x in st['sw'])} - NBA marked as this page, and a link only to the other sports that have a page in this build ({sorted(others) or 'none'})"))
+            import switch_want                                # 11/23: one switch for every sport page - NFL, CFB, NBA, Soccer - linking only to pages in this build
+            others = [k for k in ("cfb",) + switch_want.LEAGUE_KEYS if os.path.exists(os.path.join(ROOT, k, "index.html"))]
+            check(st["sw"] == switch_want.sports(ROOT, "nba") and st["lg"] == 0,
+                  T(f"a sport switch sits above the cards: {' | '.join(x[0] for x in st['sw'])} - NBA marked as this page, a link only to the other sports that have a page in this build ({', '.join(others) or 'none'}), "
+                    "Soccer going to the first league that has one, and no league row on a page that is not soccer"))
             has_sk = os.path.exists(os.path.join(ROOT, "nba", "stocks", "index.html"))
-            check(st["pg"] == ([["Boards", "/nba/", "page"], ["Stocks", "/nba/stocks/", None]] if has_sk else []) and st["bar"][0] <= 6 and st["bar"][1] <= 60,
-                  T(("beside it the NBA's own pages, Boards (this one) and Stocks, " if has_sk else "no second NBA page in this build, so no page switch; ") + f"and the whole bar is one row ({st['bar'][1]:.0f}px)"))
+            # 11/23: with four sports the row fills a phone's width (the key had dropped to a line of its own), so on a phone the NBA's own
+            # pages take a second row - as the leagues do on a soccer page - and the sports and the key share the first
+            under = phone and has_sk
+            check(st["pg"] == ([["Boards", "/nba/", "page"], ["Stocks", "/nba/stocks/", None]] if has_sk else []) and st["bar"][0] <= 6 and st["bar"][1] <= (104 if under else 60) and st["bar"][3]
+                  and (not has_sk or ((0 <= st["bar"][2] <= 20) if phone else st["bar"][2] < 0)),
+                  T(("the sports and the key share one row" + (", and under it the NBA's own pages, Boards (this one) and Stocks" if under else "; beside them the NBA's own pages, Boards (this one) and Stocks, all in that row") if has_sk
+                     else "no second NBA page in this build, so no page switch; the sports and the key share one row") + f" ({st['bar'][1]:.0f}px)"))
             k0 = want[0]["key"]; w0 = want[0]
             await pg.click(f'#{k0} .vbtn[data-view="proj"]'); await pg.wait_for_timeout(350)
             o = await pg.evaluate("""(function(k){ var c = document.getElementById(k), r = c.querySelectorAll('li.pl'), f = r[0], b = f.querySelector('.prow').getBoundingClientRect(), bar = f.querySelector('.ppr i'), ibar = getComputedStyle(bar).getPropertyValue('--w');

@@ -6,28 +6,38 @@ link to it would be a dead one. So the question is asked of each builder's own r
 """
 import html
 
-ORDER = (("nfl", "NFL", "/boards/"), ("cfb", "CFB", "/cfb/"), ("nba", "NBA", "/nba/"), ("epl", "EPL", "/epl/"))
-BOARDS = {"nba": ("build_nba", "nba/board.json"), "epl": ("build_epl", "epl/board.json"), "cfb": ("build_cfb", "cfb/board.json")}
+SOCCER = (("epl", "Premier League", "/epl/", "epl"), ("bundesliga", "Bundesliga", "/bundesliga/", "bun"), ("laliga", "La Liga", "/laliga/", "lal"),
+          ("seriea", "Serie A", "/seriea/", "sea"), ("mls", "MLS", "/mls/", "mls"))            # site folder, name, address, folder on the feed branch
+LEAGUE = {k: {"key": k, "name": n, "path": h, "feed": f} for k, n, h, f in SOCCER}
+ORDER = (("nfl", "NFL", "/boards/"), ("cfb", "CFB", "/cfb/"), ("nba", "NBA", "/nba/"), ("soccer", "Soccer", "/epl/"))
+BOARDS = {"nba": ("build_nba", "nba/board.json"), "cfb": ("build_cfb", "cfb/board.json")}
+PAGES = ("nba", "cfb") + tuple(k for k, _, _, _ in SOCCER)          # every preview page there can be, by its site folder
 
 
 def available(clone=None, only=None):
-    """{sport: True} for the preview pages this build will draw. only: a list given by hand, for local work and tests."""
+    """{page: True} for the preview pages this build will draw (keys: nba, cfb, and each soccer league's site folder).
+    only: a list given by hand, for local work and tests."""
     if only is not None:
-        return {k: True for k in only if k in BOARDS}
+        return {k: True for k in only if k in PAGES}
     import build_nba as N
     out = {}
     try:
-        if N.usable(N.load(clone=clone))[0]:          # N.load fetches the branch; the two reads below use what it fetched
+        if N.usable(N.load(clone=clone))[0]:          # N.load fetches the branch; the reads below use what it fetched
             out["nba"] = True
     except Exception:
         pass
-    for key in ("epl", "cfb"):
-        mod, name = BOARDS[key]
-        try:
-            if __import__(mod).usable(N.feed_file(clone, name))[0]:
+    try:
+        if __import__("build_cfb").usable(N.feed_file(clone, "cfb/board.json"))[0]:
+            out["cfb"] = True
+    except Exception:
+        pass
+    try:
+        K = __import__("build_epl")
+        for key, _, _, feed in SOCCER:
+            if K.usable(N.feed_file(clone, f"{feed}/board.json"), sport=feed)[0]:
                 out[key] = True
-        except Exception:
-            pass
+    except Exception:
+        pass
     return out
 
 
@@ -42,17 +52,37 @@ def named(argv):
 
 
 def local(argv, out_dir):
-    """for a page built by hand from a board file: the sports named on the command line, plus any whose page already sits in out/"""
+    """for a page built by hand from a board file: the pages named on the command line, plus any whose page already sits in out/"""
     import os
     have = available(only=named(argv))
-    for key in BOARDS:
+    for key in PAGES:
         if os.path.exists(os.path.join(out_dir, f"{key}-boards.html")):
             have[key] = True
     return have
 
 
 def switch(cur, have):
-    """the row of sport pills: the NFL always, this page's own sport, and every other sport with a page in this build"""
-    return ('<div class="nbsw" role="group" aria-label="Sport">'
-            + "".join(f'<a href="{href}"' + (' aria-current="page"' if key == cur else "") + f'>{html.escape(label)}</a>' for key, label, href in ORDER if key in ("nfl", cur) or have.get(key))
-            + '</div>')
+    """the row of sport pills - NFL | CFB | NBA | Soccer: the NFL always, this page's own sport, and every other sport with a page in this
+    build. Soccer is one sport: its pill goes to the first league that has a page (the Premier League when it is there)."""
+    have = dict(have or {})
+    if cur in LEAGUE: have[cur] = True
+    first = next((LEAGUE[k]["path"] for k, _, _, _ in SOCCER if have.get(k)), None)
+    here = "soccer" if cur in LEAGUE else cur
+    out = []
+    for key, label, href in ORDER:
+        if key == "soccer":
+            if not first: continue
+            href = LEAGUE[cur]["path"] if cur in LEAGUE else first
+        elif key not in ("nfl", here) and not have.get(key):
+            continue
+        out.append(f'<a href="{href}"' + (' aria-current="page"' if key == here else "") + f'>{html.escape(label)}</a>')
+    return '<div class="nbsw" role="group" aria-label="Sport">' + "".join(out) + '</div>'
+
+
+def leagues(cur, have):
+    """the row of league pills on a soccer page; nothing when this is the only league with a page"""
+    have = dict(have or {}); have[cur] = True
+    ks = [k for k, _, _, _ in SOCCER if have.get(k)]
+    if len(ks) < 2: return ""
+    return ('<div class="nbsw nblg" role="group" aria-label="League">'
+            + "".join(f'<a href="{LEAGUE[k]["path"]}"' + (' aria-current="page"' if k == cur else "") + f'>{html.escape(LEAGUE[k]["name"])}</a>' for k in ks) + '</div>')

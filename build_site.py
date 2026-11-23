@@ -961,6 +961,16 @@ if os.path.exists(os.path.join(OUT, "cfb-boards.html")):
         if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_cf, _t))
 elif os.path.isdir(_cf):
     shutil.rmtree(_cf)
+# 11/23: the other soccer leagues (build_soccer.py), each a preview in its own folder on the Premier League page's terms.
+for _lk in ("bundesliga", "laliga", "seriea", "mls"):
+    _ld = os.path.join(SITE, _lk)
+    if os.path.exists(os.path.join(OUT, f"{_lk}-boards.html")):
+        made.append(place(os.path.join(OUT, f"{_lk}-boards.html"), os.path.join(OUT, "img-none"), _ld, f"/{_lk}/"))
+        for _f, _t in ((f"{_lk}_board.json", "board.json"), (f"{_lk}_sig.json", "sig.json"), (f"{_lk}_record.json", "record.json")):
+            if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_ld, _t))
+            elif os.path.exists(os.path.join(_ld, _t)): os.remove(os.path.join(_ld, _t))
+    elif os.path.isdir(_ld):
+        shutil.rmtree(_ld)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
@@ -1488,7 +1498,7 @@ _today = _dt.date.today().isoformat(); _urls = []
 for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
-    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/", "/epl/", "/cfb/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
+    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/", "/epl/", "/cfb/", "/bundesliga/", "/laliga/", "/seriea/", "/mls/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
     try:
         if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
     except Exception: pass

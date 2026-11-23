@@ -11,15 +11,22 @@ the small publish for a preview folder.
 
 Serves SITE (default ./site).   python3 tests/epl_board.py [shots_dir]
 With no /epl/ page in the build it says so and passes: the page is optional, a stale one is not.
+
+11/23 (owner 1:10 AM: "get to building Bundesliga, La Liga, Serie A, and MLS"): the other leagues' pages are drawn by the same code from
+boards in the same format, so this same test reads them:   LEAGUE=laliga python3 tests/epl_board.py   (tests/soccer_leagues.py runs it
+for each league). What differs there is checked too: the page names the league, says a shot-based stand-in is used for expected goals
+and that no injury list is read, and nobody is marked out.
 """
 import asyncio, json, os, re, sys, tempfile, shutil, threading, http.server, functools, datetime as dt
 from playwright.async_api import async_playwright
 HERE = os.path.dirname(os.path.abspath(__file__)); TREE = os.path.join(HERE, ".."); sys.path.insert(0, TREE)
 ROOT = os.environ.get("SITE") or os.path.join(TREE, "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
-PORT = 8885
+import build_epl as K, build_nba as N, sport_nav, switch_want
+KEY = os.environ.get("LEAGUE") or "epl"                  # the page's folder on the site: epl, bundesliga, laliga, seriea, mls
+CFG = sport_nav.LEAGUE[KEY]; FEED, NAME, EPL = CFG["feed"], CFG["name"], KEY == "epl"
+PORT = 8885 if EPL else 8886 + switch_want.LEAGUE_KEYS.index(KEY)       # 8887-8890: each league its own, so two never collide (8886 is college football's)
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
-import build_epl as K, build_nba as N
 pct = lambda p: f"{round(p * 100)}%"
 
 
@@ -86,9 +93,19 @@ def record_states():
     hn = K.record_block(nopl)
     check("Early days" not in K.record_block(big) and "Players who started" not in hn and "starters" not in hn.split("</summary>")[0] and "Home, draw or away" in hn,
           f"from {K.EARLY} matches on the 'too few' line is gone; before any player results are in, the block shows the match results alone")
+    wk = json.loads(json.dumps(rec)); wk["rounds"][0]["gw"] = 20261124; wk["beyond"] = {"k1": "2026-11-25"}
+    hw = K.record_block(wk)
+    check("<b>Week of Nov 24</b> 10 matches" in hw and "Gameweek" not in hw and "1 match went to extra time or penalties: graded as the draw it was at ninety minutes, with its goals and players left out." in hw
+          and "2 matches went to extra time or penalties: graded as the draw they were at ninety minutes, with their goals and players left out." in K.record_block(dict(wk, beyond={"a": "x", "b": "y"}))
+          and "extra time" not in h and [K.round_name(x) for x in (12, 20261124, 20270105, 0, None, "x", 20261340)] == ["Gameweek 12", "Week of Nov 24", "Week of Jan 5", "Other matches", "Other matches", "Other matches", "Other matches"],
+          "a league without gameweeks lists its rounds by the week ('Week of Nov 24'); a knockout match that went past ninety minutes is named in the notes as graded a draw, goals and players left out")
     B0 = {"matches": [], "teams": {}, "players": []}
     check(K.signature(B0) != K.signature(B0, empty) and K.signature(B0, empty) != K.signature(B0, rec) and K.signature(B0, rec) == K.signature(B0, json.loads(json.dumps(rec))),
           "the page's signature moves when a record first appears and when a match is graded - so the small publish sends it out - and not otherwise")
+    mk = lambda det, tot=2.5: {"matches": [{"key": "A-B", "state": "pre", "line": {"details": det, "total": tot}, "xg": {"home": 1.5, "away": 1.0}, "lineups": False}], "teams": {}, "players": []}
+    check(K.signature(mk("AAA -145")) == K.signature(mk("AAA -150")) and K.signature(mk("AAA -145")) != K.signature(mk("BBB +120")) and K.signature(mk("AAA -145")) != K.signature(mk("AAA -145", 3.5))
+          and K.signature(mk("AAA -145")) != K.signature(mk(None, None)) and K.signature(B0, rec) != K.signature(B0, dict(rec, beyond={"k": "d"})),
+          "a posted price that ticks (-145 to -150) does not move the signature - the page is not sent out for that alone - but a new favorite, a new total, a line appearing, or a match graded past ninety minutes does")
     for p in ({"xi": "start", "starts5": 0}, {"xi": None, "starts5": 3}, {"xi": None, "starts5": 2}, {"xi": "bench", "starts5": 5}, {"xi": "no", "starts5": 5}):
         if K.regular(p) != G.regular(p): check(False, f"the page and the grader disagree on who is a regular: {p}")
     check(K.REGULAR == G.REGULAR and len(K.RBAND) == len(G.EDGES) + 1 and len(K.GBAND) == len(G.GOAL_EDGES) + 1, "the page and the grader use one rule for a regular and the same chance bands")
@@ -111,8 +128,9 @@ def expect(B):
                         "players": [[x["id"], x["name"], x["pos"], role(x), pct(x["p_goal"]), (f"#{ranks[(x['id'], x['match'])]} {x['pos']}" if (x["id"], x["match"]) in ranks else ""), (x.get("status") or {}).get("tag") or "", not K.regular(x)] for x in ps],
                         "div": any(not K.regular(x) for x in ps)}
         best = m["scores"][0]
+        ltxt = " · ".join(x for x in ((line.get("details") or ""), (f"O/U {line['total']:g}" if isinstance(line.get("total"), (int, float)) else "")) if x)
         out.append({"key": m["key"], "h": h, "a": a, "score": f"{m['xg']['home']:.2f}–{m['xg']['away']:.2f}", "small": f"{h} {pct(p['home'])} · draw {pct(p['draw'])} · {a} {pct(p['away'])}", "ko": m["koct"] + " CT",
-                    "line": " · ".join(x for x in ((line.get("details") or ""), (f"O/U {line['total']:g}" if isinstance(line.get("total"), (int, float)) else "")) if x), "by": (line.get("by") or "").replace("Draft Kings", "DraftKings"),
+                    "line": ltxt, "by": ((line.get("by") or "the sportsbook ESPN shows").replace("Draft Kings", "DraftKings") if ltxt else ""),      # the book is named only beside a line: an empty entry (no price posted yet) shows nothing
                     "mk": [pct(p["over25"]), pct(p["btts"]), f"{best[0]} {pct(best[1])}", f"{m['shots']['home']:.0f}–{m['shots']['away']:.0f}"],
                     "nout": sum(len(B["teams"][x].get("out") or []) + len(B["teams"][x].get("doubt") or []) for x in (h, a)), "cols": cols})
     return out, ranks
@@ -138,34 +156,54 @@ READ = r"""(function(){
 
 
 async def main():
-    rules(); record_states()
-    page_path = os.path.join(ROOT, "epl", "index.html")
+    if EPL: rules(); record_states()
+    page_path = os.path.join(ROOT, KEY, "index.html")
     if not os.path.exists(page_path):
-        check(not os.path.exists(os.path.join(ROOT, "epl", "board.json")), "this build has no Premier League page, and no leftover board file (the page is optional; a stale one is not allowed)")
+        check(not os.path.exists(os.path.join(ROOT, KEY, "board.json")), f"this build has no {NAME} page, and no leftover board file (the page is optional; a stale one is not allowed)")
         print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
     src = open(page_path, encoding="utf-8").read()
-    B = json.load(open(os.path.join(ROOT, "epl", "board.json")))
+    B = json.load(open(os.path.join(ROOT, KEY, "board.json")))
     want, ranks = expect(B)
     P = B["players"]; mids = {m["id"] for m in B["matches"]}
-    check(B.get("format") == K.FORMAT and B.get("sport") == "epl" and len(B["matches"]) >= 1 and len({m["key"] for m in B["matches"]}) == len(B["matches"]) and B.get("data_through"),
-          f"the page ships its board: {K.round_label(B)}, {len(B['matches'])} matches, {len(P)} player rows, matches through {B.get('data_through')}")
+    check(B.get("format") == K.FORMAT and B.get("sport") == FEED and len(B["matches"]) >= 1 and len({m["key"] for m in B["matches"]}) == len(B["matches"]) and B.get("data_through"),
+          f"the {NAME} page ships its board: {K.round_label(B)}, {len(B['matches'])} matches, {len(P)} player rows, matches through {B.get('data_through')}")
     check(all(abs(m["p"]["home"] + m["p"]["draw"] + m["p"]["away"] - 1) < 0.003 and 0.2 < m["xg"]["home"] < 4.5 and 0.2 < m["xg"]["away"] < 4.5 and 0 < m["p"]["btts"] < 1 and m["p"]["over15"] > m["p"]["over25"] > m["p"]["over35"]
               and abs(sum(s[1] for s in m["scores"]) - 0.4) < 0.4 and m["home"] in B["teams"] and m["away"] in B["teams"] for m in B["matches"]),
           "every match: home, draw and away add up to 100%, the goal rates are in a football match's range, and over 1.5 is likelier than over 2.5 than over 3.5")
     check(all(p["match"] in mids and p["team"] in B["teams"] and p["opp"] in B["teams"] and 0 <= p["p_goal"] < 0.9 and p["p_goal2"] <= p["p_goal"] and 0 <= p["p_assist"] < 0.9 and p["shots"] >= p["sot"] >= 0 and 0 <= p["starts5"] <= p["apps5"] <= 5 and p["pos"] in K.POSN for p in P),
           "every player row has a match and a club on the board, a position, chances between 0 and 90%, shots no fewer than shots on target, and starts no more than appearances")
     outs = {(ab, o["name"]) for ab, t in B["teams"].items() for o in t.get("out") or []}
-    check(not any((p.get("status") or {}).get("tag") in ("Out", "Suspended") for p in P) and all(o["tag"] in ("Out", "Suspended") for t in B["teams"].values() for o in t.get("out") or []) and all(o["tag"].endswith("%") or o["tag"] == "Doubt" for t in B["teams"].values() for o in t.get("doubt") or []),
-          f"nobody listed out or suspended has numbers ({len(outs)} out across the clubs); a doubt keeps his, with his chance of playing")
+    if EPL:
+        check(not any((p.get("status") or {}).get("tag") in ("Out", "Suspended") for p in P) and all(o["tag"] in ("Out", "Suspended") for t in B["teams"].values() for o in t.get("out") or []) and all(o["tag"].endswith("%") or o["tag"] == "Doubt" for t in B["teams"].values() for o in t.get("doubt") or []),
+              f"nobody listed out or suspended has numbers ({len(outs)} out across the clubs); a doubt keeps his, with his chance of playing")
+    else:
+        st_ = B.get("standin") or {}
+        check(B.get("no_availability") is True and not outs and not any(t.get("doubt") for t in B["teams"].values()) and not any(p.get("status") for p in P) and not B.get("gameweeks")
+              and all(isinstance(m.get("gw"), int) and m["gw"] > 20260000 for m in B["matches"]) and st_.get("off_target", 0) > 0 and abs(st_["on_target"] - 3 * st_["off_target"]) < 0.001 and 0.1 < st_["on_target"] < 0.35,
+              f"this league's board says what it lacks: no injury list (nobody is out, nobody a doubt), no gameweeks (each match carries its week as its round), and a shot-based stand-in for expected goals "
+              f"(a shot on target counts {st_.get('on_target')} of a goal, three times one off target)")
     sm = open(os.path.join(ROOT, "sitemap.xml"), encoding="utf-8").read() if os.path.exists(os.path.join(ROOT, "sitemap.xml")) else ""
-    linkers = [rel for rel in ("index.html", "boards/index.html", "build/index.html", "stocks/index.html", "social/index.html") if os.path.exists(os.path.join(ROOT, rel)) and re.search(r'href="/epl/?"', open(os.path.join(ROOT, rel), encoding="utf-8", errors="ignore").read())]
-    check("/epl/" not in sm and not linkers, f"it is a preview: not in the sitemap, and no NFL page or menu links to it ({linkers})")
+    linkers = [rel for rel in ("index.html", "boards/index.html", "build/index.html", "stocks/index.html", "social/index.html") if os.path.exists(os.path.join(ROOT, rel)) and re.search(r'href="/%s/?"' % KEY, open(os.path.join(ROOT, rel), encoding="utf-8", errors="ignore").read())]
+    check(f"/{KEY}/" not in sm and not linkers, f"it is a preview: not in the sitemap, and no NFL page or menu links to it ({linkers})")
     body = re.sub(r"<style.*?</style>|<script.*?</script>", "", src, flags=re.S)
-    check("Premier League preview" in src and "no FanDuel prices yet" in src and "Player numbers assume he starts" in src and "Nothing here is a pick" in src and "sportsbook.fanduel.com" not in body and "thin evidence" in src and "checked against ESPN" in src,
-          "the page says what it is: a preview, model numbers only, player numbers for a start, nothing a pick; where its data comes from; and that the test results behind it are thin")
+    said = f"{NAME} preview" in src and "no FanDuel prices yet" in src and "Player numbers assume he starts" in src and "Nothing here is a pick" in src and "sportsbook.fanduel.com" not in body
+    check(f"<title>BetSweep · {NAME} Matchup Boards</title>" in src and f"<small>{NAME} · {K.round_label(B)}</small>" in src and (EPL or "Premier League preview" not in src),
+          f"the page is named for its league: {NAME} · {K.round_label(B)}")
+    if EPL:
+        check(said and "thin evidence" in src and "checked against ESPN" in src and "shot-based stand-in" not in src,
+              "the page says what it is: a preview, model numbers only, player numbers for a start, nothing a pick; where its data comes from; and that the test results behind it are thin")
+    else:
+        st_ = B.get("standin") or {}
+        check(said and "This league has no expected-goals data, so a shot-based stand-in is used, and no injury list is read yet." in src and "it has not been tested on past seasons here" in src
+              and f'a shot on target counts {st_["on_target"]:.2f} of a goal, one off target {st_["off_target"]:.2f}' in src and "No injury list is read for this league yet" in src and "Fantasy Premier League" not in body
+              and "FPL-Elo-Insights" not in body and f'#{B["n_clubs"]} (red) the least' in src and "this board's regular starters" in src
+              and (("Player lines are in for" in src) == (B.get("with_players", 0) < 0.95 * B.get("played", 0))),
+              f"the page says what it is and what it lacks: a preview, model numbers only, nothing a pick; expected goals replaced by a shot-based stand-in that has not been tested on past seasons; no injury list; "
+              f"ESPN named as the source and not the Premier League's; the color key runs to #{B['n_clubs']}")
     check(not re.search(r"\b(best bet|lock of|value bet|\+EV)\b", re.sub(r"<[^>]+>", " ", body), re.I), "nothing on it is called a best bet or value")
     # ---- the grading record: the page says only what the record beside it supports
-    rp = os.path.join(ROOT, "epl", "record.json"); R = json.load(open(rp)) if os.path.exists(rp) else None
+    rp = os.path.join(ROOT, KEY, "record.json"); R = json.load(open(rp)) if os.path.exists(rp) else None
+    if R is not None: check(R.get("sport") == FEED, f"the grading record beside the page is this league's own ({R.get('sport')})")
     from sports.epl import grade as G
     RS = G.summary(R) if R else None
     if R is None:
@@ -198,7 +236,7 @@ async def main():
             await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}")
             await ctx.route("**/*supabase*/**", lambda r: r.abort())
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
-            await pg.goto(f"http://127.0.0.1:{PORT}/epl/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1300)
+            await pg.goto(f"http://127.0.0.1:{PORT}/{KEY}/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1300)
             # 11/23 (owner: "Epl can we have soccer ball and goal. Maybe other soccer related things"): the card heads wear the pitch tile
             bgi = await pg.evaluate("getComputedStyle(document.querySelector('.card .hd')).backgroundImage")
             check("M24%20118V78h60v40" in bgi and ("20%2C26%2C36" if theme == "light" else "239%2C233%2C218") in bgi and "M24%2018l10%2010" not in bgi and "M34%20120V82h32v38" not in bgi,
@@ -215,17 +253,25 @@ async def main():
                        + [(g["key"], ab, "count") for g, w in zip(got, want) for ab in w["cols"] if len((g["cols"].get(ab) or {}).get("players") or []) != len(w["cols"][ab]["players"])]
                 n = sum(len(c["players"]) for w in want for c in w["cols"].values())
                 check(not badp and n == len(P), f"all {n} player rows: the regulars first by chance to score, the others under a line, each with position, starts in the last five, chance to score, his rank among this round's regulars and his doubt tag" + (f" (off: {badp[:2]})" if badp else ""))
-            st = await pg.evaluate("""(function(){ var cs = [...document.querySelectorAll('.grid > .card[id]:not(.summary)')], c = cs[0], vb = [...c.querySelectorAll('.vbtn')], bar = document.querySelector('.nbbar'), ks = [...bar.children].map(function(x){ return Math.round(x.getBoundingClientRect().top); }), mk = c.querySelector('.eplmk');
+            st = await pg.evaluate("""(function(){ var cs = [...document.querySelectorAll('.grid > .card[id]:not(.summary)')], c = cs[0], vb = [...c.querySelectorAll('.vbtn')], bar = document.querySelector('.nbbar'), ks = [...bar.children].filter(function(x){ return !x.classList.contains('nblg'); }).map(function(x){ return Math.round(x.getBoundingClientRect().top); }), mk = c.querySelector('.eplmk');
+              var pill = function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }, lr = document.querySelector('.nblg'), lc = lr && lr.querySelector('a[aria-current]'), bx = function(e){ return e.getBoundingClientRect(); }, sr = document.querySelector('.nbsw:not(.nblg)');
+              var lrow = lr ? {below: bx(lr).top - bx(sr).bottom, fit: bx(lr).right <= innerWidth + 1 && bx(lr).left >= -1, curin: !!lc && bx(lc).left >= bx(lr).left - 1 && bx(lc).right <= bx(lr).right + 1, h: bx(lr).height, tap: Math.min.apply(null, [...lr.querySelectorAll('a')].map(function(a){ return bx(a).height; })),
+                oneline: [...lr.querySelectorAll('a')].every(function(a){ return Math.abs(bx(a).top - bx(lr.querySelector('a')).top) < 2; })} : null;
               return {compact: document.body.classList.contains('compact'), shown: cs.filter(function(x){ return x.querySelector('.cols').getClientRects().length; }).length, vb: vb.map(function(x){ var r = x.getBoundingClientRect(); return [x.textContent.replace(/\\s+/g, ' ').trim(), r.height]; }),
-                over: document.documentElement.scrollWidth - innerWidth, sw: [...document.querySelectorAll('.nbsw a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }), bar: Math.max.apply(null, ks) - Math.min.apply(null, ks),
+                over: document.documentElement.scrollWidth - innerWidth, sw: [...document.querySelectorAll('.nbsw:not(.nblg) a')].map(pill), lg: [...document.querySelectorAll('.nbsw.nblg a')].map(pill), lrow: lrow, bar: Math.max.apply(null, ks) - Math.min.apply(null, ks),
                 mk: [mk.getClientRects().length > 0, mk.getBoundingClientRect().height, [...mk.children].every(function(x){ return x.scrollWidth <= x.clientWidth + 1; })], font: getComputedStyle(c.querySelector('.tm b')).fontFamily,
                 names: cs.every(function(x){ return [...x.querySelectorAll('.hd .tm span:not(.badge)')].every(function(s){ return s.getBoundingClientRect().height < 34; }); })}; })()""")
             multi = len(want) > 1
             check(st["compact"] == multi and st["shown"] == (0 if multi else 1) and st["over"] <= 0, T(f"scorecards first, as on the NFL boards: {len(want)} matches, none opened, no sideways scroll"))
-            import sport_nav                                  # 11/23: one switch for every sport page - NFL, CFB, NBA, EPL - linking only to pages in this build
-            others = {k: True for k in ("cfb", "nba") if os.path.exists(os.path.join(ROOT, k, "index.html"))}
-            check(st["sw"] == [[lab, href, ("page" if key == "epl" else None)] for key, lab, href in sport_nav.ORDER if key in ("nfl", "epl") or others.get(key)] and st["bar"] <= 6,
-                  T(f"the sport switch: {' | '.join(x[0] for x in st['sw'])} - EPL marked as this page, on one row with the key"))
+            # 11/23: one switch for every sport page - NFL, CFB, NBA, Soccer - linking only to pages in this build; on a soccer page a second row has the leagues
+            check(st["sw"] == switch_want.sports(ROOT, KEY) and st["bar"] <= 6,
+                  T(f"the sport switch: {' | '.join(x[0] for x in st['sw'])} - Soccer marked as this page's sport and pointing at this league, on one row with the key"))
+            wl = switch_want.leagues(ROOT, KEY); lr = st["lrow"]
+            if wl:
+                check(st["lg"] == wl and lr and 0 <= lr["below"] <= 24 and lr["fit"] and lr["curin"] and lr["oneline"] and lr["tap"] >= 36 and lr["h"] <= 64,
+                      T(f"under it the leagues that have a page: {' | '.join(x[0] for x in st['lg'])} - {NAME} marked and in view, the row on one line inside the screen ({lr and round(lr['h'])}px; it scrolls sideways on its own when it is too wide)"))
+            else:
+                check(st["lg"] == [] and lr is None, T(f"{NAME} is the only soccer league with a page in this build: no league row"))
             check(len(st["vb"]) == 2 and st["vb"][0][0].startswith("Projections") and st["vb"][1][0].startswith("Who's out") and min(v[1] for v in st["vb"]) >= 38 and st["mk"][0] and st["mk"][1] <= 78 and st["mk"][2] and st["names"],
                   T(f"each card shows its four match tiles in one row ({st['mk'][1]:.0f}px, nothing cut off), club names on one line, and two buttons: Projections and Who's out"))
             k0 = want[0]["key"]; w0 = want[0]
@@ -247,7 +293,7 @@ async def main():
             check(not d["hidden"] and d["chips"] == wchips and d["over"] <= 0 and d["wide"] <= 1, T(f"{X['name']} opened: his chance to score and of an assist, his shots and shots on target, each with what {X['opp']} allow and his season beside it") + ("" if d["chips"] == wchips else f" (page {d['chips']}, board {wchips})"))
             wl = [[cap, [f"{L}+{pct(pr)}" for L, pr in X["ladder"][k] if pr >= 0.03]] for k, cap in (("shots", "Shots"), ("sot", "Shots on target")) if any(pr >= 0.03 for L, pr in X["ladder"][k])]
             check(d["lad"] == wl and d["rec"] == [[str(c) for c in g[:7]] for g in reversed(X["recent"])], T(f"the chance of each number of shots is the board's ({'; '.join(a + ' ' + ' '.join(b) for a, b in wl[:1])}), and his last {len(X['recent'])} appearances are listed newest first"))
-            if SHOTS: await pg.screenshot(path=os.path.join(SHOTS, f"epl_{theme}_{'phone' if phone else 'desk'}_player.png"))
+            if SHOTS: await pg.screenshot(path=os.path.join(SHOTS, f"{KEY}_{theme}_{'phone' if phone else 'desk'}_player.png"))
             # ---- a player who is not a regular says so
             sub = next((x for x in P if x["match"] == B["matches"][0]["id"] and not K.regular(x) and x.get("xi") is None and not x.get("status")), None)
             if sub:
@@ -257,8 +303,12 @@ async def main():
             # ---- Who's out
             await pg.click(f'#{k0} .vbtn[data-view="out"]'); await pg.wait_for_timeout(300)
             v = await pg.evaluate("""(function(k){ var c = document.getElementById(k), vis = function(x){ return x.getClientRects().length; }; return {view: c.getAttribute('data-view'), rows: [...c.querySelectorAll('li.pl, .epldiv')].filter(vis).length,
-              outs: [...c.querySelectorAll('.inj em')].filter(vis).length, none: [...c.querySelectorAll('.nbnoout')].filter(vis).length}; })""", k0)
-            check(v["view"] == "out" and v["rows"] == 0 and v["outs"] == w0["nout"] and v["none"] == sum(1 for ab in (w0["h"], w0["a"]) if not B["teams"][ab].get("out")), T(f"Who's out shows the {w0['nout']} players out or doubtful for the two clubs and no player rows; a club with nobody out says so"))
+              outs: [...c.querySelectorAll('.inj em')].filter(vis).length, none: [...c.querySelectorAll('.nbnoout')].filter(vis).length, said: [...c.querySelectorAll('.nbnoout')].filter(vis).map(function(x){ return x.textContent.trim(); })}; })""", k0)
+            if EPL:
+                check(v["view"] == "out" and v["rows"] == 0 and v["outs"] == w0["nout"] and v["none"] == sum(1 for ab in (w0["h"], w0["a"]) if not B["teams"][ab].get("out")) and all(x == "Nobody listed out." for x in v["said"]),
+                      T(f"Who's out shows the {w0['nout']} players out or doubtful for the two clubs and no player rows; a club with nobody out says so"))
+            else:
+                check(v["view"] == "out" and v["rows"] == 0 and v["outs"] == 0 and v["said"] == ["No injury list is read for this league yet."] * 2, T("Who's out shows no player rows and says, for each club, that no injury list is read for this league yet - not that nobody is out"))
             await pg.click(f'#{k0} .vbtn[data-view="out"]'); await pg.wait_for_timeout(250)
             # ---- the Slate card
             await pg.evaluate("window.scrollTo(0, 0)"); await pg.click(".card.summary .hd"); await pg.wait_for_timeout(250)
@@ -290,7 +340,7 @@ async def main():
             check(ob == [not (last_day < N.nba_day()), last_day], T(f"the old-board note is {'shown: every match has been played' if last_day < N.nba_day() else 'hidden: the last match is still to come'} ({last_day})"))
             check(not errs and (await pg.evaluate("document.documentElement.scrollWidth - innerWidth")) <= 0, T(f"no script errors, no sideways scroll {errs[:2]}"))
             if SHOTS:
-                await pg.evaluate("window.scrollTo(0, 0)"); await pg.wait_for_timeout(200); await pg.screenshot(path=os.path.join(SHOTS, f"epl_{theme}_{'phone' if phone else 'desk'}.png"))
+                await pg.evaluate("window.scrollTo(0, 0)"); await pg.wait_for_timeout(200); await pg.screenshot(path=os.path.join(SHOTS, f"{KEY}_{theme}_{'phone' if phone else 'desk'}.png"))
             await ctx.close()
         await b.close()
     srv.shutdown(); print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

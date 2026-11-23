@@ -106,10 +106,26 @@ def rules():
     same = json.loads(json.dumps(B0)); same["games"][0]["model"]["margin"] = -4.3; same["built"] = "later"
     check(C.signature(B0) != C.signature(moved) and C.signature(B0) != C.signature(known) and C.signature(B0) == C.signature(same),
           "the page's signature moves when a line moves or a title game learns a team - so the small publish sends it out - and not when only a decimal of our rating does")
+    hrefs = lambda h: re.findall(r'href="([^"]+)"', h); cur = lambda h: re.findall(r'<a href="([^"]+)" aria-current="page">([^<]+)</a>', h)
     check(sport_nav.switch("cfb", {}) == '<div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/cfb/" aria-current="page">CFB</a></div>'
-          and re.findall(r'href="([^"]+)"', sport_nav.switch("nba", {"cfb": True, "epl": True})) == ["/boards/", "/cfb/", "/nba/", "/epl/"] and "/epl/" not in sport_nav.switch("nba", {"cfb": True})
-          and sport_nav.available(only=["cfb", "nope"]) == {"cfb": True},
-          "the sport switch is NFL, CFB, NBA, EPL in that order, marks the page you are on, and links only to sports that have a page in the build")
+          and hrefs(sport_nav.switch("nba", {"cfb": True, "epl": True})) == ["/boards/", "/cfb/", "/nba/", "/epl/"] and "Soccer" not in sport_nav.switch("nba", {"cfb": True})
+          and sport_nav.available(only=["cfb", "nope", "laliga"]) == {"cfb": True, "laliga": True},
+          "the sport switch is NFL, CFB, NBA, Soccer in that order, marks the page you are on, and links only to sports that have a page in the build")
+    # 11/23, owner: "We'd have NFL, College Football, NBA and Soccer (with these different leagues)" - soccer is one sport, its leagues a second row
+    all5 = {"epl": True, "bundesliga": True, "laliga": True, "seriea": True, "mls": True}
+    check(hrefs(sport_nav.switch("nba", {"laliga": True, "mls": True})) == ["/boards/", "/nba/", "/laliga/"] and hrefs(sport_nav.switch("cfb", all5)) == ["/boards/", "/cfb/", "/epl/"]
+          and cur(sport_nav.switch("mls", {"epl": True, "nba": True})) == [("/mls/", "Soccer")] and hrefs(sport_nav.switch("mls", {"epl": True, "nba": True})) == ["/boards/", "/nba/", "/mls/"]
+          and cur(sport_nav.switch("epl", {})) == [("/epl/", "Soccer")],
+          "Soccer is one pill: from another sport it goes to the first league that has a page (the Premier League when it is there); on a league's page it is the current one and points at that league")
+    row = sport_nav.leagues("seriea", all5)
+    check(re.findall(r'>([^<]+)</a>', row) == ["Premier League", "Bundesliga", "La Liga", "Serie A", "MLS"] and cur(row) == [("/seriea/", "Serie A")] and 'class="nbsw nblg"' in row and 'aria-label="League"' in row
+          and hrefs(sport_nav.leagues("mls", {"epl": True})) == ["/epl/", "/mls/"] and sport_nav.leagues("epl", {}) == "" and sport_nav.leagues("epl", {"nba": True, "cfb": True}) == "",
+          "a soccer page has a second row with the leagues that have a page, this one marked; with only one league in the build there is no second row")
+    import switch_want
+    combos = [({}, "cfb"), ({"nba": True}, "epl"), (all5, "nba"), (dict(all5, cfb=True, nba=True), "seriea"), ({"mls": True, "cfb": True}, "nba"), ({"bundesliga": True}, "mls"), ({"cfb": True}, "laliga")]
+    pills = lambda h: [[lab, href, ("page" if c else None)] for href, c, lab in re.findall(r'<a href="([^"]+)"( aria-current="page")?>([^<]+)</a>', h)]
+    check(all(pills(sport_nav.switch(c, hv)) == switch_want.sports(None, c, hv) and pills(sport_nav.leagues(c, hv) if c in sport_nav.LEAGUE else "") == (switch_want.leagues(None, c, hv) if c in sport_nav.LEAGUE else []) for hv, c in combos),
+          f"the switch the pages draw is the one the page tests expect, over {len(combos)} mixes of pages in a build")
     import reprice as R
     keep = (R.SITE, R.OUT); d = tempfile.mkdtemp()
     try:
@@ -152,7 +168,7 @@ async def main():
     T = B.get("test") or {}
     check(f'{T.get("book_miss", 0):.1f} points' in body and f'{T.get("model_miss", 0):.1f}' in body and f'{T["ats"][0]}–{T["ats"][1]}' in body and "That is why the line leads on this page" in body,
           f"the stamp gives the evidence for leading with the line: the book off by {T.get('book_miss')}, our rating by {T.get('model_miss')}, {T['ats'][0]}-{T['ats'][1]} against the spread")
-    have = {k: True for k in ("nba", "epl") if os.path.exists(os.path.join(ROOT, k, "index.html"))}
+    import switch_want
     f1 = lambda x: f"{x:.1f}"
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), functools.partial(type("Q", (http.server.SimpleHTTPRequestHandler,), {"log_message": lambda *a: None}), directory=ROOT))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -169,7 +185,7 @@ async def main():
               return {cards: [...document.querySelectorAll('.grid .card[id]:not(.summary)')].map(function(c){ return {id: c.id, a: tx(c.querySelector('.tm.a b')), b: tx(c.querySelector('.tm.b b')), pts: [...c.querySelectorAll('.score .pt')].map(tx),
                   sub: tx(c.querySelector('.score small')), name: tx(c.querySelector('.cfname')), tiles: [...c.querySelectorAll('.cfmk span')].map(function(s){ return [tx(s.querySelector('small')), tx(s.querySelector('b'))]; }),
                   gap: tx(c.querySelector('.cfgap')), info: tx(c.querySelector('.ginfo')), exp: c.classList.contains('expanded'), cols: c.querySelector('.cols').getBoundingClientRect().height}; }),
-                compact: document.body.classList.contains('compact'), over: document.documentElement.scrollWidth - innerWidth, sw: [...document.querySelectorAll('.nbsw a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }),
+                compact: document.body.classList.contains('compact'), over: document.documentElement.scrollWidth - innerWidth, sw: [...document.querySelectorAll('.nbsw:not(.nblg) a')].map(function(a){ return [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')]; }), lg: document.querySelectorAll('.nblg').length,
                 bg: getComputedStyle(document.querySelector('.card .hd')).backgroundImage, theme: document.documentElement.getAttribute('data-theme'), old: document.getElementById('nbold').hidden}; })()""")
             want = [{"id": g["key"], "a": g["away"], "b": g["home"], "pts": [f1((g.get("mkt") or g["model"])["away"]), f1((g.get("mkt") or g["model"])["home"])], "name": g["name"]} for g in G]
             got = [{k: c[k] for k in ("id", "a", "b", "pts", "name")} for c in st["cards"]]
@@ -189,8 +205,8 @@ async def main():
             multi = len(G) > 1
             check(st["compact"] == multi and all(not c["exp"] for c in st["cards"]) == multi and st["over"] <= 0 and st["old"] and st["theme"] == theme,
                   T_(f"scorecards first, as on the NFL boards: {len(G)} games, {'none' if multi else 'the one'} opened, no sideways scroll"))
-            check(st["sw"] == [[lab, href, ("page" if key == "cfb" else None)] for key, lab, href in sport_nav.ORDER if key in ("nfl", "cfb") or have.get(key)],
-                  T_(f"the sport switch: {' | '.join(x[0] for x in st['sw'])}, this page marked"))
+            check(st["sw"] == switch_want.sports(ROOT, "cfb") and st["lg"] == 0,
+                  T_(f"the sport switch: {' | '.join(x[0] for x in st['sw'])}, this page marked, each link to a page in this build, and no league row"))
             check("M24%2018l10%2010" in st["bg"] and ("20%2C26%2C36" if theme == "light" else "239%2C233%2C218") in st["bg"] and "M34%20120V82h32v38" not in st["bg"],
                   T_("the card heads keep the NFL's Xs and Os - it is football - in this theme's ink"))
             g0 = G[-1]; k0 = g0["key"]

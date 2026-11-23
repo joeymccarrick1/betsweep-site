@@ -39,12 +39,12 @@ def when(s):
         return None
 
 
-def usable(B, now=None, any_age=False):
+def usable(B, now=None, any_age=False, sport="epl"):
     """(ok, why not). Drawn only if it is in the shape this page reads, has a match that is not long over, and was built in the last day:
     the feed job keeps its last board when the model step fails, so an old one can sit on the branch."""
     now = now or dt.datetime.now(dt.timezone.utc)
-    if not B or not isinstance(B, dict): return False, "no epl/board.json in reach on the feeds-sports branch"
-    if B.get("format") != FORMAT or B.get("sport") != "epl": return False, f"the board is format {B.get('format')!r}, this page reads format {FORMAT}"
+    if not B or not isinstance(B, dict): return False, f"no {sport}/board.json in reach on the feeds-sports branch"
+    if B.get("format") != FORMAT or B.get("sport") != sport: return False, f"the board is format {B.get('format')!r} for {B.get('sport')!r}, this page reads format {FORMAT} for {sport!r}"
     if not B.get("matches") or not B.get("players"): return False, "the board holds no matches"
     if any_age: return True, ""
     built = when(B.get("built"))
@@ -112,7 +112,8 @@ def team_col(ab, m, B, top, ranks):
     dsum = f'<li class="dsum">{N.badge(ab, t)}<span>vs {E(opp)} D</span><span class="dgrid">{dm}</span></li>'
     bits = [x for x in ((t.get("record") or ""), (f"form {t['form']}" if t.get("form") else ""), (f"attack #{t['att'][0]}, defence #{t['def'][0]} of {n}")) if x]
     note = f'<li class="nbrest">{E(" · ".join(bits))}</li>'
-    inj = ('<li class="inj"><span>Out</span>' + "".join(f'<em>{E(x["name"])} <small>{E((x.get("why") or x["tag"]).split(" - ")[0])}</small></em>' for x in t["out"]) + '</li>') if t.get("out") else '<li class="nbnoout">Nobody listed out.</li>'
+    inj = (('<li class="inj"><span>Out</span>' + "".join(f'<em>{E(x["name"])} <small>{E((x.get("why") or x["tag"]).split(" - ")[0])}</small></em>' for x in t["out"]) + '</li>') if t.get("out")
+           else ('<li class="nbnoout">No injury list is read for this league yet.</li>' if B.get("no_availability") else '<li class="nbnoout">Nobody listed out.</li>'))
     doubt = ('<li class="inj nbback epldoubt"><span>Doubts</span>' + "".join(f'<em>{E(x["name"])} <small>{E(x["tag"])} to play{" · " + E((x.get("why") or "").split(" - ")[0]) if x.get("why") else ""}</small></em>' for x in t["doubt"]) + '</li>') if t.get("doubt") else ""
     ps = sorted([p for p in B["players"] if p["team"] == ab and p["match"] == m["id"]], key=lambda p: (not regular(p), -p["p_goal"], p["name"]))
     if not ps:
@@ -175,7 +176,19 @@ def summary_card(B, ranks):
 
 def round_label(B):
     g = B.get("gameweeks") or []
-    return ("Gameweek " + str(g[0])) if len(g) == 1 else (f"Gameweeks {g[0]} and {g[-1]}" if g else "The coming matches")
+    return ("Gameweek " + str(g[0])) if len(g) == 1 else (f"Gameweeks {g[0]} and {g[-1]}" if g else "Coming up")
+
+
+def round_name(gw):
+    """a row of the grading record, by name: a Premier League gameweek, or - for a league without gameweeks - the week a match was played
+    in, which the board names by its Tuesday (20261124: sports/soccer/publish.py week_key)"""
+    if not isinstance(gw, int) or gw <= 0: return "Other matches"
+    if gw < 1000: return f"Gameweek {gw}"
+    try:
+        d = dt.date(gw // 10000, gw // 100 % 100, gw % 100)
+        return f"Week of {d.strftime('%b')} {d.day}"
+    except Exception:
+        return "Other matches"
 
 
 RBAND = ("under 20%", "20 to 40%", "40 to 60%", "60 to 80%", "80% and up")       # sports/epl/grade.py EDGES
@@ -231,10 +244,13 @@ def record_block(R):
     if pw: notes.append(f'Player results for {pw} {plural(pw, "match", "matches")} are still to come.')
     if w: notes.append(f'{w} {plural(w, "match is", "matches are")} locked and waiting for a final score.')
     if missed: notes.append(f'{missed} {plural(missed, "match", "matches")} could not be graded: no board had been built before kickoff.')
+    beyond = len(R.get("beyond") or {})
+    if beyond: notes.append(f'{beyond} {plural(beyond, "match", "matches")} went to extra time or penalties: graded as the draw {plural(beyond, "it was", "they were")} at ninety minutes, '
+                            f'with {plural(beyond, "its", "their")} goals and players left out.')
     rounds = ""
     for r in (R.get("rounds") or [])[-5:][::-1]:
         rr = (r.get("res") or {})
-        rounds += (f'<li><b>{"Gameweek " + str(r.get("gw")) if r.get("gw") else "Other matches"}</b> {r.get("matches", 0)} {plural(r.get("matches", 0), "match", "matches")}'
+        rounds += (f'<li><b>{round_name(r.get("gw"))}</b> {r.get("matches", 0)} {plural(r.get("matches", 0), "match", "matches")}'
                    + (f', likeliest result right {rr.get("top", 0)} of {rr["n"]}' if rr.get("n") else '') + '</li>')
     early = ('<p class="nbrc-early">Early days: ' + (f'{S["matches"]} matches are' if S["matches"] != 1 else 'one match is') + ' too few to judge a model by. Nothing here is a pick yet.</p>') if S["matches"] < EARLY else ""
     how = ('<p class="nbrc-how">Each match\'s numbers are locked from the last board built before kickoff and are not changed afterwards. '
@@ -270,10 +286,17 @@ body.compact .card:not(.expanded) > .eplmk{display:grid}
 li.pl.eplsub .ppr .v{opacity:.72}
 .eplxi{font-style:normal;font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--good);margin-left:6px}
 .pl .pos{min-width:34px}
+.nblg{flex:1 0 100%;order:5;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px} .nblg::-webkit-scrollbar{display:none} .nblg a{flex:0 0 auto;white-space:nowrap}
 """
 
 
-def page(B, nba=False, R=None, have=None):
+# On a phone the league row is wider than the screen and scrolls sideways: bring this page's own league into view (MLS is the last pill).
+LG_JS = r"""<script>(function(){ var r = document.querySelector('.nblg'), a = r && r.querySelector('a[aria-current]'); if (!a) return;
+  r.scrollLeft += a.getBoundingClientRect().left - r.getBoundingClientRect().left - (r.clientWidth - a.offsetWidth) / 2; })();</script>"""
+
+
+def page(B, nba=False, R=None, have=None, cfg=None):
+    cfg = cfg or sport_nav.LEAGUE["epl"]; name = cfg["name"]; epl = cfg["key"] == "epl"
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     # this round's rank at each position by chance to score, regular starters only (a substitute's "if he starts" number is not ranked)
     ranks = {}
@@ -282,7 +305,7 @@ def page(B, nba=False, R=None, have=None):
             ranks[(p["id"], p["match"])] = i + 1
     nav = '<a href="#summary">Slate</a> ' + " ".join(f'<a href="#{E(m["key"])}">{E(m["home"])}·{E(m["away"])}</a>' for m in B["matches"])
     n = len(B["matches"]); rl = round_label(B)
-    desc = (f"Premier League matchup boards, {rl.lower()}: the model's expected goals and result chances for {n} match{'es' if n != 1 else ''}, each regular's chance to score, his shots, "
+    desc = (f"{name} matchup boards, {rl.lower()}: the model's expected goals and result chances for {n} match{'es' if n != 1 else ''}, each regular's chance to score, his shots, "
             "who is out, and what each defence allows. A preview: model numbers only.")
     last = max(when(m["ko"]) for m in B["matches"])
     try:
@@ -291,36 +314,58 @@ def page(B, nba=False, R=None, have=None):
     except Exception:
         last_day = (last - dt.timedelta(hours=6)).date().isoformat()
     rec = record_block(R)
-    pre = ('<div class="nbpre"><b>Premier League preview.</b> Model numbers only: no FanDuel prices yet, so no edges or betslip buttons. '
-           'Player numbers assume he starts. ' + ('Nothing here is a pick: every match is locked at kickoff and graded against the result first.' if rec else 'Nothing here is a pick.') + '</div>')
+    pre = (f'<div class="nbpre"><b>{E(name)} preview.</b> Model numbers only: no FanDuel prices yet, so no edges or betslip buttons. '
+           'Player numbers assume he starts. ' + ('' if epl else 'This league has no expected-goals data, so a shot-based stand-in is used, and no injury list is read yet. ')
+           + ('Nothing here is a pick: every match is locked at kickoff and graded against the result first.' if rec else 'Nothing here is a pick.') + '</div>')
     key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
            '<dt>Score</dt><dd>Each side\'s expected goals, home side first, and under it the chance of a home win, a draw and an away win. The posted line beside the kickoff time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
-           '<dt>Bar and number</dt><dd>A player\'s chance to score <b>if he starts</b>, with the bar scaled to the match\'s likeliest scorer. The tag after it is his place among this round\'s regular starters at his position.</dd>'
+           '<dt>Bar and number</dt><dd>A player\'s chance to score <b>if he starts</b>, with the bar scaled to the match\'s likeliest scorer. The tag after it is his place among ' + ("this round\'s" if B.get("gameweeks") else "this board\'s") + ' regular starters at his position.</dd>'
            '<dt>Started N of last 5</dt><dd>The model does not pick line-ups. Players who started three or more of the club\'s last five matches are listed first; the rest sit under a line. When the confirmed elevens are in, about an hour before kickoff, each player is marked in the eleven or on the bench.</dd>'
-           '<dt>Chips</dt><dd>Tap a player. Each chip is a projection; its color is how much the opponent allows - goals for scoring and assists, shots for shots - #1 (green) allows the most and #20 (red) the least.</dd>'
-           '<dt>Out and doubts</dt><dd>From the official Fantasy Premier League list. A player listed out or suspended has no numbers; a doubt keeps his, with his chance of playing.</dd></dl></details>')
+           '<dt>Chips</dt><dd>Tap a player. Each chip is a projection; its color is how much the opponent allows - goals for scoring and assists, shots for shots - #1 (green) allows the most and #' + str(B.get("n_clubs") or 20) + ' (red) the least.</dd>'
+           + ('<dt>Out and doubts</dt><dd>From the official Fantasy Premier League list. A player listed out or suspended has no numbers; a doubt keeps his, with his chance of playing.</dd>' if not B.get("no_availability")
+              else '<dt>Who\'s out</dt><dd>No injury list is read for this league yet, so nobody is marked out. Check the team news before trusting a player\'s number; the confirmed elevens still mark who starts.</dd>')
+           + '</dl></details>')
     chk = ("".join(f"<li>{E(c)}</li>" for c in B.get("checks") or []))
-    stamp = (f'<p class="nbstamp">Built {N.fmt_ct(B.get("built"))} from {B.get("played")} matches through {E(B.get("data_through") or "?")}. Match data: the public FPL-Elo-Insights data set; fixtures, kickoff times and line-ups: ESPN; availability: the official Fantasy Premier League list'
+    stamp_epl = (f'<p class="nbstamp">Built {N.fmt_ct(B.get("built"))} from {B.get("played")} matches through {E(B.get("data_through") or "?")}. Match data: the public FPL-Elo-Insights data set; fixtures, kickoff times and line-ups: ESPN; availability: the official Fantasy Premier League list'
              + (f' as of {N.fmt_ct(B.get("fpl_at"))}' if B.get("fpl_at") else '') + '. Every fixture is checked against ESPN before it is shown. '
              'Projections: BetSweep\'s Premier League model (an attack and a defence rating for every club, fitted on expected goals and goals; players by minutes and per-90 rates against what the opponent allows). '
              'In tests its home / draw / away chances were level with a plain Elo rating and well ahead of flat rates; its totals were no better than last season\'s flat rate; its scorer and shots numbers beat a player\'s own hit rate on about 100 matches of 2026-27. '
              'That is thin evidence: a first look, not a record. For entertainment; not betting advice.</p>'
              + (f'<ul class="nbstamp eplchk">{chk}</ul>' if chk else ""))
+    st = B.get("standin") or {}
+    wp, npl = B.get("with_players"), B.get("played") or 0
+    part = (f' Player lines are in for {wp} of those matches so far, so the player numbers rest on part of the season.' if isinstance(wp, int) and wp < 0.95 * npl else '')
+    stamp_other = (f'<p class="nbstamp">Built {N.fmt_ct(B.get("built"))} from {B.get("played")} matches through {E(B.get("data_through") or "?")}.{part} Results, shots, player lines, fixtures, line-ups and the posted prices: ESPN'
+                   + (f' as of {N.fmt_ct(B.get("espn_at"))}' if B.get("espn_at") else '') + '. '
+                   'Projections: the Premier League model on this league\'s own matches (an attack and a defence rating for every club; players by minutes and per-90 rates against what the opponent allows). '
+                   'One difference matters: there are no expected goals for this league, so a shot-based stand-in is used in their place'
+                   + (f' (a shot on target counts {st["on_target"]:.2f} of a goal, one off target {st["off_target"]:.2f})' if st else '') + '. '
+                   'That is weaker evidence than expected goals and it has not been tested on past seasons here, so treat every number as a first look. No injury list is read for this league yet. '
+                   'For entertainment; not betting advice.</p>' + (f'<ul class="nbstamp eplchk">{chk}</ul>' if chk else ""))
+    stamp = stamp_epl if epl else stamp_other
     cards = "\n".join(match_card(m, B, ranks) for m in B["matches"])
-    sw = sport_nav.switch("epl", have if have is not None else ({"nba": True} if nba else {}))      # NFL | CFB | NBA | EPL: only sports with a page in this build
-    return (f'<title>BetSweep · Premier League Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n<style>{PITCH_CSS}</style>\n'
-            f'<div class="top">\n  <div class="mast">\n    <h1><small>Premier League · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to match">{nav}</nav>\n</div>\n'
+    hv = have if have is not None else ({"nba": True} if nba else {})
+    sw = sport_nav.switch(cfg["key"], hv) + sport_nav.leagues(cfg["key"], hv)      # NFL | CFB | NBA | Soccer, then the leagues: only pages in this build
+    return (f'<title>BetSweep · {E(name)} Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n<style>{PITCH_CSS}</style>\n'
+            f'<div class="top">\n  <div class="mast">\n    <h1><small>{E(name)} · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to match">{nav}</nav>\n</div>\n'
             f'<div class="nbbar">{sw}{key}</div>\n{pre}\n{rec}\n'
             f'<div class="nbold" id="nbold" hidden><b>Every match on this board has kicked off.</b> A newer board is not up yet, so the numbers below are from before those matches.</div>\n'
-            f'<div class="grid" data-day="{E(last_day)}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{N.NB_JS}\n')
+            f'<div class="grid" data-day="{E(last_day)}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{N.NB_JS}\n{LG_JS}\n')
+
+
+def line_sig(line):
+    """the posted line as a visitor would notice it change: which side is favored, and the total. Not the price ticking from -145 to -150:
+    with five leagues that would send a page out every hour for nothing (each publish stays in the site's history for good)."""
+    d = str((line or {}).get("details") or "")
+    return [d.split(" ")[0] if d else None, (line or {}).get("total")]
 
 
 def signature(B, R=None):
-    """what a visitor would notice changing: the matches and their state, the posted lines, each side's expected goals to a tenth, who is out or doubtful,
-    whether the elevens are in, each player's chance to score to the whole percent - and the grading record's size (a newly graded match is news)"""
+    """what a visitor would notice changing: the matches and their state, each posted line's favorite and total, each side's expected goals to a tenth, who is
+    out or doubtful, whether the elevens are in, each player's chance to score to the whole percent - and the grading record's size (a newly graded match is news)"""
     tot = (R or {}).get("total") if isinstance((R or {}).get("total"), dict) else None
-    return json.dumps([([tot.get("matches"), tot.get("pmatches"), (R or {}).get("waiting"), (R or {}).get("pwaiting"), len((R or {}).get("missed") or {})] if tot else None),
-                       [(m["key"], m.get("state"), (m.get("line") or {}).get("details"), round(m["xg"]["home"], 1), round(m["xg"]["away"], 1), bool(m.get("lineups"))) for m in B["matches"]],
+    return json.dumps([([tot.get("matches"), tot.get("pmatches"), (R or {}).get("waiting"), (R or {}).get("pwaiting"), len((R or {}).get("missed") or {}), len((R or {}).get("beyond") or {})] if tot else None),
+                       [(m["key"], m.get("state"), line_sig(m.get("line")), round(m["xg"]["home"], 1), round(m["xg"]["away"], 1), bool(m.get("lineups"))) for m in B["matches"]],
                        sorted((ab, sorted(o["name"] for o in t.get("out") or []), sorted((o["name"], o["tag"]) for o in t.get("doubt") or [])) for ab, t in B["teams"].items()),
                        sorted((p["id"], p["match"], round(p["p_goal"] * 100), p.get("xi")) for p in B["players"])], sort_keys=True)
 
