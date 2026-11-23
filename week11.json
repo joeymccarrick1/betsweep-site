@@ -1191,6 +1191,67 @@
    "date": "11/23",
    "legs": [
     {
+     "pl": "Chase Brown",
+     "m": "Rush + Rec Yards",
+     "ln": 77.0,
+     "o": -111,
+     "p": 0.5227,
+     "bk": 0.5261,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626104589",
+      "s": "41072627"
+     },
+     "why": "Proj 78.1, 5 of 9 at 77+; O/U 54.5 game."
+    },
+    {
+     "pl": "Jayden Daniels",
+     "m": "Passing TDs",
+     "ln": 2.0,
+     "o": -125,
+     "p": 0.5426,
+     "bk": 0.5556,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626103757",
+      "s": "41161339"
+     },
+     "why": "CIN gives QB1s 1.30x (rank 1); proj 1.69 pass TDs."
+    },
+    {
+     "pl": "Over 53.5",
+     "m": "Total",
+     "ln": 53.5,
+     "o": -128,
+     "p": 0.5284,
+     "bk": 0.5614,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626039163",
+      "s": "12197179"
+     },
+     "why": "Model total 54.5, shootout 30%; a point under the model."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626104589&selectionId[0]=41072627&marketId[1]=42.626103757&selectionId[1]=41161339&marketId[2]=42.626039163&selectionId[2]=12197179",
+   "price": "+418",
+   "price_is_estimate": true,
+   "chance": 0.1499,
+   "caption": "Monday Stripes. Both offenses eat.\nChase Brown 77+ scrimmage yds | Jayden Daniels 2+ pass TDs | Over 53.5\nAbout +418 (SGP - check FanDuel).\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "Monday Stripes. Both offenses eat.\nChase Brown 77+ scrimmage yds | Jayden Daniels 2+ pass TDs | Over 53.5\nAbout +418 (SGP - check FanDuel).\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": [
+    "HOOK: Monday night. Three legs, about plus 420.",
+    "LEGS: Chase Brown seventy-seven. Daniels two TDs. Over fifty-three and a half.",
+    "WHY: Cincinnati gives up the most to quarterbacks in the league - 1.3 times their average.",
+    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
+   ],
+   "post": false,
+   "check": "check_mnf FLAG: new 'FD rec yds 3/8' bad flag (builder Mon 7:24 AM) puts a non-empty w on every Ja'Marr Chase and Stefon Diggs leg - leg filter fails; risk score still 0 and prices moved our way. Swapped to clean legs; original kept under 'replaced'.",
+   "replaced": [
+    {
      "pl": "Ja'Marr Chase",
      "m": "Anytime TD",
      "ln": 1.0,
@@ -1240,21 +1301,7 @@
       "p": 0.5355
      }
     }
-   ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626103726&selectionId[0]=26809165&marketId[1]=42.626107192&selectionId[1]=11890083&marketId[2]=42.626104589&selectionId[2]=41072627",
-   "price": "+429",
-   "price_is_estimate": true,
-   "chance": 0.1473,
-   "caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 77+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "Monday Stripes. Both offenses eat.\nJa'Marr Chase TD | Stefon Diggs 5+ catches | Chase Brown 77+ scrimmage yds\nAbout +427 (SGP - check FanDuel).\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": [
-    "HOOK: Monday night. Three legs, about plus 425.",
-    "LEGS: Chase scores. Diggs five catches. Chase Brown seventy-seven.",
-    "WHY: Cincinnati gives slot receivers the third-most in the league - Diggs lives there.",
-    "CALL: Tail it at betsweep.co, link in bio. Comment Playbook for your book. 21 plus."
-   ],
-   "post": false,
-   "check": "check_weekend OK - main-line market moved up 2 yds (link now adds the new line), under 3 implied pts against"
+   ]
   },
   {
    "slot": "mnf",
@@ -1264,6 +1311,107 @@
    "game": "CIN-WAS",
    "date": "11/23",
    "legs": [
+    {
+     "pl": "Jayden Daniels",
+     "m": "Passing TDs",
+     "ln": 3.0,
+     "o": 300,
+     "p": 0.2393,
+     "bk": 0.25,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626338350",
+      "s": "60051559"
+     },
+     "why": "Shootout leg: CIN gives QB1s 1.30x (rank 1)."
+    },
+    {
+     "pl": "Jayden Daniels",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -210,
+     "p": 0.6644,
+     "bk": 0.677,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626338348",
+      "s": "48141787"
+     },
+     "why": "Every start at least 164 pass yds; proj 209."
+    },
+    {
+     "pl": "Chase Brown",
+     "m": "Rush + Rec Yards",
+     "ln": 77.0,
+     "o": -111,
+     "p": 0.5227,
+     "bk": 0.5261,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626104589",
+      "s": "41072627"
+     },
+     "why": "Proj 78.1, 5 of 9 at 77+."
+    },
+    {
+     "pl": "Antonio Williams",
+     "m": "Receptions",
+     "ln": 3.0,
+     "o": -260,
+     "p": 0.66,
+     "bk": 0.722,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626338363",
+      "s": "102913941"
+     },
+     "why": "3+ catches 7 of 9; McLaurin out (fill-in volume)."
+    },
+    {
+     "pl": "Antonio Williams",
+     "m": "Receiving Yards",
+     "ln": 36.0,
+     "o": -113,
+     "p": 0.4903,
+     "bk": 0.531,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626107187",
+      "s": "48777717"
+     },
+     "why": "Proj 42.5 with McLaurin out; CIN allows WR2s only 0.69x - needs the volume."
+    },
+    {
+     "pl": "Over 53.5",
+     "m": "Total",
+     "ln": 53.5,
+     "o": -128,
+     "p": 0.5284,
+     "bk": 0.5614,
+     "game": "CIN-WAS",
+     "risk": 0,
+     "fd": {
+      "m": "42.626039163",
+      "s": "12197179"
+     },
+     "why": "Model total 54.5, shootout 30%."
+    }
+   ],
+   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626338350&selectionId[0]=60051559&marketId[1]=42.626338348&selectionId[1]=48141787&marketId[2]=42.626104589&selectionId[2]=41072627&marketId[3]=42.626338363&selectionId[3]=102913941&marketId[4]=42.626107187&selectionId[4]=48777717&marketId[5]=42.626039163&selectionId[5]=12197179",
+   "price": "+4335",
+   "price_is_estimate": true,
+   "chance": 0.0142,
+   "caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nDaniels 3+ pass TDs & 200+ yds | Chase Brown 77+ | Antonio Williams 3+ catches & 36+ yds | Over 53.5\nLOTTERY. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
+   "ig_caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nDaniels 3+ pass TDs & 200+ yds | Chase Brown 77+ | Antonio Williams 3+ catches & 36+ yds | Over 53.5\nLOTTERY. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
+   "script": null,
+   "post": false,
+   "check": "check_mnf FLAG: new 'FD rec yds 3/8' bad flag (builder Mon 7:24 AM) puts a non-empty w on every Ja'Marr Chase and Stefon Diggs leg - leg filter fails; risk score still 0 and prices moved our way. Swapped to clean legs; original kept under 'replaced'. 6 legs (recipe says 7-10): no seventh clean leg fits the shootout.",
+   "replaced": [
     {
      "pl": "Ja'Marr Chase",
      "m": "Receiving Yards",
@@ -1389,16 +1537,7 @@
      },
      "why": "3+ catches 7 of 9."
     }
-   ],
-   "link": "https://sportsbook.fanduel.com/addToBetslip?marketId[0]=42.626338361&selectionId[0]=40905950&marketId[1]=42.626103726&selectionId[1]=26809165&marketId[2]=42.626338364&selectionId[2]=61354865&marketId[3]=42.626103726&selectionId[3]=10288139&marketId[4]=42.626103757&selectionId[4]=41161339&marketId[5]=42.626104589&selectionId[5]=41072627&marketId[6]=42.626039163&selectionId[6]=12194314&marketId[7]=42.626338363&selectionId[7]=102913941",
-   "price": "+6564",
-   "price_is_estimate": true,
-   "chance": 0.0074,
-   "caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 77+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nComment @Playbook to tail this on your book\n21+ | gamble responsibly",
-   "ig_caption": "PISS MISSILE MONDAY. Bengals-Commanders shootout.\nChase 80+ & TD | Diggs 4+ catches & TD | Daniels 2+ pass TDs | Chase Brown 77+ | Over 52.5 | Antonio Williams 3+ catches\nLOTTERY. Small stake.\nTail on FanDuel: link in bio\n21+ | gamble responsibly",
-   "script": null,
-   "post": false,
-   "check": "check_weekend OK - main-line market moved up 2 yds (link now adds the new line), under 3 implied pts against"
+   ]
   }
  ],
  "not_drafted": {
@@ -1436,6 +1575,13 @@
    "sun_best": "FLAG swapped 2 legs (Nix duplicate; Hubbard rec -205)",
    "snf_mini": "FLAG swapped (both legs on LIVE promos)",
    "live_promos": "Sunday Slate: Caleb 225+ (CHI-NO HIGH weather, rain 85%, bad flag) and Pickens 50+ (DAL-TEN wind bad flag, first game back) at risk. Best TDs: Lamb (risk 7), E. Johnson + Coleman (bad flags), P. Washington (risk 3). Either-or: Barkley/D. Smith (backup QB Joe Milton, rule 5), McCaffrey/Jefferson (Jefferson risk 12, Cousins), St. Brown/LaPorta, Downs/E. Johnson, Swift/Tyson, Hampton/Hall all carry flags. Favorite 6: Justice Hill + Breece Hall bad flags. No posted player is inactive/out as of 16:24 UTC."
+  },
+  "check_mnf": {
+   "run": "2026-11-23 ~7:50 AM CT, builder Mon 11/23 7:24 AM CT, feeds 13:40 UTC",
+   "mnf_500": "FLAG swapped (Chase TD, Diggs 5+ rec -> Daniels 2+ TDs, Over 53.5)",
+   "mnf_pmm": "FLAG rebuilt, 6 legs, est +4335",
+   "sweep_mon": "none (no CIN-WAS leg qualifies under rule 3)",
+   "live_promos": "Either or TD Parlay (LIVE) carries Tee Higgins or Ja'Marr Chase: both Active; Higgins Boom/bust bad flag, Chase new FD rec yds 3/8 flag. Not redrafted."
   }
  }
 }
