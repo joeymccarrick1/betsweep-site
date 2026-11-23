@@ -247,16 +247,40 @@ def preview_changed(clone, name):
 def nba_changed(clone): return preview_changed(clone, "nba")
 
 
+def replace_folder(src, dst):
+    """dst becomes a copy of src, except that the data-<hash>.js files the OUTGOING pages link stay, one generation back.
+    11/15 (owner: Live page blank): a page cached for a few minutes (GitHub Pages, the phone) still names the previous build's hashed
+    data file, and with the file gone the page draws nothing. 11/22: the file is looked for beside the page that links it as well as at
+    the top of the folder, so a page one folder down (/nba/stocks/) is covered, and the small publish (copy_only) follows the same rule
+    - on an NBA night that publish runs every hour. Only what the outgoing pages link is kept, so exactly one generation, never a pile."""
+    keep = {}
+    if os.path.isdir(dst):
+        for hf in glob.glob(os.path.join(dst, "**", "*.html"), recursive=True):
+            try: names = set(re.findall(r"data-[0-9a-f]{8,}\.js", open(hf, encoding="utf-8", errors="ignore").read()))
+            except Exception: continue
+            for f in names:
+                for fp in (os.path.join(os.path.dirname(hf), f), os.path.join(dst, f)):
+                    if os.path.isfile(fp): keep[os.path.relpath(fp, dst)] = open(fp, "rb").read()
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+    back = []
+    for rel, b in sorted(keep.items()):
+        fp = os.path.join(dst, rel)
+        if os.path.isdir(os.path.dirname(fp)) and not os.path.exists(fp):       # a page folder this build dropped gets nothing back
+            open(fp, "wb").write(b); back.append(rel)
+    return back
+
+
 def copy_only(clone, names):
     """A small publish: only these folders go out, plus any shared stylesheet or script they link that the clone does not hold yet.
     For the run where too few NFL prices moved to earn a publish but the NBA board changed: the NBA is a daily sport, and a full copy
-    every few hours would add megabytes of NFL pages that differ only in their build stamp. Nothing is pruned and nothing else is touched."""
+    every few hours would add megabytes of NFL pages that differ only in their build stamp. Nothing is pruned and nothing else is touched.
+    Each folder is replaced as the full publish replaces one (replace_folder): the data file a cached page still names stays one more run."""
     done = []
     for name in names:
         src, dst = os.path.join(SITE, name), os.path.join(clone, name)
         if not os.path.isdir(src) or name in PROTECTED: continue
-        if os.path.isdir(dst): shutil.rmtree(dst)
-        shutil.copytree(src, dst); done.append(name)
+        replace_folder(src, dst); done.append(name)
         linked = set()
         for hf in glob.glob(os.path.join(src, "**", "*.html"), recursive=True):
             linked.update(re.findall(r"/s/((?:site|app|tpl)-[0-9a-f]{6,}\.(?:css|js))", open(hf, encoding="utf-8", errors="ignore").read()))
@@ -278,22 +302,7 @@ def copy_into_clone(clone):
                 os.makedirs(dst, exist_ok=True)
                 for f in glob.glob(os.path.join(src, "*.png")): shutil.copy2(f, dst)
             elif name in MERGE: shutil.copytree(src, dst, dirs_exist_ok=True)
-            else:
-                # 11/15 (owner: Live page blank): a page cached for a few minutes (GitHub Pages, the phone) still names the previous
-                # build's hashed data file. Keep the data-<hash>.js files the folder had before this copy, one generation back.
-                keep = {}
-                if os.path.isdir(dst):
-                    linked = set()
-                    for hf in glob.glob(os.path.join(dst, "**", "*.html"), recursive=True):
-                        try: linked.update(re.findall(r"data-[0-9a-f]{8,}\.js", open(hf, encoding="utf-8", errors="ignore").read()))
-                        except Exception: pass
-                    for f in linked:   # only what the outgoing pages link - so exactly one generation is kept, never a pile
-                        fp = os.path.join(dst, f)
-                        if os.path.exists(fp): keep[f] = open(fp, "rb").read()
-                    shutil.rmtree(dst)
-                shutil.copytree(src, dst)
-                for f, b in keep.items():
-                    if not os.path.exists(os.path.join(dst, f)): open(os.path.join(dst, f), "wb").write(b)
+            else: replace_folder(src, dst)
         else: shutil.copy2(src, dst)
         done.append(name)
     if "promo" not in done and os.path.isdir(os.path.join(clone, "promo")): shutil.rmtree(os.path.join(clone, "promo"))   # last week's posters

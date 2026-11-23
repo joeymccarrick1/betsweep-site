@@ -51,6 +51,34 @@ def publish_rule():
         check(got == ["app-bbbbbb2222.js", "site-aaaaaa1111.css", "tpl-cccccc3333.css"] and open(os.path.join(clone, "s", "tpl-cccccc3333.css")).read() == "already there",
               f"it brings the shared files the page links that the live site lacks, leaves one it has, and no others ({got})")
         check(open(os.path.join(clone, "boards", "index.html")).read() == "live boards" and open(os.path.join(clone, ".github", "x")).read() == "job", "the NFL pages and the jobs folder are not touched")
+        # 11/22 10:25 PM: the first small publish with /nba/stocks/ in it deleted the data file a cached copy of that page still named
+        # (the full publish has kept one generation since 11/15, but only at the top of a folder). Both go through replace_folder now.
+        sk, ck = os.path.join(R.SITE, "nba", "stocks"), os.path.join(clone, "nba", "stocks")
+        os.makedirs(sk); os.makedirs(ck)
+        open(os.path.join(ck, "index.html"), "w").write('<script src="/nba/stocks/data-aaaaaaaa0001.js"></script>live stocks')
+        for f in ("data-aaaaaaaa0001.js", "data-aaaaaaaa0000.js"): open(os.path.join(ck, f), "w").write(f)
+        open(os.path.join(sk, "index.html"), "w").write('<script src="/nba/stocks/data-bbbbbbbb0002.js"></script>new stocks'); open(os.path.join(sk, "data-bbbbbbbb0002.js"), "w").write("new data")
+        R.copy_only(clone, ["nba"])
+        got = sorted(f for f in os.listdir(ck) if f.startswith("data-"))
+        check(got == ["data-aaaaaaaa0001.js", "data-bbbbbbbb0002.js"] and open(os.path.join(ck, "index.html")).read().endswith("new stocks") and open(os.path.join(ck, "data-aaaaaaaa0001.js")).read() == "data-aaaaaaaa0001.js",
+              f"the small publish keeps the data file the outgoing /nba/stocks/ page named, beside the new one, and drops an older one no page named ({got})")
+        R.copy_only(clone, ["nba"])
+        got = sorted(f for f in os.listdir(ck) if f.startswith("data-"))
+        check(got == ["data-bbbbbbbb0002.js"], f"one run later that file is gone: one generation back, never a pile ({got})")
+        a, b = os.path.join(d, "fa"), os.path.join(d, "fb")
+        for x in (os.path.join(a, "x"), os.path.join(b, "x"), os.path.join(b, "gone")): os.makedirs(x)
+        open(os.path.join(b, "index.html"), "w").write('<script src="/p/data-cccccccc0001.js"></script>old top'); open(os.path.join(b, "data-cccccccc0001.js"), "w").write("top")
+        open(os.path.join(b, "x", "index.html"), "w").write('<script src="/p/data-cccccccc0001.js"></script><script src="/p/x/data-dddddddd0001.js"></script>'); open(os.path.join(b, "x", "data-dddddddd0001.js"), "w").write("nested")
+        open(os.path.join(b, "gone", "index.html"), "w").write('<script src="/p/gone/data-eeeeeeee0001.js"></script>'); open(os.path.join(b, "gone", "data-eeeeeeee0001.js"), "w").write("gone")
+        open(os.path.join(b, "stray.txt"), "w").write("x")
+        open(os.path.join(a, "index.html"), "w").write('<script src="/p/data-cccccccc0002.js"></script>new top'); open(os.path.join(a, "data-cccccccc0002.js"), "w").write("top 2"); open(os.path.join(a, "x", "index.html"), "w").write("new nested")
+        back = R.replace_folder(a, b)
+        check(back == ["data-cccccccc0001.js", os.path.join("x", "data-dddddddd0001.js")] and open(os.path.join(b, "index.html")).read().endswith("new top") and open(os.path.join(b, "data-cccccccc0001.js")).read() == "top"
+              and open(os.path.join(b, "x", "data-dddddddd0001.js")).read() == "nested" and os.path.exists(os.path.join(b, "data-cccccccc0002.js")),
+              f"replacing a folder (the full publish too): the old pages' data files stay at the top and one folder down ({back})")
+        check(not os.path.exists(os.path.join(b, "gone")) and not os.path.exists(os.path.join(b, "stray.txt")), "a page folder the build dropped is gone with its data file, and so is anything else the build did not make")
+        c = os.path.join(d, "fc"); back = R.replace_folder(a, c)
+        check(back == [] and sorted(os.listdir(c)) == ["data-cccccccc0002.js", "index.html", "x"], "a folder the live site did not have is a plain copy")
     finally:
         R.SITE, R.OUT = keep; shutil.rmtree(d, ignore_errors=True)
 
