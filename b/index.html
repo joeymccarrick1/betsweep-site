@@ -98,6 +98,78 @@ a{color:var(--ink)}
   if(!code) return;
   var box = document.getElementById('blDyn'), list = document.getElementById('blStatic'); if(list) list.hidden = true; box.hidden = false;
   box.innerHTML = '<div class="none">Loading the slip…</div>';
+  var G = {}, BOX = {}, FIRST = {}, SUMOK = {};   // the leg grader Social uses (social.GRADE_JS / READ_JS, put in by index_page)
+  // ---- grading (social.GRADE_JS: the same code on every page that shows posted slips) ----
+  var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
+  function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
+  function num(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; }
+  function parseBox(js, gid){ try {
+    (js.boxscore.players || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || cat.labels || [];
+      (cat.athletes || []).forEach(function(a){ var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
+        var r = BOX[n] = BOX[n] || {pass: 0, ptd: 0, rush: 0, rec: 0, recy: 0, long: 0, rtd: 0, ctd: 0}; var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
+        // 11/16: touchdowns are SET per category, not added - the box is re-read every minute and "+=" doubled a scorer's TDs on the second read
+        if(cat.name === 'passing'){ r.pass = num(S.passingYards != null ? S.passingYards : S.YDS); r.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); }
+        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
+        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = num(S.longReception != null ? S.longReception : S.LONG); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
+        if(cat.name === 'kickReturns' || cat.name === 'puntReturns'){ var tk = Object.keys(S).filter(function(k){ return /touchdown/i.test(k) || k === 'TD'; })[0]; if(tk) r[cat.name === 'kickReturns' ? 'krtd' : 'prtd'] = num(S[tk]); }   // 11/17: a return touchdown pays an anytime-TD leg too
+      }); }); });
+    var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
+    if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
+    if((js.boxscore.players || []).length) SUMOK[gid] = 1;   // 11/17: this game's box score really was read
+  } catch(e){} }
+  var CUR = {G: G, BOX: BOX, FIRST: FIRST};
+  function gradeLeg(l, C){
+    C = C || CUR;
+    if(/^Under /.test(l.m)){ var s0 = gradeLeg(Object.assign({}, l, {m: l.m.slice(6), ln: Math.floor(l.ln) + 1}), C); return s0 === 'hit' ? 'dead' : s0 === 'dead' ? 'hit' : s0; }   // unders: the other side of the (X+1)+ over
+    var g = C.G[l.g]; if(!g || g.st === 'pre') return 'open'; var fin = g.st === 'post';
+    if(l.gl){ var sa = +g.sa || 0, sb = +g.sb || 0, tot = sa + sb, x = l.gl, ln = +l.ln || 0;
+      if(x.k !== 'M'){ var over = String(x.side).toUpperCase() === 'OVER'; return over ? (tot > ln ? 'hit' : fin ? 'dead' : 'open') : (tot > ln ? 'dead' : fin ? 'hit' : 'open'); }
+      if(!fin) return 'open'; var me = x.side === g.a ? sa : sb, them = x.side === g.a ? sb : sa; return (me - them + (l.m === 'Moneyline' ? 0 : ln)) > 0 ? 'hit' : 'dead'; }
+    var r = C.BOX[norm(l.pl)], sure = C !== CUR;   // live box: a player we cannot find is left open, never called a miss (a name mismatch must not bust a slip); a graded week's file is complete
+    if(l.m === 'First TD'){ var f = C.FIRST[l.g]; if(!f) return (fin && !sure && SUMOK[l.g]) ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }   // 11/17: "no first TD" only once that game's box score has been read - a final whose box did not load used to bust the leg
+    if(l.m === 'Passing TDs'){ if(r && (r.ptd || 0) >= Math.round(l.ln)) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
+    if(l.m === 'Either TD'){ var rs = String(l.pl).split(/\s+or\s+/).map(function(n){ return C.BOX[norm(n)]; });
+      if(rs.some(function(q){ return q && (q.rtd || 0) + (q.ctd || 0) + (q.krtd || 0) + (q.prtd || 0) >= 1; })) return 'hit'; return fin && (sure || rs.every(Boolean)) ? 'dead' : 'open'; }
+    if(/TD$/.test(l.m)){ var needT = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : 1; if(r && (r.rtd || 0) + (r.ctd || 0) + (r.krtd || 0) + (r.prtd || 0) >= needT) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
+    var v = !r ? (fin && sure ? 0 : null) : l.m === 'Passing Yards' ? r.pass : l.m === 'Rushing Yards' ? r.rush : l.m === 'Receiving Yards' ? r.recy : l.m === 'Receptions' ? r.rec : l.m === 'Longest Reception' ? r.long : l.m === 'Rush + Rec Yards' ? r.rush + r.recy : null;
+    if(['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'].indexOf(l.m) < 0) return 'open';   // a market this page cannot grade stays open
+    if(v == null) return 'open'; return v >= Math.round(l.ln) ? 'hit' : (fin ? 'dead' : 'open');
+  }
+  function stateOf(p, C){ var ls = p.legs || [], dead = 0, hits = 0, fin = ls.length > 0, live = false;
+    ls.forEach(function(l){ var s = gradeLeg(l, C); if(s === 'hit') hits++; if(s === 'dead') dead++; var g = (C || CUR).G[l.g]; if(!g || g.st !== 'post') fin = false; if(g && g.st !== 'pre') live = true; });
+    return {hits: hits, n: ls.length, st: dead ? 'busted' : (ls.length && hits === ls.length) ? 'cashed' : fin ? 'done' : live ? 'live' : 'open'}; }
+  function settled(x){ return x.st === 'busted' || x.st === 'cashed' || x.st === 'done'; }
+  // ---- what is known about the week's games (social.READ_JS) ----
+  var FILEOK = {}, ESPNOK = {};   // games the week's box file has as finals / games whose box score this page read from ESPN itself
+  function fileRead(w){
+    return fetch('/data/weeks.json').then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      if(!j || (j.weeks || []).indexOf(+w) < 0) return null;   // no file for this week yet: nothing to ask for
+      return fetch('/data/box-w' + (+w) + '.json').then(function(r){ return r.ok ? r.json() : null; }); }).then(function(d){ if(!d) return;
+      Object.keys(d.games || {}).forEach(function(k){ var t = k.split('-'), v = d.games[k], r = t[1] + '-' + t[0];
+        if(!G[k]) G[k] = {st: 'post', a: t[0], b: t[1], sa: v[0], sb: v[1]}; if(!G[r]) G[r] = {st: 'post', a: t[1], b: t[0], sa: v[1], sb: v[0]}; FILEOK[k] = FILEOK[r] = 1; });
+      Object.keys(d.box || {}).forEach(function(n){ var v = d.box[n], k = norm(n); if(!BOX[k]) BOX[k] = {pass: +v[0] || 0, ptd: +v[1] || 0, rush: +v[3] || 0, rec: +v[5] || 0, recy: +v[6] || 0, long: +v[8] || 0, rtd: +v[4] || 0, ctd: +v[7] || 0}; });
+    }).catch(function(){}); }
+  // a leg the file alone cannot settle: a first touchdown (the file has no first scorer) or a touchdown leg it calls dead (a return touchdown is not in the file)
+  function unsure(l){ return !!FILEOK[l.g] && !ESPNOK[l.g] && !l.gl && (l.m === 'First TD' || (/TD$/.test(l.m) && gradeLeg(l) === 'dead')); }
+  // has this leg's game been read? A leg that has not kicked off needs nothing; a game line needs the score; a player leg needs a box score
+  function legRead(l){ if(!l || !l.g || !l.ko || Date.now() < l.ko) return true; var g = G[l.g]; if(!g) return false; if(g.st === 'pre' || l.gl || ESPNOK[l.g]) return true; return !!FILEOK[l.g] && !unsure(l); }
+  function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
+  // one read of ESPN for the legs whose game has kicked off and is still unread: the scoreboard, then the box score of at most `cap`
+  // games. Resolves when it is done or after `cut` ms, and never rejects; what it could not read simply stays unread.
+  function liveRead(legs, cap, cut){
+    var need = (legs || []).filter(function(l){ return l && l.g && !legRead(l); }); if(!need.length) return Promise.resolve();
+    var t0 = Math.min.apply(null, need.map(function(l){ return l.ko; })), t1 = Math.max.apply(null, need.map(function(l){ return l.ko; })), order = [];
+    need.forEach(function(l){ if(order.indexOf(l.g) < 0) order.push(l.g); });
+    var job = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + ymd(t0 - 864e5) + '-' + ymd(t1 + 864e5), {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){
+      if(!js) return;
+      (js.events || []).forEach(function(ev){ var c = (ev.competitions || [])[0]; if(!c) return; var by = {}; (c.competitors || []).forEach(function(x){ by[ab(x.team && x.team.abbreviation)] = x.score; });
+        order.forEach(function(gid){ var p = gid.split('-'); if(!(p[0] in by) || !(p[1] in by)) return; var ty = ((ev.status || c.status || {}).type) || {};
+          G[gid] = {eid: ev.id, st: ty.state || 'pre', a: p[0], b: p[1], sa: by[p[0]], sb: by[p[1]]}; }); });
+      var on = order.filter(function(gid){ return G[gid] && G[gid].eid && G[gid].st !== 'pre' && need.some(function(l){ return l.g === gid && !l.gl; }); }).slice(0, cap || 4);
+      return Promise.all(on.map(function(gid){ return fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + G[gid].eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(s){ if(s){ parseBox(s, gid); ESPNOK[gid] = 1; } }).catch(function(){}); }));
+    }).catch(function(){});
+    return cut ? Promise.race([job, new Promise(function(res){ setTimeout(res, cut); })]) : job;
+  }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function am(o){ if(o == null) return ''; o = Math.round(o); return o > 0 ? '+' + o : String(o); }
   function lnTxt(l){ if(l.gl) return l.ms || l.m; if(l.m === 'Anytime TD') return 'anytime TD'; if(l.m === 'First TD') return 'first TD'; if(/^\d\+ TD$/.test(l.m)) return l.m; var n = l.ln == null ? '' : (l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'); return ((l.ms || l.m || '').replace(/^Under /i, '').toLowerCase() + ' ' + n).trim(); }
@@ -146,11 +218,21 @@ a{color:var(--ink)}
     if(window.supabase && CFG.url){
       var sb = window.supabase.createClient(CFG.url, CFG.key);
       if(post){
-        sb.from('feed_posts').select('id,handle,title,week,legs,fd_odds,last_ko').eq('id', +post).maybeSingle().then(function(r){
-          if(r.error || !r.data){ box.innerHTML = '<div class="none">This post is gone - it leaves Social once a leg loses or its games end. <a href="/social/" style="color:var(--ink)">See what is open →</a></div>'; return; }
-          var d = r.data; (d.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; });
+        // owner 11/23 12:12 PM ("Once a leg from a slip that someone posted on social loses please take the slip off the site"): the
+        // slip's own link goes with it. Lost on record -> gone. Otherwise, when a leg has kicked off, the page reads the week's box
+        // file and (for games in play or just over) ESPN, and says the slip is off when a leg is known to have lost. A touchdown leg
+        // only the box file calls dead does not count (unsure(): the file has no return touchdowns); what cannot be read shows the slip.
+        var cols = 'id,handle,title,week,legs,fd_odds,last_ko', gone = function(t){ box.innerHTML = '<div class="none">' + t + ' <a href="/social/" style="color:var(--ink)">See what is open →</a></div>'; };
+        var one = function(c){ return sb.from('feed_posts').select(c).eq('id', +post).maybeSingle(); };
+        one(cols + ',result').then(function(r){ return r && r.error ? one(cols) : r; }).then(function(r){   // a database without the result column
+          if(!r || r.error || !r.data){ gone('This post is gone - a slip leaves Social once a leg loses or its games end.'); return; }
+          var d = r.data, LOST = 'This slip is off Social - one of its legs lost.'; (d.legs || []).forEach(function(l){ if(l && l.ko) l.ko = +l.ko; });
+          if(d.result === 'lost'){ gone(LOST); return; }
           var row = {week: d.week, title: d.title || ('@' + d.handle + '\'s slip'), legs: d.legs || [], fd_odds: d.fd_odds, link: null};
-          withMap(row, function(m){ render(row, m); });
+          var show = function(){ withMap(row, function(m){ render(row, m); }); }, now = Date.now();
+          if(d.result || !(d.legs || []).some(function(l){ return l && l.ko && now >= l.ko; })){ show(); return; }   // on record as a winner, or nothing has kicked off
+          fileRead(d.week).then(function(){ return liveRead(d.legs, 4, 4000); }).then(function(){
+            if((d.legs || []).some(function(l){ return gradeLeg(l) === 'dead' && !unsure(l); })) gone(LOST); else show(); }).then(null, show);
         }); return; }
       sb.from('short_links').select('code,week,title,legs,fd_odds,link').eq('code', code).maybeSingle().then(function(r){
         if(r.error){ box.innerHTML = '<div class="none">' + (/relation|does not exist/i.test(r.error.message) ? 'Short links are still being set up - try again soon.' : esc(r.error.message)) + '</div>'; return; }
