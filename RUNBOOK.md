@@ -3027,3 +3027,31 @@ light and dark and desktop. `tests/nba_board.py` checks the new bar.
 
 **Not yet:** a graph in the panel like the NFL's, per-stat graphs, a "this week's schedule" line (games in the next 7 days - the
 thing fantasy players set line-ups by), rank at position, and anything priced.
+
+## 11/22 8:45 PM CT: where the NBA stands, and what is next
+
+**Live (previews, not in the menu or sitemap):** `/nba/` (boards + the grading record) and `/nba/stocks/` (Stock Market). Site
+76c2cba7, generators 4ad66274 (+ this note), data job on main 521dd415. Full set 52 of 52 at 8:11 PM; gate on a copy of the live
+site 551 pages, 0 problems.
+
+**First real grading.** Published 8:44 PM with 2 games / 39 player-games (points 4.5 for the model and 4.5 for a season average);
+by the 8:42 PM job run 3 games / 56 player-games: points 5.22 vs 5.56, rebounds 1.91 vs 2.02, assists 1.47 vs 1.54, threes 1.19 vs
+1.25, minutes off by 4.71 (DEN-CHI went to overtime, 151-145). ORL-WSH was re-graded by hand from the branch's lock and box score:
+every result equals the box score, rows identical to `graded-2026-11-22.json`. Three games is nothing to judge by.
+
+**MASTER log:** rows 676 (grader) and 677 (Stock Market, first results). The sheet's log now has two writers' blocks back to
+back, so `append_values` on A1 lands after the scheduled sessions' rows; last row 677.
+
+**Sunday-night tests.** Two more tests assumed a game still to kick off (page_tight: two games with player props; social_feed: a
+saved slip stays "open" after its player's real game is final). Fixed in the tests; with promo_clock and stocks_page from the
+afternoon that is four clock-dependent tests found in one Sunday. A full set run between the late kickoffs and Tuesday is the one
+that finds these.
+
+**Decisions taken without asking, to tell the owner:** NBA Today is held until prices are in - without picks it would repeat the
+boards' Slate card. Order from here: Premier League boards (sports/epl has the team model - goal rates, home/draw/away, totals,
+both-to-score - and player chances; the feed already mirrors fixtures, line-ups and the FPL availability list), then college
+postseason game lines.
+
+**Open on the NBA side:** the hourly build is every 3 hours on Tue/Wed/Fri/Sat (offered to the owner, a job change needs his
+yes); grading game totals and margins against the posted line; a results page from `graded-<day>.json`; price snapshots after the
+Odds API upgrade.
