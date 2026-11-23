@@ -3716,3 +3716,53 @@ Terms wording (his document); two-step sign-in on every account; database backup
 **Not started on purpose:** hidden markers in the data (they touch the numbers every page runs on; to be designed, not rushed).
 Findings as first written down: /tmp/protect1/FINDINGS.md in the session that did the check.
 
+
+## 11/23 2:17-3:20 PM CT: alerts that stay on (owner: "I keep having to turn on alerts. Why won't it just stay on?")
+
+**What the code did before.** My BetSweep's "Slip alerts" card called alerts "on" when the browser itself still held a push sign-up
+and permission was granted, and showed "Turn on alerts" otherwise. Nothing ever made a sign-up again or saved it again. The choices
+(live, weekly, slip posts, big-name news, favorite team) live on the `push_subs` row keyed by that sign-up's address, so a new
+sign-up meant a new row and the choices back at their defaults. A choice was saved with `update().eq(endpoint)` and no check that
+a row had changed: with the row missing the card said "On - ..." and saved nothing. The alert function deletes a device when its
+push service answers 404 or 410 (right), and nothing put it back.
+
+**Why it bites on an iPhone.** The owner uses the home-screen app. Reported there, and not ours to fix: a sign-up that goes missing,
+`getSubscription()` answering "none" right after the app opens while the sign-up still works (WebKit bug 273063, Apple developer
+forum threads), no `pushsubscriptionchange` event, and the rule that three pushes which show no notification remove the sign-up
+(WebKit "Enforce silent push quota"). **Not known: which of these hit his phone.** The session cannot see the phone or the database.
+
+**What changed (account.py KEEP_JS, PUSH_JS; build_site.py SW).**
+- `window.bsPushKeep` - one small engine. account.js carries it to every page; My BetSweep carries its own copy inline (the inline
+  script runs before the deferred account.js, so a fresh page never leans on an older cached account.js; the two never both define it).
+- The device keeps a note, localStorage `bs_push_dev` = {on, u (whose), ep (address), c (choices), t (last database check), rn / re
+  (how often it was put back, last time), h (background sign-up times), f (last refused try), su / st (leftover look-up)}. It is NOT
+  one of the SYNC keys: it never follows the account to another device.
+- `keep(force)`, run on every page after sign-in is known, when the app comes back to the front, and forced on My BetSweep:
+  signed in + permission still "granted" + the note says this reader has alerts on -> a missing sign-up is asked for again after
+  1.2 s (the "none right after opening" case) and then made again without a tap; a missing row is saved again; a row that had to be
+  made again gets the remembered choices; the row of the address it replaces is deleted (no double alerts).
+- It never acts: after "Turn off on this device" (note on:0, choices forgotten); for another account's note; when permission is no
+  longer "granted" (asking takes a tap - the button comes back and one tap restores the choices too); for a leftover sign-up with no
+  note and no row (the button is shown instead - nobody is signed up unasked).
+- Limits: off My BetSweep the database is asked at most every 30 minutes; a refused sign-up rests 10 minutes; at most three
+  background sign-ups an hour (a browser that keeps answering "none" must not be signed up on every page).
+- `save(ep, vals)`: update + select. No row changed -> the row is put back and the save tried again; still none -> an error.
+  "Saved" now means saved.
+- A second account on the same device: its tap on "Turn on alerts" replaces the device's sign-up with one of its own (the first
+  account's row is not readable or writable by it; the alert function clears that row when the push service reports it gone).
+- The card: no "Sign in" flash before the account script has answered; when the device had lost its sign-up the line reads
+  "Alerts are on for this device. It lost its sign-up 3 times and was switched back on each time (last Nov 23, 2:41 PM)."
+  **That line is the only count of how often a phone drops it** - ask the owner what his says.
+- sw.js `push`: a payload that is not an object, unreadable text, or a first `showNotification` that is refused still ends in a
+  notification (three silent ones would cost an iPhone its sign-up).
+- A device from before this change is taken as on when the browser holds a sign-up AND this account has its row. If the owner's
+  phone shows the button after the publish, one more tap is needed; from then on it keeps itself.
+
+**Not changed:** the alert function (the owner deploys it; no change needed), any SQL, the privacy page (the same push address,
+keys and settings as before, for a feature the reader switched on; the device's note is a setting kept in the browser, which the
+page already says the site does). Told the owner as an FYI.
+**Not covered:** a phone that wipes the whole app's storage (the note goes too, and so does the sign-in), and anything between the
+moment a phone drops the sign-up and the next time the app is opened - alerts sent in that gap do not arrive.
+**Test:** `tests/alerts_keep.py` (port 8889, in tests/prepublish.sh): a made-up account client with the owner-only rule, a made-up
+push service, and the service worker's push handler run under node. `SITE=<the old build> python3 tests/alerts_keep.py` fails,
+as it should. tests/promo_up.py and tests/news_up.py read the new save calls.

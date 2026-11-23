@@ -91,11 +91,144 @@ ACCOUNT_CSS = """
 .bsdlg small.lg{display:block;margin-top:10px;font-size:11.5px;color:#7a7368;line-height:1.4}
 """
 
+# 11/23: the device keeps its own alerts alive (see the comment inside). Included in account.js and inline on My BetSweep.
+KEEP_JS = r"""
+/* Alerts that stay on (owner 11/23: "I keep having to turn on alerts. Why won't it just stay on?").
+   A phone can drop its push sign-up by itself (iPhone home-screen apps are known for it), and the alert service removes a device its
+   push service reports gone. Nothing put either back: the reader met "Turn on alerts" again, and the choices made on the old sign-up
+   (slip posts, big-name news, favorite team) went with it. This keeps one note on the device (on or off, whose it is, the sign-up's
+   address, the choices) and, while that same reader is signed in and notifications are still allowed, makes a missing sign-up again,
+   saves a missing row again and puts the choices back. Never after "Turn off on this device", never for another account, and never
+   when the browser would have to ask permission, which takes a tap. One copy runs per page: account.js carries it to every page and
+   My BetSweep carries its own, so a fresh page never leans on an older cached account.js. */
+window.bsPushKeep = window.bsPushKeep || (function(){
+  var KEY = 'bs_push_dev', VAPID = '__VAPID__', COLS = ['live', 'weekly', 'promo', 'news', 'team'], busy = null, busyForce = false;
+  function C(){ return window.bsAccount && window.bsAccount.client; }
+  function U(){ return window.bsAccount && window.bsAccount.user; }
+  function note(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ return {}; } }
+  function put(o){ try { localStorage.setItem(KEY, JSON.stringify(o)); } catch(e){} }
+  function ok(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function key(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while(s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function opts(){ return {userVisibleOnly: true, applicationServerKey: key(VAPID)}; }
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  /* a service worker that never comes up must not leave the card waiting for good */
+  function sw(){ return Promise.race([navigator.serviceWorker.ready, wait(8000).then(function(){ throw new Error('The app is still starting. Reload the page and try again.'); })]); }
+  function row(ep){ return C().from('push_subs').select('*').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.error) throw r.error; return (r && r.data) || null; }); }
+  function choices(r){ var c = {}; COLS.forEach(function(k){ if(r && k in r) c[k] = r[k]; }); return c; }
+  /* the database must hold this sign-up. A row that has to be made again gets the choices the device remembers, and the row of the address it replaces goes. */
+  function ensure(sub, made){
+    var u = U(), c = C(), j = sub.toJSON(), n = note(), mine = !!u && n.u === u.id, lost = false;
+    var old = mine && n.ep && n.ep !== j.endpoint ? n.ep : null, had = mine && n.on === 1 && n.c ? n.c : {};
+    return row(j.endpoint).then(function(r0){
+      if(r0) return r0;
+      lost = mine && n.on === 1;
+      return c.from('push_subs').upsert({endpoint: j.endpoint, user_id: u.id, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 200)}, {onConflict: 'endpoint'}).then(function(r){
+        if(r && r.error){ if(r.error.code === '42501' || /row-level security/i.test(r.error.message || '')){ var e = new Error('This device is signed up for alerts under another account.'); e.foreign = true; throw e; } throw r.error; }
+        return Promise.all(Object.keys(had).map(function(k){ var v = {}; v[k] = had[k]; return c.from('push_subs').update(v).eq('endpoint', j.endpoint).then(function(){}, function(){}); }));
+      }).then(function(){ return row(j.endpoint); });
+    }).then(function(r1){
+      if(old) c.from('push_subs').delete().eq('endpoint', old).then(function(){}, function(){});
+      var m = {on: 1, u: u.id, ep: j.endpoint, c: choices(r1), t: Date.now(), rn: mine ? (n.rn || 0) : 0, re: mine ? (n.re || 0) : 0, h: mine && n.h ? n.h.slice(-5) : []};
+      /* counted as lost only when something really was: a new address, or a row that had to be made again. A browser that says "none" and then hands back the same sign-up lost nothing. */
+      if(lost || (made && old)){ m.rn += 1; m.re = Date.now(); }
+      if(made) m.h.push(Date.now());
+      put(m); return r1;
+    });
+  }
+  /* the check every page runs. force (My BetSweep) skips the half-hour rest between database checks and the ten-minute rest after a failed try. */
+  function keep(force){
+    if(busy){ if(busyForce || !force) return busy; return busy.then(function(){ return keep(true); }); }
+    busyForce = !!force;
+    busy = Promise.resolve().then(function(){
+      var u = U(), n = note();
+      if(!u || !C() || !ok() || Notification.permission !== 'granted') return {sub: null};
+      var mine = n.on === 1 && n.u === u.id;
+      return sw().then(function(reg){
+        return reg.pushManager.getSubscription().then(function(sub){
+          if(sub) return {sub: sub, made: false};
+          if(!mine) return {sub: null};
+          if(!force && Date.now() - (n.f || 0) < 600000) return {sub: null};
+          /* a browser that keeps answering "none" must not be signed up over and over: three tries an hour in the background, then only My BetSweep */
+          if(!force && (n.h || []).filter(function(t){ return Date.now() - t < 3600000; }).length >= 3) return {sub: null};
+          /* the device says alerts are on but the browser gave no sign-up: ask once more (an iPhone can answer "none" right after the app opens), then make it again */
+          return wait(1200).then(function(){ return reg.pushManager.getSubscription(); }).then(function(s2){
+            if(s2) return {sub: s2, made: false};
+            return reg.pushManager.subscribe(opts()).then(function(s3){ return {sub: s3, made: true}; }, function(e){ var m = note(); m.f = Date.now(); put(m); return {sub: null, err: e}; });
+          });
+        });
+      }).then(function(x){
+        if(!x.sub) return x;
+        if(mine){
+          if(!force && n.ep === x.sub.endpoint && Date.now() - (n.t || 0) < 1800000){ if(x.made){ var m0 = note(); m0.h = (m0.h || []).slice(-5); m0.h.push(Date.now()); put(m0); } return {sub: x.sub, row: null}; }
+          return ensure(x.sub, x.made).then(function(r){ return {sub: x.sub, row: r, made: x.made}; }, function(e){ return e && e.foreign ? {sub: null, foreign: true} : {sub: x.sub, row: null, err: e}; });
+        }
+        /* no note for this reader (a device from before 11/23, or another account's sign-up): alerts are on only if this account already has the row. Never make one unasked.
+           When the database cannot be asked, a device that carries no other account's note keeps reading as on, as it did before. */
+        if(n.on === 0 && n.u === u.id) return {sub: null};
+        if(!force && n.su === u.id && Date.now() - (n.st || 0) < 1800000) return {sub: null, stray: true};
+        return row(x.sub.endpoint).then(function(r){
+          if(!r){ var ms = note(); ms.su = u.id; ms.st = Date.now(); put(ms); return {sub: null, stray: true}; }
+          put({on: 1, u: u.id, ep: x.sub.endpoint, c: choices(r), t: Date.now(), rn: 0, re: 0});
+          return {sub: x.sub, row: r};
+        }, function(e){ return n.u && n.u !== u.id ? {sub: null, err: e} : {sub: x.sub, row: null, err: e}; });
+      });
+    }).then(function(res){ busy = null; return res; }, function(e){ busy = null; return {sub: null, err: e}; });
+    return busy;
+  }
+  /* from a tap: may ask for permission. A sign-up that belongs to another account on this device is replaced by a new one for this account. */
+  function turnOn(){
+    return Notification.requestPermission().then(function(p){
+      if(p !== 'granted') throw new Error('Notifications were not allowed.');
+      return sw();
+    }).then(function(reg){
+      return reg.pushManager.getSubscription().then(function(s){ return s || reg.pushManager.subscribe(opts()); }).then(function(sub){
+        return ensure(sub, false).then(function(r){ return {sub: sub, row: r}; }, function(e){
+          if(!e || !e.foreign) throw e;
+          return sub.unsubscribe().then(function(){ return reg.pushManager.subscribe(opts()); }).then(function(s2){ return ensure(s2, false).then(function(r){ return {sub: s2, row: r}; }); });
+        });
+      });
+    });
+  }
+  /* the note goes to "off" first, so nothing switches alerts back on if the rest is cut short */
+  function turnOff(){
+    var n = note(), u = U(), c = C(), eps = [];
+    put({on: 0, u: u ? u.id : (n.u || null), t: Date.now()});
+    if(u && n.u === u.id && n.ep) eps.push(n.ep);
+    if(!ok()) return Promise.resolve();
+    return sw().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+      if(!sub) return; if(eps.indexOf(sub.endpoint) < 0) eps.push(sub.endpoint);
+      return sub.unsubscribe();
+    }).then(function(){ if(!c) return; return Promise.all(eps.map(function(ep){ return c.from('push_subs').delete().eq('endpoint', ep).then(function(){}, function(){}); })); });
+  }
+  /* save choices. A save that changed no row is not a save: the row is put back and the save tried once more before anything is reported. */
+  function save(ep, vals){
+    var c = C(); if(!c || !ep) return Promise.resolve({error: {message: 'Alerts are not on for this device.'}});
+    function go(){ return c.from('push_subs').update(vals).eq('endpoint', ep).select('endpoint').then(function(r){ return r || {}; }); }
+    return go().then(function(r){
+      if(r.error || (r.data || []).length) return r;
+      return sw().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+        if(!sub || sub.endpoint !== ep) return {error: {message: 'This device lost its alert sign-up. Reload the page to switch it back on.'}};
+        return ensure(sub, false).then(go);
+      });
+    }).then(function(r){
+      if(!r.error && !(r.data || []).length) r = {error: {message: 'That did not save. Turn alerts off and on again.'}};
+      if(!r.error){ var m = note(); if(m.ep === ep){ m.c = m.c || {}; Object.keys(vals).forEach(function(k){ m.c[k] = vals[k]; }); put(m); } }
+      return r;
+    }, function(e){ return {error: {message: String(e && (e.message || e))}}; });
+  }
+  return {note: note, keep: keep, turnOn: turnOn, turnOff: turnOff, save: save, supported: ok};
+})();
+"""
+
 ACCOUNT_JS = r"""
 (function(){
   var CFG = window.__BS_ACCOUNT || {}; if(!CFG.url || !window.supabase) return;
   var sb = window.supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
   window.bsAccount = {client: sb, user: null};
+  __KEEP__
+  /* 11/23: any page keeps the device's alerts alive, and looks once more when the app comes back to the front. My BetSweep runs its own check. */
+  document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.user && window.bsPushKeep && location.pathname.indexOf('/me/') !== 0) setTimeout(function(){ window.bsPushKeep.keep(false); }, 1500); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && window.bsAccount && window.bsAccount.user && window.bsPushKeep && location.pathname.indexOf('/me/') !== 0) window.bsPushKeep.keep(false); });
   // ---- which browser-storage keys follow the account (everything a person builds; not caches) ----
   var SYNC = /^bs_(bankroll(?:_plan)?|clv_w\d+|log_w\d+|slips?_w\d+|slipk_w\d+|slipg_w\d+|slipmeta_w\d+|trade_\d+|manual|teams|team_cur|sleeper_user|sleeper_league|team_mode|tip|tracked.*|dfs_saved|dfs_lu_.*|dfs_site|dfs_fmt|dfs_sal_.*|handle|survivor)$/;
   var META_KEY = 'bs_sync_meta', meta = {}; try{ meta = JSON.parse(localStorage.getItem(META_KEY)||'{}')||{}; }catch(e){}
@@ -166,6 +299,7 @@ ACCOUNT_JS = r"""
   sb.auth.onAuthStateChange(function(ev, s){ if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION' || ev === 'TOKEN_REFRESHED') onSession(s); if (ev === 'SIGNED_OUT') onSession(null); if (ev === 'SIGNED_IN' && dlg) dlg.hidden = true; });
 })();
 """
+ACCOUNT_JS = ACCOUNT_JS.replace("  __KEEP__\n", KEEP_JS).replace("__VAPID__", VAPID_PUBLIC)   # 11/23: alerts that stay on
 
 ME_CSS = """
 .me .ppteam{display:block} .me .ppteam select{display:block;width:100%;max-width:340px;margin-top:6px;font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
@@ -595,51 +729,59 @@ def me_page():
 {__import__("social").POST_HTML}
 {__import__("social").POST_JS}
 {__import__("social").SAVED_JS}
-<script>{PUSH_JS.replace("__VAPID__", VAPID_PUBLIC).replace("__SB__", SUPABASE_URL)}</script>"""
+<script>{KEEP_JS.replace("__VAPID__", VAPID_PUBLIC)}{PUSH_JS.replace("__SB__", SUPABASE_URL)}</script>"""
 
 PUSH_JS = r"""
 (function(){
-  var VAPID = '__VAPID__', FN = '__SB__/functions/v1/slip-alerts';
+  var FN = '__SB__/functions/v1/slip-alerts', K = window.bsPushKeep;
   var msg = document.getElementById('pushmsg'), on = document.getElementById('pushon'), test = document.getElementById('pushtest'), off = document.getElementById('pushoff');
-  if(!msg) return;
+  if(!msg || !K) return;
   function say(t, c){ msg.textContent = t; msg.className = 'm ' + (c || ''); }
   var prefs = document.getElementById('pushprefs'), pl = document.getElementById('pplive'), pw = document.getElementById('ppweekly'), curEp = null;
   function show(a, b, c){ on.hidden = !a; test.hidden = !b; off.hidden = !c; if(prefs) prefs.hidden = !c; }
+  /* 11/23: every choice is saved through bsPushKeep.save, which reports a save only when a row really changed (it used to say "On" with the row missing) */
   var pp = document.getElementById('pppromo'), ppl = document.getElementById('pppromolab');
-  function loadPromo(ep){ if(!pp || !client() || !ep) return; client().from('push_subs').select('promo').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ ppl.hidden = true; return; } ppl.hidden = false; pp.checked = !!(r.data && r.data.promo); }); }
-  if(pp) pp.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({promo: pp.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pp.checked = !pp.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pp.checked ? 'On - you will hear when a slip posts.' : 'Saved.', 'ok'); }); });
+  if(pp) pp.addEventListener('change', function(){ if(!curEp) return; K.save(curEp, {promo: pp.checked}).then(function(r){ if(r && r.error){ pp.checked = !pp.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pp.checked ? 'On - you will hear when a slip posts.' : 'Saved.', 'ok'); }); });
   var pn = document.getElementById('ppnews'), pnl = document.getElementById('ppnewslab');
-  function loadNews(ep){ if(!pn || !client() || !ep) return; client().from('push_subs').select('news').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ pnl.hidden = true; return; } pnl.hidden = false; pn.checked = !!(r.data && r.data.news); }); }
-  if(pn) pn.addEventListener('change', function(){ if(!client() || !curEp) return; client().from('push_subs').update({news: pn.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out, released or traded.' : 'Saved.', 'ok'); }); });
-  var pt = document.getElementById('ppteam'), ptl = document.getElementById('ppteamlab');
-  function loadTeam(ep){ if(!pt || !client() || !ep) return; client().from('push_subs').select('team').eq('endpoint', ep).maybeSingle().then(function(r){ if(!r || r.error){ ptl.hidden = true; return; } ptl.hidden = false; pt.value = (r.data && r.data.team) || ''; }); }
-  if(pt) pt.addEventListener('change', function(){ if(!client() || !curEp) return; var v = pt.value || null; client().from('push_subs').update({team: v}).eq('endpoint', curEp).then(function(r){ if(r && r.error){ say('Could not save that: ' + r.error.message, 'err'); } else say(v ? 'On - you will get ' + pt.options[pt.selectedIndex].text + ' news.' : 'Saved.', 'ok'); }); });
-  function loadPrefs(ep){ curEp = ep; loadPromo(ep); loadNews(ep); loadTeam(ep); if(!client() || !ep) return; client().from('push_subs').select('live,weekly').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.data){ pl.checked = r.data.live !== false; pw.checked = r.data.weekly !== false; } }); }
-  function savePref(){ if(!client() || !curEp) return; client().from('push_subs').update({live: pl.checked, weekly: pw.checked}).eq('endpoint', curEp).then(function(r){ if(r && r.error) say(/column/i.test(r.error.message) ? 'Saved alerts work; these two settings switch on after the next server update.' : r.error.message, 'err'); else say('Saved.', 'ok'); }); }
+  if(pn) pn.addEventListener('change', function(){ if(!curEp) return; K.save(curEp, {news: pn.checked}).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out, released or traded.' : 'Saved.', 'ok'); }); });
+  var pt = document.getElementById('ppteam'), ptl = document.getElementById('ppteamlab'), ptWas = '';
+  if(pt) pt.addEventListener('change', function(){ if(!curEp) return; var v = pt.value || null; K.save(curEp, {team: v}).then(function(r){ if(r && r.error){ pt.value = ptWas; say('Could not save that: ' + r.error.message, 'err'); } else { ptWas = pt.value; say(v ? 'On - you will get ' + pt.options[pt.selectedIndex].text + ' news.' : 'Saved.', 'ok'); } }); });
+  function savePref(){ if(!curEp) return; K.save(curEp, {live: pl.checked, weekly: pw.checked}).then(function(r){ if(r && r.error) say(/column/i.test(r.error.message) ? 'Saved alerts work; these two settings switch on after the next server update.' : r.error.message, 'err'); else say('Saved.', 'ok'); }); }
   if(pl) pl.addEventListener('change', savePref); if(pw) pw.addEventListener('change', savePref);
-  function key(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while(s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
-  var supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  /* the boxes come from the device's own row; a setting the database does not have yet stays hidden */
+  function fill(row){
+    if(pp){ if(row && 'promo' in row){ ppl.hidden = false; pp.checked = !!row.promo; } else ppl.hidden = true; }
+    if(pn){ if(row && 'news' in row){ pnl.hidden = false; pn.checked = !!row.news; } else pnl.hidden = true; }
+    if(pt){ if(row && 'team' in row){ ptl.hidden = false; pt.value = row.team || ''; ptWas = pt.value; } else ptl.hidden = true; }
+    if(row){ pl.checked = row.live !== false; pw.checked = row.weekly !== false; }
+  }
+  /* says so when the device had lost its sign-up and it was put back: the reader should know it happened, and it is the only count of how often it does */
+  function onText(){
+    var n = K.note(); if(!n.rn || !n.re) return 'Alerts are on for this device.';
+    var d = new Date(n.re), when = d.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) + ', ' + d.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+    return 'Alerts are on for this device. It lost its sign-up ' + (n.rn === 1 ? 'once and was switched back on for you (' + when + ').' : n.rn + ' times and was switched back on each time (last ' + when + ').');
+  }
+  function painted(res){ curEp = res.sub.endpoint; show(0,1,1); say(onText(), 'ok'); fill(res.row); }
   var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   function user(){ return window.bsAccount && window.bsAccount.user; }
   function client(){ return window.bsAccount && window.bsAccount.client; }
+  var known = false, seq = 0, last = null, lastAt = 0, lastU = null;
   function refresh(){
-    if(!supported){ show(0,0,0); say(ios && !standalone ? 'On iPhone, alerts need the app: tap Share, then Add to Home Screen, open BetSweep from your home screen and come back here.' : 'This browser cannot receive alerts.'); return; }
-    if(!user()){ show(0,0,0); say('Sign in (top right) to turn on alerts.'); return; }
+    if(!K.supported()){ show(0,0,0); say(ios && !standalone ? 'On iPhone, alerts need the app: tap Share, then Add to Home Screen, open BetSweep from your home screen and come back here.' : 'This browser cannot receive alerts.'); return; }
+    /* 11/23: until the account script has answered, say nothing - "Sign in" used to flash at readers who were signed in */
+    if(!user()){ show(0,0,0); say(known ? 'Sign in (top right) to turn on alerts.' : ''); return; }
     if(Notification.permission === 'denied'){ show(0,0,0); say('Notifications are blocked for betsweep.co in this browser\'s settings - allow them there, then reload.', 'err'); return; }
-    navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
-      if(sub && Notification.permission === 'granted'){ show(0,1,1); say('Alerts are on for this device.', 'ok'); loadPrefs(sub.endpoint); } else { show(1,0,0); say(''); } }).catch(function(){ show(1,0,0); });
-  }
-  function save(sub){
-    var j = sub.toJSON(), u = user();
-    return client().from('push_subs').upsert({endpoint: j.endpoint, user_id: u.id, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 200)}, {onConflict: 'endpoint'}).then(function(r){ if(r.error) throw r.error; });
+    if(last && lastU === user().id && Date.now() - lastAt < 5000){ if(last.sub) painted(last); return; }
+    var my = ++seq, uid = user().id;
+    K.keep(true).then(function(res){
+      if(my !== seq) return;
+      last = res || {}; lastAt = Date.now(); lastU = uid;
+      if(last.sub) painted(last); else { curEp = null; show(1,0,0); say(''); }
+    });
   }
   on.addEventListener('click', function(){
-    on.disabled = true; say('Asking for permission…');
-    Notification.requestPermission().then(function(p){
-      if(p !== 'granted') throw new Error('Notifications were not allowed.');
-      return navigator.serviceWorker.ready;
-    }).then(function(reg){ return reg.pushManager.getSubscription().then(function(s){ return s || reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: key(VAPID)}); }); })
-    .then(function(sub){ return save(sub).then(function(){ return sub; }); }).then(function(sub){ say('Alerts are on for this device.', 'ok'); show(0,1,1); loadPrefs(sub.endpoint); })
+    on.disabled = true; say('Asking for permission…'); seq++;
+    K.turnOn().then(function(res){ last = res; lastAt = Date.now(); lastU = user() && user().id; painted(res); })
     .catch(function(e){ var t = String(e && (e.message || e)); say(/push_subs|relation|does not exist/i.test(t) ? 'Alerts are not switched on on our side yet - try again soon.' : t, 'err'); })
     .then(function(){ on.disabled = false; });
   });
@@ -660,10 +802,12 @@ PUSH_JS = r"""
     .catch(function(){ say('Could not reach the alert service.', 'err'); }).then(function(){ test.disabled = false; });
   });
   off.addEventListener('click', function(){
-    navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){ if(!sub) return;
-      var ep = sub.endpoint; return sub.unsubscribe().then(function(){ return client() && client().from('push_subs').delete().eq('endpoint', ep); }); })
-    .then(function(){ say('Alerts are off for this device.'); show(1,0,0); }).catch(function(){ refresh(); });
+    seq++; last = null;
+    K.turnOff().then(function(){ curEp = null; say('Alerts are off for this device.'); show(1,0,0); }).catch(function(){ refresh(); });
   });
-  document.addEventListener('bs-account', refresh); setTimeout(refresh, 1500); refresh();
+  document.addEventListener('bs-account', function(){ known = true; last = null; refresh(); });
+  /* back from the background: the check may have made a new sign-up, so the card reads the state again */
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible'){ last = null; refresh(); } });
+  setTimeout(function(){ known = true; refresh(); }, 1500); refresh();
 })();
 """

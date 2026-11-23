@@ -17,7 +17,7 @@ check("add column if not exists promo boolean not null default false" in sql and
 import importlib.util
 acct = open(os.path.join(HERE, "account.py"), encoding="utf-8").read()
 mflag = re.search(r"^PROMO_ALERTS = (True|False)\b", acct, re.M)
-check(mflag is not None and "{PROMO_CB}" in acct and "update({promo: pp.checked})" in acct, "the account page has the switch behind PROMO_ALERTS and saves push_subs.promo on its own")
+check(mflag is not None and "{PROMO_CB}" in acct and "K.save(curEp, {promo: pp.checked})" in acct, "the account page has the switch behind PROMO_ALERTS and saves push_subs.promo on its own")
 mep = os.path.join(os.environ.get("SITE") or os.path.join(HERE, "site"), "me", "index.html")
 if mflag and os.path.exists(mep):
     me = open(mep, encoding="utf-8").read(); on = mflag.group(1) == "True"; has = 'id="pppromo"' in me and "When BetSweep posts a slip" in me
