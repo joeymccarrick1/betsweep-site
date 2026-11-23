@@ -1,6 +1,6 @@
 // BetSweep service worker: app shell cached for instant open; pages are network-first so the data is always this build's,
-// with the last good copy served when the connection drops (stadium wifi). Version: 202611231525
-var V = 'bs-202611231525', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dossier/', '/dfs/', '/receipts/', '/season/', '/player/', '/stocks/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
+// with the last good copy served when the connection drops (stadium wifi). Version: 202611231529
+var V = 'bs-202611231529', SHELL = ['/', '/boards/', '/build/', '/live/', '/social/', '/team/', '/firsttd/', '/teasers/', '/beat/', '/teams/', '/dossier/', '/dfs/', '/receipts/', '/season/', '/player/', '/stocks/', '/usage/', '/benefits/', '/guide/', '/offline.html', '/wordmark.png', '/wordmark-ink.png', '/favicon.png', '/logo.png', '/banner.jpg', '/app/icon-192.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(V).then(function(c){ return Promise.all(SHELL.map(function(u){ return c.add(u).catch(function(){}); })); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== V; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
@@ -17,9 +17,13 @@ self.addEventListener('fetch', function(e){
   e.respondWith(caches.match(req).then(function(r){ return r || fetch(req).then(function(res){ if(res && res.ok){ var copy = res.clone(); caches.open(V).then(function(c){ c.put(req, copy); }); } return res;   /* 11/15: never keep a 404 or an error page (a script missing for a moment would stay missing until the next build) */ }); }));
 });
 // slip alerts (owner 10/30): the Supabase function "slip-alerts" pushes {title, body, url, tag}; tapping opens the page
+// 11/23: an iPhone drops the device's alert sign-up after three pushes that show nothing, so every push must end in a notification -
+// whatever the message holds, and even when the first try to show it is refused.
 self.addEventListener('push', function(e){
-  var d = {}; try { d = e.data ? e.data.json() : {}; } catch(x){ d = {title: 'BetSweep', body: e.data ? e.data.text() : ''}; }
-  e.waitUntil(self.registration.showNotification(d.title || 'BetSweep', {body: d.body || '', icon: '/app/icon-192.png', badge: '/app/icon-192.png', tag: d.tag || 'bs', data: {url: d.url || '/me/'}}));
+  var d = null; try { d = e.data ? e.data.json() : null; } catch(x){ try { d = {title: 'BetSweep', body: e.data ? e.data.text() : ''}; } catch(y){ d = null; } }
+  if(!d || typeof d !== 'object') d = {};
+  var t = String(d.title || 'BetSweep'), o = {body: String(d.body || ''), icon: '/app/icon-192.png', badge: '/app/icon-192.png', tag: String(d.tag || 'bs'), data: {url: d.url || '/me/'}};
+  e.waitUntil(self.registration.showNotification(t, o).catch(function(){ return self.registration.showNotification(t, {body: o.body}); }));
 });
 self.addEventListener('notificationclick', function(e){
   e.notification.close(); var u = (e.notification.data || {}).url || '/me/';

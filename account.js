@@ -3,6 +3,135 @@
   var CFG = window.__BS_ACCOUNT || {}; if(!CFG.url || !window.supabase) return;
   var sb = window.supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
   window.bsAccount = {client: sb, user: null};
+
+/* Alerts that stay on (owner 11/23: "I keep having to turn on alerts. Why won't it just stay on?").
+   A phone can drop its push sign-up by itself (iPhone home-screen apps are known for it), and the alert service removes a device its
+   push service reports gone. Nothing put either back: the reader met "Turn on alerts" again, and the choices made on the old sign-up
+   (slip posts, big-name news, favorite team) went with it. This keeps one note on the device (on or off, whose it is, the sign-up's
+   address, the choices) and, while that same reader is signed in and notifications are still allowed, makes a missing sign-up again,
+   saves a missing row again and puts the choices back. Never after "Turn off on this device", never for another account, and never
+   when the browser would have to ask permission, which takes a tap. One copy runs per page: account.js carries it to every page and
+   My BetSweep carries its own, so a fresh page never leans on an older cached account.js. */
+window.bsPushKeep = window.bsPushKeep || (function(){
+  var KEY = 'bs_push_dev', VAPID = 'BD3UuhEHyS404Cj8rHy4BOKOpVbRoWsAwL280ALvqmPlhct0Pc42PDiQ9UazK8KHF-sG4IxqEBpBWg3acsYljWk', COLS = ['live', 'weekly', 'promo', 'news', 'team'], busy = null, busyForce = false;
+  function C(){ return window.bsAccount && window.bsAccount.client; }
+  function U(){ return window.bsAccount && window.bsAccount.user; }
+  function note(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ return {}; } }
+  function put(o){ try { localStorage.setItem(KEY, JSON.stringify(o)); } catch(e){} }
+  function ok(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function key(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while(s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function opts(){ return {userVisibleOnly: true, applicationServerKey: key(VAPID)}; }
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  /* a service worker that never comes up must not leave the card waiting for good */
+  function sw(){ return Promise.race([navigator.serviceWorker.ready, wait(8000).then(function(){ throw new Error('The app is still starting. Reload the page and try again.'); })]); }
+  function row(ep){ return C().from('push_subs').select('*').eq('endpoint', ep).maybeSingle().then(function(r){ if(r && r.error) throw r.error; return (r && r.data) || null; }); }
+  function choices(r){ var c = {}; COLS.forEach(function(k){ if(r && k in r) c[k] = r[k]; }); return c; }
+  /* the database must hold this sign-up. A row that has to be made again gets the choices the device remembers, and the row of the address it replaces goes. */
+  function ensure(sub, made){
+    var u = U(), c = C(), j = sub.toJSON(), n = note(), mine = !!u && n.u === u.id, lost = false;
+    var old = mine && n.ep && n.ep !== j.endpoint ? n.ep : null, had = mine && n.on === 1 && n.c ? n.c : {};
+    return row(j.endpoint).then(function(r0){
+      if(r0) return r0;
+      lost = mine && n.on === 1;
+      return c.from('push_subs').upsert({endpoint: j.endpoint, user_id: u.id, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 200)}, {onConflict: 'endpoint'}).then(function(r){
+        if(r && r.error){ if(r.error.code === '42501' || /row-level security/i.test(r.error.message || '')){ var e = new Error('This device is signed up for alerts under another account.'); e.foreign = true; throw e; } throw r.error; }
+        return Promise.all(Object.keys(had).map(function(k){ var v = {}; v[k] = had[k]; return c.from('push_subs').update(v).eq('endpoint', j.endpoint).then(function(){}, function(){}); }));
+      }).then(function(){ return row(j.endpoint); });
+    }).then(function(r1){
+      if(old) c.from('push_subs').delete().eq('endpoint', old).then(function(){}, function(){});
+      var m = {on: 1, u: u.id, ep: j.endpoint, c: choices(r1), t: Date.now(), rn: mine ? (n.rn || 0) : 0, re: mine ? (n.re || 0) : 0, h: mine && n.h ? n.h.slice(-5) : []};
+      /* counted as lost only when something really was: a new address, or a row that had to be made again. A browser that says "none" and then hands back the same sign-up lost nothing. */
+      if(lost || (made && old)){ m.rn += 1; m.re = Date.now(); }
+      if(made) m.h.push(Date.now());
+      put(m); return r1;
+    });
+  }
+  /* the check every page runs. force (My BetSweep) skips the half-hour rest between database checks and the ten-minute rest after a failed try. */
+  function keep(force){
+    if(busy){ if(busyForce || !force) return busy; return busy.then(function(){ return keep(true); }); }
+    busyForce = !!force;
+    busy = Promise.resolve().then(function(){
+      var u = U(), n = note();
+      if(!u || !C() || !ok() || Notification.permission !== 'granted') return {sub: null};
+      var mine = n.on === 1 && n.u === u.id;
+      return sw().then(function(reg){
+        return reg.pushManager.getSubscription().then(function(sub){
+          if(sub) return {sub: sub, made: false};
+          if(!mine) return {sub: null};
+          if(!force && Date.now() - (n.f || 0) < 600000) return {sub: null};
+          /* a browser that keeps answering "none" must not be signed up over and over: three tries an hour in the background, then only My BetSweep */
+          if(!force && (n.h || []).filter(function(t){ return Date.now() - t < 3600000; }).length >= 3) return {sub: null};
+          /* the device says alerts are on but the browser gave no sign-up: ask once more (an iPhone can answer "none" right after the app opens), then make it again */
+          return wait(1200).then(function(){ return reg.pushManager.getSubscription(); }).then(function(s2){
+            if(s2) return {sub: s2, made: false};
+            return reg.pushManager.subscribe(opts()).then(function(s3){ return {sub: s3, made: true}; }, function(e){ var m = note(); m.f = Date.now(); put(m); return {sub: null, err: e}; });
+          });
+        });
+      }).then(function(x){
+        if(!x.sub) return x;
+        if(mine){
+          if(!force && n.ep === x.sub.endpoint && Date.now() - (n.t || 0) < 1800000){ if(x.made){ var m0 = note(); m0.h = (m0.h || []).slice(-5); m0.h.push(Date.now()); put(m0); } return {sub: x.sub, row: null}; }
+          return ensure(x.sub, x.made).then(function(r){ return {sub: x.sub, row: r, made: x.made}; }, function(e){ return e && e.foreign ? {sub: null, foreign: true} : {sub: x.sub, row: null, err: e}; });
+        }
+        /* no note for this reader (a device from before 11/23, or another account's sign-up): alerts are on only if this account already has the row. Never make one unasked.
+           When the database cannot be asked, a device that carries no other account's note keeps reading as on, as it did before. */
+        if(n.on === 0 && n.u === u.id) return {sub: null};
+        if(!force && n.su === u.id && Date.now() - (n.st || 0) < 1800000) return {sub: null, stray: true};
+        return row(x.sub.endpoint).then(function(r){
+          if(!r){ var ms = note(); ms.su = u.id; ms.st = Date.now(); put(ms); return {sub: null, stray: true}; }
+          put({on: 1, u: u.id, ep: x.sub.endpoint, c: choices(r), t: Date.now(), rn: 0, re: 0});
+          return {sub: x.sub, row: r};
+        }, function(e){ return n.u && n.u !== u.id ? {sub: null, err: e} : {sub: x.sub, row: null, err: e}; });
+      });
+    }).then(function(res){ busy = null; return res; }, function(e){ busy = null; return {sub: null, err: e}; });
+    return busy;
+  }
+  /* from a tap: may ask for permission. A sign-up that belongs to another account on this device is replaced by a new one for this account. */
+  function turnOn(){
+    return Notification.requestPermission().then(function(p){
+      if(p !== 'granted') throw new Error('Notifications were not allowed.');
+      return sw();
+    }).then(function(reg){
+      return reg.pushManager.getSubscription().then(function(s){ return s || reg.pushManager.subscribe(opts()); }).then(function(sub){
+        return ensure(sub, false).then(function(r){ return {sub: sub, row: r}; }, function(e){
+          if(!e || !e.foreign) throw e;
+          return sub.unsubscribe().then(function(){ return reg.pushManager.subscribe(opts()); }).then(function(s2){ return ensure(s2, false).then(function(r){ return {sub: s2, row: r}; }); });
+        });
+      });
+    });
+  }
+  /* the note goes to "off" first, so nothing switches alerts back on if the rest is cut short */
+  function turnOff(){
+    var n = note(), u = U(), c = C(), eps = [];
+    put({on: 0, u: u ? u.id : (n.u || null), t: Date.now()});
+    if(u && n.u === u.id && n.ep) eps.push(n.ep);
+    if(!ok()) return Promise.resolve();
+    return sw().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+      if(!sub) return; if(eps.indexOf(sub.endpoint) < 0) eps.push(sub.endpoint);
+      return sub.unsubscribe();
+    }).then(function(){ if(!c) return; return Promise.all(eps.map(function(ep){ return c.from('push_subs').delete().eq('endpoint', ep).then(function(){}, function(){}); })); });
+  }
+  /* save choices. A save that changed no row is not a save: the row is put back and the save tried once more before anything is reported. */
+  function save(ep, vals){
+    var c = C(); if(!c || !ep) return Promise.resolve({error: {message: 'Alerts are not on for this device.'}});
+    function go(){ return c.from('push_subs').update(vals).eq('endpoint', ep).select('endpoint').then(function(r){ return r || {}; }); }
+    return go().then(function(r){
+      if(r.error || (r.data || []).length) return r;
+      return sw().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+        if(!sub || sub.endpoint !== ep) return {error: {message: 'This device lost its alert sign-up. Reload the page to switch it back on.'}};
+        return ensure(sub, false).then(go);
+      });
+    }).then(function(r){
+      if(!r.error && !(r.data || []).length) r = {error: {message: 'That did not save. Turn alerts off and on again.'}};
+      if(!r.error){ var m = note(); if(m.ep === ep){ m.c = m.c || {}; Object.keys(vals).forEach(function(k){ m.c[k] = vals[k]; }); put(m); } }
+      return r;
+    }, function(e){ return {error: {message: String(e && (e.message || e))}}; });
+  }
+  return {note: note, keep: keep, turnOn: turnOn, turnOff: turnOff, save: save, supported: ok};
+})();
+  /* 11/23: any page keeps the device's alerts alive, and looks once more when the app comes back to the front. My BetSweep runs its own check. */
+  document.addEventListener('bs-account', function(e){ if(e.detail && e.detail.user && window.bsPushKeep && location.pathname.indexOf('/me/') !== 0) setTimeout(function(){ window.bsPushKeep.keep(false); }, 1500); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && window.bsAccount && window.bsAccount.user && window.bsPushKeep && location.pathname.indexOf('/me/') !== 0) window.bsPushKeep.keep(false); });
   // ---- which browser-storage keys follow the account (everything a person builds; not caches) ----
   var SYNC = /^bs_(bankroll(?:_plan)?|clv_w\d+|log_w\d+|slips?_w\d+|slipk_w\d+|slipg_w\d+|slipmeta_w\d+|trade_\d+|manual|teams|team_cur|sleeper_user|sleeper_league|team_mode|tip|tracked.*|dfs_saved|dfs_lu_.*|dfs_site|dfs_fmt|dfs_sal_.*|handle|survivor)$/;
   var META_KEY = 'bs_sync_meta', meta = {}; try{ meta = JSON.parse(localStorage.getItem(META_KEY)||'{}')||{}; }catch(e){}
