@@ -258,9 +258,10 @@ async def main():
             check(st["compact"] == multi and st["shown"] == (0 if multi else 1) and st["over"] <= 0, T(f"scorecards first, as on the NFL boards: {len(want)} games, none opened, no sideways scroll, page {st['h']:.1f} screens long"))
             check(len(st["vb"]) == 2 and st["vb"][0][0] == "Projections" and st["vb"][1][0].startswith("Who's out") and min(v[1] for v in st["vb"]) >= 38 and abs(st["vb"][0][2] - st["vb"][1][2]) < 2 and abs(st["vb"][0][3] - st["vb"][1][3]) < 3,
                   T(f"each card has two equal buttons, Projections and Who's out ({st['vb'][0][1]:.0f}px tall)"))
-            has_epl = os.path.exists(os.path.join(ROOT, "epl", "index.html"))
-            check(st["sw"] == [["NFL", "/boards/", None], ["NBA", "/nba/", "page"]] + ([["EPL", "/epl/", None]] if has_epl else []),
-                  T("a sport switch sits above the cards: NFL (to the NFL boards), NBA (this page)" + (" and EPL (the Premier League preview is in this build)" if has_epl else "; no Premier League page in this build, so no link to one")))
+            import sport_nav                                  # 11/23: one switch for every sport page - NFL, CFB, NBA, EPL - linking only to pages in this build
+            others = {k: True for k in ("cfb", "epl") if os.path.exists(os.path.join(ROOT, k, "index.html"))}
+            check(st["sw"] == [[lab, href, ("page" if key == "nba" else None)] for key, lab, href in sport_nav.ORDER if key in ("nfl", "nba") or others.get(key)],
+                  T(f"a sport switch sits above the cards: {' | '.join(x[0] for x in st['sw'])} - NBA marked as this page, and a link only to the other sports that have a page in this build ({sorted(others) or 'none'})"))
             has_sk = os.path.exists(os.path.join(ROOT, "nba", "stocks", "index.html"))
             check(st["pg"] == ([["Boards", "/nba/", "page"], ["Stocks", "/nba/stocks/", None]] if has_sk else []) and st["bar"][0] <= 6 and st["bar"][1] <= 60,
                   T(("beside it the NBA's own pages, Boards (this one) and Stocks, " if has_sk else "no second NBA page in this build, so no page switch; ") + f"and the whole bar is one row ({st['bar'][1]:.0f}px)"))

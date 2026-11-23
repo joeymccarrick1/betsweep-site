@@ -19,6 +19,7 @@ nothing and removes what an earlier run left.
 """
 import datetime as dt, html, json, os, re, sys
 import build_nba as N
+import sport_nav
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out")
 PAGE = os.path.join(OUT, "epl-boards.html")
@@ -272,7 +273,7 @@ li.pl.eplsub .ppr .v{opacity:.72}
 """
 
 
-def page(B, nba=False, R=None):
+def page(B, nba=False, R=None, have=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     # this round's rank at each position by chance to score, regular starters only (a substitute's "if he starts" number is not ranked)
     ranks = {}
@@ -306,7 +307,7 @@ def page(B, nba=False, R=None):
              'That is thin evidence: a first look, not a record. For entertainment; not betting advice.</p>'
              + (f'<ul class="nbstamp eplchk">{chk}</ul>' if chk else ""))
     cards = "\n".join(match_card(m, B, ranks) for m in B["matches"])
-    sw = ('<div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a>' + ('<a href="/nba/">NBA</a>' if nba else "") + '<a href="/epl/" aria-current="page">EPL</a></div>')
+    sw = sport_nav.switch("epl", have if have is not None else ({"nba": True} if nba else {}))      # NFL | CFB | NBA | EPL: only sports with a page in this build
     return (f'<title>BetSweep · Premier League Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n<style>{PITCH_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>Premier League · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to match">{nav}</nav>\n</div>\n'
             f'<div class="nbbar">{sw}{key}</div>\n{pre}\n{rec}\n'
@@ -329,13 +330,13 @@ def main():
     named = "--board" in a
     R = None
     if named:
-        B = N.load(path=a[a.index("--board") + 1]); nba = "--nba" in a           # --nba: draw the link to the NBA page (local work)
+        B = N.load(path=a[a.index("--board") + 1]); have = sport_nav.local(a, OUT); nba = bool(have.get("nba"))   # --nba / --with nba,cfb: draw those links (local work)
         if "--record" in a:
             try: R = json.load(open(a[a.index("--record") + 1], encoding="utf-8"))
             except Exception: R = None
     else:
-        nb = N.load(clone=(a[0] if a else None))       # fetches the branch; the NBA board says whether there will be an NBA page to link to
-        B = N.feed_file(a[0] if a else None, "epl/board.json"); nba = N.usable(nb)[0]
+        have = sport_nav.available(a[0] if a else None)       # fetches the branch; each sport's own rule says whether its page will be there to link to
+        B = N.feed_file(a[0] if a else None, "epl/board.json"); nba = bool(have.get("nba"))
         R = N.feed_file(a[0] if a else None, "epl/record.json")      # the grading record (sports/epl/grade.py); None until the job has written one
     if not isinstance(R, dict) or R.get("sport") != "epl" or not isinstance(R.get("total"), dict):
         R = None
@@ -347,9 +348,9 @@ def main():
         print(f"epl: no page written - {why}")
         return
     os.makedirs(OUT, exist_ok=True)
-    open(PAGE, "w", encoding="utf-8").write(page(B, nba, R))
+    open(PAGE, "w", encoding="utf-8").write(page(B, nba, R, have))
     json.dump(B, open(outs[1], "w"), separators=(",", ":"))
-    json.dump({"built": B.get("built"), "sig": signature(B, R)}, open(outs[2], "w"))
+    json.dump({"built": B.get("built"), "sig": signature(B, R) + "|nav:" + ",".join(sorted(have))}, open(outs[2], "w"))
     if R: json.dump(R, open(outs[3], "w"), separators=(",", ":"))
     elif os.path.exists(outs[3]): os.remove(outs[3])
     T = (R or {}).get("total") or {}

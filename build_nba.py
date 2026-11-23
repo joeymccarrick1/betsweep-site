@@ -25,6 +25,7 @@ copied from it; this script computes only ranks for display (who is tonight's Nt
 """
 import datetime as dt, html, json, os, re, subprocess, sys
 
+import sport_nav
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out")
 E = lambda s: html.escape(str(s), quote=True)
 PAGE = os.path.join(OUT, "nba-boards.html")
@@ -400,7 +401,7 @@ NB_JS = r"""<script>
 </script>"""
 
 
-def page(B, R=None):
+def page(B, R=None, have=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     # tonight's rank at each position group by projected points (the NFL card's "#14 QB")
     ranks = {}
@@ -427,12 +428,12 @@ def page(B, R=None):
              'adjusted for what the opponent allows by position). In a test on 2026-27 games through mid-November (2,877 player-games) it was about 7% closer than a player\'s season average on points, rebounds and assists. For entertainment; not betting advice.</p>')
     cards = "\n".join(game_card(g, B, ranks) for g in B["games"])
     # the NBA's own pages: shown once there is a second one in this build (build_nba_stocks.py runs first and leaves out/nba-stocks.html)
-    epl = '<a href="/epl/">EPL</a>' if os.path.exists(os.path.join(OUT, "epl-boards.html")) else ""
+    sw = sport_nav.switch("nba", have if have is not None else sport_nav.local([], OUT))      # NFL | CFB | NBA | EPL: only sports with a page in this build
     pages = ('<div class="nbsw nbpg" role="group" aria-label="NBA pages"><a href="/nba/" aria-current="page">Boards</a><a href="/nba/stocks/">Stocks</a></div>'
              if os.path.exists(os.path.join(OUT, "nba-stocks.html")) else "")
     return (f'<title>BetSweep · NBA Matchup Boards</title>\n<style>{css}</style>\n<style>{NB_CSS}</style>\n<style>{COURT_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>NBA · {E(B["day_label"])}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to game">{nav}</nav>\n</div>\n'
-            f'<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/nba/" aria-current="page">NBA</a>{epl}</div>{pages}{key}</div>\n{pre}\n{record_block(R)}\n'
+            f'<div class="nbbar">{sw}{pages}{key}</div>\n{pre}\n{record_block(R)}\n'
             f'<div class="nbold" id="nbold" hidden><b>This board is for {E(B["day_label"])}.</b> A newer one is not up yet, so every number below is from that day.</div>\n'
             f'<div class="grid" data-day="{E(B["day"])}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{NB_JS}\n')
 
@@ -460,7 +461,11 @@ def signature(B, R=None, extra=None):
 
 def main():
     a = sys.argv[1:]
-    B = load(path=a[a.index("--board") + 1]) if "--board" in a else load(clone=(a[0] if a else None))
+    if "--board" in a:
+        B = load(path=a[a.index("--board") + 1]); have = sport_nav.local(a, OUT)
+    else:
+        have = sport_nav.available(a[0] if a else None)          # fetches the branch and asks each sport's page rule whether it will be drawn
+        B = feed_file(a[0] if a else None, "nba/board.json")
     ok, why = usable(B, any_day="--board" in a)   # a board file named by hand is drawn whatever its day (tests, local work)
     if not ok:
         for f in (PAGE, os.path.join(OUT, "nba_board.json"), os.path.join(OUT, "nba_sig.json"), os.path.join(OUT, "nba_record.json")):
@@ -472,7 +477,7 @@ def main():
     if R is not None and not (isinstance(R, dict) and isinstance(R.get("total"), dict) and R.get("sport") == "nba"):
         print("nba: the grading record is not in a shape this page reads - the page is drawn without it"); R = None
     os.makedirs(OUT, exist_ok=True)
-    open(PAGE, "w", encoding="utf-8").write(page(B, R))
+    open(PAGE, "w", encoding="utf-8").write(page(B, R, have))
     rp = os.path.join(OUT, "nba_record.json")
     if R is not None: json.dump(R, open(rp, "w"), separators=(",", ":"))
     elif os.path.exists(rp): os.remove(rp)
@@ -481,7 +486,7 @@ def main():
     json.dump(B, open(os.path.join(OUT, "nba_board.json"), "w"), separators=(",", ":"))
     sk = load(path=os.path.join(OUT, "nba_stocks.json")) if os.path.exists(os.path.join(OUT, "nba-stocks.html")) and os.path.exists(os.path.join(OUT, "nba_stocks.json")) else None
     extra = [sk["stocks"].get("data_through"), sum(1 for p in sk["stocks"]["players"] if p.get("dir") == "up"), sum(1 for p in sk["stocks"]["players"] if p.get("dir") == "dn")] if sk else None
-    json.dump({"day": B.get("day"), "built": B.get("built"), "sig": signature(B, R, extra)}, open(os.path.join(OUT, "nba_sig.json"), "w"))
+    json.dump({"day": B.get("day"), "built": B.get("built"), "sig": signature(B, R, extra) + "|nav:" + ",".join(sorted(have))}, open(os.path.join(OUT, "nba_sig.json"), "w"))
     print(f"nba boards: {B['day_label']}, {len(B['games'])} games, {len(B['players'])} players, {sum(len(t.get('out') or []) for t in B['teams'].values())} out; board built {fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
 
 

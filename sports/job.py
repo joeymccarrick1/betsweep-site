@@ -15,7 +15,7 @@ import shutil
 import sys
 import traceback
 
-STEPS = (("nba", "sports.nba.publish", ()), ("epl", "sports.epl.publish", ("epl/board.json",)))
+STEPS = (("nba", "sports.nba.publish", ()), ("epl", "sports.epl.publish", ("epl/board.json",)), ("cfb", "sports.cfb.publish", ("cfb/board.json",)))
 
 
 def arg(name, default=None):

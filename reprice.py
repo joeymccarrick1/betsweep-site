@@ -78,6 +78,7 @@ BUILD = [
     ("shadow slips", "shadow_slips.py", "soft"),
     ("promos", "build_promo.py {clone}/promo-slips", "hard"),
     ("today (with promos)", "build_today.py", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
+    ("cfb boards (preview)", "build_cfb.py {clone}", "soft"),    # owner 11/23 1:10 AM: college football postseason game lines
     ("epl boards (preview)", "build_epl.py {clone}", "soft"),    # owner 11/22 9:32 PM; before the NBA steps, whose sport switch links to it
     ("nba stocks (preview)", "build_nba_stocks.py {clone}", "soft"),
     ("nba boards (preview)", "build_nba.py {clone}", "soft"),   # owner 11/22: /nba/, from the board the feeds-sports job writes; no board, no page
@@ -229,7 +230,7 @@ def check_site(W, live):
     return bad
 
 
-PREVIEWS = ("nba", "epl")     # the other sports' preview pages: each lives in its own folder with a sig.json beside it
+PREVIEWS = ("nba", "epl", "cfb")     # the other sports' preview pages: each lives in its own folder with a sig.json beside it
 
 
 def preview_changed(clone, name):

@@ -3235,3 +3235,65 @@ multi-sport plan document, screenshots, two SQL drafts that are also in `sql/`).
 and removed it. Nothing in the repos, the site, the sheet or `owner_send/` was touched, and the owner has the copies that were
 sent to him. Two rules from it: simulate with absolute paths in a folder made for the purpose (`/tmp/epl/job`), and look inside
 a folder before removing it.
+
+## 11/23 1:10-1:25 AM CT: a background for each sport (owner: court lines for the NBA, ball and goal for soccer)
+
+Owner 1:10 AM: "On the nfl backgrounds we have xs and os. On the nba backgrounds can we have courtlines and basketball themed
+backgrounds. Epl can we have soccer ball and goal. Maybe other soccer related things."
+
+- **Where the texture lives.** `template.html` defines `--plays` (the chalk Xs and Os, a 360 x 130 tile) three times - dark,
+  light by the system's choice, light by the visitor's - and draws it across every card head (`.hd`).
+- **A sport sets its own tile** with `build_nba.plays_css(svg)`, which writes the same three rules after the template's, so each
+  theme gets the right ink (`INK` in the drawing is the stroke). The tile keeps the NFL's size, stroke weight and 16% opacity.
+- **NBA (`build_nba.COURT`)**: one end of the court from above (baseline, lane with hash marks, free-throw circle, three-point
+  arc, backboard and rim), a ball on a dashed arc toward a hoop and net, the centre circle on the half-court line, a second ball
+  off a bounce. On `/nba/`; the Stock Market page has no card heads, as the NFL's has none.
+- **Soccer (`build_epl.PITCH`)**: a goal with its net, a ball on a dashed line toward it, the centre circle and spot, a corner arc
+  with its flag, the penalty area with its arc and spot. One tile for every soccer league.
+- **College football** keeps the NFL's Xs and Os.
+- Every mark sits inside the tile, so it repeats without a seam. Tests: `tests/nba_board.py` and `tests/epl_board.py` check the
+  card heads wear their sport's tile in each theme's ink and not another sport's.
+
+## 11/23 1:25-2:10 AM CT: college football postseason game lines, /cfb/ (a preview), and one sport switch for every page
+
+Owner 11/22: college football means "Post season game lines". 11/23 1:10 AM: "get to work on the next thing which I suppose is
+college football". Game lines only: Tennessee does not allow bets on individual college athletes.
+
+**The line leads, on the evidence** (`sports/backtests/RESULTS.md`, 2026, 751 games): DraftKings' spread missed the final margin
+by 11.89 points on average and our rating by 13.29; taking the rating's side against the spread went 352-389. So a card's big
+numbers are what the posted spread and total imply each side scores, and our rating sits beside the line as a second opinion that
+is tracked. The page says so in its note and prints those numbers in its stamp. With no line posted yet the score is our rating's,
+marked as ours.
+
+**The board file** - `sports/cfb/publish.py`, run by `sports/job.py` in the feeds-sports job, writes `cfb/board.json` (FORMAT 1).
+- Games: the ones ESPN marks postseason or names as a championship, bowl or playoff game. A game with a side not decided is
+  listed apart (`tbd`) by name, date and site, with the side that is known.
+- The line, kickoff, site, ranks, records: the job's own ESPN mirror (`cfb/scoreboard.json`). **The mirrored spread is the home
+  side's: minus means the home side is favored.** Implied score: home = (total - spread) / 2, away = (total + spread) / 2.
+- Every final this season: sportsdataverse's public ESPN schedule file (`cfb_schedule_<season>.csv`, 130 KB, fetched on every
+  run with curl; through Saturday's games by Sunday night), plus any final the mirror has that the file does not.
+- Our rating: `sports/cfb/model.py`, unchanged from the 11/15 groundwork (the schedule-adjusted grid on points). A team with
+  fewer than six games is rated as an average lower-division side and the board says so. The home edge is not given at a
+  neutral site.
+- First run on real data (1:28 AM): 3 title games with both teams known (2 with a line: Boise State -15.5 / 57.5 and Miami
+  -2.5 / 56.5), 7 still to be decided, 822 finals through 11/22, 138 teams rated.
+
+**The page** - `build_cfb.py` -> `/cfb/` (index, `board.json`, `sig.json`), out of the menu and sitemap. Visiting side first, as
+on the NFL boards. Tiles: Spread, Total, Our rating, Our total; a sentence on how far the rating sits from the line (3 points on
+the spread, 4 on the total before it is called apart) that always ends "tracked, not a pick". "How they got here" opens the two
+teams: record, points scored and allowed, schedule-adjusted offense and defense ranks, last five. The Slate card lists the games
+and the title games whose teams are not set. Background: the NFL's Xs and Os.
+
+**One sport switch** - `sport_nav.py`: NFL | CFB | NBA | EPL, the same row on every sport page, linking only to sports whose
+page is going out in the same build (each builder's own `usable()` is asked, on the same feed branch). Which links a page shows
+is part of its signature, so a sport appearing or leaving sends the others out with the small publish. Local builds:
+`--with nba,epl,cfb`, plus any sport whose page already sits in `out/`.
+
+**Wired in:** `reprice.py` builds "cfb boards (preview)" first of the previews, `PREVIEWS = ("nba", "epl", "cfb")`;
+`build_site.py` places `/cfb/`; `sports/job.py` runs the college step last (its failure keeps the last board).
+
+**Tests:** `tests/cfb_board.py` (38 checks): the board builder on a made-up season and mirror, the page's rules, and the page
+redone from the board it ships in both themes and on a desktop. In the pre-publish set.
+
+**Not built yet:** lock-and-grade for college games (wanted before the title games on 12/4), FanDuel prices, bowl and playoff
+names when ESPN posts them on 12/6 (the page reads whatever ESPN names).

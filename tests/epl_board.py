@@ -222,8 +222,10 @@ async def main():
                 names: cs.every(function(x){ return [...x.querySelectorAll('.hd .tm span:not(.badge)')].every(function(s){ return s.getBoundingClientRect().height < 34; }); })}; })()""")
             multi = len(want) > 1
             check(st["compact"] == multi and st["shown"] == (0 if multi else 1) and st["over"] <= 0, T(f"scorecards first, as on the NFL boards: {len(want)} matches, none opened, no sideways scroll"))
-            has_nba = os.path.exists(os.path.join(ROOT, "nba", "index.html"))
-            check(st["sw"] == [["NFL", "/boards/", None]] + ([["NBA", "/nba/", None]] if has_nba else []) + [["EPL", "/epl/", "page"]] and st["bar"] <= 6, T("the sport switch: NFL, " + ("NBA, " if has_nba else "") + "and EPL (this page), on one row with the key"))
+            import sport_nav                                  # 11/23: one switch for every sport page - NFL, CFB, NBA, EPL - linking only to pages in this build
+            others = {k: True for k in ("cfb", "nba") if os.path.exists(os.path.join(ROOT, k, "index.html"))}
+            check(st["sw"] == [[lab, href, ("page" if key == "epl" else None)] for key, lab, href in sport_nav.ORDER if key in ("nfl", "epl") or others.get(key)] and st["bar"] <= 6,
+                  T(f"the sport switch: {' | '.join(x[0] for x in st['sw'])} - EPL marked as this page, on one row with the key"))
             check(len(st["vb"]) == 2 and st["vb"][0][0].startswith("Projections") and st["vb"][1][0].startswith("Who's out") and min(v[1] for v in st["vb"]) >= 38 and st["mk"][0] and st["mk"][1] <= 78 and st["mk"][2] and st["names"],
                   T(f"each card shows its four match tiles in one row ({st['mk'][1]:.0f}px, nothing cut off), club names on one line, and two buttons: Projections and Who's out"))
             k0 = want[0]["key"]; w0 = want[0]

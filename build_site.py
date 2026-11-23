@@ -953,6 +953,14 @@ if os.path.exists(os.path.join(OUT, "epl-boards.html")):
         elif os.path.exists(os.path.join(_ep, _t)): os.remove(os.path.join(_ep, _t))        # none in this build: an earlier local build's copy must not go out beside this page
 elif os.path.isdir(_ep):
     shutil.rmtree(_ep)
+# 11/23: /cfb/ - college football postseason game lines (build_cfb.py), a preview on the same terms as /nba/ and /epl/.
+_cf = os.path.join(SITE, "cfb")
+if os.path.exists(os.path.join(OUT, "cfb-boards.html")):
+    made.append(place(os.path.join(OUT, "cfb-boards.html"), os.path.join(OUT, "img-none"), _cf, "/cfb/"))
+    for _f, _t in (("cfb_board.json", "board.json"), ("cfb_sig.json", "sig.json")):
+        if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_cf, _t))
+elif os.path.isdir(_cf):
+    shutil.rmtree(_cf)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
@@ -1480,7 +1488,7 @@ _today = _dt.date.today().isoformat(); _urls = []
 for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
-    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/", "/epl/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
+    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/", "/epl/", "/cfb/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
     try:
         if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
     except Exception: pass
