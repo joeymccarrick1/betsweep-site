@@ -9,7 +9,15 @@ def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + 
 IN_VIEW = "(function(s){ var e = document.querySelector(s); if(!e || !e.getClientRects().length) return null; var r = e.getBoundingClientRect(); return {top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), w: Math.round(r.width), vh: innerHeight, vis: r.top >= 0 && r.bottom <= innerHeight && r.width > 0}; })"
 BD = json.load(open(os.path.join(HERE, "out", "builder_data.json"))); WEEK = int(BD["week"])
 _l = [l for l in BD["legs"] if not l.get("gl") and (l.get("fd") or {}).get("m") and l["m"] in ("Rushing Yards", "Receiving Yards") and not next((g for g in BD["games"] if g["gid"] == l["g"]), {}).get("fin")]
-KEYS = [f"{_l[0]['pl']}|{_l[0]['m']}|{int(round(_l[0]['ln']))}"] + [f"{x['pl']}|{x['m']}|{int(round(x['ln']))}" for x in _l if x["pl"] != _l[0]["pl"] and x["g"] != _l[0]["g"]][:1]
+# 11/22 11:05 PM (a Sunday night, one game left to play): the second leg used to have to come from ANOTHER game, so with only Monday night
+# open the slip had one leg and the "2 legs" checks failed - on the clock, not on the page. The second leg is another player, from another
+# game while there is one and from the same game when there is not; with no game left to kick off there is nothing to put in a slip.
+if not _l:
+    print("PASS no game is still to kick off this week, so there is no open leg to save: the Save box is checked again when next week's legs are in")
+    print("1 passed, 0 failed"); sys.exit(0)
+_k = lambda x: f"{x['pl']}|{x['m']}|{int(round(x['ln']))}"
+KEYS = [_k(_l[0])] + [_k(x) for x in sorted([x for x in _l if x["pl"] != _l[0]["pl"]], key=lambda x: x["g"] == _l[0]["g"])][:1]
+NK = len(KEYS); LEGS = f"{NK} leg{'s' if NK != 1 else ''}"
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
@@ -24,7 +32,7 @@ async def main():
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto(f"http://127.0.0.1:{PORT}/build/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             nsl = await pg.evaluate("(document.querySelector('.slipwrap .slipbar .n') || {}).textContent")
-            if str(nsl) != "2": print("   setup: slip count", nsl)
+            if str(nsl) != str(NK): print("   setup: slip count", nsl, "wanted", NK)
             T = f"[{theme}] "
             check(await pg.evaluate(IN_VIEW + "('#savepin')") is None, T + "with the slip closed there is no extra Save button in the way")
             await pg.tap(".slipwrap .slipbar"); await pg.wait_for_timeout(600)
@@ -32,11 +40,11 @@ async def main():
             check(bool(sp) and sp["vis"] and sp["h"] >= 40 and bool(fd) and fd["vis"], T + f"the open slip shows Save on screen beside FanDuel, no scrolling ({sp})")
             await pg.tap("#savepin"); await pg.wait_for_timeout(400)
             bx = await pg.evaluate(IN_VIEW + "('.svpop .svbox')"); t = await pg.inner_text(".svpop .svbox")
-            check(bool(bx) and bx["vis"] and abs((bx["top"] + bx["bottom"]) / 2 - 422) < 200 and "Save this slip" in t and "2 legs" in t and await pg.evaluate("!!document.querySelector('.svpop input')"), T + f"Save opens a box in the middle of the screen with the leg count and a name field ({bx})")
+            check(bool(bx) and bx["vis"] and abs((bx["top"] + bx["bottom"]) / 2 - 422) < 200 and "Save this slip" in t and LEGS in t and await pg.evaluate("!!document.querySelector('.svpop input')"), T + f"Save opens a box in the middle of the screen with the leg count and a name field ({bx})")
             if SHOTS: await pg.screenshot(path=os.path.join(SHOTS, f"save_pop_{theme}.png"))
             await pg.fill(".svpop input", "Sunday special"); await pg.tap(".svpop .pri"); await pg.wait_for_timeout(400)
             t2 = await pg.inner_text(".svpop .svbox"); saved = await pg.evaluate("(function(){ var k = Object.keys(localStorage).filter(function(x){ return /^bs_slips_w\\d+$/.test(x); })[0]; return k ? JSON.parse(localStorage.getItem(k)) : []; })()")
-            check("Saved" in t2 and "Sunday special" in t2 and "My BetSweep" in t2 and len(saved) == 1 and saved[0]["name"] == "Sunday special" and len(saved[0]["keys"]) == 2, T + f"the box then says Saved, with the name and where to find it, and the slip is stored ({[s['name'] for s in saved]})")
+            check("Saved" in t2 and "Sunday special" in t2 and "My BetSweep" in t2 and len(saved) == 1 and saved[0]["name"] == "Sunday special" and len(saved[0]["keys"]) == NK, T + f"the box then says Saved, with the name and where to find it, and the slip is stored ({[s['name'] for s in saved]})")
             if SHOTS: await pg.screenshot(path=os.path.join(SHOTS, f"save_done_{theme}.png"))
             await pg.tap(".svpop .dn"); await pg.wait_for_timeout(200); check(not await pg.query_selector(".svpop"), T + "Done closes it")
             await pg.tap("#savepin"); await pg.wait_for_timeout(300); t3 = await pg.inner_text(".svpop .svbox")

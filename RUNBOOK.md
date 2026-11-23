@@ -3201,3 +3201,13 @@ They are not on the page, not in the record and not in the log as results. **The
 2:00 PM Central.**
 
 **Also:** a check note said "within a day" where the rule is 36 hours; the note now says a day and a half.
+
+## 11/22 11:05 PM CT: a sixth test that failed on the clock (tests/builder_save_pop.py), not on the page
+
+The full set at 10:46 PM had one failure: the Save-box test wanted a two-leg slip whose second leg came from ANOTHER game. At
+9:49 PM Sunday night's game was still open and it passed; by 11:05 PM only Monday night's was, so the slip had one leg and the
+"2 legs" checks failed. The page was right (the box opened in the middle and saved the slip). Fixed in the test: the second leg is
+another player, from another game while there is one and from the same game when there is not; with no game left to kick off it
+says so and passes. Run on the same build: 14 of 14. With new_markets, promo_clock, stocks_page, page_tight and social_feed that is
+six clock-dependent tests found on one Sunday; the rule stands - a test that needs an open leg must not assume which games are
+still to kick off.
