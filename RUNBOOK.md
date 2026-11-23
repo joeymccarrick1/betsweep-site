@@ -3806,3 +3806,9 @@ reader can see it. **Nothing was changed.**
   smaller than the page can show. (a) is the honest one.
 - Until then the check stays red whenever the day's lines produce it. It is not a reason to hold an unrelated publish; say so in the
   log each time, as here.
+
+## 11/23 5:05 PM CT: first soccer locks and grades (scheduled checks) - all three worked
+- EPL BRE-EVE, Serie A MON-FIO, La Liga LEV-ELC: each locked from the 19:43Z board ("the feed, one run earlier"), 17, 1 and 16 minutes
+  before kickoff, and graded: record.json shows 1 match in each league. Serie A and La Liga graded their starters too (players 1; 20 and 22
+  player rows); EPL players still waiting (pmatches 0) until the season file has the match - expected. Serie A's lock was 1 minute
+  before kickoff: fine today, thin margin; watch it on the weekend slate. One match proves the plumbing, not the model.
