@@ -275,12 +275,19 @@ async def main():
                      else "no second NBA page in this build, so no page switch; the sports and the key share one row") + f" ({st['bar'][1]:.0f}px)"))
             k0 = want[0]["key"]; w0 = want[0]
             await pg.click(f'#{k0} .vbtn[data-view="proj"]'); await pg.wait_for_timeout(350)
-            o = await pg.evaluate("""(function(k){ var c = document.getElementById(k), r = c.querySelectorAll('li.pl'), f = r[0], b = f.querySelector('.prow').getBoundingClientRect(), bar = f.querySelector('.ppr i'), ibar = getComputedStyle(bar).getPropertyValue('--w');
-              return {exp: c.classList.contains('expanded'), view: c.getAttribute('data-view'), rows: [...r].filter(function(x){ return x.getClientRects().length; }).length, rowh: b.height, top: c.getBoundingClientRect().top, w: parseFloat(ibar), det: f.querySelector('.pdetail').hidden,
+            o = await pg.evaluate("""(function(k){ var c = document.getElementById(k), r = c.querySelectorAll('li.pl'), f = r[0], b = f.querySelector('.prow').getBoundingClientRect();
+              var bars = [...r].map(function(x){ var v = x.querySelector('.ppr .v'), num = [...v.childNodes].filter(function(n){ return n.nodeType === 3; }).map(function(n){ return n.textContent; }).join('');
+                return [parseFloat(getComputedStyle(x.querySelector('.ppr i')).getPropertyValue('--w')), parseFloat(num)]; }).filter(function(x){ return !isNaN(x[0]) && !isNaN(x[1]); });
+              var wmax = Math.max.apply(null, bars.map(function(x){ return x[0]; })), pmax = Math.max.apply(null, bars.map(function(x){ return x[1]; }));
+              return {exp: c.classList.contains('expanded'), view: c.getAttribute('data-view'), rows: [...r].filter(function(x){ return x.getClientRects().length; }).length, rowh: b.height, top: c.getBoundingClientRect().top, w: wmax, nbars: bars.length,
+                prop: bars.every(function(x){ return Math.abs(x[0] - 100 * x[1] / pmax) < 1.0; }), det: f.querySelector('.pdetail').hidden,
                 pressed: getComputedStyle(c.querySelector('.vbtn[data-view="proj"]')).backgroundColor !== getComputedStyle(c.querySelector('.vbtn[data-view="out"]')).backgroundColor, over: document.documentElement.scrollWidth - innerWidth}; })""", k0)
             nrows = sum(len(c["players"]) for c in w0["cols"].values())
             check(o["exp"] and o["view"] == "proj" and o["rows"] == nrows and o["det"] and o["pressed"] and o["over"] <= 0 and 40 <= o["top"] <= 260, T(f"Projections opens the game: {nrows} player rows, the button shown pressed, the card at the top of the screen"))
-            check(o["rowh"] >= 44 and abs(o["w"] - 100) < 0.2, T(f"a player's row is {o['rowh']:.0f}px tall to tap, and the game's top scorer has the full bar"))
+            # 11/23 morning: this read only the FIRST row's bar, which is the game's top scorer only when he plays for the side listed first
+            # (true on 11/22, not for UTAH-LAL on 11/23). The page was right; the check now finds the top scorer wherever he is.
+            check(o["rowh"] >= 44 and abs(o["w"] - 100) < 0.2 and o["prop"] and o["nbars"] >= 10,
+                  T(f"a player's row is {o['rowh']:.0f}px tall to tap; the game's top scorer - on either side - has the full bar, and all {o['nbars']} bars are in proportion to the points shown"))
             # ---- a player opened: chips, chances, last games - all from the board
             tm = w0["a"]; pid = w0["cols"][tm]["players"][0][0]; P = next(p for p in B["players"] if p["id"] == pid); od = B["teams"][tm]["opp_def"].get(P["grp"], {})
             await pg.click(f'#{k0} li.pl[data-pid="{pid}"] .prow'); await pg.wait_for_timeout(250)
