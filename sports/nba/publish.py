@@ -211,6 +211,19 @@ def main():
             G.run(os.path.join(a.out, "nba"), boards)
         except Exception as e:
             print(f"nba grade: FAILED and skipped ({type(e).__name__}: {e}) - the board is written; locks and record are as the last run left them")
+    # ---- the Stock Market's numbers (sports/nba/stocks.py). Same rule: a failure is printed and the last run's file is kept.
+    sk_path = os.path.join(a.out, "nba", "stocks.json")
+    try:
+        from . import stocks as NS
+        s = NS.build(ND.load([2027], folder))
+        json.dump(s, open(sk_path + ".tmp", "w"), separators=(",", ":")); os.replace(sk_path + ".tmp", sk_path)
+        print(f"nba stocks: {len(s['players'])} players through {s['data_through']}, {sum(1 for p in s['players'] if p['dir'] == 'up')} rising, {sum(1 for p in s['players'] if p['dir'] == 'dn')} falling")
+    except Exception as e:
+        last = os.path.join(a.prev or os.path.join(os.path.dirname(os.path.abspath(a.out)), "prev"), "nba", "stocks.json")
+        kept = os.path.exists(last) and not os.path.exists(sk_path)
+        if kept:
+            import shutil; shutil.copy(last, sk_path)
+        print(f"nba stocks: FAILED and skipped ({type(e).__name__}: {e})" + (" - the last run's file is kept" if kept else ""))
 
 
 if __name__ == "__main__":
