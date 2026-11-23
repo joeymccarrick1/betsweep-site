@@ -27,7 +27,12 @@ for g, v in by.items():
     if q and w: pair = (q, w); break
 check(pair is not None, "a game with a quarterback's passing yards and his receiver's yards priced at FanDuel")
 other = next((l for l in legs if pair and l["g"] != pair[0]["g"]), None)
-check(other is not None, "a second game with a priced leg")
+# 11/23: on a Monday one game is left in the week, so there is no second game to pair with. That is the calendar, not a fault (the test
+# failed the first Monday it ran). With priced legs in one game only, the two-game checks are skipped and the run says so; with legs in
+# several games and no second one found, it is still a failure.
+ONE_GAME = pair is not None and other is None and len(by) == 1
+if ONE_GAME: print(f"NOTE priced legs in one game only ({pair[0]['g']}): the two-game checks are skipped this run")
+else: check(other is not None, "a second game with a priced leg")
 key = lambda l: f'{l["pl"]}|{l["m"]}|{round(l["ln"] or 1)}'
 joint = sgp_discount.make_joint(D)
 pb = joint([dict(x) for x in pair]) if pair else None
@@ -54,12 +59,13 @@ async def main():
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             q = lambda ls: "?new=1&" + "&".join("add=" + urllib.parse.quote(key(l)) for l in ls)
             # one leg per game: the legs multiplied, no "about" mark
-            await pg.goto("http://127.0.0.1:8861/build/" + q([pair[0], other]), wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
-            s = await pg.evaluate(READ); m = dec(pair[0]["o"]) * dec(other["o"])
-            check("≈" not in s["price"] and "legs multiplied" in s["sub"] and not s["why"], f"{theme}: two games, one leg each - the price is the legs multiplied ({s['price']}; {s['sub'][:40]})")
-            check(abs(am_to_dec(s["price"]) / m - 1) < 0.02, f"{theme}: and it equals the legs multiplied ({s['price']} vs {m:.2f})")
-            check("≈" not in s["bar"], f"{theme}: the slip bar has no about mark ({s['bar']})")
-            check(not await pg.evaluate("!!document.querySelector('#sgq')"), f"{theme}: no quote box when every leg is from a different game")
+            if not ONE_GAME:
+                await pg.goto("http://127.0.0.1:8861/build/" + q([pair[0], other]), wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
+                s = await pg.evaluate(READ); m = dec(pair[0]["o"]) * dec(other["o"])
+                check("≈" not in s["price"] and "legs multiplied" in s["sub"] and not s["why"], f"{theme}: two games, one leg each - the price is the legs multiplied ({s['price']}; {s['sub'][:40]})")
+                check(abs(am_to_dec(s["price"]) / m - 1) < 0.02, f"{theme}: and it equals the legs multiplied ({s['price']} vs {m:.2f})")
+                check("≈" not in s["bar"], f"{theme}: the slip bar has no about mark ({s['bar']})")
+                check(not await pg.evaluate("!!document.querySelector('#sgq')"), f"{theme}: no quote box when every leg is from a different game")
             # two legs in one game: the estimate
             await pg.goto("http://127.0.0.1:8861/build/" + q(list(pair)), wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
             s = await pg.evaluate(READ); got = am_to_dec(s["price"])
