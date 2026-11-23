@@ -3211,3 +3211,27 @@ another player, from another game while there is one and from the same game when
 says so and passes. Run on the same build: 14 of 14. With new_markets, promo_clock, stocks_page, page_tight and social_feed that is
 six clock-dependent tests found on one Sunday; the rule stands - a test that needs an open leg must not assume which games are
 still to kick off.
+
+## 11/22 11:45 PM CT: where the Premier League stands, and what is next
+
+**Live (a preview, not in the menu or sitemap):** `/epl/` with the grading note ("Grading has started"). Site afb9eb6d,
+generators 2eee0e8f (+ this note), data job on main 69baac6d. The job's 11:37 PM run was the first with the grader: "epl grade:
+locked 0, missed 0, graded 0", `epl/record.json` on the feed branch, `base` on the board. Published copy: tests/epl_board.py 60
+of 60, tests/nba_board.py 95 of 95. MASTER rows 678 (hourly NBA rebuild), 679 (the page), 680 (the grader).
+
+**To watch on Monday 11/23:** Brentford v Everton kicks off 2:00 PM Central - the first real lock. Expect, in the job's log:
+about 2:07 PM "locked 1" (from a board a few minutes old, line-ups in it); about 4:07 PM "graded 1 match(es)"; the players
+whenever the data set has the match. On the page: "1 match is locked and waiting" from the 2:20 PM build, "Graded so far - 1
+match" from 4:20 PM. A "missed 1" there would mean no board from before kickoff was in reach - look at why before the weekend.
+
+**Not done:** Tuesday 11/24 about 12:38 PM is still the first hour the NBA-night rebuild should be asked for by the job (see
+the 9:35 PM note). College postseason game lines are next; nothing to show until the conference title games are set (12/4-5).
+Premier League later: FanDuel prices after the Odds API upgrade, then the posted line as the bar to beat instead of "every
+match alike"; a results page from `graded-gwNN.json`.
+
+**A mistake of mine, for whoever works here next.** While simulating the job I ran the model from a symlinked folder, so
+`../out` resolved beside the repos, to `/home/claude/work/out` - an existing scratch folder of earlier deliverables (a
+multi-sport plan document, screenshots, two SQL drafts that are also in `sql/`). I took it for a folder the simulation had made
+and removed it. Nothing in the repos, the site, the sheet or `owner_send/` was touched, and the owner has the copies that were
+sent to him. Two rules from it: simulate with absolute paths in a folder made for the purpose (`/tmp/epl/job`), and look inside
+a folder before removing it.
