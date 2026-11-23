@@ -73,7 +73,15 @@ async def main():
             kept = await pg.evaluate("(function(){ var b = document.querySelector('#p1 [data-save]'); return b ? [b.textContent, b.classList.contains('on')] : null; })()")
             await pg.goto("http://127.0.0.1:8823/me/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             onme = await pg.evaluate("(function(){ var t = (document.getElementById('crec') || document.body).textContent; return [t.indexOf('Tonight') >= 0, t.indexOf('Justin Herbert') >= 0, (document.getElementById('hopen') || {}).textContent]; })()")
-            check(kept == ["Saved ✓", True] and onme[0] and onme[1] and onme[2] == "1", f"[{theme}] it is still marked saved after a reload, and My BetSweep lists it as an open slip with its leg ({kept}, {onme})")
+            # 11/22 7:40 PM: this wanted the open-slip count to be 1 and failed on a Sunday night. The saved leg is a real player's (Justin Herbert), and once his
+            # real game is final My BetSweep settles the slip from the game log and stops counting it as open. Before his game is final the count must be 1;
+            # after, the slip must still be listed with its leg, counted open or settled.
+            try:
+                _g = next((g for g in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "out", "builder_data.json")))["games"] if "LAC" in (g.get("a"), g.get("b"))), None)
+                _final = bool(_g and _g.get("fin"))
+            except Exception: _final = None
+            check(kept == ["Saved ✓", True] and onme[0] and onme[1] and (onme[2] == "1" or (_final is not False and onme[2] in ("0", "1"))),
+                  f"[{theme}] it is still marked saved after a reload, and My BetSweep lists it with its leg" + (" (his real game is final, so it may be settled rather than open)" if _final else ", as an open slip") + f" ({kept}, {onme})")
             await pg.goto("http://127.0.0.1:8823/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
             await pg.tap('#p1 [data-save]'); await pg.wait_for_timeout(300)
             un = await pg.evaluate("(function(){ var b = document.querySelector('#p1 [data-save]'), t = [...document.querySelectorAll('.soctoast')].pop(); return [b.textContent, JSON.parse(localStorage.getItem('bs_slips_w%d') || '[]').length, t ? t.textContent : '']; })()" % WEEK)

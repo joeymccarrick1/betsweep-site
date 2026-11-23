@@ -58,20 +58,25 @@ async def main():
             cards = await pg.evaluate(CARDS); scr = await pg.evaluate(SCR)
             if len(cards) >= 2:
                 both = [c for c in cards if c["btns"] == ["Game lines", "Player legs"]]; want = lambda c: (["Game lines"] if c["lines"] else []) + (["Player legs"] if c["props"] else [])
-                check(all(c["btns"] == want(c) and not any(c["on"]) and not c["grid"] and not c["body"] and not c["pill"] and not c["old"] and min(c["h"] or [44]) >= 44 for c in cards) and len(both) >= 2 and cards[0]["btns"] == want(cards[0]),
+                check(all(c["btns"] == want(c) and not any(c["on"]) and not c["grid"] and not c["body"] and not c["pill"] and not c["old"] and min(c["h"] or [44]) >= 44 for c in cards) and (len(both) >= 1 or not any(c["props"] and c["lines"] for c in cards)) and cards[0]["btns"] == want(cards[0]),
                       f"builder, {theme}: every game card - the first like the rest - carries the same buttons, Game lines and Player legs, both shut ({len(both)} of {len(cards)} with both; the others have no player props posted yet; {scr} screens)")
                 check(scr <= 6.0 and await pg.evaluate(OVER) <= 0, f"builder, {theme}: the page is {scr} phone screens (7.7 before the first pass)")
-                gid = both[1]["id"]; ix = [c["id"] for c in cards].index(gid)
-                await pg.click(f"#{gid} .gswb[data-gl]"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
-                check(c["grid"] and c["on"] == [True, False] and c["ax"][0] == "true" and not c["body"], f"builder, {theme}: Game lines opens that game's prices and nothing else")
-                await pg.click(f"#{gid} .glgrid .glb:not(.none)"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
-                check(c["grid"] and await pg.evaluate(f"document.querySelectorAll('#{gid} .glgrid .glb.in').length") == 1 and not errs, f"builder, {theme}: a tapped price goes on the slip and the prices stay open ({errs[:1]})")
-                await pg.click(f"#{gid} .gswb[data-gp]"); await pg.wait_for_timeout(350); c = (await pg.evaluate(CARDS))[ix]
-                check(c["body"] and c["grid"] and c["on"] == [True, True] and c["order"] is True, f"builder, {theme}: Player legs opens the legs under the prices, and both buttons show as open")
-                await pg.click(f"#{gid} .gswb[data-gl]"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
-                check(not c["grid"] and c["body"] and c["on"] == [False, True], f"builder, {theme}: Game lines closes the prices and leaves the legs open")
-                await pg.click(f"#{gid} .ghd"); await pg.wait_for_timeout(350); c = (await pg.evaluate(CARDS))[ix]
-                check(not c["body"] and c["on"] == [False, False] and not errs, f"builder, {theme}: the header still opens and closes the player legs ({errs[:1]})")
+                # 11/22 7:56 PM: this took the SECOND game with both buttons and crashed on a Sunday night, when one game with player props was left. It opens
+                # the second such game when there are two, the only one when there is one, and waits for the next slate when every game with props has kicked off.
+                if not both:
+                    check(True, f"builder, {theme}: no game has player props posted right now (they come down at kickoff) - the open and close checks wait for the next slate")
+                else:
+                    gid = both[min(1, len(both) - 1)]["id"]; ix = [c["id"] for c in cards].index(gid)
+                    await pg.click(f"#{gid} .gswb[data-gl]"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
+                    check(c["grid"] and c["on"] == [True, False] and c["ax"][0] == "true" and not c["body"], f"builder, {theme}: Game lines opens that game's prices and nothing else")
+                    await pg.click(f"#{gid} .glgrid .glb:not(.none)"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
+                    check(c["grid"] and await pg.evaluate(f"document.querySelectorAll('#{gid} .glgrid .glb.in').length") == 1 and not errs, f"builder, {theme}: a tapped price goes on the slip and the prices stay open ({errs[:1]})")
+                    await pg.click(f"#{gid} .gswb[data-gp]"); await pg.wait_for_timeout(350); c = (await pg.evaluate(CARDS))[ix]
+                    check(c["body"] and c["grid"] and c["on"] == [True, True] and c["order"] is True, f"builder, {theme}: Player legs opens the legs under the prices, and both buttons show as open")
+                    await pg.click(f"#{gid} .gswb[data-gl]"); await pg.wait_for_timeout(250); c = (await pg.evaluate(CARDS))[ix]
+                    check(not c["grid"] and c["body"] and c["on"] == [False, True], f"builder, {theme}: Game lines closes the prices and leaves the legs open")
+                    await pg.click(f"#{gid} .ghd"); await pg.wait_for_timeout(350); c = (await pg.evaluate(CARDS))[ix]
+                    check(not c["body"] and c["on"] == [False, False] and not errs, f"builder, {theme}: the header still opens and closes the player legs ({errs[:1]})")
             else: check(True, f"builder, {theme}: fewer than two games to come - nothing to compare")
             await ctx.close()
             # ---- home ----
