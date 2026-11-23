@@ -190,6 +190,9 @@ def build(folder, feeds=None, day=None, now=None):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--feeds"); ap.add_argument("--out", required=True); ap.add_argument("--day"); ap.add_argument("--data")
+    ap.add_argument("--prev", help="the branch as the last run left it (default: prev/ beside --out, where the feeds-sports job puts it)")
+    ap.add_argument("--site", help="a checkout of the live site, for the board it has published (default: the folder --out is in)")
+    ap.add_argument("--no-grade", action="store_true", help="write the board only: no lock, no grading (local work)")
     a = ap.parse_args()
     folder = fetch(a.data or ND.data_dir())
     b = build(folder, a.feeds, a.day)
@@ -197,6 +200,17 @@ def main():
     json.dump(b, open(os.path.join(a.out, "nba", "board.json"), "w"), separators=(",", ":"))
     print(f"nba board {b['day']}: {len(b['games'])} games, {len(b['players'])} players, data through {b['data_through']}, injuries {'from the mirror' if b['injuries'] else 'NOT in reach (the players of each last game)'}, "
           f"out {sum(len(t['out']) for t in b['teams'].values())}, back {len(b['back'])}; {os.path.getsize(os.path.join(a.out, 'nba', 'board.json')) // 1024} KB")
+    # ---- the nightly grading (sports/nba/grade.py): lock each game's numbers at tip, grade them when its box score is final, keep the record.
+    # It can never take the board down with it: any failure is printed and the board stands, the grading files as the last run left them.
+    if not a.no_grade:
+        try:
+            from . import grade as G
+            root = os.path.dirname(os.path.abspath(a.out))   # in the job: the workspace - main checked out at its top, the branch's last state in prev/
+            boards = [("the feed", b), ("the feed, one run earlier", G.load(os.path.join(a.prev or os.path.join(root, "prev"), "nba", "board.json"))),
+                      ("the published page", G.load(os.path.join(a.site or root, "nba", "board.json")))]
+            G.run(os.path.join(a.out, "nba"), boards)
+        except Exception as e:
+            print(f"nba grade: FAILED and skipped ({type(e).__name__}: {e}) - the board is written; locks and record are as the last run left them")
 
 
 if __name__ == "__main__":
