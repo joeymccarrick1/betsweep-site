@@ -3298,7 +3298,7 @@ redone from the board it ships in both themes and on a desktop. In the pre-publi
 **Not built yet:** lock-and-grade for college games (wanted before the title games on 12/4), FanDuel prices, bowl and playoff
 names when ESPN posts them on 12/6 (the page reads whatever ESPN names).
 
-## 11/23 2:05-3:40 AM CT: the Bundesliga, La Liga, Serie A and MLS (previews), and Soccer as one sport with a league row
+## 11/23 2:05-3:45 AM CT: the Bundesliga, La Liga, Serie A and MLS (previews), and Soccer as one sport with a league row
 
 Owner 1:10 AM: "If college football isn't much work, get to building Bundesliga, La Liga, Serie A, and MLS. We'd have NFL,
 College Football, NBA and Soccer (with these different leagues)."
@@ -3372,7 +3372,7 @@ the bar the model has to beat, is next for soccer. A league's first weeks (under
 dispatched; it failed on a rebase conflict when both tried to push. Nothing was lost and nothing was published by it. Check
 `gh api .../reprice.yml/runs?per_page=2` before dispatching, as the standing rule says.
 
-## 11/23 3:20 AM CT: five soccer pages must not send themselves out every hour - and the site's repository is 1.76 GB
+## 11/23 3:05 AM CT: five soccer pages must not send themselves out every hour - and the site's repository is 1.76 GB
 
 Found while wiring the leagues in. Every publish stays in the site repository's history for good, and a soccer page is about
 1.3 MB (about 0.15 MB once git has packed it, with its board). Three things made a league page look "changed" on every run:
@@ -3397,3 +3397,22 @@ both changes to how the site is published and so **the owner's call, not done**:
 committing the built pages to main (GitHub Pages' Actions deploy), so history holds only source and data; (b) keep committing
 but squash main's history on a schedule. Until then: previews go out only when their signature moves, and the three rules
 above keep the leagues quiet.
+
+## 11/23 3:45 AM CT: the four leagues are live, and what to watch today
+
+**Published 3:45 AM** (site `0f4e92417`, generators `de46ad62`, pushed in two steps: the data side `dff0a954` first, so the job
+had built real boards before the full set ran on the pages). Full set: 57 page tests, both importer checks, the gate (519 pages),
+and the gate on a copy of the live site with the build laid over it (557 pages, 0 problems). Published copy read again:
+`soccer_leagues` 249/249, `epl_board` 70/70, `nba_board` 98/98, `cfb_board` 41/41. Pages deploy succeeded. The live pages were
+not read directly.
+
+First data-job run on the final code (3:42 AM): every league's season complete with player lines (MLS 518 of 518), all four
+boards "unchanged since 09:40:17Z, kept as it is", 8 grading files carried forward, each league's record started at zero.
+
+**Today's first kickoffs to check (Central):** Serie A Monza v Fiorentina 1:45 PM; La Liga Levante v Elche and the Premier
+League's Brentford v Everton 2:00 PM; MLS St. Louis v LAFC 7:00 PM. For each: a lock file under `<league>/locks/` on the
+feeds-sports branch taken from a board built before kickoff, the match graded once ESPN calls it final, its starters graded
+from the season file, and the page's record block moving from "Grading has started" to numbers on the next rebuild.
+
+**Next, in order:** college football lock-and-grade (before the title games on 12/4); ESPN's three-way prices on the soccer
+cards and the posted line as the bar the model has to beat; the repository-size decision (the owner's).
