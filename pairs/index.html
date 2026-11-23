@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Price FanDuel&#x27;s either-or touchdown legs: pick two players and see the chance one of them scores, the fair price, and whether the pair is worth more or less than its two singles.">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#d7332a">
+<script>try{var _t=localStorage.getItem("bs_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BetSweep">
+<link rel="canonical" href="https://betsweep.co/pairs/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BetSweep">
+<meta property="og:title" content="Either-or TDs · BetSweep"><meta property="og:description" content="Price FanDuel&#x27;s either-or touchdown legs: pick two players and see the chance one of them scores, the fair price, and whether the pair is worth more or less than its two singles.">
+<meta property="og:url" content="https://betsweep.co/pairs/"><meta property="og:image" content="https://betsweep.co/og.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Either-or TDs · BetSweep">
+<meta name="twitter:description" content="Price FanDuel&#x27;s either-or touchdown legs: pick two players and see the chance one of them scores, the fair price, and whether the pair is worth more or less than its two singles."><meta name="twitter:image" content="https://betsweep.co/og.png">
+<script>window.__BS_ACCOUNT={url:"https://fuwiqijgkgbzvnfnsans.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1d2lxaWpna2dienZuZm5zYW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDMxNzMsImV4cCI6MjEwODExOTE3M30.cHHSmNne8GWkMvVO5n3DRIyrmC2D0hmpI8DNbOxs7eU",google:false};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
+<link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><title>Either-or TDs · BetSweep</title>
+<style>
+/* Layout: BetSweep chalkboard. Dark navy ground with chalk play-diagram texture, cream type, one red swoosh per card.
+   One board per game, two team columns, score + script odds + weather strip up top. Dark-first; cream "paper" variant for light. */
+:root{
+  --bg:#0e1820; --card:#152230; --chalk:#1c2b3a; --ink:#efe9da; --mute:#97a5b3; --line:#2a3b4b;
+  --red:#d7332a; --redtxt:#f0594e; --red-ink:#ffffff; --cream:#efe9da;
+  --bar:#efe9da; --barbg:#253646;
+  --good:#5fcf93; --bad:#ef8a7e; --warn:#f2b35a;
+  --s1:#efe9da; --s2:#6f7a8c; --s3:#d7332a; --s4:#8a3a44;
+  --s1-ink:#0f141c; --s2-ink:#ffffff; --s3-ink:#ffffff; --s4-ink:#ffffff;
+  --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%28239%2C233%2C218%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E");
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --brand:"Barlow","Arial Black",Impact,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#efe9da; --card:#f7f3e8; --chalk:#e4ddcb; --ink:#141a24; --mute:#5d6676; --line:#d3cbb8;
+  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2; --redtxt:#b8261d;
+  --good:#1f7a4d; --bad:#b3372b; --warn:#a86400;
+  --s1:#141a24; --s2:#7a8699; --s3:#d7332a; --s4:#6b2d3f; --s1-ink:#efe9da; --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%2820%2C26%2C36%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E"); color-scheme:light }}
+:root[data-theme="light"]{
+  --bg:#efe9da; --card:#f7f3e8; --chalk:#e4ddcb; --ink:#141a24; --mute:#5d6676; --line:#d3cbb8;
+  --cream:#141a24; --bar:#141a24; --barbg:#ddd5c2; --redtxt:#b8261d;
+  --good:#1f7a4d; --bad:#b3372b; --warn:#a86400;
+  --s1:#141a24; --s2:#7a8699; --s3:#d7332a; --s4:#6b2d3f; --s1-ink:#efe9da; --plays:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22360%22%20height%3D%22130%22%20viewBox%3D%220%200%20360%20130%22%20fill%3D%22none%22%20stroke%3D%22rgba%2820%2C26%2C36%2C0.16%29%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cpath%20d%3D%22M24%2018l10%2010m0-10l-10%2010M62%2088l10%2010m0-10l-10%2010M150%2020l10%2010m0-10l-10%2010M232%2096l10%2010m0-10l-10%2010M306%2026l10%2010m0-10l-10%2010M330%20100l10%2010m0-10l-10%2010M118%20112l10%2010m0-10l-10%2010%22%2F%3E%0A%3Ccircle%20cx%3D%2252%22%20cy%3D%2248%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22192%22%20cy%3D%2266%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22280%22%20cy%3D%2260%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%2296%22%20cy%3D%2226%22%20r%3D%226%22%2F%3E%3Ccircle%20cx%3D%22258%22%20cy%3D%22118%22%20r%3D%226%22%2F%3E%0A%3Cpath%20d%3D%22M52%2042C62%2022%2086%2020%20108%2016%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M100%2013l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M192%2060C206%2044%20222%2040%20238%2030%22%2F%3E%3Cpath%20d%3D%22M231%2027l9%202-5%208%22%2F%3E%0A%3Cpath%20d%3D%22M280%2066C270%2084%20256%2092%20240%20100%22%20stroke-dasharray%3D%224%204%22%2F%3E%3Cpath%20d%3D%22M247%2092l-8%207%2010%202%22%2F%3E%0A%3Cpath%20d%3D%22M96%2032C104%2050%20120%2060%20140%2066%22%2F%3E%3Cpath%20d%3D%22M132%2068l9-1-3-9%22%2F%3E%0A%3C%2Fsvg%3E"); color-scheme:light }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.35;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+
+a{color:var(--ink)}
+
+
+.pr{max-width:720px;margin:18px auto 40px}
+.pr h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:36px;line-height:1;margin:0 0 8px;letter-spacing:-.01em}
+.pr .lead{color:var(--mute);line-height:1.5;margin:0 0 14px;font-size:15.5px}
+.pr .card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
+.pr .pick{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.pr .pick i{font-style:normal;color:var(--mute);font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.1em}
+.pr select,.pr input{width:100%;min-height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;font-size:15px;padding:0 10px;min-width:0}
+.pr .big{margin:14px 0 2px;font-family:var(--display);font-weight:800;font-size:40px;line-height:1;letter-spacing:-.01em}
+.pr .big small{display:block;margin-top:6px;font-family:inherit;font-weight:600;font-size:14px;letter-spacing:0;color:var(--mute);line-height:1.35}
+.pr .rows{margin:12px 0 0;padding:0;list-style:none;font-size:14px;line-height:1.45}
+.pr .rows li{padding:7px 0;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:baseline}
+.pr .rows li span:last-child{color:var(--mute);text-align:right}
+.pr .rows li.note{display:block;color:var(--mute)} .pr .rows li.note b{color:var(--ink)}
+.pr .rk{display:inline-block;padding:1px 8px;border-radius:9px;font-size:12px;font-weight:700;background:#dcefdc;color:#14532d}
+.pr .rk.mid{background:#f6e3b8;color:#7a4b00} .pr .rk.hi{background:#b3261e;color:#fff}
+.pr .fd{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:12px}
+.pr .fd label{font-size:14px;color:var(--mute)} .pr .fd input{width:120px;text-align:center}
+.pr #prv{margin:10px 0 0;font-size:15px;line-height:1.45} .pr #prv b.up{color:var(--good)} .pr #prv b.dn{color:var(--redtxt)}
+.pr h2{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.1em;text-transform:uppercase;margin:22px 0 8px}
+.pr .best{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+.pr .best li{border-top:1px solid var(--line)} .pr .best li:first-child{border-top:0}
+.pr .best button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;padding:11px 14px;cursor:pointer;font-size:14.5px;line-height:1.35}
+.pr .best button:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.pr .best b{font-weight:700} .pr .best em{font-style:normal;font-family:var(--display);font-weight:800;font-size:17px;text-align:right}
+.pr .best small{grid-column:1/-1;color:var(--mute);font-size:12.5px}
+.pr .fn{color:var(--mute);font-size:12.5px;line-height:1.5;margin-top:16px} .pr .fn a{color:var(--ink)}
+.pr .none{color:var(--mute);font-size:15px;line-height:1.5;margin:6px 0}
+@media (max-width:480px){.pr .pick{grid-template-columns:1fr}.pr .pick i{text-align:center}.pr .big{font-size:34px}}
+</style>
+<link rel="stylesheet" href="/s/site-cc55fdfb47.css"></head>
+<body>
+<nav class="sitenav" id="sitenav"><div class="in"><a class="brand" href="/" aria-label="BetSweep home"><img class="cream" src="/wordmark.png" alt="BetSweep"><img class="ink" src="/wordmark-ink.png" alt="BetSweep"></a><button class="srch" type="button" id="bssrchbtn" aria-label="Find a player" title="Find a player"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><button class="menu" type="button" aria-expanded="false" onclick="var n=document.getElementById('sitenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">Menu <span aria-hidden="true">☰</span></button><div class="acct" id="bsacct"></div><div class="tabs"><div class="navask" id="navask" data-eg="Ben Sinnott 15+ rec yds" data-team="Commanders"><form id="navaskf" role="search" action="/build/" method="get"><label for="navaskq">Ask BetSweep</label><div class="navaskr"><input type="search" id="navaskq" name="ask" maxlength="400" placeholder="Ask BetSweep" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"><button type="submit">Ask</button></div><p class="navaskh">Try <b>Ben Sinnott 15+ rec yds</b>, <b>Commanders</b> or <b>best td</b>.</p></form><div class="navaskout" id="navaskout" hidden aria-live="polite"></div></div><a href="/" class="">Today</a><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Games <i aria-hidden="true">▾</i></button><span class="ddh">Games</span><div class="ddm"><a href="/boards/" class="">Matchup Boards<small>One board per game</small></a><a href="/dossier/" class="">Game previews<small>The read before the bet</small></a><a href="/news/" class="">News desk<small>Who is out, limited or back</small></a><a href="/firsttd/" class="">First TD<small>Who scores first</small></a><a href="/live/" class="">Live<small>Your legs vs the box score</small></a></div></div><div class="dd on"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Betting <i aria-hidden="true">▾</i></button><span class="ddh">Betting</span><div class="ddm"><a href="/best/" class="">Model's Best<small>The week's edges in one list</small></a><a href="/hunches/" class="">Hunches<small>Matchups, streaks, weather</small></a><a href="/build/" class="">Parlay Builder<small>Every prop, priced</small></a><a href="/sweep/" class="">Sweep my slip<small>A verdict from a screenshot</small></a><a href="/me/#import" class="">Import FanDuel slips<small>From screenshots, 12 at a time</small></a><a href="/pairs/" class="on">Either-or TDs<small>Two names, one leg</small></a><a href="/shop/" class="">Line shop<small>Same leg, better price</small></a><a href="/boost/" class="">Boost finder<small>The best slip for a boost</small></a><a href="/teasers/" class="">Teaser finder<small>6, 6.5 and 7 points, priced</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Play <i aria-hidden="true">▾</i></button><span class="ddh">Play</span><div class="ddm"><a href="/beat/" class="">Beat the model<small>Your five vs its five</small></a><a href="/survivor/" class="">Survivor planner<small>Your pick, and who to save</small></a><a href="/social/" class="">Social<small>Slips people posted this week</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Players <i aria-hidden="true">▾</i></button><span class="ddh">Players</span><div class="ddm"><a href="/player/" class="">All players<small>Lines, hit rates, game logs</small></a><a href="/stocks/" class="">Stock Market<small>Who is rising, in graphs</small></a><a href="/teams/" class="">Teams<small>Stats, results, box scores</small></a><a href="/usage/" class="">Usage trends<small>Rising and falling roles</small></a><a href="/benefits/" class="">Who benefits<small>When a starter is out</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Fantasy <i aria-hidden="true">▾</i></button><span class="ddh">Fantasy</span><div class="ddm"><a href="/team/" class="">My team<small>Start / sit, Sleeper import</small></a><a href="/team/compare/" class="">Who should I start?<small>Compare players for your flex</small></a><a href="/trade/" class="">Trade calculator<small>Rest-of-season values</small></a><a href="/targets/" class="">Trade desk<small>Buy low, sell high</small></a><a href="/dfs/" class="">DFS<small>Lineup builder</small></a></div></div><div class="dd"><button type="button" class="ddb" aria-expanded="false" aria-haspopup="true">Results <i aria-hidden="true">▾</i></button><span class="ddh">Results</span><div class="ddm"><a href="/receipts/" class="">Receipts<small>Every week, graded</small></a><a href="/season/" class="">Season<small>The running record</small></a><a href="/badbeats/" class="">Missed by one<small>The week's bad beats</small></a><a href="/how/" class="">How BetSweep picks<small>The method and the record</small></a><a href="/guide/" class="">How to read BetSweep<small>Colors, ranks, edge</small></a><a href="/all/" class="">Every page<small>The whole site on one screen</small></a></div></div></div></div></nav>
+<script>(function(){var n=document.getElementById("sitenav");if(window.matchMedia("(max-width:1240px)").matches){var c=n.querySelector(".dd.on");if(c)c.classList.add("open");}n.querySelectorAll(".ddb").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();var dd=b.parentNode,o=!dd.classList.contains("open");n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");x.querySelector(".ddb").setAttribute("aria-expanded","false");});if(o){dd.classList.add("open");b.setAttribute("aria-expanded","true");}});});document.addEventListener("click",function(e){if(e.target.closest&&(e.target.closest("#sitenav .tabs")||e.target.closest("#sitenav .menu")))return;n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});document.addEventListener("keydown",function(e){if(e.key==="Escape")n.querySelectorAll(".dd.open").forEach(function(x){x.classList.remove("open");});});})();</script>
+<script>(function(){var n=document.getElementById("sitenav"),d=document.documentElement.style;d.setProperty("--bs-inset","0px");d.setProperty("--bs-top","0px");var r=n.getBoundingClientRect(),l=Math.round(r.left),t=Math.round(r.top+(window.scrollY||0));if(l>0)d.setProperty("--bs-inset",l+"px");if(t>0&&t<40)d.setProperty("--bs-top",t+"px");var a=n.querySelector(".tabs a.on"),tb=n.querySelector(".tabs");if(a&&tb&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=a.offsetLeft-tb.offsetLeft-40;})();</script>
+<div class="pr">
+<h1>Either-or TDs</h1>
+<p class="lead">Two names from the same game, one leg: it cashes when either one scores. Pick the pair and see what it is really worth before you pay FanDuel's price.</p>
+<div class="card" id="prcard">
+ <div class="pick"><select id="pra" aria-label="First player"></select><i>OR</i><select id="prb" aria-label="Second player"></select></div>
+ <div id="prout" aria-live="polite"></div>
+</div>
+<h2 id="prbesth">Best pairs on the board</h2>
+<ul class="best" id="prbest"></ul>
+<p class="fn">Week 11. FanDuel sells an either-or touchdown inside one game, so both players come from the same game. The pair is priced with the game's four endings, so a back who needs a lead and a receiver who needs a chase are worth more together than apart. The pair's risk is the safer player's: one of them scoring is the bet. FanDuel's either-or prices are not in our feed, so type the one you see. Information, not betting advice. <a href="/how/">How BetSweep picks</a></p>
+</div>
+<script>
+(function(){
+  var D = {"week":11,"players":[{"n":"Ja'Marr Chase","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"WR","o":-160,"p":0.5745,"bk":0.615,"sc":[0.633,0.441,0.655,0.414],"r":0,"fl":["FD rec yds 3/8"]},{"n":"Chase Brown","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"RB","o":-125,"p":0.5582,"bk":0.556,"sc":[0.648,0.498,0.6,0.286],"r":2,"fl":["2/9 this season"]},{"n":"Tee Higgins","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"WR","o":-105,"p":0.4722,"bk":0.512,"sc":[0.513,0.33,0.582,0.307],"r":1,"fl":["Boom/bust"]},{"n":"Rachaad White","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"RB","o":130,"p":0.4127,"bk":0.435,"sc":[0.256,0.437,0.527,0.571],"r":3,"fl":["3/8 this season"]},{"n":"Stefon Diggs","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"WR","o":175,"p":0.352,"bk":0.364,"sc":[0.271,0.29,0.457,0.438],"r":0,"fl":["FD rec yds 3/8"]},{"n":"Samaje Perine","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"RB","o":210,"p":0.3313,"bk":0.323,"sc":[0.42,0.203,0.35,0.217],"r":7,"fl":["3/9 this season","Boom/bust","FD rush yds 2/9"]},{"n":"Mike Gesicki","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"TE","o":180,"p":0.3181,"bk":0.357,"sc":[0.368,0.234,0.367,0.183],"r":9,"fl":["Fringe role","Boom/bust","Role Down"]},{"n":"Austin Ekeler","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"RB","o":230,"p":0.3026,"bk":0.303,"sc":[0.239,0.225,0.372,0.441],"r":0,"fl":["0/6 this season"]},{"n":"Jayden Daniels","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"QB","o":220,"p":0.2945,"bk":0.313,"sc":[0.233,0.26,0.385,0.316],"r":0,"fl":["1/7 this season"]},{"n":"Chig Okonkwo","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"TE","o":240,"p":0.2792,"bk":0.294,"sc":[0.193,0.242,0.372,0.372],"r":7,"fl":["0/7 this season","FD rec yds 2/6"]},{"n":"Antonio Williams","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"WR","o":240,"p":0.2695,"bk":0.294,"sc":[0.19,0.205,0.384,0.332],"r":0,"fl":["2/9 this season"]},{"n":"Treylon Burks","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"WR","o":290,"p":0.2386,"bk":0.256,"sc":[0.197,0.224,0.293,0.256],"r":4,"fl":["2/7 this season","Boom/bust"]},{"n":"Dohnte Meyers","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"WR","o":360,"p":0.2113,"bk":0.217,"sc":[0.213,0.186,0.246,0.162],"r":9,"fl":["1/9 this season","Fringe role","Boom/bust"]},{"n":"Joe Burrow","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"QB","o":420,"p":0.2047,"bk":0.192,"sc":[0.205,0.166,0.255,0.147],"r":3,"fl":["3/9 this season","FD pass yds 3/9"]},{"n":"Drew Sample","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"TE","o":550,"p":0.1578,"bk":0.1538,"sc":[0.184,0.112,0.184,0.086],"r":6,"fl":["2/5 this season","Fringe role"]},{"n":"Van Jefferson","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"WR","o":900,"p":0.1292,"bk":0.1,"sc":[0.105,0.121,0.161,0.139],"r":4,"fl":["Limited"]},{"n":"Ben Sinnott","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"TE","o":800,"p":0.1176,"bk":0.1111,"sc":[0.077,0.099,0.161,0.161],"r":7,"fl":["1/4 this season","Fringe role"]},{"n":"Robert Henry Jr.","tm":"WAS","opp":"CIN","g":"CIN-WAS","pos":"RB","o":2000,"p":0.1088,"bk":0.0476,"sc":[0.082,0.077,0.137,0.168],"r":2,"fl":["Limited"]},{"n":"Mitchell Tinsley","tm":"CIN","opp":"WAS","g":"CIN-WAS","pos":"WR","o":1400,"p":0.1049,"bk":0.0667,"sc":[0.106,0.092,0.123,0.079],"r":10,"fl":["0/3 this season","Fringe role","Rising: Young"]}],"games":{"CIN-WAS":{"a":"CIN","b":"WAS","probs":[38.0,19.0,30.0,13.0],"lab":"CIN @ WAS","kick":"Mon 7:15 PM","ko":1795482900000}}}, G = D.games, $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function pc(p){ return (p * 100).toFixed(p >= 0.995 || p < 0.1 ? 1 : 0) + '%'; }
+  function am(o){ return (o > 0 ? '+' : '') + o; }
+  function fair(p){ if(!(p > 0 && p < 1)) return null; return p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); }
+  function implied(o){ o = parseFloat(o); if(!isFinite(o) || o === 0 || Math.abs(o) < 100) return null; return o > 0 ? 100 / (o + 100) : -o / (-o + 100); }
+  function wts(g){ var pr = (g && g.probs || []).map(Number), s = 0; pr.forEach(function(x){ s += x || 0; }); return pr.length === 4 && s > 0 ? pr.map(function(x){ return (x || 0) / s; }) : null; }
+  function scn(l, w){ if(l.p == null || !l.sc || l.sc.length !== 4 || !w) return null; var m = 0; for(var k = 0; k < 4; k++) m += w[k] * l.sc[k]; if(m <= 0) return null;
+    return l.sc.map(function(x){ return Math.min(0.97, Math.max(0, x * l.p / m)); }); }
+  // pairs.py either(): same arithmetic, same numbers (tests/pairs_page.py)
+  function either(A, B){
+    var ind = 1 - (1 - A.p) * (1 - B.p), sg = A.g === B.g, st = A.tm === B.tm, wa = wts(G[A.g]), wb = wts(G[B.g]), sa = scn(A, wa), sb = scn(B, wb), out = {ind: ind, sg: sg, st: st, per: null, worst: null};
+    out.book = A.bk != null && B.bk != null ? 1 - (1 - A.bk) * (1 - B.bk) : null;
+    if(sg && sa && sb){ var per = [], p = 0; for(var k = 0; k < 4; k++){ var pe = 1 - (1 - sa[k]) * (1 - sb[k]); if(st) pe -= 0.02 * Math.min(sa[k], sb[k]); per.push(pe); p += wa[k] * pe; }
+      out.p = p; out.per = per; out.worst = Math.min.apply(null, per); }
+    else { out.p = ind - (st ? 0.02 * Math.min(A.p, B.p) : 0); if(sa && sb) out.worst = 1 - (1 - Math.min.apply(null, sa)) * (1 - Math.min.apply(null, sb)); }
+    out.hedge = out.p - ind; return out; }
+  window.BSPairs = {either: either, data: D, fair: fair, implied: implied};
+  function live(t){ var g = G[t.g]; return !(g && g.ko && Date.now() >= g.ko); }
+  function verdict(t){ try{ return window.BSRisk && window.BSRisk.verdict(t.n, 'Anytime TD'); }catch(e){ return null; } }
+  function out(t){ var v = verdict(t); return !!(v && v.level === 'block'); }
+  function risk(t){ var v = verdict(t); return t.r + (v && v.level === 'warn' ? 3 : 0); }
+  var P = D.players.filter(live), byN = {}; P.forEach(function(t){ byN[t.n] = t; });
+  // owner 11/10: FanDuel sells an either-or touchdown inside ONE game, so the second picker only holds the first player's game
+  // (only = that game's id, skip = the first player's name); with no first player it holds nothing to pick.
+  function opts(sel, keep, only, skip){
+    if(only === false){ sel.innerHTML = '<option value="">Pick the first player</option>'; sel.disabled = true; return; } sel.disabled = false;
+    var h = '<option value="">' + (only ? 'Pick a second player' : 'Pick a player') + '</option>', gids = []; P.forEach(function(t){ if(gids.indexOf(t.g) < 0 && (!only || t.g === only)) gids.push(t.g); });
+    gids.forEach(function(gid){ var g = G[gid]; h += '<optgroup label="' + esc(g.lab + (g.kick ? ' · ' + g.kick : '')) + '">';
+      P.filter(function(t){ return t.g === gid && t.n !== skip; }).forEach(function(t){ h += '<option value="' + esc(t.n) + '"' + (t.n === keep ? ' selected' : '') + '>' + esc(t.n + ' (' + t.tm + ') ' + pc(t.p) + (out(t) ? ' - ruled out' : '')) + '</option>'; });
+      h += '</optgroup>'; });
+    sel.innerHTML = h; }
+  function rkTag(s){ return s >= 4 ? '<span class="rk hi">High risk</span>' : s >= 2 ? '<span class="rk mid">Some risk</span>' : '<span class="rk">Low risk</span>'; }
+  function endLab(g, k){ return [g.a + ' by 10+', 'a close, low game', 'a shootout', g.b + ' by 10+'][k]; }
+  function show(){
+    var A = byN[$('pra').value], B = byN[$('prb').value], box = $('prout');
+    if(!A){ box.innerHTML = '<p class="none">Pick two players from the same game and the pair is priced here.</p>'; return; }
+    if(!B){ box.innerHTML = '<p class="none">Now pick a second player from ' + esc(G[A.g].lab) + '. FanDuel only sells an either-or touchdown inside one game.</p>'; return; }
+    if(A.n === B.n){ box.innerHTML = '<p class="none">Pick two different players.</p>'; return; }
+    if(A.g !== B.g){ box.innerHTML = '<p class="none">Those two play in different games. FanDuel only sells an either-or touchdown inside one game: pick a second player from ' + esc(G[A.g].lab) + '.</p>'; return; }
+    var oa = out(A), ob = out(B);
+    if(oa || ob){ var s = oa && ob ? null : (oa ? B : A);
+      box.innerHTML = '<p class="none"><b>' + esc((oa ? A : B).n) + ' is ruled out' + (oa && ob ? ', and so is ' + esc(B.n) : '') + '.</b> ' + (s ? 'That leaves a single on ' + esc(s.n) + ' (' + pc(s.p) + '). Check how FanDuel settles the pair before you bet it.' : 'Pick another pair.') + '</p>'; return; }
+    var e = either(A, B), f = fair(e.p), rs = Math.min(risk(A), risk(B)), g = G[A.g], h = '';
+    h += '<p class="big">' + pc(e.p) + '<small>that ' + esc(A.n) + ' or ' + esc(B.n) + ' scores' + (f != null ? ' · fair price ' + am(f) : '') + '</small></p>';
+    h += '<ul class="rows">';
+    [A, B].forEach(function(t){ h += '<li><span><b>' + esc(t.n) + '</b> ' + esc(t.tm) + '</span><span>' + pc(t.p) + ' alone · FanDuel ' + am(t.o) + '</span></li>'; });
+    var d = Math.round(e.hedge * 1000) / 10;
+    h += '<li class="note">' + (!e.sg ? 'Different games, so the two do not affect each other.' : e.per == null ? 'Same game.' : d >= 0.5 ? '<b>Good pair:</b> they need different kinds of game, so together they are worth ' + d.toFixed(1) + ' points more than the two singles suggest.' : d <= -0.5 ? '<b>Overlap:</b> they need the same kind of game' + (e.st ? ' and share the ball' : '') + ', so together they are worth ' + Math.abs(d).toFixed(1) + ' points less than the two singles suggest.' : 'Same game, and the game script barely moves this pair.') + '</li>';
+    if(e.per && g){ var k = e.per.indexOf(e.worst); h += '<li><span>Worst ending</span><span>' + esc(endLab(g, k)) + ': ' + pc(e.worst) + '</span></li>'; }
+    var both = [A, B].filter(function(t){ return risk(t) >= 2; }), why = both.length === 2 ? 'Both names carry flags: ' + esc(A.fl.concat(B.fl).filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 4).join(', ') || 'see the builder') + '.' : both.length === 1 ? esc(both[0].n) + ' carries flags' + (both[0].fl.length ? ' (' + esc(both[0].fl.slice(0, 2).join(', ')) + ')' : '') + '; ' + esc((both[0] === A ? B : A).n) + ' is clean, and one of them scoring is the bet.' : 'Neither name carries a risk flag.';
+    h += '<li class="note">' + rkTag(rs) + ' ' + why + '</li></ul>';
+    h += '<div class="fd"><label for="prfd">FanDuel\'s price for this pair' + (e.book != null && fair(e.book) != null ? ' <small>(its two singles point to about ' + am(fair(e.book)) + ')</small>' : '') + '</label><input id="prfd" inputmode="numeric" placeholder="-475" autocomplete="off"></div><p id="prv" aria-live="polite"></p>';
+    box.innerHTML = h;
+    var inp = $('prfd'); try{ var sv = sessionStorage.getItem('bs_pair_fd|' + [A.n, B.n].sort().join('|')); if(sv) inp.value = sv; }catch(x){}
+    function judge(){ var raw = inp.value.replace(/[^\d+\-.]/g, ''), need = implied(raw), v = $('prv');
+      try{ sessionStorage.setItem('bs_pair_fd|' + [A.n, B.n].sort().join('|'), raw); }catch(x){}
+      if(!raw){ v.innerHTML = ''; return; } if(need == null){ v.textContent = 'Type the price the way FanDuel shows it, like -475 or +120.'; return; }
+      var gap = Math.round((e.p - need) * 1000) / 10;
+      v.innerHTML = 'At ' + esc(am(parseFloat(raw))) + ' the pair has to score ' + pc(need) + ' of the time. The model has ' + pc(e.p) + ': ' + (gap >= 1 ? '<b class="up">' + gap.toFixed(1) + ' points on your side.</b>' : gap <= -1 ? '<b class="dn">you are paying ' + Math.abs(gap).toFixed(1) + ' points too much.</b>' : '<b>about a fair price.</b>') + (rs >= 2 ? ' Both names carry flags, so treat it as a risky leg either way.' : ''); }
+    inp.addEventListener('input', judge); judge(); }
+  function best(){
+    var rows = [], gids = []; P.forEach(function(t){ if(gids.indexOf(t.g) < 0) gids.push(t.g); });
+    gids.forEach(function(gid){ var top = P.filter(function(t){ return t.g === gid && !out(t); }).slice().sort(function(a, b){ return b.p - a.p; }).slice(0, 8);
+      for(var i = 0; i < top.length; i++) for(var j = i + 1; j < top.length; j++){ var e = either(top[i], top[j]); rows.push({a: top[i], b: top[j], e: e, r: Math.min(risk(top[i]), risk(top[j]))}); } });
+    rows.sort(function(x, y){ return ((x.r >= 2) - (y.r >= 2)) || (y.e.p - x.e.p); });
+    var seen = {}, pick = []; rows.forEach(function(r){ if(pick.length >= 8) return; var ca = seen[r.a.n] || 0, cb = seen[r.b.n] || 0; if(ca >= 2 || cb >= 2) return; seen[r.a.n] = ca + 1; seen[r.b.n] = cb + 1; pick.push(r); });
+    var el = $('prbest'); if(!pick.length){ el.innerHTML = ''; $('prbesth').hidden = true; return; } $('prbesth').hidden = false;
+    el.innerHTML = pick.map(function(r){ var f = fair(r.e.p), d = Math.round(r.e.hedge * 1000) / 10;
+      return '<li><button type="button" data-a="' + esc(r.a.n) + '" data-b="' + esc(r.b.n) + '"><b>' + esc(r.a.n) + ' or ' + esc(r.b.n) + '</b><em>' + pc(r.e.p) + '</em><small>' + (r.r >= 4 ? 'High risk' : r.r >= 2 ? 'Some risk' : 'Low risk') + (f != null ? ' · fair ' + am(f) : '') + ' · ' + esc(r.a.tm === r.b.tm ? r.a.tm : r.a.tm + ' / ' + r.b.tm) + (r.e.sg && d >= 0.5 ? ' · different needs, +' + d.toFixed(1) : r.e.sg && d <= -0.5 ? ' · overlap, ' + d.toFixed(1) : '') + '</small></button></li>'; }).join(''); }
+  function init(){
+    if(!P.length){ $('prcard').innerHTML = '<p class="none">' + (D.players.length ? 'Every game with a touchdown price has kicked off. Next week\'s prices land midweek.' : 'FanDuel has not posted touchdown prices for this week yet. They usually land by Thursday.') + '</p>'; $('prbesth').hidden = true; return; }
+    var q = new URLSearchParams(location.search), a = q.get('a'), b = q.get('b');
+    opts($('pra'), byN[a] ? a : ''); second(byN[b] ? b : ''); best(); }
+  // the second picker follows the first: same game only; a second player from another game is dropped
+  function second(keep){ var A = byN[$('pra').value], B = byN[keep];
+    if(!A) opts($('prb'), '', false); else opts($('prb'), (B && B.g === A.g && B.n !== A.n) ? B.n : '', A.g, A.n);
+    show(); }
+  $('pra').addEventListener('change', function(){ second($('prb').value); }); $('prb').addEventListener('change', show);
+  $('prbest').addEventListener('click', function(ev){ var b = ev.target.closest && ev.target.closest('button[data-a]'); if(!b) return; $('pra').value = b.getAttribute('data-a'); second(b.getAttribute('data-b')); $('prcard').scrollIntoView({behavior: 'smooth', block: 'start'}); });
+  document.addEventListener('bs-risk', function(){ try{ var a = $('pra').value, b = $('prb').value; opts($('pra'), a); second(b); best(); }catch(e){} });
+  init();
+})();
+</script>
+<nav class="nx" aria-label="Where to next"><h2>Where to next</h2><div class="nxl"><a href="/firsttd/"><b>First TD</b><small>Who scores first</small></a><a href="/build/"><b>Parlay Builder</b><small>Add a scorer to a slip</small></a><a href="/boost/"><b>Boost finder</b><small>Make a boost count</small></a></div></nav>
+<p style="max-width:1360px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:12px;line-height:1.5">Information and analysis only, not betting advice; no outcome is guaranteed. 21+ (18+ where permitted). Problem gambling help: 1-800-GAMBLER. BetSweep is not affiliated with FanDuel or the NFL. Follow <a href="https://x.com/bet_sweep" style="color:var(--ink)">@bet_sweep on X</a> and <a href="https://www.instagram.com/bet_sweep" style="color:var(--ink)">Instagram</a>. Questions, corrections or a leg that graded wrong: <a href="mailto:support@betsweep.co" style="color:var(--ink)">support@betsweep.co</a>. BetSweep may earn a commission when you bet through links on this site; it never changes a pick or a grade (<a href="/responsible-gambling/" style="color:var(--ink)">disclosures</a>). © 2026 BetSweep LLC. BetSweep™ is a trademark of BetSweep LLC (U.S. Serial No. 50169404). · <a href="/guide/" style="color:var(--ink)">How to read BetSweep</a> · <a href="/terms/" style="color:var(--ink)">Terms</a> · <a href="/privacy/" style="color:var(--ink)">Privacy</a> · <a href="/responsible-gambling/" style="color:var(--ink)">Responsible gambling</a>.</p><nav class="apptabs" aria-label="app tabs"><a href="/" class=""><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Today</span></a><a href="/boards/" class=""><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Boards</span></a><a href="/build/" class=""><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span>Builder</span></a><a href="/live/" class=""><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg><span>Live</span></a><a href="/social/" class=""><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Social</span></a></nav>
+<script src="/s/app-8b13a1938c.js" defer></script>
+</body>
+</html>

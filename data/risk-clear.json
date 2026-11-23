@@ -1,0 +1,11 @@
+{
+ "about": "The owner's calls on players ESPN's injury page still tags Out / Doubtful. .github/feeds.py copies the live entries to feeds notout.json; risk.js then shows 'Good to go' instead of 'Ruled out'. An entry lapses after its 'until' day, or as soon as ESPN posts a newer Out / Doubtful line for the player (see feeds.py).",
+ "players": {
+  "Cam Skattebo": {
+   "note": "Good to go for Thursday. He was out last week; full participant in Tuesday's practice.",
+   "by": "owner 11/10 9:19 PM CT",
+   "at": "2026-11-11T03:19:00Z",
+   "until": "2026-11-13"
+  }
+ }
+}

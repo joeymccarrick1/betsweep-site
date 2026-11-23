@@ -1,0 +1,51 @@
+# ESPN / Fantasy Premier League mirror for NBA, Premier League and college football, plus tonight's NBA model board.
+# Owner 11/22: "Let's start adding nba, college football, and epl" and, asked whether the jobs may pull their data, "Yes add them".
+#
+# Its own workflow and its own orphan branch (`feeds-sports`): nothing here touches the NFL feed (feeds.yml) or the hourly rebuild.
+#   step 1  .github/feeds_sports.py  - scoreboards, the NBA injury report and box scores, EPL line-ups and the FPL list, college games
+#   step 2  sports/nba/publish.py on the generators branch - tonight's NBA board from the history plus step 1's injury report.
+#           If it fails, the last board is kept and the mirror still publishes.
+# No secrets are read. Turn it off: Actions > feeds-sports > "..." > Disable workflow.
+name: feeds-sports
+on:
+  schedule: [{cron: "4,19,34,49 * * * *"}]
+  # GitHub's own schedule skips most runs in this repo (RUNBOOK, measured 11/16; this job's first hour: not one scheduled run). The other
+  # jobs are started on time by the database timer, which is the owner's to edit. So this job also starts whenever two jobs that timer
+  # already starts have finished - sheet-mirror (:05, :35) and price-moves (:12, :42): four runs an hour, on time, nothing for the owner
+  # to run. It reads nothing from those jobs and changes nothing in them; it only uses their finishing as its clock.
+  workflow_run: {workflows: [sheet-mirror, price-moves], types: [completed]}
+  workflow_dispatch: {}
+permissions: {contents: write, actions: write}   # actions: to ask for the site's hourly rebuild on an NBA night (last step)
+concurrency: {group: feeds-sports, cancel-in-progress: true}
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: {ref: gen-overrides, path: gen}
+      - name: last run's files (finals and anything that fails to fetch are carried forward)
+        run: |
+          if git fetch -q --depth 1 origin feeds-sports 2>/dev/null; then git worktree add -q prev FETCH_HEAD; else echo "no earlier feeds-sports branch"; fi
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: mirror
+        run: python3 .github/feeds_sports.py
+      - name: tonight's NBA board
+        run: |
+          ( python3 -m pip install -q pandas numpy scipy && cd gen && python3 -W ignore -m sports.job --feeds ../out --out ../out ) || {
+            echo "::warning::the NBA board step failed - keeping the last board"
+            mkdir -p out/nba; cp prev/nba/board.json out/nba/board.json 2>/dev/null || true
+          }
+      - name: publish to the feeds-sports branch
+        run: |
+          cd out
+          git init -q -b feeds-sports && git config user.name BetSweep && git config user.email support@betsweep.co
+          git add -A && git commit -qm "Sports mirror $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" feeds-sports
+      # Owner 11/22 9:32 PM: "On nba nights it should refresh hourly." The timer rebuilds the site hourly only on Sun/Mon/Thu; on an NBA
+      # night this asks for the hours it skips (the rule and its tests are in feeds_sports.py, rebuild_due). It can never fail the job.
+      - name: on an NBA night, ask for the hourly site rebuild
+        env: {GITHUB_TOKEN: "${{ github.token }}"}
+        run: python3 .github/feeds_sports.py --rebuild || echo "::warning::the NBA rebuild check failed"

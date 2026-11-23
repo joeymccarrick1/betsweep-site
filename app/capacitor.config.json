@@ -1,0 +1,12 @@
+{
+  "appId": "co.betsweep.app",
+  "appName": "BetSweep",
+  "webDir": "www",
+  "server": {
+    "url": "https://betsweep.co",
+    "cleartext": false,
+    "allowNavigation": ["betsweep.co", "site.api.espn.com", "fonts.googleapis.com", "fonts.gstatic.com", "cdnjs.cloudflare.com"]
+  },
+  "ios": { "contentInset": "always", "backgroundColor": "#141a24", "scheme": "BetSweep" },
+  "android": { "backgroundColor": "#141a24", "allowMixedContent": false }
+}

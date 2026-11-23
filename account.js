@@ -1,0 +1,74 @@
+
+(function(){
+  var CFG = window.__BS_ACCOUNT || {}; if(!CFG.url || !window.supabase) return;
+  var sb = window.supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
+  window.bsAccount = {client: sb, user: null};
+  // ---- which browser-storage keys follow the account (everything a person builds; not caches) ----
+  var SYNC = /^bs_(bankroll(?:_plan)?|clv_w\d+|log_w\d+|slips?_w\d+|slipk_w\d+|slipg_w\d+|slipmeta_w\d+|trade_\d+|manual|teams|team_cur|sleeper_user|sleeper_league|team_mode|tip|tracked.*|dfs_saved|dfs_lu_.*|dfs_site|dfs_fmt|dfs_sal_.*|handle|survivor)$/;
+  var META_KEY = 'bs_sync_meta', meta = {}; try{ meta = JSON.parse(localStorage.getItem(META_KEY)||'{}')||{}; }catch(e){}
+  function saveMeta(){ try{ localStorage.setItem(META_KEY, JSON.stringify(meta)); }catch(e){} }
+  var user = null, pending = {}, timer = null, ready = false;
+  var _set = localStorage.setItem.bind(localStorage), _rm = localStorage.removeItem.bind(localStorage);
+  localStorage.setItem = function(k, v){ _set(k, v); if (SYNC.test(k)){ meta[k] = Date.now(); saveMeta(); if (user && ready){ pending[k] = String(v); schedule(); } } };
+  localStorage.removeItem = function(k){ _rm(k); if (SYNC.test(k)){ meta[k] = Date.now(); saveMeta(); if (user && ready){ pending[k] = null; schedule(); } } };
+  function schedule(){ clearTimeout(timer); timer = setTimeout(flush, 800); }
+  window.addEventListener('pagehide', function(){ if (Object.keys(pending).length) flush(); });   // owner 10/28: push the slip before leaving the page, not 800 ms later
+  function flush(){ if(!user) return; var rows = [], dels = []; Object.keys(pending).forEach(function(k){ if (pending[k]===null) dels.push(k); else rows.push({user_id: user.id, key: k, value: {v: pending[k]}, updated_at: new Date(meta[k]||Date.now()).toISOString()}); }); pending = {};
+    if (rows.length) sb.from('user_state').upsert(rows, {onConflict: 'user_id,key'}).then(function(r){ if(r.error) console.warn('sync', r.error.message); });
+    if (dels.length) sb.from('user_state').delete().eq('user_id', user.id).in('key', dels).then(function(r){ if(r.error) console.warn('sync', r.error.message); }); }
+  function pull(){ return sb.from('user_state').select('key,value,updated_at').then(function(r){ if (r.error){ console.warn('sync', r.error.message); if (/relation|does not exist/i.test(r.error.message)) toast('Account storage is not set up yet (table missing).'); return false; }
+      var changed = false, remote = {}; (r.data||[]).forEach(function(x){ remote[x.key] = x; });
+      // remote newer than local -> take it; local newer (or only local) -> push it
+      Object.keys(remote).forEach(function(k){ var rt = Date.parse(remote[k].updated_at)||0, lt = meta[k]||0, lv = null; try{ lv = localStorage.getItem(k); }catch(e){}
+        var rv = remote[k].value && remote[k].value.v; if (rv == null) return;
+        if (lv === null && lt > rt){ pending[k] = null; return; }   // 11/15: removed here after the account copy was written - push the removal, don't restore it
+        if (lv === null || rt > lt){ if (lv !== rv){ _set(k, rv); changed = true; } meta[k] = rt; } else if (lt > rt && lv !== rv){ pending[k] = lv; } });
+      try{ for (var i=0;i<localStorage.length;i++){ var k = localStorage.key(i); if (SYNC.test(k) && !remote[k]) pending[k] = localStorage.getItem(k); } }catch(e){}
+      saveMeta(); flush(); return changed; }); }
+  // ---- UI ----
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  var slot = document.getElementById('bsacct'); if(!slot) return;
+  function prof(){ if (!user) return null; if (window.bsAccount.profile && window.bsAccount.profile.user_id === user.id) return window.bsAccount.profile; try { var p = JSON.parse(localStorage.getItem('bs_prof') || 'null'); return p && p.user_id === user.id ? p : null; } catch(e){ return null; } }
+  // 11/19 (owner: "My BetSweep and my profile on the social page need to combine"): one identity. The header shows the avatar picked on My BetSweep.
+  window.bsAccount.setProfile = function(p){ if (!p || !p.handle) return; window.bsAccount.profile = p; try { localStorage.setItem('bs_prof', JSON.stringify({user_id: p.user_id, handle: p.handle, color: p.color, emoji: p.emoji || null})); } catch(e){} paint(); document.dispatchEvent(new CustomEvent('bs-profile', {detail: p})); };
+  function profLoad(){ if (!user || !sb.rpc) return; var c = prof(), fresh = 0; try { fresh = +sessionStorage.getItem('bs_prof_at') || 0; } catch(e){} if (c) window.bsAccount.profile = c; if (c && Date.now() - fresh < 600000) return;
+    sb.rpc('feed_profile_me').then(function(r){ if (r && r.data && r.data.user_id && user && r.data.user_id === user.id){ try { sessionStorage.setItem('bs_prof_at', String(Date.now())); } catch(e){} window.bsAccount.setProfile(r.data); } }, function(){}); }
+  function paint(){ if (user){ var e = user.email||'', pf = prof(), ini = pf && pf.emoji ? pf.emoji : ((pf && pf.handle ? pf.handle[0] : e[0])||'?').toUpperCase(); slot.innerHTML = '<a class="me" href="/me/" title="'+esc(e)+'"><i>'+esc(ini)+'</i>My BetSweep</a><button type="button" class="out" title="Sign out">Out</button>'; slot.querySelector('.out').addEventListener('click', function(){ sb.auth.signOut().then(function(){ location.reload(); }); });
+      var tabs = document.querySelector('.sitenav .tabs'); if (tabs && !tabs.querySelector('.mout')){ var mo = document.createElement('a'); mo.href = '#'; mo.className = 'mout'; mo.textContent = 'Sign out'; mo.addEventListener('click', function(e){ e.preventDefault(); sb.auth.signOut().then(function(){ location.reload(); }); }); tabs.appendChild(mo); }
+      var mm0 = tabs && tabs.querySelector('.mme'); if (mm0) mm0.parentNode.removeChild(mm0); }
+    else { slot.innerHTML = '<button type="button" class="in">Sign in</button>'; slot.querySelector('.in').addEventListener('click', openDlg);
+      // 11/11: the Theme switch moved from the menu to My BetSweep (owner). Signed in, the header pill goes there; signed out there was no
+      // way to the page from the menu, so the menu gets one line for it (the page works without an account: this browser's slips, record, theme).
+      var tabs2 = document.querySelector('.sitenav .tabs'); if (tabs2 && !tabs2.querySelector('.mme')){ var mm = document.createElement('a'); mm.href = '/me/'; mm.className = 'mme' + (location.pathname.indexOf('/me/') === 0 ? ' on' : ''); mm.textContent = 'My BetSweep'; tabs2.appendChild(mm); } } }
+  var dlg = null;
+  function openDlg(){ if(!dlg){ dlg = document.createElement('div'); dlg.className = 'bsdlg'; dlg.innerHTML = '<div class="box" role="dialog" aria-label="Sign in"><button class="x" type="button" aria-label="close">×</button><h2>Sign in to BetSweep</h2><p>Optional. Signed in, your saved betslips, built fantasy teams, trade scenarios and Sleeper league follow you to any device. Nothing here requires it.</p>'
+      + '<input type="email" id="bsemail" placeholder="you@email.com" autocomplete="email"><label class="chk"><input type="checkbox" id="bs21"> I am 21 or older and I accept the <a href="/terms/" target="_blank">Terms</a> and <a href="/privacy/" target="_blank">Privacy Policy</a>.</label>'
+      + '<button class="go" type="button" id="bsgo">Email me a sign-in link</button>' + (CFG.google ? '<button class="g" type="button" id="bsgoogle">Continue with Google</button>' : '') + '<div class="msg" id="bsmsg"></div><small class="lg">No passwords: the code (or link) in the email signs you in once, and you stay signed in on that device until you tap Out. We store what you build on the site and your email, nothing else. Information only, 21+, please bet responsibly.</small></div>';
+      document.body.appendChild(dlg);
+      dlg.addEventListener('click', function(e){ if (e.target===dlg || e.target.closest('.x')) dlg.hidden = true; });
+      dlg.querySelector('#bsgo').addEventListener('click', function(){ var em = dlg.querySelector('#bsemail').value.trim(), ok = dlg.querySelector('#bs21').checked, m = dlg.querySelector('#bsmsg');
+        if(!/.+@.+\..+/.test(em)){ m.textContent = 'Enter your email.'; m.className = 'msg err'; return; } if(!ok){ m.textContent = 'Please confirm you are 21+ and accept the terms.'; m.className = 'msg err'; return; }
+        var b = dlg.querySelector('#bsgo'); b.disabled = true; m.textContent = 'Sending…'; m.className = 'msg';
+        sb.auth.signInWithOtp({email: em, options: {emailRedirectTo: location.origin + location.pathname, data: {over21: true, accepted_terms_at: new Date().toISOString()}}}).then(function(r){ b.disabled = false;
+          if (r.error){ m.textContent = r.error.message; m.className = 'msg err'; return; }
+          // a 6-digit code typed here signs THIS app in - the email link opens the browser, which on a phone home-screen app is a different place
+          m.innerHTML = 'Check your email. Type the <b>6-digit code</b> here (best on the home-screen app), or tap the link in the email.'; m.className = 'msg';
+          var cb = dlg.querySelector('#bscode'); if (!cb){ cb = document.createElement('div'); cb.id = 'bscode'; cb.innerHTML = '<input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456" id="bsotp" style="width:100%;box-sizing:border-box;font:inherit;font-size:22px;letter-spacing:.3em;text-align:center;padding:10px;border:1px solid #cfc7b6;border-radius:10px;margin-top:10px"><button class="go" type="button" id="bsverify">Sign in with code</button>'; m.parentNode.insertBefore(cb, m.nextSibling);
+            var vin = cb.querySelector('#bsotp'), vb = cb.querySelector('#bsverify');
+            function verify(){ var code = vin.value.replace(/\D/g,''); if (code.length < 6){ m.textContent = 'Enter the code from the email.'; m.className = 'msg err'; return; } vb.disabled = true; m.textContent = 'Signing in…'; m.className = 'msg';
+              sb.auth.verifyOtp({email: em, token: code, type: 'email'}).then(function(v){ vb.disabled = false; if (v.error){ m.textContent = v.error.message.indexOf('expired') >= 0 || v.error.message.indexOf('invalid') >= 0 ? 'That code did not work - check it, or send a new email.' : v.error.message; m.className = 'msg err'; } else { m.textContent = 'Signed in. You stay signed in on this device until you tap Out.'; dlg.hidden = true; } }); }
+            vb.addEventListener('click', verify); vin.addEventListener('keydown', function(e){ if (e.key === 'Enter') verify(); }); vin.addEventListener('input', function(){ if (vin.value.replace(/\D/g,'').length === 6) verify(); }); }
+          setTimeout(function(){ var i = dlg.querySelector('#bsotp'); if (i) i.focus(); }, 50); }); });
+      var g = dlg.querySelector('#bsgoogle'); if (g) g.addEventListener('click', function(){ sb.auth.signInWithOAuth({provider: 'google', options: {redirectTo: location.origin + location.pathname}}); }); }
+    dlg.hidden = false; setTimeout(function(){ var i = dlg.querySelector('#bsemail'); if(i) i.focus(); }, 50); }
+  function toast(t){ var el = document.createElement('div'); el.textContent = t; el.style.cssText = 'position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b1a17;color:#fff;padding:9px 14px;border-radius:999px;font:13px IBM Plex Sans,system-ui,sans-serif;z-index:120;box-shadow:0 8px 24px rgba(0,0,0,.3)'; document.body.appendChild(el); setTimeout(function(){ el.remove(); }, 3500); }
+  function onSession(s){ var u = s && s.user; if (u && (!user || user.id !== u.id)){ user = u; window.bsAccount.user = u; paint(); profLoad(); pull().then(function(changed){ ready = true; document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: u, changed: changed}})); if (changed && !/\/me\//.test(location.pathname)){ toast('Synced from your account');
+        // 11/15 (owner video: the builder "freaking out flashing"): a page that rewrote a synced key on load made every pull look like a change, so
+        // the page reloaded itself over and over. One sync reload per tab per 2 minutes; past that the synced data shows on the next visit.
+        var last = 0; try { last = +sessionStorage.getItem('bs_sync_rl') || 0; } catch(e){}
+        if (Date.now() - last > 120000){ try { sessionStorage.setItem('bs_sync_rl', String(Date.now())); } catch(e){} setTimeout(function(){ location.reload(); }, 900); } } }); }
+    else if (!u){ user = null; window.bsAccount.user = null; ready = false; paint(); document.dispatchEvent(new CustomEvent('bs-account', {detail: {user: null}})); } }
+  paint();
+  sb.auth.getSession().then(function(r){ onSession(r.data && r.data.session); });
+  sb.auth.onAuthStateChange(function(ev, s){ if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION' || ev === 'TOKEN_REFRESHED') onSession(s); if (ev === 'SIGNED_OUT') onSession(null); if (ev === 'SIGNED_IN' && dlg) dlg.hidden = true; });
+})();

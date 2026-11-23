@@ -1,0 +1,137 @@
+{
+ "week": 9,
+ "legs": {
+  "Kalif Raymond|Receptions|3": {
+   "pl": "Kalif Raymond",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "CHI-TB",
+   "fd": 164.0,
+   "dk": 142.0,
+   "hr": 125.0,
+   "gap": 3.4,
+   "p": 0.452,
+   "seen": "2026-11-06 6:24"
+  },
+  "Kayshon Boutte|Anytime TD|1": {
+   "pl": "Kayshon Boutte",
+   "m": "Anytime TD",
+   "ln": 1,
+   "g": "HOU-LAC",
+   "fd": 800.0,
+   "dk": 600.0,
+   "hr": 600.0,
+   "gap": 3.2,
+   "p": 0.1327,
+   "seen": "2026-11-06 6:24"
+  },
+  "Evan Engram|Receiving Yards|25": {
+   "pl": "Evan Engram",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "CAR-DEN",
+   "fd": 142.0,
+   "dk": 125.0,
+   "hr": 125.0,
+   "gap": 3.1,
+   "p": 0.3835,
+   "seen": "2026-11-06 6:24"
+  },
+  "Colston Loveland|Longest Reception|20": {
+   "pl": "Colston Loveland",
+   "m": "Longest Reception",
+   "ln": 20.0,
+   "g": "CHI-TB",
+   "fd": 110.0,
+   "dk": -113.0,
+   "hr": -115.0,
+   "gap": 5.4,
+   "p": 0.418,
+   "seen": "2026-11-06 6:24"
+  },
+  "Adonai Mitchell|Receptions|5": {
+   "pl": "Adonai Mitchell",
+   "m": "Receptions",
+   "ln": 5.0,
+   "g": "KC-NYJ",
+   "fd": 178.0,
+   "dk": 152.0,
+   "hr": 155.0,
+   "gap": 3.2,
+   "p": 0.3509,
+   "seen": "2026-11-07 6:25"
+  },
+  "Christian McCaffrey|Receiving Yards|40": {
+   "pl": "Christian McCaffrey",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "LV-SF",
+   "fd": -108.0,
+   "dk": -127.0,
+   "hr": -125.0,
+   "gap": 3.6,
+   "p": 0.517,
+   "seen": "2026-11-08 6:25"
+  },
+  "Van Jefferson|Receiving Yards|10": {
+   "pl": "Van Jefferson",
+   "m": "Receiving Yards",
+   "ln": 10.0,
+   "g": "LA-WAS",
+   "fd": 102.0,
+   "dk": -120.0,
+   "hr": -115.0,
+   "gap": 4.0,
+   "p": 0.5433,
+   "seen": "2026-11-08 6:25"
+  },
+  "Ryan Flournoy|Receptions|3": {
+   "pl": "Ryan Flournoy",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "DAL-IND",
+   "fd": -320.0,
+   "dk": -417.0,
+   "hr": -450.0,
+   "gap": 4.5,
+   "p": 0.7104,
+   "seen": "2026-11-08 6:25"
+  },
+  "Emeka Egbuka|Receptions|3": {
+   "pl": "Emeka Egbuka",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "CHI-TB",
+   "fd": -290.0,
+   "dk": -363.0,
+   "hr": -350.0,
+   "gap": 3.4,
+   "p": 0.7204,
+   "seen": "2026-11-08 11:25"
+  },
+  "Christian McCaffrey|Receptions|5": {
+   "pl": "Christian McCaffrey",
+   "m": "Receptions",
+   "ln": 5.0,
+   "g": "LV-SF",
+   "fd": -162.0,
+   "dk": -204.0,
+   "hr": -190.0,
+   "gap": 3.7,
+   "p": 0.5871,
+   "seen": "2026-11-08 14:25"
+  },
+  "Trey McBride|Anytime TD|1": {
+   "pl": "Trey McBride",
+   "m": "Anytime TD",
+   "ln": 1.0,
+   "g": "ARI-SEA",
+   "fd": 230.0,
+   "dk": 190.0,
+   "hr": 200.0,
+   "gap": 3.0,
+   "p": 0.3069,
+   "seen": "2026-11-08 14:25"
+  }
+ }
+}
