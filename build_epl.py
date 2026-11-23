@@ -27,6 +27,16 @@ E = html.escape
 FORMAT = 1                                   # sports/epl/publish.py FORMAT
 POSN = {"GK": "Goalkeeper", "DEF": "Defender", "MID": "Midfielder", "FWD": "Forward"}
 POSS = {"GK": "goalkeepers", "DEF": "defenders", "MID": "midfielders", "FWD": "forwards"}
+from sports.soccer import roles as RL        # owner 11/23 7:37 AM: specific positions - ST, RW, CAM, CDM, RB ... (plain Python: the hourly build has no pandas)
+
+
+def spot(p):
+    """the position shown beside a player and the one he is ranked among: his specific role when the board has one (ST, RW, CAM, CDM, RB ...),
+    else the group the board has always carried (a board built before 11/23, or a player ESPN has not yet drawn in an eleven)"""
+    return p.get("role") or p["pos"]
+
+
+def spot_name(x): return RL.NAMES.get(x) or POSN.get(x, x)
 REGULAR = 3                                  # starts in the club's last five that make a player "a regular" on this page
 HEADNAME = {"Nott'm Forest": "Forest", "Crystal Palace": "Palace"}     # under the big letters in a card's header there is room for about eleven
 
@@ -98,9 +108,9 @@ def player_li(p, top, ranks, B):
     rk = ranks.get((p["id"], p["match"]))
     w = 0 if not top else max(4.0, min(100.0, p["p_goal"] / top * 100))
     tags = (f'<i class="nbtag t-q">{E(tag)}</i>' if tag else "") + ('<i class="nbtag t-p">XI</i>' if xi == "start" else ('<i class="nbtag t-d">Bench</i>' if xi == "bench" else ""))
-    return (f'<li class="pl pos-{p["pos"]}{"" if regular(p) else " eplsub"}" data-pid="{E(p["id"])}"> <button type="button" class="prow" aria-expanded="false"><span class="pos" title="{POSN.get(p["pos"], p["pos"])}">{E(p["pos"])}</span>'
+    return (f'<li class="pl pos-{p["pos"]}{"" if regular(p) else " eplsub"}" data-pid="{E(p["id"])}"> <button type="button" class="prow" aria-expanded="false"><span class="pos" title="{E(spot_name(spot(p)))}">{E(spot(p))}</span>'
             f'<span class="who"><span class="nm">{E(p["name"])}{tags}</span><span class="role sn" title="Starts in his club\'s last five matches; minutes when he starts: about {p["start_min"]}">{E(role)}</span></span> '
-            f'<span class="ppr"><span class="v"><small>Scores</small>{pct(p["p_goal"])}<small>if he starts</small></span><i style="--w:{w:.1f}%"></i><span class="rk">{("#" + str(rk) + " " + p["pos"]) if rk else ""}</span></span><i class="car" aria-hidden="true">▾</i></button> '
+            f'<span class="ppr"><span class="v"><small>Scores</small>{pct(p["p_goal"])}<small>if he starts</small></span><i style="--w:{w:.1f}%"></i><span class="rk">{("#" + str(rk) + " " + spot(p)) if rk else ""}</span></span><i class="car" aria-hidden="true">▾</i></button> '
             f'<div class="pdetail" hidden><div class="sl">{chips}</div>' + (f'<ul class="nblad" aria-label="Chance of each line, model only, if he starts">{lad}</ul>' if lad else "") + fl + rec + '</div></li>')
 
 
@@ -285,7 +295,7 @@ body.compact .card:not(.expanded) > .eplmk{display:grid}
 .card.expanded[data-view="out"] .epldiv{display:none}
 li.pl.eplsub .ppr .v{opacity:.72}
 .eplxi{font-style:normal;font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--good);margin-left:6px}
-.pl .pos{min-width:34px}
+.pl .pos{min-width:40px}
 .nblg{flex:1 0 100%;order:5;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px} .nblg::-webkit-scrollbar{display:none} .nblg a{flex:0 0 auto;white-space:nowrap}
 """
 
@@ -300,8 +310,8 @@ def page(B, nba=False, R=None, have=None, cfg=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     # this round's rank at each position by chance to score, regular starters only (a substitute's "if he starts" number is not ranked)
     ranks = {}
-    for pos in POSN:
-        for i, p in enumerate(sorted([p for p in B["players"] if p["pos"] == pos and regular(p)], key=lambda p: (-p["p_goal"], p["name"]))):
+    for pos in sorted({spot(p) for p in B["players"]}):
+        for i, p in enumerate(sorted([p for p in B["players"] if spot(p) == pos and regular(p)], key=lambda p: (-p["p_goal"], p["name"]))):
             ranks[(p["id"], p["match"])] = i + 1
     nav = '<a href="#summary">Slate</a> ' + " ".join(f'<a href="#{E(m["key"])}">{E(m["home"])}·{E(m["away"])}</a>' for m in B["matches"])
     n = len(B["matches"]); rl = round_label(B)
@@ -320,7 +330,11 @@ def page(B, nba=False, R=None, have=None, cfg=None):
     key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
            '<dt>Score</dt><dd>Each side\'s expected goals, home side first, and under it the chance of a home win, a draw and an away win. The posted line beside the kickoff time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
            '<dt>Bar and number</dt><dd>A player\'s chance to score <b>if he starts</b>, with the bar scaled to the match\'s likeliest scorer. The tag after it is his place among ' + ("this round\'s" if B.get("gameweeks") else "this board\'s") + ' regular starters at his position.</dd>'
-           '<dt>Started N of last 5</dt><dd>The model does not pick line-ups. Players who started three or more of the club\'s last five matches are listed first; the rest sit under a line. When the confirmed elevens are in, about an hour before kickoff, each player is marked in the eleven or on the bench.</dd>'
+           + (('<dt>Position</dt><dd>Where he usually lines up, read from how ESPN drew his side in his last ten starts: <b>ST</b> striker, <b>LW RW</b> wings, <b>CAM</b> attacking mid, <b>CM</b> center mid, '
+               '<b>CDM</b> defensive mid, <b>LM RM</b> wide mids, <b>LB RB</b> full backs, <b>LWB RWB</b> wing-backs, <b>CB</b> center back, <b>GK</b>. Once the elevens are in, it is where he lines up in this match. '
+               + ('A player with no start this season keeps the fantasy list\'s group: DEF, MID or FWD.' if epl else '<b>SUB</b>: he has only come off the bench this season, so there is no position to go on.') + '</dd>')
+              if any(p.get("role") for p in B["players"]) else "")
+           + '<dt>Started N of last 5</dt><dd>The model does not pick line-ups. Players who started three or more of the club\'s last five matches are listed first; the rest sit under a line. When the confirmed elevens are in, about an hour before kickoff, each player is marked in the eleven or on the bench.</dd>'
            '<dt>Chips</dt><dd>Tap a player. Each chip is a projection; its color is how much the opponent allows - goals for scoring and assists, shots for shots - #1 (green) allows the most and #' + str(B.get("n_clubs") or 20) + ' (red) the least.</dd>'
            + ('<dt>Out and doubts</dt><dd>From the official Fantasy Premier League list. A player listed out or suspended has no numbers; a doubt keeps his, with his chance of playing.</dd>' if not B.get("no_availability")
               else '<dt>Who\'s out</dt><dd>No injury list is read for this league yet, so nobody is marked out. Check the team news before trusting a player\'s number; the confirmed elevens still mark who starts.</dd>')

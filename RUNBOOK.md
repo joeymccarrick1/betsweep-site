@@ -3416,3 +3416,50 @@ from the season file, and the page's record block moving from "Grading has start
 
 **Next, in order:** college football lock-and-grade (before the title games on 12/4); ESPN's three-way prices on the soccer
 cards and the posted line as the bar the model has to beat; the repository-size decision (the owner's).
+
+## 11/23 7:40-8:20 AM CT: specific positions - the NBA's five, and where each soccer player lines up
+
+Owner 7:37 AM: "Can we get more specific with positions in nba and soccer? I want forward/striker, Right wing/Right mid, center
+mid/center attacking mid, right back, ect. For nba we can have all 5 standard positions SG, PG, PF, SF, C."
+
+**For the pages alone.** A position here is what a visitor reads beside a name and whom a player is ranked among. No model
+number moved: the NBA model still uses guards / forwards / centers (what it was tested on) and so do the "allowed to" ranks;
+the soccer models' priors still use the four groups. Changing those is a model change and would have to beat what is there.
+
+**NBA - where the five come from.** ESPN's box scores and rosters list only G, F or C this season (checked: 225 / 189 / 76,
+nothing else). Its depth charts name each team's PG, SG, SF, PF and C, first choice first. The job mirrors all 30 every six
+hours (`nba/depth.json`; written byte for byte in between; a read where under 25 teams answer keeps the last good file).
+`sports/nba/positions.py`: a player gets the position where he stands highest on his team's chart; a tie goes to one that fits
+ESPN's own G / F / C for him, then PG-SG-SF-PF-C order; a player on no chart gets none, and the page shows ESPN's letter and
+no rank rather than a guess. First board: 189 of 190 players on a chart (PG 39, SG 35, SF 41, PF 36, C 38); all 281 on the
+Stocks page. Board rows carry `pos` beside `grp`; the board and the stocks file carry `positions_at`.
+- `/nba/`: the row tag and the rank ("#4 PG") use it; the key and the stamp say where it comes from.
+- `/nba/stocks/`: the sections are Point guards, Shooting guards, Small forwards, Power forwards, Centers. A guard or forward
+  on no chart would sit in a section named "Guards on no depth chart" - never under a guessed position.
+
+**Soccer - where a role comes from.** ESPN draws every eleven with a place per starter ("G", "CD-L", "LM", "AM-R", "CF-L").
+The same code means different jobs in different shapes, so `sports/soccer/roles.py` reads a place with the other ten. Checked
+against all 1,710 elevens of the four leagues' seasons (18 shapes, every place read, one keeper each) and against players
+whose job is not in doubt (Kimmich and Tchouameni CDM, Olise and Yamal RW, Vinicius LW, Bellingham CAM, Pedri CM, Dimarco LWB,
+Kane ST). The labels: GK, CB, LB, RB, LWB, RWB, CDM, CM, LM, RM, CAM, LW, RW, ST. The traps, all in the module's header:
+ESPN's LM / RM are the holding pair in a 4-2-3-1, the outer two of a midfield three in a 4-3-3, wing-backs behind three
+centre-backs, and wide midfielders only otherwise; CF-L / CF-R are wings beside a central F and two strikers without one.
+- A player's usual role = the one he started most in his last ten starts (a tie to the more recent). With a match's elevens
+  in, a starter's row shows where he lines up in that match.
+- The four leagues: from their own season files. A player who has only come off the bench is marked SUB (before this he was
+  shown as MID, which was a guess).
+- The Premier League: its data set and the fantasy list know four groups, so the job now also keeps the season as ESPN has it
+  (`epl/season.json`, 109 matches, collected in one run) for this one purpose; the numbers stay on the data set. Players are
+  matched by name within a club (`roles.find`: the same name, spaces closed, one name inside the other, a surname or one-word
+  name only one man has): 318 of 327 matched, every loose match checked by eye, no ESPN name claimed twice; the 9 unmatched
+  have no start this season and keep the fantasy group. The same matcher now decides who is in a confirmed eleven: the old
+  rule left a starter under "Not in the eleven" when the two sources spelled him differently (Groß, Kadıoğlu, Chema Andrés).
+- The page ranks a player among the regulars at his role ("#2 LW") and has a Position entry in its key.
+
+**On main (the job):** `nba_depth()`, `soccer_season()` (the season archive, split out so the Premier League can use it
+alone), the probe that showed ESPN's depth-chart shape added and removed again (5b6c39454, 34ee257c5). Self-test 32/32.
+
+**Also this morning:** the 7:30 AM NBA check - all 5 games locked on 11/22 graded (93 player-games: points off by 4.69 against
+4.93 for a season average), the day rolled to Mon 11/23 (10 games), stocks through 11/22. `tests/nba_board.py` failed 3 checks
+on the live page for a reason that was the test's: it read the first row's bar as the game's top scorer, true only when he
+plays for the side listed first. Fixed (9d767484); the page was right.

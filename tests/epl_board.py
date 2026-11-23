@@ -114,8 +114,11 @@ def record_states():
 def expect(B):
     n = B.get("n_clubs") or 20
     ranks = {}
-    for pos in K.POSN:
-        for i, p in enumerate(sorted([p for p in B["players"] if p["pos"] == pos and K.regular(p)], key=lambda p: (-p["p_goal"], p["name"]))): ranks[(p["id"], p["match"])] = i + 1
+    # 11/23 (owner: "more specific with positions ... forward/striker, Right wing/Right mid, center mid/center attacking mid, right back"):
+    # a row shows the player's specific position when the board has one and is ranked among the regulars at it; else his group, as before
+    spot = lambda p: (p.get("role") or p["pos"])
+    for pos in sorted({spot(p) for p in B["players"]}):
+        for i, p in enumerate(sorted([p for p in B["players"] if spot(p) == pos and K.regular(p)], key=lambda p: (-p["p_goal"], p["name"]))): ranks[(p["id"], p["match"])] = i + 1
     out = []
     for m in B["matches"]:
         h, a = m["home"], m["away"]; p = m["p"]; line = m.get("line") or {}
@@ -125,7 +128,7 @@ def expect(B):
             ps = sorted([x for x in B["players"] if x["team"] == ab and x["match"] == m["id"]], key=lambda x: (not K.regular(x), -x["p_goal"], x["name"]))
             role = lambda x: {"start": "in the eleven", "bench": "on the bench", "no": "not in the squad"}.get(x.get("xi")) or f"started {x['starts5']} of last 5"
             cols[ab] = {"def": [f"Goals#{n + 1 - o['def'][0]}", f"Shots#{n + 1 - o['shots_against'][0]}"], "out": [x["name"] for x in t.get("out") or []], "doubt": [x["name"] for x in t.get("doubt") or []],
-                        "players": [[x["id"], x["name"], x["pos"], role(x), pct(x["p_goal"]), (f"#{ranks[(x['id'], x['match'])]} {x['pos']}" if (x["id"], x["match"]) in ranks else ""), (x.get("status") or {}).get("tag") or "", not K.regular(x)] for x in ps],
+                        "players": [[x["id"], x["name"], spot(x), role(x), pct(x["p_goal"]), (f"#{ranks[(x['id'], x['match'])]} {spot(x)}" if (x["id"], x["match"]) in ranks else ""), (x.get("status") or {}).get("tag") or "", not K.regular(x)] for x in ps],
                         "div": any(not K.regular(x) for x in ps)}
         best = m["scores"][0]
         ltxt = " · ".join(x for x in ((line.get("details") or ""), (f"O/U {line['total']:g}" if isinstance(line.get("total"), (int, float)) else "")) if x)
@@ -172,6 +175,19 @@ async def main():
           "every match: home, draw and away add up to 100%, the goal rates are in a football match's range, and over 1.5 is likelier than over 2.5 than over 3.5")
     check(all(p["match"] in mids and p["team"] in B["teams"] and p["opp"] in B["teams"] and 0 <= p["p_goal"] < 0.9 and p["p_goal2"] <= p["p_goal"] and 0 <= p["p_assist"] < 0.9 and p["shots"] >= p["sot"] >= 0 and 0 <= p["starts5"] <= p["apps5"] <= 5 and p["pos"] in K.POSN for p in P),
           "every player row has a match and a club on the board, a position, chances between 0 and 90%, shots no fewer than shots on target, and starts no more than appearances")
+    from sports.soccer import roles as RL
+    uniq = {p["id"]: p for p in P}; named = [p for p in uniq.values() if p.get("role") in RL.ROLES]; reg = [p for p in P if K.regular(p)]
+    if any(p.get("role") for p in P):
+        tally = {r: sum(1 for p in named if p["role"] == r) for r in RL.ROLES}
+        check(all(p.get("role") in RL.ROLES + ((None,) if EPL else ("SUB",)) for p in P) and sum(1 for p in reg if p.get("role") in RL.ROLES) >= 0.9 * len(reg) and all(p["starts"] == 0 for p in P if p.get("role") in (None, "SUB"))
+              and tally["GK"] >= len(B["teams"]) * 0.8 and tally["CB"] >= tally["GK"] and tally["ST"] >= len(B["teams"]) * 0.6 and tally["LW"] + tally["RW"] + tally["LM"] + tally["RM"] + tally["LWB"] + tally["RWB"] >= len(B["teams"])
+              and "<dt>Position</dt>" in src and "read from how ESPN drew his side in his last ten starts" in src
+              and (("keeps the fantasy list's group" in src) if EPL else ("he has only come off the bench this season, so there is no position to go on" in src)),
+              f"specific positions: {len(named)} of {len(uniq)} players carry one from ESPN's elevens ({', '.join(f'{k} {v}' for k, v in tally.items() if v)}); "
+              + (f"the {len(uniq) - len(named)} with no start this season keep the fantasy list's group" if EPL else f"the {len(uniq) - len(named)} who have only come off the bench are marked SUB, not given a guessed position")
+              + "; the key says how a position is read")
+    else:
+        check("<dt>Position</dt>" not in src, "this board was built before specific positions: rows show the position group and the key claims nothing more")
     outs = {(ab, o["name"]) for ab, t in B["teams"].items() for o in t.get("out") or []}
     if EPL:
         check(not any((p.get("status") or {}).get("tag") in ("Out", "Suspended") for p in P) and all(o["tag"] in ("Out", "Suspended") for t in B["teams"].values() for o in t.get("out") or []) and all(o["tag"].endswith("%") or o["tag"] == "Doubt" for t in B["teams"].values() for o in t.get("doubt") or []),

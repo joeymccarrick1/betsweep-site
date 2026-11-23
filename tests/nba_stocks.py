@@ -97,8 +97,26 @@ async def main():
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), functools.partial(H, directory=ROOT)); threading.Thread(target=srv.serve_forever, daemon=True).start()
+    # 11/23, owner 7:37 AM: "For nba we can have all 5 standard positions SG, PG, PF, SF, C." Worked out here from the file itself: with
+    # ESPN's depth charts in it the sections are the five, each player under the position the file gives him; a guard or forward on no
+    # chart sits in a section that says so (never under a guessed position); a file without positions keeps guards, forwards, centers.
+    from sports.nba import positions as PS
+    pos_of = {str(x["id"]): x.get("pos") for x in S["players"]}; grp_of = {str(x["id"]): x["grp"] for x in S["players"]}
+    five = bool(S.get("positions_at")) and any(pos_of.values())
+    left = sorted({grp_of[x["k"]] for x in PL if not pos_of.get(x["k"])} - {"C"}, key="GF".index) if five else []
+    order = (list(PS.SLOTS) + left) if five else ["G", "F", "C"]
+    check(all(x["g"] == (pos_of.get(x["k"]) or grp_of[x["k"]]) for x in PL) and (not five or all(v in PS.SLOTS for v in pos_of.values() if v))
+          and re.findall(r'<section class="sksec" id="nsk-([a-z]+)"', src)[:len(order)] == [g.lower() for g in order] and re.findall(r'<a href="#nsk-([a-z]+)">([A-Z]+)</a>', src) == [(g.lower(), g) for g in order]
+          and (("ESPN's depth charts as of" in src) == five) and (not five or [t for t in re.findall(r'<section class="sksec" id="nsk-[a-z]+"><h2>([^<]+?) <', src)][:5] == ["Point guards", "Shooting guards", "Small forwards", "Power forwards", "Centers"]),
+          (f"the sections are the five positions, {' '.join(order)}, each player under the one ESPN's depth charts give him ({sum(1 for x in PL if pos_of.get(x['k']))} of {len(PL)} players; "
+           + (f"{len([x for x in PL if not pos_of.get(x['k'])])} on no chart, listed apart as ESPN's {' / '.join(left) or 'C'}" if any(not pos_of.get(x['k']) for x in PL) else "none left over") + "), and the page says where the positions come from")
+          if five else "this file has no depth-chart positions, so the sections are guards, forwards and centers and the page claims nothing more")
+    mk_ = lambda g, f: {"g": g, "five": f}
+    check([g[0] for g in K.groups([mk_("PG", True), mk_("G", False), mk_("C", True)])] == ["PG", "SG", "SF", "PF", "C", "G"] and [g[0] for g in K.groups([mk_("SF", True), mk_("F", False), mk_("G", False)])] == ["PG", "SG", "SF", "PF", "C", "G", "F"]
+          and K.groups([mk_("G", False), mk_("F", False), mk_("C", False)]) == K.GROUPS and K.groups([mk_("C", True)]) == K.GROUPS5 and dict((a, b) for a, b, c in K.LEFT) == {"G": "Guards on no depth chart", "F": "Forwards on no depth chart"},
+          "the sections for any file: the five when it carries positions, a plainly named extra section for a guard or forward on no chart, and guards / forwards / centers when it carries none")
     want = {}
-    for g, _, _ in K.GROUPS:
+    for g in order:
         want[g] = {"rise": sorted([x for x in PL if x["g"] == g and x["dir"] == "up"], key=lambda x: (-x["d"], x["n"])), "fall": sorted([x for x in PL if x["g"] == g and x["dir"] == "dn"], key=lambda x: (x["d"], x["n"]))}
     async with async_playwright() as p:
         b = await p.chromium.launch()

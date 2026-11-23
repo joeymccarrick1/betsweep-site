@@ -128,10 +128,14 @@ def copy_of(x): return json.loads(json.dumps(x))
 
 
 def expect(B):
-    """what the page must show, from the board alone"""
+    """what the page must show, from the board alone. 11/23 (owner: "all 5 standard positions SG, PG, PF, SF, C"): with ESPN's depth
+    charts in the board a row carries one of the five and is ranked among tonight's players at it; a player on no chart shows ESPN's
+    G / F / C and no rank; a board without charts is the three groups, as before."""
+    five = bool(B.get("positions_at")); FIVE = ("PG", "SG", "SF", "PF", "C")
+    spot = lambda p: (p.get("pos") or p["grp"])
     ranks = {}
-    for g in ("G", "F", "C"):
-        for i, p in enumerate(sorted([p for p in B["players"] if p["grp"] == g], key=lambda p: -(p["proj"].get("pts") or 0))): ranks[p["id"]] = i + 1
+    for g in (FIVE if five else ("G", "F", "C")):
+        for i, p in enumerate(sorted([p for p in B["players"] if (p.get("pos") if five else p["grp"]) == g], key=lambda p: -(p["proj"].get("pts") or 0))): ranks[p["id"]] = i + 1
     games = []
     for g in B["games"]:
         a, h = g["away"], g["home"]; pa, ph = g["proj"].get(a), g["proj"].get(h)
@@ -141,7 +145,7 @@ def expect(B):
         for ab in (a, h):
             t = B["teams"][ab]; ps = sorted([p for p in B["players"] if p["team"] == ab], key=lambda p: -(p["proj"].get("pts") or 0))
             cols[ab] = {"def": [f"{x}#{(t['opp_def'].get(x) or {}).get('pts', [None])[0]}" for x in ("G", "F", "C") if (t.get("opp_def") or {}).get(x)], "out": [o["name"] for o in t.get("out") or []], "back": list(t.get("back") or []),
-                        "players": [[p["id"], p["name"], p["grp"], f"~{round(p['min'])} min", f1(p["proj"].get("pts")), f"#{ranks[p['id']]} {p['grp']}", (p.get("status") or {}).get("tag") or ""] for p in ps]}
+                        "players": [[p["id"], p["name"], spot(p), f"~{round(p['min'])} min", f1(p["proj"].get("pts")), (f"#{ranks[p['id']]} {spot(p)}" if p["id"] in ranks else ""), (p.get("status") or {}).get("tag") or ""] for p in ps]}
         games.append({"key": g["key"], "a": a, "h": h, "score": f"{pa:.1f}–{ph:.1f}", "small": f"total {pa + ph:.1f} · " + ("even" if round(by, 1) == 0 else f"{fav} by {by:.1f}"), "tip": g["tipct"] + " CT",
                       "line": " · ".join(x for x in ((line.get("details") or ""), (f"O/U {line['total']:g}" if isinstance(line.get("total"), (int, float)) else "")) if x), "by": (line.get("by") or "").replace("Draft Kings", "DraftKings"),
                       "state": g.get("state") if g.get("state") in ("in", "post") and g.get("score") else None, "cols": cols, "nout": sum(len(B["teams"][x].get("out") or []) for x in (a, h))})
@@ -166,8 +170,23 @@ READ = r"""(function(){
 })()"""
 
 
+def positions():
+    """sports/nba/positions.py: one of the five from ESPN's depth charts, or nothing - never a guess"""
+    from sports.nba import positions as PS
+    D = {"teams": {"AAA": {"PG": ["1", "2", "9"], "SG": ["3", "4", "8"], "SF": ["5", "4", "8"], "PF": ["6", "5", "7"], "C": ["7", "6"]}, "BBB": {"PG": ["20"], "SG": ["21"], "SF": ["22", "30"], "PF": ["23"], "C": ["24"]}}}
+    s = lambda pid, grp=None, team="AAA", d=D: PS.slot(d, team, pid, grp)
+    check([s("1"), s("3"), s("5", "F"), s("7", "C"), s("9")] == ["PG", "SG", "SF", "C", "PG"] and s("2", "G") == "PG" and s("6", "F") == "PF",
+          "a player takes the position where he stands highest on his team's chart: a starter his own, a reserve listed at two the one he is higher at")
+    check(s("4", "G") == "SG" and s("4", "F") == "SF" and s("4") == "SG" and s("8", "F") == "SF" and s("8", "G") == "SG" and s("7", "F") == "C" and s("5", "G") == "SF",
+          "level at two positions, he goes to the one that fits ESPN's own guard / forward / center for him (a forward level at SG and SF is an SF), else the earlier of PG SG SF PF C; a clear first choice is never moved to fit")
+    check(s("30", "F") == "SF" and s("30", "F", team="BBB") == "SF" and s("99", "G") is None and PS.slot(None, "AAA", "1", "G") is None and PS.slot({"teams": {}}, "AAA", "1") is None and PS.slot({"mirrored": "x"}, "AAA", "1") is None,
+          "a player his own team's chart does not list (a trade the charts have not caught up with) is read off the chart that has him; on no chart, or with no charts, he has no position")
+    check(PS.shown({"pos": "PF", "grp": "F"}) == "PF" and PS.shown({"pos": None, "grp": "G"}) == "G" and PS.shown({"grp": "C"}) == "C" and set(PS.NAMES) == set(PS.SLOTS) == set(PS.PLURAL) and PS.SLOTS == ("PG", "SG", "SF", "PF", "C"),
+          "a row shows the five-position when the board has one for him and ESPN's G, F or C when it does not")
+
+
 async def main():
-    publish_rule(); stale_rule(); record_states()
+    publish_rule(); stale_rule(); record_states(); positions()
     page_path = os.path.join(ROOT, "nba", "index.html")
     if not os.path.exists(page_path):
         check(not os.path.exists(os.path.join(ROOT, "nba", "board.json")), "this build has no NBA board, so it has no /nba/ page and no leftover board file (the page is optional; a stale one is not allowed)")
@@ -175,6 +194,17 @@ async def main():
     src = open(page_path, encoding="utf-8").read()
     B = json.load(open(os.path.join(ROOT, "nba", "board.json")))
     want, ranks = expect(B)
+    five = bool(B.get("positions_at")); withp = [p for p in B["players"] if p.get("pos")]
+    if five:
+        check(all(p["pos"] in ("PG", "SG", "SF", "PF", "C") for p in withp) and len(withp) >= 0.9 * len(B["players"]) and all(p["id"] in ranks for p in withp) and not any(p["id"] in ranks for p in B["players"] if not p.get("pos"))
+              and "<dt>Position</dt>" in src and "from ESPN's depth charts" in src and "ESPN's depth charts as of" in src and "his place among tonight's players at his position" in src
+              and "What an opponent allows is still counted for guards, forwards and centers" in src,
+              f"the five positions: {len(withp)} of {len(B['players'])} players carry PG, SG, SF, PF or C from ESPN's depth charts and are ranked among tonight's players at it "
+              f"({', '.join(f'{k} {sum(1 for p in withp if p['pos'] == k)}' for k in ('PG', 'SG', 'SF', 'PF', 'C'))}); "
+              + (f"{len(B['players']) - len(withp)} on no chart keep ESPN's G / F / C and have no rank; " if len(withp) < len(B["players"]) else "") + "the key and the stamp say where the positions come from, and that what an opponent allows is still by group")
+    else:
+        check(not withp and "<dt>Position</dt>" not in src and "depth charts" not in src and "his place among tonight's guards, forwards or centers" in src,
+              "this board has no depth-chart positions: rows show guard, forward or center and the page claims nothing more")
     import build_nba as N, datetime as dt
     check(B.get("format") == N.FORMAT, f"the board is in the shape the page reads (format {B.get('format')})")
     check(B.get("sport") == "nba" and len(B["games"]) >= 1 and len(B["players"]) >= 10 * len(B["games"]) and B.get("data_through") and B.get("day"), f"the page ships its board: {B.get('day_label')}, {len(B['games'])} games, {len(B['players'])} players, games through {B.get('data_through')}")

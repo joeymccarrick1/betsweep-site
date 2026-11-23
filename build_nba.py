@@ -30,6 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out
 E = lambda s: html.escape(str(s), quote=True)
 PAGE = os.path.join(OUT, "nba-boards.html")
 GRP = {"G": "Guard", "F": "Forward", "C": "Center"}
+from sports.nba import positions as PS           # owner 11/23 7:37 AM: the five positions, from ESPN's depth charts (plain Python: no pandas in this build)
 GRPS = {"G": "guards", "F": "forwards", "C": "centers"}
 STATS = [("pts", "points", "Points"), ("reb", "rebounds", "Rebounds"), ("ast", "assists", "Assists"), ("fg3", "threes", "Threes")]
 # a nickname that is more than the last word of the team's name (ESPN's short name is used when the mirror carries it)
@@ -211,9 +212,9 @@ def player_li(p, team, top, ranks, B):
                + "".join("<tr>" + "".join(f"<td>{E(c)}</td>" for c in g) + "</tr>" for g in reversed(p["recent"])) + "</tbody></table>")
     rk = ranks.get(p["id"])
     w = 0 if not top else max(4.0, min(100.0, (p["proj"].get("pts") or 0) / top * 100))
-    return (f'<li class="pl pos-{p["grp"]}" data-pid="{E(p["id"])}"> <button type="button" class="prow" aria-expanded="false"><span class="pos" title="{GRP[p["grp"]]}">{p["grp"]}</span>'
+    return (f'<li class="pl pos-{p["grp"]}" data-pid="{E(p["id"])}"> <button type="button" class="prow" aria-expanded="false"><span class="pos" title="{PS.NAMES.get(PS.shown(p)) or GRP[p["grp"]]}">{PS.shown(p)}</span>'
             f'<span class="who"><span class="nm">{E(p["name"])}' + (f'<i class="nbtag t-{tag[0].lower()}">{E(tag)}</i>' if tag else "") + f'</span><span class="role sn" title="Projected minutes tonight; his recent-games baseline is {f1(p.get("base_min"))}">{role}</span></span> '
-            f'<span class="ppr"><span class="v"><small>Proj</small>{f1(p["proj"].get("pts"))}<small>points</small></span><i style="--w:{w:.1f}%"></i><span class="rk">{("#" + str(rk) + " " + p["grp"]) if rk else ""}</span></span><i class="car" aria-hidden="true">▾</i></button> '
+            f'<span class="ppr"><span class="v"><small>Proj</small>{f1(p["proj"].get("pts"))}<small>points</small></span><i style="--w:{w:.1f}%"></i><span class="rk">{("#" + str(rk) + " " + PS.shown(p)) if rk else ""}</span></span><i class="car" aria-hidden="true">▾</i></button> '
             f'<div class="pdetail" hidden><div class="sl">{chips}</div>' + (f'<ul class="nblad" aria-label="Chance of each line, model only">{lad}</ul>' if lad else "") + fl + rec + '</div></li>')
 
 
@@ -403,10 +404,13 @@ NB_JS = r"""<script>
 
 def page(B, R=None, have=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
-    # tonight's rank at each position group by projected points (the NFL card's "#14 QB")
+    # tonight's rank at each position by projected points (the NFL card's "#14 QB"). With ESPN's depth charts in the board, the position
+    # is one of the five - PG, SG, SF, PF, C - and a player on no chart is shown as ESPN lists him (G, F or C) with no rank: there is
+    # nobody to rank him among. A board with no charts ranks within guards, forwards and centers, as before 11/23.
+    five = bool(B.get("positions_at"))
     ranks = {}
-    for g in ("G", "F", "C"):
-        for i, p in enumerate(sorted([p for p in B["players"] if p["grp"] == g], key=lambda p: -(p["proj"].get("pts") or 0))):
+    for g in (PS.SLOTS if five else ("G", "F", "C")):
+        for i, p in enumerate(sorted([p for p in B["players"] if (p.get("pos") if five else p["grp"]) == g], key=lambda p: -(p["proj"].get("pts") or 0))):
             ranks[p["id"]] = i + 1
     nav = '<a href="#summary">Slate</a> ' + " ".join(f'<a href="#{E(g["key"])}">{E(g["away"])}·{E(g["home"])}</a>' for g in B["games"])
     n = len(B["games"])
@@ -419,13 +423,15 @@ def page(B, R=None, have=None):
               else 'Nothing here is a pick: the projections have to be graded against results first.') + '</div>')
     key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
            '<dt>Score</dt><dd>The model\'s points for each team tonight. The posted line beside the tip time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
-           '<dt>Bar and number</dt><dd>Projected points, with the bar scaled to the game\'s top scorer. The tag after it is his place among tonight\'s guards, forwards or centers.</dd>'
-           '<dt>Minutes</dt><dd>The model starts from minutes. Each team has 240 to hand out, so when players are out their minutes go to the ones who are left. That is the biggest thing the test results rewarded.</dd>'
+           '<dt>Bar and number</dt><dd>Projected points, with the bar scaled to the game\'s top scorer. The tag after it is his place among tonight\'s ' + ('players at his position.' if five else 'guards, forwards or centers.') + '</dd>'
+           + ('<dt>Position</dt><dd><b>PG SG SF PF C</b>, from ESPN\'s depth charts: the position where a player stands highest on his team\'s chart. ESPN\'s box scores list only guard, forward or center this season, '
+              'so a player on no chart is shown as <b>G</b>, <b>F</b> or <b>C</b>. What an opponent allows is still counted for guards, forwards and centers.</dd>' if five else '')
+           + '<dt>Minutes</dt><dd>The model starts from minutes. Each team has 240 to hand out, so when players are out their minutes go to the ones who are left. That is the biggest thing the test results rewarded.</dd>'
            '<dt>Stat chips</dt><dd>Tap a player. Each chip is a projection; its color is how much the opponent allows to his position in that stat, #1 (green) allows the most and #30 (red) the least.</dd>'
            '<dt>Chance of each line</dt><dd>How often the model expects him to reach that many. There is no price beside it yet, so it cannot say whether a bet is good value.</dd>'
            '<dt>Out tonight</dt><dd>From ESPN\'s injury report. A player listed doubtful is treated as out; questionable and probable players stay in, tagged.</dd></dl></details>')
     stamp = (f'<p class="nbstamp">Built {fmt_ct(B.get("built"))} from games through {E(B.get("data_through") or "?")}; {E(inj)}. Projections: BetSweep\'s NBA model (minutes and per-minute rates, fitted to each team\'s 240 minutes among the active players, '
-             'adjusted for what the opponent allows by position). In a test on 2026-27 games through mid-November (2,877 player-games) it was about 7% closer than a player\'s season average on points, rebounds and assists. For entertainment; not betting advice.</p>')
+             'adjusted for what the opponent allows to guards, forwards and centers).' + (f' Positions: ESPN\'s depth charts as of {fmt_ct(B.get("positions_at"))}.' if B.get("positions_at") else '') + ' In a test on 2026-27 games through mid-November (2,877 player-games) it was about 7% closer than a player\'s season average on points, rebounds and assists. For entertainment; not betting advice.</p>')
     cards = "\n".join(game_card(g, B, ranks) for g in B["games"])
     # the NBA's own pages: shown once there is a second one in this build (build_nba_stocks.py runs first and leaves out/nba-stocks.html)
     # NFL | CFB | NBA | Soccer: only sports with a page in this build. With four sports the row fills a phone's width, so on a phone the

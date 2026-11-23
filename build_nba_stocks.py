@@ -29,7 +29,19 @@ E = html.escape
 FORMAT = 1                                   # sports/nba/stocks.py FORMAT
 TOP = 8                                      # tiles shown per group before "Show all"
 GROUPS = (("G", "Guards", "guard"), ("F", "Forwards", "forward"), ("C", "Centers", "center"))
-GNAME = {a: c for a, b, c in GROUPS}
+# Owner 11/23 7:37 AM: "For nba we can have all 5 standard positions SG, PG, PF, SF, C." With ESPN's depth charts in the stocks file
+# (sports/nba/positions.py) the page's sections are the five; a file without them keeps the three groups above.
+GROUPS5 = (("PG", "Point guards", "point guard"), ("SG", "Shooting guards", "shooting guard"), ("SF", "Small forwards", "small forward"),
+           ("PF", "Power forwards", "power forward"), ("C", "Centers", "center"))
+LEFT = (("G", "Guards on no depth chart", "guard"), ("F", "Forwards on no depth chart", "forward"))      # a player ESPN lists on no chart keeps its G or F, in a section that says so
+GNAME = {a: c for a, b, c in GROUPS + GROUPS5}
+
+
+def groups(PL):
+    """the page's sections for these players: the five positions when the file carries them (plus a plainly named section for any guard
+    or forward on no depth chart - never a guessed position), else guards, forwards and centers"""
+    if not any(x.get("five") for x in PL): return GROUPS
+    return GROUPS5 + tuple(g for g in LEFT if any(x["g"] == g[0] for x in PL))
 STAT = (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"), ("fg3", "Threes"), ("stl", "Steals"), ("blk", "Blocks"), ("tov", "Turnovers"))
 # ESPN's abbreviations; nickname, primary, secondary
 TEAMS = {"ATL": ("Hawks", "E03A3E", "C1D32F"), "BOS": ("Celtics", "007A33", "BA9653"), "BKN": ("Nets", "000000", "FFFFFF"), "CHA": ("Hornets", "1D1160", "00788C"), "CHI": ("Bulls", "CE1141", "000000"),
@@ -116,7 +128,7 @@ def prep(S, B):
                f"Minutes: {p['rmin']:.1f} a game over those {p['nr']}, " + ("the same as before." if abs(dm) < 0.5 else f"{'up' if dm > 0 else 'down'} {abs(dm):.1f} from {p['pmin']:.1f}.")]
         if p.get("sat"): say.append(f"He sat out {p['sat']} of his team's last 5 games.")
         to, link, tag, cls, head = tonight(p, B)
-        out.append({"k": p["id"], "n": p["name"], "t": p["team"], "tn": nm, "c": [c1, c2, ink], "g": p["grp"], "gp": p["gp"], "fp": p["fp"], "mn": p["min"], "r": p["r"], "p": p["p"], "d": p["d"],
+        out.append({"k": p["id"], "n": p["name"], "t": p["team"], "tn": nm, "c": [c1, c2, ink], "g": (p.get("pos") or p["grp"]), "five": bool(p.get("pos")), "gp": p["gp"], "fp": p["fp"], "mn": p["min"], "r": p["r"], "p": p["p"], "d": p["d"],
                     "rm": p["rmin"], "pm": p["pmin"], "dir": p["dir"], "sp": [pa, pr, ex, ey], "avg": p["avg"], "ravg": p["ravg"], "rows": p["g"], "say": say, "to": to, "tt": head, "ln": link, "st": tag, "sc": cls,
                     "nr": p["nr"], "np": p["np"]})
     return out
@@ -275,10 +287,11 @@ def page(S, B, PL):
     mk = movers(PL)
     through = N.day_label(S["data_through"])
     r = S["rule"]
-    blob = {"pl": PL, "stat": [list(s) for s in STAT], "gname": {a: c.capitalize() for a, b, c in GROUPS}}
+    GR = groups(PL)
+    blob = {"pl": PL, "stat": [list(s) for s in STAT], "gname": {a: c.capitalize() for a, b, c in GROUPS + GROUPS5}}
     foot = (f'<p class="skfoot">Built {N.fmt_ct(S.get("built"))} from box scores through {E(through)}. Fantasy points use {E(S["scoring"][0].lower() + S["scoring"][1:])}. '
             f'Rising: up {r["move"]:g} or more a game over the last {r["recent"]} against the {r["before"]} before, and averaging {r["floor"]:g} or more now. Falling: down {r["move"]:g} or more after averaging {r["floor"]:g} or more. '
-            f'A player is listed with {r["games"]} or more games this season and a rotation role. Five games is a short run: a move here is something to look into, not a forecast. For entertainment; not betting advice.</p>')
+            f'A player is listed with {r["games"]} or more games this season and a rotation role.' + (f' Positions are the five standard ones, from ESPN\'s depth charts as of {N.fmt_ct(S.get("positions_at"))}: the position where a player stands highest on his team\'s chart.' if S.get("positions_at") else '') + f' Five games is a short run: a move here is something to look into, not a forecast. For entertainment; not betting advice.</p>')
     link, base = __import__("account")._base_css()      # the site's fonts and theme colours, as the NFL Stock Market takes them
     return ('<title>BetSweep · NBA Stock Market</title>\n'
             f'{link}\n<style>{base}{sk_css}</style>\n<style>{N.NB_CSS}</style>\n<style>{N.COURT_CSS}</style>\n<style>{NSK_CSS}</style>\n'
@@ -290,9 +303,9 @@ def page(S, B, PL):
             '<div class="skfind"><label class="sr" for="nskq">Search players</label><input id="nskq" type="search" placeholder="Search a player or team" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search"></div>\n'
             + ('<section class="skmk" id="nskmk" aria-label="Market movers"><ul class="skml">' + "".join(mover_html(c, BY) for c in mk) + '</ul></section>\n' if mk else '')
             + '<div class="skmode" role="group" aria-label="Show the risers or the fallers"><button type="button" data-mode="rise" aria-pressed="true">Rising</button><button type="button" data-mode="fall" aria-pressed="false">Falling</button></div>\n'
-            '<div class="skbar"><nav class="skj" aria-label="Jump to a position">' + "".join(f'<a href="#nsk-{a.lower()}">{a}</a>' for a, b, c in GROUPS) + '</nav>'
+            '<div class="skbar"><nav class="skj" aria-label="Jump to a position">' + "".join(f'<a href="#nsk-{a.lower()}">{a}</a>' for a, b, c in GR) + '</nav>'
             f'<p class="skkey"><span><i class="k2"></i>last {r["recent"]} games</span><span><i></i>earlier games</span></p></div>\n'
-            + "\n".join(section(a, b, c, PL) for a, b, c in GROUPS)
+            + "\n".join(section(a, b, c, PL) for a, b, c in GR)
             + '\n<section class="sksec" id="nskfind" hidden><h2>Search</h2><ul class="skg" id="nskres"></ul><p class="sknone" id="nsknone" hidden>No listed player or team matches. A player is listed with 8 or more games and a rotation role.</p></section>\n'
             + foot + '\n</main>\n'
             '<script>window.__NSK = ' + json.dumps(blob, separators=(",", ":")).replace("</", "<\\/") + ';</script>\n' + NSK_JS + '\n'), mk

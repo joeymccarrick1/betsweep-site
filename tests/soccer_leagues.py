@@ -109,9 +109,9 @@ def part_one():
     try:
         feeds = os.path.join(d, "feeds"); A = season()
         put(os.path.join(feeds, "bun"), "season.json", A); put(os.path.join(feeds, "bun"), "scoreboard.json", scoreboard())
-        xi = [{"id": f"11{k:02d}"} for k in range(1, 10)] + [{"id": "9001"}, {"id": "1112"}]                # the usual sub starts; the first forward is on the bench
+        xi = [{"id": f"11{k:02d}", "pos": PLACES[k - 1]} for k in range(1, 10)] + [{"id": "9001", "pos": "CF-R"}, {"id": "1112", "pos": "CF-L"}]      # the usual sub starts up front; the first forward is on the bench
         put(os.path.join(feeds, "bun"), "lineups.json", {"mirrored": "2026-11-10T11:55:00Z", "matches": [{"id": "E1", "date": iso(NOW + dt.timedelta(days=2)), "state": "pre", "posted": True,
-            "teams": [{"abbr": "AAA", "ha": "home", "xi": xi, "bench": [{"id": "1110"}]}, {"abbr": "FFF", "ha": "away", "xi": [{"id": f"16{k:02d}"} for k in range(1, 12)], "bench": [{"id": "1612"}]}]}]})
+            "teams": [{"abbr": "AAA", "ha": "home", "xi": xi, "bench": [{"id": "1110"}]}, {"abbr": "FFF", "ha": "away", "xi": [{"id": f"16{k:02d}", "pos": PLACES[k - 1]} for k in range(1, 12)], "bench": [{"id": "1612"}]}]}]})
 
         # ---- the pieces
         check([S.position(x) for x in ("G", "GK", "CD-L", "LB", "RWB", "LM", "AM", "CM-R", "DM", "F", "CF-L", "ST", "SUB", "", None)] == ["GK", "GK", "DEF", "DEF", "DEF", "MID", "MID", "MID", "MID", "FWD", "FWD", "FWD", None, None, None],
@@ -119,6 +119,32 @@ def part_one():
         wk = lambda s: S.week_key(S.when(s))
         check(wk("2026-11-28T14:30Z") == wk("2026-11-29T18:30Z") == wk("2026-12-01T01:00Z") == 20261124 and wk("2026-11-24T01:00Z") == 20261117 and wk("2026-11-25T03:00Z") == 20261124 and wk("2026-12-01T19:00Z") == 20261201,
               "a match's round is the week it is played in, Tuesday to Monday on the Central clock, named by its Tuesday: a weekend and its Monday night together (20261124), a Tuesday match with the weekend after it")
+
+        # ---- specific positions (owner 11/23 7:37 AM: "forward/striker, Right wing/Right mid, center mid/center attacking mid, right back")
+        from sports.soccer import roles as RL
+        shape = lambda places: [RL.role(x, places) for x in places]
+        e4231 = ["G", "LB", "CD-L", "CD-R", "RB", "LM", "RM", "AM-L", "AM", "AM-R", "F"]; e433 = ["G", "LB", "CD-L", "CD-R", "RB", "LM", "CM", "RM", "LF", "F", "RF"]
+        e343 = ["G", "CD-L", "CD", "CD-R", "LM", "CM-L", "CM-R", "RM", "CF-L", "F", "CF-R"]; e3412 = ["G", "CD-L", "CD", "CD-R", "LM", "CM-L", "CM-R", "RM", "AM", "CF-L", "CF-R"]
+        e442 = ["G", "LB", "CD-L", "CD-R", "RB", "LM", "CM-L", "CM-R", "RM", "CF-L", "CF-R"]; e4141 = ["G", "LB", "CD-L", "CD-R", "RB", "DM", "LM", "CM-L", "CM-R", "RM", "F"]
+        e541 = ["G", "LB", "CD-L", "CD", "CD-R", "RB", "LM", "CM-L", "CM-R", "RM", "F"]; e4222 = ["G", "LB", "CD-L", "CD-R", "RB", "CM-L", "CM-R", "AM-L", "AM-R", "CF-L", "CF-R"]
+        check(shape(e4231) == ["GK", "LB", "CB", "CB", "RB", "CDM", "CDM", "LW", "CAM", "RW", "ST"] and shape(e433) == ["GK", "LB", "CB", "CB", "RB", "CM", "CM", "CM", "LW", "ST", "RW"]
+              and shape(e442) == ["GK", "LB", "CB", "CB", "RB", "LM", "CM", "CM", "RM", "ST", "ST"] and shape(e4141) == ["GK", "LB", "CB", "CB", "RB", "CDM", "LM", "CM", "CM", "RM", "ST"],
+              "a back four, read by its shape: in a 4-2-3-1 ESPN's LM and RM are the two holding midfielders and AM-L / AM-R the wings; in a 4-3-3 LM and RM are the outer two of a midfield three and LF / RF the wings; "
+              "in a 4-4-2 or 4-1-4-1 they are wide midfielders")
+        check(shape(e343) == ["GK", "CB", "CB", "CB", "LWB", "CM", "CM", "RWB", "LW", "ST", "RW"] and shape(e3412) == ["GK", "CB", "CB", "CB", "LWB", "CM", "CM", "RWB", "CAM", "ST", "ST"]
+              and shape(e541) == ["GK", "LWB", "CB", "CB", "CB", "RWB", "LM", "CM", "CM", "RM", "ST"] and shape(e4222) == ["GK", "LB", "CB", "CB", "RB", "CM", "CM", "CAM", "CAM", "ST", "ST"],
+              "three centre-backs: LM and RM are wing-backs (or LB and RB are, when they play too); CF-L and CF-R are the wings beside a central striker and two strikers without one; a pair of AM-L / AM-R with no ten between them are two tens")
+        check([RL.role(x, e442) for x in ("SW", "RCF", "M", "SUB", "", None, "XYZ")] == ["CDM", "ST", "CM", None, None, None, None] and set(RL.GROUP) == set(RL.ROLES) and all(r in RL.NAMES for r in RL.ROLES + ("SUB",))
+              and [RL.GROUP[r] for r in ("GK", "RWB", "CDM", "CAM", "RW", "ST")] == ["GK", "DEF", "MID", "MID", "FWD", "FWD"],
+              "the rarer places are read too (ESPN's SW is a holding midfielder where it appears); a substitute's 'SUB' and anything unknown give no role rather than a guess")
+        check(RL.usual(["LB"] * 6 + ["LWB"] * 5) == "LWB" and RL.usual(["ST", "RW", "ST", "RW"]) == "RW" and RL.usual(["CM"] * 3 + ["CDM"]) == "CM" and RL.usual(["RW"] * 12 + ["ST"] * 10) == "ST" and RL.usual([]) is None and RL.usual([None]) is None,
+              "a player's usual position is the one he has started most in his last ten starts, a tie going to the more recent; no start, no position")
+        club = {RL.fold(n): n for n in ("Pascal Groß", "Ferdi Kadioglu", "Jay Da Silva", "Fatawu Issahaku", "Chema Andrés", "Gabriel Magalhães", "Gabriel Jesus", "Gabriel Martinelli", "Ben White", "Đorđe Petrović", "Martin Ødegaard")}
+        f = lambda *names: club.get(RL.find(list(names), club))
+        check(f("Pascal Gross") == "Pascal Groß" and f("Ferdi Kadıoğlu", "F.Kadıoğlu") == "Ferdi Kadioglu" and f("Jay Dasilva", "Dasilva") == "Jay Da Silva" and f("Abdul Fatawu", "Fatawu") == "Fatawu Issahaku"
+              and f("José María Andrés Baixauli", "Andrés") == "Chema Andrés" and f("Gabriel dos Santos Magalhães", "Gabriel") == "Gabriel Magalhães" and f("Benjamin White", "White") == "Ben White"
+              and f("Djordje Petrovic") == "Đorđe Petrović" and f("Martin Odegaard") == "Martin Ødegaard" and f("Gabriel") is None and f("Someone Else", "Else") is None and f("") is None and RL.fold("  Pascal   GROß-Müller ") == "pascal gross muller",
+              "the same player under two spellings is found (Groß / Gross, Kadıoğlu, Dasilva / Da Silva, 'Fatawu' for Fatawu Issahaku, 'Andrés' for Chema Andrés); a name three men at the club share is matched to none of them")
 
         # ---- the board
         B = S.build("bun", feeds, NOW)
@@ -154,6 +180,11 @@ def part_one():
               and [r[1] for r in f1["ladder"]["shots"]] == sorted([r[1] for r in f1["ladder"]["shots"]], reverse=True) and f1["tot"]["goals"] == sum(m["hs"] if m["h"] == "11" else m["as"] for m in A["matches"].values() if "11" in (m["h"], m["a"]))
               and f1["mins"] == 900 and f1["start_min"] == 89 and f2["start_min"] == 72 and len(f1["recent"]) == 5 and f1["recent"][-1][0] == "11/3" and P[("1610", "E1")]["p_goal"] < P[("1110", "E1")]["p_goal"],
               f"player numbers: the scorer of all his club's goals has the best chance ({f1['p_goal']:.0%}), ahead of his strike partner and a defender; shots are no fewer than shots on target; minutes when starting come from his own starts")
+        check((f1["role"], f2["role"], dfn["role"], gk["role"], P[("1106", "E1")]["role"], P[("1107", "E1")]["role"], P[("1109", "E1")]["role"], P[("1105", "E1")]["role"]) == ("ST", "ST", "LB", "GK", "LM", "CM", "RM", "RB")
+              and sub["role"] == "ST" and P[("1612", "E1")]["role"] == "SUB" and all(p["role"] in RL.ROLES + ("SUB",) for p in B["players"]) and all(p["pos"] in ("GK", "DEF", "MID", "FWD") for p in B["players"])
+              and [p["role"] for p in B["players"] if p["id"] == "1212"] == ["SUB"],
+              "every row carries the player's specific position beside his group: from his starts (this league plays 4-4-2: ST, LM, CM, RM, LB, RB, GK), from tonight's eleven for a man who starts where he usually does not "
+              "(the substitute picked up front is an ST for this match), and SUB for one who has only ever come off the bench")
         check((f1["xi"], f2["xi"], sub["xi"], dfn["xi"], P[("1602", "E1")]["xi"], P[("1612", "E1")]["xi"]) == ("bench", "start", "start", "start", "start", "bench") and all(p["xi"] is None for p in B["players"] if p["match"] != "E1")
               and K.regular(sub) and not K.regular(f1),
               "with the confirmed elevens in for one match, each of its players is marked in the eleven or on the bench - the usual substitute who starts becomes a regular, the forward left out does not - and other matches are untouched")
