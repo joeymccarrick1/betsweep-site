@@ -1427,55 +1427,29 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         print("week pages:", ", ".join(_wk_made))
     except Exception as _e:
         print("WARN week pages failed:", _e)
-# ---- 11/5 (out-of-the-box batch): /api/ - a plain page listing every public JSON the site serves, so anyone can build on the numbers ----
-_API = [
-    ("/b/plus.json", "This week's plus-money and touchdown-tier legs with the price at build time: {week, built, legs:[{pl, m, ln, o, p, tier, ...}]}.", "every rebuild"),
-    ("/b/live-legs.json", "Every leg the live page tracks (the model's picks plus saved slips' legs) with the pregame chance; the live page re-prices them from the box score.", "every rebuild"),
-    ("/b/players.json", "Player index for search: name, slug (the /player/<slug>/ page), team, position, opponent, whether he has props this week.", "every rebuild"),
-    ("/b/ask.json", "Where this week's whole board is: {week, src}. src is the Parlay Builder's data file (every priced leg with the model's chance, edge, flags and FanDuel ids); Ask BetSweep in the menu reads it.", "every rebuild"),
-    ("/b/today.json", "The morning briefs per game day: {week, briefs:{YYYY-MM-DD:{title, body, url, games}}, days}. Weather risks lead the body.", "every rebuild"),
-    ("/b/pairs.json", "Either-or touchdown pairs: every player with an anytime-TD price (model chance, FanDuel price, chance under each game ending, risk score) and the best pairs with the chance that at least one scores. FanDuel's own either-or prices are not included.", "every rebuild"),
-    ("/b/shop.json", "Line shop: every leg where DraftKings or Hard Rock pays more than FanDuel at the same line (both prices, the gap in points of break-even chance, the link), plus how many legs have a second price.", "every rebuild"),
-    ("/b/stale.json", "Lines to check: players the news desk has ruled out since the last FanDuel props pull, with their position-room teammates' legs as the site is still showing them (price, model chance, FanDuel link) and the time of that pull.", "every rebuild"),
-    ("/data/under-day.json", "Under of the day: one under per game day since 11/10 (player, line, FanDuel price, the chance shown), frozen at kickoff and graded HIT / MISS / VOID from the game log.", "every rebuild"),
-    ("/b/hunches.json", "The week's hunches: per game, the kind, the verdict (Backed / Mixed / Caution / Info), the evidence lines, the case against and the suggested leg with its FanDuel ids.", "every rebuild"),
-    ("/b/boost.json", "The boost finder's board: per game, the legs with FanDuel ids whose chance times price is highest (chance, price, risk score, ids) and each game's best parlay with the model's chance that it lands.", "every rebuild"),
-    ("/b/teasers.json", "The teaser finder: every spread and total teased 6, 6.5 and 7 points with the model's chance before and after the move, which cross 3 and 7, and the best pairs.", "every rebuild"),
-    ("/b/beat.json", "Beat the model: the week's pool (every player prop priced -150 to +150, as [key, player, team, opp, game, market, line, odds, model chance, kickoff]) and the model's five keys.", "every rebuild"),
-    ("/b/dossier.json", "Game previews: per game, the model script, weather / injury / news flags, situational spots (tested on 2006-2025), each offense's results against the most similar defenses and each defense's leaks by role.", "every rebuild"),
-    ("/b/startsit.json", "Who-should-I-start inputs: {week, players:[{n, t, p, o, fp, av}]} - name, team, position, opponent, projected fantasy points, availability.", "every rebuild"),
-    ("/b/books.json", "DraftKings / Hard Rock selection ids for the week's legs, keyed like the slip keys, for deep links.", "every rebuild"),
-    ("/b/prominent.json", "The big names the news alert watches: every quarterback with 4+ starts and the top backs, receivers and tight ends by fantasy points a game.", "every rebuild"),
-    ("/b/promos.json", "The promo desk's posted slips with their short links and grades.", "every rebuild"),
-    ("/data/price-moves.json", "FanDuel price moves of 3+ points since the build on every tracked leg: {built, moves:[{key, pl, m, ln, from, to, pts, dir, tier, detail}]}.", "every 30 min (GitHub Action)"),
-    ("/data/risk-notes.json", "Risk flags per player (questionable tags, weather, role changes) refreshed between builds.", "every 30 min (GitHub Action)"),
-    ("/data/box-w<W>.json", "The graded box score per week: every tracked leg's final stat and hit / miss.", "Tuesday"),
-    ("/data/close-w<W>.json", "Closing lines per slip key with the build price: {week, close:{key:{o, imp, at}}, build:{key:{o, p}}} - the CLV numbers on /me/.", "Tuesday"),
-    ("/data/graded-w<W>.json", "Hit / miss per slip key for the week, the input to Beat the model grading.", "Tuesday"),
-    ("/data/weeks.json", "Which weeks have box scores and receipts.", "Tuesday"),
-    ("/team/compare/data.json", "The same projections the start/sit page uses (alias of /b/startsit.json).", "every rebuild"),
-]
-_feeds = [("injuries.json", "Official injury report rows (nflverse), refreshed every 10 minutes on the feeds branch."), ("inactives.json", "Game-day inactives as they post."), ("scoreboard.json", "Live scores and clock per game."),
-          ("weather.json", "Kickoff-hour forecast per game: wind, precipitation chance and type, temperature, risk."), ("depthcharts.json", "ESPN depth charts per team."), ("news.json", "The news desk's tagged items."), ("projections.json", "The sheet's current projections snapshot.")]
-_rows = "".join(f'<tr><td><code>{html.escape(p)}</code></td><td>{html.escape(d)}</td><td class="r">{html.escape(f)}</td></tr>' for p, d, f in _API)
-_frows = "".join(f'<tr><td><code>https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/{html.escape(n)}</code></td><td>{html.escape(d)}</td><td class="r">every 10 min</td></tr>' for n, d in _feeds)
-_api_body = f'''<title>API · BetSweep</title>
-<meta name="description" content="Every public JSON BetSweep serves: this week's priced legs, live legs, price moves, closing lines, box scores, teasers and the live feeds - free to read, no key.">
-<style>.api{{max-width:1100px;margin:16px auto 40px;padding:0 16px}} .api h1{{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;margin:0 0 8px}} .api p{{color:var(--mute);line-height:1.5;max-width:76ch}} .api table{{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0 22px}} .api th,.api td{{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}} .api th.r,.api td.r{{text-align:right;white-space:nowrap;color:var(--mute)}} .api thead th{{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}} .api code{{font-size:12.5px;background:var(--chalk);padding:2px 6px;border-radius:6px;word-break:break-all}} .api h2{{font-family:var(--display);font-weight:700;font-size:20px;margin:18px 0 4px}}</style>
+# ---- 11/5 (out-of-the-box batch): /api/ was a plain page listing every public JSON the site serves, "so anyone can build on the numbers".
+# ---- 11/23 (owner 12:25 PM: "How do I go about protecting everything we've built if somebody were to try to pull all of our data and
+# recreate something like what we've done ... Are we able to block people from stealing our data?", then 1:00 PM: "Get started on all
+# steps you don't need me for"): the list is retired. The page had told readers to "Read it from anything - a spreadsheet, a bot, your
+# own page. No key, no sign-up" and printed the address of every data file and live feed, while the Terms (section 6) forbid scraping,
+# reselling and building a competing service - a written invitation to do what the Terms say not to. The address stays (old links
+# must not 404) and now says what the Terms say, in the Terms' own words, and where to ask. It is noindex and out of the sitemap.
+# Nothing else changed: the pages still read the same files, which any browser can see; this only stops advertising them.
+# The old page also never carried the site's base styles (Times on white, in dark mode too); this one takes them the way /social/ does.
+_api_body = '''<title>Using BetSweep's data · BetSweep</title>
+<meta name="description" content="BetSweep's projections, prices and grades are for reading on this site. What you may share, what needs permission, and where to ask.">
+<meta name="robots" content="noindex">
+__BASE__
+<style>__BASECSS__.api{max-width:760px;margin:16px auto 40px;padding:0 16px} .api h1{font-family:var(--brand);font-style:italic;font-weight:800;font-size:32px;line-height:1.1;margin:0 0 12px} .api p{color:var(--ink);font-size:16px;line-height:1.55;max-width:68ch;margin:0 0 14px} .api p.q{border-left:3px solid var(--red);padding:2px 0 2px 14px} .api p.s{color:var(--mute);font-size:14px} .api a{color:var(--ink)}</style>
 <main class="api">
-<h1>API</h1>
-<p>Everything on this site is built from JSON the site also serves. Read it from anything - a spreadsheet, a bot, your own page. No key, no sign-up; same-origin and cross-origin GETs both work. Numbers are the model's, prices are FanDuel's at build time unless the file says otherwise. Please cache for a few minutes and credit betsweep.co. Not betting advice.</p>
-<h2>Site JSON</h2>
-<table><thead><tr><th>URL</th><th>What it holds</th><th class="r">Refreshed</th></tr></thead><tbody>{_rows}</tbody></table>
-<h2>Live feeds</h2>
-<p>The feeds live on the <code>feeds</code> branch of the public repo and refresh every ten minutes during the season.</p>
-<table><thead><tr><th>URL</th><th>What it holds</th><th class="r">Refreshed</th></tr></thead><tbody>{_frows}</tbody></table>
-<h2>Keys</h2>
-<p>A slip key is <code>Player|Market|Line</code> with the line rounded to an integer the way JavaScript's <code>Math.round</code> does it (<code>Josh Allen|Passing Yds|250</code>); the same key appears in price moves, closing lines, box scores and saved slips, so the files join on it.</p>
-<p>Ideas, bugs, something you built: <a href="/social/" style="color:var(--ink)">post it on Social</a>.</p>
+<h1>Using BetSweep's data</h1>
+<p>BetSweep's projections, prices, grades and write-ups are made to be read here, by people.</p>
+<p class="q">You may share screenshots and links freely with credit. You may not scrape, resell or republish the projections or tools as your own, or use them to build a competing service, without written permission.</p>
+<p>That is section 6 of the <a href="/terms/">Terms</a>. If you would like to use BetSweep's numbers in something of your own, such as a show, a newsletter or a tool, write to <a href="mailto:support@betsweep.co">support@betsweep.co</a> and say what you have in mind.</p>
+<p class="s">This page used to list the site's data files. That list was retired on November 23, 2026.</p>
 </main>
 '''
-os.makedirs(os.path.join(SITE, "api"), exist_ok=True); open(os.path.join(SITE, "api", "index.html"), "w").write(wrap(_api_body, "API · BetSweep", "Every public JSON BetSweep serves, free to read.", "/api/", "/og.png")); print("wrote /api/")
+os.makedirs(os.path.join(SITE, "api"), exist_ok=True); open(os.path.join(SITE, "api", "index.html"), "w").write(wrap(_api_body.replace("__BASE__", _sl).replace("__BASECSS__", _sb), "Using BetSweep's data · BetSweep", "What you may share from BetSweep, what needs permission, and where to ask.", "/api/", "/og.png")); print("wrote /api/")
 # ---- audit 11/10: /how/ ("How BetSweep picks") was a hand-stitched page in the site repo carrying a frozen copy of an old shell (old header and
 # menu, the Builder tab lit, Google Fonts). Its text lives in how_body.html here now (a <style> block, then the body) and is wrapped like
 # every other plain page, so the header, menu and tabs follow the site. Edit the wording in how_body.html.
@@ -1498,7 +1472,7 @@ _today = _dt.date.today().isoformat(); _urls = []
 for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
-    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/", "/epl/", "/cfb/", "/bundesliga/", "/laliga/", "/seriea/", "/mls/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
+    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/api/", "/nba/", "/epl/", "/cfb/", "/bundesliga/", "/laliga/", "/seriea/", "/mls/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
     try:
         if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
     except Exception: pass
@@ -1516,7 +1490,13 @@ _freq = lambda u: "monthly" if u.startswith(("/receipts/week", "/terms/", "/priv
 open(os.path.join(SITE, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"<url><loc>{BASE}{html.escape(u)}</loc><lastmod>{_today}</lastmod><changefreq>{_freq(u)}</changefreq><priority>{_pri(u)}</priority></url>\n" for u in sorted(set(_urls)))
     + "</urlset>\n")
-open(os.path.join(SITE, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /me/\nSitemap: {BASE}/sitemap.xml\n")
+# 11/23 (owner: "Are we able to block people from stealing our data?" / "Get started on all steps you don't need me for"): the crawlers
+# that collect pages to train AI models are asked to stay out. It is a request, not a lock: the named crawlers say they obey robots.txt,
+# a scraper does not read it. Search engines and the assistants' search / answer fetchers (OAI-SearchBot, ChatGPT-User, PerplexityBot,
+# Claude-SearchBot) are NOT listed, so BetSweep can still be found and cited. Google-Extended and Applebot-Extended are tokens, not
+# crawlers: they tell Google and Apple not to use what Googlebot / Applebot already fetched for training, and do not touch search.
+_AI_TRAIN = ("GPTBot", "ClaudeBot", "anthropic-ai", "Google-Extended", "Applebot-Extended", "meta-externalagent", "CCBot", "Bytespider", "Amazonbot", "cohere-ai", "cohere-training-data-crawler", "AI2Bot")
+open(os.path.join(SITE, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nDisallow: /me/\n\n" + "".join(f"User-agent: {_b}\n" for _b in _AI_TRAIN) + f"Disallow: /\n\nSitemap: {BASE}/sitemap.xml\n")
 print(f"sitemap: {len(set(_urls))} urls")
 # ---- owner 11/11 ("I'd want this on the menu of every page"): the pages this build did not make - older receipts, /season/ between
 # gradings, earlier weeks' short-link pages - keep whatever menu they were last built with (on 11/11: 26 live pages on three generations

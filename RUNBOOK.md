@@ -3675,3 +3675,44 @@ week's finals. Lesson kept from 11/22: a page clock that a test freezes (`Date.n
 **Weight.** The two blocks add about 10 KB of script to Today and to Boards (4 KB gzipped). The box file (43 KB this week) is only
 fetched there when a posted slip has a leg that has kicked off.
 
+## 11/23 12:25-1:40 PM CT: protecting what is built - what is exposed, what was changed, what waits for the owner
+
+Owner, 12:25 PM: "How do I go about protecting everything we've built if somebody were to try to pull all of our data and recreate
+something like what we've done with bet sweep ... Are we able to block people from stealing our data?" Then 1:00 PM: "if we can have a
+log of anyone (IPs) that have tried to pull data from our account too that'd be helpful. Get started on all steps you don't need me for."
+
+**What was found (checked 11/23, nothing assumed):**
+- `joeymccarrick1/betsweep-site` is **public**: every generator, this RUNBOOK, the SQL layouts (placeholders, no secrets), the tests and
+  the sheet mirror (45 files: every projection, multipliers, correlations, settings; no e-mail addresses; the MASTER log and the Slip
+  Log are not mirrored). 0 forks, 0 stars, 0 watchers. GitHub's 14-day traffic: 15 page views by one visitor, all on 11/16, front page
+  and Actions page, arriving from github.com (most likely the owner); 22,233 clones by 2,698 "unique" cloners, which is our own
+  jobs (about 600 runs a day, each a fresh checkout) and cannot be told apart from an outsider. **GitHub never gives names or IPs.**
+- GitHub Pages keeps no visitor log for us. The database's API log does carry client IPs, kept about a day on the free plan.
+- What only works because the repository is public: Pages on a free plan; free Actions minutes (about 17,000 a month at last week's
+  pace); visitors' browsers reading `raw.githubusercontent.com/.../feeds/{changes,weather,q,notout}.json` (build_live.py, risk.py);
+  the alert Edge Function reading FEEDS_URL and MIRROR_URL from the same host (push/slip-alerts.ts, both overridable by env);
+  several job steps that curl raw URLs (some with a git fall-back). **Do not flip the repository to private as it stands**: on a
+  free plan the site is unpublished at once, and GitHub warns of a domain take-over if the custom domain's records are left as they are.
+- The trademark application is already on file (Terms: Serial No. 50169404) - the first chat answer listed it as still to do; corrected.
+
+**Changed 11/23 (no owner step needed):**
+- `/api/` no longer lists the data files. It had said "Read it from anything - a spreadsheet, a bot, your own page. No key, no
+  sign-up" and printed every JSON and feed address, while Terms section 6 forbids scraping, reselling and a competing service. The
+  address stays (no 404), quotes that section word for word, says where to ask (support@betsweep.co), is noindex and out of the
+  sitemap. No new legal wording was written. The page had also never carried the site's base styles (Times on white, in dark mode
+  too, since 11/5); it takes them the way /social/ does now. The data files themselves are unchanged - the pages need them.
+- `robots.txt` asks the AI **training** crawlers to stay out (GPTBot, ClaudeBot, anthropic-ai, Google-Extended, Applebot-Extended,
+  meta-externalagent, CCBot, Bytespider, Amazonbot, cohere-ai, cohere-training-data-crawler, AI2Bot). Search engines and the
+  assistants' search / answer fetchers are not listed. It is a request, not a lock. One line in build_site.py (_AI_TRAIN) undoes it.
+- Sheet tab **'ADMIN - Access Watch'** (new, last tab; not mirrored): one row per day of what GitHub does give - visitors, views,
+  days with a visit, referring sites, pages opened, forks, stars, clones. First row 11/23. A daily scheduled task to add the row was
+  written and **refused by the session's permission check** (creating a scheduled task needs the owner's say-so); until he gives it
+  the row is added by hand in a session: `gh api repos/joeymccarrick1/betsweep-site/traffic/{views,clones,popular/referrers,popular/paths}`.
+
+**Waiting for the owner (each needs his hands or his yes):** the private-engine switch (a private repository for the generators, docs
+and sheet mirror; the public one keeps the built site, the feeds and the job files, whose runs pull the engine with a read-only key,
+so the free minutes stay); Cloudflare in front of betsweep.co (the only way to an IP-level log of who pulls the data files); the
+Terms wording (his document); two-step sign-in on every account; database backups (free plan has none); the daily watch task.
+**Not started on purpose:** hidden markers in the data (they touch the numbers every page runs on; to be designed, not rushed).
+Findings as first written down: /tmp/protect1/FINDINGS.md in the session that did the check.
+
