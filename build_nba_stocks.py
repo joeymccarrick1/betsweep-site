@@ -281,7 +281,7 @@ def page(S, B, PL):
             f'A player is listed with {r["games"]} or more games this season and a rotation role. Five games is a short run: a move here is something to look into, not a forecast. For entertainment; not betting advice.</p>')
     link, base = __import__("account")._base_css()      # the site's fonts and theme colours, as the NFL Stock Market takes them
     return ('<title>BetSweep · NBA Stock Market</title>\n'
-            f'{link}\n<style>{base}{sk_css}</style>\n<style>{N.NB_CSS}</style>\n<style>{NSK_CSS}</style>\n'
+            f'{link}\n<style>{base}{sk_css}</style>\n<style>{N.NB_CSS}</style>\n<style>{N.COURT_CSS}</style>\n<style>{NSK_CSS}</style>\n'
             '<main class="skm" id="nsk" data-mode="rise">\n'
             '<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/stocks/">NFL</a><a href="/nba/stocks/" aria-current="page">NBA</a></div>'
             '<div class="nbsw nbpg" role="group" aria-label="NBA pages"><a href="/nba/">Boards</a><a href="/nba/stocks/" aria-current="page">Stocks</a></div></div>\n'

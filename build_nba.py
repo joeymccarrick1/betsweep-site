@@ -295,6 +295,32 @@ def key_of(p, B):
     return next((g["key"] for g in B["games"] if g["id"] == p["game"]), "summary")
 
 
+def plays_css(svg):
+    """A sport's own card texture. template.html draws --plays (the NFL's chalk Xs and Os, a 360 x 130 tile) across every card head; a sport
+    page sets its own tile in the template's three places - dark, light by the system's choice, light by the visitor's - so each theme
+    gets the right ink. INK in the drawing is the stroke colour. Owner 11/23 1:10 AM: "On the nfl backgrounds we have xs and os. On the nba
+    backgrounds can we have courtlines and basketball themed backgrounds. Epl can we have soccer ball and goal." """
+    import urllib.parse
+    u = lambda ink: 'url("data:image/svg+xml,' + urllib.parse.quote(svg.replace("INK", ink), safe="") + '")'
+    d, l = u("rgba(239,233,218,0.16)"), u("rgba(20,26,36,0.16)")
+    return f':root{{--plays:{d}}}\n@media (prefers-color-scheme: light){{ :root:not([data-theme="dark"]){{--plays:{l}}} }}\n:root[data-theme="light"]{{--plays:{l}}}\n'
+
+
+# The NBA's tile: one end of the court from above (baseline, lane, free-throw circle, three-point arc, backboard and rim), a ball in the air
+# on a dashed arc toward a hoop and net seen from the side, the centre circle on the half-court line, and a second ball off a bounce.
+# Every mark sits inside the tile, as the NFL's do, so it repeats without a seam.
+COURT = ('<svg xmlns="http://www.w3.org/2000/svg" width="360" height="130" viewBox="0 0 360 130" fill="none" stroke="INK" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+         '<path d="M10 120h80M34 120V82h32v38M16 120v-14C16 46 84 46 84 106v14M38 82a12 12 0 0 1 24 0M44 114h12M34 93h-3.500M34 104h-3.500M66 93h3.500M66 104h3.500"/>'
+         '<path d="M38 82a12 12 0 0 0 24 0" stroke-dasharray="3 3.5"/><circle cx="50" cy="109.500" r="3.500"/>'
+         '<circle cx="128" cy="36" r="13"/><path d="M128 23v26M115 36h26M119 26.500c6 5.500 6 13.500 0 19M137 26.500c-6 5.500-6 13.500 0 19"/>'
+         '<path d="M146 28C186 2 246 0 284 20" stroke-dasharray="4 4"/><path d="M275 14l10 6-10 4"/>'
+         '<path d="M322 8v30M322 30h-24M300 30l3.500 15h13l3.500-15M301.500 37h17M306.500 30l-1 15M313.500 30l1 15"/>'
+         '<path d="M176 92h76"/><circle cx="214" cy="92" r="16"/><circle cx="214" cy="92" r="5.500"/>'
+         '<circle cx="326" cy="96" r="9"/><path d="M326 87v18M317 96h18M320 89.500c4 4 4 9 0 13M332 89.500c-4 4-4 9 0 13"/>'
+         '<path d="M276 120c8-20 22-30 38-27" stroke-dasharray="4 4"/>'
+         '</svg>')
+COURT_CSS = plays_css(COURT)
+
 NB_CSS = """
 /* NBA additions to the NFL boards' stylesheet (build_nba.py). Site colour variables only. */
 .nbbar{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 10px;margin:10px 0 0;padding:0 2px} .nbsw{display:flex;gap:6px} .nbsw a{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1.5px solid var(--line);border-radius:999px;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-decoration:none}
@@ -404,7 +430,7 @@ def page(B, R=None):
     epl = '<a href="/epl/">EPL</a>' if os.path.exists(os.path.join(OUT, "epl-boards.html")) else ""
     pages = ('<div class="nbsw nbpg" role="group" aria-label="NBA pages"><a href="/nba/" aria-current="page">Boards</a><a href="/nba/stocks/">Stocks</a></div>'
              if os.path.exists(os.path.join(OUT, "nba-stocks.html")) else "")
-    return (f'<title>BetSweep · NBA Matchup Boards</title>\n<style>{css}</style>\n<style>{NB_CSS}</style>\n'
+    return (f'<title>BetSweep · NBA Matchup Boards</title>\n<style>{css}</style>\n<style>{NB_CSS}</style>\n<style>{COURT_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>NBA · {E(B["day_label"])}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to game">{nav}</nav>\n</div>\n'
             f'<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/nba/" aria-current="page">NBA</a>{epl}</div>{pages}{key}</div>\n{pre}\n{record_block(R)}\n'
             f'<div class="nbold" id="nbold" hidden><b>This board is for {E(B["day_label"])}.</b> A newer one is not up yet, so every number below is from that day.</div>\n'

@@ -199,6 +199,10 @@ async def main():
             await ctx.route("**/*supabase*/**", lambda r: r.abort())
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto(f"http://127.0.0.1:{PORT}/epl/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1300)
+            # 11/23 (owner: "Epl can we have soccer ball and goal. Maybe other soccer related things"): the card heads wear the pitch tile
+            bgi = await pg.evaluate("getComputedStyle(document.querySelector('.card .hd')).backgroundImage")
+            check("M24%20118V78h60v40" in bgi and ("20%2C26%2C36" if theme == "light" else "239%2C233%2C218") in bgi and "M24%2018l10%2010" not in bgi and "M34%20120V82h32v38" not in bgi,
+                  T("the card heads wear the soccer texture (goal and net, ball, centre circle, corner flag) in this theme's ink, not the NFL's or the NBA's"))
             got = await pg.evaluate(READ)
             if theme == "light":
                 check([g["key"] for g in got] == [w["key"] for w in want], f"one card a match, in kickoff order ({', '.join(g['key'] for g in got[:6])}...)")

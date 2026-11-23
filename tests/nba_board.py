@@ -229,6 +229,10 @@ async def main():
             await ctx.route("**/*supabase*/**", lambda r: r.abort()); await ctx.route("**/site.api.espn.com/**", lambda r: r.abort())
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto(f"http://127.0.0.1:{PORT}/nba/", wait_until="domcontentloaded"); await pg.wait_for_timeout(1200)
+            # 11/23 (owner: "On the nba backgrounds can we have courtlines and basketball themed backgrounds"): the card heads wear the court tile
+            bgi = await pg.evaluate("getComputedStyle(document.querySelector('.card .hd')).backgroundImage")
+            check("M34%20120V82h32v38" in bgi and ("20%2C26%2C36" if theme == "light" else "239%2C233%2C218") in bgi and "M24%2018l10%2010" not in bgi,
+                  T("the card heads wear the court-line texture (lane, arc, hoop, ball) in this theme's ink, not the NFL's Xs and Os"))
             got = await pg.evaluate(READ)
             if theme == "light":   # the content is the same in every theme: read it once
                 check([g["key"] for g in got] == [g["key"] for g in want], f"one card a game, in the board's order ({', '.join(g['key'] for g in got)})")

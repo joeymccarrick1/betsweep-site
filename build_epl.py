@@ -243,6 +243,19 @@ def record_block(R):
             + (f'<ul class="nbrc-nights">{rounds}</ul>' if rounds else '') + how + '</div></details>')
 
 
+# Soccer's tile (N.plays_css): a goal from the front with its net, a ball on a dashed line toward it, the centre circle and spot on the
+# halfway line, a corner arc with its flag, and the penalty area with its arc and spot. One tile for every soccer league.
+PITCH = ('<svg xmlns="http://www.w3.org/2000/svg" width="360" height="130" viewBox="0 0 360 130" fill="none" stroke="INK" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+         '<path d="M10 118h88M24 118V78h60v40"/>'
+         '<path d="M36 78v40M48 78v40M60 78v40M72 78v40M24 91h60M24 104h60" stroke-width="0.800"/>'
+         '<circle cx="140" cy="38" r="13"/><path d="M140 32.500l5.200 3.800-2 6.100h-6.400l-2-6.100zM140 32.500V25M145.200 36.300l7.200-2.300M143.200 42.400l4.400 6.100M136.800 42.400l-4.400 6.100M134.800 36.300l-7.200-2.300"/>'
+         '<path d="M126 46C112 58 104 66 94 78" stroke-dasharray="4 4"/><path d="M103 77l-9 2 2-9.500"/>'
+         '<path d="M232 46v64"/><circle cx="232" cy="78" r="17"/><circle cx="232" cy="78" r="1.200"/>'
+         '<path d="M296 16h44v32M330 16a10 10 0 0 0 10 10M340 16V5l9 3.500-9 3.500"/>'
+         '<path d="M270 124h76M284 124V98h48v26M296 98a13 11 0 0 1 24 0"/><circle cx="308" cy="111" r="1.200"/>'
+         '</svg>')
+PITCH_CSS = N.plays_css(PITCH)
+
 EPL_CSS = """
 .eplmk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 12px 4px}
 .eplmk span{min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:5px 8px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
@@ -294,7 +307,7 @@ def page(B, nba=False, R=None):
              + (f'<ul class="nbstamp eplchk">{chk}</ul>' if chk else ""))
     cards = "\n".join(match_card(m, B, ranks) for m in B["matches"])
     sw = ('<div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a>' + ('<a href="/nba/">NBA</a>' if nba else "") + '<a href="/epl/" aria-current="page">EPL</a></div>')
-    return (f'<title>BetSweep · Premier League Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n'
+    return (f'<title>BetSweep · Premier League Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n<style>{PITCH_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>Premier League · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to match">{nav}</nav>\n</div>\n'
             f'<div class="nbbar">{sw}{key}</div>\n{pre}\n{rec}\n'
             f'<div class="nbold" id="nbold" hidden><b>Every match on this board has kicked off.</b> A newer board is not up yet, so the numbers below are from before those matches.</div>\n'
