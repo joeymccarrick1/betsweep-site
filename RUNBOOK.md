@@ -3513,8 +3513,9 @@ feeds-sports (15:07Z) all green on the snapshot; price-moves at 15:12Z saved the
   trig_01DhRGYD5yvRnTn3GAchx9Bg) and Wed 12/16 10:30 AM CT (the next snapshot: prepare without `--go`, then ask the owner:
   trig_01UvGh2eUwyi3YkWv3BDATy9). The swap waits for his word each time.
 
-**GitHub's own number** (API `size`: 1,759,961 KB at the swap) only drops after GitHub's own cleanup of unreachable objects, days
-later; Support can run it on request. Do not read that number as "it did not work" before then.
+**GitHub's own number** (API `size`): 1,759,961 KB at the swap, 1,359,143 KB at 15:13Z, twenty-five minutes later. That is the
+401 MB the swap alone could free; GitHub cleaned up by itself, quickly. The rest, about 1.2 GB, is what the promo-studio branch
+still holds. If the number ever lags after a snapshot, GitHub Support can run the cleanup on request.
 
 **The tool:** `tools/snapshot_site_history.sh MIRROR SITE_URL ARCHIVE_URL [--go]`. Without `--go` it does everything but the swap
 (bring the mirror up to date, fsck, send what the archive lacks, build the snapshot, compare trees) and says what it would push.
