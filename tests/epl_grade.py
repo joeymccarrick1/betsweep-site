@@ -11,7 +11,9 @@ What must hold:
   - players are graded later, when their results arrive, and ONLY THOSE WHO STARTED (every player number is "if he starts");
     a player who came on or did not play is counted, not graded; with the two sources disagreeing on the score, nobody is graded;
   - model and "every match alike", and model and season average, are compared on the same matches and players; totals are the sum of the rounds;
-  - a record that cannot be read is left exactly as it is - and the kickoff is still locked.
+  - a record that cannot be read is left exactly as it is - and the kickoff is still locked;
+  - another league is graded in its own folder with a week for a round; a knockout match that went to extra time or penalties is graded
+    as the draw it was at ninety minutes, on the result alone, and its players are left out.
 
   python3 tests/epl_grade.py
 """
@@ -185,6 +187,35 @@ try:
           f"locks older than {G.KEEP_LOCK_DAYS} days are dropped and only the last {G.KEEP_ROUND_FILES} gameweek files are kept; no half-written file is left behind")
     check(all(s.startswith("epl grade:") for s in said) and any("locked 1, missed 1" in s for s in said) and any("players of 1 (m1: 2 starters, 1 came on, 1 did not play)" in s for s in said),
           "every run says in one line what it locked, graded and is waiting for")
+
+    # ---- another league, graded by the same code in its own folder (sports/soccer/publish.py): a week for a round, and knockout matches
+    # that go past ninety minutes (the MLS playoffs). Every chance on a board is for ninety minutes.
+    fb = lambda det, h=2, a=1, state="post": G.final_score(ev("1", state, h, a, detail=det))
+    check(fb("AET") == {"home": 2, "away": 1, "beyond": True} and fb("FT-Pens", 1, 1) == {"home": 1, "away": 1, "beyond": True} and fb("Final Score - After Penalties", 0, 0).get("beyond") is True
+          and fb("After Extra Time").get("beyond") is True and fb("FT") == {"home": 2, "away": 1} and fb("ET 105'", state="in") is None and fb("Suspended", state="in") is None and "beyond" not in (fb("Suspended") or {}),
+          "ESPN's word on a knockout match: 'AET' and 'FT-Pens' are finals that went past ninety minutes; a match still in extra time is not over; 'Suspended' is not mistaken for penalties")
+    F2 = os.path.join(d, "mls"); said2 = []; wk = 20261124
+    k1, k2, k3 = match("k1", "7001", "AAA-BBB", T(1, 0, 25), 0.50, gw=wk), match("k2", "7002", "CCC-DDD", T(3, 0, 25), 0.50, gw=wk), match("k3", "7003", "EEE-FFF", T(2, 0, 25), 0.50, gw=wk)
+    bl = dict(board(T(0, 30, 25), extra=[k1, k2, k3]), sport="mls")
+    sbk = {"events": [ev("7001", "post", 2, 1, detail="AET"), ev("7002", "post", 1, 1, detail="FT-Pens"), ev("7003", "post", 0, 1)]}
+    r = G.run(F2, [("the feed", bl)], scoreboard=sbk, now=T(6, 0, 25), say=said2.append, sport="mls")
+    rec = json.load(open(os.path.join(F2, "record.json"))); t = rec["total"]; day = "2026-11-25"
+    check(sorted(r["graded"]) == ["k1", "k2", "k3"] and rec["sport"] == "mls" and [(x["gw"], x["matches"]) for x in rec["rounds"]] == [(wk, 3)] and os.path.exists(os.path.join(F2, f"graded-gw{wk}.json"))
+          and not os.path.exists(os.path.join(F, "locks", f"{day}.json")) and all(x.startswith("mls grade:") for x in said2),
+          "a second league is graded in its own folder under its own name, with the week a match is played in (named by its Tuesday) as the round")
+    check(t["res"]["n"] == 3 and near(t["res"]["brier"], 2.625) and t["res"]["top"] == 0 and t["o25"]["n"] == 1 and near(t["o25"]["brier"], 0.3025) and t["btts"]["n"] == 1 and t["goals"]["n"] == 2
+          and t["cal"] == [[0, 0, 0.0], [7, 3, 1.8], [5, 0, 2.61], [1, 0, 0.78], [0, 0, 0.0]],
+          f"a match settled in extra time (2-1) or on penalties (1-1) is graded as the draw it was at ninety minutes, on home / draw / away alone: its totals, both-to-score and goals are left out ({t['cal']})")
+    Lk = json.load(open(os.path.join(F2, "locks", f"{day}.json")))["matches"]; gk = json.load(open(os.path.join(F2, f"graded-gw{wk}.json")))["matches"]
+    check(rec["beyond"] == {"k1": day, "k2": day} and Lk["k1"]["beyond"] is True and Lk["k1"]["result"] == "draw" and Lk["k1"]["final"] == {"home": 2, "away": 1} and "beyond" not in Lk["k3"] and Lk["k3"]["result"] == "away"
+          and gk["k1"]["beyond"] is True and gk["k1"]["result"] == "draw" and "beyond" not in gk["k3"] and rec["waiting"] == 0 and rec["pwaiting"] == 1 and G.wanted(F2) == ["k3"],
+          "the record names the matches that went past ninety, their locks and the week's file say so, and they do not wait for player results: only the match settled in ninety minutes does")
+    actk = {k: {"final": {"home": h, "away": a}, "players": {"4" + k[1:]: {"min": 120 if k != "k3" else 90, "started": True, "g": 1, "a": 0, "sh": 3, "sot": 2}}} for k, h, a in (("k1", 2, 1), ("k2", 1, 1), ("k3", 0, 1))}
+    r = G.run(F2, [("the feed", bl)], scoreboard=sbk, actuals=actk, now=T(9, 0, 25), say=said2.append, sport="mls")
+    rec = json.load(open(os.path.join(F2, "record.json")))
+    check([x[0] for x in r["players"]] == ["k3"] and rec["pgraded"] == {"k3": day} and rec["total"]["pmatches"] == 1 and rec["total"]["pl"]["n"] == 1 and rec["pwaiting"] == 0 and G.wanted(F2) == []
+          and json.load(open(os.path.join(F2, f"graded-gw{wk}.json")))["matches"]["k1"]["rows"] is None,
+          "with every match's player results in reach, only the ninety-minute match's starters are graded: goals and minutes from extra time never reach the record")
 
     # ---- the board builder's side: what the data set has for a match (needs pandas, as the job has)
     try:

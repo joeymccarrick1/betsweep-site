@@ -3,8 +3,10 @@
 The job on main calls this one module, so a new sport is added here (in the generators, where it is tested) and not in the job's file.
 Each sport's step is on its own: one failing is printed and does not stop the next.
 
-  nba   sports.nba.publish   the board, the nightly grading, the Stock Market's numbers
-  epl   sports.epl.publish   the Premier League board (when that module exists)
+  nba      sports.nba.publish      the board, the nightly grading, the Stock Market's numbers
+  epl      sports.epl.publish      the Premier League board and its grading
+  cfb      sports.cfb.publish      college football: the postseason game lines beside a plain rating
+  soccer   sports.soccer.publish   the Bundesliga, La Liga, Serie A and MLS: a board and a grading record for each league
 
 Exit code: 1 only when the NBA board itself could not be written - the job's file then keeps the last board. Any other sport that
 fails keeps its own last file here (copied from prev/, the branch as the last run left it).
@@ -15,7 +17,8 @@ import shutil
 import sys
 import traceback
 
-STEPS = (("nba", "sports.nba.publish", ()), ("epl", "sports.epl.publish", ("epl/board.json",)), ("cfb", "sports.cfb.publish", ("cfb/board.json",)))
+STEPS = (("nba", "sports.nba.publish", ()), ("epl", "sports.epl.publish", ("epl/board.json",)), ("cfb", "sports.cfb.publish", ("cfb/board.json",)),
+         ("soccer", "sports.soccer.publish", ("bun/board.json", "lal/board.json", "sea/board.json", "mls/board.json")))   # each league also keeps its own last board inside the step
 
 
 def arg(name, default=None):

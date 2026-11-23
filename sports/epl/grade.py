@@ -11,13 +11,18 @@ run inside the feeds-sports job on every run, after the board is written or carr
   GRADE   In two parts, because the two answers arrive at different times.
           The match, as soon as ESPN's mirrored fixture list calls it final: home / draw / away, over 2.5, both to score and each side's
           goals, scored for the model and for "every match alike" - the same model given two average sides, which is what you would say
-          knowing nothing about the clubs. A match ESPN calls postponed or abandoned is set aside, not graded.
+          knowing nothing about the clubs. A match ESPN calls postponed or abandoned is set aside, not graded. A knockout match
+          that went to extra time or penalties was a draw at ninety minutes and is graded as one, on the result alone (grade_match).
           The players, when the data set has the match (hours later, sometimes the next day): ONLY PLAYERS WHO STARTED, because every
           player number on the board is "if he starts" - chance to score, chance of an assist, shots, shots on target, the shot ladders
           and his minutes, each beside his own season average over the same minutes. Players who came on or did not play are counted,
           not graded. If the data set and ESPN disagree on the score the players are left ungraded and the run says so.
   RECORD  epl/record.json keeps one row of sums per gameweek and the totals, which are always the sum of the rows. epl/graded-gwNN.json
-          keeps the last few gameweeks match by match and player by player.
+          keeps the last few gameweeks match by match and player by player. A league without gameweeks gives each match the Tuesday its
+          week starts on as its round (20261124: sports/soccer/publish.py week_key), and everything here works the same.
+
+The other soccer leagues (sports/soccer/publish.py) are graded by this same code, each in its own folder with its own record
+(run(..., sport="bun")); there the players' results come from the job's own season file, usually in the same run as the final.
 
 The branch these files live on is rebuilt from nothing on every run of the job, so the job copies them forward before anything else
 (.github/feeds_sports.py carry()). Nothing here needs pandas: plain files in, plain files out, so it can be tested anywhere.
@@ -27,6 +32,7 @@ import glob
 import json
 import math
 import os
+import re
 
 FORMAT = 1
 EDGES = (0.2, 0.4, 0.6, 0.8)                 # five bands of stated chance for a match's chances and the shot ladders: under 20%, 20-40, 40-60, 60-80, 80 and up
@@ -38,6 +44,7 @@ MIN_BASE_MINUTES = 270                       # a season average needs three matc
 KEEP_LOCK_DAYS = 10                          # a lock still not fully graded after this many days is dropped (a postponement, results that never came)
 KEEP_ROUND_FILES = 4                         # match-by-match files kept
 VOID = ("postponed", "canceled", "cancelled", "abandoned")
+BEYOND = re.compile(r"\b(aet|pens?|penalties|extra time)\b")        # ESPN's "AET", "FT-Pens", "After Extra Time", "After Penalties" (and not "suspended")
 
 
 def when(s):
@@ -135,18 +142,23 @@ def lock(locks, boards, now, known=()):
 
 
 def final_score(ev):
-    """ESPN's word on a match: None while it is not over, "void" when it will not be played as scheduled, else {"home", "away"}"""
+    """ESPN's word on a match: None while it is not over, "void" when it will not be played as scheduled, else {"home", "away"} -
+    with "beyond": True when it was settled in extra time or on penalties, so the score shown is not a ninety-minute score"""
     if not ev:
         return None
-    if str(ev.get("detail") or "").strip().lower().startswith(VOID):
+    det = str(ev.get("detail") or "").strip().lower()
+    if det.startswith(VOID):
         return "void"
     if ev.get("state") != "post" or not ev.get("done"):
         return None
     t = {x.get("ha"): x for x in ev.get("teams") or []}
     try:
-        return {"home": int(t["home"]["score"]), "away": int(t["away"]["score"])}
+        fs = {"home": int(t["home"]["score"]), "away": int(t["away"]["score"])}
     except Exception:
         return None
+    if BEYOND.search(det):
+        fs["beyond"] = True      # a knockout match that went to extra time or penalties (the MLS playoffs): see grade_match
+    return fs
 
 
 def bucket(p, edges):
@@ -201,10 +213,14 @@ def rounded(x):
 
 
 def grade_match(lk, fs):
-    """one locked match against its final score -> (sums, what happened)"""
+    """one locked match against its final score -> (sums, what happened).
+    Every chance on the board is for ninety minutes. A knockout match that went to extra time or penalties (fs["beyond"]) was level at
+    ninety - it could not have gone on otherwise - so it is graded as the draw it was, on home / draw / away alone: the ninety-minute
+    score is not known from the final, so its totals, both-to-score and goals are left out (and run() leaves its players out)."""
     S = empty(); S["matches"] = 1
     h, a = fs["home"], fs["away"]
-    out = "home" if h > a else ("away" if a > h else "draw")
+    beyond = bool(fs.get("beyond"))
+    out = "draw" if beyond else ("home" if h > a else ("away" if a > h else "draw"))
     hap = {"home": out == "home", "draw": out == "draw", "away": out == "away", "over15": h + a >= 2, "over25": h + a >= 3, "over35": h + a >= 4, "btts": h >= 1 and a >= 1}
     p = lk.get("p") or {}; bp = (lk.get("base") or {}).get("p") or {}
     ok = lambda q, ks: all(num(q.get(k)) for k in ks)
@@ -214,16 +230,18 @@ def grade_match(lk, fs):
         R["ll"] = -math.log(max(p[out], 1e-6)); R["bll"] = -math.log(max(bp[out], 1e-6))
         R["top"] = int(max(THREE, key=lambda k: p[k]) == out); R["btop"] = int(max(THREE, key=lambda k: bp[k]) == out)
     for key, k in (("o25", "over25"), ("btts", "btts")):
-        if ok(p, (k,)) and ok(bp, (k,)):
+        if not beyond and ok(p, (k,)) and ok(bp, (k,)):
             S[key] = {"n": 1, "brier": (p[k] - hap[k]) ** 2, "base": (bp[k] - hap[k]) ** 2, "hit": int(hap[k])}
-    for k in MATCH_CHANCES:
+    for k in (THREE if beyond else MATCH_CHANCES):
         if ok(p, (k,)):
             c = S["cal"][bucket(p[k], EDGES)]; c[0] += 1; c[1] += int(hap[k]); c[2] += p[k]
     xg = lk.get("xg") or {}; bx = (lk.get("base") or {}).get("xg") or {}
     for side, got in (("home", h), ("away", a)):
-        if ok(xg, (side,)) and ok(bx, (side,)):
+        if not beyond and ok(xg, (side,)) and ok(bx, (side,)):
             G = S["goals"]; G["n"] += 1; G["model"] += abs(xg[side] - got); G["base"] += abs(bx[side] - got); G["err"] += got - xg[side]
-    return S, {"result": out, "final": {"home": h, "away": a}}
+    info = {"result": out, "final": {"home": h, "away": a}}
+    if beyond: info["beyond"] = True
+    return S, info
 
 
 def grade_players(lk, act):
@@ -274,12 +292,12 @@ def wanted(folder):
     out = []
     for f in sorted(glob.glob(os.path.join(folder, "locks", "*.json"))):
         for mid, lk in ((load(f) or {}).get("matches") or {}).items():
-            if not lk.get("missed") and not lk.get("void") and mid not in done:
+            if not lk.get("missed") and not lk.get("void") and not lk.get("beyond") and mid not in done:
                 out.append(mid)
     return sorted(out)
 
 
-def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print):
+def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print, sport="epl"):
     """folder: the epl/ folder of the branch being built (locks/, record.json, graded-gwNN.json).
     boards: [(source, board)] in reach, the newest first. scoreboard: ESPN's mirrored fixture list ({"events": [...]}).
     actuals: {match id: {"final": {"home", "away"}, "players": {id: {min, started, g, a, sh, sot}}}} for the matches the data set has.
@@ -296,8 +314,8 @@ def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print):
     rec = load(rec_path)
     readable = not (rec is None and os.path.exists(rec_path))
     if not isinstance(rec, dict):
-        rec = {"format": FORMAT, "sport": "epl", "since": None, "rounds": []}
-    for k in ("graded", "pgraded", "missed", "void"):
+        rec = {"format": FORMAT, "sport": sport, "since": None, "rounds": []}
+    for k in ("graded", "pgraded", "missed", "void", "beyond"):
         if not isinstance(rec.get(k), dict):
             rec[k] = {}
     # ---- lock (always: a kickoff does not wait for a record that cannot be read)
@@ -306,7 +324,7 @@ def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print):
         for day, entry in locks.items():
             if entry["matches"]:
                 save(os.path.join(lock_dir, f"{day}.json"), entry)
-        say(f"epl grade: record.json is there but cannot be read - left as it is, nothing graded this run (locked {sum(1 for x in new if x[2] == 'locked')})")
+        say(f"{sport} grade: record.json is there but cannot be read - left as it is, nothing graded this run (locked {sum(1 for x in new if x[2] == 'locked')})")
         return {"new": new, "graded": [], "players": [], "void": [], "notes": [], "record": None}
     # ---- grade
     rounds = {r.get("gw"): norm(r) for r in rec.get("rounds") or [] if isinstance(r, dict)}
@@ -340,9 +358,11 @@ def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print):
                 lk["final"] = info["final"]; lk["result"] = info["result"]
                 rd = load(rf) or {"gw": gw, "matches": {}}
                 rd["matches"][mid] = dict(head, final=info["final"], result=info["result"], rows=None)
+                if info.get("beyond"):
+                    lk["beyond"] = True; rec["beyond"][mid] = day; rd["matches"][mid]["beyond"] = True
                 save(rf, rd)
                 graded_now.append(mid)
-            if mid in rec["graded"] and mid not in rec["pgraded"] and actuals and mid in actuals:
+            if mid in rec["graded"] and mid not in rec["pgraded"] and not lk.get("beyond") and actuals and mid in actuals:
                 act, fin = actuals[mid], lk.get("final")
                 af = act.get("final")
                 if fin and af and (af.get("home"), af.get("away")) != (fin.get("home"), fin.get("away")):
@@ -365,11 +385,11 @@ def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print):
         rec["updated"] = stamp
         # ids are kept three weeks: by then a match's lock is long gone and it cannot come round again
         keep_from = (now - dt.timedelta(days=21)).strftime("%Y-%m-%d")
-        for k in ("graded", "pgraded", "missed", "void"):
+        for k in ("graded", "pgraded", "missed", "void", "beyond"):
             rec[k] = {m: d for m, d in rec[k].items() if d >= keep_from}
         live = [(mid, lk) for e in locks.values() for mid, lk in e["matches"].items() if not lk.get("missed") and not lk.get("void")]
         rec["waiting"] = sum(1 for mid, lk in live if mid not in rec["graded"])
-        rec["pwaiting"] = sum(1 for mid, lk in live if mid in rec["graded"] and mid not in rec["pgraded"])
+        rec["pwaiting"] = sum(1 for mid, lk in live if mid in rec["graded"] and mid not in rec["pgraded"] and not lk.get("beyond"))
         save(rec_path, rec)
     # ---- write the locks back; drop the old ones
     cut = (now - dt.timedelta(days=KEEP_LOCK_DAYS)).strftime("%Y-%m-%d")
@@ -383,7 +403,7 @@ def run(folder, boards, scoreboard=None, actuals=None, now=None, say=print):
     for f in sorted(glob.glob(os.path.join(folder, "graded-gw*.json")))[:-KEEP_ROUND_FILES]:
         os.remove(f)
     t = rec.get("total") or empty()
-    say(f"epl grade: locked {sum(1 for x in new if x[2] == 'locked')}, missed {sum(1 for x in new if x[2] == 'missed')}, graded {len(graded_now)} match(es)"
+    say(f"{sport} grade: locked {sum(1 for x in new if x[2] == 'locked')}, missed {sum(1 for x in new if x[2] == 'missed')}, graded {len(graded_now)} match(es)"
         + (f" ({', '.join(graded_now)})" if graded_now else "")
         + f", players of {len(players_now)}" + (f" ({', '.join(f'{m}: {n} starters, {s} came on, {d} did not play' for m, n, s, d in players_now)})" if players_now else "")
         + (f", set aside {len(void_now)}" if void_now else "")
