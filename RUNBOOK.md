@@ -3463,3 +3463,101 @@ alone), the probe that showed ESPN's depth-chart shape added and removed again (
 4.93 for a season average), the day rolled to Mon 11/23 (10 games), stocks through 11/22. `tests/nba_board.py` failed 3 checks
 on the live page for a reason that was the test's: it read the first row's bar as the game's top scorer, true only when he
 plays for the side listed first. Fixed (9d767484); the page was right.
+
+## 11/23 8:35-8:45 AM CT: the positions are live, and a seventh test that failed on the calendar (tests/sgp_price.py)
+
+Full pre-publish set on the positions commit (9356a08c): 55 of 56 page tests clean, both importer checks, the gate (517 pages, 0
+problems). The one failure was `tests/sgp_price.py`, "a second game with a priced leg": on a Monday one game is left in the week, so
+there is no second game to pair a leg with. That is the calendar, not the page (it passed at 3:30 AM, when Sunday's games were still
+on the price list, and failed at 8:17 AM once only CIN-WSH was left). Test-only fix,
+67ec5330: with priced legs in one game only, the two-game checks are skipped and the run says so; with legs in several games and no
+second one found it is still a failure. Re-run on the tested copy: 40 of 40. Tested copy = commit (headcheck), clone-copy gate, pushed
+by SHA, `publish=all` at 14:37Z, on the site at 14:42Z, Pages run green.
+- Published copy: nba_board 103, nba_stocks 59, epl_board 71, soccer_leagues 259, cfb_board 41 - all pass.
+- On the pages: /nba/ rows PG 39, SG 35, SF 41, PF 36, C 38 (one forward on no depth chart keeps F); /epl/ and the four leagues
+  carry CB, LB, RB, LWB, RWB, CDM, CM, LM, RM, CAM, LW, RW, ST, GK (and SUB in the leagues, the fantasy group in the Premier League,
+  for a player with no start on file).
+
+## 11/23 7:35-8:50 AM CT: the site repository's size - main's history replaced by one snapshot, the old history in a private archive
+
+Owner 7:31 AM: "How can we get our storage down on GitHub without affecting what we've built?" 8:01 AM: "Yeah do what you think is
+best to get the storage down without affecting the day to day user experience." 8:13 AM, on the backup: "Archive ready".
+
+**What was measured (a full mirror, 1.68 GiB, 96,477 objects).** main held 1,712 of 1,727 MB (1,201 commits then). 89% of it was
+PNG: `boards/img/` 939-956 MB (1,971 versions added Oct 15 - Nov 5; not in today's tree, no page points at it), promo graphics
+306 MB (each saved again 15-20 times while its games play), receipts and slip cards 281 MB. Pages and data: 182 MB. The tree
+itself: 174 MB. Growth over the last week: about 25 MB a day. No job reads history (they stage, `git pull --rebase`, push), no
+forks, no pull requests, no tags, no releases, main not protected.
+
+**What was done.**
+1. The archive: `joeymccarrick1/betsweep-site-archive`, private, created by the owner. Its default branch `main` holds a note and
+   nothing else, ON PURPOSE: the site's main carries the scheduled jobs, and GitHub runs a scheduled job from a repository's
+   default branch - a plain mirror would have started every job there. The old history is on `archive/2026-11-23/main` (sent in
+   pieces of 20-100 commits; 1.7 GB is too much for one push). Checked: private, default branch `main`, 0 Actions runs.
+2. The swap, 14:47:25Z, in a quiet window with no run in progress: main went from 044d033fc (1,208 commits) to 5a94f63c8, ONE
+   commit with the SAME tree (b51628c9, 1,091 files), pushed with `--force-with-lease` so it could only land if main had not moved.
+3. Checked after: a fresh clone is identical file for file to the site as published before the swap; the Pages run on the snapshot
+   is green; the archive's branch ends at 044d033fc. The session's site clone was moved onto the snapshot (old tip kept there as the
+   local branch `before-snapshot-2026-11-23`).
+
+**NOT finished: the `promo-studio` branch.** The 11/3 Promo Studio draft (three commits, never published; the studio lives in
+assets/studio) was cut from main on 11/2 and so still carries 1,266 MB of the old history. It is archived
+(`archive/2026-11-23/promo-studio`, same commit 6da1f7f8f), but removing it from the site repository was refused for this session
+(it is a deletion). Until it is removed the repository still needs 1,327 MB; with it gone, 136 MB. It is the owner's to delete
+(GitHub, Branches) or to ask for in so many words. Nothing uses it: no job, no generator, no page.
+
+**GitHub's own number** (API `size`: 1,759,961 KB at the swap) only drops after GitHub's own cleanup of unreachable objects, days
+later; Support can run it on request. Do not read that number as "it did not work" before then.
+
+**The tool:** `tools/snapshot_site_history.sh MIRROR SITE_URL ARCHIVE_URL [--go]`. Without `--go` it does everything but the swap
+(bring the mirror up to date, fsck, send what the archive lacks, build the snapshot, compare trees) and says what it would push.
+It refuses to go on if the archive's default branch is not the note. Rehearsed on a local copy first (/tmp/snap1): identical
+tree, and a job that had committed before the swap still landed its own change with its usual `git pull --rebase` and push.
+- When to run it again: about 25 MB a day comes back, so about once a month. Run it on a Wednesday, in a quiet window (about :26
+  to :40 past the hour; check that no run is in progress), so Tuesday's research has already read the past week.
+- A new archive is a new branch, `archive/<day>/main`; it starts at the snapshot before it.
+
+**Who reads the site's history by hand - they now read the archive for anything before a snapshot:**
+- `flag_grade.py` (Tuesdays): the last build before Sunday's first kickoff. Week 11's was pulled before the swap
+  (build/data-07cceba8a80d.js at b117c2515, saved as /tmp/fg/boards/w11.js; in a new sandbox take it from the archive branch).
+- `research/value_board.py`: every Tuesday's Trade calculator. `research/freeze_scripts.py`: done once, not needed again.
+- Diagnoses such as `git log -- index.html` or `git log -- nba/board.json`: from 11/23 14:47Z on in the site repository, before
+  that in the archive.
+  `git clone --filter=blob:none --no-checkout --branch archive/2026-11-23/main https://github.com/joeymccarrick1/betsweep-site-archive hist`
+
+## 11/23 8:10-8:45 AM CT: Week 11 Sunday read from the final box scores, and four more slip rules
+
+Owner 8:09 AM, with his FanDuel screenshots: "The Parker Washington td is very controversial ... Otherwise we didn't do great. What
+can we do to improve? We do still have the either or alive which would be a great win". 8:39 AM: "Yes let's make 1-4 the rules. As
+for 1 though, I may still want all games with a +300 parlay just to test with the other rules potentially affecting how we'll make
+the parlays. But you can flag the lower rated ones from the higher rated ones."
+
+**Where the numbers come from:** `finals.json` on the `feeds` branch (ESPN's final box, the same nine numbers the site grades
+with) for Week 11, the game log for Weeks 1-10, slip log rows 63-79 and the promo tab. Tuesday's grader fills the Result cells;
+it should agree with this.
+- Legs: 41 different lines on Sunday's slips, 26 hit (63%); their prices implied 61% on average. Leg-picking was as priced.
+- The ten game-by-game three-leggers (rows 63-72): 2-8 (ARI-KC +197, BAL-CAR +274). Five of the eight lost by one leg (Allen 2+
+  pass TDs, Pollard TD, Egbuka 4+ catches, McCarthy 200+, Nix 2+ pass TDs). By the model % written on each: the top three (33, 28,
+  26) went 2-1, the other seven (23-25) went 0-7. With the two earlier weeks' rated short slips: under 26% is 0-10, 26%+ is 2-4.
+- TD scorers: 6 of 8 (Cook, Hubbard, E. Johnson, Lamb, Coleman, McCaffrey; not Pollard, not Parker Washington, whose catch in the
+  end zone was ruled incomplete and upheld on review). Best TDs (promo w11-4): 5 of 6, a miss on the record.
+- Either or TD Parlay (promo w11-5, +4392): 11 of 11 pairs through Sunday; Higgins or Chase, CIN at WSH Monday 7:15 PM CT, is the last.
+- Sunday Slate 7 of 9 (Williams 181, Wilson 39); Favorite 6: 4 of 6 (Nix 1 TD pass, McCaffrey 62); late-window six 3 of 6; Daily
+  Sweep 2 of 3 (Wilson 39 against 60+).
+- 2+ passing TDs: 2 of 5 (Mahomes 3, Goff 2; Allen 1, Nix 1, Lawrence 1). Allen and Nix each sat in a slip with their own back's TD;
+  Cook scored once and Coleman three times on the ground. League, Weeks 1-10, 297 team-games (starter with 15+ attempts): two or
+  more TD passes in 44%; 49% (70 of 142) when his backs ran in none, 39% (60 of 155) when they ran in at least one.
+- Repeats: Garrett Wilson on four slips (rows 70, 73, 76, 79; the only miss on the Daily Sweep), Nix on six, Cook on five. The
+  note on Wilson before kickoff: weakest leg, needs Geno Smith, who had been under 170 two straight (he threw for 176).
+- The log by price, every logged slip at one unit (not all were bet; versions of one slip count each): under +600, 11-27, about
+  +8.5 units; +600 to +999, 1-2; +1000 and longer, 0-31.
+
+**The four rules (saved; they add to the 11/15 and 11/21 rules):**
+1. Rate every slip and flag the lower-rated ones apart from the higher-rated ones. When he asks for a +300 from every game he still
+   gets one from every game (his test of the other rules); the list is ranked and the low ones are marked.
+2. No quarterback "2+ passing TDs" leg in a slip that also has his own running back's TD.
+3. One player, one slip a day. And a receiver's leg is out when his quarterback fails the trend check.
+4. Six TDs are bet as two three-leg slips plus a small six. With exactly one miss, one of the threes always cashes (Sunday's six:
+   +243 to +374 depending on the split).
+- Not built yet: the builder's script check still does not price passing-TD legs. Next: the chance of 2+ TD passes by ending, and the
+  "his back ran one in" split on Tuesday's passing-TD scorecard. Scratch for this read: /tmp/slips1 (legs.py, legs_w11.json).

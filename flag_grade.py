@@ -8,6 +8,9 @@ Getting the boards (one per week, the last build before Sunday's first kickoff):
     git clone --filter=blob:none --no-checkout <site repo> hist && cd hist
     c=$(git rev-list -1 --before="2026-11-15 18:00 +0000" origin/main)
     git show $c:$(git ls-tree -r --name-only $c | grep '^build/data-' | head -1) > ../boards/w10.js
+From 11/23 the site repository's history starts at a snapshot (RUNBOOK, "the site repository's size"). A build from before a snapshot is in
+the private archive instead: clone https://github.com/joeymccarrick1/betsweep-site-archive with --branch archive/<day>/main and use that
+branch in place of origin/main (Week 11: archive/2026-11-23/main).
 Run it on Tuesdays once the game log has the week. A tag earns a weight in sweep.TAG_W only when it points the same way in every week
 graded and has 100+ player-weeks; two weeks of anything else is noise.
 """
