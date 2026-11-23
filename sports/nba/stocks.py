@@ -18,7 +18,7 @@ A player is listed with 8+ games played this season and a rotation role (15+ min
 """
 import datetime as dt
 import pandas as pd
-from . import data as ND
+from . import data as ND, positions as PS
 
 FORMAT = 1
 SCORING = {"pts": 1.0, "reb": 1.2, "ast": 1.5, "stl": 3.0, "blk": 3.0, "tov": -1.0}
@@ -33,8 +33,9 @@ def fantasy(frame):
     return sum(frame[k] * w for k, w in SCORING.items())
 
 
-def build(d, now=None):
-    """d: the frame of data.load() - one row per player per game. Returns the file as a dict."""
+def build(d, now=None, depth=None):
+    """d: the frame of data.load() - one row per player per game. depth: the mirrored ESPN depth charts (nba/depth.json), for each
+    player's position among the five (sports/nba/positions.py); without it players carry ESPN's G / F / C alone. Returns the file as a dict."""
     now = now or dt.datetime.now(dt.timezone.utc)
     cur = d[d["season"] == d["season"].max()].copy()
     cur["fp"] = fantasy(cur)
@@ -62,7 +63,8 @@ def build(d, now=None):
                 why = str(x["reason"]) if isinstance(x["reason"], str) and x["reason"].strip() else "did not play"
                 rows.append([day, opp, None, why.strip().capitalize()[:40]])
         sat = int((~g.iloc[-RECENT:]["played"]).sum())      # of his team's last five games he was listed for, how many he sat out
-        players.append({"id": str(int(pid)), "name": str(last["player"]), "team": str(last["team"]), "grp": str(last["grp"]), "gp": int(len(pl)),
+        players.append({"id": str(int(pid)), "name": str(last["player"]), "team": str(last["team"]), "grp": str(last["grp"]),
+                        "pos": PS.slot(depth, str(last["team"]), str(int(pid)), str(last["grp"])), "gp": int(len(pl)),
                         "fp": round(float(pl["fp"].mean()), 1), "min": round(smin, 1), "r": round(r, 1), "p": round(p, 1), "d": round(move, 1),
                         "rmin": round(rmin, 1), "pmin": round(pmin, 1), "nr": int(len(rec)), "np": int(len(pri)), "sat": sat,
                         "dir": "up" if (move >= MOVE and r >= FLOOR) else ("dn" if (move <= -MOVE and p >= FLOOR) else ""),
@@ -72,15 +74,17 @@ def build(d, now=None):
     players.sort(key=lambda x: (-x["r"], x["name"]))
     through = cur["date"].max()
     return {"sport": "nba", "format": FORMAT, "built": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "season": int(cur["season"].max()), "data_through": through.strftime("%Y-%m-%d"),
-            "scoring": SCORING_TEXT, "rule": {"recent": RECENT, "before": PRIOR, "move": MOVE, "floor": FLOOR, "games": MIN_GAMES}, "cols": COLS, "players": players}
+            "positions_at": ((depth or {}).get("mirrored") if (depth or {}).get("teams") else None), "scoring": SCORING_TEXT, "rule": {"recent": RECENT, "before": PRIOR, "move": MOVE, "floor": FLOOR, "games": MIN_GAMES}, "cols": COLS, "players": players}
 
 
 def main():
     import argparse, json, os
-    ap = argparse.ArgumentParser(); ap.add_argument("--out", required=True); ap.add_argument("--data")
+    ap = argparse.ArgumentParser(); ap.add_argument("--out", required=True); ap.add_argument("--data"); ap.add_argument("--feeds")
     a = ap.parse_args()
     d = ND.load([2027], a.data or ND.data_dir())
-    s = build(d)
+    depth = None
+    if a.feeds and os.path.exists(os.path.join(a.feeds, "nba", "depth.json")): depth = json.load(open(os.path.join(a.feeds, "nba", "depth.json")))
+    s = build(d, depth=depth)
     os.makedirs(os.path.join(a.out, "nba"), exist_ok=True)
     json.dump(s, open(os.path.join(a.out, "nba", "stocks.json"), "w"), separators=(",", ":"))
     print(f"nba stocks: {len(s['players'])} players through {s['data_through']}, {sum(1 for p in s['players'] if p['dir'] == 'up')} rising, {sum(1 for p in s['players'] if p['dir'] == 'dn')} falling")

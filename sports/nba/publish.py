@@ -25,7 +25,7 @@ Nothing here is a pick: there are no prices to compare with yet, and the numbers
 import argparse, datetime as dt, glob, json, os, sys, urllib.request
 import numpy as np
 import pandas as pd
-from . import data as ND, model as NM, slate as SL
+from . import data as ND, model as NM, slate as SL, positions as PS
 from ..core import dist as D, legboard as LB
 
 # the shape of board.json. build_nba.py (the page) refuses a board whose number it does not know, so the page and the file can never be half a version apart:
@@ -88,6 +88,7 @@ def build(folder, feeds=None, day=None, now=None):
     # ---- the ESPN mirror: who is out, and where tonight's games stand
     sb = _j(os.path.join(feeds, "nba", "scoreboard.json")) if feeds else None
     inj = _j(os.path.join(feeds, "nba", "injuries.json")) if feeds else None
+    depth = _j(os.path.join(feeds, "nba", "depth.json")) if feeds else None      # ESPN's depth charts: the five positions (sports/nba/positions.py)
     ev = {str(e.get("id")): e for e in ((sb or {}).get("events") or [])}
     name_of = {}
     for _, g in games.iterrows():
@@ -177,7 +178,8 @@ def build(folder, feeds=None, day=None, now=None):
             for s in STAT_NAMES:
                 lad[s] = [[L, _r(float(D.p_at_least(L, r["proj_" + s], "qp", phi=NM.PHI[s])), 3)] for L in RUNGS[s]]
                 lad[s] = [x for x in lad[s] if x[1] is not None and 0.05 <= x[1] <= 0.95]
-            P.append({"id": str(int(r["athlete_id"])), "name": r["player"], "team": r["team"], "opp": r["opp"], "game": str(int(r["game_id"])), "grp": r["grp"], "n": int(r["n"]),
+            P.append({"id": str(int(r["athlete_id"])), "name": r["player"], "team": r["team"], "opp": r["opp"], "game": str(int(r["game_id"])), "grp": r["grp"],
+                      "pos": PS.slot(depth, r["team"], str(int(r["athlete_id"])), r["grp"]), "n": int(r["n"]),
                       "min": _r(r["proj_min"]), "base_min": _r(r["base_min"]),
                       "proj": {s: _r(r["proj_" + s]) for s in STAT_NAMES}, "avg": {s: _r(r["avg_" + s]) for s in STAT_NAMES}, "l10": {s: _r(r["l10_" + s]) for s in STAT_NAMES},
                       "pra": _r(r["proj_pra"]), "ladder": lad, "warn": warn, "recent": recent.get(r["athlete_id"], []),
@@ -185,6 +187,7 @@ def build(folder, feeds=None, day=None, now=None):
     through = cur["date"].max()
     return {"sport": "nba", "format": FORMAT, "built": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "day": str(day), "day_label": pd.Timestamp(day).strftime("%a %-m/%d"), "season": "2026-27",
             "data_through": None if pd.isna(through) else through.strftime("%Y-%m-%d"), "injuries": bool(have_inj), "injuries_at": (inj or {}).get("mirrored"), "scoreboard_at": (sb or {}).get("mirrored"),
+            "positions_at": ((depth or {}).get("mirrored") if (depth or {}).get("teams") else None),      # when ESPN's depth charts were read; None = the rows have no five-position
             "back": sorted(set(back_names)), "stats": STAT_NAMES, "games": G, "teams": T, "players": P}
 
 
@@ -215,7 +218,7 @@ def main():
     sk_path = os.path.join(a.out, "nba", "stocks.json")
     try:
         from . import stocks as NS
-        s = NS.build(ND.load([2027], folder))
+        s = NS.build(ND.load([2027], folder), depth=(_j(os.path.join(a.feeds, "nba", "depth.json")) if a.feeds else None))
         json.dump(s, open(sk_path + ".tmp", "w"), separators=(",", ":")); os.replace(sk_path + ".tmp", sk_path)
         print(f"nba stocks: {len(s['players'])} players through {s['data_through']}, {sum(1 for p in s['players'] if p['dir'] == 'up')} rising, {sum(1 for p in s['players'] if p['dir'] == 'dn')} falling")
     except Exception as e:

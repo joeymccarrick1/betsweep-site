@@ -30,6 +30,7 @@ import numpy as np
 import pandas as pd
 from . import data as ED, model as EM, grade as G
 from ..core import ratings as R, dist as D
+from ..soccer import roles as RL
 
 FORMAT = 1
 REPO = ED.REPO
@@ -55,9 +56,9 @@ def fetch(folder):
 
 
 def plain(s):
-    """a name for matching: no accents, no punctuation, lower case"""
-    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z ]", "", s.lower().replace("-", " ")).strip()
+    """a name for matching: no accents, no punctuation, lower case (11/23: sports/soccer/roles.py fold(), which also reads the letters
+    plain Unicode folding leaves alone - 'Groß' is 'gross', 'Kadıoğlu' is 'kadioglu')"""
+    return RL.fold(s)
 
 
 def grid(m, tg, stat, asof):
@@ -165,6 +166,17 @@ def build(folder, feeds=None, now=None, extras=None):
         if "home" in ab and "away" in ab:
             ev_by.setdefault((ab["home"]["abbr"], ab["away"]["abbr"]), []).append(e)
     lineups = {str(x.get("id")): x for x in (lu or {}).get("matches") or []}
+    # ---- where each player lines up (owner 11/23 7:37 AM: "more specific with positions"). The data set and the fantasy list know four
+    # groups, so the job also keeps the season as ESPN has it (epl/season.json) for ONE thing: the formation place of every starter.
+    # role_by[ESPN club][folded ESPN name] = his roles in his starts, oldest first. For the page alone; no number here depends on it.
+    es = load_feed(feeds, "season.json") if feeds else None
+    role_by = {}
+    if es and isinstance(es.get("matches"), dict):
+        st_roles, who = RL.starts(es["matches"]); club_abbr = {str(t.get("id")): t.get("abbr") for t in es.get("teams") or []}
+        for pid, rr in st_roles.items():
+            nm, tid = who[pid]
+            role_by.setdefault(club_abbr.get(str(tid)), {})[RL.fold(nm)] = rr
+    if not role_by: checks.append("ESPN's season file was not in reach: players are shown by position group, not by their specific position")
 
     # ---- which matches: not finished in the data set, kicking off from three hours ago to AHEAD_DAYS ahead
     cur = m[m["season"] == season]
@@ -257,7 +269,11 @@ def build(folder, feeds=None, now=None, extras=None):
             rec = [[f"{x['date'].month}/{x['date'].day}", ("" if x["home"] == 1 else "@") + short(x["opp"]), int(x["min"]), int(x["goals"]), int(x["assists"]), int(x["shots"]), int(x["sot"]), bool(x["started"])]
                    for _, x in mine[mine["player_code"] == pc].tail(5).iterrows()]
             x = fp.get(int(pc)) or {}
-            meta[int(pc)] = {"name": str(base["player"]), "full": (f"{x.get('first', '')} {x.get('last', '')}".strip() or str(base["player"])), "pos": POS.get(str(base["position"]), FPL_POS.get(x.get("pos"), str(base["position"])[:3].upper())),
+            full_ = (f"{x.get('first', '')} {x.get('last', '')}".strip() or str(base["player"]))
+            club_roles = role_by.get(T["espn"]) or {}
+            rk_ = RL.find([full_, str(base["player"])], club_roles) if club_roles else None
+            meta[int(pc)] = {"name": str(base["player"]), "full": full_, "pos": POS.get(str(base["position"]), FPL_POS.get(x.get("pos"), str(base["position"])[:3].upper())),
+                             "role": (RL.usual(club_roles[rk_]) if rk_ else None),
                              "apps5": int(rr["apps5"]), "starts5": int(rr["starts5"]), "apps": int(t["apps"]), "starts": int(t["starts"]), "mins": int(t["mins"]),
                              "tot": {"goals": int(t["goals"]), "assists": int(t["assists"]), "shots": int(t["shots"]), "sot": int(t["sot"]), "xg": round(float(t["xg"]), 2)}, "recent": rec}
             for mid in T["matches"]:
@@ -277,21 +293,25 @@ def build(folder, feeds=None, now=None, extras=None):
             L = lineups.get(str(mm["espn"])) if mm["espn"] else None
             if L and L.get("posted"):
                 for t in L.get("teams") or []:
-                    xi_by[(mm["id"], t.get("abbr"))] = ({plain(p["name"]) for p in t.get("xi") or []}, {plain(p["name"]) for p in t.get("bench") or []})
+                    eleven = [p.get("pos") for p in t.get("xi") or []]
+                    xi_by[(mm["id"], t.get("abbr"))] = ({plain(p["name"]): RL.role(p.get("pos"), eleven) for p in t.get("xi") or []}, {plain(p["name"]): None for p in t.get("bench") or []})
         for _, r in pr.iterrows():
             pc = int(r["player_code"]); mt = meta[pc]; T = teams_on[int(r["team"])]
             if (status(pc) or {}).get("tag") in ("Out", "Suspended"):
                 continue                                  # listed out or suspended: he is on his club's list, and has no numbers
             mid = str(r["match_id"])
             xg, sh, so = float(r["proj_xg"]), float(r["proj_shots"]), float(r["proj_sot"])
-            xi = None
+            xi = None; role = mt.get("role")
             if (mid, T["espn"]) in xi_by:
+                # 11/23: RL.find, which also sees 'Chema Andrés' in the list's 'José María Andrés Baixauli' and 'Jay Da Silva' in 'Dasilva' -
+                # the old rule (the same name, or the only man with that surname) left such a starter under "Not in the eleven"
                 start, bench = xi_by[(mid, T["espn"])]
-                me = {plain(mt["full"]), plain(mt["name"])}
-                last = plain(mt["full"]).split(" ")[-1] if plain(mt["full"]) else ""
-                hit = lambda group: bool(me & group) or (bool(last) and sum(1 for n in group if n.split(" ")[-1] == last) == 1 and len(last) > 3)
-                xi = "start" if hit(start) else ("bench" if hit(bench) else "no")
-            players.append({"id": str(pc), "name": mt["name"], "full": mt["full"], "team": T["abbr"], "opp": short(r["opp"]), "match": mid, "home": bool(r["home"] == 1), "pos": mt["pos"],
+                k = RL.find([mt["full"], mt["name"]], start)
+                if k is not None:
+                    xi = "start"; role = start[k] or role          # tonight he lines up where the eleven says
+                else:
+                    xi = "bench" if RL.find([mt["full"], mt["name"]], bench) is not None else "no"
+            players.append({"id": str(pc), "name": mt["name"], "full": mt["full"], "team": T["abbr"], "opp": short(r["opp"]), "match": mid, "home": bool(r["home"] == 1), "pos": mt["pos"], "role": role,
                             "apps5": mt["apps5"], "starts5": mt["starts5"], "apps": mt["apps"], "starts": mt["starts"], "mins": mt["mins"], "start_min": round(float(r["start_min"])),
                             "xg": round(xg, 3), "p_goal": round(float(r["p_goal"]), 4), "p_goal2": round(1.0 - math.exp(-xg) * (1 + xg), 4), "p_assist": round(float(r["p_assist"]), 4),
                             "shots": round(sh, 2), "sot": round(so, 2),
@@ -363,6 +383,10 @@ def main():
     now = when(a.now) if a.now else dt.datetime.now(dt.timezone.utc)
     pb = G.load(os.path.join(a.prev or os.path.join(root, "prev"), "epl", "board.json"))
     keep, why = keep_last(pb, now)
+    # 11/23: a kept board from before specific positions has none to show. Once ESPN's season file is in reach, build a new one rather
+    # than carry the old one for its hundred minutes.
+    if keep and a.feeds and os.path.exists(os.path.join(a.feeds, "epl", "season.json")) and not any(p.get("role") for p in (pb or {}).get("players") or []):
+        keep, why = False, "the last board has no specific positions and ESPN's season file is in reach"
     actuals = None
     if keep and not a.always:
         os.makedirs(gdir, exist_ok=True)

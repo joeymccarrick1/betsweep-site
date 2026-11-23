@@ -28,6 +28,7 @@ import numpy as np
 
 from ..core import dist as D, ratings as R
 from ..epl import grade as G
+from . import roles as RL
 
 FORMAT = 1
 LEAGUES = collections.OrderedDict((("bun", "Bundesliga"), ("lal", "La Liga"), ("sea", "Serie A"), ("mls", "MLS")))
@@ -215,12 +216,19 @@ def build(lg, feeds, now=None):
     for code in on:
         mine = [mid for mid, m in fin if code in (m["h"], m["a"])]
         last5[code] = set(mine[-5:])
-    xi_by = {}
+    # ---- each player's specific position (owner 11/23 7:37 AM), for the page alone: his usual role from where ESPN drew him in his last
+    # ten starts, and - once a match's elevens are in - where he lines up in that match. The model's priors stay on the four groups above.
+    role_starts, _ = RL.starts(dict(fin))
+    xi_by, xi_role = {}, {}
     for mm in matches:
         Lx = lineups.get(mm["id"])
         if Lx and Lx.get("posted"):
             for t in Lx.get("teams") or []:
                 xi_by[(mm["id"], t.get("abbr"))] = ({str(p.get("id")) for p in t.get("xi") or []}, {str(p.get("id")) for p in t.get("bench") or []})
+                eleven = [p.get("pos") for p in t.get("xi") or []]
+                for p in t.get("xi") or []:
+                    r = RL.role(p.get("pos"), eleven)
+                    if r: xi_role[(mm["id"], str(p.get("id")))] = r
     players = []
     for pid, rs in byp.items():
         rs.sort(key=lambda r: (r[0], r[1]))
@@ -258,7 +266,9 @@ def build(lg, feeds, now=None):
             if (mid, T_["abbr"]) in xi_by:
                 start, bench = xi_by[(mid, T_["abbr"])]
                 xi = "start" if pid in start else ("bench" if pid in bench else "no")
-            players.append({"id": str(pid), "name": short, "full": name, "team": T_["abbr"], "opp": on[opp]["abbr"], "match": mid, "home": bool(home), "pos": pos,
+            # "SUB": he has come on, never started, so ESPN has drawn him nowhere - the page says that rather than guess a position
+            role = (xi_role.get((mid, str(pid))) if xi == "start" else None) or RL.usual(role_starts.get(str(pid))) or "SUB"
+            players.append({"id": str(pid), "name": short, "full": name, "team": T_["abbr"], "opp": on[opp]["abbr"], "match": mid, "home": bool(home), "pos": pos, "role": role,
                             "apps5": len(l5), "starts5": starts5, "apps": len(mine), "starts": len(st_rows), "mins": int(mins), "start_min": round(start_min),
                             "xg": round(xg, 3), "p_goal": round(1.0 - math.exp(-xg), 4), "p_goal2": round(1.0 - math.exp(-xg) * (1 + xg), 4),
                             "p_assist": round(1.0 - math.exp(-frac * r90["assists"] * eg), 4), "shots": round(sh, 2), "sot": round(so, 2),
