@@ -3055,3 +3055,86 @@ postseason game lines.
 **Open on the NBA side:** the hourly build is every 3 hours on Tue/Wed/Fri/Sat (offered to the owner, a job change needs his
 yes); grading game totals and margins against the posted line; a results page from `graded-<day>.json`; price snapshots after the
 Odds API upgrade.
+
+## 11/22 9:35 PM CT: on NBA nights the site rebuilds every hour (owner 9:32 PM: "On nba nights it should refresh hourly")
+
+**What was wrong.** The site is rebuilt by the owner's database timer: every hour on Thu/Sun/Mon, and only at 6:20 and 9:20 AM,
+12:20, 3:20, 6:20 and 9:20 PM Central on the other days. So on a Tuesday, Wednesday, Friday or Saturday the NBA boards, the record
+and the Stock Market were up to three hours behind the feed.
+
+**The fix needs no new timer and no new SQL.** The feeds-sports job already runs about four times an hour (it is started when
+sheet-mirror and price-moves finish, about :07, :12, :37 and :42). Its last step now asks GitHub for a site rebuild when one is due:
+`python3 .github/feeds_sports.py --rebuild`, on main (fb044c7b). The rebuild it asks for is the ordinary one with `publish=changed`,
+so nothing goes out unless three prices moved or a preview folder's signature changed - on a quiet NFL day that is /nba/ alone.
+
+**When a rebuild is due** (`rebuild_due(now, board, record, runs)`, every line has a self-test case):
+- between noon and midnight Central, and in the second half of the hour (the :20 timer run has had its turn);
+- today's NBA board is on the feed branch and has games (an NBA day is the Central date of four hours ago);
+- no rebuild is queued or running, and none started in the last 40 minutes;
+- not when every game is final, nothing is waiting to be graded, and a rebuild has started since the record was last written.
+
+**What it may touch.** The workflow has `actions: write` beside `contents: write`, and the step uses the run's own token
+(`github.token`) to list and start `reprice.yml`. No secret is read. A failure in the step is a warning, never a failed job.
+
+**Checking it.** `python3 .github/feeds_sports.py --selftest` (16 checks); `--rebuild --dry` prints the decision and starts
+nothing; `--rebuild --force` starts one whatever the clock says. In the job's log the line begins `nba rebuild:`. Sunday night it
+read "not asked for - a rebuild started 19 minutes ago", which is right on a timer hour. **The first real one is due on an hour the
+timer skips: Tuesday 11/24, about 12:38 PM Central.** Look for a `workflow_dispatch` run of the hourly job at that time.
+
+**Known edge.** The window closes at midnight Central, so a West-coast game that ends after it is graded by the job but reaches
+the site with the 6:20 AM run.
+
+**`sports/job.py`** (generators 4142f948) is what the job runs now: `python3 -m sports.job --feeds ../out --out ../out`. It runs
+each sport's publisher in turn (`STEPS`: the NBA, then the Premier League), each on its own, so one sport's fault cannot take
+another's file with it. A sport whose module is missing is skipped. Only an NBA failure fails the step; any other sport keeps the
+file the last run wrote.
+
+## 11/22 9:40-10:30 PM CT: the Premier League preview, /epl/ (owner 9:32 PM: "Get to what's next")
+
+**The board file** - `sports/epl/publish.py` (generators 2d596674), run by `sports/job.py` inside the feeds-sports job, writes
+`epl/board.json` on the feed branch (FORMAT 1). First written 9:43 PM: 11 matches (one left over from gameweek 11 and gameweek
+12), 356 player rows, 20 clubs, no check notes.
+
+| What | From |
+|---|---|
+| matches, goals, expected goals, shots, every player's minutes and shots | the public FPL-Elo-Insights data set, cloned shallow in the job (`<data>/fplei`, about 18 MB to fetch) |
+| kickoff, venue, score, the posted line, confirmed line-ups | ESPN, from the job's own mirror (`epl/scoreboard.json`, `epl/lineups.json`) |
+| injured, suspended, doubtful | the official Fantasy Premier League list (`epl/fpl.json`) |
+
+- **Every fixture is checked against ESPN.** A match ESPN does not list for those two clubs within 36 hours is left off and named
+  in the board's `checks`; so is one ESPN calls postponed. ESPN's kickoff is the one shown. Club short names are the Fantasy
+  Premier League's; ESPN's differ for two (`ESPN_ABBR`: MUN is MAN, MCI is MNC).
+- **The model is the 11/15 groundwork, unchanged** (`sports/epl/model.py`): an attack and a defence factor per club on a blend of
+  expected goals and goals -> each side's goal rate -> every score's chance -> home/draw/away, totals, both to score. Players:
+  minutes when he starts x per-90 rates x what the opponent allows -> to score, an assist, shots, shots on target.
+- **Every player number is "if he starts".** The model does not pick line-ups. A player listed Out or Suspended gets no row.
+  Once ESPN posts the eleven, each row carries `xi`: start, bench or no.
+- **It is not rebuilt on every run.** A board under 100 minutes old is carried forward (`keep_last`), unless a match on it kicks
+  off within 100 minutes or kicked off in the last half hour - that is when the line-ups land. `--always` overrides.
+- Local run: `BS_SPORTS_DATA=<folder> python3 -W ignore -m sports.epl.publish --feeds <feed folder> --out <out folder>`.
+
+**The page** - `build_epl.py` reads the board through the clone with git, in plain Python, and writes `out/epl-boards.html`,
+`out/epl_board.json` and `out/epl_sig.json`; `build_site.py` places them at `/epl/` (index, `board.json`, `sig.json`), out of the
+sitemap and the menu. It borrows the NBA page's rules and script, so it is the NFL boards' look.
+- A card a match, home side first. The big numbers are each side's expected goals; under them home / draw / away. Four tiles: over
+  2.5 goals, both teams to score, the likeliest score, shots. ESPN's posted line is shown as posted, with the book named.
+- Each club's column: what the opponent allows in goals and shots (1 allows the most, as on the NFL cards - the board file ranks
+  the best defence 1, the page turns it over), record and form, who is out, who is doubtful, then the players.
+- **Regulars first:** in the confirmed eleven, or - before it is posted - three or more starts in the club's last five. Everyone
+  else sits under "Others who have played lately". A tap opens a player: to score, an assist, shots, on target, the chance of each
+  number of shots, his last five.
+- No prices, no edges, no betslip buttons, no picks. The stamp says how thin the test evidence is.
+- **When it draws nothing:** no board in reach, another FORMAT, a board more than 26 hours old, or every match kicked off more
+  than 6 hours ago. Then the page files are removed from the build; the published folder is left as it was and says it is old.
+
+**The hourly job.** `reprice.py` builds it before the two NBA steps ("epl boards (preview)", soft), so the NBA pages know whether
+to show EPL in the sport switch (NFL | NBA | EPL). `PREVIEWS = ("nba", "epl")` and `preview_changed(clone, name)` make the small
+publish work for any preview folder: a run where too few prices moved still copies whichever preview folders changed.
+
+**Test:** `tests/epl_board.py` (50 checks, port 8885), in the pre-publish set. It redoes the page from the board file it ships,
+at 390x844 light and dark and on a desktop, and checks the board itself, the draw rules and the small publish.
+`tests/nba_board.py` follows the three-sport switch.
+
+**Not built yet:** grading (results, totals and player chances against what happened - until then nothing here is a pick),
+FanDuel prices (after the Odds API upgrade), a place in the menu and sitemap (the owner's call). Next: college postseason game
+lines.
