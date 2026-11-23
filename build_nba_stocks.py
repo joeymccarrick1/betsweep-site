@@ -76,25 +76,30 @@ STATUS = {"Out": ("OUT", "o"), "Doubtful": ("OUT", "o"), "Questionable": ("Q", "
 
 
 def tonight(p, B):
-    """(sentences, link, status tag, tag class) for a player from tonight's board; all empty without a board"""
-    if not B: return [], "", "", ""
+    """(sentences, link, status tag, tag class, heading) for a player from the board; all empty without a board.
+    The board is the day's, and a page built at 9 PM still carries games that have started or ended: the words follow the game's
+    state as the board had it - "His next game" before the tip, "His game tonight" once it is under way or over."""
+    if not B: return [], "", "", "", ""
     t = (B.get("teams") or {}).get(p["team"])
     lab = B.get("day_label") or "tonight"
-    if not t: return [f"The {team(p['team'])[0]} do not play on {lab}."], "", "", ""
+    if not t: return [f"The {team(p['team'])[0]} do not play on {lab}."], "", "", "", "His next game"
     g = next((g for g in B["games"] if p["team"] in (g["home"], g["away"])), None)
-    where = (("vs " if g["home"] == p["team"] else "at ") + (g["away"] if g["home"] == p["team"] else g["home"]) + f", {g['tipct']} CT") if g else ""
+    state = (g or {}).get("state") if (g or {}).get("state") in ("in", "post") else "pre"
+    head = "His next game" if state == "pre" else "His game tonight"
+    vs = (("vs " if g["home"] == p["team"] else "at ") + (g["away"] if g["home"] == p["team"] else g["home"])) if g else ""
+    where = (vs + {"pre": f", {g['tipct']} CT", "in": ", under way when this page was built", "post": ", final"}[state]) if g else ""
     link = f"/nba/#{g['key']}" if g else ""
     o = next((o for o in t.get("out") or [] if o.get("name") == p["name"]), None)
     if o:
         tag, cls = STATUS.get(o.get("tag"), ("OUT", "o"))
-        return [f"{lab}: {where}. Listed {str(o.get('tag') or 'out').lower()}" + (f" ({o['why']})" if o.get("why") else "") + ", so the board has no numbers for him."], link, tag, cls
+        return [f"{lab}: {where}. Listed {str(o.get('tag') or 'out').lower()}" + (f" ({o['why']})" if o.get("why") else "") + ", so the board has no numbers for him."], link, tag, cls, head
     bp = next((x for x in B["players"] if str(x["id"]) == p["id"]), None)
-    if not bp: return [f"{lab}: {where}. He is not in the board's rotation for this game."], link, "", ""
+    if not bp: return [f"{lab}: {where}. He is not in the board's rotation for this game."], link, "", "", head
     pr = bp["proj"]; st = (bp.get("status") or {}).get("tag") or ""
     tag, cls = STATUS.get(st, ("", ""))
-    say = [f"{lab}: {where}.", f"The model has him at {pr['pts']:.1f} points, {pr['reb']:.1f} rebounds, {pr['ast']:.1f} assists and {pr['fg3']:.1f} threes in about {round(bp['min'])} minutes."]
+    say = [f"{lab}: {where}.", f"The model {'has' if state == 'pre' else 'had'} him at {pr['pts']:.1f} points, {pr['reb']:.1f} rebounds, {pr['ast']:.1f} assists and {pr['fg3']:.1f} threes in about {round(bp['min'])} minutes."]
     if st: say.append(f"Listed {st.lower()}.")
-    return say, link, tag, cls
+    return say, link, tag, cls, head
 
 
 def prep(S, B):
@@ -110,9 +115,9 @@ def prep(S, B):
         say = [f"Last {p['nr']} games: {p['r']:.1f} fantasy points a game, {word} {abs(p['d']):.1f} on the {p['np']} before ({p['p']:.1f}).",
                f"Minutes: {p['rmin']:.1f} a game over those {p['nr']}, " + ("the same as before." if abs(dm) < 0.5 else f"{'up' if dm > 0 else 'down'} {abs(dm):.1f} from {p['pmin']:.1f}.")]
         if p.get("sat"): say.append(f"He sat out {p['sat']} of his team's last 5 games.")
-        to, link, tag, cls = tonight(p, B)
+        to, link, tag, cls, head = tonight(p, B)
         out.append({"k": p["id"], "n": p["name"], "t": p["team"], "tn": nm, "c": [c1, c2, ink], "g": p["grp"], "gp": p["gp"], "fp": p["fp"], "mn": p["min"], "r": p["r"], "p": p["p"], "d": p["d"],
-                    "rm": p["rmin"], "pm": p["pmin"], "dir": p["dir"], "sp": [pa, pr, ex, ey], "avg": p["avg"], "ravg": p["ravg"], "rows": p["g"], "say": say, "to": to, "ln": link, "st": tag, "sc": cls,
+                    "rm": p["rmin"], "pm": p["pmin"], "dir": p["dir"], "sp": [pa, pr, ex, ey], "avg": p["avg"], "ravg": p["ravg"], "rows": p["g"], "say": say, "to": to, "tt": head, "ln": link, "st": tag, "sc": cls,
                     "nr": p["nr"], "np": p["np"]})
     return out
 
@@ -216,7 +221,7 @@ NSK_JS = r"""
     return '<div class="skph"><div><h3>' + esc(p.n) + '</h3><p>' + esc(p.tn) + ' · ' + D.gname[p.g] + ' · ' + p.gp + ' games this season</p></div><button type="button" class="skx">Close</button></div>' +
       '<div class="skqt"><div class="skqc"><span>Last ' + p.nr + '</span><b class="' + dir(p.d) + '">' + f1(p.r) + '</b><small>FP a game</small></div><div class="skqc"><span>The ' + p.np + ' before</span><b>' + f1(p.p) + '</b><small>' + dtx(p.d) + ' since</small></div>' +
       '<div class="skqc"><span>Season</span><b>' + f1(p.fp) + '</b><small>' + f1(p.mn) + ' min a game</small></div></div>' +
-      '<div class="skfx"><div><b>What moved</b>' + p.say.map(function(s){ return '<p>' + esc(s) + '</p>'; }).join('') + '</div>' + (p.to.length ? '<div><b>His next game</b>' + p.to.map(function(s){ return '<p>' + esc(s) + '</p>'; }).join('') + '</div>' : '') + '</div>' +
+      '<div class="skfx"><div><b>What moved</b>' + p.say.map(function(s){ return '<p>' + esc(s) + '</p>'; }).join('') + '</div>' + (p.to.length ? '<div><b>' + esc(p.tt) + '</b>' + p.to.map(function(s){ return '<p>' + esc(s) + '</p>'; }).join('') + '</div>' : '') + '</div>' +
       '<div class="skts">' + stats + '</div>' +
       '<details class="sktbl"><summary>Game by game, newest first</summary><div class="nskw"><table class="nskt"><thead><tr><th>Date</th><th>Opp</th><th>FP</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>3s</th><th>Stl</th><th>Blk</th><th>TO</th></tr></thead><tbody>' + rows + '</tbody></table></div></details>' +
       (p.ln ? '<p class="skpl"><a href="' + p.ln + '" data-pid="' + esc(p.k) + '">See his game on the NBA board</a></p>' : '');

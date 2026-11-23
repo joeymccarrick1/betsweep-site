@@ -28,15 +28,20 @@ def rules():
     check(K.usable(good, day)[0] and K.usable(good, dt.date(2026, 11, 26))[0] and not any(x[0] for x in r) and all(x[1] for x in r),
           f"a stocks file is drawn when it is in the right shape, holds 50+ players and its games reach within five days; otherwise not, each with its reason (e.g. {r[3][1][:58]}...)")
     check([K.delta_text(x) for x in (19.04, -18.6, 0.3, -0.2, 0.04)] == ["▲ 19.0", "▼ 18.6", "+0.3", "−0.2", "0.0"], "a move reads as on the NFL page: a triangle from half a point, a plain sign under it, no sign on 0.0")
-    B = {"day_label": "Sun 11/22", "games": [{"key": "BOS-GS", "home": "GS", "away": "BOS", "tipct": "7:30 PM"}],
+    B = {"day_label": "Sun 11/22", "games": [{"key": "BOS-GS", "home": "GS", "away": "BOS", "tipct": "7:30 PM", "state": "pre"}],
          "teams": {"BOS": {"out": [{"name": "Out Guy", "tag": "Out", "why": "Knee"}]}, "GS": {"out": []}},
          "players": [{"id": "1", "proj": {"pts": 26.84, "reb": 7.6, "ast": 4.9, "fg3": 3.1}, "min": 34.6, "status": None}, {"id": "2", "proj": {"pts": 10, "reb": 3, "ast": 2, "fg3": 1}, "min": 22, "status": {"tag": "Questionable"}}]}
-    a = K.tonight({"id": "1", "name": "Star", "team": "BOS"}, B); q = K.tonight({"id": "2", "name": "Iffy", "team": "GS"}, B)
+    star = {"id": "1", "name": "Star", "team": "BOS"}
+    a = K.tonight(star, B); q = K.tonight({"id": "2", "name": "Iffy", "team": "GS"}, B)
     o = K.tonight({"id": "3", "name": "Out Guy", "team": "BOS"}, B); n = K.tonight({"id": "4", "name": "Idle", "team": "LAL"}, B); x = K.tonight({"id": "5", "name": "Deep Bench", "team": "GS"}, B)
-    check(a == (["Sun 11/22: at GS, 7:30 PM CT.", "The model has him at 26.8 points, 7.6 rebounds, 4.9 assists and 3.1 threes in about 35 minutes."], "/nba/#BOS-GS", "", "") and q[0][0] == "Sun 11/22: vs BOS, 7:30 PM CT." and q[0][-1] == "Listed questionable." and q[2:] == ("Q", ""),
+    check(a == (["Sun 11/22: at GS, 7:30 PM CT.", "The model has him at 26.8 points, 7.6 rebounds, 4.9 assists and 3.1 threes in about 35 minutes."], "/nba/#BOS-GS", "", "", "His next game") and q[0][0] == "Sun 11/22: vs BOS, 7:30 PM CT." and q[0][-1] == "Listed questionable." and q[2:4] == ("Q", ""),
           "his next game: where and when, and the board's numbers for him; a questionable player says so and wears a Q")
-    check(o[0] == ["Sun 11/22: at GS, 7:30 PM CT. Listed out (Knee), so the board has no numbers for him."] and o[2:] == ("OUT", "o") and n == (["The Lakers do not play on Sun 11/22."], "", "", "") and "not in the board's rotation" in x[0][0] and K.tonight({"id": "1", "name": "Star", "team": "BOS"}, None) == ([], "", "", ""),
+    check(o[0] == ["Sun 11/22: at GS, 7:30 PM CT. Listed out (Knee), so the board has no numbers for him."] and o[2:4] == ("OUT", "o") and n == (["The Lakers do not play on Sun 11/22."], "", "", "", "His next game") and "not in the board's rotation" in x[0][0] and K.tonight(star, None) == ([], "", "", "", ""),
           "a player listed out gets no numbers and an OUT tag; a team that is off says so; a player outside the rotation says so; with no board the block is left out")
+    live = dict(B, games=[dict(B["games"][0], state="in")]); done = dict(B, games=[dict(B["games"][0], state="post")])
+    i_, d_ = K.tonight(star, live), K.tonight(star, done)
+    check(i_[4] == "His game tonight" and i_[0][0] == "Sun 11/22: at GS, under way when this page was built." and i_[0][1].startswith("The model had him at 26.8 points") and d_[0][0] == "Sun 11/22: at GS, final." and d_[4] == "His game tonight",
+          "once the game is under way or over the block is 'His game tonight', says so, and gives the model's numbers as what it had, not as what is to come")
 
 
 READ = r"""(function(){
@@ -128,7 +133,7 @@ async def main():
             await pg.click(f'#nsk-{g0.lower()} .skg[data-for="rise"] li.sk[data-k="{x["k"]}"] .skb'); await pg.wait_for_timeout(300)
             pn = await pg.evaluate(PANEL)
             wq = [[f"Last {x['nr']}", f1(x["r"]), "FP a game"], [f"The {x['np']} before", f1(x["p"]), f"{K.delta_text(x['d'])} since"], ["Season", f1(x["fp"]), f"{f1(x['mn'])} min a game"]]
-            wfx = [["What moved", x["say"]]] + ([["His next game", x["to"]]] if x["to"] else [])
+            wfx = [["What moved", x["say"]]] + ([[x["tt"], x["to"]]] if x["to"] else [])
             check(bool(pn) and pn["k"] == x["k"] and pn["h"] == x["n"] and pn["sub"] == f"{x['tn']} · {K.GNAME[x['g']].capitalize()} · {x['gp']} games this season" and pn["q"] == wq and pn["fx"] == wfx and pn["full"] and pn["over"] <= 0 and ("up" in pn["cls"].split()),
                   T(f"a tap opens {x['n']}'s panel across the row: last {x['nr']} ({f1(x['r'])}), the {x['np']} before ({f1(x['p'])}), season ({f1(x['fp'])}); what moved, and his next game - all as the file has them") + ("" if pn and pn["q"] == wq and pn["fx"] == wfx else f" (page {json.dumps(pn and [pn['q'], pn['fx']])[:400]})"))
             wst = []
