@@ -3574,3 +3574,39 @@ it should agree with this.
    +243 to +374 depending on the split).
 - Not built yet: the builder's script check still does not price passing-TD legs. Next: the chance of 2+ TD passes by ending, and the
   "his back ran one in" split on Tuesday's passing-TD scorecard. Scratch for this read: /tmp/slips1 (legs.py, legs_w11.json).
+
+## 11/23 9:46-11:05 AM CT: Monday night's two promos (owner: "Make me a couple promos for tonight including the piss missile")
+
+Posted 11:00 AM CT on his word ("I like em both. Let's make them promos"), CIN at WAS, 7:15 PM CT. PROMO rows 65-66, slip log 80-81.
+- **w11-8 Daily Sweep: Dig a Burrow:** Burrow 275+ pass yds, Higgins 60+ rec yds, Diggs 5+ catches (the Sweep says leg).
+- **w11-9 Piss Missile Monday:** Chase 100+ rec yds, Chase TD, Brown 77+ rush + rec, Daniels 225+ pass yds, Okonkwo 4+ catches,
+  Williams 3+ catches, Over 54.5, WAS +5.5. The shootout build (shootout 30%, total 54.5 the week's highest).
+- Built with `research/slipcheck` on a fresh local build in a copy (`/tmp/gpS1`): the four checks on every leg of the game, a
+  search of every three-leg slip (9,699) for the model's best against FanDuel's estimated same-game price. **Nothing in this game
+  rates above its price** with low-risk legs that pass matchup and script; the owner was told so (rule 1 of 11/23: rate and flag).
+- The new rules as applied: no player on both slips (rule 3; Chase and Higgins are also the last pair of the live either-or, said);
+  no passing-TD leg beside a back's TD (rule 2); Diggs misses the matchup rule by one board rank (#17) - flagged, he kept it.
+- **Both are same-game slips, so column E is blank** until FanDuel's own price comes off his betslip (the card shows a dash;
+  build_promo warns "no FanDuel price in column E"). Estimates: about +250 and about +3600.
+
+What to carry forward:
+1. **Re-read every leg's price in `links.json` right before writing the row.** FanDuel's 10:35 AM pull landed between his yes
+   and the post and moved six legs a little; column D was corrected before the publish. The builder's own leg prices lagged that
+   pull for these legs (they still read 6:34 AM), so the links tab is the one to read.
+2. **Quote the card's number.** The tool's joint for the Sweep was 24%; the card prints the graded chance, "About 20% to hit,
+   fair +412". He was told 24% at the draft and 20% at the post. Next time give the card's number first.
+3. **The trial shape says no leg at -200 or shorter.** Tonight's Sweep has two (-245, -230) because no leg in the -130 to -199
+   band passed the checks with the model above its price. It is marked "not the trial shape" on the row; he saw the prices.
+4. **The Rain flag fires on a forecast typed 'rain' at ANY chance** (flags.py: `pt.startswith("rain") or pch >= 50`; feeds.py
+   types rain from 0.01 of forecast precipitation). At 10:40 AM that was a 4% chance: every player in the game got a Rain watch
+   flag, Higgins 60+ became "Some risk" and Okonkwo "High risk" on the build, and build_promo printed a risky-leg warning for a
+   Sweep that had none when drafted. Not changed (it moves risk tags site-wide: the owner's call); a chance floor would fix it.
+5. **`tests/promo_kickoff.py` checks the tree's own `out/promos.json`**, not SITE. Run from the working tree, whose `out/` was a
+   day old, it "failed" twice on Thursday's slips; from the fresh copy it passed 8 of 8. Run it where the build is fresh.
+6. Posting steps that worked: write the rows, read them back, dispatch sheet-mirror, poll the mirror for the row, build in a
+   copy, run `build_promo.py` there to read its own lines, promo tests and the gate (519 pages), `publish=all`, promo tests on
+   the published copy, Pages run. About 20 minutes.
+
+Open for tonight: Croskey-Merritt (WAS RB) is officially questionable and reported set to come off injured reserve before
+kickoff; the availability tab still has him OUT (not a desk row, so avail_auto leaves it). Burks' row says QUESTIONABLE but the
+final report gave him no designation. Both to be set from the inactives (5:45 PM CT), then a rebuild. No promo leg depends on them.
