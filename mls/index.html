@@ -136,7 +136,10 @@ li.pl.eplsub .ppr .v{opacity:.72}
     if((b = t.closest('.prow'))){ row(b); return; }
     if((b = t.closest('.vbtn[data-view]'))){ show(b.closest('.card'), b.getAttribute('data-view')); return; }
     if((b = t.closest('a[data-open]'))){
-      var li = document.querySelector('.pl[data-pid="' + b.getAttribute('data-open') + '"]');
+      /* 11/23: a soccer board can hold two rounds, so a player can sit in two match cards. Open his row in the match the line names
+         (the link's own #match), not the first card that happens to hold him - the two matches carry different numbers. */
+      var pid = b.getAttribute('data-open'), hr = b.getAttribute('href') || '', hc = hr.charAt(0) === '#' && hr.length > 1 ? document.getElementById(hr.slice(1)) : null;
+      var li = (hc && hc.querySelector('.pl[data-pid="' + pid + '"]')) || document.querySelector('.pl[data-pid="' + pid + '"]');
       if(li){ e.preventDefault(); var c = li.closest('.card'); c.setAttribute('data-view', 'proj'); c.classList.add('expanded'); row(li.querySelector('.prow'), true); li.scrollIntoView({block: 'center'}); }
       return;
     }
