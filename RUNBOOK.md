@@ -3786,3 +3786,23 @@ tests/epl_board.py gained a check that does not depend on the day's data: the pl
 before the tap, so the first card that holds him is always the wrong one. It fails on the build from before the fix.
 The alert change was pushed and published with this one known, unrelated failure on record (49680ba5); this fix followed with its own
 full set.
+
+## 11/23 3:57 PM CT: calib_floor's ladder check is red by the day's data - found, NOT fixed (model rule; Tuesday's list)
+
+The board fix's full set failed one check that has nothing to do with it: tests/calib_floor.py "the cut turns no ladder upside down"
+(Stefon Diggs receiving yards: 50+ shows 0.5133, 51+ shows 0.5146). It passed at 2:51 PM and is on the published copy since the
+3:28 PM build (out/builder_data.json and the live /build/ data file carry the same two numbers). Both read 51% on the page, so no
+reader can see it. **Nothing was changed.**
+- Why: FanDuel lists an alternate 50+ rung and the main line Over 50.5 (51+), one yard apart, and his projection is 57.2, so both sit
+  in the floor cut's upper taper (calib.FLOOR_BAND, 85-90% of the projection). There the cut falls by c / (0.05 x projection) a yard,
+  0.79 points a yard for him, and the blended ladder before the cut fell only 0.65 points over that yard (0.5290 -> 0.5225; the raw
+  model alone has the two rungs the other way round, 0.466 and 0.497, because the main line and the alternates are priced by different
+  sheet steps). 0.65 - 0.79 = the 0.13-point flip. The 11/18 note's "tapers so a one-yard move cannot jump the number" holds; "cannot
+  turn a ladder upside down" does not hold for two rungs a yard apart inside the upper taper with a projection under about 70.
+- Options for Tuesday (floor_depth.py day), none adopted: (a) a ladder pass after the cut - a higher rung never shows more than the
+  rung under it (touches only flipped pairs, by at most the taper's step; every caller of calib.shown must agree, so it belongs in one
+  place the builder, boards, home, face-off and swap pages all read); (b) a longer upper taper (changes every leg at 85-100% of the
+  projection - a model change, needs the leave-one-week-out check and the owner's rule); (c) leave it and let the check allow a flip
+  smaller than the page can show. (a) is the honest one.
+- Until then the check stays red whenever the day's lines produce it. It is not a reason to hold an unrelated publish; say so in the
+  log each time, as here.
