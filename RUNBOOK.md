@@ -3506,6 +3506,13 @@ assets/studio) was cut from main on 11/2 and so still carries 1,266 MB of the ol
 (it is a deletion). Until it is removed the repository still needs 1,327 MB; with it gone, 136 MB. It is the owner's to delete
 (GitHub, Branches) or to ask for in so many words. Nothing uses it: no job, no generator, no page.
 
+**After the swap, the jobs:** feeds (14:50, 15:00, 15:10Z), risk-notes (15:00Z, nothing to save), sheet-mirror (15:05Z) and
+feeds-sports (15:07Z) all green on the snapshot; price-moves at 15:12Z saved the first new commit on top of it (1b37cde18, main =
+2 commits) and Pages rebuilt. Nothing on the site or in the generators points at a commit id: every link is by branch name.
+- Reminders set: Wed 11/25 10:30 AM CT (is the promo-studio branch gone, GitHub's number, any failed run:
+  trig_01DhRGYD5yvRnTn3GAchx9Bg) and Wed 12/16 10:30 AM CT (the next snapshot: prepare without `--go`, then ask the owner:
+  trig_01UvGh2eUwyi3YkWv3BDATy9). The swap waits for his word each time.
+
 **GitHub's own number** (API `size`: 1,759,961 KB at the swap) only drops after GitHub's own cleanup of unreachable objects, days
 later; Support can run it on request. Do not read that number as "it did not work" before then.
 
