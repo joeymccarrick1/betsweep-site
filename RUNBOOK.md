@@ -3758,6 +3758,13 @@ forum threads), no `pushsubscriptionchange` event, and the rule that three pushe
 - A device from before this change is taken as on when the browser holds a sign-up AND this account has its row. If the owner's
   phone shows the button after the publish, one more tap is needed; from then on it keeps itself.
 
+**Live 3:32 PM CT** (generators 49680ba5, site commit 8163dfe41): the published copy passes tests/alerts_keep.py 63 of 63; the live
+page itself was not read. Owner told: open My BetSweep once; if the button shows, one last tap.
+**If the card's count keeps climbing** (the phone keeps dropping the sign-up), the next thing to try - a guess, not a finding: sw.js
+carries the build minute, so after every publish the phone installs a new service worker (skipWaiting + claim) on its next open, about
+hourly on a game day. Nothing read today ties that to lost sign-ups, but it is the one thing this site does to the phone's push set-up
+that most sites do not. The test would be a worker file that only changes when its own code or the shell list changes (the cache name
+can still move with the build through a tiny version file the worker fetches), then watch the count for a week.
 **Not changed:** the alert function (the owner deploys it; no change needed), any SQL, the privacy page (the same push address,
 keys and settings as before, for a feature the reader switched on; the device's note is a setting kept in the browser, which the
 page already says the site does). Told the owner as an FYI.
