@@ -948,8 +948,9 @@ elif os.path.isdir(_nb):
 _ep = os.path.join(SITE, "epl")
 if os.path.exists(os.path.join(OUT, "epl-boards.html")):
     made.append(place(os.path.join(OUT, "epl-boards.html"), os.path.join(OUT, "img-none"), _ep, "/epl/"))
-    for _f, _t in (("epl_board.json", "board.json"), ("epl_sig.json", "sig.json")):
+    for _f, _t in (("epl_board.json", "board.json"), ("epl_sig.json", "sig.json"), ("epl_record.json", "record.json")):   # the board the page was drawn from, its signature, and the grading record the page shows
         if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_ep, _t))
+        elif os.path.exists(os.path.join(_ep, _t)): os.remove(os.path.join(_ep, _t))        # none in this build: an earlier local build's copy must not go out beside this page
 elif os.path.isdir(_ep):
     shutil.rmtree(_ep)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)

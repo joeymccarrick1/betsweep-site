@@ -3138,3 +3138,66 @@ at 390x844 light and dark and on a desktop, and checks the board itself, the dra
 **Not built yet:** grading (results, totals and player chances against what happened - until then nothing here is a pick),
 FanDuel prices (after the Odds API upgrade), a place in the menu and sitemap (the owner's call). Next: college postseason game
 lines.
+
+## 11/22 10:25 PM CT: the small publish deleted a data file a cached page still named (found at /epl/'s first publish, fixed)
+
+**What happened.** The 10:22 PM run was the first small (preview-only) publish with `/nba/stocks/` in it. `copy_only` removed the
+folder and copied the new one, so the Stock Market's previous `data-<hash>.js` was gone while a copy of the page cached for a few
+minutes (GitHub Pages, a phone) still named it: that visitor's page draws nothing until refreshed. The full publish has kept one
+earlier data file since 11/15 (owner: "Live page blank"), but looked only at the top of a folder, so a page one folder down was
+not covered there either.
+
+**The fix.** `reprice.replace_folder(src, dst)` is now the one way a folder is replaced, for both publishes: the data files the
+OUTGOING pages link are kept, beside the pages that link them, exactly one generation back. `tests/nba_board.py` has five more
+checks on made-up folders (kept beside the new file; gone one run later; top of a folder and one down; a dropped page folder; a
+first copy). On an NBA night the small publish runs every hour, which is why this mattered.
+
+## 11/22 10:35-11:20 PM CT: the Premier League board is graded - lock, grade, record (`sports/epl/grade.py`)
+
+The page went up saying "Nothing here is a pick". This is what has to happen before anything on it is one: the owner's standing
+rule is "tracked, not a lead". Same three steps as the NBA's, inside the feeds-sports job on every run, after the board is
+written or carried forward (`sports/epl/publish.py main`).
+
+**LOCK.** When a match's kickoff has passed, its numbers - result chances, each side's expected goals, and every player row of
+the two clubs - are copied from the LAST BOARD BUILT BEFORE KICKOFF and never touched again (`epl/locks/<kickoff date>.json`).
+The board is rebuilt on every run in the 100 minutes before a kickoff, so that board is a few minutes old and carries the
+confirmed elevens. Boards in reach: this run's, the feed's from one run earlier, and the one the site has published. None from
+before kickoff: the match is MISSED and never graded.
+
+**GRADE, in two parts,** because the two answers arrive at different times.
+- **The match**, as soon as ESPN's mirrored fixture list calls it final: home / draw / away, over 2.5, both to score, each
+  side's goals. Scored for the model and for **"every match alike"** - the same model given two average sides (the board's
+  `base`: about 42 / 28 / 30). It is the low bar: what you would say knowing nothing about the clubs. ESPN's posted line cannot
+  be a bar yet: the mirror carries only the favorite's price, not all three. A match ESPN calls postponed or abandoned is set
+  aside (`void`), not graded.
+- **The players**, when the data set has the match (hours later, sometimes the next day; it is looked for whenever the board is
+  rebuilt, at most 100 minutes apart). **Only players who started**, because every player number is "if he starts": chance to
+  score, chance of an assist, shots, shots on target, the shot ladders, minutes. Beside each, his own **season average** over the
+  same minutes (season totals scaled to one start; none under 270 minutes played). Players who came on or did not play are
+  counted, not graded. If the data set's score is not ESPN's, the players are left ungraded and the run's log line says so. A
+  match is handed over only when the data set has it finished with at least 20 starters on file.
+
+**RECORD.** `epl/record.json`: one row of sums per gameweek, totals always the sum of the rows, plus `waiting` (locked, no final
+yet) and `pwaiting` (final, players still to come). `epl/graded-gwNN.json`: the last four gameweeks match by match and player by
+player. Locks are dropped after 10 days. The job copies all of these forward first on every run (main 69baac6d: `GRADING` in
+`.github/feeds_sports.py`), because its branch is rebuilt from nothing each time.
+
+**Scores, in plain words.** A "miss score" is the squared gap between the chance given and what happened (0 is perfect; for
+home/draw/away it runs 0 to 2). The chance tables put every stated chance in a band and show how often it happened.
+
+**On the page** (`build_epl.record_block`): nothing while there is no record; "Grading has started" with how many matches are
+locked and waiting; then a closed strip, "Graded so far - N matches - likeliest result right X of N (the home side every time:
+Y)", that opens to the model beside every-match-alike, the chance table, the starters beside their season averages, the
+chance-to-score table, what was not graded, the gameweeks. Under 60 matches it says the record is too small to judge by. A
+newly graded match changes the page's signature, so the small publish sends it out.
+
+**Tests.** `tests/epl_grade.py` (29 checks, made-up data, every number worked by hand in the test); `tests/epl_board.py` 60 to 64
+checks depending on the record's state (all three states were run locally). The job's self-test: 16 of 16.
+
+**A replay used to try the grader on real data, and why it is NOT a record.** Last weekend's nine matches were run through it by
+refitting the model without them (`/tmp/epl/replay.py`, scratch). It exercised every path on real shapes - 189 starters graded,
+63 who came on, 44 who did not play - but those numbers were made after the matches were played and nothing had been locked.
+They are not on the page, not in the record and not in the log as results. **The first real lock is BRE-EVE, Monday 11/23
+2:00 PM Central.**
+
+**Also:** a check note said "within a day" where the rule is 36 hours; the note now says a day and a half.

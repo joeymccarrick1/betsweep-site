@@ -177,6 +177,72 @@ def round_label(B):
     return ("Gameweek " + str(g[0])) if len(g) == 1 else (f"Gameweeks {g[0]} and {g[-1]}" if g else "The coming matches")
 
 
+RBAND = ("under 20%", "20 to 40%", "40 to 60%", "60 to 80%", "80% and up")       # sports/epl/grade.py EDGES
+GBAND = ("under 5%", "5 to 10%", "10 to 20%", "20 to 30%", "30% and up")        # GOAL_EDGES
+EARLY = 60                                   # matches before the record stops calling itself too small (six full rounds)
+
+
+def record_block(R):
+    """The grading record (sports/epl/grade.py), as the page shows it. Three states, each saying only what is true:
+    no record file in reach - nothing is shown; a record with no graded match yet - it says how many are locked and waiting;
+    graded matches - the model beside "every match alike" on results, totals and both-to-score, the chances it gave against how often
+    they happened, then the players who started beside their own season averages, the rounds, and what was left out."""
+    if not R or not isinstance(R.get("total"), dict):
+        return ""
+    from sports.epl import grade as G
+    S = G.summary(R)
+    missed = len(R.get("missed") or {})
+    w, pw = R.get("waiting") or 0, R.get("pwaiting") or 0
+    if not S:
+        return ('<p class="nbrec none" id="nbrec"><b>Grading has started.</b> '
+                + (f'{w} match{"es are" if w != 1 else " is"} locked and waiting for {"their final scores" if w != 1 else "its final score"}; the first results appear here.' if w
+                   else 'Each match is locked at kickoff and scored against the final result; the first results appear here.') + '</p>')
+    T = G.add(G.empty(), R["total"])
+    f1, f2, f3 = (lambda x: f"{x:.1f}"), (lambda x: f"{x:.2f}"), (lambda x: f"{x:.3f}")
+    plural = lambda n, one, many: one if n == 1 else many
+    res, pl = S.get("res"), S.get("pl")
+    head = (f'<summary><b>Graded so far</b><span class="nbrc-n">{S["matches"]} {plural(S["matches"], "match", "matches")}' + (f' · {pl["n"]} starters' if pl else '') + '</span>'
+            + (f'<span class="nbrc-l">likeliest result right {res["top"]} of {res["n"]} <i>(the home side every time: {res["btop"]})</i></span>' if res else '') + '</summary>')
+
+    def row(k, lab, x, fmt):
+        m, b = fmt(x["model"]), fmt(x["base"])
+        who = "same" if m == b else ("model" if x["model"] < x["base"] else "other")
+        return (f'<tr data-k="{k}"><th>{lab}</th><td class="{"win" if who == "model" else ""}">{m}</td><td class="{"win" if who == "other" else ""}">{b}</td>'
+                f'<td class="nbrc-w">{"model closer" if who == "model" else ("model behind" if who == "other" else "the same")}</td></tr>')
+    rows = "".join(row(k, lab, S[k], f2) for k, lab in (("res", "Home, draw or away"), ("o25", "Over 2.5 goals"), ("btts", "Both teams score")) if S.get(k))
+    if S.get("goals"): rows += row("goals", "Goals a side <i>(average miss)</i>", S["goals"], f2)
+    table = ('<table class="nbrc-t"><thead><tr><th>Miss score, lower is better</th><th>Model</th><th>Every match alike</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>') if rows else ""
+    crow = "".join(f'<tr><th>{RBAND[i]}</th><td>{round(100 * c[1] / c[0])}%</td><td>{round(100 * c[2] / c[0])}%</td><td class="nbrc-w">{c[0]} {plural(c[0], "chance", "chances")}</td></tr>' for i, c in enumerate(T["cal"]) if c[0])
+    ctab = ('<table class="nbrc-t nbrc-c"><thead><tr><th>Chance the board gave</th><th>Happened</th><th>Board said</th><th></th></tr></thead><tbody>' + crow + '</tbody></table>') if crow else ""
+    notes, ptab, gtab = [], "", ""
+    if pl:
+        prow = "".join(row("p_" + k, lab, pl[k], fmt) for k, lab, fmt in (("goal", "To score <i>(miss score)</i>", f3), ("assist", "An assist <i>(miss score)</i>", f3),
+                                                                                             ("shots", "Shots <i>(average miss)</i>", f2), ("sot", "On target <i>(average miss)</i>", f2))
+                       if pl.get(k) and pl[k].get("model") is not None and pl[k].get("base") is not None)
+        ptab = ('<table class="nbrc-t nbrc-p"><thead><tr><th>Players who started</th><th>Model</th><th>Season avg</th><th></th></tr></thead><tbody>' + prow + '</tbody></table>') if prow else ""
+        grow = "".join(f'<tr><th>{GBAND[i]}</th><td>{round(100 * c[1] / c[0])}%</td><td>{round(100 * c[2] / c[0])}%</td><td class="nbrc-w">{c[0]} {plural(c[0], "starter", "starters")}</td></tr>' for i, c in enumerate(T["pl"]["cal"]["goal"]) if c[0])
+        gtab = ('<table class="nbrc-t nbrc-c nbrc-g"><thead><tr><th>Chance to score the board gave</th><th>Scored</th><th>Board said</th><th></th></tr></thead><tbody>' + grow + '</tbody></table>') if grow else ""
+        g = pl["goal"]
+        if g["n"]: notes.append(f'The board expected {f1(g["exp"])} scorers among {g["n"]} starters; {g["hit"]} scored.')
+        if pl["reg"]: notes.append(f'Of the {pl["reg"]} players it listed as regulars, {pl["reg_start"]} started.')
+        if pl["sub"] or pl["dnp"]: notes.append(f'{pl["sub"]} came on and {pl["dnp"]} did not play: counted here, not graded, because every player number assumes a start.')
+        if pl.get("min"): notes.append(f'Starters\' minutes were off by {round(pl["min"]["mae"])} on average.')
+    if pw: notes.append(f'Player results for {pw} {plural(pw, "match", "matches")} are still to come.')
+    if w: notes.append(f'{w} {plural(w, "match is", "matches are")} locked and waiting for a final score.')
+    if missed: notes.append(f'{missed} {plural(missed, "match", "matches")} could not be graded: no board had been built before kickoff.')
+    rounds = ""
+    for r in (R.get("rounds") or [])[-5:][::-1]:
+        rr = (r.get("res") or {})
+        rounds += (f'<li><b>{"Gameweek " + str(r.get("gw")) if r.get("gw") else "Other matches"}</b> {r.get("matches", 0)} {plural(r.get("matches", 0), "match", "matches")}'
+                   + (f', likeliest result right {rr.get("top", 0)} of {rr["n"]}' if rr.get("n") else '') + '</li>')
+    early = ('<p class="nbrc-early">Early days: ' + (f'{S["matches"]} matches are' if S["matches"] != 1 else 'one match is') + ' too few to judge a model by. Nothing here is a pick yet.</p>') if S["matches"] < EARLY else ""
+    how = ('<p class="nbrc-how">Each match\'s numbers are locked from the last board built before kickoff and are not changed afterwards. '
+           '"Every match alike" is the same model given two average sides: what it would say knowing nothing about the clubs. '
+           'A miss score is the squared gap between the chance given and what happened, so 0 is perfect. Players are graded only when they started.</p>')
+    return (f'<details class="nbrec" id="nbrec">{head}<div class="nbrc-b">{early}{table}{ctab}{ptab}{gtab}' + (f'<p class="nbrc-notes">{" ".join(notes)}</p>' if notes else '')
+            + (f'<ul class="nbrc-nights">{rounds}</ul>' if rounds else '') + how + '</div></details>')
+
+
 EPL_CSS = """
 .eplmk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 12px 4px}
 .eplmk span{min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:5px 8px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
@@ -193,7 +259,7 @@ li.pl.eplsub .ppr .v{opacity:.72}
 """
 
 
-def page(B, nba=False):
+def page(B, nba=False, R=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     # this round's rank at each position by chance to score, regular starters only (a substitute's "if he starts" number is not ranked)
     ranks = {}
@@ -210,8 +276,9 @@ def page(B, nba=False):
         last_day = last.astimezone(ZoneInfo("America/Chicago")).date().isoformat()
     except Exception:
         last_day = (last - dt.timedelta(hours=6)).date().isoformat()
+    rec = record_block(R)
     pre = ('<div class="nbpre"><b>Premier League preview.</b> Model numbers only: no FanDuel prices yet, so no edges or betslip buttons. '
-           'Player numbers assume he starts. Nothing here is a pick.</div>')
+           'Player numbers assume he starts. ' + ('Nothing here is a pick: every match is locked at kickoff and graded against the result first.' if rec else 'Nothing here is a pick.') + '</div>')
     key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
            '<dt>Score</dt><dd>Each side\'s expected goals, home side first, and under it the chance of a home win, a draw and an away win. The posted line beside the kickoff time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
            '<dt>Bar and number</dt><dd>A player\'s chance to score <b>if he starts</b>, with the bar scaled to the match\'s likeliest scorer. The tag after it is his place among this round\'s regular starters at his position.</dd>'
@@ -229,15 +296,17 @@ def page(B, nba=False):
     sw = ('<div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a>' + ('<a href="/nba/">NBA</a>' if nba else "") + '<a href="/epl/" aria-current="page">EPL</a></div>')
     return (f'<title>BetSweep · Premier League Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>Premier League · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to match">{nav}</nav>\n</div>\n'
-            f'<div class="nbbar">{sw}{key}</div>\n{pre}\n'
+            f'<div class="nbbar">{sw}{key}</div>\n{pre}\n{rec}\n'
             f'<div class="nbold" id="nbold" hidden><b>Every match on this board has kicked off.</b> A newer board is not up yet, so the numbers below are from before those matches.</div>\n'
             f'<div class="grid" data-day="{E(last_day)}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{N.NB_JS}\n')
 
 
-def signature(B):
+def signature(B, R=None):
     """what a visitor would notice changing: the matches and their state, the posted lines, each side's expected goals to a tenth, who is out or doubtful,
-    whether the elevens are in, and each player's chance to score to the whole percent"""
-    return json.dumps([[(m["key"], m.get("state"), (m.get("line") or {}).get("details"), round(m["xg"]["home"], 1), round(m["xg"]["away"], 1), bool(m.get("lineups"))) for m in B["matches"]],
+    whether the elevens are in, each player's chance to score to the whole percent - and the grading record's size (a newly graded match is news)"""
+    tot = (R or {}).get("total") if isinstance((R or {}).get("total"), dict) else None
+    return json.dumps([([tot.get("matches"), tot.get("pmatches"), (R or {}).get("waiting"), (R or {}).get("pwaiting"), len((R or {}).get("missed") or {})] if tot else None),
+                       [(m["key"], m.get("state"), (m.get("line") or {}).get("details"), round(m["xg"]["home"], 1), round(m["xg"]["away"], 1), bool(m.get("lineups"))) for m in B["matches"]],
                        sorted((ab, sorted(o["name"] for o in t.get("out") or []), sorted((o["name"], o["tag"]) for o in t.get("doubt") or [])) for ab, t in B["teams"].items()),
                        sorted((p["id"], p["match"], round(p["p_goal"] * 100), p.get("xi")) for p in B["players"])], sort_keys=True)
 
@@ -245,24 +314,36 @@ def signature(B):
 def main():
     a = sys.argv[1:]
     named = "--board" in a
+    R = None
     if named:
         B = N.load(path=a[a.index("--board") + 1]); nba = "--nba" in a           # --nba: draw the link to the NBA page (local work)
+        if "--record" in a:
+            try: R = json.load(open(a[a.index("--record") + 1], encoding="utf-8"))
+            except Exception: R = None
     else:
         nb = N.load(clone=(a[0] if a else None))       # fetches the branch; the NBA board says whether there will be an NBA page to link to
         B = N.feed_file(a[0] if a else None, "epl/board.json"); nba = N.usable(nb)[0]
+        R = N.feed_file(a[0] if a else None, "epl/record.json")      # the grading record (sports/epl/grade.py); None until the job has written one
+    if not isinstance(R, dict) or R.get("sport") != "epl" or not isinstance(R.get("total"), dict):
+        R = None
     ok, why = usable(B, any_age=named)
-    outs = (PAGE, os.path.join(OUT, "epl_board.json"), os.path.join(OUT, "epl_sig.json"))
+    outs = (PAGE, os.path.join(OUT, "epl_board.json"), os.path.join(OUT, "epl_sig.json"), os.path.join(OUT, "epl_record.json"))
     if not ok:
         for f in outs:
             if os.path.exists(f): os.remove(f)
         print(f"epl: no page written - {why}")
         return
     os.makedirs(OUT, exist_ok=True)
-    open(PAGE, "w", encoding="utf-8").write(page(B, nba))
+    open(PAGE, "w", encoding="utf-8").write(page(B, nba, R))
     json.dump(B, open(outs[1], "w"), separators=(",", ":"))
-    json.dump({"built": B.get("built"), "sig": signature(B)}, open(outs[2], "w"))
+    json.dump({"built": B.get("built"), "sig": signature(B, R)}, open(outs[2], "w"))
+    if R: json.dump(R, open(outs[3], "w"), separators=(",", ":"))
+    elif os.path.exists(outs[3]): os.remove(outs[3])
+    T = (R or {}).get("total") or {}
     print(f"epl boards: {round_label(B)}, {len(B['matches'])} matches, {len(B['players'])} player rows, {sum(len(t.get('out') or []) for t in B['teams'].values())} out, "
-          f"{sum(len(t.get('doubt') or []) for t in B['teams'].values())} doubts; board built {N.fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
+          f"{sum(len(t.get('doubt') or []) for t in B['teams'].values())} doubts; board built {N.fmt_ct(B.get('built'))}; "
+          + (f"record: {T.get('matches', 0)} matches graded, players of {T.get('pmatches', 0)}, {R.get('waiting', 0)} waiting; " if R else "no grading record in reach; ")
+          + f"{os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
 
 
 if __name__ == "__main__":

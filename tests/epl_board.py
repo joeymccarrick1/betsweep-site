@@ -47,6 +47,53 @@ def rules():
         R.SITE, R.OUT = keep; shutil.rmtree(d, ignore_errors=True)
 
 
+def record_states():
+    """build_epl.record_block: what the page says about the grading, in each of its three states"""
+    from sports.epl import grade as G
+    check(K.record_block(None) == "" and K.record_block({}) == "" and K.record_block({"total": "x"}) == "", "with no grading record in reach the page shows no record block")
+    empty = {"format": 1, "sport": "epl", "rounds": [], "total": G.empty(), "waiting": 2, "pwaiting": 0, "missed": {}, "graded": {}}
+    h = K.record_block(empty)
+    check('class="nbrec none"' in h and "Grading has started" in h and "2 matches are locked and waiting for their final scores" in h and "<details" not in h and "Miss score" not in h
+          and "1 match is locked and waiting for its final score" in K.record_block(dict(empty, waiting=1)) and "Each match is locked at kickoff" in K.record_block(dict(empty, waiting=0)),
+          "a record with nothing graded yet says grading has started and how many matches are locked and waiting - and shows no numbers")
+    S = G.empty(); S.update(matches=10, pmatches=8)
+    S["res"] = {"n": 10, "brier": 5.8, "base": 6.4, "ll": 10.0, "bll": 10.6, "top": 6, "btop": 4}
+    S["o25"] = {"n": 10, "brier": 2.6, "base": 2.5, "hit": 5}; S["btts"] = {"n": 10, "brier": 2.5, "base": 2.5, "hit": 6}; S["goals"] = {"n": 20, "model": 18.0, "base": 21.0, "err": 2.0}
+    S["cal"] = [[4, 0, 0.6], [20, 6, 6.2], [30, 16, 15.0], [12, 9, 8.2], [4, 4, 3.4]]
+    P = S["pl"]; P.update(n=170, sub=40, dnp=30, reg=160, reg_start=140)
+    P["goal"] = {"n": 170, "hit": 20, "exp": 21.44, "bn": 150, "brier": 10.5, "base": 12.0}; P["assist"] = {"n": 170, "hit": 15, "exp": 14.0, "bn": 150, "brier": 12.0, "base": 12.0}
+    P["shots"] = {"n": 150, "model": 135.0, "base": 126.0, "err": 6.0}; P["sot"] = {"n": 150, "model": 60.0, "base": 63.0, "err": 1.0}; P["min"] = {"n": 170, "abs": 1445.0, "err": -100.0}
+    P["cal"]["goal"] = [[60, 1, 1.8], [50, 4, 3.5], [40, 8, 6.0], [15, 4, 3.6], [5, 3, 2.0]]
+    rec = {"format": 1, "sport": "epl", "since": "2026-11-23", "rounds": [dict(json.loads(json.dumps(S)), gw=12, ids=list("abcdefghij"), pids=list("abcdefgh"))], "total": S, "waiting": 1, "pwaiting": 2,
+           "missed": {"m": "2026-11-28"}, "graded": {}, "pgraded": {}}
+    h = K.record_block(rec)
+    cells = re.findall(r'<tr data-k="(\w+)"><th>.*?</th><td class="(\w*)">([\d.]+)</td><td class="(\w*)">([\d.]+)</td><td class="nbrc-w">([^<]*)</td>', h)
+    check(cells == [("res", "win", "0.58", "", "0.64", "model closer"), ("o25", "", "0.26", "win", "0.25", "model behind"), ("btts", "", "0.25", "", "0.25", "the same"), ("goals", "win", "0.90", "", "1.05", "model closer"),
+                    ("p_goal", "win", "0.070", "", "0.080", "model closer"), ("p_assist", "", "0.080", "", "0.080", "the same"), ("p_shots", "", "0.90", "win", "0.84", "model behind"), ("p_sot", "win", "0.40", "", "0.42", "model closer")],
+          f"graded matches: results, totals, both-to-score and goals show the model beside 'every match alike', and the starters beside their season averages, each naming who is closer ({[c[2] + '/' + c[4] for c in cells]})")
+    check("10 matches · 170 starters" in h and "likeliest result right 6 of 10 <i>(the home side every time: 4)</i>" in h and "The board expected 21.4 scorers among 170 starters; 20 scored." in h
+          and "Of the 160 players it listed as regulars, 140 started." in h and "40 came on and 30 did not play" in h and "minutes were off by 8 on average" in h
+          and "Player results for 2 matches are still to come." in h and "1 match is locked and waiting for a final score." in h and "1 match could not be graded" in h,
+          "the headline is matches, starters and how often the likeliest result came in; the notes give scorers expected and seen, the regulars who started, who was not graded, minutes, and what is still waiting or was missed")
+    cal = re.findall(r'<tr><th>([^<]*)</th><td>(\d+)%</td><td>(\d+)%</td><td class="nbrc-w">(\d+) (chances?|starters?)</td></tr>', h)
+    check([c[:4] for c in cal if c[4].startswith("chance")] == [("under 20%", "0", "15", "4"), ("20 to 40%", "30", "31", "20"), ("40 to 60%", "53", "50", "30"), ("60 to 80%", "75", "68", "12"), ("80% and up", "100", "85", "4")]
+          and [c[:4] for c in cal if c[4].startswith("starter")] == [("under 5%", "2", "3", "60"), ("5 to 10%", "8", "7", "50"), ("10 to 20%", "20", "15", "40"), ("20 to 30%", "27", "24", "15"), ("30% and up", "60", "40", "5")],
+          "two chance tables: every match chance in its band beside how often it happened, and the starters' chance to score beside how often they scored")
+    check("Early days: 10 matches are too few" in h and "<b>Gameweek 12</b> 10 matches, likeliest result right 6 of 10" in h and '<details class="nbrec"' in h and " open" not in h.split(">")[0]
+          and "Players are graded only when they started" in h, "a small record says it is too small to judge by, lists the gameweek, starts closed, and says how it is scored")
+    big = json.loads(json.dumps(rec)); big["total"]["matches"] = K.EARLY
+    nopl = json.loads(json.dumps(rec)); nopl["total"]["pl"] = G.empty()["pl"]; nopl["total"]["pmatches"] = 0
+    hn = K.record_block(nopl)
+    check("Early days" not in K.record_block(big) and "Players who started" not in hn and "starters" not in hn.split("</summary>")[0] and "Home, draw or away" in hn,
+          f"from {K.EARLY} matches on the 'too few' line is gone; before any player results are in, the block shows the match results alone")
+    B0 = {"matches": [], "teams": {}, "players": []}
+    check(K.signature(B0) != K.signature(B0, empty) and K.signature(B0, empty) != K.signature(B0, rec) and K.signature(B0, rec) == K.signature(B0, json.loads(json.dumps(rec))),
+          "the page's signature moves when a record first appears and when a match is graded - so the small publish sends it out - and not otherwise")
+    for p in ({"xi": "start", "starts5": 0}, {"xi": None, "starts5": 3}, {"xi": None, "starts5": 2}, {"xi": "bench", "starts5": 5}, {"xi": "no", "starts5": 5}):
+        if K.regular(p) != G.regular(p): check(False, f"the page and the grader disagree on who is a regular: {p}")
+    check(K.REGULAR == G.REGULAR and len(K.RBAND) == len(G.EDGES) + 1 and len(K.GBAND) == len(G.GOAL_EDGES) + 1, "the page and the grader use one rule for a regular and the same chance bands")
+
+
 def expect(B):
     n = B.get("n_clubs") or 20
     ranks = {}
@@ -91,7 +138,7 @@ READ = r"""(function(){
 
 
 async def main():
-    rules()
+    rules(); record_states()
     page_path = os.path.join(ROOT, "epl", "index.html")
     if not os.path.exists(page_path):
         check(not os.path.exists(os.path.join(ROOT, "epl", "board.json")), "this build has no Premier League page, and no leftover board file (the page is optional; a stale one is not allowed)")
@@ -117,6 +164,28 @@ async def main():
     check("Premier League preview" in src and "no FanDuel prices yet" in src and "Player numbers assume he starts" in src and "Nothing here is a pick" in src and "sportsbook.fanduel.com" not in body and "thin evidence" in src and "checked against ESPN" in src,
           "the page says what it is: a preview, model numbers only, player numbers for a start, nothing a pick; where its data comes from; and that the test results behind it are thin")
     check(not re.search(r"\b(best bet|lock of|value bet|\+EV)\b", re.sub(r"<[^>]+>", " ", body), re.I), "nothing on it is called a best bet or value")
+    # ---- the grading record: the page says only what the record beside it supports
+    rp = os.path.join(ROOT, "epl", "record.json"); R = json.load(open(rp)) if os.path.exists(rp) else None
+    from sports.epl import grade as G
+    RS = G.summary(R) if R else None
+    if R is None:
+        check('id="nbrec"' not in src and "locked at kickoff and graded" not in src, "no grading record ships with the page: no record block, and the note does not claim any grading")
+    elif RS is None:
+        check('<p class="nbrec none" id="nbrec">' in src and "every match is locked at kickoff and graded against the result first" in src and '<details class="nbrec"' not in src,
+              f"the record ships with nothing graded yet ({R.get('waiting')} waiting): the page says grading has started and shows no numbers")
+    else:
+        blk = src[src.find('<details class="nbrec"'):]; blk = blk[:blk.find("</details>")]
+        cells = re.findall(r'<tr data-k="(\w+)"><th>.*?</th><td class="\w*">([\d.]+)</td><td class="\w*">([\d.]+)</td>', blk)
+        wantr = [(k, f"{RS[k]['model']:.2f}", f"{RS[k]['base']:.2f}") for k in ("res", "o25", "btts", "goals") if RS.get(k)]
+        if RS.get("pl"):
+            wantr += [("p_" + k, f"{RS['pl'][k]['model']:.{d}f}", f"{RS['pl'][k]['base']:.{d}f}") for k, d in (("goal", 3), ("assist", 3), ("shots", 2), ("sot", 2)) if RS["pl"].get(k) and RS["pl"][k].get("model") is not None and RS["pl"][k].get("base") is not None]
+        check(cells == wantr and f"{RS['matches']} match{'es' if RS['matches'] != 1 else ''}" in blk and "every match is locked at kickoff and graded against the result first" in src,
+              f"the record block is the record file's: {RS['matches']} matches, players of {RS['pmatches']}, " + ", ".join(f"{k} {m} vs {b}" for k, m, b in wantr))
+        tot = G.empty()
+        for r_ in R["rounds"]: G.add(tot, r_)
+        check(G.rounded(tot) == R["total"] and len(re.findall(r"<li><b>", blk)) == min(5, len(R["rounds"])) and (("Early days" in blk) == (RS["matches"] < K.EARLY))
+              and sum(len(r_.get("ids") or []) for r_ in R["rounds"]) == R["total"]["matches"] and sum(len(r_.get("pids") or []) for r_ in R["rounds"]) == R["total"]["pmatches"],
+              f"the record's totals are the sum of its gameweeks, each graded match is named once, the last gameweeks are listed, and a record under {K.EARLY} matches says it is too small to judge by")
 
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
@@ -199,6 +268,13 @@ async def main():
                 await pg.click(f'.card.summary a[data-open="{s["sc"][0][0]}"]'); await pg.wait_for_timeout(600)
                 j = await pg.evaluate("""(function(a){ var c = document.querySelector(a[1]), li = c.querySelector('li.pl[data-pid="' + a[0] + '"]'), r = li.getBoundingClientRect(); return [c.classList.contains('expanded'), !li.querySelector('.pdetail').hidden, r.top >= 0 && r.top <= innerHeight - 80]; })""", [s["sc"][0][0], s["sc"][0][1]])
                 check(j == [True, True, True], T(f"tapping {sc6[0]['name']} in the Slate opens his match and his row, on screen"))
+            if RS:
+                await pg.evaluate("window.scrollTo(0, 0)"); await pg.wait_for_timeout(300)
+                r0 = await pg.evaluate("(function(){ var d = document.getElementById('nbrec'), s = d.querySelector('summary').getBoundingClientRect(); return [d.open, s.height, d.getBoundingClientRect().height]; })()")
+                await pg.click("#nbrec > summary"); await pg.wait_for_timeout(250)
+                r1 = await pg.evaluate("(function(){ var d = document.getElementById('nbrec'), b = d.querySelector('.nbrc-b'); return [d.open, [...d.querySelectorAll('.nbrc-t')].every(function(t){ return t.getBoundingClientRect().right <= b.getBoundingClientRect().right + 1; }), document.documentElement.scrollWidth - innerWidth, d.querySelectorAll('.nbrc-t tbody tr').length]; })()")
+                check(not r0[0] and r0[1] >= 44 and r0[2] <= 130 and r1[0] and r1[1] and r1[2] <= 0 and r1[3] >= 1, T(f"the record starts closed in a strip {r0[2]:.0f}px tall; a tap opens it and its tables fit the screen"))
+                await pg.click("#nbrec > summary"); await pg.wait_for_timeout(150)
             late = max(K.when(m["ko"]) for m in B["matches"])
             try:
                 from zoneinfo import ZoneInfo

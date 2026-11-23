@@ -8,7 +8,7 @@ What goes in, and from where:
   kickoff times, venues, scores, the posted line, confirmed line-ups         ESPN, from this job's own mirror (epl/scoreboard.json, epl/lineups.json)
   who is injured, suspended or doubtful                                       the official Fantasy Premier League list, same mirror (epl/fpl.json)
 The data set is a community one, so every fixture is checked against ESPN before it is written: a match ESPN does not list for those
-two clubs within a day is left off the board and named in "checks"; ESPN's kickoff time is the one shown.
+two clubs within a day and a half is left off the board and named in "checks"; ESPN's kickoff time is the one shown.
 
 The model is the 11/15 groundwork (sports/epl/model.py), unchanged:
   teams    an attack and a defence factor for every club, fitted on a blend of expected goals and real goals with older matches counting
@@ -19,12 +19,16 @@ The model is the 11/15 groundwork (sports/epl/model.py), unchanged:
 
 A PREVIEW's numbers: no bookmaker price is read or compared (ESPN's posted line is carried as posted, with the book named).
 
-    python3 -m sports.epl.publish --feeds DIR --out DIR [--data DIR] [--now ISO]
+After the board, every run: the grading (sports/epl/grade.py) - each match locked at kickoff from the last board built before it,
+graded against ESPN's final score, and its players against the data set when that has the match. "base" on the board is the same
+model given two average sides: what the grading calls "every match alike".
+
+    python3 -m sports.epl.publish --feeds DIR --out DIR [--data DIR] [--now ISO] [--prev DIR] [--site DIR] [--always] [--no-grade]
 """
 import argparse, datetime as dt, json, math, os, re, subprocess, unicodedata
 import numpy as np
 import pandas as pd
-from . import data as ED, model as EM
+from . import data as ED, model as EM, grade as G
 from ..core import ratings as R, dist as D
 
 FORMAT = 1
@@ -113,13 +117,37 @@ def pois_at_least(k, mean):
     return float(1.0 - sum(math.exp(-mean) * mean ** i / math.factorial(i) for i in range(k)))
 
 
-def build(folder, feeds=None, now=None):
+def actuals_for(m, pm, want):
+    """What the data set has for these matches, for the grading: the final score and every player who played -
+    {match id: {"final": {"home", "away"}, "players": {player code: {min, started, g, a, sh, sot}}}}.
+    A match the data set has not finished, or one with fewer than 20 starters on file so far, is left out: its turn comes on a later run."""
+    out = {}
+    ids = m["match_id"].astype(str); pids = pm["match_id"].astype(str)
+    for mid in want or ():
+        row = m[ids == str(mid)]
+        if row.empty or not bool(row.iloc[0]["finished"]):
+            continue
+        ps = pm[pids == str(mid)]
+        if int(ps["started"].astype(bool).sum()) < 20:
+            continue
+        r = row.iloc[0]
+        fin = {"home": int(r["home_score"]), "away": int(r["away_score"])} if pd.notna(r["home_score"]) and pd.notna(r["away_score"]) else None
+        out[str(mid)] = {"final": fin, "players": {str(int(x["player_code"])): {"min": int(x["min"]), "started": bool(x["started"]), "g": int(x["goals"]), "a": int(x["assists"]),
+                                                                              "sh": int(x["shots"]), "sot": int(x["sot"])} for _, x in ps.iterrows()}}
+    return out
+
+
+def build(folder, feeds=None, now=None, extras=None):
+    """extras: a dict the caller hands in to get more than the board back. With extras["want"] (match ids), extras["actuals"] is filled
+    with what the data set holds for them (actuals_for) - the frames are loaded here anyway."""
     now = now or dt.datetime.now(dt.timezone.utc)
     nown = pd.Timestamp(now).tz_convert(None)
     m = ED.load_matches(folder)
     names = ED.load_teams(folder)
     tg = ED.team_games(m)
     pm = ED.load_player_matches(m, folder)
+    if extras is not None and extras.get("want"):
+        extras["actuals"] = actuals_for(m, pm, extras["want"])
     season = int(m["season"].max())
     short = lambda code: names.get(int(code), {}).get("short", str(code))
     checks = []
@@ -163,7 +191,7 @@ def build(folder, feeds=None, now=None):
             cand = [x for x in ev_by.get((he, ae), []) if when(x.get("date")) and abs((when(x["date"]) - ko).total_seconds()) <= 36 * 3600]
             e = min(cand, key=lambda x: abs((when(x["date"]) - ko).total_seconds())) if cand else None
             if e is None:
-                checks.append(f"{hs} v {as_} ({ko.strftime('%m/%d')}) is in the data set but ESPN lists no such match within a day: left off the board")
+                checks.append(f"{hs} v {as_} ({ko.strftime('%m/%d')}) is in the data set but ESPN lists no such match within a day and a half: left off the board")
                 continue
             if str(e.get("detail", "")).lower().startswith(("postponed", "canceled", "cancelled", "abandoned")):
                 checks.append(f"{hs} v {as_}: ESPN says {e.get('detail')}: left off the board")
@@ -292,10 +320,13 @@ def build(folder, feeds=None, now=None):
                             "last": (f"{lastg.iloc[0]['date'].month}/{lastg.iloc[0]['date'].day} {'v' if lastg.iloc[0]['home'] == 1 else 'at'} {short(lastg.iloc[0]['opp'])}, {int(lastg.iloc[0]['goals'])}-{int(lastg.iloc[0]['goals_against'])}" if len(lastg) else None)}
     done = cur[cur["finished"]]
     gws = sorted({x["gw"] for x in matches if x["gw"] is not None})
+    # "every match alike": this model with two average sides - the home side's edge and nothing else. What the grading measures the model against.
+    bh, ba = float(gg["L"] * gg["H"]), float(gg["L"] / gg["H"])
+    base = {"xg": {"home": round(bh, 2), "away": round(ba, 2)}, "p": {k: round(float(v), 4) for k, v in D.soccer_markets(bh, ba, EM.PARAMS["rho"]).items()}}
     return {"sport": "epl", "format": FORMAT, "built": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "season": season, "gameweeks": gws,
             "data_through": done["date"].max().strftime("%Y-%m-%d") if len(done) else None, "played": int(len(done)),
             "fpl_at": (fpl or {}).get("mirrored"), "espn_at": (sb or {}).get("mirrored"), "lineups_at": (lu or {}).get("mirrored"),
-            "home_edge": round(float(gg["H"]), 3), "league_goals": round(float(gg["L"]), 3), "n_clubs": len(clubs),
+            "home_edge": round(float(gg["H"]), 3), "league_goals": round(float(gg["L"]), 3), "n_clubs": len(clubs), "base": base,
             "checks": checks, "matches": matches, "teams": teams, "players": players}
 
 
@@ -321,28 +352,43 @@ def keep_last(prev_board, now):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--feeds"); ap.add_argument("--out", required=True); ap.add_argument("--data"); ap.add_argument("--now")
-    ap.add_argument("--prev"); ap.add_argument("--always", action="store_true", help="build even when the last run's board is fresh")
+    ap.add_argument("--prev", help="the branch as the last run left it (default: prev/ beside --out, where the feeds-sports job puts it)")
+    ap.add_argument("--site", help="a checkout of the live site, for the board it has published (default: the folder --out is in)")
+    ap.add_argument("--always", action="store_true", help="build even when the last run's board is fresh")
+    ap.add_argument("--no-grade", action="store_true", help="write the board only: no lock, no grading (local work)")
     a, _ = ap.parse_known_args()
-    path = os.path.join(a.out, "epl", "board.json")
-    last = os.path.join(a.prev or os.path.join(os.path.dirname(os.path.abspath(a.out)), "prev"), "epl", "board.json")
-    try: pb = json.load(open(last, encoding="utf-8"))
-    except Exception: pb = None
-    keep, why = keep_last(pb, when(a.now) if a.now else dt.datetime.now(dt.timezone.utc))
+    root = os.path.dirname(os.path.abspath(a.out))
+    gdir = os.path.join(a.out, "epl")
+    path = os.path.join(gdir, "board.json")
+    now = when(a.now) if a.now else dt.datetime.now(dt.timezone.utc)
+    pb = G.load(os.path.join(a.prev or os.path.join(root, "prev"), "epl", "board.json"))
+    keep, why = keep_last(pb, now)
+    actuals = None
     if keep and not a.always:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(gdir, exist_ok=True)
         json.dump(pb, open(path + ".tmp", "w"), separators=(",", ":")); os.replace(path + ".tmp", path)
         print(f"epl board: kept from the last run - {why}")
-        return
-    folder = a.data or ED.data_dir()
-    src = fetch(folder)
-    now = when(a.now) if a.now else None
-    b = build(folder, a.feeds, now)
-    b["data_commit"] = src
-    os.makedirs(os.path.join(a.out, "epl"), exist_ok=True)
-    json.dump(b, open(path + ".tmp", "w"), separators=(",", ":")); os.replace(path + ".tmp", path)
-    print(f"epl board: {len(b['matches'])} matches (gameweek {', '.join(map(str, b['gameweeks'])) or '?'}), {len(b['players'])} player rows, {len(b['teams'])} clubs, data through {b['data_through']} "
-          f"({b['played']} matches played; data set {src['sha']} {src['when'][:16]}); line-ups posted for {sum(1 for x in b['matches'] if x['lineups'])}; "
-          f"{len(b['checks'])} check note(s){': ' + ' | '.join(b['checks'])[:300] if b['checks'] else ''}; {os.path.getsize(path) // 1024} KB")
+        b = pb
+    else:
+        folder = a.data or ED.data_dir()
+        src = fetch(folder)
+        extras = {"want": [] if a.no_grade else G.wanted(gdir)}
+        b = build(folder, a.feeds, now, extras)
+        actuals = extras.get("actuals")
+        b["data_commit"] = src
+        os.makedirs(gdir, exist_ok=True)
+        json.dump(b, open(path + ".tmp", "w"), separators=(",", ":")); os.replace(path + ".tmp", path)
+        print(f"epl board: {len(b['matches'])} matches (gameweek {', '.join(map(str, b['gameweeks'])) or '?'}), {len(b['players'])} player rows, {len(b['teams'])} clubs, data through {b['data_through']} "
+              f"({b['played']} matches played; data set {src['sha']} {src['when'][:16]}); line-ups posted for {sum(1 for x in b['matches'] if x['lineups'])}; "
+              f"{len(b['checks'])} check note(s){': ' + ' | '.join(b['checks'])[:300] if b['checks'] else ''}; {os.path.getsize(path) // 1024} KB")
+    if not a.no_grade:
+        # lock and grade (sports/epl/grade.py). On every run, a carried-forward board included: a final whistle does not wait for a rebuild.
+        # The board is already written, so nothing here can cost it.
+        try:
+            boards = [("the feed", b), ("the feed, one run earlier", pb), ("the published page", G.load(os.path.join(a.site or root, "epl", "board.json")))]
+            G.run(gdir, boards, scoreboard=load_feed(a.feeds, "scoreboard.json") if a.feeds else None, actuals=actuals, now=now)
+        except Exception as e:
+            print(f"epl grade: FAILED ({type(e).__name__}: {e}) - the board is written, the record is as the last run left it")
 
 
 if __name__ == "__main__":
