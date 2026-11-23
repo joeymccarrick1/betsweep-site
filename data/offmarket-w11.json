@@ -276,6 +276,18 @@
    "gap": 4.7,
    "p": 0.2395,
    "seen": "2026-11-22 10:34"
+  },
+  "Drew Sample|Receptions|2": {
+   "pl": "Drew Sample",
+   "m": "Receptions",
+   "ln": 2.0,
+   "g": "CIN-WAS",
+   "fd": 182.0,
+   "dk": 156.0,
+   "hr": 160.0,
+   "gap": 3.0,
+   "p": 0.443,
+   "seen": "2026-11-23 10:35"
   }
  }
 }
