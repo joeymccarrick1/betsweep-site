@@ -2938,3 +2938,53 @@ comes back before the grader exists.
 Tonight's boards are not lost: every board that was published is in main's history (`git log -- nba/board.json`).
 
 State at 5:45 PM: site faefad74 (the page, the header fix, the kickoff fix), generators d53ac454, MASTER rows 651-654.
+
+## 11/22 7:15-8:15 PM CT: the NBA nightly grader (owner 7:14 PM: "Alright get to what's next!")
+
+What "tracked, not a lead" means for the NBA board, running since the 7:37 PM run of the feeds-sports job on 11/22.
+
+**Where it runs.** Inside `python3 -m sports.nba.publish` (the model step of feeds-sports), right after the board is written:
+`sports/nba/grade.py run()`. Plain Python, no pandas. A failure in it is printed and skipped - the board is still written and the
+grading files stay as the last run left them.
+
+**Lock.** Once a game's tip has passed, its players' numbers are copied from the LAST board built BEFORE the tip into
+`nba/locks/<day>.json` and never touched again: model minutes and the four projections, season averages, the chance ladders, the
+game's model score and posted line, which board it came from and how many minutes before the tip that board was built. The boards
+in reach are the feed's own previous board (`prev/nba/board.json`, at most half an hour old) and the one the site has published
+(`nba/board.json` in the main checkout). If neither was built before the tip the game is marked **missed** with the reason and
+is never graded: a number written down after the ball went up is not a projection.
+
+**Grade.** When the mirrored box score of a locked game is final (`nba/box-<id>.json`, `done` and `state == "post"`):
+- model and season average are each compared with the result, on the same player-stats (a stat counts only when the lock has
+  both numbers), for points, rebounds, assists and threes; minutes are graded for everyone who played;
+- every rung of every chance ladder goes into the band of the chance it was given (under 20%, 20-40, 40-60, 60-80, 80 and up)
+  with whether the player reached it;
+- a locked player who did not play is counted on his own line (`dnp`), not in the averages.
+
+**Record.** `nba/record.json`: one row of sums a night (`nights`), `total` = the sum of the rows, the ids graded and missed in
+the last two weeks, how many locked games are waiting. `nba/graded-<day>.json`: the last four nights player by player (model,
+season average, result). `grade.summary(record)` turns the sums into mean misses for the page.
+
+**Staying alive on a branch that is rebuilt every run.** `.github/feeds_sports.py carry()` (main) copies `nba/locks/*.json`,
+`nba/record.json` and `nba/graded-*.json` from the last run into the new one FIRST, before any fetch or the model step can fail.
+Files are written whole or not at all (`save()`), and a record that cannot be read is left exactly as it is and nothing is graded
+into a new one. The page build also ships the record at `/nba/record.json`, so every change of it is in main's history.
+
+**Tonight (11/22), started by hand.** The grader went live at about 7:35 PM, after most tips. Tonight's lock file was built with
+the same `lock()` from the boards the site had already published: the three 6:00 PM games from the board built 5:36 PM (published
+5:43 PM), IND-NY from the board built 6:42 PM (published 6:59 PM). DET-ATL (2:30 PM) and OKC-MIA (5:00 PM) tipped before the first
+board existed and are missed. BOS-GS (7:30 PM) was left for the job. The file's `note` says all this.
+
+**On the page** (`build_nba.record_block`): nothing while no record is in reach; "Grading has started... N games locked and
+waiting" while nothing is graded; then a closed strip "Graded so far - N games, M player-games, points off by X (season average
+Y)" that opens to the four stats (model beside season average, the closer one named), minutes, did-not-play, missed games, the
+chance table and the last five nights. Under 30 games it says "Early days... too few to judge a model by". The preview note says
+"locked at tip and graded against the box score first" only when the record is in reach. The record's size is in the page's
+signature, so a newly graded game is enough for the NBA-only publish.
+
+**Tests.** `tests/nba_grade.py` (27 checks, made-up data, in the pre-publish set). `tests/nba_board.py` checks the block in its
+three states from the builder and against the `record.json` the page ships.
+
+**Still to do for grading:** a results page (last night player by player from `graded-<day>.json`); grading the game totals and
+margins against the posted line; a by-position and by-minutes-change breakdown (who is out is the model's lead signal - is that
+where it wins?); price snapshots once the Odds API plan is upgraded, so chances can be graded against prices, not only results.

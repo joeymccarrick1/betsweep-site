@@ -69,6 +69,36 @@ def stale_rule():
     check(N.usable(dict(good, day="2026-11-21"), now, any_day=True)[0], "a board file named by hand is drawn whatever its day (tests and local work)")
 
 
+def record_states():
+    """build_nba.record_block: what the page says about the grading, in each of its three states"""
+    import build_nba as N
+    from sports.nba import grade as G
+    check(N.record_block(None) == "" and N.record_block({}) == "" and N.record_block({"total": "x"}) == "", "with no grading record in reach the page shows no record block")
+    empty = {"format": 1, "sport": "nba", "nights": [], "total": G.empty(), "waiting": 3, "missed": {"a": "2026-11-22"}, "graded": {}}
+    h = N.record_block(empty)
+    check('class="nbrec none"' in h and "Grading has started" in h and "3 games locked and waiting" in h and "<details" not in h and "off by" not in h,
+          "a record with nothing graded yet says grading has started and how many games are locked and waiting - and shows no numbers")
+    S = G.empty(); S.update(games=2, players=40, dnp=3)
+    S["stats"]["pts"] = {"n": 40, "model": 180.0, "base": 204.0, "err": -20.0}; S["stats"]["reb"] = {"n": 40, "model": 80.0, "base": 76.0, "err": 4.0}
+    S["stats"]["ast"] = {"n": 40, "model": 60.0, "base": 60.0, "err": 0.0}; S["stats"]["fg3"] = {"n": 38, "model": 34.2, "base": 38.0, "err": 1.0}
+    S["min"] = {"n": 40, "abs": 168.0, "err": 8.0}; S["cal"]["pts"] = [[10, 1, 1.2], [0, 0, 0.0], [20, 11, 10.0], [0, 0, 0.0], [10, 9, 8.7]]
+    rec = {"format": 1, "sport": "nba", "since": "2026-11-22", "nights": [dict(copy_of(S), day="2026-11-22", ids=["a", "b"])], "total": S, "waiting": 0, "missed": {"m": "2026-11-22"}, "graded": {"a": "2026-11-22", "b": "2026-11-22"}}
+    h = N.record_block(rec)
+    cells = re.findall(r'<tr data-k="(\w+)"><th>[^<]*</th><td class="(\w*)">([\d.]+)</td><td class="(\w*)">([\d.]+)</td><td class="nbrc-w">([^<]*)</td>', h)
+    check(cells == [("pts", "win", "4.5", "", "5.1", "model closer"), ("reb", "", "2.0", "win", "1.9", "season average closer"), ("ast", "", "1.5", "", "1.5", "the same"), ("fg3", "win", "0.9", "", "1.0", "model closer")],
+          f"graded games: each stat shows the model's average miss beside the season average's and names the closer one, or says they are the same ({[c[2] + '/' + c[4] for c in cells]})")
+    check("2 games · 40 player-games" in h and "points off by 4.5 <i>(season average 5.1)</i>" in h and "Minutes were off by 4.2" in h and "3 players the board projected did not play" in h and "1 game could not be graded" in h,
+          "the headline is games, player-games and the points miss; the notes give minutes, the players who did not play and the games that could not be graded")
+    cal = re.findall(r'<tr><th>([^<]*)</th><td>(\d+)%</td><td>(\d+)%</td><td class="nbrc-w">(\d+) lines</td></tr>', h)
+    check(cal == [("under 20%", "10", "12", "10"), ("40 to 60%", "55", "50", "20"), ("80% and up", "90", "87", "10")], "the chance table has a row for each band that has lines: how often they were reached beside what the board said")
+    check("Early days: 2 games are too few" in h and "Sun 11/22" in h and "<details class=\"nbrec\"" in h and " open" not in h.split(">")[0], "a small record says it is too small to judge by, lists the night, and starts closed")
+    big = json.loads(json.dumps(rec)); big["total"]["games"] = 30
+    check("Early days" not in N.record_block(big), "from 30 games on the 'too few' line is gone")
+
+
+def copy_of(x): return json.loads(json.dumps(x))
+
+
 def expect(B):
     """what the page must show, from the board alone"""
     ranks = {}
@@ -109,7 +139,7 @@ READ = r"""(function(){
 
 
 async def main():
-    publish_rule(); stale_rule()
+    publish_rule(); stale_rule(); record_states()
     page_path = os.path.join(ROOT, "nba", "index.html")
     if not os.path.exists(page_path):
         check(not os.path.exists(os.path.join(ROOT, "nba", "board.json")), "this build has no NBA board, so it has no /nba/ page and no leftover board file (the page is optional; a stale one is not allowed)")
@@ -132,6 +162,25 @@ async def main():
     check("/nba/" not in sm and not linkers, f"it is a preview: not in the sitemap, and no other page or menu links to it ({linkers})")
     check("NBA preview" in src and "Model numbers only" in src and "FanDuel prices are not connected yet" in src and "Nothing here is a pick" in src and "being graded" not in src,
           "the page says it is a preview: model numbers only, no FanDuel prices yet, nothing is a pick - and it does not claim a nightly grading that is not built yet")
+    # ---- the grading record: the page says only what the record beside it supports
+    rp = os.path.join(ROOT, "nba", "record.json"); R = json.load(open(rp)) if os.path.exists(rp) else None
+    from sports.nba import grade as G
+    RS = G.summary(R) if R else None
+    if R is None:
+        check('id="nbrec"' not in src and "have to be graded against results first" in src, "no grading record ships with the page: no record block, and the note says the projections have to be graded first")
+    elif RS is None:
+        check('<p class="nbrec none" id="nbrec">' in src and "locked at tip and graded against the box score first" in src and "<details class=\"nbrec\"" not in src,
+              f"the record ships with nothing graded yet ({R.get('waiting')} waiting): the page says grading has started and shows no numbers")
+    else:
+        blk = src[src.find('<details class="nbrec"'):]; blk = blk[:blk.find("</details>")]
+        cells = re.findall(r'<tr data-k="(\w+)"><th>[^<]*</th><td class="\w*">([\d.]+)</td><td class="\w*">([\d.]+)</td>', blk)
+        wantr = [(k, f"{RS['stats'][k]['model']:.1f}", f"{RS['stats'][k]['base']:.1f}") for k in G.STATS if k in RS["stats"]]
+        check(cells == wantr and f"{RS['games']} game{'s' if RS['games'] != 1 else ''} · {RS['players']} player-games" in blk and "locked at tip and graded against the box score first" in src,
+              f"the record block is the record file's: {RS['games']} games, {RS['players']} player-games, " + ", ".join(f"{k} {m} vs {b}" for k, m, b in wantr))
+        tot = G.empty()
+        for n_ in R["nights"]: G.add(tot, n_)
+        check(G.rounded(tot) == R["total"] and len(re.findall(r"<li><b>", blk)) == min(5, len(R["nights"])) and (("Early days" in blk) == (RS["games"] < 30)),
+              "the record's totals are the sum of its nights, the last nights are listed, and a record under 30 games says it is too small to judge by")
     body = re.sub(r"<style.*?</style>|<script.*?</script>", "", src, flags=re.S)
     cards_html = body[body.find('<div class="grid">'):]
     check(not re.search(r"\b(best bet|best parlay|lock|edge|value|\+EV)\b", re.sub(r"<[^>]+>", " ", cards_html[:cards_html.find('class="nbstamp"')]), re.I) and "sportsbook.fanduel.com" not in cards_html,
@@ -229,6 +278,13 @@ async def main():
             await pg.evaluate("window.scrollTo(0, 0)"); await pg.click(f'.nav a[href="#{last}"]'); await pg.wait_for_timeout(500)
             n = await pg.evaluate(f"(function(){{ var c = document.getElementById('{last}'); return [c.classList.contains('expanded'), c.getBoundingClientRect().top]; }})()")
             check(n[0] and -5 <= n[1] <= 320, T(f"a game's chip at the top jumps to that game and opens it ({last})"))
+            if RS:
+                await pg.evaluate("window.scrollTo(0, 0)"); await pg.wait_for_timeout(300)
+                r0 = await pg.evaluate("(function(){ var d = document.getElementById('nbrec'), s = d.querySelector('summary').getBoundingClientRect(); return [d.open, s.height, d.getBoundingClientRect().height]; })()")
+                await pg.click("#nbrec > summary"); await pg.wait_for_timeout(250)
+                r1 = await pg.evaluate("(function(){ var d = document.getElementById('nbrec'), b = d.querySelector('.nbrc-b'); return [d.open, [...d.querySelectorAll('.nbrc-t')].every(function(t){ return t.getBoundingClientRect().right <= b.getBoundingClientRect().right + 1; }), document.documentElement.scrollWidth - innerWidth, d.querySelectorAll('.nbrc-t tbody tr').length]; })()")
+                check(not r0[0] and r0[1] >= 44 and r0[2] <= 110 and r1[0] and r1[1] and r1[2] <= 0 and r1[3] >= 4, T(f"the record starts closed in a strip {r0[2]:.0f}px tall; a tap opens it and its tables fit the screen"))
+                await pg.click("#nbrec > summary"); await pg.wait_for_timeout(150)
             late = B["day"] < N.nba_day()
             nb = await pg.evaluate("(function(){ var o = document.getElementById('nbold'); return [!!o && o.hidden, o ? o.getClientRects().length : -1, document.querySelector('.grid').getAttribute('data-day')]; })()")
             check(nb[2] == B["day"] and nb[0] == (not late) and (nb[1] == 0) == (not late), T(f"the old-board note is {'shown: the board is for a day already over' if late else 'hidden: the board is for today or a day to come'} ({B['day']})"))

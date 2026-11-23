@@ -933,7 +933,7 @@ if os.path.exists(os.path.join(OUT, "stocks.html")):
 _nb = os.path.join(SITE, "nba")
 if os.path.exists(os.path.join(OUT, "nba-boards.html")):
     made.append(place(os.path.join(OUT, "nba-boards.html"), os.path.join(OUT, "img-none"), _nb, "/nba/"))
-    for _f, _t in (("nba_board.json", "board.json"), ("nba_sig.json", "sig.json")):   # the board the page was drawn from, and its signature (reprice.nba_changed)
+    for _f, _t in (("nba_board.json", "board.json"), ("nba_sig.json", "sig.json"), ("nba_record.json", "record.json")):   # the board the page was drawn from, its signature (reprice.nba_changed), and the grading record the page shows
         if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_nb, _t))
 elif os.path.isdir(_nb):
     shutil.rmtree(_nb)

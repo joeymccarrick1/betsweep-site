@@ -74,11 +74,78 @@ def load(clone=None, path=None):
     if not clone or not os.path.isdir(clone):
         return None
     subprocess.run(["git", "-C", clone, "fetch", "-q", "--depth", "1", "origin", "+feeds-sports:refs/remotes/origin/feeds-sports"], capture_output=True, text=True)
-    r = subprocess.run(["git", "-C", clone, "show", "origin/feeds-sports:nba/board.json"], capture_output=True)
+    return feed_file(clone, "nba/board.json")
+
+
+def feed_file(clone, name):
+    """a JSON file of the feeds-sports branch as the clone last fetched it, or None"""
+    if not clone or not os.path.isdir(clone):
+        return None
+    r = subprocess.run(["git", "-C", clone, "show", f"origin/feeds-sports:{name}"], capture_output=True)
     if r.returncode != 0:
         return None
     try: return json.loads(r.stdout)
     except Exception: return None
+
+
+RSTAT = (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"), ("fg3", "Threes"))
+RBUCKET = ("under 20%", "20 to 40%", "40 to 60%", "60 to 80%", "80% and up")
+
+
+def day_label(day):
+    try: d = dt.date.fromisoformat(day); return f"{d.strftime('%a')} {d.month}/{d.day}"
+    except Exception: return str(day)
+
+
+def record_block(R):
+    """The grading record (sports/nba/grade.py), as the page shows it. Three states, each saying only what is true:
+    no record file in reach - nothing is shown; a record with no graded game yet - it says how many games are locked and waiting;
+    graded games - mean misses for the model and for a season average on the same players, the chance ladders against what happened,
+    the nights, and what was left out. While the record is small the block says so."""
+    if not R or not isinstance(R.get("total"), dict):
+        return ""
+    from sports.nba import grade as G
+    S = G.summary(R)
+    missed = len(R.get("missed") or {})
+    if not S:
+        w = R.get("waiting") or 0
+        return ('<p class="nbrec none" id="nbrec"><b>Grading has started.</b> Each game\'s numbers are locked at tip and scored against the box score when the game ends. '
+                + (f'{w} game{"s" if w != 1 else ""} locked and waiting; ' if w else '') + 'the first results appear here.</p>')
+    T = R["total"]
+    f1 = lambda x: f"{x:.1f}"
+    lead = S["stats"].get("pts")
+    head = (f'<summary><b>Graded so far</b><span class="nbrc-n">{S["games"]} game{"s" if S["games"] != 1 else ""} · {S["players"]} player-games</span>'
+            + (f'<span class="nbrc-l">points off by {f1(lead["model"])} <i>(season average {f1(lead["base"])})</i></span>' if lead else '') + '</summary>')
+    rows = ""
+    for k, lab in RSTAT:
+        x = S["stats"].get(k)
+        if not x: continue
+        m, b = f1(x["model"]), f1(x["base"])
+        who = "same" if m == b else ("model" if x["model"] < x["base"] else "average")
+        rows += (f'<tr data-k="{k}"><th>{lab}</th><td class="{"win" if who == "model" else ""}">{m}</td><td class="{"win" if who == "average" else ""}">{b}</td>'
+                 f'<td class="nbrc-w">{"model closer" if who == "model" else ("season average closer" if who == "average" else "the same")}</td></tr>')
+    table = ('<table class="nbrc-t"><thead><tr><th>Average miss</th><th>Model</th><th>Season avg</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>')
+    mn = S.get("min")
+    notes = []
+    if mn: notes.append(f'Minutes were off by {f1(mn["mae"])} a player on average.')
+    if S["dnp"]: notes.append(f'{S["dnp"]} player{"s" if S["dnp"] != 1 else ""} the board projected did not play; they are counted here, not in the averages.')
+    if missed: notes.append(f'{missed} game{"s" if missed != 1 else ""} could not be graded: no board had been built before the tip.')
+    # the chance ladders, all four stats together: of the lines given a chance in each band, how many were reached
+    cal = [[sum(T["cal"][k][i][j] for k, _ in RSTAT) for j in range(3)] for i in range(len(RBUCKET))]
+    crow = "".join(f'<tr><th>{RBUCKET[i]}</th><td>{round(100 * c[1] / c[0])}%</td><td>{round(100 * c[2] / c[0])}%</td><td class="nbrc-w">{c[0]} lines</td></tr>' for i, c in enumerate(cal) if c[0])
+    ctab = ('<table class="nbrc-t nbrc-c"><thead><tr><th>Chance the board gave</th><th>Happened</th><th>Board said</th><th></th></tr></thead><tbody>' + crow + '</tbody></table>') if crow else ""
+    nights = ""
+    for n in (R.get("nights") or [])[-5:][::-1]:
+        st = n["stats"]["pts"]
+        nights += (f'<li><b>{E(day_label(n["day"]))}</b> {n["games"]} game{"s" if n["games"] != 1 else ""}, {n["players"]} player-games'
+                   + (f', points off by {f1(st["model"] / st["n"])} (season average {f1(st["base"] / st["n"])})' if st["n"] else '') + '</li>')
+    early = ('<p class="nbrc-early">Early days: ' + (f'{S["games"]} games are' if S["games"] != 1 else 'one game is') + ' too few to judge a model by. Nothing here is a pick yet.</p>') if S["games"] < 30 else ""
+    how = ('<p class="nbrc-how">Each game\'s numbers are locked from the last board built before its tip and are not changed afterwards. '
+           'The model and the season average are scored on the same players, against the box score.</p>')
+    return (f'<details class="nbrec" id="nbrec">{head}<div class="nbrc-b">{early}{table}' + (f'<p class="nbrc-notes">{" ".join(notes)}</p>' if notes else '')
+            + ctab + (f'<ul class="nbrc-nights">{nights}</ul>' if nights else '') + how + '</div></details>')
+
+
 
 
 def lum(h):
@@ -232,6 +299,7 @@ NB_CSS = """
 .nbbar{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 10px;margin:10px 0 0;padding:0 2px} .nbsw{display:flex;gap:6px} .nbsw a{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1.5px solid var(--line);border-radius:999px;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-decoration:none}
 .nbsw a[aria-current]{background:var(--ink);border-color:var(--ink);color:var(--bg)} .nbsw a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .nbpre{margin:10px 0 12px;border:1px dashed color-mix(in srgb,var(--red) 55%,var(--line));border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--mute)} .nbpre b{color:var(--ink)}
+.nbrec{margin:0 0 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;line-height:1.45;color:var(--ink)} p.nbrec{padding:10px 12px;color:var(--mute)} p.nbrec b{color:var(--ink)} .nbrec>summary{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-height:44px;padding:9px 40px 9px 12px;cursor:pointer;list-style:none} .nbrec>summary::-webkit-details-marker{display:none} .nbrec>summary b{font-family:var(--ctl,var(--display));text-transform:uppercase;letter-spacing:.04em;font-size:13.5px} .nbrec>summary:after{content:'+';position:absolute;right:14px;top:11px;color:var(--mute);font-size:20px;line-height:1} .nbrec[open]>summary:after{content:'\\2212'} .nbrc-n{color:var(--mute);font-size:13px} .nbrc-l{flex:1 0 100%;font-size:14px} .nbrc-l i{font-style:normal;color:var(--mute)} .nbrc-b{padding:2px 12px 12px;border-top:1px solid var(--line)} .nbrc-b p{margin:10px 0 0;color:var(--mute);font-size:13.5px} .nbrc-b p.nbrc-early{color:var(--ink);font-weight:600} .nbrc-t{width:100%;border-collapse:collapse;margin:10px 0 0;font-size:14px;font-variant-numeric:tabular-nums} .nbrc-t th,.nbrc-t td{padding:6px 6px 6px 0;text-align:right;border-bottom:1px solid var(--line)} .nbrc-t th:first-child{text-align:left;font-weight:600} .nbrc-t thead th{font-size:12px;font-weight:500;color:var(--mute)} .nbrc-t td.win{color:var(--good);font-weight:700} .nbrc-t td.nbrc-w{color:var(--mute);font-size:12.5px;white-space:nowrap} .nbrc-nights{list-style:none;margin:10px 0 0;padding:0;color:var(--mute);font-size:13.5px} .nbrc-nights li{padding:3px 0} .nbrc-nights b{color:var(--ink);font-weight:600;margin-right:6px}
 .nbold{margin:10px 0 12px;border:1.5px solid var(--bad);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45;color:var(--ink);background:color-mix(in srgb,var(--bad) 10%,transparent)} .nbold[hidden]{display:none}
 .nbstate{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:9px 14px;border-top:1px solid var(--line);font-size:14px} .nbstate b{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
 .nbstate.s-post b{color:var(--mute)} .nbstate span{font-weight:600;color:var(--ink)} .nbstate small{color:var(--mute);font-size:12px}
@@ -304,7 +372,7 @@ NB_JS = r"""<script>
 </script>"""
 
 
-def page(B):
+def page(B, R=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     # tonight's rank at each position group by projected points (the NFL card's "#14 QB")
     ranks = {}
@@ -316,8 +384,10 @@ def page(B):
     desc = (f"NBA matchup boards for {B['day_label']}: the model's minutes, points, rebounds, assists and threes for every rotation player in tonight's {n} game{'s' if n != 1 else ''}, "
             "who is out, and what each defense allows. A preview: model numbers only.")
     inj = ("the injury report as of " + fmt_ct(B.get("injuries_at"))) if B.get("injuries") else "no injury report was in reach, so each team is the players of its last game"
+    # the last sentence says the grading is running only when its record is in reach (the feeds-sports job writes it)
     pre = ('<div class="nbpre"><b>NBA preview.</b> Model numbers only: FanDuel prices are not connected yet, so there are no edges or betslip buttons. '
-           'Nothing here is a pick: the projections have to be graded against results first.</div>')
+           + ('Nothing here is a pick: every game is locked at tip and graded against the box score first.' if R and isinstance(R.get("total"), dict)
+              else 'Nothing here is a pick: the projections have to be graded against results first.') + '</div>')
     key = ('<details class="nbkey"><summary>How to read the board</summary><dl>'
            '<dt>Score</dt><dd>The model\'s points for each team tonight. The posted line beside the tip time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
            '<dt>Bar and number</dt><dd>Projected points, with the bar scaled to the game\'s top scorer. The tag after it is his place among tonight\'s guards, forwards or centers.</dd>'
@@ -330,7 +400,7 @@ def page(B):
     cards = "\n".join(game_card(g, B, ranks) for g in B["games"])
     return (f'<title>BetSweep · NBA Matchup Boards</title>\n<style>{css}</style>\n<style>{NB_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>NBA · {E(B["day_label"])}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to game">{nav}</nav>\n</div>\n'
-            f'<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/nba/" aria-current="page">NBA</a></div>{key}</div>\n{pre}\n'
+            f'<div class="nbbar"><div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a><a href="/nba/" aria-current="page">NBA</a></div>{key}</div>\n{pre}\n{record_block(R)}\n'
             f'<div class="nbold" id="nbold" hidden><b>This board is for {E(B["day_label"])}.</b> A newer one is not up yet, so every number below is from that day.</div>\n'
             f'<div class="grid" data-day="{E(B["day"])}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{NB_JS}\n')
 
@@ -348,9 +418,10 @@ def fmt_ct(iso):
         return "?"
 
 
-def signature(B):
-    """what a visitor would notice changing: the day, the games and their state, who is out, each player's points to the whole number"""
-    return json.dumps([B.get("day"), [(g["key"], g.get("state"), (g.get("line") or {}).get("details")) for g in B["games"]], sorted((ab, sorted(o["name"] for o in t.get("out") or [])) for ab, t in B["teams"].items()),
+def signature(B, R=None):
+    """what a visitor would notice changing: the day, the games and their state, who is out, each player's points to the whole number, and the graded record growing"""
+    t = (R or {}).get("total") or {}
+    return json.dumps([[t.get("games"), t.get("players"), (R or {}).get("waiting")] if R else None, B.get("day"), [(g["key"], g.get("state"), (g.get("line") or {}).get("details")) for g in B["games"]], sorted((ab, sorted(o["name"] for o in t.get("out") or [])) for ab, t in B["teams"].items()),
                        sorted((p["id"], round(p["proj"].get("pts") or 0)) for p in B["players"])], sort_keys=True)
 
 
@@ -359,16 +430,23 @@ def main():
     B = load(path=a[a.index("--board") + 1]) if "--board" in a else load(clone=(a[0] if a else None))
     ok, why = usable(B, any_day="--board" in a)   # a board file named by hand is drawn whatever its day (tests, local work)
     if not ok:
-        for f in (PAGE, os.path.join(OUT, "nba_board.json"), os.path.join(OUT, "nba_sig.json")):
+        for f in (PAGE, os.path.join(OUT, "nba_board.json"), os.path.join(OUT, "nba_sig.json"), os.path.join(OUT, "nba_record.json")):
             if os.path.exists(f): os.remove(f)
         print(f"nba: no page written - {why}")
         return
+    # the grading record: a file named by hand, or the feed branch's (fetched with the board just above)
+    R = load(path=a[a.index("--record") + 1]) if "--record" in a else (None if "--board" in a else feed_file(a[0] if a else None, "nba/record.json"))
+    if R is not None and not (isinstance(R, dict) and isinstance(R.get("total"), dict) and R.get("sport") == "nba"):
+        print("nba: the grading record is not in a shape this page reads - the page is drawn without it"); R = None
     os.makedirs(OUT, exist_ok=True)
-    open(PAGE, "w", encoding="utf-8").write(page(B))
+    open(PAGE, "w", encoding="utf-8").write(page(B, R))
+    rp = os.path.join(OUT, "nba_record.json")
+    if R is not None: json.dump(R, open(rp, "w"), separators=(",", ":"))
+    elif os.path.exists(rp): os.remove(rp)
     # beside the page: the board it was drawn from (tests redo the page from it; later pages will read it) and the signature the hourly
     # job compares with the live one to decide whether the NBA page alone is worth a publish (reprice.nba_changed)
     json.dump(B, open(os.path.join(OUT, "nba_board.json"), "w"), separators=(",", ":"))
-    json.dump({"day": B.get("day"), "built": B.get("built"), "sig": signature(B)}, open(os.path.join(OUT, "nba_sig.json"), "w"))
+    json.dump({"day": B.get("day"), "built": B.get("built"), "sig": signature(B, R)}, open(os.path.join(OUT, "nba_sig.json"), "w"))
     print(f"nba boards: {B['day_label']}, {len(B['games'])} games, {len(B['players'])} players, {sum(len(t.get('out') or []) for t in B['teams'].values())} out; board built {fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
 
 
