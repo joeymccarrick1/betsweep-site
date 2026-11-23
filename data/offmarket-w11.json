@@ -288,6 +288,18 @@
    "gap": 3.0,
    "p": 0.443,
    "seen": "2026-11-23 10:35"
+  },
+  "Antonio Williams|Receiving Yards|40": {
+   "pl": "Antonio Williams",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "CIN-WAS",
+   "fd": 116.0,
+   "dk": -103.0,
+   "hr": 100.0,
+   "gap": 3.7,
+   "p": 0.473,
+   "seen": "2026-11-23 15:35"
   }
  }
 }
