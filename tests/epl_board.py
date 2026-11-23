@@ -340,6 +340,24 @@ async def main():
                 await pg.click(f'.card.summary a[data-open="{s["sc"][0][0]}"]'); await pg.wait_for_timeout(600)
                 j = await pg.evaluate("""(function(a){ var c = document.querySelector(a[1]), li = c.querySelector('li.pl[data-pid="' + a[0] + '"]'), r = li.getBoundingClientRect(); return [c.classList.contains('expanded'), !li.querySelector('.pdetail').hidden, r.top >= 0 && r.top <= innerHeight - 80]; })""", [s["sc"][0][0], s["sc"][0][1]])
                 check(j == [True, True, True], T(f"tapping {sc6[0]['name']} in the Slate opens his match and his row, on screen"))
+                # 11/23: a board can hold two rounds (it did that afternoon: Gameweeks 11 and 13), so a player can sit in two match cards, and the
+                # Slate line must open the match it names. Made independent of the day's data: his row is first copied into the page's first
+                # match card, so "the first card that holds him" is the wrong one whichever matches are on the board.
+                d = await pg.evaluate(r"""(function(){
+                  var cards = [...document.querySelectorAll('.card[id]:not(.summary)')].filter(function(c){ return c.querySelector('li.pl'); }), links = [...document.querySelectorAll('.card.summary a[data-open]')];
+                  for (var i = 0; i < links.length; i++){ var a = links[i], pid = a.getAttribute('data-open'), tgt = document.getElementById((a.getAttribute('href') || '#').slice(1)), k = cards.indexOf(tgt); if (k < 1) continue;
+                    var li = tgt.querySelector('li.pl[data-pid="' + pid + '"]'); if (!li) continue;
+                    var other = cards[0], real = !!other.querySelector('li.pl[data-pid="' + pid + '"]');
+                    if (!real){ var cl = li.cloneNode(true); cl.setAttribute('data-clone', '1'); other.querySelector('li.pl').parentNode.appendChild(cl); }
+                    [tgt, other].forEach(function(c){ c.classList.remove('expanded'); var x = c.querySelector('li.pl[data-pid="' + pid + '"]'); x.querySelector('.pdetail').hidden = true; x.querySelector('.prow').setAttribute('aria-expanded', 'false'); });
+                    a.setAttribute('data-test', '1'); return {pid: pid, tgt: tgt.id, other: other.id, real: real};
+                  } return null; })()""")
+                if d:
+                    await pg.evaluate("window.scrollTo(0, 0)"); await pg.click('.card.summary a[data-test="1"]'); await pg.wait_for_timeout(600)
+                    j2 = await pg.evaluate("""(function(d){ var c = document.getElementById(d.tgt), o = document.getElementById(d.other), li = c.querySelector('li.pl[data-pid="' + d.pid + '"]'), ol = o.querySelector('li.pl[data-pid="' + d.pid + '"]'), r = li.getBoundingClientRect();
+                      var out = [c.classList.contains('expanded'), !li.querySelector('.pdetail').hidden, r.top >= 0 && r.top <= innerHeight - 80, ol.querySelector('.pdetail').hidden, !o.classList.contains('expanded')];
+                      [...document.querySelectorAll('li.pl[data-clone]')].forEach(function(x){ x.remove(); }); var a = document.querySelector('a[data-test]'); if (a) a.removeAttribute('data-test'); return out; })""", d)
+                    check(j2 == [True, True, True, True, True], T(f"a player who sits in two match cards: his Slate line opens the match it names ({d['tgt']}), not the first card that holds him ({d['other']})"))
             if RS:
                 await pg.evaluate("window.scrollTo(0, 0)"); await pg.wait_for_timeout(300)
                 r0 = await pg.evaluate("(function(){ var d = document.getElementById('nbrec'), s = d.querySelector('summary').getBoundingClientRect(); return [d.open, s.height, d.getBoundingClientRect().height]; })()")

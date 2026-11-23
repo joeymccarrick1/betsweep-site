@@ -3766,3 +3766,16 @@ moment a phone drops the sign-up and the next time the app is opened - alerts se
 **Test:** `tests/alerts_keep.py` (port 8889, in tests/prepublish.sh): a made-up account client with the owner-only rule, a made-up
 push service, and the service worker's push handler run under node. `SITE=<the old build> python3 tests/alerts_keep.py` fails,
 as it should. tests/promo_up.py and tests/news_up.py read the new save calls.
+
+## 11/23 3:20-3:40 PM CT: a Slate name opened the wrong match once a soccer board held two rounds
+
+Found by the full pre-publish set run for the alert change (epl_board, 3 failures; the change itself did not touch the boards, and the
+same failure was on the published copy). Between 2:05 and 2:52 PM the EPL feed's board grew to two rounds (Gameweeks 11 and 13,
+12 matches; 64 player ids in more than one match). The shared tap handler (build_nba.py NB_JS, used by /nba/, the soccer leagues and
+/cfb/) opened `document.querySelector('.pl[data-pid=...]')` - the FIRST card holding the player - so "Awoniyi 54% COV v IPS" opened his
+row under LEE v COV, a different match with different numbers. Now it opens his row inside the card the line links to (`href="#COV-IPS"`),
+and falls back to the first card only when that card does not hold him. No number changed; only which card a tap opens.
+tests/epl_board.py gained a check that does not depend on the day's data: the player's row is copied into the page's first match card
+before the tap, so the first card that holds him is always the wrong one. It fails on the build from before the fix.
+The alert change was pushed and published with this one known, unrelated failure on record (49680ba5); this fix followed with its own
+full set.
