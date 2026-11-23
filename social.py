@@ -1,6 +1,11 @@
 """social.py - BetSweep Social (owner 10/26): users post their betslips, others tail and upvote; the most-upvoted open slips sit on top;
 a slip leaves the feed as soon as one leg loses or once every leg's game is over.
 
+11/23 (owner: "Once a leg from a slip that someone posted on social loses please take the slip off the site"): that sentence is now
+true of the whole site, not only of the Top tab. A posted slip is drawn only while it is open or live, or once it has cashed - no
+Lost tab, no profile, no game view, not on Today's strip, not in a Boards card's count, and its own link says it came off. The
+grader is one shared block (GRADE_JS) and the pages share one reader of the week's finished games (READ_JS). RUNBOOK has the rest.
+
 Pieces:
   SQL           run once in the Supabase SQL editor (also gen/social.sql) - tables feed_posts / feed_votes / feed_reports, row-level security,
                 vote counting, a posting limit, and auto-hide at 3 reports.
@@ -357,6 +362,7 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc .bar a.pri{background:#d7332a;border-color:#d7332a;color:#fff}
 .soc .bar .seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .soc .empty{padding:26px 16px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:12px}
+.soc .offnote{margin:12px 2px 0;font-size:13px;line-height:1.45;color:var(--mute)} .soc .lede.hold{margin:0}
 .soc .empty b{display:block;font-family:var(--display);font-size:20px;color:var(--ink);margin-bottom:4px} .soc .empty .act{display:inline-block;margin-top:14px;background:var(--red);color:#fff;font-weight:700;text-decoration:none;border-radius:10px;padding:12px 18px}
 .post .av,.soc .prof .av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;font-style:normal;color:#fff;letter-spacing:.02em}
 .av.c0{background:#c2410c}.av.c1{background:#0f766e}.av.c2{background:#1d4ed8}.av.c3{background:#7e22ce}.av.c4{background:#be123c}.av.c5{background:#4d7c0f}.av.c6{background:#b45309}.av.c7{background:#334155}
@@ -434,6 +440,90 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .soc .rules{font-size:12px;color:var(--mute);line-height:1.5;margin-top:18px}
 """
 
+# ---------------- grading, shared (11/23) ----------------
+# One copy of the leg grader for every page that shows posted slips: the Social page, Today's "Top on Social" strip, the Boards
+# "N slips on Social" count and the single-slip page (/b/?p=). Until 11/23 only the Social page graded; the other three drew or
+# counted a slip whatever had happened to its legs. The including script declares G, BOX, FIRST and SUMOK first.
+GRADE_JS = r"""  // ---- grading (social.GRADE_JS: the same code on every page that shows posted slips) ----
+  var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
+  function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
+  function num(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; }
+  function parseBox(js, gid){ try {
+    (js.boxscore.players || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || cat.labels || [];
+      (cat.athletes || []).forEach(function(a){ var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
+        var r = BOX[n] = BOX[n] || {pass: 0, ptd: 0, rush: 0, rec: 0, recy: 0, long: 0, rtd: 0, ctd: 0}; var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
+        // 11/16: touchdowns are SET per category, not added - the box is re-read every minute and "+=" doubled a scorer's TDs on the second read
+        if(cat.name === 'passing'){ r.pass = num(S.passingYards != null ? S.passingYards : S.YDS); r.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); }
+        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
+        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = num(S.longReception != null ? S.longReception : S.LONG); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
+        if(cat.name === 'kickReturns' || cat.name === 'puntReturns'){ var tk = Object.keys(S).filter(function(k){ return /touchdown/i.test(k) || k === 'TD'; })[0]; if(tk) r[cat.name === 'kickReturns' ? 'krtd' : 'prtd'] = num(S[tk]); }   // 11/17: a return touchdown pays an anytime-TD leg too
+      }); }); });
+    var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
+    if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
+    if((js.boxscore.players || []).length) SUMOK[gid] = 1;   // 11/17: this game's box score really was read
+  } catch(e){} }
+  var CUR = {G: G, BOX: BOX, FIRST: FIRST};
+  function gradeLeg(l, C){
+    C = C || CUR;
+    if(/^Under /.test(l.m)){ var s0 = gradeLeg(Object.assign({}, l, {m: l.m.slice(6), ln: Math.floor(l.ln) + 1}), C); return s0 === 'hit' ? 'dead' : s0 === 'dead' ? 'hit' : s0; }   // unders: the other side of the (X+1)+ over
+    var g = C.G[l.g]; if(!g || g.st === 'pre') return 'open'; var fin = g.st === 'post';
+    if(l.gl){ var sa = +g.sa || 0, sb = +g.sb || 0, tot = sa + sb, x = l.gl, ln = +l.ln || 0;
+      if(x.k !== 'M'){ var over = String(x.side).toUpperCase() === 'OVER'; return over ? (tot > ln ? 'hit' : fin ? 'dead' : 'open') : (tot > ln ? 'dead' : fin ? 'hit' : 'open'); }
+      if(!fin) return 'open'; var me = x.side === g.a ? sa : sb, them = x.side === g.a ? sb : sa; return (me - them + (l.m === 'Moneyline' ? 0 : ln)) > 0 ? 'hit' : 'dead'; }
+    var r = C.BOX[norm(l.pl)], sure = C !== CUR;   // live box: a player we cannot find is left open, never called a miss (a name mismatch must not bust a slip); a graded week's file is complete
+    if(l.m === 'First TD'){ var f = C.FIRST[l.g]; if(!f) return (fin && !sure && SUMOK[l.g]) ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }   // 11/17: "no first TD" only once that game's box score has been read - a final whose box did not load used to bust the leg
+    if(l.m === 'Passing TDs'){ if(r && (r.ptd || 0) >= Math.round(l.ln)) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
+    if(l.m === 'Either TD'){ var rs = String(l.pl).split(/\s+or\s+/).map(function(n){ return C.BOX[norm(n)]; });
+      if(rs.some(function(q){ return q && (q.rtd || 0) + (q.ctd || 0) + (q.krtd || 0) + (q.prtd || 0) >= 1; })) return 'hit'; return fin && (sure || rs.every(Boolean)) ? 'dead' : 'open'; }
+    if(/TD$/.test(l.m)){ var needT = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : 1; if(r && (r.rtd || 0) + (r.ctd || 0) + (r.krtd || 0) + (r.prtd || 0) >= needT) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
+    var v = !r ? (fin && sure ? 0 : null) : l.m === 'Passing Yards' ? r.pass : l.m === 'Rushing Yards' ? r.rush : l.m === 'Receiving Yards' ? r.recy : l.m === 'Receptions' ? r.rec : l.m === 'Longest Reception' ? r.long : l.m === 'Rush + Rec Yards' ? r.rush + r.recy : null;
+    if(['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'].indexOf(l.m) < 0) return 'open';   // a market this page cannot grade stays open
+    if(v == null) return 'open'; return v >= Math.round(l.ln) ? 'hit' : (fin ? 'dead' : 'open');
+  }
+  function stateOf(p, C){ var ls = p.legs || [], dead = 0, hits = 0, fin = ls.length > 0, live = false;
+    ls.forEach(function(l){ var s = gradeLeg(l, C); if(s === 'hit') hits++; if(s === 'dead') dead++; var g = (C || CUR).G[l.g]; if(!g || g.st !== 'post') fin = false; if(g && g.st !== 'pre') live = true; });
+    return {hits: hits, n: ls.length, st: dead ? 'busted' : (ls.length && hits === ls.length) ? 'cashed' : fin ? 'done' : live ? 'live' : 'open'}; }
+  function settled(x){ return x.st === 'busted' || x.st === 'cashed' || x.st === 'done'; }
+"""
+
+# What a page knows about the week's games before (or without) reading ESPN: the week's box file, which the hourly build writes from
+# the finals feed (build_mydata.py). The Social page reads it once so a slip that lost a leg yesterday is never drawn while the live
+# scores are still on their way; the Today strip, the Boards count and the single-slip page use it so they need ESPN only for games
+# in play or just over. The file has rushing and receiving touchdowns only and no first scorer ("it can confirm a TD leg but never
+# take one away", build_live.py regradeRow), which is what unsure() is for.
+READ_JS = r"""  // ---- what is known about the week's games (social.READ_JS) ----
+  var FILEOK = {}, ESPNOK = {};   // games the week's box file has as finals / games whose box score this page read from ESPN itself
+  function fileRead(w){
+    return fetch('/data/weeks.json').then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      if(!j || (j.weeks || []).indexOf(+w) < 0) return null;   // no file for this week yet: nothing to ask for
+      return fetch('/data/box-w' + (+w) + '.json').then(function(r){ return r.ok ? r.json() : null; }); }).then(function(d){ if(!d) return;
+      Object.keys(d.games || {}).forEach(function(k){ var t = k.split('-'), v = d.games[k], r = t[1] + '-' + t[0];
+        if(!G[k]) G[k] = {st: 'post', a: t[0], b: t[1], sa: v[0], sb: v[1]}; if(!G[r]) G[r] = {st: 'post', a: t[1], b: t[0], sa: v[1], sb: v[0]}; FILEOK[k] = FILEOK[r] = 1; });
+      Object.keys(d.box || {}).forEach(function(n){ var v = d.box[n], k = norm(n); if(!BOX[k]) BOX[k] = {pass: +v[0] || 0, ptd: +v[1] || 0, rush: +v[3] || 0, rec: +v[5] || 0, recy: +v[6] || 0, long: +v[8] || 0, rtd: +v[4] || 0, ctd: +v[7] || 0}; });
+    }).catch(function(){}); }
+  // a leg the file alone cannot settle: a first touchdown (the file has no first scorer) or a touchdown leg it calls dead (a return touchdown is not in the file)
+  function unsure(l){ return !!FILEOK[l.g] && !ESPNOK[l.g] && !l.gl && (l.m === 'First TD' || (/TD$/.test(l.m) && gradeLeg(l) === 'dead')); }
+  // has this leg's game been read? A leg that has not kicked off needs nothing; a game line needs the score; a player leg needs a box score
+  function legRead(l){ if(!l || !l.g || !l.ko || Date.now() < l.ko) return true; var g = G[l.g]; if(!g) return false; if(g.st === 'pre' || l.gl || ESPNOK[l.g]) return true; return !!FILEOK[l.g] && !unsure(l); }
+  function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
+  // one read of ESPN for the legs whose game has kicked off and is still unread: the scoreboard, then the box score of at most `cap`
+  // games. Resolves when it is done or after `cut` ms, and never rejects; what it could not read simply stays unread.
+  function liveRead(legs, cap, cut){
+    var need = (legs || []).filter(function(l){ return l && l.g && !legRead(l); }); if(!need.length) return Promise.resolve();
+    var t0 = Math.min.apply(null, need.map(function(l){ return l.ko; })), t1 = Math.max.apply(null, need.map(function(l){ return l.ko; })), order = [];
+    need.forEach(function(l){ if(order.indexOf(l.g) < 0) order.push(l.g); });
+    var job = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + ymd(t0 - 864e5) + '-' + ymd(t1 + 864e5), {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){
+      if(!js) return;
+      (js.events || []).forEach(function(ev){ var c = (ev.competitions || [])[0]; if(!c) return; var by = {}; (c.competitors || []).forEach(function(x){ by[ab(x.team && x.team.abbreviation)] = x.score; });
+        order.forEach(function(gid){ var p = gid.split('-'); if(!(p[0] in by) || !(p[1] in by)) return; var ty = ((ev.status || c.status || {}).type) || {};
+          G[gid] = {eid: ev.id, st: ty.state || 'pre', a: p[0], b: p[1], sa: by[p[0]], sb: by[p[1]]}; }); });
+      var on = order.filter(function(gid){ return G[gid] && G[gid].eid && G[gid].st !== 'pre' && need.some(function(l){ return l.g === gid && !l.gl; }); }).slice(0, cap || 4);
+      return Promise.all(on.map(function(gid){ return fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + G[gid].eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(s){ if(s){ parseBox(s, gid); ESPNOK[gid] = 1; } }).catch(function(){}); }));
+    }).catch(function(){});
+    return cut ? Promise.race([job, new Promise(function(res){ setTimeout(res, cut); })]) : job;
+  }
+"""
+
 PAGE_JS = r"""<script>(function(){
   var W = __WEEK__, list = document.getElementById('feed'), info = document.getElementById('feedinfo');
   var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
@@ -464,6 +554,11 @@ PAGE_JS = r"""<script>(function(){
   function hotQ(){ return A.client.from('feed_posts').select('user_id,last_ko,created_at,result').eq('status', 'open').eq('result', 'won').gte('created_at', new Date(Date.now() - (HOT_DAYS + 7) * 864e5).toISOString()); }
   function hot(uid){ return HOT[uid] ? '<span class="hot" role="img" aria-label="Hit recently" title="Cashed a slip in the last ' + HOT_DAYS + ' days">🔥</span>' : ''; }
   try { sort = localStorage.getItem('bs_social_sort') || 'top'; } catch(e){}
+  if(['top', 'new', 'following', 'cashed', 'sharp'].indexOf(sort) < 0) sort = 'top';   // a tab this page no longer has (Lost, until 11/23)
+  // 11/23: a game link (a Boards card says "3 slips on Social") opens on that game's slips whatever tab was saved - a reader whose last
+  // tab was Cashed or Sharps used to land there and not find the three slips. The saved choice itself is left alone.
+  function gameTab(){ if(GF && sort !== 'top' && sort !== 'new'){ sort = 'top'; document.querySelectorAll('.soc .seg button').forEach(function(b){ b.classList.toggle('on', b.dataset.s === sort); }); } }
+  gameTab();
   function client(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount); if(n > 60){ info.textContent = ''; list.innerHTML = '<div class="empty"><b>The feed did not load.</b>Check your connection and try again.<a class="act" href="/social/">Reload</a></div>'; return; } setTimeout(function(){ client(cb, n + 1); }, 150); }   // same box as a failed read (11/17): the old one-line text had no button
   // owner 11/14 ("Can this show the games? How do we tell what under it's taking?"): every leg names its game
   function gameTxt(l){ return l.g ? ' · ' + esc(String(l.g).replace('-', ' vs ')) : ''; }
@@ -533,12 +628,22 @@ PAGE_JS = r"""<script>(function(){
         : '<div class="empty">Not enough graded legs yet - closing prices are captured for player props from Week 9 on. Post slips before the lines move to climb this board.</div>') +
       '<p class="rules">CLV = FanDuel\'s closing chance minus the chance in the price when the slip was posted (the BetSweep price at that moment), in points per leg. Game lines are not counted yet.</p></section>';
   }
-  // owner 11/16 (alpha, Social step 1 - never empty): a slip no longer disappears when it settles. Every post of the week is loaded,
-  // graded on the page, and sorted into open / live (Top and New) or settled (the Cashed tab: winners first, busted slips folded under).
-  function stateOf(p, C){ var ls = p.legs || [], dead = 0, hits = 0, fin = ls.length > 0, live = false;
-    ls.forEach(function(l){ var s = gradeLeg(l, C); if(s === 'hit') hits++; if(s === 'dead') dead++; var g = (C || CUR).G[l.g]; if(!g || g.st !== 'post') fin = false; if(g && g.st !== 'pre') live = true; });
-    return {hits: hits, n: ls.length, st: dead ? 'busted' : (ls.length && hits === ls.length) ? 'cashed' : fin ? 'done' : live ? 'live' : 'open'}; }
-  function settled(x){ return x.st === 'busted' || x.st === 'cashed' || x.st === 'done'; }
+  // owner 11/16 (alpha, Social step 1 - never empty): every post of the week is loaded and graded on the page.
+  // owner 11/23 12:12 PM ("Once a leg from a slip that someone posted on social loses please take the slip off the site"): a posted
+  // slip is drawn only while it is open or live, or once it has cashed. A slip with a dead leg, a stored result of lost or push, or
+  // every game over without every leg hit is drawn nowhere: no tab, no game view, no profile, the poster's own included (the Lost
+  // tab of 11/16 is gone, and the Terms have always said a post leaves the feed "once a leg loses or every game in them is over").
+  // The row stays in the database. fate() is the one place that decides it.
+  function fate(p, C){ return p.result ? (p.result === 'won' ? 'cashed' : 'busted') : stateOf(p, C).st; }
+  function shown(st){ return st === 'open' || st === 'live' || st === 'cashed'; }
+  // ...and a slip that has already lost must never flash on the page while the scores are on their way. For HOLD_MS after the
+  // first load a slip with a leg whose game has kicked off but has not been read yet (no box file, no ESPN answer) is held back:
+  // not drawn, not counted. Each read re-renders (sig() carries the held flag); one timer re-renders when the wait is up.
+  // The wait is counted on the page's own running clock (performance.now), not the wall clock: it is an elapsed time.
+  var T0 = -1, HOLD_MS = 6000, HT = 0, SKEL = '<p class="lede hold"><span class="skel"></span><span class="skel"></span></p>';
+  function tick(){ return (window.performance && performance.now) ? performance.now() : Date.now(); }
+  function held(p){ return !p.result && +p.week === W && T0 >= 0 && tick() - T0 < HOLD_MS && (p.legs || []).some(function(l){ return !legRead(l); }); }
+  function holdTimer(){ if(HT) return; HT = setTimeout(function(){ HT = 0; SIG = null; render(); }, Math.max(60, T0 + HOLD_MS - tick() + 40)); }
   function card(p, me, C, old){
     var ls = p.legs || [], x = p.result ? {st: p.result === 'won' ? 'cashed' : p.result === 'lost' ? 'busted' : 'done', hits: p.result === 'won' ? ls.length : 0, n: ls.length, graded: 1} : stateOf(p, C), over = settled(x), url = over || old ? null : fdUrl(ls), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
     var badge = x.st === 'cashed' ? '<span class="res won">Cashed' + (p.units != null ? ' · +' + (+p.units).toFixed(1) + 'u' : '') + '</span>' : x.st === 'busted' ? '<span class="res lost">Busted' + (x.graded ? '' : ' · ' + x.hits + ' of ' + x.n + ' hit') + '</span>' : x.st === 'done' ? '<span class="res">Final · ' + x.hits + ' of ' + x.n + ' graded hits</span>' : '';
@@ -569,48 +674,45 @@ PAGE_JS = r"""<script>(function(){
     var won = LAST.posts.filter(function(p){ return stateOf(p, LAST.C).st === 'cashed'; }).sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); }).slice(0, 5);
     return won.length ? '<h2 class="sec">Last week\'s winners</h2>' + won.map(function(p){ return card(p, me, LAST.C, true); }).join('') : '';
   }
-  function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (MYV[p.id] ? 'v' : '') + p.score + (MYT[p.id] ? 't' : '') + (p.tails || 0) + (MYRX[p.id] || '') + JSON.stringify(p.rx || {}) + (FOL[p.user_id] ? 'f' : ''); }).join(',') + '|' + (LAST ? LAST.posts.length : '-'); }
+  function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (held(p) ? 'h' : '') + (MYV[p.id] ? 'v' : '') + p.score + (MYT[p.id] ? 't' : '') + (p.tails || 0) + (MYRX[p.id] || '') + JSON.stringify(p.rx || {}) + (FOL[p.user_id] ? 'f' : ''); }).join(',') + '|' + (LAST ? LAST.posts.length : '-'); }
   var SIG = null;
   function render(){
-    var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'lost' || sort === 'sharp';   // the pinned house slips belong to the open feed
+    var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'sharp';   // the pinned house slips belong to the open feed
     if(VIEW){ SIG = null; if(hb) hb.hidden = true; profile(); return; }
     if(sort === 'sharp'){ SIG = null; sharps(); return; }
     SIG = sig();
     var me = A && A.user ? A.user.id : null, by = sort === 'new' ? function(a, b){ return new Date(b.created_at) - new Date(a.created_at); } : function(a, b){ return (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)); };
-    var open = [], won = [], lost = [];
-    POSTS.filter(inGame).sort(by).forEach(function(p){ var x = p.result ? {st: p.result === 'won' ? 'cashed' : 'busted'} : stateOf(p); (x.st === 'cashed' ? won : settled(x) ? lost : open).push(p); });
+    var open = [], won = [], wait = 0;   // owner 11/23: nothing else is drawn - see fate()
+    POSTS.filter(inGame).sort(by).forEach(function(p){ if(held(p)){ wait++; return; } var st = fate(p); if(st === 'cashed') won.push(p); else if(st === 'open' || st === 'live') open.push(p); });
+    if(wait) holdTimer();
+    var SK = wait ? SKEL : '';
     if(sort === 'following'){
       var mine = open.filter(function(p){ return FOL[p.user_id]; }), nf = Object.keys(FOL).length;
       if(hb) hb.hidden = true;
       info.textContent = !me ? 'Sign in to follow people' : nf ? 'Open slips from the ' + nf + ' ' + (nf === 1 ? 'person' : 'people') + ' you follow' : 'You are not following anyone yet';
-      list.innerHTML = mine.length ? mine.map(function(p){ return card(p, me); }).join('')
+      list.innerHTML = mine.length ? mine.map(function(p){ return card(p, me); }).join('') + SK : wait ? SK
         : '<div class="empty"><b>' + (!me ? 'Follow the people whose slips you like.' : nf ? 'Nobody you follow has an open slip.' : 'Nobody followed yet.') + '</b>' + (!me ? 'Sign in, then tap a name on any slip to see their record and follow them.' : 'Tap a name on any slip to see their record and follow them.') + '<a class="act" href="#" data-go="top">See the top slips</a></div>';
       return;
     }
     won.sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); });
     var cb = document.querySelector('.soc .seg button[data-s="cashed"]'); if(cb) cb.textContent = 'Cashed' + (won.length ? ' ' + won.length : '');
-    var lb = document.querySelector('.soc .seg button[data-s="lost"]'); if(lb) lb.textContent = 'Lost' + (lost.length ? ' ' + lost.length : '');
     if(sort === 'cashed'){
       info.textContent = won.length ? won.length + ' slip' + (won.length === 1 ? '' : 's') + ' cashed this week' : 'Slips that hit every leg land here';
-      if(!won.length && !lost.length && !LAST) loadLast();
-      list.innerHTML = (won.length ? won.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>Nothing has cashed yet this week.</b>A posted slip moves here the moment its last leg hits.' + POSTBTN + '</div>') +
-        (won.length ? '' : lastWeekHtml(me));
-    } else if(sort === 'lost'){
-      // owner 11/16: "Once one leg kills it, the bet should be off the pages or put into a lost tab"
-      info.textContent = lost.length ? lost.length + ' slip' + (lost.length === 1 ? '' : 's') + ' busted this week' : 'A slip lands here the moment one leg kills it';
-      list.innerHTML = lost.length ? lost.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>Nothing has busted this week.</b>Every posted slip is still alive.' + POSTBTN + '</div>';
+      if(!won.length && !wait && !LAST) loadLast();
+      list.innerHTML = won.length ? won.map(function(p){ return card(p, me); }).join('') + SK : wait ? SK
+        : '<div class="empty"><b>Nothing has cashed yet this week.</b>A posted slip moves here the moment its last leg hits.' + POSTBTN + '</div>' + lastWeekHtml(me);
     } else if(GF){
-      // one game asked for (a Boards card says "3 slips on Social"): show every slip on it - open first, then cashed, then lost - so the count on the card is what the reader finds
-      var allg = open.concat(won, lost);
-      info.textContent = allg.length + ' slip' + (allg.length === 1 ? '' : 's') + ' on this game' + (open.length ? ' · ' + open.length + ' open' : '') + (won.length ? ' · ' + won.length + ' cashed' : '') + (lost.length ? ' · ' + lost.length + ' lost' : '');
-      list.innerHTML = allg.length ? allg.map(function(p){ return card(p, me); }).join('') : '<div class="empty"><b>No slips on this game yet.</b>Build one and post it so others can tail it.' + POSTBTN + '</div>';
+      // one game asked for (a Boards card says "3 slips on Social"): the slips on it that are still up - open first, then cashed. The Boards count leaves the lost ones out too, so the count on the card is what the reader finds
+      var allg = open.concat(won);
+      info.textContent = wait && !allg.length ? 'Reading the live scores…' : allg.length + ' slip' + (allg.length === 1 ? '' : 's') + ' on this game' + (open.length ? ' · ' + open.length + ' open' : '') + (won.length ? ' · ' + won.length + ' cashed' : '');
+      list.innerHTML = allg.length ? allg.map(function(p){ return card(p, me); }).join('') + SK : wait ? SK : '<div class="empty"><b>No slips on this game right now.</b>Build one and post it so others can tail it.' + POSTBTN + '</div>';
     } else {
-      info.textContent = open.length + ' open slip' + (open.length === 1 ? '' : 's') + (won.length ? ' · ' + won.length + ' cashed this week' : '') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
-      if(!open.length && !LAST) loadLast();
-      list.innerHTML = open.length ? open.map(function(p){ return card(p, me); }).join('')
+      info.textContent = wait && !open.length ? 'Reading the live scores…' : open.length + ' open slip' + (open.length === 1 ? '' : 's') + (won.length ? ' · ' + won.length + ' cashed this week' : '') + ' · sorted by ' + (sort === 'new' ? 'newest' : 'upvotes');
+      if(!open.length && !wait && !LAST) loadLast();
+      list.innerHTML = open.length ? open.map(function(p){ return card(p, me); }).join('') + SK : wait ? SK
         : '<div class="empty"><b>No open slips right now.</b>' + (won.length ? won.length + ' cashed this week - they are under the Cashed tab. ' : '') + 'Be the first on the board for the next game.' + POSTBTN + '</div>' + (won.length ? '' : lastWeekHtml(me));
     }
-    if(GF){ list.insertAdjacentHTML('afterbegin', gfBar()); if(hb && sort !== 'cashed' && sort !== 'lost') hb.hidden = true; }   // one game asked for: the pinned house slips step aside
+    if(GF){ list.insertAdjacentHTML('afterbegin', gfBar()); if(hb && sort !== 'cashed') hb.hidden = true; }   // one game asked for: the pinned house slips step aside
     gradeHouse();
     if(location.hash && !GF){ var el = document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView({block: 'center'}); }
   }
@@ -627,15 +729,23 @@ PAGE_JS = r"""<script>(function(){
           if(UPOSTS.prof) PROF[u] = UPOSTS.prof; else if(PROF[u]) UPOSTS.prof = PROF[u]; hotOf(UPOSTS.posts); if(VIEW === u) render(); })
         .catch(function(){ UPOSTS = {u: u, posts: [], rec: null, prof: null, fans: 0}; if(VIEW === u) render(); });
       return; }
-    var h = (d.prof && d.prof.handle) || (d.rec && d.rec.handle) || (d.posts[0] && d.posts[0].handle) || 'user', r = d.rec || {posts: d.posts.length};
-    var hd = av({user_id: u, handle: h}, true) + '<div class="pn"><h2>@' + esc(h) + hot(u) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + ' · ' + (r.posts || d.posts.length) + ' slip' + ((r.posts || d.posts.length) === 1 ? '' : 's') + ' posted</p></div>';
+    var h = (d.prof && d.prof.handle) || (d.rec && d.rec.handle) || (d.posts[0] && d.posts[0].handle) || 'user';
+    // owner 11/23: a slip that lost a leg is off the site, the poster's own page included. This week's slips are graded like the feed
+    // (fate()); an earlier week's slip is listed only when it is on record as a winner. The header counts the slips listed, not every
+    // slip ever posted: with the losers gone a total would give the record away (owner 11/22: no records on Social).
+    var up = [], waitP = 0, off = 0;
+    d.posts.forEach(function(p){ var old = +p.week !== W; if(!old && held(p)){ waitP++; return; } if(shown(old ? (p.result === 'won' ? 'cashed' : 'busted') : fate(p))) up.push(p); else off++; });
+    if(waitP) holdTimer();
+    var hd = av({user_id: u, handle: h}, true) + '<div class="pn"><h2>@' + esc(h) + hot(u) + '</h2><p>' + d.fans + ' follower' + (d.fans === 1 ? '' : 's') + (up.length ? ' · ' + up.length + ' slip' + (up.length === 1 ? '' : 's') + ' on Social' : '') + '</p></div>';
     var ed = u === me && EDIT, keep = ed ? pick() : null;   // a feed refresh while the editor is open must not undo unsaved taps
     list.innerHTML = '<a class="back" href="#" data-go="back">← Back to the feed</a>' +
       '<section class="prof">' + (ed ? '<div class="phd">' + hd + '</div>' : hd) +
       (u !== me ? '<button type="button" class="fol' + (FOL[u] ? ' on' : '') + '" data-fol="' + esc(u) + '" aria-pressed="' + !!FOL[u] + '">' + (FOL[u] ? 'Following ✓' : 'Follow') + '</button>' : (V4 && !EDIT ? '<button type="button" class="fol on" data-edit="1">Edit profile</button>' : '')) +
       (u === me && EDIT ? editForm(h) : '') +
       '</section>' +
-      (d.posts.length ? '<h2 class="sec">Slips</h2>' + d.posts.map(function(p){ return card(p, me, null, p.week !== W); }).join('') : '<div class="empty"><b>No slips posted yet.</b></div>');
+      (up.length ? '<h2 class="sec">Slips</h2>' + up.map(function(p){ return card(p, me, null, +p.week !== W); }).join('') + (waitP ? SKEL : '')
+        : waitP ? SKEL : '<div class="empty"><b>' + (d.posts.length ? 'No open or cashed slips right now.' : 'No slips posted yet.') + '</b></div>') +
+      (u === me && off ? '<p class="offnote">A slip comes off Social once a leg loses or its games end without a win.</p>' : '');
     put(keep);
   }
   /* owner 11/22 ("When you edit profile and press a color or emoji make the change in real time on the users profile picture"): the
@@ -672,7 +782,7 @@ PAGE_JS = r"""<script>(function(){
   function openUser(u){ EDIT = false; VIEW = u; UPOSTS = null; try { history.pushState({u: u}, '', '#u=' + u); } catch(e){} render(); window.scrollTo(0, 0); }
   function closeUser(){ VIEW = null; try { history.replaceState({}, '', location.pathname); } catch(e){} render(); }
   window.addEventListener('popstate', function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); VIEW = m ? m[1] : null; if(A) render(); });
-  window.addEventListener('hashchange', function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && m[1] !== GF){ GF = m[1]; if(A) render(); } });
+  window.addEventListener('hashchange', function(){ var m = location.hash.match(/^#g=([A-Z]{2,3}-[A-Z]{2,3})$/); if(m && m[1] !== GF){ GF = m[1]; gameTab(); if(A) render(); } });
   var LAST = null, LAST_BUSY = false;
   function loadLast(){
     if(LAST || LAST_BUSY || !A || W < 2) return; LAST_BUSY = true;
@@ -704,6 +814,7 @@ PAGE_JS = r"""<script>(function(){
         if(r.error && V3 && (r.error.code === '42703' || r.error.code === 'PGRST204' || /column/i.test(r.error.message || ''))){ V3 = false; load(); return; }   // the database is still on v2
         if(r.error){ info.textContent = (r.error.code === '42P01' || r.error.code === 'PGRST205') ? 'Social is being set up - check back soon.' : 'Could not load the feed (' + r.error.message + (r.error.code ? ', ' + r.error.code : '') + ').'; try{ console.error('feed load', r.error); }catch(e){} list.innerHTML = '<div class="empty"><b>The feed did not load.</b>Check your connection and try again.<a class="act" href="/social/">Reload</a></div>'; return; }
         POSTS = (r.data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; }); return p; });
+        if(T0 < 0) T0 = tick();
         if(!SHARP && !SHARP_BUSY) setTimeout(function(){ sharpLoad(function(){ if(sort !== 'sharp' && Object.keys(SHARP_BADGE).length) render(); }); }, 1200);
         var me = A.user ? A.user.id : null;
         if(!me || !POSTS.length){ MYV = {}; people(function(){ render(); poll(); }); return; }
@@ -754,41 +865,8 @@ PAGE_JS = r"""<script>(function(){
   (function(){ var m = location.hash.match(/^#u=([0-9a-f-]{36})$/); if(m) VIEW = m[1]; })();
   (function(){ var b = document.getElementById('mebtn'); if(b) b.addEventListener('click', function(){ if(A && A.user) openUser(A.user.id); else needSignIn(); }); })();
   // ---- live grading (same rules as the home page's promoted bets): a slip leaves the feed when a leg loses or every game is over ----
-  var ESPN = {WSH: 'WAS', LAR: 'LA'}; function ab(x){ return ESPN[x] || x; }
-  function norm(n){ return String(n || '').toLowerCase().replace(/\./g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
-  function num(v){ var m = String(v == null ? '' : v).match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; }
-  function parseBox(js, gid){ try {
-    (js.boxscore.players || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || cat.labels || [];
-      (cat.athletes || []).forEach(function(a){ var n = norm(a.athlete && (a.athlete.displayName || a.athlete.shortName)); if(!n) return;
-        var r = BOX[n] = BOX[n] || {pass: 0, ptd: 0, rush: 0, rec: 0, recy: 0, long: 0, rtd: 0, ctd: 0}; var S = {}; keys.forEach(function(k, i){ S[k] = a.stats[i]; });
-        // 11/16: touchdowns are SET per category, not added - the box is re-read every minute and "+=" doubled a scorer's TDs on the second read
-        if(cat.name === 'passing'){ r.pass = num(S.passingYards != null ? S.passingYards : S.YDS); r.ptd = num(S.passingTouchdowns != null ? S.passingTouchdowns : S.TD); }
-        if(cat.name === 'rushing'){ r.rush = num(S.rushingYards != null ? S.rushingYards : S.YDS); r.rtd = num(S.rushingTouchdowns != null ? S.rushingTouchdowns : S.TD); }
-        if(cat.name === 'receiving'){ r.rec = num(S.receptions != null ? S.receptions : S.REC); r.recy = num(S.receivingYards != null ? S.receivingYards : S.YDS); r.long = num(S.longReception != null ? S.longReception : S.LONG); r.ctd = num(S.receivingTouchdowns != null ? S.receivingTouchdowns : S.TD); }
-        if(cat.name === 'kickReturns' || cat.name === 'puntReturns'){ var tk = Object.keys(S).filter(function(k){ return /touchdown/i.test(k) || k === 'TD'; })[0]; if(tk) r[cat.name === 'kickReturns' ? 'krtd' : 'prtd'] = num(S[tk]); }   // 11/17: a return touchdown pays an anytime-TD leg too
-      }); }); });
-    var sp = (js.scoringPlays || []).filter(function(p){ return (p.type && /touchdown/i.test(p.type.text || '')) || /\bTD\b|touchdown/i.test(p.text || ''); });
-    if(sp.length){ var m = (sp[0].text || '').match(/^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}?)\s+\d+\s+(?:Yd|Yard)/i); FIRST[gid] = m ? norm(m[1]) : '?'; }
-    if((js.boxscore.players || []).length) SUMOK[gid] = 1;   // 11/17: this game's box score really was read
-  } catch(e){} }
-  var CUR = {G: G, BOX: BOX, FIRST: FIRST};
-  function gradeLeg(l, C){
-    C = C || CUR;
-    if(/^Under /.test(l.m)){ var s0 = gradeLeg(Object.assign({}, l, {m: l.m.slice(6), ln: Math.floor(l.ln) + 1}), C); return s0 === 'hit' ? 'dead' : s0 === 'dead' ? 'hit' : s0; }   // unders: the other side of the (X+1)+ over
-    var g = C.G[l.g]; if(!g || g.st === 'pre') return 'open'; var fin = g.st === 'post';
-    if(l.gl){ var sa = +g.sa || 0, sb = +g.sb || 0, tot = sa + sb, x = l.gl, ln = +l.ln || 0;
-      if(x.k !== 'M'){ var over = String(x.side).toUpperCase() === 'OVER'; return over ? (tot > ln ? 'hit' : fin ? 'dead' : 'open') : (tot > ln ? 'dead' : fin ? 'hit' : 'open'); }
-      if(!fin) return 'open'; var me = x.side === g.a ? sa : sb, them = x.side === g.a ? sb : sa; return (me - them + (l.m === 'Moneyline' ? 0 : ln)) > 0 ? 'hit' : 'dead'; }
-    var r = C.BOX[norm(l.pl)], sure = C !== CUR;   // live box: a player we cannot find is left open, never called a miss (a name mismatch must not bust a slip); a graded week's file is complete
-    if(l.m === 'First TD'){ var f = C.FIRST[l.g]; if(!f) return (fin && !sure && SUMOK[l.g]) ? 'dead' : 'open'; return f === norm(l.pl) ? 'hit' : 'dead'; }   // 11/17: "no first TD" only once that game's box score has been read - a final whose box did not load used to bust the leg
-    if(l.m === 'Passing TDs'){ if(r && (r.ptd || 0) >= Math.round(l.ln)) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
-    if(l.m === 'Either TD'){ var rs = String(l.pl).split(/\s+or\s+/).map(function(n){ return C.BOX[norm(n)]; });
-      if(rs.some(function(q){ return q && (q.rtd || 0) + (q.ctd || 0) + (q.krtd || 0) + (q.prtd || 0) >= 1; })) return 'hit'; return fin && (sure || rs.every(Boolean)) ? 'dead' : 'open'; }
-    if(/TD$/.test(l.m)){ var needT = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : 1; if(r && (r.rtd || 0) + (r.ctd || 0) + (r.krtd || 0) + (r.prtd || 0) >= needT) return 'hit'; return fin && (r || sure) ? 'dead' : 'open'; }
-    var v = !r ? (fin && sure ? 0 : null) : l.m === 'Passing Yards' ? r.pass : l.m === 'Rushing Yards' ? r.rush : l.m === 'Receiving Yards' ? r.recy : l.m === 'Receptions' ? r.rec : l.m === 'Longest Reception' ? r.long : l.m === 'Rush + Rec Yards' ? r.rush + r.recy : null;
-    if(['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Longest Reception', 'Rush + Rec Yards'].indexOf(l.m) < 0) return 'open';   // a market this page cannot grade stays open
-    if(v == null) return 'open'; return v >= Math.round(l.ln) ? 'hit' : (fin ? 'dead' : 'open');
-  }
+__GRADE__
+__READ__
   // house slips (pinned by the build): the same grading, so a slip stays up through its game with a live count and its result
   var HOUSE = window.__BS_HOUSE || [];
   function gradeHouse(){
@@ -799,12 +877,11 @@ PAGE_JS = r"""<script>(function(){
       var kos = (h.legs || []).map(function(l){ return +l.ko || 0; }).filter(Boolean), f0 = kos.length ? Math.min.apply(null, kos) : 0, l0 = kos.length ? Math.max.apply(null, kos) : 0, nowH = Date.now();
       var byClock = x.st !== 'open' ? '' : (l0 && nowH >= l0 + 4.5 * 36e5) ? 'Final · grading' : (f0 && nowH >= f0) ? 'In play' : '';
       st.textContent = x.st === 'cashed' ? 'Cashed' : x.st === 'busted' ? 'Busted · ' + x.hits + ' of ' + x.n + ' hit' : x.st === 'done' ? 'Final' : x.st === 'live' ? 'Live · ' + x.hits + '/' + x.n + ' hit' : byClock || st.getAttribute('data-pre') || '';
-      st.className = 'hst ' + x.st; c.classList.toggle('over', settled(x)); c.hidden = x.st === 'busted';   // owner 11/16: a busted slip comes off the page (it is under Lost on Today)
+      st.className = 'hst ' + x.st; c.classList.toggle('over', settled(x)); c.hidden = x.st === 'busted';   // owner 11/16: a busted house slip comes off the page (the house's own record keeps it: the Lost fold on Today)
       var t = c.querySelector('a.tail'); if(t && (x.st !== 'open' || byClock)) t.hidden = true; });
   }
   function grade(){ if(sort === 'sharp'){ gradeHouse(); return; } if(sig() !== SIG) render(); else gradeHouse(); }
   var busy = false, DONE = {};
-  function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
   function poll(){
     var legs = []; POSTS.concat(HOUSE).forEach(function(p){ (p.legs || []).forEach(function(l){ legs.push(l); }); });
     var now = Date.now(), live = legs.filter(function(l){ return l.ko && l.g && now >= l.ko - 9e5 && !(DONE[l.g]); }); if(busy || !live.length) return; busy = true;
@@ -814,11 +891,12 @@ PAGE_JS = r"""<script>(function(){
       (js.events || []).forEach(function(ev){ var c = (ev.competitions || [])[0]; if(!c) return; var by = {}; (c.competitors || []).forEach(function(x){ by[ab(x.team && x.team.abbreviation)] = x.score; });
         Object.keys(want).forEach(function(gid){ var p = gid.split('-'); if(!(p[0] in by) || !(p[1] in by)) return; var ty = ((ev.status || c.status || {}).type) || {};
           G[gid] = {eid: ev.id, st: ty.state || 'pre', a: p[0], b: p[1], sa: by[p[0]], sb: by[p[1]]}; }); });
-      var on = Object.keys(want).filter(function(gid){ return G[gid] && G[gid].st !== 'pre'; });
-      return Promise.all(on.map(function(gid){ return fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + G[gid].eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(s){ if(s){ parseBox(s, gid); if(G[gid].st === 'post') DONE[gid] = 1; } }).catch(function(){}); }));   // a final game is read once
+      var on = Object.keys(want).filter(function(gid){ return G[gid] && G[gid].eid && G[gid].st !== 'pre'; });   // .eid: a game known only from the box file has no ESPN event to ask for
+      return Promise.all(on.map(function(gid){ return fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + G[gid].eid, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(s){ if(s){ parseBox(s, gid); ESPNOK[gid] = 1; if(G[gid].st === 'post') DONE[gid] = 1; } }).catch(function(){}); }));   // a final game is read once
     }).then(function(){ busy = false; grade(); }).catch(function(){ busy = false; });
   }
   client(function(acc){ A = acc; load(); setInterval(poll, 60000); setInterval(load, 180000); });
+  fileRead(W).then(function(){ if(A && (POSTS.length || HOUSE.length)) grade(); });   // the week's finished games, known before ESPN answers
   setTimeout(poll, 1200);   // house slips grade even before the feed answers
   document.addEventListener('bs-account', function(){ if(A){ meBtn(); load(); } });
 })();</script>"""
@@ -927,62 +1005,89 @@ STRIP_CSS = """.socstrip .ssl{display:grid;gap:8px}
 
 STRIP_JS = r"""(function(){
   var W = __WEEK__, box = document.getElementById('socstrip'); if(!box) return; var list = box.querySelector('.ssl'), all = box.querySelector('.seeall');
+  var G = {}, BOX = {}, FIRST = {}, SUMOK = {};
+__GRADE__
+__READ__
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function am(o){ o = +o; return !o ? '' : (o > 0 ? '+' : '') + Math.round(o); }
   function inits(h){ var m = String(h || '').match(/[A-Z]/g) || []; return (m.slice(0, 2).join('') || String(h || '?').slice(0, 2)).toUpperCase(); }
   function hcol(h){ var x = 0, t = String(h || ''); for(var i = 0; i < t.length; i++) x = (x * 31 + t.charCodeAt(i)) % 8; return x; }
   function leg(l){ if(!l) return ''; if(l.gl || /TD$/.test(l.m)) return l.pl + (l.gl ? '' : ' ' + String(l.m).toLowerCase()); if(/^Under /.test(l.m)) return l.pl + ' under ' + l.ln; return l.pl + ' ' + Math.round(l.ln) + '+'; }
   function wait(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount.client); if(n > 40){ box.hidden = true; return; } setTimeout(function(){ wait(cb, n + 1); }, 150); }
-  function empty(){ list.innerHTML = '<div class="ssempty"><b>No slips up for the games left this week.</b><span>Build one and post it so others can tail it.</span><a href="/build/">Post the first slip</a></div>'; }
+  function empty(){ list.innerHTML = '<div class="ssempty"><b>No open slips for the games left this week.</b><span>Build one and post it so others can tail it.</span><a href="/build/">Post the first slip</a></div>'; }
+  // the database returns kickoff times as text ("2026-11-17T01:15:00+00:00"), never as a number: "+p.last_ko" is NaN and hid every real post (11/16, live 21:28Z until fixed)
+  function ms(v){ var t = typeof v === 'number' ? v : Date.parse(v); return isNaN(t) ? 0 : t; }
+  function inWin(p){ return ms(p.last_ko) > Date.now() - 4.5 * 3600e3; }   // games still to come, or running
+  // owner 11/23 12:12 PM ("Once a leg from a slip that someone posted on social loses please take the slip off the site"): the strip
+  // shows a slip only when it is known to be alive - nothing of it has kicked off, or every leg that has kicked off has been read
+  // (the week's box file, or one read of ESPN for the few games in play) and none has lost. A slip it cannot check is left out; it
+  // is still on Social, which reads every game. A lost slip never shows here.
+  function fateS(p){ if(p.result) return p.result === 'won' ? 'cashed' : 'busted'; if((p.legs || []).some(function(l){ return !legRead(l); })) return 'unread'; return stateOf(p).st; }
   function draw(rows, prof){
-    // the database returns kickoff times as text ("2026-11-17T01:15:00+00:00"), never as a number: "+p.last_ko" is NaN and hid every real post (11/16, live 21:28Z until fixed)
-    function ms(v){ var t = typeof v === 'number' ? v : Date.parse(v); return isNaN(t) ? 0 : t; }
-    var now = Date.now(), live = rows.filter(function(p){ return ms(p.last_ko) > now - 4.5 * 3600e3; });   // games still to come, or running
+    var now = Date.now(), live = rows.filter(function(p){ var st = fateS(p); p._st = st; return inWin(p) && (st === 'open' || st === 'live' || st === 'cashed'); });
     if(all) all.textContent = live.length > 3 ? 'All ' + live.length + ' slips' : 'Open Social';
     if(!live.length){ empty(); return; }
     list.innerHTML = live.slice(0, 3).map(function(p){ var ls = p.legs || [], q = prof[p.user_id] || {}, pre = ms(p.first_ko) > now;
       return '<a class="ssp" href="/b/?p=' + p.id + '"><i class="av c' + (q.color != null ? q.color : hcol(p.handle)) + (q.emoji ? ' em' : '') + '" aria-hidden="true">' + esc(q.emoji || inits(p.handle)) + '</i>' +
-        '<span class="w"><b>' + esc(p.title || leg(ls[0]) + (ls.length > 1 ? ' + ' + (ls.length - 1) + ' more' : '')) + '</b><small>@' + esc(p.handle) + ' · ' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + (p.tails ? ' · ' + p.tails + ' tailing' : '') + (pre ? '' : ' · live') + '</small></span>' +
+        '<span class="w"><b>' + esc(p.title || leg(ls[0]) + (ls.length > 1 ? ' + ' + (ls.length - 1) + ' more' : '')) + '</b><small>@' + esc(p.handle) + ' · ' + ls.length + ' leg' + (ls.length === 1 ? '' : 's') + (p.tails ? ' · ' + p.tails + ' tailing' : '') + (p._st === 'cashed' ? ' · cashed' : pre ? '' : ' · live') + '</small></span>' +
         '<span class="od">' + esc(am(p.fd_odds)) + '<small>▲ ' + (p.score || 0) + '</small></span></a>'; }).join('');
   }
   setTimeout(function(){ if(list.querySelector('.sk')) box.hidden = true; }, 9000);   // a read that never answers: no placeholders left pulsing on Today (11/17)
   wait(function(sb){
     function read(cols){ return sb.from('feed_posts').select(cols).eq('status', 'open').eq('week', W).order('score', {ascending: false}).order('created_at', {ascending: false}).limit(60); }
-    read('id,user_id,handle,title,legs,fd_odds,first_ko,last_ko,score,tails').then(function(r){
+    read('id,user_id,handle,title,legs,fd_odds,first_ko,last_ko,score,tails,result').then(function(r){
       if(r.error) return read('id,user_id,handle,title,legs,fd_odds,first_ko,last_ko,score');   // a database still on the older columns
       return r; }).then(function(r){
       if(!r || r.error){ box.hidden = true; return; }
-      var rows = r.data || [], ids = {}; rows.slice(0, 12).forEach(function(p){ ids[p.user_id] = 1; }); ids = Object.keys(ids);
-      if(!ids.length){ draw(rows, {}); return; }
-      function pr(cols){ return sb.from('feed_profiles').select(cols).in('user_id', ids); }
-      pr('user_id,color,emoji').then(function(q){ return q && q.error ? pr('user_id,color') : q; })   // before sql/social_v4.sql there is no emoji column
-        .then(function(q){ var m = {}; ((q && q.data) || []).forEach(function(x){ m[x.user_id] = x; }); draw(rows, m); }, function(){ draw(rows, {}); });
-    }, function(){ box.hidden = true; });
+      var rows = (r.data || []).map(function(p){ (p.legs || []).forEach(function(l){ if(l && l.ko) l.ko = +l.ko; }); return p; }), now = Date.now();
+      var cand = rows.filter(function(p){ return inWin(p) && !p.result; }), legs = []; cand.slice(0, 8).forEach(function(p){ (p.legs || []).forEach(function(l){ legs.push(l); }); });
+      // nothing has kicked off (most of the week): no file, no ESPN. Otherwise the week's box file, then the games in play that the first
+      // few candidates need (most-upvoted first): one scoreboard read and at most four box scores, with four seconds to answer
+      var started = cand.some(function(p){ return (p.legs || []).some(function(l){ return l && l.ko && now >= l.ko; }); });
+      return (started ? fileRead(W).then(function(){ return liveRead(legs, 4, 4000); }) : Promise.resolve()).then(function(){
+        var ids = {}; rows.filter(function(p){ var st = fateS(p); return inWin(p) && (st === 'open' || st === 'live' || st === 'cashed'); }).slice(0, 12).forEach(function(p){ ids[p.user_id] = 1; }); ids = Object.keys(ids);
+        if(!ids.length){ draw(rows, {}); return; }
+        function pr(cols){ return sb.from('feed_profiles').select(cols).in('user_id', ids); }
+        return pr('user_id,color,emoji').then(function(q){ return q && q.error ? pr('user_id,color') : q; })   // before sql/social_v4.sql there is no emoji column
+          .then(function(q){ var m = {}; ((q && q.data) || []).forEach(function(x){ m[x.user_id] = x; }); draw(rows, m); }, function(){ draw(rows, {}); }); });
+    }).then(null, function(){ box.hidden = true; });
   });
 })();"""
 
 def strip_html(week):
     return ('<section class="sec socstrip" id="socstrip"><style>' + STRIP_CSS + '</style><div class="sech"><h2 class="t">Top on Social <small class="tsub">slips people posted</small></h2><a class="seeall" href="/social/">Open Social</a></div>'
             '<div class="ssl" aria-live="polite"><span class="sk"></span><span class="sk"></span></div>'
-            '<script>' + STRIP_JS.replace("__WEEK__", str(int(week))) + '</script></section>')
+            '<script>' + STRIP_JS.replace("__GRADE__", GRADE_JS.rstrip("\n")).replace("__READ__", READ_JS.rstrip("\n")).replace("__WEEK__", str(int(week))) + '</script></section>')
 
 
 CARDS_CSS = """.ginfo a.socn{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;white-space:nowrap} .ginfo a.socn.has{color:var(--ink);font-weight:700;text-decoration-color:var(--red)}"""
 CARDS_JS = r"""(function(){
   var W = __WEEK__, cards = document.querySelectorAll('section.card[id][data-ko]'); if(!cards.length) return;
+  var G = {}, BOX = {}, FIRST = {}, SUMOK = {};
+__GRADE__
+__READ__
   function wait(cb, n){ n = n || 0; if(window.bsAccount && window.bsAccount.client) return cb(window.bsAccount.client); if(n > 40) return; setTimeout(function(){ wait(cb, n + 1); }, 150); }
-  wait(function(sb){ sb.from('feed_posts').select('id,legs').eq('status', 'open').eq('week', W).limit(300).then(function(r){
-    if(!r || r.error) return; var n = {};
-    (r.data || []).forEach(function(p){ var seen = {}; (p.legs || []).forEach(function(l){ if(l && l.g && !seen[l.g]){ seen[l.g] = 1; n[l.g] = (n[l.g] || 0) + 1; } }); });
+  wait(function(sb){
+    function read(cols){ return sb.from('feed_posts').select(cols).eq('status', 'open').eq('week', W).limit(300); }
+    read('id,legs,result').then(function(r){ return r && r.error ? read('id,legs') : r; }).then(function(r){
+    if(!r || r.error) return; var rows = r.data || [], now = Date.now();
+    rows.forEach(function(p){ (p.legs || []).forEach(function(l){ if(l && l.ko) l.ko = +l.ko; }); });
+    var started = rows.some(function(p){ return !p.result && (p.legs || []).some(function(l){ return l && l.ko && now >= l.ko; }); });
+    return (started ? fileRead(W) : Promise.resolve()).then(function(){ var n = {};
+    // owner 11/23: a slip that lost a leg is off the site, so the card does not count it. Known here: a stored result, and a leg that
+    // missed in a game the week's box file has as a final (this page does not read ESPN; a game in play is graded on Social itself)
+    rows.forEach(function(p){
+      var st = p.result ? (p.result === 'won' ? 'cashed' : 'busted') : stateOf(p).st; if(st !== 'open' && st !== 'live' && st !== 'cashed') return;
+      var seen = {}; (p.legs || []).forEach(function(l){ if(l && l.g && !seen[l.g]){ seen[l.g] = 1; n[l.g] = (n[l.g] || 0) + 1; } }); });
     cards.forEach(function(c){ var gid = c.id, k = n[gid] || n[gid.split('-').reverse().join('-')] || 0, gi = c.querySelector('.ginfo'), pre = (+c.dataset.ko || 0) > Date.now();
       if(!gi || gi.querySelector('.socn') || (!k && !pre)) return;
       var sep = document.createElement('i'); sep.textContent = '·'; var a = document.createElement('a'); a.className = 'socn' + (k ? ' has' : '');
       a.href = k ? '/social/#g=' + gid : '/build/#g-' + gid; a.textContent = k ? k + (k === 1 ? ' slip' : ' slips') + ' on Social' : 'Post a slip for this game';
-      gi.appendChild(sep); gi.appendChild(a); }); }, function(){}); });
+      gi.appendChild(sep); gi.appendChild(a); }); }); }).then(null, function(){}); });
 })();"""
 
 def cards_js(week):
-    return "<style>" + CARDS_CSS + "</style><script>" + CARDS_JS.replace("__WEEK__", str(int(week))) + "</script>"
+    return "<style>" + CARDS_CSS + "</style><script>" + CARDS_JS.replace("__GRADE__", GRADE_JS.rstrip("\n")).replace("__READ__", READ_JS.rstrip("\n")).replace("__WEEK__", str(int(week))) + "</script>"
 
 
 # 11/16 (alpha plan step 3): post a slip from a FanDuel screenshot. The picture is read on the phone by the same reader My BetSweep uses
@@ -1060,7 +1165,7 @@ __BASE__
 <div class="soc">
  <h1>Social</h1>
  <p class="lede">Slips people are riding this week. Tail one in a tap, upvote the good ones.</p>
- <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="savbtn" data-w="{int(week)}" aria-controls="sav" aria-expanded="false" hidden>From saved slips</button><button type="button" id="mebtn" hidden>My slips</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="lost">Lost</button> <button type="button" data-s="sharp">Sharps</button></span></div>
+ <div class="bar"><a class="pri" href="/build/">+ Post a slip</a><button type="button" id="shotbtn" aria-controls="shot" aria-expanded="false">From a screenshot</button><button type="button" id="savbtn" data-w="{int(week)}" aria-controls="sav" aria-expanded="false" hidden>From saved slips</button><button type="button" id="mebtn" hidden>My slips</button><span class="seg"><button type="button" data-s="top">Top</button> <button type="button" data-s="new">New</button> <button type="button" data-s="following">Following</button> <button type="button" data-s="cashed">Cashed</button> <button type="button" data-s="sharp">Sharps</button></span></div>
  <section class="shot" id="shot" hidden aria-label="Post a slip from a screenshot">
   <h2>Post from a screenshot</h2>
   <p>Screenshot your FanDuel betslip, then choose the picture or paste it. Your phone reads it; the picture never leaves this device.</p>
@@ -1072,8 +1177,8 @@ __BASE__
  {house}
  <p class="lede" id="feedinfo"><span class="skel"></span><span class="skel"></span></p>
  <div id="feed"></div>
- <p class="rules">How it works: the most-upvoted slips sit on top. Save slip keeps a slip on My BetSweep, where it is graded after the games - no account needed. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg moves to Lost right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
+ <p class="rules">How it works: the most-upvoted slips sit on top. Save slip keeps a slip on My BetSweep, where it is graded after the games - no account needed. Load any slip into the Parlay Builder to see our price for it. Slips are graded live from the box score: a slip that hits every leg moves to Cashed, and one that loses a leg comes off Social right away. Posted slips are users' own picks, not BetSweep's, and are not checked by the model. Sign in to post, upvote or report; a post with three reports is hidden for review. No harassment, spam, ads or personal info - see the <a href="/terms/">Terms</a>. 21+. Bet only what you can afford to lose; 1-800-GAMBLER.</p>
 </div>
 {POST_HTML}
 <script defer src="/import.js"></script>
-""" + PAGE_JS.replace("__WEEK__", json.dumps(int(week))) + SHOT_JS + POST_JS + SAVED_JS)
+""" + PAGE_JS.replace("__GRADE__", GRADE_JS.rstrip("\n")).replace("__READ__", READ_JS.rstrip("\n")).replace("__WEEK__", json.dumps(int(week))) + SHOT_JS + POST_JS + SAVED_JS)

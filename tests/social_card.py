@@ -4,9 +4,10 @@ social just look a little better. They look like they're onto of each other and 
 What the card's action area is now, top to bottom:
   1  Tail on FanDuel, the one filled button, the full width of the card. On somebody else's slip "I'm tailing" sits beside it.
   2  Save slip and Load into my slip, two equal buttons on one row.
-  3  a quiet last line: when it kicks off (or Live / Cashed / Busted) on the left; Delete or Report, then Open slip, on the right.
+  3  a quiet last line: when it kicks off (or Live / Cashed) on the left; Delete or Report, then Open slip, on the right.
 The test measures that on a 390x844 phone in light and dark and on a desktop, in every state a card has: my own open slip (the owner's
-screenshot), somebody else's, a slip with no FanDuel link, a live slip, a cashed and a busted one, and Delete after its first tap.
+screenshot), somebody else's, a slip with no FanDuel link, a live slip, a cashed one, and Delete after its first tap. A busted slip
+has no card any more (owner 11/23: a slip comes off the site once a leg loses); the test checks it is on no tab.
 
 Serves SITE (default ./site), fakes the account client and the score feed.   python3 tests/social_card.py [shots_dir]"""
 import asyncio, json, os, re, sys, threading, http.server, functools, time
@@ -77,6 +78,7 @@ async def main():
             async def espn(route):
                 u = route.request.url; await route.fulfill(status=200, content_type="application/json", body=json.dumps(SCORE if "scoreboard" in u else SUMMARY))
             await ctx.route("**/site.api.espn.com/**", espn)
+            await ctx.route("**/data/weeks.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"weeks": [WEEK - 1]})))   # 11/23: the page reads the week's box file; this test's made-up games are graded from the faked score feed alone
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto(f"http://127.0.0.1:{PORT}/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(3200)
             ids = await pg.evaluate("Array.from(document.querySelectorAll('#feed > article.post')).map(a => a.id)")
@@ -149,13 +151,18 @@ async def main():
             check(v["st"]["txt"].startswith("Live") and (narrow or near(v["st"]["cy"], v["open"]["cy"], 3)) and apart(v["fd"], v["rep"], v["open"], v["st"]), f"[{tag}] a live slip: \"{v['st']['txt']}\" shares the last line with Open slip")
 
             # ---- settled slips: the result on the left, Open slip on the right, no buttons ----
-            for i, word, tab in (("p2", "Cashed", "cashed"), ("p3", "Busted", "lost")):
+            for i, word, tab in (("p2", "Cashed", "cashed"),):
                 await pg.click(f'.seg button[data-s="{tab}"]'); await pg.wait_for_timeout(500)
                 s = await pg.evaluate(MEASURE, i)
                 if not s: check(False, f"[{tag}] {word}: the card is on its tab"); continue
                 await shot(i, word.lower())
                 check(bool(s["res"]) and s["res"]["txt"].startswith(word) and not (s["fd"] or s["save"] or s["load"] or s["tail"] or s["st"]), f"[{tag}] {word}: the result and no buttons ({s['res']['txt'] if s['res'] else None})")
                 check(bool(s["res"] and s["open"]) and (narrow or near(s["res"]["cy"], s["open"]["cy"], 3)) and near(s["res"]["l"], s["in"]["l"], 2) and near(s["open"]["r"], s["in"]["r"], 2) and apart(s["res"], s["open"], s["rep"]), f"[{tag}] {word}: result left, Open slip right, one line")
+            # owner 11/23: the slip that lost a leg (p3, one touchdown where two were needed) has no card on any tab, and there is no Lost tab
+            seen = {}
+            for tab in ("top", "new", "cashed"):
+                await pg.click(f'.seg button[data-s="{tab}"]'); await pg.wait_for_timeout(350); seen[tab] = await pg.evaluate("!!document.getElementById('p3')")
+            check(not any(seen.values()) and not await pg.query_selector('.seg button[data-s="lost"]'), f"[{tag}] a busted slip has no card on any tab, and there is no Lost tab ({seen})")
             check(not errs, f"[{tag}] no script errors {errs[:2]}")
             if SHOTS and phone: await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(400); await pg.screenshot(path=f"{SHOTS}/feed-{theme}.png", full_page=True)
             await ctx.close()

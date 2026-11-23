@@ -1,5 +1,6 @@
-"""Social feed states (11/16, alpha step 1): open / live / cashed / busted, the Cashed tab, last week's winners, house-slip grading and
-the touchdown double-count. Serves ./site, fakes the account client and ESPN.  python3 tests/social_feed.py [shots_dir]"""
+"""Social feed states (11/16, alpha step 1): open / live / cashed, the Cashed tab, last week's winners, house-slip grading and
+the touchdown double-count. Since 11/23 a busted slip is drawn nowhere (owner: "Once a leg from a slip that someone posted on social
+loses please take the slip off the site") - tests/social_gone.py has that rule in full; here the old Lost-tab checks became "not there". Serves ./site, fakes the account client and ESPN.  python3 tests/social_feed.py [shots_dir]"""
 import asyncio, json, os, sys, threading, http.server, functools, time
 from playwright.async_api import async_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
@@ -52,6 +53,7 @@ async def main():
             async def espn(route):
                 u = route.request.url; await route.fulfill(status=200, content_type="application/json", body=json.dumps(SCORE if "scoreboard" in u else SUMMARY))
             await ctx.route("**/site.api.espn.com/**", espn)
+            await ctx.route("**/data/weeks.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"weeks": [WEEK - 1]})))   # no box file for the test's own week: the made-up games are graded from the faked score feed alone
             await ctx.route(f"**/data/box-w{WEEK - 1}.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"week": WEEK - 1, "box": {"Travis Kelce": [0, 0, 0, 1, 1, 4, 72, 0, 38]}, "games": {"NYJ-KC": [12, 35]}, "final": True})))
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             await pg.goto("http://127.0.0.1:8823/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(3200)
@@ -91,12 +93,15 @@ async def main():
             check(await ids() == ["p2"], f"[{theme}] Cashed lists the winner ({await ids()})")
             check(await pg.inner_text("#p2 .res") == "Cashed" and await pg.locator("#p2 li.hit").count() == 3, f"[{theme}] winner: three legs marked hit (yards, one TD, over)")
             check(await pg.locator("#feed article.post").count() == 1, f"[{theme}] Cashed holds winners only")
-            await pg.click('.seg button[data-s="lost"]'); await pg.wait_for_timeout(400)
-            bust = await pg.evaluate("Array.from(document.querySelectorAll('#feed article.post')).map(a => a.id + ':' + (a.querySelector('.res')||{}).textContent)")
-            check(bust == ["p3:Busted · 1 of 2 hit", "p4:Final · 0 of 1 graded hits"], f"[{theme}] Lost tab: a one-TD game does not pass 2+ TD after repeat reads; an unknown player is never called a miss ({bust})")
+            # owner 11/23: no Lost tab; the slip that lost a leg (p3) and the one whose game ended without a win (p4) are in no tab at all.
+            # p3 not being under Cashed is also the 11/16 check that a one-TD game does not pass 2+ TD after repeat reads.
+            where = {}
+            for tab in ("top", "new", "cashed"):
+                await pg.click(f'.seg button[data-s="{tab}"]'); await pg.wait_for_timeout(350); where[tab] = await ids()
+            check(not await pg.query_selector('.seg button[data-s="lost"]') and where == {"top": ["p1"], "new": ["p1"], "cashed": ["p2"]}, f"[{theme}] there is no Lost tab, and the busted slip and the one that ended without a win are in no tab ({where})")
             m = await pg.evaluate("({over: document.documentElement.scrollWidth - document.documentElement.clientWidth, tab: Math.round(document.querySelector('nav.apptabs').getBoundingClientRect().bottom)})")
             check(m["over"] == 0 and m["tab"] == 844, f"[{theme}] no sideways scroll, tab bar at the bottom ({m})")
-            if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-lost-{theme}.png", full_page=False)
+            if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-cashed-{theme}.png", full_page=False)
             # nothing open and nothing cashed -> last week's winners
             await pg.evaluate("localStorage.setItem('t_empty', '1')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
             await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(900)
@@ -111,12 +116,14 @@ async def main():
             # ---- owner 11/22: no public records; a fire for accounts that hit recently, otherwise nothing
             W_ = "(function(){ var f = document.getElementById('feed'); return {cards: [...f.querySelectorAll('article.post')].map(function(c){ var h = c.querySelector('.who .hot'); return [c.id, !!c.querySelector('.who .rec'), h ? h.textContent : '', h ? h.getAttribute('aria-label') : '']; }), txt: f.textContent}; })()"
             hr = await pg.evaluate(W_)
-            await pg.click('.seg button[data-s="lost"]'); await pg.wait_for_timeout(400); hl = await pg.evaluate(W_)
-            await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(400)
+            # the poster whose only win is three weeks old: his slip this week lost, so (11/23) it is on no tab - his profile is where his name shows
+            await pg.goto("http://127.0.0.1:8823/social/?h=1#u=00000000-0000-0000-0000-000000000003", wait_until="domcontentloaded"); await pg.wait_for_timeout(2600)
+            hl = await pg.evaluate("(function(){ var s = document.querySelector('.prof'); return s ? {name: s.querySelector('h2').firstChild.textContent, hot: !!s.querySelector('h2 .hot'), cards: document.querySelectorAll('#feed article.post').length, txt: document.getElementById('feed').textContent} : null; })()")
+            await pg.goto("http://127.0.0.1:8823/social/", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
             import re as _re
-            check(["p1", False, "🔥", "Hit recently"] in hr["cards"] and any(c[0] == "p3" for c in hl["cards"]) and all(not c[1] and not c[2] for c in hl["cards"]),
-                  f"[{theme}] a poster who cashed in the last week wears a fire; one whose only win is three weeks old wears nothing ({hr['cards']}, {hl['cards']})")
-            hr["txt"] += hl["txt"]
+            check(["p1", False, "🔥", "Hit recently"] in hr["cards"] and bool(hl) and hl["name"] == "@loser" and not hl["hot"] and hl["cards"] == 0,
+                  f"[{theme}] a poster who cashed in the last week wears a fire; one whose only win is three weeks old wears nothing, and his lost slip is not on his profile ({hr['cards']}, {hl and [hl['name'], hl['hot'], hl['cards']]})")
+            hr["txt"] += (hl or {}).get("txt", "")
             check("12-8" not in hr["txt"] and "6.4" not in hr["txt"] and not _re.search(r"\b\d+-\d+ · [+−-]\d", hr["txt"]), f"[{theme}] no win-loss record or units next to any name in the feed")
             await pg.click('#p1 [data-tail]'); await pg.wait_for_timeout(300); await pg.click('#p1 [data-rx="1|lock"]'); await pg.wait_for_timeout(300)
             c2 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return [c.querySelector('[data-tail]').textContent, c.querySelector('.tn').textContent, c.querySelector('[data-rx=\"1|lock\"]').className, (c.querySelector('[data-rx=\"1|lock\"] b')||{}).textContent, window.__CALLS.filter(function(x){ return /tails:insert|reactions:upsert:lock|rpc:feed_profile_me/.test(x); }).length]; })()")
@@ -125,6 +132,8 @@ async def main():
             await pg.click('#p1 b.h'); await pg.wait_for_timeout(700)
             pr = await pg.evaluate("(function(){ var s = document.querySelector('.prof'); return s ? [s.querySelector('h2').firstChild.textContent, (s.querySelector('h2 .hot') || {}).textContent || '', s.querySelectorAll('dd, dl, .pstats').length, s.querySelector('.fol').textContent, document.querySelectorAll('#feed article.post').length, s.textContent] : null; })()")
             check(pr[:5] == ["@opener", "🔥", 0, "Follow", 1], f"[{theme}] tapping a name opens the profile: the name, the fire, a Follow button and their slips ({pr[:5]})")
+            pl = await pg.inner_text('.prof .pn p')
+            check("1 slip on Social" in pl and "posted" not in pl and "21" not in pl, f"[{theme}] the profile counts the slips it lists, not every slip ever posted - a total would give the record away ({pl})")
             sel = await pg.evaluate("window.__SEL.filter(function(x){ return /^feed_records:/.test(x); })")
             check(not _re.search(r"Record|Units|Graded|12-8|6\.4", pr[5]) and sel and not any(_re.search(r"won|lost|units|graded", x) for x in sel), f"[{theme}] the profile shows no record, units or graded count, and the page never asks the database for them ({sorted(set(sel))})")
             await pg.click('.prof .fol'); await pg.wait_for_timeout(300)
@@ -133,7 +142,7 @@ async def main():
             await pg.click('.seg button[data-s="following"]'); await pg.wait_for_timeout(400)
             check(await ids() == ["p1"] and "1 person you follow" in await pg.inner_text("#feedinfo"), f"[{theme}] the Following tab lists the followed poster's open slip")
             m2 = await pg.evaluate("({over: document.documentElement.scrollWidth - document.documentElement.clientWidth})")
-            check(m2["over"] == 0, f"[{theme}] no sideways scroll with six tabs")
+            check(m2["over"] == 0, f"[{theme}] no sideways scroll with five tabs")
             # ---- own username and avatar (v4) ----
             await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(300)
             check(await pg.is_visible('#mebtn'), f"[{theme}] a signed-in account gets a My slips button")

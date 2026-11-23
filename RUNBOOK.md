@@ -846,7 +846,7 @@ Until v4 is run the page hides the editor (`V4 = false`). Tested on the throwawa
 Owner: "I don't want the lost promos on the today/home page. Just in receipts somewhere." The Lost fold on Today (added at 10:42 AM)
 is gone: a busted promo card is simply hidden the moment a leg dies, a busted Sweep leaves the hero (strip: "Last ... Missed"), and
 slips the game log already shows lost are not built into the promo grid. `home.lost_block` now renders "This week's misses" at the
-foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its Lost tab.
+foot of /receipts/ (build_site.py). Winners behave as before; Social keeps its Lost tab (until 11/23: see "a posted slip comes off the site once a leg loses").
 
 ## 11/16 afternoon: a bogus "best rung +53% EV" chip on every graded leg (fixed), and the picture in a leg's details
 
@@ -3610,3 +3610,68 @@ What to carry forward:
 Open for tonight: Croskey-Merritt (WAS RB) is officially questionable and reported set to come off injured reserve before
 kickoff; the availability tab still has him OUT (not a desk row, so avail_auto leaves it). Burks' row says QUESTIONABLE but the
 final report gave him no designation. Both to be set from the inactives (5:45 PM CT), then a rebuild. No promo leg depends on them.
+
+## 11/23 12:12-1:20 PM CT: a posted slip comes off the site once a leg loses (owner: "please take the slip off the site")
+
+Owner, 12:12 PM: "Once a leg from a slip that someone posted on social loses please take the slip off the site". On 11/16 he had
+offered two ways ("off the pages or put into a lost tab") and the Lost tab was built; on 11/22 he asked for no records on Social.
+This is the first way, everywhere. He was not asked anything; the choices below were made and told to him, each easy to turn back.
+
+**The rule (social.py, fate()):** a user's posted slip is drawn only while it is **open or live**, or once it has **cashed**.
+Everything that used to sit under Lost is drawn nowhere: a dead leg on the live grade, a stored result of lost or push, and a slip
+whose games are all over without every leg hit ("Final · n graded hits"). Nothing is deleted and no SQL was needed: the rows stay in
+the database and the daily grade job is unchanged. House slips (promos) are not part of this - they already left the pin, and Today's
+Lost fold is the house's own record. The Terms have said since 10/26 that a post leaves the feed "once a leg loses or every game in
+them is over", so no wording there changed.
+
+**Where a lost slip used to show, and now does not:**
+- Social: the **Lost tab is gone** (five tabs). Top / New / Following never had it; the one-game view (`#g=`) listed it with "1 lost"
+  and now lists open then cashed; a saved tab of "lost" falls back to Top. A game link now always opens on that game's slips
+  (a reader whose saved tab was Cashed or Sharps used to land there instead).
+- Profiles (`#u=`): this week's slips follow fate(); an **earlier week's slip is listed only when it is on record as a winner**
+  (an old slip the grade job left open used to show as if it had not kicked off). The header counts the slips listed
+  ("2 slips on Social"), not every slip ever posted: with the losers gone, a total beside a short list gave the record away.
+  **The poster's own page hides his lost slip too**; when one is hidden he alone sees one line, "A slip comes off Social once a leg
+  loses or its games end without a win." If the owner wants the poster to keep his own view, it is one condition in profile().
+  My BetSweep still says "N slips posted to Social" (a private card, unchanged).
+- Today, "Top on Social": it listed the three most-upvoted slips with a game still to play **without grading anything**, so a slip
+  that lost a leg on Sunday was listed as "live" through Monday night. It now lists a slip only when it is known to be alive.
+- Boards, "N slips on Social": counted every post with a leg in the game; a lost slip is no longer counted, so the count is what
+  the link shows.
+- The slip's own link (`/b/?p=<id>`, shortlinks.py): it showed any post for ever. A slip lost on record, or with a leg known to
+  have lost, now says "This slip is off Social - one of its legs lost." with a link to what is open.
+
+**How a page knows (two shared blocks in social.py, used by all four pages - one copy of the code):**
+- `GRADE_JS`: the leg grader, moved out of the Social page's script without a character changed (norm, parseBox, gradeLeg,
+  stateOf). The including script declares G, BOX, FIRST, SUMOK first.
+- `READ_JS`: `fileRead(w)` reads the week's box file (`/data/weeks.json` first, so a week with no file is not asked for; then
+  `/data/box-w<w>.json`, which the hourly build writes from the finals feed) and `liveRead(legs, cap, cut)` makes one bounded read
+  of ESPN (scoreboard, then at most `cap` box scores, `cut` ms to answer, never rejects). `legRead(l)` says whether a leg's game
+  has been read; `unsure(l)` marks what the file alone cannot settle - a first touchdown, and a touchdown leg it calls dead (the
+  file has rushing and receiving touchdowns only; "it can confirm a TD leg but never take one away", as on the Live page).
+- The **Social page** reads the file at once and ESPN as before (every started game; a game known only from the file has no event
+  id and is not asked for). The **strip** reads the file, then ESPN for the games the first eight candidates still need (four box
+  scores, four seconds) - and asks for neither when no candidate has kicked off, which is most of the week. The **Boards count**
+  reads the file only (no ESPN on Boards): a game that ended inside the last hour can be counted one too many until the next
+  build. The **slip page** reads the file and ESPN only when a leg has kicked off.
+- Where the pages differ on a touchdown leg only the file calls dead: Social waits for ESPN (see the hold), the slip page shows the
+  slip, the strip and the count take the file's word (they only pick three and count).
+
+**No flash of a dead slip (the hold):** the Social page used to draw every slip as open and re-sort when the scores arrived a second
+or three later; with the new rule that would show a lost slip, looking alive, on every load. For 6 seconds after the feed first
+answers (HOLD_MS, counted on performance.now) a slip with a leg whose game has kicked off but has not been read is **held**: not
+drawn, not counted, a placeholder in its place. Each read re-renders (sig() carries the held flag) and one timer re-renders when the
+wait is up. If neither the file nor ESPN answers in six seconds the slips show as they always did, so a dead feed never empties the
+page. The strip is stricter: a slip it cannot check is simply not listed (it is still on Social).
+
+**Tests.** `tests/social_gone.py` (new, 57 checks, in the pre-publish set): made-up games, a faked account client, score feed and box
+file; a MutationObserver records every slip card ever drawn, so "never on the page, not even for a moment" is measured. Scenarios:
+scores slow, scores down with the file up, neither, the slip's own link (with a stub of the database library), Today's strip.
+`social_feed.py`, `social_card.py`, `social_elsewhere.py`: Lost-tab checks became "not there"; `social_elsewhere.py` gained three
+posts (lost early / alive early / nobody can check) for the strip, the Boards count and the one-game view. **All four fake
+`/data/weeks.json` (and the box file where they use one)** - the pages now read those, and a test must not pick up the real
+week's finals. Lesson kept from 11/22: a page clock that a test freezes (`Date.now`) must not be what an elapsed wait is counted on.
+
+**Weight.** The two blocks add about 10 KB of script to Today and to Boards (4 KB gzipped). The box file (43 KB this week) is only
+fetched there when a posted slip has a leg that has kicked off.
+

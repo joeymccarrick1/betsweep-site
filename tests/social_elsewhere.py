@@ -1,5 +1,9 @@
 """Social on other pages (alpha plan step 5, 11/16): "Top on Social" on Today, "N slips on Social" on Boards game cards, and the
-one-game filter on Social (/social/#g=BAL-LAC). Serves ./site with a faked account client.  python3 tests/social_elsewhere.py [shots_dir]"""
+one-game filter on Social (/social/#g=BAL-LAC). Serves ./site with a faked account client.  python3 tests/social_elsewhere.py [shots_dir]
+
+11/23 (owner: "Once a leg from a slip that someone posted on social loses please take the slip off the site"): a slip that lost a leg
+is not listed on Today, not counted on a Boards card and not shown in a game's view. The week's box file is faked here too (weeks.json
+and box-w<week>.json), so the real build's finals never reach the test."""
 import asyncio, json, os, sys, threading, http.server, functools, time
 from playwright.async_api import async_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
@@ -22,13 +26,18 @@ POSTS = [post(1, "HerbFan", "Herbo time", [leg("Justin Herbert", "Passing Yards"
          post(4, "Fourth", "Also tonight", [leg("Justin Herbert", "Rushing Yards", 15, "BAL-LAC", FUT)], 1),
          dict(post(5, "Sunday", "Old slip", [leg("Joe Burrow", "Passing Yards", 250, "CIN-PIT", PAST)], 30), result="lost", units=-1)]   # a finished, graded slip
 POSTS = J(POSTS)
+MORE = J([post(6, "DeadEarly", "Lost on Thursday", [leg("Test Player", "Receiving Yards", 60, "CIN-PIT", PAST), leg("Justin Herbert", "Passing Yards", 175, "BAL-LAC", FUT)], 50),
+          post(7, "AliveEarly", "Hit on Thursday", [leg("Test Player", "Receptions", 2, "CIN-PIT", PAST), leg("Derrick Henry", "Rushing Yards", 60, "BAL-LAC", FUT)], 40),
+          post(8, "NoRead", "Nobody can check", [leg("Someone Else", "Receptions", 3, "DET-NE", PAST), leg("Zay Flowers", "Receiving Yards", 50, "BAL-LAC", FUT)], 45)])
+BOXFILE = J({"week": WEEK, "final": False, "games": {"CIN-PIT": [20, 17]}, "box": {"Test Player": [0, 0, 0, 0, 0, 2, 31, 0, 20]}})   # the week's first game is a final in the file; "DET-NE" is not in it
 FAKE = """window.__POSTS = %s; try{ if(localStorage.getItem("t_empty")) window.__POSTS = window.__POSTS.filter(function(p){ return p.id === 5; }); }catch(e){}
+try{ if(localStorage.getItem("t_more")) window.__POSTS = window.__POSTS.concat(%s); }catch(e){}
 var PRO = [{user_id: "00000000-0000-0000-0000-000000000001", handle: "HerbFan", color: 2, emoji: "\\ud83c\\udfc8"}];
 function Q(rows, t){ var f = {}, cols = '', q = {select: function(c){ cols = c || ''; return q; }, eq: function(k, v){ f[k] = v; return q; }, gte: function(){ return q; }, in: function(){ return q; }, order: function(){ return q; }, limit: function(){ return q; },
   then: function(cb, eb){ var old = false; try{ old = !!localStorage.getItem("t_nov4"); }catch(e){}
     if(old && t === 'feed_profiles' && /emoji/.test(cols)) return Promise.resolve({data: null, error: {message: 'column feed_profiles.emoji does not exist'}}).then(cb, eb);
     return Promise.resolve({data: rows.map(function(p){ if(old && t === 'feed_profiles'){ var c = {}; for(var k in p) if(k !== 'emoji') c[k] = p[k]; return c; } return p; }).filter(function(p){ return f.week == null || p.week == null || p.week === f.week; }).slice().sort(function(a, b){ return (b.score || 0) - (a.score || 0); }), error: null}).then(cb, eb); }}; return q; }
-window.bsAccount = {user: null, client: {rpc: function(){ return Promise.resolve({data: null, error: null}); }, from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS, t) : t === 'feed_profiles' ? Q(PRO, t) : Q([], t); }}};""" % json.dumps(POSTS)
+window.bsAccount = {user: null, client: {rpc: function(){ return Promise.resolve({data: null, error: null}); }, from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS, t) : t === 'feed_profiles' ? Q(PRO, t) : Q([], t); }}};""" % (json.dumps(POSTS), json.dumps(MORE))
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 async def main():
@@ -41,6 +50,8 @@ async def main():
             ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
             await ctx.add_init_script(f"try{{localStorage.setItem('bs_theme','{theme}')}}catch(e){{}}" + FREEZE + FAKE)
             await ctx.route("**/site.api.espn.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body='{"events":[]}'))
+            await ctx.route("**/data/weeks.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"weeks": [WEEK]})))
+            await ctx.route(f"**/data/box-w{WEEK}.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(BOXFILE)))
             pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
             _ev, _go = pg.evaluate, pg.goto
             async def ev(src, *a, _ev=_ev): return await _ev(J(src), *a)
@@ -66,7 +77,7 @@ async def main():
             await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             bd = await pg.evaluate("""() => { var o = document.documentElement; function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; }
                 var c = document.getElementById('BAL-LAC'); c.querySelector('.ginfo').scrollIntoView({block: 'center'}); return {mnf: a('BAL-LAC'), cin: a('CIN-PIT'), det: a('DET-NE'), over: o.scrollWidth - o.clientWidth}; }""")
-            check(bd == J({"mnf": "4 slips on Social -> /social/#g=BAL-LAC", "cin": "1 slip on Social -> /social/#g=CIN-PIT", "det": None, "over": 0}), f"[{theme}] Boards: each game card counts its posted slips and links to them; a finished game with none says nothing ({bd})")
+            check(bd == J({"mnf": "4 slips on Social -> /social/#g=BAL-LAC", "cin": None, "det": None, "over": 0}), f"[{theme}] Boards: each game card counts its posted slips and links to them; a finished game whose only slip lost says nothing, like one with none ({bd})")
             if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/boards-social-{theme}.png")
             # ---- Social, one game ----
             await pg.goto("http://127.0.0.1:8851/social/#g=BAL-LAC", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
@@ -78,14 +89,27 @@ async def main():
             # the house slips come back when the build has any (a Tuesday build has none until the week's first promo is posted)
             any_house = so2.pop("any")
             check(so2 == {"bar": False, "house": any_house, "hash": ""}, f"[{theme}] 'Show every game' clears the filter" + ("" if any_house else " (no house slips in this build)") + f" ({so2})")
-            # a finished game: the card said "1 slip on Social", so that slip is what the link shows, though it lost
+            # a finished game whose only slip lost (owner 11/23): the slip is off the site, so the game's view is empty and says so
             await pg.goto("http://127.0.0.1:8851/social/?y=1#g=CIN-PIT", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
-            sf = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), info: (document.getElementById('feedinfo') || {}).textContent || '', empty: !!document.querySelector('#feed .empty')})""")
-            check(sf["ids"] == ["p5"] and not sf["empty"] and "1 slip on this game" in sf["info"] and "1 lost" in sf["info"], f"[{theme}] a finished game's link shows its slips even though they are settled ({sf})")
+            sf = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), info: (document.getElementById('feedinfo') || {}).textContent || '', empty: (document.querySelector('#feed .empty b') || {}).textContent || ''})""")
+            check(sf["ids"] == [] and sf["empty"] == "No slips on this game right now." and "0 slips on this game" in sf["info"] and "lost" not in sf["info"], f"[{theme}] a finished game whose only slip lost shows no slip and no count of lost ones ({sf})")
+            # ---- 11/23: three more posts. One lost its first leg in the finished game (the most upvotes of all), one's first leg hit there, one has a leg in a finished game nobody can read ----
+            await pg.evaluate("localStorage.setItem('t_more', '1')"); await pg.goto("http://127.0.0.1:8851/?x=5", wait_until="domcontentloaded"); await pg.wait_for_timeout(2600)
+            sm = await pg.evaluate("""() => { var s = document.getElementById('socstrip'); return {rows: Array.from(s.querySelectorAll('a.ssp')).map(function(a){ return a.getAttribute('href') + ' ' + a.querySelector('.w small').textContent; }), all: s.querySelector('.seeall').textContent}; }""")
+            check([r.split(" ")[0] for r in sm["rows"]] == ["/b/?p=7", "/b/?p=2", "/b/?p=1"] and sm["rows"][0].endswith("· live") and sm["all"] == "All 5 slips", f"[{theme}] Today: the slip that lost a leg is not listed though it has the most upvotes, nor is the one nobody can check; the one whose first leg hit is, as live ({sm})")
+            await pg.goto("http://127.0.0.1:8851/boards/?x=5", wait_until="domcontentloaded"); await pg.wait_for_timeout(2600)
+            bm = await pg.evaluate("""() => { function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; } return {mnf: a('BAL-LAC'), cin: a('CIN-PIT'), det: a('DET-NE')}; }""")
+            check(bm == J({"mnf": "6 slips on Social -> /social/#g=BAL-LAC", "cin": "1 slip on Social -> /social/#g=CIN-PIT", "det": "1 slip on Social -> /social/#g=DET-NE"}), f"[{theme}] Boards: the slip that lost a leg is counted on neither of its games; the other two are counted on both of theirs ({bm})")
+            await pg.goto("http://127.0.0.1:8851/social/?x=5#g=BAL-LAC", wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            g0 = await pg.evaluate("""() => Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; })""")
+            await pg.wait_for_timeout(4800)
+            g1 = await pg.evaluate("""() => ({ids: Array.from(document.querySelectorAll('#feed > article.post')).map(function(a){ return a.id; }), info: (document.getElementById('feedinfo') || {}).textContent || ''})""")
+            check(g0 == ["p7", "p2", "p1", "p3", "p4"] and g1["ids"] == ["p8", "p7", "p2", "p1", "p3", "p4"] and "6 slips on this game" in g1["info"], f"[{theme}] Social, one game: the six the card counted and not the slip that lost a leg; the one nobody can check waits six seconds, then shows ({g0} -> {g1})")
+            await pg.evaluate("localStorage.removeItem('t_more')")
             # ---- nobody has posted ----
             await pg.evaluate("localStorage.setItem('t_empty', '1')"); await pg.goto("http://127.0.0.1:8851/?x=2", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             em = await pg.evaluate("""() => { var s = document.getElementById('socstrip'); s.scrollIntoView({block: 'center'}); var e = s.querySelector('.ssempty'); return e ? [e.querySelector('b').textContent, e.querySelector('a').textContent, e.querySelector('a').getAttribute('href'), s.querySelector('.seeall').textContent] : null; }""")
-            check(em == ["No slips up for the games left this week.", "Post the first slip", "/build/", "Open Social"], f"[{theme}] with nothing posted the strip invites the first slip ({em})")
+            check(em == ["No open slips for the games left this week.", "Post the first slip", "/build/", "Open Social"], f"[{theme}] with nothing posted the strip invites the first slip ({em})")
             if SHOTS: await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/today-social-empty-{theme}.png")
             await pg.goto("http://127.0.0.1:8851/boards/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             b2 = await pg.evaluate("""() => { function a(id){ var c = document.getElementById(id), x = c && c.querySelector('.ginfo a.socn'); return x ? x.textContent + ' -> ' + x.getAttribute('href') : null; } return [a('BAL-LAC'), a('DET-NE')]; }""")

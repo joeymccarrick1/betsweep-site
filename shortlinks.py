@@ -253,6 +253,9 @@ INDEX_JS = r"""<script>(function(){
   if(!code) return;
   var box = document.getElementById('blDyn'), list = document.getElementById('blStatic'); if(list) list.hidden = true; box.hidden = false;
   box.innerHTML = '<div class="none">Loading the slip…</div>';
+  var G = {}, BOX = {}, FIRST = {}, SUMOK = {};   // the leg grader Social uses (social.GRADE_JS / READ_JS, put in by index_page)
+__GRADE__
+__READ__
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function am(o){ if(o == null) return ''; o = Math.round(o); return o > 0 ? '+' + o : String(o); }
   function lnTxt(l){ if(l.gl) return l.ms || l.m; if(l.m === 'Anytime TD') return 'anytime TD'; if(l.m === 'First TD') return 'first TD'; if(/^\d\+ TD$/.test(l.m)) return l.m; var n = l.ln == null ? '' : (l.u ? 'under ' + l.ln : Math.round(l.ln) + '+'); return ((l.ms || l.m || '').replace(/^Under /i, '').toLowerCase() + ' ' + n).trim(); }
@@ -301,11 +304,21 @@ INDEX_JS = r"""<script>(function(){
     if(window.supabase && CFG.url){
       var sb = window.supabase.createClient(CFG.url, CFG.key);
       if(post){
-        sb.from('feed_posts').select('id,handle,title,week,legs,fd_odds,last_ko').eq('id', +post).maybeSingle().then(function(r){
-          if(r.error || !r.data){ box.innerHTML = '<div class="none">This post is gone - it leaves Social once a leg loses or its games end. <a href="/social/" style="color:var(--ink)">See what is open →</a></div>'; return; }
-          var d = r.data; (d.legs || []).forEach(function(l){ if(l.ko) l.ko = +l.ko; });
+        // owner 11/23 12:12 PM ("Once a leg from a slip that someone posted on social loses please take the slip off the site"): the
+        // slip's own link goes with it. Lost on record -> gone. Otherwise, when a leg has kicked off, the page reads the week's box
+        // file and (for games in play or just over) ESPN, and says the slip is off when a leg is known to have lost. A touchdown leg
+        // only the box file calls dead does not count (unsure(): the file has no return touchdowns); what cannot be read shows the slip.
+        var cols = 'id,handle,title,week,legs,fd_odds,last_ko', gone = function(t){ box.innerHTML = '<div class="none">' + t + ' <a href="/social/" style="color:var(--ink)">See what is open →</a></div>'; };
+        var one = function(c){ return sb.from('feed_posts').select(c).eq('id', +post).maybeSingle(); };
+        one(cols + ',result').then(function(r){ return r && r.error ? one(cols) : r; }).then(function(r){   // a database without the result column
+          if(!r || r.error || !r.data){ gone('This post is gone - a slip leaves Social once a leg loses or its games end.'); return; }
+          var d = r.data, LOST = 'This slip is off Social - one of its legs lost.'; (d.legs || []).forEach(function(l){ if(l && l.ko) l.ko = +l.ko; });
+          if(d.result === 'lost'){ gone(LOST); return; }
           var row = {week: d.week, title: d.title || ('@' + d.handle + '\'s slip'), legs: d.legs || [], fd_odds: d.fd_odds, link: null};
-          withMap(row, function(m){ render(row, m); });
+          var show = function(){ withMap(row, function(m){ render(row, m); }); }, now = Date.now();
+          if(d.result || !(d.legs || []).some(function(l){ return l && l.ko && now >= l.ko; })){ show(); return; }   // on record as a winner, or nothing has kicked off
+          fileRead(d.week).then(function(){ return liveRead(d.legs, 4, 4000); }).then(function(){
+            if((d.legs || []).some(function(l){ return gradeLeg(l) === 'dead' && !unsure(l); })) gone(LOST); else show(); }).then(null, show);
         }); return; }
       sb.from('short_links').select('code,week,title,legs,fd_odds,link').eq('code', code).maybeSingle().then(function(r){
         if(r.error){ box.innerHTML = '<div class="none">' + (/relation|does not exist/i.test(r.error.message) ? 'Short links are still being set up - try again soon.' : esc(r.error.message)) + '</div>'; return; }
@@ -315,6 +328,11 @@ INDEX_JS = r"""<script>(function(){
     if(++tries < 60) setTimeout(tick, 100); else box.innerHTML = '<div class="none">Could not load the slip - check your connection and reload.</div>'; })();
 })();</script>"""
 
+def _index_js():
+    """INDEX_JS with Social's leg grader in it (one copy of that code: social.GRADE_JS / READ_JS)"""
+    import social
+    return INDEX_JS.replace("__GRADE__", social.GRADE_JS.rstrip("\n")).replace("__READ__", social.READ_JS.rstrip("\n"))
+
 def index_page(promos, week):
     """/b/ - with ?s=<code> it renders a builder slip from Supabase; without, this week's promoted bets"""
     live = [p for p in promos if p.get("status", "LIVE") == "LIVE" and not (p.get("checks") or {}).get("block")]
@@ -322,7 +340,7 @@ def index_page(promos, week):
     static = f'<div class="hd"><span class="tag">Bet links</span><span class="wk">Week {week}</span></div><h1>This week\'s bets</h1><div class="meta">Every bet BetSweep posts has a short link - the legs, the model\'s number and one tap to FanDuel.</div>' \
              + (f'<div class="list">{items}</div>' if items else '<div class="none">Nothing posted for this week yet.</div>') \
              + '<p class="fn">Make your own from the <a href="/build/" style="color:var(--ink)">Parlay Builder</a>: build a slip, tap <b>Short link</b>, paste it anywhere.</p>'
-    return f'<div class="bl" data-code="" data-week="{week}"><div id="blStatic">{static}</div><div id="blDyn" hidden></div></div>{INDEX_JS}{SAVE_JS}{SHARE_JS}'
+    return f'<div class="bl" data-code="" data-week="{week}"><div id="blStatic">{static}</div><div id="blDyn" hidden></div></div>{_index_js()}{SAVE_JS}{SHARE_JS}'
 
 # ---- Parlay Builder: "Short link" in the slip panel ----
 BTN_HTML = '<button type="button" class="pri" id="shortl" title="A short betsweep.co link for this slip - paste it on X or an Instagram story">Short link</button>'
