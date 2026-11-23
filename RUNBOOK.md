@@ -3506,6 +3506,11 @@ assets/studio) was cut from main on 11/2 and so still carries 1,266 MB of the ol
 (it is a deletion). Until it is removed the repository still needs 1,327 MB; with it gone, 136 MB. It is the owner's to delete
 (GitHub, Branches) or to ask for in so many words. Nothing uses it: no job, no generator, no page.
 
+**11/23 9:46 AM CT, the owner: "Yeah remove the old promo studio."** Tried again with his word: the push that deletes the branch
+is answered 403 by this session's git proxy (a policy refusal; `git push --force-with-lease ... :refs/heads/promo-studio`). Not
+retried and not routed around (no API call either). It is the owner's to delete on github.com (the repository's Branches page,
+the bin beside `promo-studio`). The archive copy is checked: archive/2026-11-23/promo-studio = 6da1f7f8f = the site's branch.
+
 **After the swap, the jobs:** feeds (14:50, 15:00, 15:10Z), risk-notes (15:00Z, nothing to save), sheet-mirror (15:05Z) and
 feeds-sports (15:07Z) all green on the snapshot; price-moves at 15:12Z saved the first new commit on top of it (1b37cde18, main =
 2 commits) and Pages rebuilt. Nothing on the site or in the generators points at a commit id: every link is by branch name.
