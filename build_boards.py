@@ -446,7 +446,8 @@ def fd_note(player, label, val):
     diff = v - line; cls = "up" if diff > 0 else "down"
     # owner 10/26: "+" right on the stat adds FanDuel's line for it (the rung priced nearest -112) to the betslip
     add = plus_btn(leg) if leg.get("p") is not None and leg.get("status") not in ("OUT", "BYE") else ""
-    return (f'<span class="fd {cls}" title="FanDuel main line {line:g}+ at {odds_str(leg["odds"])} (the rung priced nearest -112) vs the model">FD {line:g} <b>{diff:+.0f}</b>'
+    dtxt = f"{diff:+.1f}" if mk == "Passing TDs" else f"{diff:+.0f}"   # 11/23: touchdowns need the decimal (2.4 against a 3+ line reads -0.6, not -1)
+    return (f'<span class="fd {cls}" title="FanDuel main line {line:g}+ at {odds_str(leg["odds"])} (the rung priced nearest -112) vs the model">FD {line:g} <b>{dtxt}</b>'
             f'<small class="fdo">{odds_str(leg["odds"])}</small>{add}</span>')
 
 # ---- boards blocks ----
@@ -508,6 +509,41 @@ def _kick_key(blk):
     g = game_for(blk[0], blk[1])
     return (g["gameday"], g["gametime"]) if g else ("9999-99-99", "99:99")
 blocks.sort(key=_kick_key)
+
+# owner 11/23 ("How come I can't add passing TDs from the matchup boards"): FanDuel's Passing TDs legs are priced only in the builder
+# (newmkt.py, 11/19), so the boards' "pass TD" box had no FanDuel line and no +. Priced here the builder's way - newmkt.Pricer with the
+# team's projected points as the team total, then calib.shown - so the board and the builder carry the same number for the same rung
+# (tests/boards_ptd.py holds them together). Kept OUT of LEGS on purpose: the boards' listed parlays, script plays and picks do not change.
+PTD_LEGS = []
+try:
+    import newmkt as _NM
+    if "Passing TDs" in _NM.P:
+        _NMP = _NM.Pricer(IN, WEEK); _pts = {}
+        for _s in SCRIPTS.values():
+            if _s[0] and _s[1]: _pts[_s[0]] = (_s[1], _s[2]); _pts[_s[1]] = (_s[0], _s[3])
+        _qb_team = {normname(_p[0]): (_p[0], _p[2]) for _a, _b, _pl in blocks for _p in _pl if _p[3] == "QB"}
+        _out = {normname(_r[1]) for _r in avail_raw[1:] if len(_r) > 4 and str(_r[0]) == str(WEEK) and str(_r[4]).strip().upper() in ("OUT", "IR", "DOUBTFUL")}
+        for _r in vals("links.json")[1:]:
+            if len(_r) < 8 or _r[2] != "Passing TDs": continue
+            _ln, _od = num(_r[3]), num(_r[7]); _qn = normname(_r[1])
+            if _ln is None or _od is None or _qn not in _qb_team or _qn in _out: continue
+            _bn, _tm = _qb_team[_qn]
+            if _tm not in _pts: continue
+            _opp, _ip = _pts[_tm]
+            _nm2 = _r[1] if _r[1] in _NMP.team else next((n for n in _NMP.team if normname(n) == _qn), _r[1])
+            _res = _NMP.prob(_nm2, "Passing TDs", _ln, _opp, _ip)
+            if not _res: continue
+            _raw, _mean = round(_res[0], 4), _res[1]   # the builder rounds the raw chance before calibrating
+            _bk = (100 / (_od + 100)) if _od > 0 else (-_od / (-_od + 100))
+            _p = round(CALIB.shown(_raw, round(_bk, 4), "Passing TDs", line=_ln, proj=round(_mean, 2)), 4)
+            PTD_LEGS.append({"player": _bn, "market": "Passing TDs", "line": _ln, "odds": _od, "team": _tm, "opp": _opp, "status": "", "proj": round(_mean, 2),
+                             "p": _p, "fair": "", "book": round(_bk, 4), "edge": _p - round(_bk, 4), "verdict": "", "warn": "", "game": "", "kick": "", "raw_p": _raw})
+        print(f"boards: {len(PTD_LEGS)} passing-TD legs priced for the QB boxes")
+except Exception as _e: print("note: boards passing-TD legs skipped:", _e)
+for l in PTD_LEGS:
+    k = (l["player"], l["market"]); d = abs(l["odds"] + 112)
+    if k not in MAIN or d < MAIN[k][1]: MAIN[k] = (l["line"], d, l["proj"], l)
+MK_OF["pass TD"] = "Passing TDs"
 
 # ---------------- rendering helpers ----------------
 ICONS = {
@@ -606,7 +642,7 @@ def statline(p):
     tm_ = p[2]; py, ry, rcy, rec = _mx(py, tm_, "x Pass yds", 1, nm), _mx(ry, tm_, "x Rush yds", 1, nm), _mx(rcy, tm_, "x Rec yds", 1, nm), _mx(rec, tm_, "x Receptions", 1, nm)
     ptd, rtd, rctd = _mx(ptd, tm_, "x Pass TD", 2), _mx(rtd, tm_, "x Rush TD", 2), _mx(rctd, tm_, "x Rec TD", 2)
     def c(label, val, col): return chip(label, val, opp, col, fd_note(nm, label, val), tm=tm_)
-    if pos == "QB": return c("pass yds", py, "QB Pass Yds") + chip("pass TD", ptd, opp, "QB Pass TD", tm=tm_) + c("rush yds", ry, "QB Rush Yds") + c("rush TD", rtd, "QB Rush TD")
+    if pos == "QB": return c("pass yds", py, "QB Pass Yds") + c("pass TD", ptd, "QB Pass TD") + c("rush yds", ry, "QB Rush Yds") + c("rush TD", rtd, "QB Rush TD")
     # owner 10/27: carries ride inside the rush-yards box (their own box cluttered the card)
     if pos == "RB": return chip("rush yds", ry, opp, "RB Rush Yds", fd_note(nm, "rush yds", ry), f"{CARRIES[nm]:.1f} carries" if nm in CARRIES else "", tm=tm_) + c("rec yds", rcy, "RB Rec Yds") + c("rec", rec, "RB Receptions") + c("rush TD", rtd, "RB Rush TD") + chip("rec TD", rctd, opp, "RB Rec TD", tm=tm_)
     if pos in ("WR", "TE"): return c("rec yds", rcy, pos + " Rec Yds") + c("rec", rec, pos + " Receptions") + c("TD", rctd, pos + " Rec TD")
@@ -1504,7 +1540,7 @@ SLIP_LEGS = []; _seenk = set()
 def fl_triples(l): return [[f.get("k", "info"), f.get("tag", ""), f.get("txt", "")] for f in (l.get("flags") or []) if f.get("txt")]
 # every rung of a player|market ladder rides along once any rung of it is on an Add button, so the slip's ‹ › faders and target price work here as in the builder
 USED_PM = {tuple(k.split("|")[:2]) for k in SLIP_USED}
-for l in LEGS:
+for l in LEGS + PTD_LEGS:   # 11/23: passing-TD rungs ride along like the rest
     k = leg_key(l)
     if (k not in SLIP_USED and k not in CHIP_USED and (l["player"], l["market"]) not in USED_PM) or k in _seenk or l["p"] is None or l["book"] is None or l["odds"] is None or l["status"] in ("OUT", "BYE"): continue
     _seenk.add(k); ids = fd_ids(l)

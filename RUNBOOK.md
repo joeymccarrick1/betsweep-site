@@ -3812,3 +3812,13 @@ reader can see it. **Nothing was changed.**
   before kickoff, and graded: record.json shows 1 match in each league. Serie A and La Liga graded their starters too (players 1; 20 and 22
   player rows); EPL players still waiting (pmatches 0) until the season file has the match - expected. Serie A's lock was 1 minute
   before kickoff: fine today, thin margin; watch it on the weekend slate. One match proves the plumbing, not the model.
+
+## 11/23 5:30-6:10 PM CT: passing TDs get a + on the matchup boards (owner: "How come I can't add passing TDs from the matchup boards")
+Why they were missing: the boards are built from the sheet's leg board, which has no Passing TDs market; FanDuel's passing-TD legs
+(11/19) are priced only inside build_builder.py (newmkt.Pricer with the team total). So the QB "pass TD" box had no FanDuel note and no +.
+Now build_boards.py prices them the builder's way right after the game blocks are read (newmkt.Pricer, the team's projected points as
+the team total, raw rounded to 4 places, calib.shown) into PTD_LEGS: the QB box shows "FD 3 -0.6 -128 +" like the yards boxes (the
+difference to one decimal), and every rung rides in the page's slip data. PTD_LEGS is kept OUT of LEGS, so the boards' listed parlays,
+script plays and picks do not change. tests/boards_ptd.py (port 8891, in the pre-publish set): the embedded rungs equal the builder's
+chance and price exactly, the + is on screen in the Projections view (phone light/dark, desktop) and a tap puts the rung in the betslip.
+Not covered: the builder's questionable translator (it re-prices a questionable player's legs; the test would show the gap).
