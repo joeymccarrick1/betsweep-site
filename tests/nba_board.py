@@ -226,7 +226,9 @@ async def main():
             check(st["compact"] == multi and st["shown"] == (0 if multi else 1) and st["over"] <= 0, T(f"scorecards first, as on the NFL boards: {len(want)} games, none opened, no sideways scroll, page {st['h']:.1f} screens long"))
             check(len(st["vb"]) == 2 and st["vb"][0][0] == "Projections" and st["vb"][1][0].startswith("Who's out") and min(v[1] for v in st["vb"]) >= 38 and abs(st["vb"][0][2] - st["vb"][1][2]) < 2 and abs(st["vb"][0][3] - st["vb"][1][3]) < 3,
                   T(f"each card has two equal buttons, Projections and Who's out ({st['vb'][0][1]:.0f}px tall)"))
-            check(st["sw"] == [["NFL", "/boards/", None], ["NBA", "/nba/", "page"]], T("a sport switch sits above the cards: NFL (to the NFL boards) and NBA (this page)"))
+            has_epl = os.path.exists(os.path.join(ROOT, "epl", "index.html"))
+            check(st["sw"] == [["NFL", "/boards/", None], ["NBA", "/nba/", "page"]] + ([["EPL", "/epl/", None]] if has_epl else []),
+                  T("a sport switch sits above the cards: NFL (to the NFL boards), NBA (this page)" + (" and EPL (the Premier League preview is in this build)" if has_epl else "; no Premier League page in this build, so no link to one")))
             has_sk = os.path.exists(os.path.join(ROOT, "nba", "stocks", "index.html"))
             check(st["pg"] == ([["Boards", "/nba/", "page"], ["Stocks", "/nba/stocks/", None]] if has_sk else []) and st["bar"][0] <= 6 and st["bar"][1] <= 60,
                   T(("beside it the NBA's own pages, Boards (this one) and Stocks, " if has_sk else "no second NBA page in this build, so no page switch; ") + f"and the whole bar is one row ({st['bar'][1]:.0f}px)"))

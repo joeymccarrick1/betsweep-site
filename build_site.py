@@ -943,6 +943,15 @@ if os.path.exists(os.path.join(OUT, "nba-boards.html")):
         if os.path.exists(os.path.join(OUT, "nba_stocks.json")): shutil.copy(os.path.join(OUT, "nba_stocks.json"), os.path.join(_nb, "stocks", "stocks.json"))
 elif os.path.isdir(_nb):
     shutil.rmtree(_nb)
+# 11/22 night: /epl/ - Premier League Matchup Boards (build_epl.py), the second sport beyond the NFL and a preview on the same terms:
+# reachable from the NBA page's sport switch and by its address, not in the menu, left out of the sitemap below.
+_ep = os.path.join(SITE, "epl")
+if os.path.exists(os.path.join(OUT, "epl-boards.html")):
+    made.append(place(os.path.join(OUT, "epl-boards.html"), os.path.join(OUT, "img-none"), _ep, "/epl/"))
+    for _f, _t in (("epl_board.json", "board.json"), ("epl_sig.json", "sig.json")):
+        if os.path.exists(os.path.join(OUT, _f)): shutil.copy(os.path.join(OUT, _f), os.path.join(_ep, _t))
+elif os.path.isdir(_ep):
+    shutil.rmtree(_ep)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
@@ -1470,7 +1479,7 @@ _today = _dt.date.today().isoformat(); _urls = []
 for _d, _, _fs in os.walk(SITE):
     if "index.html" not in _fs: continue
     _rel = os.path.relpath(_d, SITE).replace(os.sep, "/"); _path = "/" if _rel == "." else f"/{_rel}/"
-    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
+    if _path.startswith(("/me/", "/b/", "/fantasy/", "/p/", "/promo/", "/app/", "/data/", "/studio/", "/nba/", "/epl/")): continue   # /nba/ is a preview until the owner turns it on (11/22)
     try:
         if 'http-equiv="refresh"' in open(os.path.join(_d, "index.html"), encoding="utf-8", errors="ignore").read(600): continue   # audit 11/10: forwarding stubs (/today/, old player addresses) are not pages
     except Exception: pass

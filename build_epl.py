@@ -1,0 +1,269 @@
+"""Premier League Matchup Boards at /epl/ - the coming matches as cards, in the NFL boards' own clothes.
+
+Owner 11/22 3:27 PM: "Let's start adding nba, college football, and epl. I want each sport to basically look exactly like everything
+we've built for NFL."; 9:32 PM, with the NBA pages up: "Get to what's next".
+
+Where the numbers come from: epl/board.json on the feeds-sports branch, written by sports/epl/publish.py inside the feeds-sports job
+(pandas and the data set live there, not here). This script reads it through the clone with git and writes out/epl-boards.html in
+plain Python. The look is the NBA page's, which is the NFL boards': template.html's stylesheet, the same card markup, and build_nba's
+own extra rules and script (scorecards first, Projections / Who's out, a tap opens a player).
+
+A PREVIEW: not in the menu, not in the sitemap, and it says so. Model numbers only - no FanDuel prices, no edges, no picks. Every
+player number is "if he starts": the model does not pick line-ups, and the page shows how often he has started lately beside it.
+
+    python3 build_epl.py <clone>              # the hourly job
+    python3 build_epl.py --board FILE         # tests and local work
+
+With no board in reach, one in another shape, one more than a day old, or one whose matches have all kicked off long ago, it writes
+nothing and removes what an earlier run left.
+"""
+import datetime as dt, html, json, os, re, sys
+import build_nba as N
+
+HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "out")
+PAGE = os.path.join(OUT, "epl-boards.html")
+E = html.escape
+FORMAT = 1                                   # sports/epl/publish.py FORMAT
+POSN = {"GK": "Goalkeeper", "DEF": "Defender", "MID": "Midfielder", "FWD": "Forward"}
+POSS = {"GK": "goalkeepers", "DEF": "defenders", "MID": "midfielders", "FWD": "forwards"}
+REGULAR = 3                                  # starts in the club's last five that make a player "a regular" on this page
+HEADNAME = {"Nott'm Forest": "Forest", "Crystal Palace": "Palace"}     # under the big letters in a card's header there is room for about eleven
+
+
+def when(s):
+    try:
+        t = dt.datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
+    except Exception:
+        return None
+
+
+def usable(B, now=None, any_age=False):
+    """(ok, why not). Drawn only if it is in the shape this page reads, has a match that is not long over, and was built in the last day:
+    the feed job keeps its last board when the model step fails, so an old one can sit on the branch."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    if not B or not isinstance(B, dict): return False, "no epl/board.json in reach on the feeds-sports branch"
+    if B.get("format") != FORMAT or B.get("sport") != "epl": return False, f"the board is format {B.get('format')!r}, this page reads format {FORMAT}"
+    if not B.get("matches") or not B.get("players"): return False, "the board holds no matches"
+    if any_age: return True, ""
+    built = when(B.get("built"))
+    if not built or (now - built).total_seconds() > 26 * 3600: return False, f"the board was built {B.get('built')}, more than a day ago: the feed job is not producing a new one"
+    last = max((when(m.get("ko")) for m in B["matches"] if when(m.get("ko"))), default=None)
+    if not last or (now - last).total_seconds() > 6 * 3600: return False, "every match on the board kicked off more than six hours ago"
+    return True, ""
+
+
+def pct(p): return f"{round(p * 100)}%"
+def regular(p): return p.get("xi") == "start" or (p.get("xi") is None and p["starts5"] >= REGULAR)
+def allow_rank(r, n): return n + 1 - r          # the board ranks the best defence 1; the card's scale is "1 allows the most"
+
+
+def player_li(p, top, ranks, B):
+    t = B["teams"][p["team"]]; o = B["teams"][p["opp"]]; n = B.get("n_clubs") or 20
+    ag, ash = allow_rank(o["def"][0], n), allow_rank(o["shots_against"][0], n)
+    cg, cs = N.rank_color(ag, n), N.rank_color(ash, n)
+    st = p.get("status") or {}
+    tag = st.get("tag")
+    xi = p.get("xi")
+    role = {"start": "in the eleven", "bench": "on the bench", "no": "not in the squad"}.get(xi) or f"started {p['starts5']} of last 5"
+    mu_g = f'<span class="mu"><i style="background:{cg}">{E(p["opp"])} #{ag}</i><b>in</b><i class="nbg">goals allowed</i></span>'
+    mu_s = f'<span class="mu"><i style="background:{cs}">{E(p["opp"])} #{ash}</i><b>in</b><i class="nbg">shots allowed</i></span>'
+    tip_g = f"{p['opp']} rank #{ag} of {n} in goals allowed, adjusted for opponents (1 = allow the most)"
+    tip_s = f"{p['opp']} rank #{ash} of {n} in shots allowed, adjusted for opponents (1 = allow the most)"
+    tot = p["tot"]; per = p.get("per90") or {}
+    f2 = lambda x: "–" if x is None else f"{x:.2f}"
+    chips = (f'<span class="sc" data-k="goal" style="--c:{cg}" title="{E(tip_g)}"><small>To score</small><b>{pct(p["p_goal"])}</b>{mu_g}<span class="fd">{tot["goals"]} goal{"s" if tot["goals"] != 1 else ""} in {p["mins"]} min <small class="fdo">2+: {pct(p["p_goal2"])}</small></span></span>'
+             f'<span class="sc" data-k="assist" style="--c:{cg}" title="{E(tip_g)}"><small>An assist</small><b>{pct(p["p_assist"])}</b>{mu_g}<span class="fd">{tot["assists"]} this season</span></span>'
+             f'<span class="sc" data-k="shots" style="--c:{cs}" title="{E(tip_s)}"><small>Shots</small><b>{p["shots"]:.1f}</b>{mu_s}<span class="fd">{f2(per.get("shots"))} per 90 <small class="fdo">{tot["shots"]} taken</small></span></span>'
+             f'<span class="sc" data-k="sot" style="--c:{cs}" title="{E(tip_s)}"><small>On target</small><b>{p["sot"]:.1f}</b>{mu_s}<span class="fd">{f2(per.get("sot"))} per 90 <small class="fdo">{tot["sot"]} this season</small></span></span>')
+    lad = ""
+    for k, cap in (("shots", "Shots"), ("sot", "Shots on target")):
+        rungs = [r for r in (p["ladder"].get(k) or []) if r[1] >= 0.03]
+        if rungs: lad += f'<li><span>{cap}</span>' + "".join(f'<em><b>{L}+</b>{pct(pr)}</em>' for L, pr in rungs) + '</li>'
+    flags = []
+    if tag: flags.append(("watch", f"{tag} to play" if tag.endswith("%") else tag, st.get("why") or "Listed by the Fantasy Premier League."))
+    if xi == "bench": flags.append(("watch", "On the bench", "The confirmed line-up has him among the substitutes. These numbers are for a start."))
+    elif xi == "no": flags.append(("watch", "Not in the squad", "He is not in the confirmed line-up or on the bench."))
+    elif xi is None and p["starts5"] < REGULAR:
+        flags.append(("info", "Not a regular starter", f"He started {p['starts5']} of his club's last 5 matches and played in {p['apps5']}. These numbers are for a start."))
+    fl = ""
+    if flags:
+        fl = ('<details class="flags"><summary>' + "".join(f'<span class="fg {c}">{E(h)}</span>' for c, h, _ in flags) + '<i class="more">tap for the note ▾</i></summary><ul>'
+              + "".join(f'<li class="{c}"><b>{E(h)}</b>{E(tx)}</li>' for c, h, tx in flags) + '</ul></details>')
+    rec = ""
+    if p.get("recent"):
+        rec = ('<table class="nbl5"><caption>His last ' + str(len(p["recent"])) + ' appearances</caption><thead><tr><th>Date</th><th>Opp</th><th>Min</th><th>G</th><th>A</th><th>Sh</th><th>On tgt</th></tr></thead><tbody>'
+               + "".join("<tr>" + "".join(f"<td>{E(str(c))}</td>" for c in g[:7]) + "</tr>" for g in reversed(p["recent"])) + "</tbody></table>")
+    rk = ranks.get((p["id"], p["match"]))
+    w = 0 if not top else max(4.0, min(100.0, p["p_goal"] / top * 100))
+    tags = (f'<i class="nbtag t-q">{E(tag)}</i>' if tag else "") + ('<i class="nbtag t-p">XI</i>' if xi == "start" else ('<i class="nbtag t-d">Bench</i>' if xi == "bench" else ""))
+    return (f'<li class="pl pos-{p["pos"]}{"" if regular(p) else " eplsub"}" data-pid="{E(p["id"])}"> <button type="button" class="prow" aria-expanded="false"><span class="pos" title="{POSN.get(p["pos"], p["pos"])}">{E(p["pos"])}</span>'
+            f'<span class="who"><span class="nm">{E(p["name"])}{tags}</span><span class="role sn" title="Starts in his club\'s last five matches; minutes when he starts: about {p["start_min"]}">{E(role)}</span></span> '
+            f'<span class="ppr"><span class="v"><small>Scores</small>{pct(p["p_goal"])}<small>if he starts</small></span><i style="--w:{w:.1f}%"></i><span class="rk">{("#" + str(rk) + " " + p["pos"]) if rk else ""}</span></span><i class="car" aria-hidden="true">▾</i></button> '
+            f'<div class="pdetail" hidden><div class="sl">{chips}</div>' + (f'<ul class="nblad" aria-label="Chance of each line, model only, if he starts">{lad}</ul>' if lad else "") + fl + rec + '</div></li>')
+
+
+def team_col(ab, m, B, top, ranks):
+    t = B["teams"][ab]; opp = m["away"] if m["home"] == ab else m["home"]; o = B["teams"][opp]; n = B.get("n_clubs") or 20
+    ag, ash = allow_rank(o["def"][0], n), allow_rank(o["shots_against"][0], n)
+    dm = (f'<span class="dm" style="--c:{N.rank_color(ag, n)}" title="{E(opp)} rank #{ag} of {n} in goals allowed, adjusted for opponents (1 = allow the most)"><span class="dl">Goals</span><b>#{ag}</b></span>'
+          f'<span class="dm" style="--c:{N.rank_color(ash, n)}" title="{E(opp)} rank #{ash} of {n} in shots allowed, adjusted for opponents (1 = allow the most)"><span class="dl">Shots</span><b>#{ash}</b></span>')
+    dsum = f'<li class="dsum">{N.badge(ab, t)}<span>vs {E(opp)} D</span><span class="dgrid">{dm}</span></li>'
+    bits = [x for x in ((t.get("record") or ""), (f"form {t['form']}" if t.get("form") else ""), (f"attack #{t['att'][0]}, defence #{t['def'][0]} of {n}")) if x]
+    note = f'<li class="nbrest">{E(" · ".join(bits))}</li>'
+    inj = ('<li class="inj"><span>Out</span>' + "".join(f'<em>{E(x["name"])} <small>{E((x.get("why") or x["tag"]).split(" - ")[0])}</small></em>' for x in t["out"]) + '</li>') if t.get("out") else '<li class="nbnoout">Nobody listed out.</li>'
+    doubt = ('<li class="inj nbback epldoubt"><span>Doubts</span>' + "".join(f'<em>{E(x["name"])} <small>{E(x["tag"])} to play{" · " + E((x.get("why") or "").split(" - ")[0]) if x.get("why") else ""}</small></em>' for x in t["doubt"]) + '</li>') if t.get("doubt") else ""
+    ps = sorted([p for p in B["players"] if p["team"] == ab and p["match"] == m["id"]], key=lambda p: (not regular(p), -p["p_goal"], p["name"]))
+    if not ps:
+        body = '<li class="nbnone">No projections yet for this club.</li>'
+    else:
+        reg = [p for p in ps if regular(p)]; oth = [p for p in ps if not regular(p)]
+        body = "".join(player_li(p, top, ranks, B) for p in reg)
+        if oth: body += f'<li class="epldiv">{"Not in the eleven" if m.get("lineups") else "Others who have played lately"} <small>numbers are for a start</small></li>' + "".join(player_li(p, top, ranks, B) for p in oth)
+    return f'<ul class="col" data-team="{E(ab)}">{dsum}{note}{inj}{doubt}{body}</ul>'
+
+
+def match_card(m, B, ranks):
+    h, a = m["home"], m["away"]; th, ta = B["teams"][h], B["teams"][a]
+    p = m["p"]
+    score = (f'<span class="pt">{m["xg"]["home"]:.2f}</span><span class="dash">–</span><span class="pt">{m["xg"]["away"]:.2f}</span>'
+             f'<small>{E(h)} {pct(p["home"])} · draw {pct(p["draw"])} · {E(a)} {pct(p["away"])}</small>')
+    ko = int(when(m["ko"]).timestamp() * 1000) if when(m["ko"]) else 0
+    band = ""
+    if m.get("state") in ("in", "post") and m.get("score"):
+        head = "Full time" if m["state"] == "post" else "In play"
+        band = f'<div class="nbstate s-{m["state"]}"><b>{head}</b><span>{E(h)} {E(str(m["score"].get("home")))} · {E(a)} {E(str(m["score"].get("away")))}</span>' + (f'<small>{E(m.get("detail") or "")} when this page was built</small>' if m["state"] == "in" else "") + '</div>'
+    line = m.get("line") or {}
+    mk = ""
+    if line.get("details") or line.get("total") is not None:
+        txt = " · ".join(x for x in ((line.get("details") or ""), (f"O/U {line['total']:g}" if isinstance(line.get("total"), (int, float)) else "")) if x)
+        who = (line.get("by") or "the sportsbook ESPN shows").replace("Draft Kings", "DraftKings")
+        mk = f'<i>·</i><span class="mkt" title="{E(who)} line as shown by ESPN - not FanDuel">{E(txt)} <small>{E(who)}</small></span>'
+    ginfo = f'<div class="ginfo"><span class="gk">{E(m["koct"])} CT</span>' + (f'<i>·</i><span>{E(m["venue"])}</span>' if m.get("venue") else "") + mk + '</div>'
+    best = m["scores"][0]
+    mkts = (f'<div class="eplmk" aria-label="The model\'s chances for this match"><span><small>Over 2.5</small><b>{pct(p["over25"])}</b></span><span><small>Both score</small><b>{pct(p["btts"])}</b></span>'
+            f'<span><small>Likeliest</small><b>{E(best[0])} <i>{pct(best[1])}</i></b></span><span><small>Shots</small><b>{m["shots"]["home"]:.0f}–{m["shots"]["away"]:.0f}</b></span></div>')
+    top = max([x["p_goal"] for x in B["players"] if x["match"] == m["id"] and regular(x)] or [x["p_goal"] for x in B["players"] if x["match"] == m["id"]] or [0])
+    nout = sum(len(B["teams"][x].get("out") or []) + len(B["teams"][x].get("doubt") or []) for x in (h, a))
+    xi = ' <i class="eplxi">line-ups in</i>' if m.get("lineups") else ""
+    return (f'<section class="card" id="{E(m["key"])}" data-ko="{ko}"> <header class="hd"> <div class="tm a">{N.badge(h, th)}<b>{E(h)}</b><span>{E(HEADNAME.get(th["name"], th["name"]))}</span></div> '
+            f'<div class="score">{score}{N.SWOOSH}</div> <div class="tm b">{N.badge(a, ta)}<b>{E(a)}</b><span>{E(HEADNAME.get(ta["name"], ta["name"]))}</span></div> </header> {band}{ginfo}{mkts}'
+            f'<div class="vbtns"><button type="button" class="vbtn" data-view="proj">Projections{xi}</button><button type="button" class="vbtn" data-view="out">Who\'s out <small>{nout}</small></button></div>'
+            f'<div class="cols">{team_col(h, m, B, top, ranks)}{team_col(a, m, B, top, ranks)}</div>'
+            f'<footer class="nbfoot"><span>The score is each side\'s expected goals; home side first. Bar: chance to score if he starts, scaled to this match\'s likeliest scorer · tap a player for assists, shots and his last five</span></footer> </section>')
+
+
+def summary_card(B, ranks):
+    key = {m["id"]: m["key"] for m in B["matches"]}
+    ml = ""
+    for m in B["matches"]:
+        p = m["p"]; fav = max((("home", m["home"]), ("draw", "draw"), ("away", m["away"])), key=lambda x: p[x[0]])
+        st = "Full time" if m.get("state") == "post" else ("In play" if m.get("state") == "in" else m["koct"])
+        ml += (f'<li><span class="bl-p"><a href="#{E(m["key"])}">{E(m["home"])} v {E(m["away"])}</a></span><span class="bl-m">{E(st)} <small>model {m["xg"]["home"]:.1f}–{m["xg"]["away"]:.1f}</small></span>'
+               f'<span class="bl-n">{E(fav[1])} {pct(p[fav[0]])}</span></li>')
+    reg = [p for p in B["players"] if regular(p)]
+    sc = sorted(reg, key=lambda p: (-p["p_goal"], p["name"]))[:6]
+    sl = "".join(f'<li><span class="bl-p"><a href="#{E(key[p["match"]])}" data-open="{E(p["id"])}">{E(p["name"])}</a></span><span class="bl-m">{pct(p["p_goal"])} to score <small>{p["shots"]:.1f} shots</small></span><span class="bl-n">{E(p["team"])} <small>{"v" if p["home"] else "at"} {E(p["opp"])}</small></span></li>' for p in sc)
+    sh = sorted(reg, key=lambda p: (-p["shots"], p["name"]))[:6]
+    hl = "".join(f'<li><span class="bl-p"><a href="#{E(key[p["match"]])}" data-open="{E(p["id"])}">{E(p["name"])}</a></span><span class="bl-m">{p["shots"]:.1f} shots <small>{p["sot"]:.1f} on target</small></span><span class="bl-n">{E(p["team"])} <small>{"v" if p["home"] else "at"} {E(p["opp"])}</small></span></li>' for p in sh)
+    n = len(B["matches"])
+    return (f'<section class="card summary" id="summary"> <header class="hd"><div class="tm a"><b>Slate</b><span>{E(round_label(B))} at a glance</span></div><div class="score"><span class="pt">{n}</span><small>match{"es" if n != 1 else ""} on the board</small>{N.SWOOSH}</div>'
+            f'<div class="tm b"><span>BetSweep model</span></div></header> <div class="sumgrid"> <div><h3>Matches <small>kickoff (CT), expected goals, the likeliest result</small></h3><ul class="bl">{ml}</ul></div> '
+            f'<div><h3>Likeliest scorers <small>regular starters, if they start</small></h3><ul class="bl">{sl}</ul></div> <div><h3>Most shots <small>regular starters, if they start</small></h3><ul class="bl">{hl}</ul></div> </div> </section>')
+
+
+def round_label(B):
+    g = B.get("gameweeks") or []
+    return ("Gameweek " + str(g[0])) if len(g) == 1 else (f"Gameweeks {g[0]} and {g[-1]}" if g else "The coming matches")
+
+
+EPL_CSS = """
+.eplmk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 12px 4px}
+.eplmk span{min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:5px 8px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.eplmk small{font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .eplmk b{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.15;color:var(--ink);white-space:nowrap}
+.eplmk i{font-style:normal;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--mute)}
+body.compact .card:not(.expanded) > .eplmk{display:grid}
+@media (max-width:760px){ .eplmk{gap:4px;padding:8px 10px 4px} .eplmk span{padding:5px 6px} .eplmk small{font-size:10.5px} .eplmk b{font-size:16px} .eplmk i{font-size:10.5px} }
+.epldiv{list-style:none;margin:10px 0 2px;padding:6px 2px 4px;border-top:1px dashed var(--line);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+.epldiv small{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;margin-left:6px}
+.card.expanded[data-view="out"] .epldiv{display:none}
+li.pl.eplsub .ppr .v{opacity:.72}
+.eplxi{font-style:normal;font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--good);margin-left:6px}
+.pl .pos{min-width:34px}
+"""
+
+
+def page(B, nba=False):
+    css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
+    # this round's rank at each position by chance to score, regular starters only (a substitute's "if he starts" number is not ranked)
+    ranks = {}
+    for pos in POSN:
+        for i, p in enumerate(sorted([p for p in B["players"] if p["pos"] == pos and regular(p)], key=lambda p: (-p["p_goal"], p["name"]))):
+            ranks[(p["id"], p["match"])] = i + 1
+    nav = '<a href="#summary">Slate</a> ' + " ".join(f'<a href="#{E(m["key"])}">{E(m["home"])}·{E(m["away"])}</a>' for m in B["matches"])
+    n = len(B["matches"]); rl = round_label(B)
+    desc = (f"Premier League matchup boards, {rl.lower()}: the model's expected goals and result chances for {n} match{'es' if n != 1 else ''}, each regular's chance to score, his shots, "
+            "who is out, and what each defence allows. A preview: model numbers only.")
+    last = max(when(m["ko"]) for m in B["matches"])
+    try:
+        from zoneinfo import ZoneInfo
+        last_day = last.astimezone(ZoneInfo("America/Chicago")).date().isoformat()
+    except Exception:
+        last_day = (last - dt.timedelta(hours=6)).date().isoformat()
+    pre = ('<div class="nbpre"><b>Premier League preview.</b> Model numbers only: no FanDuel prices yet, so no edges or betslip buttons. '
+           'Player numbers assume he starts. Nothing here is a pick.</div>')
+    key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
+           '<dt>Score</dt><dd>Each side\'s expected goals, home side first, and under it the chance of a home win, a draw and an away win. The posted line beside the kickoff time is the sportsbook line ESPN shows, named there; it is not FanDuel\'s.</dd>'
+           '<dt>Bar and number</dt><dd>A player\'s chance to score <b>if he starts</b>, with the bar scaled to the match\'s likeliest scorer. The tag after it is his place among this round\'s regular starters at his position.</dd>'
+           '<dt>Started N of last 5</dt><dd>The model does not pick line-ups. Players who started three or more of the club\'s last five matches are listed first; the rest sit under a line. When the confirmed elevens are in, about an hour before kickoff, each player is marked in the eleven or on the bench.</dd>'
+           '<dt>Chips</dt><dd>Tap a player. Each chip is a projection; its color is how much the opponent allows - goals for scoring and assists, shots for shots - #1 (green) allows the most and #20 (red) the least.</dd>'
+           '<dt>Out and doubts</dt><dd>From the official Fantasy Premier League list. A player listed out or suspended has no numbers; a doubt keeps his, with his chance of playing.</dd></dl></details>')
+    chk = ("".join(f"<li>{E(c)}</li>" for c in B.get("checks") or []))
+    stamp = (f'<p class="nbstamp">Built {N.fmt_ct(B.get("built"))} from {B.get("played")} matches through {E(B.get("data_through") or "?")}. Match data: the public FPL-Elo-Insights data set; fixtures, kickoff times and line-ups: ESPN; availability: the official Fantasy Premier League list'
+             + (f' as of {N.fmt_ct(B.get("fpl_at"))}' if B.get("fpl_at") else '') + '. Every fixture is checked against ESPN before it is shown. '
+             'Projections: BetSweep\'s Premier League model (an attack and a defence rating for every club, fitted on expected goals and goals; players by minutes and per-90 rates against what the opponent allows). '
+             'In tests its home / draw / away chances were level with a plain Elo rating and well ahead of flat rates; its totals were no better than last season\'s flat rate; its scorer and shots numbers beat a player\'s own hit rate on about 100 matches of 2026-27. '
+             'That is thin evidence: a first look, not a record. For entertainment; not betting advice.</p>'
+             + (f'<ul class="nbstamp eplchk">{chk}</ul>' if chk else ""))
+    cards = "\n".join(match_card(m, B, ranks) for m in B["matches"])
+    sw = ('<div class="nbsw" role="group" aria-label="Sport"><a href="/boards/">NFL</a>' + ('<a href="/nba/">NBA</a>' if nba else "") + '<a href="/epl/" aria-current="page">EPL</a></div>')
+    return (f'<title>BetSweep · Premier League Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_CSS}</style>\n'
+            f'<div class="top">\n  <div class="mast">\n    <h1><small>Premier League · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to match">{nav}</nav>\n</div>\n'
+            f'<div class="nbbar">{sw}{key}</div>\n{pre}\n'
+            f'<div class="nbold" id="nbold" hidden><b>Every match on this board has kicked off.</b> A newer board is not up yet, so the numbers below are from before those matches.</div>\n'
+            f'<div class="grid" data-day="{E(last_day)}">\n{summary_card(B, ranks)}\n{cards}\n</div>\n{stamp}\n{N.NB_JS}\n')
+
+
+def signature(B):
+    """what a visitor would notice changing: the matches and their state, the posted lines, each side's expected goals to a tenth, who is out or doubtful,
+    whether the elevens are in, and each player's chance to score to the whole percent"""
+    return json.dumps([[(m["key"], m.get("state"), (m.get("line") or {}).get("details"), round(m["xg"]["home"], 1), round(m["xg"]["away"], 1), bool(m.get("lineups"))) for m in B["matches"]],
+                       sorted((ab, sorted(o["name"] for o in t.get("out") or []), sorted((o["name"], o["tag"]) for o in t.get("doubt") or [])) for ab, t in B["teams"].items()),
+                       sorted((p["id"], p["match"], round(p["p_goal"] * 100), p.get("xi")) for p in B["players"])], sort_keys=True)
+
+
+def main():
+    a = sys.argv[1:]
+    named = "--board" in a
+    if named:
+        B = N.load(path=a[a.index("--board") + 1]); nba = "--nba" in a           # --nba: draw the link to the NBA page (local work)
+    else:
+        nb = N.load(clone=(a[0] if a else None))       # fetches the branch; the NBA board says whether there will be an NBA page to link to
+        B = N.feed_file(a[0] if a else None, "epl/board.json"); nba = N.usable(nb)[0]
+    ok, why = usable(B, any_age=named)
+    outs = (PAGE, os.path.join(OUT, "epl_board.json"), os.path.join(OUT, "epl_sig.json"))
+    if not ok:
+        for f in outs:
+            if os.path.exists(f): os.remove(f)
+        print(f"epl: no page written - {why}")
+        return
+    os.makedirs(OUT, exist_ok=True)
+    open(PAGE, "w", encoding="utf-8").write(page(B, nba))
+    json.dump(B, open(outs[1], "w"), separators=(",", ":"))
+    json.dump({"built": B.get("built"), "sig": signature(B)}, open(outs[2], "w"))
+    print(f"epl boards: {round_label(B)}, {len(B['matches'])} matches, {len(B['players'])} player rows, {sum(len(t.get('out') or []) for t in B['teams'].values())} out, "
+          f"{sum(len(t.get('doubt') or []) for t in B['teams'].values())} doubts; board built {N.fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
+
+
+if __name__ == "__main__":
+    main()

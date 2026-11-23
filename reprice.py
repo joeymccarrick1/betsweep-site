@@ -78,6 +78,7 @@ BUILD = [
     ("shadow slips", "shadow_slips.py", "soft"),
     ("promos", "build_promo.py {clone}/promo-slips", "hard"),
     ("today (with promos)", "build_today.py", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
+    ("epl boards (preview)", "build_epl.py {clone}", "soft"),    # owner 11/22 9:32 PM; before the NBA steps, whose sport switch links to it
     ("nba stocks (preview)", "build_nba_stocks.py {clone}", "soft"),
     ("nba boards (preview)", "build_nba.py {clone}", "soft"),   # owner 11/22: /nba/, from the board the feeds-sports job writes; no board, no page
     ("site", "build_site.py betsweep.co {clone}/posts", "hard"),
@@ -228,15 +229,22 @@ def check_site(W, live):
     return bad
 
 
-def nba_changed(clone):
-    """The NBA preview (owner 11/22): True when this build's board is not the one the live page was drawn from - another day, a game's
-    state or posted line, who is out, or a player's points by a whole number (build_nba.signature). No NBA page in this build: False."""
-    try: new = json.load(open(os.path.join(OUT, "nba_sig.json")))
+PREVIEWS = ("nba", "epl")     # the other sports' preview pages: each lives in its own folder with a sig.json beside it
+
+
+def preview_changed(clone, name):
+    """A preview page (the NBA's since 11/22, the Premier League's after it): True when this build's page is not the one the live
+    site holds - out/<name>_sig.json against <clone>/<name>/sig.json. What is in a signature is each builder's business
+    (build_nba.signature, build_epl.signature): what a visitor would notice changing. No such page in this build: False."""
+    try: new = json.load(open(os.path.join(OUT, f"{name}_sig.json")))
     except Exception: return False
-    if not os.path.exists(os.path.join(SITE, "nba", "index.html")): return False
-    try: old = json.load(open(os.path.join(clone, "nba", "sig.json")))
+    if not os.path.exists(os.path.join(SITE, name, "index.html")): return False
+    try: old = json.load(open(os.path.join(clone, name, "sig.json")))
     except Exception: old = {}
     return new.get("sig") != old.get("sig")
+
+
+def nba_changed(clone): return preview_changed(clone, "nba")
 
 
 def copy_only(clone, names):
@@ -402,10 +410,12 @@ def main():
     log(f"against the live site: {moved} legs with a new price, {added} new legs, {gone} legs gone ({len(pn)} legs now); {main} of those are player props or main game lines")
     if a.publish == "none": finish(0, "built and checked; nothing copied (--publish none)")
     if failed["flag"]: finish(6, "a flag step failed (" + ", ".join(failed["flag"]) + "); not copied, the live flags stay")
-    S["nba_changed"] = nba_changed(clone)
+    S["previews_changed"] = [n for n in PREVIEWS if preview_changed(clone, n)]
+    S["nba_changed"] = "nba" in S["previews_changed"]
     if a.publish == "changed" and main < a.min_moves:
-        if S["nba_changed"]:
-            S["copied"] = len(copy_only(clone, ["nba"])); finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); the NBA board changed, so /nba/ alone was copied")
+        if S["previews_changed"]:
+            S["copied"] = len(copy_only(clone, S["previews_changed"]))
+            finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); " + " and ".join("/" + n + "/" for n in S["previews_changed"]) + " changed, so only that was copied")
         finish(0, f"{main} props or main lines moved (the bar is {a.min_moves}); the clone is left alone")
     S["copied"] = len(copy_into_clone(clone)); finish(0, "built, checked and copied into the clone")
 
