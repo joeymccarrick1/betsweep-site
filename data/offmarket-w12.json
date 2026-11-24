@@ -1,0 +1,65 @@
+{
+ "week": 12,
+ "legs": {
+  "James Cook|Receptions|2": {
+   "pl": "James Cook",
+   "m": "Receptions",
+   "ln": 2.0,
+   "g": "BUF-KC",
+   "fd": 130.0,
+   "dk": 104.0,
+   "hr": 115.0,
+   "gap": 3.0,
+   "p": 0.421,
+   "seen": "2026-11-24 6:34"
+  },
+  "Xavier Worthy|Receiving Yards|40": {
+   "pl": "Xavier Worthy",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "BUF-KC",
+   "fd": 350.0,
+   "dk": 287.0,
+   "hr": 240.0,
+   "gap": 3.6,
+   "p": 0.2421,
+   "seen": "2026-11-24 6:34"
+  },
+  "Makai Lemon|Receiving Yards|50": {
+   "pl": "Makai Lemon",
+   "m": "Receiving Yards",
+   "ln": 50.0,
+   "g": "DAL-PHI",
+   "fd": 280.0,
+   "dk": 234.0,
+   "hr": 240.0,
+   "gap": 3.1,
+   "p": 0.2615,
+   "seen": "2026-11-24 6:34"
+  },
+  "Colston Loveland|Receiving Yards|80": {
+   "pl": "Colston Loveland",
+   "m": "Receiving Yards",
+   "ln": 80.0,
+   "g": "CHI-DET",
+   "fd": 300.0,
+   "dk": 251.0,
+   "hr": 250.0,
+   "gap": 3.5,
+   "p": 0.2255,
+   "seen": "2026-11-24 6:34"
+  },
+  "Brevyn Spann-Ford|Receiving Yards|25": {
+   "pl": "Brevyn Spann-Ford",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "DAL-PHI",
+   "fd": 250.0,
+   "dk": 203.0,
+   "hr": 210.0,
+   "gap": 3.7,
+   "p": 0.2587,
+   "seen": "2026-11-24 6:34"
+  }
+ }
+}
