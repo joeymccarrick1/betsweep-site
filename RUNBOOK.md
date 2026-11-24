@@ -3846,3 +3846,11 @@ feed may carry them - look before wiring), the Rain watch risk flag's own thresh
   (e.g. "out at least six weeks") still pushes once each week it rolls.
 - OWNER STEP: redeploy push/slip-alerts.ts as the slip-alerts Edge Function. Until then the old behaviour continues.
 - tests/news_up.py 23 (4 new IR checks).
+
+## 11/23 9:40 PM CT: first MLS lock and grade (scheduled check) - worked
+St. Louis v LAFC (playoff Round One, game 1 of a best-of-three; ESPN event 401933728) kicked off 01:15Z (7:15 PM CT, not 7:00 as the
+check expected). Locked 8 minutes before kickoff from the 01:07Z board ("the feed, one run earlier"), lineups true, 40 player rows.
+Settled in regular time 3-2 STL: ESPN state "post", detail "FT", period 2, clock "90'+13'", stype 13837 for the playoffs; so no
+"FT-Pens" case yet and nothing under "beyond" (the record's beyond list is empty, as it should be). record.json: 1 match, players graded
+(21). The series' later games (11/29 at LAFC, 12/3 at STL if needed) are on the scoreboard as "Scheduled". The penalties rule is still
+untested on real data - watch the first match that goes to penalties.
