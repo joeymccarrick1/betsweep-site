@@ -1,9 +1,9 @@
 {
  "news": [],
  "week": 11,
- "built": "Mon 11/23 4:57 PM",
- "checked": "2026-11-24T00:12:19Z",
- "legs_checked": 159,
+ "built": "Mon 11/23 6:15 PM",
+ "checked": "2026-11-24T00:42:13Z",
+ "legs_checked": 169,
  "moves": [
   {
    "key": "Drew Sample|Longest Reception|10",
@@ -83,7 +83,7 @@
    "built": 270,
    "now": 200.0,
    "pts": 6.3,
-   "p": 0.2433,
+   "p": 0.2431,
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
