@@ -432,7 +432,7 @@ for home, away, ko, vname, neutral, nroof in evs:
             WX_DETAIL[_wk] = _c
             try: WXM.score(WX_SCORE, f"{wk}|{t1}|{t2}", _c, st[0], st[1], ko, now)["home"] = home
             except Exception as e: print("wx score fail", _wk, str(e)[:100])
-            print("wx", _wk, "pops", _c.get("pops"), "rain", _c.get("rain"), _c["ptype"], _c["risk"], _c.get("field"), "missing", _c.get("missing"))
+            print("wx", _wk, "pops", _c.get("pops"), "rain", _c.get("rain"), "wind", _c.get("wind"), "gust", _c.get("gust"), "temp", _c.get("temp"), _c["ptype"], _c["risk"], _c.get("field"), "missing", _c.get("missing"))
             continue
         except Exception as e:
             print("wx_multi fail", _wk, str(e)[:160]); _c = None

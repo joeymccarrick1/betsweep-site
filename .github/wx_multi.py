@@ -12,8 +12,10 @@ import json, re, subprocess, datetime as dt
 
 UA = "BetSweep weather check (betsweep.co, support@betsweep.co)"
 OM = "https://api.open-meteo.com/v1/forecast"
-MODELS = ("best_match", "gfs_seamless", "ecmwf_ifs025")
-NAMES = {"best_match": "Open-Meteo", "gfs_seamless": "GFS", "ecmwf_ifs025": "ECMWF", "nws": "National Weather Service"}
+# 11/24, first live run: Open-Meteo's default and its GFS run gave the same numbers for every stadium (the default IS the GFS family here),
+# so GFS was dropped for two runs that are independent of it. A model the service refuses is dropped and the request retried.
+MODELS = ("best_match", "ecmwf_ifs025", "icon_seamless", "gem_seamless")
+NAMES = {"best_match": "Open-Meteo", "ecmwf_ifs025": "ECMWF", "icon_seamless": "ICON", "gem_seamless": "GEM", "nws": "National Weather Service"}
 WET = re.compile(r"rain|shower|drizzle|thunder|storm|snow|sleet|wintry|flurr|freezing", re.I)
 SNOW = re.compile(r"snow|sleet|wintry|flurr", re.I)
 WET_CODES = set(range(51, 68)) | set(range(71, 78)) | set(range(80, 87)) | set(range(95, 100))
@@ -44,8 +46,11 @@ def open_meteo(lat, lon, ko, get=None):
     get = get or fetch; h0, h1 = window(ko)
     q = (f"{OM}?latitude={lat}&longitude={lon}&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation_probability,precipitation,snowfall"
          "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=UTC&past_days=1&forecast_days=8")
-    try: w = get(q + "&models=" + ",".join(MODELS)); models = MODELS
-    except Exception: w = get(q); models = ("best_match",)
+    w = None
+    for models in (MODELS, MODELS[:2]):
+        try: w = get(q + "&models=" + ",".join(models)); break
+        except Exception: w = None
+    if w is None: w = get(q); models = ("best_match",)
     H = w["hourly"]; idx = [i for i, t in enumerate(H["time"]) if h0 <= _t(t) <= h1]
     if not idx: return {}
     out = {}
@@ -89,17 +94,21 @@ def combine(srcs, look=None):
     pops = {k: v.get("pop") for k, v in srcs.items() if v.get("pop") is not None}
     pop = max(pops.values()) if pops else None
     rain = _mx([v.get("rain") for v in srcs.values()]); snow = _mx([v.get("snow") for v in srcs.values()])
-    wind = _mx([v.get("wind") for v in srcs.values()]); gust = _mx([v.get("gust") for v in srcs.values()])
-    temp = next((srcs[k]["temp"] for k in ("best_match", "nws", "gfs_seamless", "ecmwf_ifs025") if k in srcs and srcs[k].get("temp") is not None), None)
+    # wind stays with one forecast (the default, else the weather service, else the worst of the rest): the Wind flags on legs were tuned on
+    # it, and taking the windiest of several runs would flag far more games than before. Rain is where the forecasts are pooled.
+    _w = next((srcs[k] for k in ("best_match", "nws") if k in srcs and srcs[k].get("wind") is not None), None)
+    wind = _w.get("wind") if _w else _mx([v.get("wind") for v in srcs.values()])
+    gust = (_w.get("gust") if _w and _w.get("gust") is not None else _mx([v.get("gust") for v in srcs.values()]))
+    temp = next((srcs[k]["temp"] for k in ("best_match", "nws", "ecmwf_ifs025", "icon_seamless", "gem_seamless") if k in srcs and srcs[k].get("temp") is not None), None)
     snowy = (snow or 0) > 0 or any(v.get("snowy") for v in srcs.values())
     rainy = (rain or 0) >= 0.01 or any(v.get("wet") for v in srcs.values())
     falling = bool(look and look.get("falling")); soon = bool(look and (look.get("next2h_in") or 0) >= 0.01)
     ptype = "snow" if snowy else "rain" if (rainy or falling or soon) else "none"
     field = "rain now" if falling else "rain within 2 hours" if soon else ""
     p = pop or 0
-    wet_amount = (rain or 0) >= 0.10   # a tenth of an inch over the game in any run is a wet game, whatever chance is quoted
+    wet_amount = (rain or 0) >= 0.10 and p >= 40   # a tenth of an inch over the game in some run, with a real chance behind it
     risk = "HIGH" if ((wind or 0) >= 15 or (gust or 0) >= 28 or snowy or p >= 60 or falling or wet_amount or (temp is not None and temp <= 25)) else \
-           "MODERATE" if ((wind or 0) >= 12 or p >= 30 or soon or (rain or 0) >= 0.03) else "LOW"
+           "MODERATE" if ((wind or 0) >= 12 or p >= 30 or soon or (rain or 0) >= 0.10) else "LOW"
     lo = min(pops.values()) if pops else None
     return {"pop": pop, "pop_low": lo, "pops": pops, "rain": rain, "snow": snow, "wind": wind, "gust": gust, "temp": temp, "ptype": ptype, "field": field, "risk": risk,
             "disagree": bool(pops and len(pops) > 1 and pop - lo >= 25), "wettest": max(pops, key=pops.get) if pops else None}
