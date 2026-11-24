@@ -50,7 +50,9 @@ if not PUB:
     D = json.load(open(os.path.join(HERE, "out", "builder_data.json"))); L = D["legs"]; ptd = [l for l in L if l["m"] == "Passing TDs"]
     check(len(ptd) >= 1, f"the board has Passing TDs legs ({len(ptd)}, {len({l['pl'] for l in ptd})} quarterbacks)")
     check(all(l.get("sk") == "ptd" and l.get("c") == "QB_PTD" and l.get("pos") == "QB" for l in ptd), "  each reads the passing-TD column of the game log (not the old placeholder key) and carries its correlation code")
-    gl = D["gl"]; good = [l for l in ptd if len([g for g in gl.get(l["pl"], []) if g.get("ptd") is not None]) >= 2]
+    # 11/24: this asked for two logged games, which a quarterback making his second start does not have (three legs failed on Week 12's
+    # Tuesday board). The point is that the passing-TD column is filled: at least one logged game, and no fewer than his logged games minus one.
+    gl = D["gl"]; good = [l for l in ptd if (lambda G: len(G) >= 1 and len([g for g in G if g.get("ptd") is not None]) >= max(1, len(G) - 1))(gl.get(l["pl"], []))]
     check(len(good) == len(ptd), f"  each quarterback's game log has his passing TDs by week ({len(good)} of {len(ptd)})")
     check(all(any(f[1] == "How it is priced" and "team total" in f[2] for f in (l.get("fh") or [])) for l in ptd), "  each says how it is priced: the team total at FanDuel and his average")
     check(all(l.get("dr") and l["dr"][0] is not None for l in ptd) and all(l.get("or") for l in ptd), "  each has the defence's and the offence's passing-TD rank for its matchup pill")

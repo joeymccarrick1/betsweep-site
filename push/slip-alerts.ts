@@ -692,6 +692,9 @@ export function irEvents(prom: any[], items: any[], W: number, now: number): { k
   return out;
 }
 const MIRROR = Deno.env.get("MIRROR_URL") ?? "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/sheet-mirror";
+// 11/24 (engine going private): when the sheet mirror lives in a private repository, MIRROR_URL points at it and MIRROR_TOKEN (a read-only
+// GitHub token, set as a function secret - the value is never in this file) is sent with that one request. Unset = the public mirror, as before.
+const MIRROR_TOKEN = Deno.env.get("MIRROR_TOKEN") ?? "";
 export function newsFinds(prom: any[], avail: any[][], items: any[], W: number, now: number, koByTeam: Record<string, number>): { key: string; title: string; body: string; url: string }[] {
   const out: { key: string; title: string; body: string; url: string }[] = [];
   const ct = (ms: number) => { const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(ms)); const o: Record<string, string> = {}; for (const x of p) o[x.type] = x.value; return `${o.year}-${o.month}-${o.day}`; };
@@ -774,7 +777,9 @@ export async function newsUp(W: number, now: number, gone: string[], games: any[
   if (!subs.length && !fans.length) return 0;
   const get = async (u: string) => { try { const r = await fetch(u, { headers: { "cache-control": "no-cache" } }); return r.ok ? await r.json() : null; } catch { return null; } };
   const prom = subs.length ? await get(`${SITE}/b/prominent.json`) : [];
-  const av = await get(`${MIRROR}/in/avail.json`);
+  const av = MIRROR_TOKEN
+    ? await (async () => { try { const r = await fetch(`${MIRROR}/in/avail.json`, { headers: { "cache-control": "no-cache", Authorization: `token ${MIRROR_TOKEN}` } }); return r.ok ? await r.json() : null; } catch { return null; } })()
+    : await get(`${MIRROR}/in/avail.json`);
   const bucket = `__newsfeed__${Math.floor(now / 600e3)}`; let items: any[] = [];
   if (!(await keysDone(bucket)).has(bucket)) { await markKey(bucket); const nj = await get(`${FEEDS}/news.json`); items = (nj && nj.items) || []; }
   const ko: Record<string, number> = {}; for (const g of games || []) { if (g.a) ko[g.a] = g.ko || 0; if (g.b) ko[g.b] = g.ko || 0; }

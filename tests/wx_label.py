@@ -31,7 +31,7 @@ check(lab(8, ko_after=False) == "Pre-game forecast: 8% chance of rain" and lab(0
 check(lab(8, field="rain now") == "Raining at the stadium now" and lab(8, field="rain now", ko_after=False) == "Raining at the stadium now", "rain falling at the stadium is said as that, before and during the game, whatever the quoted chance")
 check(lab(8, field="rain within 2 hours") == "Rain moving in" and lab(80, "rain", 5, 5, "dome", True, "rain now") == "Dome", "rain in the next two hours reads 'Rain moving in'; a dome stays a dome")
 h = lab(70, "rain", rng="forecasts 8-70%", src="4 forecasts, wettest shown, whole game window", full=True)
-check("forecasts disagree: 8% to 70%" in h and "4 forecasts, wettest shown, whole game window" in h and "Open-Meteo" not in h, "forecasts 25+ points apart are shown as disagreeing, and the card says what it stands on")
+check("forecasts disagree: 8% to 70%" in h and "8-70% precip</small>" in h and "4 forecasts, wettest shown, whole game window" in h and "Open-Meteo" not in h, "forecasts 25+ points apart are shown as disagreeing, and the card says what it stands on")
 h = lab(20, rng="forecasts 10-20%", src="4 forecasts, wettest shown, whole game window", full=True)
 check("disagree" not in h, "forecasts that agree add nothing")
 check("kickoff-hour forecast, Open-Meteo" in lab(20, full=True), "an old single-forecast row still says so")

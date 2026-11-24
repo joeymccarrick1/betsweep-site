@@ -537,12 +537,12 @@ try:
             _raw, _mean = round(_res[0], 4), _res[1]   # the builder rounds the raw chance before calibrating
             _bk = (100 / (_od + 100)) if _od > 0 else (-_od / (-_od + 100))
             _p = round(CALIB.shown(_raw, round(_bk, 4), "Passing TDs", line=_ln, proj=round(_mean, 2)), 4)
-            PTD_LEGS.append({"player": _bn, "market": "Passing TDs", "line": _ln, "odds": _od, "team": _tm, "opp": _opp, "status": "", "proj": round(_mean, 2),
+            PTD_LEGS.append({"player": _bn, "_board": _bn, "market": "Passing TDs", "line": _ln, "odds": _od, "team": _tm, "opp": _opp, "status": "", "proj": round(_mean, 2),
                              "p": _p, "fair": "", "book": round(_bk, 4), "edge": _p - round(_bk, 4), "verdict": "", "warn": "", "game": "", "kick": "", "raw_p": _raw})
         print(f"boards: {len(PTD_LEGS)} passing-TD legs priced for the QB boxes")
 except Exception as _e: print("note: boards passing-TD legs skipped:", _e)
 for l in PTD_LEGS:
-    k = (l["player"], l["market"]); d = abs(l["odds"] + 112)
+    k = (l["_board"], l["market"]); d = abs(l["odds"] + 112)
     if k not in MAIN or d < MAIN[k][1]: MAIN[k] = (l["line"], d, l["proj"], l)
 MK_OF["pass TD"] = "Passing TDs"
 
@@ -876,7 +876,7 @@ def wx_block(a, b, kick_hour):
         head = f"{lab} · {temp:.0f}°F"
         txt = f"wind {wind:.0f} mph" + (f" (gusts {gust:.0f})" if (gust or 0) >= 20 else "") + f" · {pch:.0f}% precip" + (" · roof can close" if roof == "retractable" else "")
     return (f'<span class="wx r-{risk.lower()}" title="{E(txt)} · {E(src)}{E(" · " + spread if spread else "")} · updated {E(w["updated"])}">{svg}{head}{f" <u>{risk}</u>" if risk in ("HIGH", "MED") else ""}'
-            f'{"" if roof == "dome" or temp is None else f"<small>, wind {wind:.0f}" + (f" (g {gust:.0f})" if (gust or 0) >= 20 else "") + f", {pch:.0f}% precip" + (f" ({spread})" if spread else "") + "</small>"}</span>')
+            f'{"" if roof == "dome" or temp is None else f"<small>, wind {wind:.0f}" + (f" (g {gust:.0f})" if (gust or 0) >= 20 else "") + (f", {_rg.group(1)}-{_rg.group(2)}% precip" if spread else f", {pch:.0f}% precip") + "</small>"}</span>')   # a range when the forecasts disagree (the words are in the title; the line stays two lines on a phone)
 
 # ---- SGP pricing: Gaussian copula, Monte Carlo (deterministic seed) ----
 import random

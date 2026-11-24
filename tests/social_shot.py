@@ -8,7 +8,17 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site"); S
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 cards = sorted((int(k), g) for g, k in re.findall(r'<section class="card[^"]*" id="([A-Z]+-[A-Z]+)"[^>]*data-ko="(\d+)"', open(os.path.join(ROOT, "boards", "index.html")).read()))
-GL, GD, T = cards[-1][1], cards[0][1], cards[-1][0] - 2 * 3600e3
+# 11/24: early in the week the last game often has no yardage or catch lines yet (FanDuel had six games up on Tuesday), and the test
+# crashed picking legs from it. The "late" game is the latest one that has such legs for two different players.
+def _has_legs(gid):
+    try:
+        bp = open(os.path.join(ROOT, "build", "index.html"), encoding="utf-8").read(); dn = re.search(r'src="/(build/data-[0-9a-f]+[.]js)"', bp)
+        js = open(os.path.join(ROOT, dn.group(1)), encoding="utf-8").read() if dn else bp
+        d = json.JSONDecoder().raw_decode(js[js.index("{", js.index("window.__BS = ")):])[0]
+        return len({l["pl"] for l in d["legs"] if l.get("g") == gid and not l.get("gl") and re.search("Yards|Receptions", l.get("m", "")) and not l.get("m", "").startswith("Under")}) >= 2
+    except Exception: return True
+_late = next((c for c in reversed(cards) if _has_legs(c[1])), cards[-1])
+GL, GD, T = _late[1], cards[0][1], _late[0] - 2 * 3600e3
 WEEK = int(re.search(r'id="hsbar" data-week="(\d+)"', open(os.path.join(ROOT, "index.html")).read()).group(1))
 FREEZE = "Date.now = function(){ return %d; };" % T
 ACCT = """window.bsAccount = {user: {id: '00000000-0000-0000-0000-0000000000aa', email: 't@example.com'}, client: {rpc: function(){ return Promise.resolve({data: 'Tester', error: null}); },
