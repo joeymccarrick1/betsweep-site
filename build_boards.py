@@ -843,16 +843,25 @@ def script_plays(a, b, players, s, k=None):
     items = "".join(f'<span class="sp{" w" if l["warn"] else ""}" title="{E(flag_tip(l))}">{E(l["player"])} {"anytime TD" if l["market"]=="Anytime TD" else E(l["market"].lower()) + " " + str(int(l["line"])) + "+"} <small>{odds_str(l["odds"])}</small><b>{ps*100:.0f}%</b>{ei(e)}{plus_btn(l)}</span>' for e, ps, l, sc in picks)
     return f'<div class="splays" data-sc="{k}"><span class="lt">If {E(most)} <small>({probs[k]:.0f}%)</small></span>{items}{fd_button([l for _, _, l, _ in picks], "script")}</div>', most
 
+import time as _time
 def wx_block(a, b, kick_hour):
     w = WX.get(frozenset([a, b]))
     if not w: return ""
     roof, temp, wind, gust, ptype, pch, risk = w["roof"], w["temp"], w["wind"], w["gust"], w["ptype"], w["pch"], w["risk"] or "LOW"
+    # owner 11/23 7:21 PM ("It's raining in DC why does it say clear night", then "It's literally pissing down rain"): the label said
+    # "Clear night" at an 8% chance and "Rain likely" at 4% (whenever the forecast typed the precipitation as rain). A kickoff-hour forecast
+    # cannot promise a clear sky, so the label now follows the chance alone and never says Clear, and a card built after kickoff says
+    # it is the pre-game forecast, not tonight's weather.
+    pc = pch or 0
     if roof == "dome": ic, lab = "dome", "Dome"
-    elif ptype.startswith("snow"): ic, lab = "snow", "Snow"
-    elif ptype.startswith("rain") or (pch or 0) >= 40: ic, lab = "rain", ("Rain likely" if ptype == "rain" else "Rain possible")
+    elif ptype.startswith("snow") and pc >= 30: ic, lab = "snow", ("Snow likely" if pc >= 60 else "Snow possible")
+    elif pc >= 60: ic, lab = "rain", "Rain likely"
+    elif pc >= 30: ic, lab = "rain", "Rain possible"
     elif (wind or 0) >= 15 or (gust or 0) >= 30: ic, lab = "wind", "Windy"
-    elif (pch or 0) >= 15: ic, lab = "cloud", "Cloudy"
-    else: ic, lab = ("moon", "Clear night") if kick_hour >= 19 else ("sun", "Clear")
+    elif pc >= 5 or ptype.startswith(("rain", "snow")): ic, lab = "cloud", f"{pc:.0f}% chance of {'snow' if ptype.startswith('snow') else 'rain'}"
+    else: ic, lab = "cloud", "Dry forecast"
+    _ko = kick_ms(a, b)
+    if roof != "dome" and _ko and _time.time() * 1000 >= _ko: lab = "Pre-game forecast: " + lab[0].lower() + lab[1:]
     svg = f'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">{ICONS[ic]}</svg>'
     if roof == "dome": head, txt = "Dome", "indoors · no weather"
     elif temp is None: head, txt = lab, "forecast pending"

@@ -3822,3 +3822,12 @@ difference to one decimal), and every rung rides in the page's slip data. PTD_LE
 script plays and picks do not change. tests/boards_ptd.py (port 8891, in the pre-publish set): the embedded rungs equal the builder's
 chance and price exactly, the + is on screen in the Projections view (phone light/dark, desktop) and a tap puts the rung in the betslip.
 Not covered: the builder's questionable translator (it re-prices a questionable player's legs; the test would show the gap).
+
+## 11/23 7:21-8:10 PM CT: the boards' weather label (owner: "It's raining in DC why does it say clear night" / "It's literally pissing down rain. I'm pissed.")
+The game card's weather is Open-Meteo's KICKOFF-HOUR FORECAST (the weather step, hourly). For CIN-WAS it gave 3-15% chance all day and
+it rained hard. Our label made it worse: "Rain likely" at 4-7% whenever the forecast typed the precipitation as rain, "Clear night" at
+6-8%, "Cloudy" at 15% - it flipped five times through the day - and after kickoff the card kept showing the forecast as if it were the
+weather. build_boards.wx_block now: chance alone decides (dry forecast under 5%, "N% chance of rain" to 30%, Rain possible 30-59%,
+Rain likely 60%+, Windy, Snow possible/likely when typed snow at 30%+), never "Clear", and a card built after kickoff reads
+"Pre-game forecast: ...". tests/wx_label.py (no port; in the pre-publish set). NOT done: live conditions after kickoff (the ESPN game
+feed may carry them - look before wiring), the Rain watch risk flag's own thresholds (risk side; check where the flag reads the forecast).
