@@ -378,6 +378,21 @@ def _kick(home, away, ko, wk_, site_wk, site_ko):
     return (sk, gap) if 20 * 60 <= gap <= 2 * 86400 else (ko, None)
 wk, games = _nflverse_games()
 SITE_WK, SITE_KO = _site_kickoffs()
+WX_PREV, WX_DETAIL, WX_SCORE, WXM, WX_SCORE_OK = {}, {}, {}, None, False
+try:
+    import sys as _sys; _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import wx_multi as WXM
+    def _feed(name):
+        try: return json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/" + name], stderr=subprocess.DEVNULL))
+        except Exception: return None
+    WX_PREV = (_feed("weather.json") or {}).get("detail") or {}
+    _sc = _feed("wx_score.json")
+    if _sc is None:   # no file yet (first run) is fine; any other failure must not start a new file over the season's record
+        _code = subprocess.run(["curl", "-s", "-o", os.devnull, "-w", "%{http_code}", "--max-time", "20", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/wx_score.json"], capture_output=True, text=True).stdout.strip()
+        WX_SCORE_OK = _code == "404"
+    else: WX_SCORE_OK = True
+    WX_SCORE = (_sc or {}).get("games") or {}
+except Exception as e: print("wx_multi not loaded:", e)
 evs = []
 if games:
     for g in games:
@@ -401,6 +416,26 @@ for home, away, ko, vname, neutral, nroof in evs:
         roof = "dome" if (nroof in ("dome", "closed") and st[2] == "outdoors") else st[2]
         if roof == "dome" or nroof == "closed":
             rows.append(base + ["dome" if roof == "dome" else "retractable (closed)", "Open-Meteo (kickoff hour)", upd, "", "", "", "none (dome)", "", "", "NONE (dome)", ""]); continue
+        # 11/24 (owner 11/23, CIN at WAS: one forecast said 3-15% and it rained from kickoff): several forecasts, the whole game window and a
+        # last look near kickoff (.github/wx_multi.py). Its row replaces the single-forecast one below; if it fails, the old row stands.
+        _wk = f"{t1}|{t2}"; _c = None
+        try:
+            _pv = WX_PREV.get(_wk) or {}; _mins = (ko - now).total_seconds() / 60
+            try: _age = (now - dt.datetime.fromisoformat(_pv.get("at"))).total_seconds() / 60
+            except Exception: _age = None
+            if _pv.get("ko") == ko.isoformat() and _age is not None and 0 <= _age < 50 and _mins > 360: _c = _pv   # far-off games are asked hourly
+            else: _c = WXM.game(st[0], st[1], ko, now, _pv); _c["at"] = now.isoformat(timespec="minutes")
+            if _c.get("temp") is None or _c.get("wind") is None: raise RuntimeError("no temperature or wind in any source")
+            _risk = _c["risk"] + (" (roof can close)" if roof == "retractable" else "")
+            rows.append(base + [roof, WXM.source_text(_c), upd, f"{_c['temp']:.0f}", f"{_c['wind']:.0f}", f"{(_c.get('gust') or 0):.0f}", _c["ptype"], f"{(_c.get('pop') or 0):.0f}", _c.get("field") or "", _risk,
+                                f"forecasts {_c['pop_low']:.0f}-{_c['pop']:.0f}%" if (_c.get("n") or 0) > 1 and _c.get("pop") is not None else ""])
+            WX_DETAIL[_wk] = _c
+            try: WXM.score(WX_SCORE, f"{wk}|{t1}|{t2}", _c, st[0], st[1], ko, now)["home"] = home
+            except Exception as e: print("wx score fail", _wk, str(e)[:100])
+            print("wx", _wk, "pops", _c.get("pops"), "rain", _c.get("rain"), _c["ptype"], _c["risk"], _c.get("field"), "missing", _c.get("missing"))
+            continue
+        except Exception as e:
+            print("wx_multi fail", _wk, str(e)[:160]); _c = None
         hr = ko.strftime("%Y-%m-%dT%H:00")
         try:
             w = json.loads(subprocess.check_output(["curl", "-fsS", "--max-time", "20",
@@ -416,7 +451,21 @@ for home, away, ko, vname, neutral, nroof in evs:
         rows.append(base + [roof, "Open-Meteo (kickoff hour)", upd, f"{tmp:.0f}", f"{wind:.0f}", f"{gust:.0f}", ptype, f"{(pch or 0):.0f}", "", risk, ""])
 rows.sort(key=lambda r: (r[2], r[3]))
 if rows:
-    json.dump({"header": WX_HDR, "rows": rows, "week": wk, "mirrored": now.isoformat(), "source": "nflverse schedule" if games else "ESPN scoreboard"}, open("out/weather.json", "w"))
+    json.dump({"header": WX_HDR, "rows": rows, "week": wk, "mirrored": now.isoformat(), "source": "nflverse schedule" if games else "ESPN scoreboard", "detail": WX_DETAIL}, open("out/weather.json", "w"))
+# the weather scorecard: after a game, what the nearest station reported against our last forecast. Games already played are finished here
+# (they are no longer in the week's list above), and the file is carried forward every run.
+try:
+    for _k, _e in list(WX_SCORE.items()):
+        if WXM and "actual" not in _e and _e.get("fc") and _e.get("tries", 0) < 6:
+            _ko = dt.datetime.fromisoformat(_e["ko"]); _w, _a, _b = _k.split("|")
+            if now >= _ko + dt.timedelta(hours=4):
+                _st = STADIUM.get(_e.get("home") or "")
+                if _st: WXM.score(WX_SCORE, _k, {}, _st[0], _st[1], _ko, now)
+    if WX_SCORE and WX_SCORE_OK: json.dump({"games": WX_SCORE, "updated": now.isoformat()}, open("out/wx_score.json", "w"), separators=(",", ":"))
+except Exception as e: print("wx score carry fail", e)
+if not os.path.exists("out/wx_score.json"):
+    subprocess.run(["curl", "-fsS", "--max-time", "20", "-o", "out/wx_score.json", "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/feeds/wx_score.json"], check=False)
+    if os.path.exists("out/wx_score.json") and os.path.getsize("out/wx_score.json") < 20: os.remove("out/wx_score.json")
 print("weather rows:", len(rows), "week", wk, [(r[2], r[3], r[5], r[14]) for r in rows])
 
 # ---- changes.json (owner 11/5 "what changed" feed): every run diffs this mirror against the previous one on the feeds branch and keeps a
