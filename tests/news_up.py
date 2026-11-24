@@ -109,6 +109,7 @@ if "realTeam" in o: print("   real feed, Colts + Chiefs as favorite teams right 
 check(o["one"] == [], "one headline from a non-ESPN, non-RotoWire source is not enough for a release push")
 if "real" in o:
     rk = k(o["real"]); print("   real data finds:", [(f["title"], f["body"][:90]) for f in o["real"]])
-    check("__news__out|Kenneth Walker III|11" in rk and "__news__rel|Daniel Jones" in rk, f"on tonight's real mirror and feed: Kenneth Walker III out and Daniel Jones released are both found ({rk})")
+    # 11/24: this asserted two names from the night it was written (a test must not assume the day's data); it now only shows what it finds
+    print("   real mirror and feed keys right now:", rk)
 if o.get("week"): print("   the last 16 days of the real feed, every release / trade it would have pushed:"); [print("     ", f["title"], "|", f["body"][:110]) for f in o["week"]]
 print(f"\n{ok} passed, {bad} failed"); sys.exit(1 if bad else 0)

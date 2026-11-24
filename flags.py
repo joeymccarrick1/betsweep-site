@@ -132,7 +132,7 @@ class Engine:
             r = r + [""] * (16 - len(r))
             _vh = re.search(r"\((\w+) home\)", str(r[4]))
             if _vh and _vh.group(1) not in (r[2], r[3]): continue   # stale row: venue/forecast still last week's (the matchup columns roll before the weather refresh)
-            self.WX[frozenset([r[2], r[3]])] = {"roof": r[5], "temp": _num(r[8]), "wind": _num(r[9]), "gust": _num(r[10]), "ptype": r[11], "pch": _num(r[12]), "risk": (r[14] or "").split()[0] if r[14] else ""}
+            self.WX[frozenset([r[2], r[3]])] = {"roof": r[5], "temp": _num(r[8]), "wind": _num(r[9]), "gust": _num(r[10]), "ptype": r[11], "pch": _num(r[12]), "risk": (r[14] or "").split()[0] if r[14] else "", "field": (r[13] if len(r) > 13 else "") or ""}
         # defense ranks (season block then last-3 block, split by a repeated header row)
         rk = vals("ranks.json"); self.RANKS, self.RANKS3, self.DCOL = {}, {}, {}
         if rk:
@@ -674,12 +674,16 @@ class Engine:
                     if pos in ("QB", "WR", "TE"): add("bad", "Wind", f"Kickoff-hour forecast {wt}: deep passing and kicking suffer most; expect shorter throws and more runs.")
                     else: add("good", "Wind = run game", f"Kickoff-hour forecast {wt}: teams lean on the run in wind - carries go up.")
                 if pt.startswith("snow"): add("bad" if pos != "RB" else "watch", "Snow", f"Snow in the kickoff-hour forecast ({temp:.0f}°F): footing and ball security problems; scoring usually drops.")
-                elif (pt.startswith("rain") and pch >= 50) or pch >= 70:
-                    # owner 11/1 (ATL-TB, Mayfield passing yards): steady rain at kickoff is a real flag for the passing game, not just a note
-                    rt = f"Rain {'likely' if pt.startswith('rain') else f'{pch:.0f}% chance'} at kickoff ({temp:.0f}°F)"
+                # 11/24 (owner 11/23, CIN at WAS): the Rain flags follow the chance alone - the wettest of the forecasts over the whole game
+                # (feeds: wx_multi.py) - and the last look near kickoff. They used to fire on the forecast's rain "type" at a 4% chance
+                # ("Rain watch" on every player that night) and stay quiet until 50-70%.
+                elif w.get("field") == "rain now" or pch >= 60:
+                    rt = "Rain is falling at the stadium" if w.get("field") == "rain now" else f"Rain likely during the game ({pch:.0f}% in the wettest forecast, {temp:.0f}°F)"
                     if pos in ("QB", "WR", "TE"): add("bad", "Rain", f"{rt}: a wet ball cuts deep passing and catch rates; expect shorter throws and more runs.")
                     else: add("good", "Rain = run game", f"{rt}: teams lean on the run in steady rain - carries go up.")
-                elif pt.startswith("rain") or pch >= 50: add("watch", "Rain", f"Rain {'possible' if pt.startswith('rain') else f'{pch:.0f}% chance'} at kickoff ({temp:.0f}°F): wet ball favours the run and short passing; fumbles/drops up.")
+                elif w.get("field") == "rain within 2 hours" or pch >= 30:
+                    rt = "Rain is moving in near kickoff" if w.get("field") == "rain within 2 hours" else f"Rain possible during the game ({pch:.0f}% in the wettest forecast, {temp:.0f}°F)"
+                    add("watch", "Rain", f"{rt}: wet ball favours the run and short passing; fumbles/drops up.")
                 if temp <= 25: add("watch", "Cold", f"{temp:.0f}°F at kickoff: passing efficiency and kicking drop in deep cold.")
         # --- blowout rest risk (owner 11/1 after Diggs, SNF Week 8): nflverse 2019-24, veteran WRs (age 30+ or 8+ years) on 7+ point favorites
         # averaged 13% fewer receiving yards and 15% fewer PPR points than their trailing 4 (n=137); in games actually won by 17+ veterans lost

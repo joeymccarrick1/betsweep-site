@@ -222,12 +222,15 @@ export const STADIUM: Record<string, [number, number, string]> = {
   NYJ: [40.8135, -74.0745, "open"], PHI: [39.9008, -75.1675, "open"], PIT: [40.4468, -80.0158, "open"], SF: [37.4033, -121.9694, "open"],
   SEA: [47.5952, -122.3316, "open"], TB: [27.9759, -82.5033, "open"], TEN: [36.1665, -86.7713, "open"], WAS: [38.9078, -76.8645, "open"],
 };
-export type Wx = { wind: number; gust: number; pop: number; rain: number };
+export type Wx = { wind: number; gust: number; pop: number; rain: number; now?: string };
 export function wxBad(w: Wx): string[] {   // same bar as flags.py's Wind flag, plus real rain
   const out: string[] = [];
+  // 11/24 (owner 11/23, CIN at WAS: "do all of that so we don't have to deal with this again"): the last look near kickoff comes first
+  if (w.now === "rain now") out.push("rain is falling at the stadium now");
+  else if (w.now === "rain within 2 hours") out.push("rain moving in within two hours");
   if (w.wind >= 15 || w.gust >= 28) out.push(`wind ${Math.round(w.wind)} mph` + (w.gust >= 20 ? `, gusts ${Math.round(w.gust)}` : ""));
   if (w.pop >= 60 && w.rain >= 0.04) out.push(`${w.rain >= 0.15 ? "heavy rain" : "rain"} ${Math.round(w.pop)}%`);
-  else if (w.pop >= 40) out.push(`rain possible (${Math.round(w.pop)}% chance)`);   // owner 11/5 TNF: "WHERE WAS THE UPDATE THAT IT COULD BE RAINING?"
+  else if (w.pop >= 30 && !w.now) out.push(`rain possible (${Math.round(w.pop)}% chance in the wettest forecast)`);   // 30%+ since 11/24 (was 40)   // owner 11/5 TNF: "WHERE WAS THE UPDATE THAT IT COULD BE RAINING?"
   return out;
 }
 export function wxSummary(w: Wx): string {   // the plain kickoff report every outdoor game gets, good weather or not
@@ -246,12 +249,32 @@ export function wxWindow(j: any, ko: number): Wx | null {   // kickoff hour thro
   }
   return n ? w : null;
 }
-async function wxAt(lat: number, lon: number, ko: number): Promise<Wx | null> {
+// 11/24: one forecast missed the CIN at WAS rain (3-15% all day). The feeds job now reads several forecasts over the whole game and takes
+// a last look near kickoff (.github/wx_multi.py -> weather.json "detail", keyed "T1|T2" in alphabetical order). The wettest reading there
+// joins this function's own: whichever is worse is what the alert goes by. The feed is read at most once every five minutes.
+let WXFEED: { at: number; d: any } | null = null;
+async function wxFeed(now = Date.now()): Promise<any> {
+  if (WXFEED && now - WXFEED.at < 5 * 60e3) return WXFEED.d;
+  let d: any = null;
+  try { const r = await fetch(`${FEEDS}/weather.json`, { headers: { "cache-control": "no-cache" } }); if (r.ok) { const j = await r.json(); if (j && j.mirrored && now - Date.parse(j.mirrored) < 3 * 3600e3) d = j.detail || null; } }
+  catch (e) { console.warn("weather feed", String(e).slice(0, 80)); }
+  WXFEED = { at: now, d }; return d;
+}
+export function wxMerge(w: Wx | null, d: any, ko: number): Wx | null {
+  if (!d || (d.ko && Math.abs(Date.parse(d.ko) - ko) > 2 * 3600e3)) return w;   // a reading for another kickoff is not this game's
+  const o: Wx = w ? { ...w } : { wind: 0, gust: 0, pop: 0, rain: 0 };
+  o.pop = Math.max(o.pop, +d.pop || 0); o.rain = Math.max(o.rain, +d.rain || 0); o.wind = Math.max(o.wind, +d.wind || 0); o.gust = Math.max(o.gust, +d.gust || 0);
+  if (d.field === "rain now" || d.field === "rain within 2 hours") o.now = d.field;
+  return o;
+}
+async function wxAt(lat: number, lon: number, ko: number, a = "", b = ""): Promise<Wx | null> {
+  let w: Wx | null = null;
   try {
     const r = await fetch(`${WXAPI}?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_gusts_10m,precipitation_probability,precipitation&wind_speed_unit=mph&precipitation_unit=inch&timezone=GMT&forecast_days=3`);
-    if (!r.ok) { console.warn("weather", r.status); return null; }
-    return wxWindow(await r.json(), ko);
-  } catch (e) { console.warn("weather", String(e).slice(0, 80)); return null; }
+    if (!r.ok) console.warn("weather", r.status); else w = wxWindow(await r.json(), ko);
+  } catch (e) { console.warn("weather", String(e).slice(0, 80)); }
+  if (a && b) { const d = await wxFeed(); if (d) w = wxMerge(w, d[[a, b].sort().join("|")], ko); }
+  return w;
 }
 async function homesOf(games: any[]): Promise<Map<string, { home: string; away: string; indoor: boolean }>> {   // ESPN scoreboard: who is at home, and the indoor flag
   const out = new Map(); const kos = games.map((g) => g.ko);
@@ -369,7 +392,7 @@ export async function run(now = Date.now()) {
     for (const g of soon) {
       const h = HOME.get(g.gid) as any; if (!h || h.indoor || h.neutral) continue;
       const st = STADIUM[h.home]; if (!st || st[2] !== "open") continue;
-      const w = await wxAt(st[0], st[1], g.ko); if (!w) continue;
+      const w = await wxAt(st[0], st[1], g.ko, h.home, h.away); if (!w) continue;
       const bad = wxBad(w); if (bad.length) { WX.set(g.gid, { bad, title: `${h.away} @ ${h.home}` }); wxGames.push(`${h.away}@${h.home}: ${bad.join(", ")}`); }
       else REPORT.set(g.gid, { txt: wxSummary(w), title: `${h.away} @ ${h.home}` });
     }
@@ -396,14 +419,16 @@ export async function run(now = Date.now()) {
           const set = per.get(l.g) || new Set(); set.add(legText(l, k)); per.set(l.g, set); }
       }
       for (const [gid, x] of WX) {
-        if (done.has(`${uid}|wx|${gid}|WX`)) continue;
+        // 11/24: rain seen on the last look near kickoff is its own alert - an earlier forecast push for the game does not swallow it
+        const live = x.bad.some((b) => /falling at the stadium|moving in within/.test(b)); const mk = live ? "wxnow" : "wx";
+        if (done.has(`${uid}|${mk}|${gid}|WX`)) continue;
         const L = [...(per.get(gid) || [])];
         const mine = L.length ? ` On your slips: ${L.slice(0, 3).join("; ")}${L.length > 3 ? ` +${L.length - 3} more` : ""}.` : " Nothing of yours is in it.";
         const msg = { title: `⛈ Weather: ${x.title}`.slice(0, 90),
-          body: `Kickoff forecast: ${x.bad.join(", ")}.${mine} Wind and rain cut passing and deep throws - runs and unders gain.`,
-          url: L.length ? "/me/" : `/boards/#${gid}`, tag: `bs-wx-${W}-${gid}` };
+          body: `${live ? "Near kickoff" : "Kickoff forecast"}: ${x.bad.join(", ")}.${mine} Wind and rain cut passing and deep throws - runs and unders gain.`,
+          url: L.length ? "/me/" : `/boards/#${gid}`, tag: `bs-${mk}-${W}-${gid}` };
         for (const s of subs.filter((s) => s.user_id === uid)) { try { const c = await sendPush(s, msg); if (c === 404 || c === 410) gone.push(s.endpoint); else if (c < 300) nwx++; } catch (e) { console.warn("push", String(e)); } }
-        done.add(`${uid}|wx|${gid}|WX`); await mark(uid, W, `wx|${gid}`, "WX");
+        done.add(`${uid}|${mk}|${gid}|WX`); await mark(uid, W, `${mk}|${gid}`, "WX");
       }
     }
   }
@@ -447,7 +472,7 @@ export async function run(now = Date.now()) {
     const WX24 = new Map<string, string[]>();
     if (day.length) { const HOME = await homesOf(day);
       for (const g of day) { const h = HOME.get(g.gid) as any; if (!h || h.indoor || h.neutral) continue; const stad = STADIUM[h.home]; if (!stad || stad[2] !== "open") continue;
-        const w = await wxAt(stad[0], stad[1], g.ko); if (!w) continue; const bad = wxBad(w); if (!bad.length) continue; WX24.set(g.gid, bad);
+        const w = await wxAt(stad[0], stad[1], g.ko, h.home, h.away); if (!w) continue; const bad = wxBad(w); if (!bad.length) continue; WX24.set(g.gid, bad);
         const who = [...new Set((D.legs || []).filter((l: any) => l.g === g.gid && WXLEG(String(l.m)) && ["QB", "WR", "TE"].includes(l.pos)).map((l: any) => l.pl))];
         rows.push({ id: `wx|${g.gid}`, kind: "weather", week: W, player: null, team: null, gid: g.gid, status: "WEATHER", level: "warn", detail: `${h.away} @ ${h.home} kickoff forecast: ${bad.join(", ")}`, players: who, by_owner: false, updated_at: nowIso }); } }
     for (let i = 0; i < rows.length; i += 200) await rest("risk_feed?on_conflict=id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify(rows.slice(i, i + 200)) });

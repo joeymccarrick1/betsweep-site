@@ -309,7 +309,8 @@ for r in weather_raw[1:]:
     r = r + [""] * (16 - len(r))
     _vh = re.search(r"\((\w+) home\)", str(r[4]))
     if _vh and _vh.group(1) not in (r[2], r[3]): continue   # stale row: the matchup columns rolled to this week but the venue/forecast are still last week's refresh (seen Tue 10/20: Week 6 Lambeau wind under CLE-TEN)
-    WX[frozenset([r[2], r[3]])] = {"roof": r[5], "temp": num(r[8]), "wind": num(r[9]), "gust": num(r[10]), "ptype": r[11], "pch": num(r[12]), "risk": (r[14] or "").split()[0] if r[14] else "", "updated": r[7]}
+    WX[frozenset([r[2], r[3]])] = {"roof": r[5], "temp": num(r[8]), "wind": num(r[9]), "gust": num(r[10]), "ptype": r[11], "pch": num(r[12]), "risk": {"MODERATE": "MED"}.get((r[14] or "").split()[0], (r[14] or "").split()[0]) if r[14] else "", "updated": r[7],
+                                  "src": r[6], "field": r[13], "rng": r[15]}   # 11/24: several forecasts (feeds: wx_multi.py) - what it stands on, the last look, the range
 
 # ---- availability ----
 OUT_LIST = defaultdict(list); QUEST = {}
@@ -860,16 +861,22 @@ def wx_block(a, b, kick_hour):
     elif (wind or 0) >= 15 or (gust or 0) >= 30: ic, lab = "wind", "Windy"
     elif pc >= 5 or ptype.startswith(("rain", "snow")): ic, lab = "cloud", f"{pc:.0f}% chance of {'snow' if ptype.startswith('snow') else 'rain'}"
     else: ic, lab = "cloud", "Dry forecast"
-    _ko = kick_ms(a, b)
-    if roof != "dome" and _ko and _time.time() * 1000 >= _ko: lab = "Pre-game forecast: " + lab[0].lower() + lab[1:]
+    _ko = kick_ms(a, b); field = (w.get("field") or "").lower()
+    # 11/24: the last look near kickoff beats any quoted chance - rain falling at the stadium is said as that
+    if roof != "dome" and field == "rain now": ic, lab = "rain", "Raining at the stadium now"
+    elif roof != "dome" and field == "rain within 2 hours": ic, lab = "rain", "Rain moving in"
+    elif roof != "dome" and _ko and _time.time() * 1000 >= _ko: lab = "Pre-game forecast: " + lab[0].lower() + lab[1:]
+    _rg = re.match(r"forecasts (\d+)-(\d+)%", w.get("rng") or ""); spread = ""
+    if roof != "dome" and _rg and int(_rg.group(2)) - int(_rg.group(1)) >= 25: spread = f"forecasts disagree: {_rg.group(1)}% to {_rg.group(2)}%"
+    src = (w.get("src") or "").strip() or "kickoff-hour forecast, Open-Meteo"
     svg = f'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">{ICONS[ic]}</svg>'
     if roof == "dome": head, txt = "Dome", "indoors · no weather"
     elif temp is None: head, txt = lab, "forecast pending"
     else:
         head = f"{lab} · {temp:.0f}°F"
         txt = f"wind {wind:.0f} mph" + (f" (gusts {gust:.0f})" if (gust or 0) >= 20 else "") + f" · {pch:.0f}% precip" + (" · roof can close" if roof == "retractable" else "")
-    return (f'<span class="wx r-{risk.lower()}" title="{E(txt)} · kickoff-hour forecast, Open-Meteo, updated {E(w["updated"])}">{svg}{head}{f" <u>{risk}</u>" if risk in ("HIGH", "MED") else ""}'
-            f'{"" if roof == "dome" or temp is None else f"<small>, wind {wind:.0f}" + (f" (g {gust:.0f})" if (gust or 0) >= 20 else "") + f", {pch:.0f}% precip</small>"}</span>')
+    return (f'<span class="wx r-{risk.lower()}" title="{E(txt)} · {E(src)}{E(" · " + spread if spread else "")} · updated {E(w["updated"])}">{svg}{head}{f" <u>{risk}</u>" if risk in ("HIGH", "MED") else ""}'
+            f'{"" if roof == "dome" or temp is None else f"<small>, wind {wind:.0f}" + (f" (g {gust:.0f})" if (gust or 0) >= 20 else "") + f", {pch:.0f}% precip" + (f" ({spread})" if spread else "") + "</small>"}</span>')
 
 # ---- SGP pricing: Gaussian copula, Monte Carlo (deterministic seed) ----
 import random

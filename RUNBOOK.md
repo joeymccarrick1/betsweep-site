@@ -3854,3 +3854,43 @@ Settled in regular time 3-2 STL: ESPN state "post", detail "FT", period 2, clock
 "FT-Pens" case yet and nothing under "beyond" (the record's beyond list is empty, as it should be). record.json: 1 match, players graded
 (21). The series' later games (11/29 at LAFC, 12/3 at STL if needed) are on the scoreboard as "Scheduled". The penalties rule is still
 untested on real data - watch the first match that goes to penalties.
+
+## 11/24 2:05-3:40 PM CT: Week 12 clean-up and "weather we can trust" (owner 11/23 7:41 PM: "do all of that"; 11/24 2:02 PM: "do everything you can do")
+
+**Health check (two FAILs this morning).** (1) "IR players still projected" - the 'AUTO - IR Registry' tab is the owner's 10/8 list and is
+never refreshed; Legette, Sampson, Ja'Kobi Lane, Savion Williams and Demarcus Robinson are all ACT on nflverse roster_weekly Week 12, so
+their rows (22, 26, 30, 33, 75) were marked ACTIVATED with the roster weeks as the source. Check passes. To do it again: download
+roster_weekly_2026.csv with curl (gh release download is refused here), read each flagged name's status by week. (2) "One starter per
+role" - this morning's depth-chart rows left SEA with no RB1 (Wilson moved down, nobody up: added Charbonnet forced RB1), GB with two
+(Kaleb Johnson forced RB1 while Jacobs stayed RB1: added Jacobs QUESTIONABLE, finger, forced RB2 - officially questionable for Wednesday,
+coach said unlikely), ARI with two QB1s (Beck forced QB1 from ESPN's chart, Josh Johnson by auto succession after starting 11/22).
+ARI is NOT resolved: no starter is named for 11/29; Beck's row now says QUESTIONABLE (back). Re-check on the first practice report.
+Lesson for the depth desk: a forced-role row that moves one player must leave the team with exactly one starter - check the health tab
+after writing depth rows. Croskey-Merritt's OUT row (from a roster file read before his activation posted) was set ACTIVE - he played Monday.
+**Slip log rows 63-81 graded by hand** (grade_assist cannot read "(-182)" price suffixes): 3 won, 16 lost; column K carries the reason;
+"weather" is now a fourth reason tag beside thin role / wrong script / bad luck.
+
+**Weather.** The single kickoff-hour Open-Meteo forecast is replaced, per open-air game, by `.github/wx_multi.py` (on main; feeds job,
+every 10 minutes; far-off games are re-asked hourly):
+- Five readings: Open-Meteo's default, ECMWF, ICON and GEM (one request, `models=`), and the National Weather Service's hourly forecast
+  (api.weather.gov, two requests, needs a User-Agent; re-asked every 50 minutes, 20 inside six hours of kickoff). GFS was dropped after
+  the first live run: the default gave identical numbers. All five answered on the first live runs (2:22 and 2:27 PM CT).
+- The wettest chance over kickoff to +3 h is what column M ("Precipitation Chance %") carries; rain amount is the largest sum of any run.
+  Wind / gust stay with the default forecast (window max) so the Wind flags do not multiply.
+- Inside 3 hours of kickoff and during the game: Open-Meteo `current` + `minutely_15` - column N ("Field Condition") says "rain now" or
+  "rain within 2 hours". Column P carries "forecasts LO-HI%". Column G says how many forecasts the row stands on.
+- Risk tier: HIGH = wind 15+ / gust 28+ / snow / 60%+ in any forecast / rain now / 0.10 in+ with 40%+ behind it / 25F or colder;
+  MODERATE = wind 12+ / 30%+ / rain within 2 hours / 0.10 in+. If the module fails the old single-forecast row is written (feeds.py).
+- weather.json gained "detail" (per game "T1|T2": pops by source, look, missing). `wx_score.json` (feeds branch): the last forecast before
+  kickoff, then four hours after kickoff what the nearest NWS station reported (wet reports, mm) - `python3 wx_score.py <clone> [week]`
+  prints the scorecard (caught / missed / false alarms). **Add it to the Tuesday run's summary.** The file is never restarted after a
+  failed read.
+- Generators: flags.py Rain flags follow the chance (60%+ or rain now = bad for QB/WR/TE, good for RB; 30%+ or rain within 2 hours =
+  watch) - never the forecast's rain "type" alone (that put "Rain watch" on every CIN-WAS player at 4%). build_boards.wx_block:
+  "Raining at the stadium now" / "Rain moving in", "forecasts disagree: 8% to 70%" at a 25-point spread, the title names the sources;
+  the feed's MODERATE now maps to the card's MED style (it never matched before).
+- Alerts (push/slip-alerts.ts - OWNER MUST REDEPLOY, together with this morning's IR change): its own forecast is merged with the feed's
+  detail (the worse of the two), "rain possible" from 30% (was 40), and rain seen on the last look is its own one-time push
+  (`wxnow|<gid>`), also to the owner's promo watch. Until the redeploy the alerts still go by the old single forecast.
+- Tests: tests/wx_multi.py (module on made-up answers, the feed's fallback, the alert merge under node), tests/wx_label.py.
+- Not done: nothing reads ESPN's in-game weather; the scorecard has no page yet; soccer boards have no weather at all.
