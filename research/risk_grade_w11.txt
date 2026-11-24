@@ -1,0 +1,46 @@
+week 11: built 'Mon 11/23 6:15 PM', 490 builder legs, 1656 graded snapshot legs, 109 joined
+
+ALL LEGS by risk tier
+  low (0-1)   n=   30 hit  26.7 price  57.0 site 51.3  per100  -53.7
+      wk 11   n=   30 hit  26.7 price  57.0 site 51.3  per100  -53.7
+  some (2-3)  n=   39 hit  56.4 price  55.5 site 52.5  per100   -8.1
+      wk 11   n=   39 hit  56.4 price  55.5 site 52.5  per100   -8.1
+  high (4+)   n=   40 hit  62.5 price  47.1 site 42.6  per100   19.3
+      wk 11   n=   40 hit  62.5 price  47.1 site 42.6  per100   19.3
+
+FAVORITES (-350..-140) by risk tier
+  low (0-1)   n=   17 hit  29.4 price  68.6 site 61.5  per100  -59.8
+      wk 11   n=   17 hit  29.4 price  68.6 site 61.5  per100  -59.8
+  some (2-3)  n=   18 hit  77.8 price  68.3 site 63.8  per100   14.2
+      wk 11   n=   18 hit  77.8 price  68.3 site 63.8  per100   14.2
+  high (4+)   n=    9 hit 100.0 price  70.0 site 63.7  per100   43.6
+      wk 11   n=    9 hit 100.0 price  70.0 site 63.7  per100   43.6
+
+SHORT VIEW easy-pick rule (favorite, risk 0-1, shown chance within 2 pts of the price or better):
+  pooled      -
+      wk 11    -
+
+LEGS THE SITE SHOWED AT OR ABOVE THE PRICE (shown chance >= break-even), any price:
+  below by 3+  n=   65 hit  53.8 price  58.7 site 51.9  per100  -11.0
+  below 0-3    n=   31 hit  48.4 price  46.0 site 44.4  per100   -2.0
+  above 0-2    n=   10 hit  50.0 price  42.8 site 43.8  per100   -7.6
+  above 2+     n=    3 hit   0.0 price  29.2 site 33.4  per100 -100.0
+  by market, shown at or above the price:
+    Passing Yards      -  weeks in profit 0/1
+    Receiving Yards    n=    4 hit  75.0 price  50.9 site 51.8  per100   45.0  weeks in profit 1/1
+    Receptions         n=    5 hit  40.0 price  42.2 site 44.7  per100  -31.2  weeks in profit 0/1
+    Rushing Yards      -  weeks in profit 0/1
+    Longest Reception  -  weeks in profit 0/1
+    Anytime TD         n=    4 hit   0.0 price  25.3 site 26.8  per100 -100.0  weeks in profit 0/1
+
+FAVORITES, low risk, by market:
+    Passing Yards      n=    1 hit 100.0 price  71.0 site 67.8  per100   40.8
+    Receiving Yards    n=    4 hit   0.0 price  66.6 site 61.0  per100 -100.0
+    Receptions         n=    7 hit  42.9 price  69.5 site 61.6  per100  -41.0
+    Rushing Yards      n=    3 hit   0.0 price  68.4 site 58.2  per100 -100.0
+    Longest Reception  n=    1 hit 100.0 price  76.7 site 71.2  per100   30.3
+    Anytime TD         n=    1 hit   0.0 price  60.8 site 56.9  per100 -100.0
+
+FLAG REPORT CARD (60+ legs).  gap = hit % minus the price's break-even %; weeks = weeks the flag pointed the way its colour says
+  good  O/U (total)                    n=  109 hit  50.5 price  52.8 gap   -2.3 per100  -10.6  weeks 0/1
+  (every joined leg: n=  109 hit  50.5 price  52.8 site 48.5  per100  -10.6  gap -2.3)
