@@ -1,4 +1,58 @@
 {
  "week": 12,
- "events": {}
+ "events": {
+  "J.K. Dobbins|2026-11-24T23:00": {
+   "pl": "J.K. Dobbins",
+   "tm": "DEN",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-24T23:00:10Z",
+   "legs": {
+    "Jonah Coleman|Receiving Yards|30": {
+     "pl": "Jonah Coleman",
+     "m": "Receiving Yards",
+     "ln": 30.0,
+     "built": 198,
+     "p": 0.3475,
+     "first": null,
+     "moved": null,
+     "now": 198.0,
+     "pulled": "2026-11-24 6:34"
+    },
+    "Jonah Coleman|Receptions|5": {
+     "pl": "Jonah Coleman",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 250,
+     "p": 0.251,
+     "first": null,
+     "moved": null,
+     "now": 250.0,
+     "pulled": "2026-11-24 6:34"
+    },
+    "Jonah Coleman|Rushing Yards|100": {
+     "pl": "Jonah Coleman",
+     "m": "Rushing Yards",
+     "ln": 100.0,
+     "built": 300,
+     "p": 0.174,
+     "first": null,
+     "moved": null,
+     "now": 300.0,
+     "pulled": "2026-11-24 6:34"
+    },
+    "Jonah Coleman|Rush + Rec Yards|94": {
+     "pl": "Jonah Coleman",
+     "m": "Rush + Rec Yards",
+     "ln": 94.0,
+     "built": -114,
+     "p": 0.4374,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-24 6:34"
+    }
+   }
+  }
+ }
 }
