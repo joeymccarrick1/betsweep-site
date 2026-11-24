@@ -13,7 +13,13 @@ def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + 
 bh = open(os.path.join(ROOT, "build", "index.html"), encoding="utf-8").read(); m = re.search(r'src="(/build/data-[0-9a-f]+\.js)"', bh)
 js = open(os.path.join(ROOT, m.group(1).lstrip("/")), encoding="utf-8").read() if m else bh
 BS = json.JSONDecoder().raw_decode(js[js.index("{", js.index("window.__BS = ")):])[0]
-W = int(BS["week"]); games = sorted(BS["games"], key=lambda g: g["ko"]); GL = games[-1]["gid"]; T = games[-1]["ko"] - 2 * 3600e3
+W = int(BS["week"]); games = sorted(BS["games"], key=lambda g: g["ko"])
+# 11/24: early in the week the last game has no player lines yet (IndexError on Tuesday's board); the "late" game is the latest one
+# with yardage / catch legs for three players and a total.
+def _ready(gid):
+    P = {l["pl"] for l in BS["legs"] if l["g"] == gid and not l.get("gl") and re.search(r"Yards|Receptions", l["m"]) and not l["m"].startswith("Under")}
+    return len(P) >= 3 and any(l["g"] == gid and l["m"] == "Total" for l in BS["legs"])
+_late = next((g for g in reversed(games) if _ready(g["gid"])), games[-1]); GL = _late["gid"]; T = _late["ko"] - 2 * 3600e3
 def key(l): return f"{l['pl']}|{l['m']}|{int((l['ln'] or 1) + 0.5)}"
 late = [l for l in BS["legs"] if l["g"] == GL and not l.get("gl") and re.search(r"Yards|Receptions", l["m"]) and not l["m"].startswith("Under")]
 seen = {}; props = [seen.setdefault(l["pl"], l) for l in late if l["pl"] not in seen][:3]

@@ -5,9 +5,14 @@ it stays away on every page until the warning changes. Stand-in risk feed.   pyt
 import asyncio, json, os, sys, threading, http.server, functools
 from playwright.async_api import async_playwright
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); ROOT = os.environ.get("SITE") or os.path.join(HERE, "site"); PORT = 8869
+# 11/24: the week was written in as 11, so the test broke the day the site rolled to Week 12. It is read from the built home page now.
+import re
+try: WEEK = int(re.search(r'id="hsbar" data-week="(\d+)"', open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()).group(1))
+except Exception: WEEK = 11
+WK = str(WEEK)
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
-FEED = [{"id": 1, "kind": "weather", "week": 11, "player": None, "team": None, "gid": "TEN-DAL", "status": "wind", "level": "warn", "detail": "Wind 20 mph at kickoff", "players": ["Test Player", "Other Player"], "updated_at": "2026-11-21T18:00:00Z"}]
+FEED = [{"id": 1, "kind": "weather", "week": WEEK, "player": None, "team": None, "gid": "TEN-DAL", "status": "wind", "level": "warn", "detail": "Wind 20 mph at kickoff", "players": ["Test Player", "Other Player"], "updated_at": "2026-11-21T18:00:00Z"}]
 SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 ONE = "['Test Player|Passing Yards|200']"; TWO = "['Test Player|Passing Yards|200','Other Player|Receiving Yards|50']"
 HERE_ = "(function(){ var e = document.getElementById('bsrpill'); return !!e && e.getClientRects().length > 0; })()"
@@ -17,7 +22,7 @@ async def main():
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), functools.partial(H, directory=ROOT)); threading.Thread(target=srv.serve_forever, daemon=True).start()
     async with async_playwright() as p:
         b = await p.chromium.launch(); ctx = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
-        await ctx.add_init_script("try{ if(!localStorage.getItem('__t')){ localStorage.setItem('__t', '1'); localStorage.setItem('bs_slipk_w11', JSON.stringify(" + ONE + ")); } }catch(e){}")
+        await ctx.add_init_script("try{ if(!localStorage.getItem('__t')){ localStorage.setItem('__t', '1'); localStorage.setItem('bs_slipk_w" + WK + "', JSON.stringify(" + ONE + ")); } }catch(e){}")
         async def rt(route, request):
             u = request.url
             if "127.0.0.1" in u: return await route.continue_()
@@ -48,7 +53,7 @@ async def main():
         chips = await pg.evaluate("window.BSRisk && !!window.BSRisk.verdict('Test Player', 'Passing Yards')")
         check(not r1 and not r2 and chips, "it stays away after a reload and on another page, while the leg is still flagged where it is listed")
         # ---- a new warning brings it back
-        await pg.evaluate("localStorage.setItem('bs_slipk_w11', JSON.stringify(" + TWO + "))"); await pg.reload(wait_until="domcontentloaded")
+        await pg.evaluate("localStorage.setItem('bs_slipk_w" + WK + "', JSON.stringify(" + TWO + "))"); await pg.reload(wait_until="domcontentloaded")
         try: await pg.wait_for_selector("#bsrpill", timeout=6000); back = await pg.inner_text("#bsrpill .bsrh span")
         except Exception: back = ""
         check("2 legs in your betslip are at risk" in back, f"another leg at risk brings the box back ({back.strip()})")
@@ -56,9 +61,9 @@ async def main():
         await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
         check(not x1 and not await pg.evaluate(HERE_), "the x on the bar closes it in one tap, without opening the list first")
         # ---- a slip with nothing at risk forgets the close, so the next warning shows
-        await pg.evaluate("localStorage.setItem('bs_slipk_w11', '[]')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
+        await pg.evaluate("localStorage.setItem('bs_slipk_w" + WK + "', '[]')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
         forgot = await pg.evaluate("localStorage.getItem('bs_risk_closed')")
-        await pg.evaluate("localStorage.setItem('bs_slipk_w11', JSON.stringify(" + TWO + "))"); await pg.reload(wait_until="domcontentloaded")
+        await pg.evaluate("localStorage.setItem('bs_slipk_w" + WK + "', JSON.stringify(" + TWO + "))"); await pg.reload(wait_until="domcontentloaded")
         try: await pg.wait_for_selector("#bsrpill", timeout=6000); again = True
         except Exception: again = False
         check(not forgot and again, "once nothing in the slip is at risk the close is forgotten, and the same legs coming back at risk are shown again")

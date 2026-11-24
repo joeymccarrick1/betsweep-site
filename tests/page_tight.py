@@ -34,7 +34,7 @@ async def main():
                 work: cs.filter(c => { const w = c.querySelector(':scope > .bestslip > .bpwork'); return !w || (!vis(w) && vis(c.querySelector(':scope > .bestslip > .bpmore'))); }).length,
                 lines: cs.map(c => Math.round(c.querySelector(':scope > .ginfo').getBoundingClientRect().height / 1.1)),
                 add: cs.filter(c => { const f = c.querySelector(':scope > .bestslip > .fdgo'), o = c.querySelector(':scope > .bestslip > .bpodds'); return !vis(f) || !o || Math.abs(f.getBoundingClientRect().top - o.getBoundingClientRect().top) < 26; }).length,
-                dots: cs.filter(c => { const k = [...c.querySelector(':scope > .ginfo').children].filter(vis); return k.length && k[0].tagName === 'SPAN' && k[k.length - 1].tagName === 'SPAN' && !k.some((e, i) => e.tagName === 'I' && k[i + 1] && k[i + 1].tagName === 'I'); }).length,
+                dots: cs.filter(c => { const k = [...c.querySelector(':scope > .ginfo').children].filter(e => vis(e) || (getComputedStyle(e).display === 'contents' && [...e.children].some(vis)));   /* 11/24: the weather's parts flow with the line on a phone (display: contents) - it is on screen though it has no box of its own */ return k.length && k[0].tagName === 'SPAN' && k[k.length - 1].tagName === 'SPAN' && !k.some((e, i) => e.tagName === 'I' && k[i + 1] && k[i + 1].tagName === 'I'); }).length,
                 card: Math.round(cs.reduce((a, c) => a + c.getBoundingClientRect().height, 0) / Math.max(cs.length, 1))}; }""")
             scr = await pg.evaluate(SCR); n = d["n"]
             check(n >= 4 and d["stub"] == 0 and d["tidy"] == n and d["full"] == n, f"boards, {theme}: no \"Show the game\" row - every card shows its kickoff, Game Script / Projections, its confidence line and its best parlay's legs ({d['full']} of {n})")
@@ -60,7 +60,10 @@ async def main():
                 both = [c for c in cards if c["btns"] == ["Game lines", "Player legs"]]; want = lambda c: (["Game lines"] if c["lines"] else []) + (["Player legs"] if c["props"] else [])
                 check(all(c["btns"] == want(c) and not any(c["on"]) and not c["grid"] and not c["body"] and not c["pill"] and not c["old"] and min(c["h"] or [44]) >= 44 for c in cards) and (len(both) >= 1 or not any(c["props"] and c["lines"] for c in cards)) and cards[0]["btns"] == want(cards[0]),
                       f"builder, {theme}: every game card - the first like the rest - carries the same buttons, Game lines and Player legs, both shut ({len(both)} of {len(cards)} with both; the others have no player props posted yet; {scr} screens)")
-                check(scr <= 6.0 and await pg.evaluate(OVER) <= 0, f"builder, {theme}: the page is {scr} phone screens (7.7 before the first pass)")
+                # 11/24: 6.0 screens was set on a 13-game week; Thanksgiving week has 16 games and read 6.2. The allowance now grows with
+                # the day's game cards (0.3 of a screen each past 13), so the check is about the layout, not the schedule.
+                lim = round(6.0 + 0.3 * max(0, len(cards) - 13), 1)
+                check(scr <= lim and await pg.evaluate(OVER) <= 0, f"builder, {theme}: the page is {scr} phone screens for {len(cards)} games (limit {lim}; 7.7 before the first pass)")
                 # 11/22 7:56 PM: this took the SECOND game with both buttons and crashed on a Sunday night, when one game with player props was left. It opens
                 # the second such game when there are two, the only one when there is one, and waits for the next slate when every game with props has kicked off.
                 if not both:

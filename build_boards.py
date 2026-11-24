@@ -876,7 +876,7 @@ def wx_block(a, b, kick_hour):
         head = f"{lab} · {temp:.0f}°F"
         txt = f"wind {wind:.0f} mph" + (f" (gusts {gust:.0f})" if (gust or 0) >= 20 else "") + f" · {pch:.0f}% precip" + (" · roof can close" if roof == "retractable" else "")
     return (f'<span class="wx r-{risk.lower()}" title="{E(txt)} · {E(src)}{E(" · " + spread if spread else "")} · updated {E(w["updated"])}">{svg}{head}{f" <u>{risk}</u>" if risk in ("HIGH", "MED") else ""}'
-            f'{"" if roof == "dome" or temp is None else f"<small>, wind {wind:.0f}" + (f" (g {gust:.0f})" if (gust or 0) >= 20 else "") + (f", {_rg.group(1)}-{_rg.group(2)}% precip" if spread else f", {pch:.0f}% precip") + "</small>"}</span>')   # a range when the forecasts disagree (the words are in the title; the line stays two lines on a phone)
+            f'{"" if roof == "dome" or temp is None else f"<small>wind {wind:.0f}" + (f" (g {gust:.0f})" if (gust or 0) >= 20 else "") + (f", {_rg.group(1)}-{_rg.group(2)}% precip" if spread else f", {pch:.0f}% precip") + "</small>"}</span>')   # a range when the forecasts disagree (the words are in the title; the line stays two lines on a phone)
 
 # ---- SGP pricing: Gaussian copula, Monte Carlo (deterministic seed) ----
 import random
