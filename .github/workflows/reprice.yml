@@ -36,9 +36,9 @@ jobs:
       - uses: actions/checkout@v4
         with: {path: site}
       - uses: actions/checkout@v4
-        with: {ref: gen-overrides, path: gen}
+        with: {repository: "${{ vars.ENGINE_REPO || github.repository }}", token: "${{ secrets.ENGINE_TOKEN || github.token }}", ref: gen-overrides, path: gen}
       - uses: actions/checkout@v4
-        with: {ref: sheet-mirror, path: sm}
+        with: {repository: "${{ vars.ENGINE_REPO || github.repository }}", token: "${{ secrets.ENGINE_TOKEN || github.token }}", ref: sheet-mirror, path: sm}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - id: day

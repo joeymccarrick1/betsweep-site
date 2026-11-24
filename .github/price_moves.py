@@ -13,7 +13,14 @@ own slip legs (10+ cents or a line change) and the tier legs to the owner. Reads
 import json, math, os, sys, time, urllib.request
 
 def get(u):
-    return json.load(urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "betsweep-price-moves"}), timeout=60))
+    # 11/24 (engine going private): the sheet mirror may live in a private repository. ENGINE_REPO names it and ENGINE_TOKEN (a job secret,
+    # never printed) is sent only with requests for that mirror; with neither set this reads the public mirror exactly as before.
+    h = {"User-Agent": "betsweep-price-moves"}
+    eng = os.environ.get("ENGINE_REPO") or ""
+    if eng and "/sheet-mirror/" in u:
+        u = u.replace("raw.githubusercontent.com/joeymccarrick1/betsweep-site/sheet-mirror/", f"raw.githubusercontent.com/{eng}/sheet-mirror/")
+        if os.environ.get("ENGINE_TOKEN"): h["Authorization"] = "token " + os.environ["ENGINE_TOKEN"]
+    return json.load(urllib.request.urlopen(urllib.request.Request(u, headers=h), timeout=60))
 def imp(o):
     o = float(o); return 100 / (o + 100) if o > 0 else -o / (-o + 100)
 def am(o): o = int(round(float(o))); return f"+{o}" if o > 0 else str(o)

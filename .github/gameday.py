@@ -41,7 +41,12 @@ def api(tok, method, path, body=None):
 
 def branch_file(branch, path):
     d = f"/tmp/{branch}"
-    if not os.path.isdir(d): subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", branch, REPO, d], check=True)
+    if not os.path.isdir(d):
+        # 11/24 (engine going private): the sheet mirror may live in a private repository (ENGINE_REPO, read with the job secret ENGINE_TOKEN)
+        eng, tok = os.environ.get("ENGINE_REPO") or "", os.environ.get("ENGINE_TOKEN") or ""
+        src = f"https://x-access-token:{tok}@github.com/{eng}.git" if (eng and tok and branch == "sheet-mirror") else f"https://github.com/{eng}.git" if (eng and branch == "sheet-mirror") else REPO
+        if subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", branch, src, d], stderr=subprocess.DEVNULL).returncode:
+            raise SystemExit(f"could not clone the {branch} branch")   # never let the command line (it can hold the token) into the log
     with open(os.path.join(d, path)) as f: return json.load(f)
 
 def norm(s):

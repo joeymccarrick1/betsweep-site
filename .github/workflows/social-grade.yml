@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with: {ref: gen-overrides, path: gen}
+        with: {repository: "${{ vars.ENGINE_REPO || github.repository }}", token: "${{ secrets.ENGINE_TOKEN || github.token }}", ref: gen-overrides, path: gen}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Grade

@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
-        with: {ref: gen-overrides, path: gen}
+        with: {repository: "${{ vars.ENGINE_REPO || github.repository }}", token: "${{ secrets.ENGINE_TOKEN || github.token }}", ref: gen-overrides, path: gen}
       - name: last run's files (finals and anything that fails to fetch are carried forward)
         run: |
           if git fetch -q --depth 1 origin feeds-sports 2>/dev/null; then git worktree add -q prev FETCH_HEAD; else echo "no earlier feeds-sports branch"; fi

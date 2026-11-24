@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 .github/price_moves.py || { echo "price moves skipped (plus.json or mirror missing)"; exit 0; }
+        env: {ENGINE_REPO: "${{ vars.ENGINE_REPO }}", ENGINE_TOKEN: "${{ secrets.ENGINE_TOKEN }}"}
       - run: |
           test -f data/price-moves.json || ls data/closing-w*.json >/dev/null 2>&1 || exit 0
           git config user.name BetSweep; git config user.email support@betsweep.co

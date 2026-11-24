@@ -24,4 +24,4 @@ jobs:
           cd out
           git init -q -b sheet-mirror && git config user.name BetSweep && git config user.email support@betsweep.co
           git add -A && git commit -qm "Sheet mirror $(date -u +%FT%TZ)"
-          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" sheet-mirror
+          git push -qf "https://x-access-token:${{ secrets.ENGINE_TOKEN || github.token }}@github.com/${{ vars.ENGINE_REPO || github.repository }}.git" sheet-mirror
