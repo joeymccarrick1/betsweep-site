@@ -3831,3 +3831,18 @@ weather. build_boards.wx_block now: chance alone decides (dry forecast under 5%,
 Rain likely 60%+, Windy, Snow possible/likely when typed snow at 30%+), never "Clear", and a card built after kickoff reads
 "Pre-game forecast: ...". tests/wx_label.py (no port; in the pre-publish set). NOT done: live conditions after kickoff (the ESPN game
 feed may carry them - look before wiring), the Rain watch risk flag's own thresholds (risk side; check where the flag reads the forecast).
+
+## 11/24 ~9:10 AM CT: IR players no longer get an "out this week" push every week (owner: "I don't think we need all the push notifications from players that are already on IR that they'll be out this week. Only if there's a player going on IR or returning from IR")
+- Why it happened: the Tuesday roll re-dates every Weekly Availability row to the roll day, so newsFinds / teamFinds (rows dated today or
+  yesterday) pushed "X is out this week" for every big name already on IR. On this morning's real mirror the old code would push 14 names
+  (Jalen Hurts, Lamar Jackson, Davante Adams, Terry McLaurin ...); the new code pushes 3 (Drake Maye, Daniel Jones, A.J. Brown - none an IR row).
+- push/slip-alerts.ts: `irRow(r)` - a row whose reason or source says IR / injured reserve / reserve / status RES / PUP / NFI / out for the
+  season / season-ending is never an "out this week" push (big-name or favorite team). Plain ruled-out rows (no IR) are unchanged.
+- `irEvents()` (called from newsFinds): from the news feed on the release bar (one ESPN or RotoWire item, or two from anywhere, 36 h,
+  prominent players): "X is going on IR" (placed on / headed to / lands on IR, "Name: Injured Reserve (Hand)") and "X is back from IR"
+  (activated / reinstated off IR). Hedged or negative sentences (expected, could, may, don't place, avoids, designated to return) are not
+  the event. Keys `__news__irin|<name>|<W>` / `__news__irback|<name>|<W>`; newsUp also skips a device told the same event last week.
+- Not covered: a favorite-team device gets IR news only through ESPN's tagged stories (as before), not irEvents; a long non-IR absence
+  (e.g. "out at least six weeks") still pushes once each week it rolls.
+- OWNER STEP: redeploy push/slip-alerts.ts as the slip-alerts Edge Function. Until then the old behaviour continues.
+- tests/news_up.py 23 (4 new IR checks).

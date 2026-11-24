@@ -9,7 +9,9 @@ def check(c, msg):
     global ok, bad
     print(("PASS " if c else "FAIL ") + msg); ok += bool(c); bad += (not c)
 src = open(os.path.join(HERE, "push", "slip-alerts.ts"), encoding="utf-8").read()
-m = re.search(r"export function newsFinds\(.*?\n}\n", src, re.S)
+m = re.search(r"export function irRow\(.*?\n}\nexport function irEvents\(.*?\n}\n", src, re.S)
+mn = re.search(r"export function newsFinds\(.*?\n}\n", src, re.S)
+m = type("M", (), {"group": lambda self, i=0, a=m, b=mn: a.group(0) + b.group(0)})() if (m and mn) else None
 mt = re.search(r"const TEAMNAME: Record<string, string> = \{.*?\};\nexport function teamFinds\(.*?\n}\n", src, re.S)
 check(bool(mt) and "team=not.is.null" in src and 'mark(uid, W, f.key, "TEAM")' in src and ">= 6" in src, "the favorite-team push is there: devices with a team set, marked once per story, six a day at most")
 check("add column if not exists team text" in open(os.path.join(HERE, "sql", "push_news.sql")).read() and "K.save(curEp, {team: v})" in open(os.path.join(HERE, "account.py")).read(), "the database script adds the team setting and My BetSweep saves it")
@@ -56,6 +58,9 @@ out.teamStarted = teamFinds("AAA", A.AV, [], 11, A.NOW, { AAA: A.NOW - 3600e3 })
 out.teamBad = teamFinds("ZZZ", A.AV, A.TITEMS, 11, A.NOW, {});
 if (A.real.av) out.realTeam = teamFinds("IND", A.real.av, A.real.items, 11, A.NOW, { IND: A.NOW - 24 * 3600e3 }).concat(teamFinds("KC", A.real.av, A.real.items, 11, A.NOW, { KC: A.NOW + 40 * 3600e3 }));
 out.one = newsFinds(A.PROM, [], A.ITEMS.slice(1, 2), 11, A.NOW, {});
+out.ir = newsFinds(A.PROM, A.IRAV, A.IRITEMS, 11, A.NOW, { AAA: A.NOW + 40 * 3600e3, BBB: A.NOW + 40 * 3600e3, CCC: A.NOW + 40 * 3600e3 });
+out.irTeam = teamFinds("AAA", A.IRAV, [], 11, A.NOW, { AAA: A.NOW + 40 * 3600e3 });
+out.irHedged = newsFinds(A.PROM, [], A.IRHEDGED, 11, A.NOW, {});
 if (A.real.av) out.real = newsFinds(A.real.prom, A.real.av, A.real.items, 11, A.NOW, { KC: A.NOW + 40 * 3600e3, IND: A.NOW - 24 * 3600e3 });
 console.log(JSON.stringify(out));
 """
@@ -66,7 +71,15 @@ with tempfile.TemporaryDirectory() as td:
           dict(it("espn", "2026-11-19T02:00:00Z", "Old Aces story"), teams="['Testville Aces']", link="https://www.espn.com/nfl/story/_/id/700/old"),
           dict(it("espn", "2026-11-20T23:00:00Z", "Another team's story"), teams="['Arizona Cardinals']", link="https://www.espn.com/nfl/story/_/id/779/x"),
           dict(it("yahoo", "Fri, 20 Nov 2026 23:00:00 +0000", "Aces fan blog roundup"), teams="[]", link="https://sports.yahoo.com/x")]
-    json.dump({"PROM": PROM, "AV": AV, "ITEMS": ITEMS, "TITEMS": TITEMS, "NOW": NOW, "real": real}, open(arg, "w"))
+    IRAV = [H, row(11, "Star Back", "AAA", "OUT", "IR 10/6 (min 4 games, through Week 9)", "2026-11-20"), row(11, "The QB", "BBB", "OUT", "on IR since Week 4", "2026-11-20"),
+            [str(11), "Cut Smith", "CCC", "WR", "OUT", "", "", "", "", "knee - out for the season", "nflverse roster_weekly_2026 Week 11 status RES", "2026-11-20"],
+            row(11, "Nobody Special", "AAA", "OUT", "AUTO HOURLY: Nobody Special: Out (Ankle) - ruled out for Sunday.", "2026-11-20"),
+            row(11, "Star Back", "AAA", "OUT", "NEWS DESK: Star Back: Out (Hamstring) - ruled out for Sunday", "2026-11-20")]
+    IRITEMS = [it("espn", "2026-11-20T22:00:00Z", "Aces place Star Back on injured reserve"), it("rotowire", "Fri, 20 Nov 2026 02:00:00 PM PST", "The QB: Activated from IR", "The QB was activated off injured reserve Friday."),
+               it("espn", "2026-11-20T21:00:00Z", "Cut Smith activated off injured reserve, set to start Sunday")]
+    IRHEDGED = [it("espn", "2026-11-20T22:00:00Z", "Packers don't place The QB on IR"), it("espn", "2026-11-20T22:10:00Z", "Star Back expected to be placed on injured reserve"),
+                it("yahoo", "Fri, 20 Nov 2026 22:00:00 +0000", "Cut Smith placed on injured reserve"), it("espn", "2026-11-20T22:20:00Z", "Cut Smith designated to return from IR")]
+    json.dump({"IRAV": IRAV, "IRITEMS": IRITEMS, "IRHEDGED": IRHEDGED, "PROM": PROM, "AV": AV, "ITEMS": ITEMS, "TITEMS": TITEMS, "NOW": NOW, "real": real}, open(arg, "w"))
     open(f, "a").write(""); src2 = open(f).read().replace("JSON.parse(process.argv[2])", "JSON.parse((await import('node:fs')).readFileSync(process.argv[2], 'utf8'))"); open(f, "w").write(src2)
     r = subprocess.run(["node", "--experimental-strip-types", "--no-warnings", f, arg], capture_output=True, text=True, timeout=120)
 if r.returncode != 0 and ("strip-types" in r.stderr or "bad option" in r.stderr or "Unknown file extension" in r.stderr):
@@ -85,6 +98,13 @@ check(sorted(tk) == ["__news__out|Nobody Special|11", "__news__out|Star Back|11"
 ft = {f["key"]: f for f in o["team"]}
 check(ft["__team__AAA|777"]["url"].startswith("https://www.espn.com/") and ft["__news__out|Star Back|11"]["title"] == "Aces: Star Back is out this week", "the story push opens ESPN's page; the rule-out is titled with the team")
 check(o["teamStarted"] == [] and o["teamBad"] == [], "no rule-outs after kickoff, and an unknown team code finds nothing")
+ik = k(o["ir"])
+check(ik == ["__news__irback|Cut Smith|11", "__news__irback|The QB|11", "__news__irin|Star Back|11", "__news__out|Star Back|11"], f"owner 11/24: rows for players already on IR (IR date, 'on IR since', out for the season / status RES) push nothing; a big name ESPN says was placed on injured reserve is 'going on IR', RotoWire's 'Activated from IR' and ESPN's 'activated off injured reserve' are 'back from IR'; a plain ruled-out row still pushes ({ik})")
+ib = {f["key"]: f for f in o["ir"]}
+check(ib.get("__news__irin|Star Back|11", {}).get("title") == "Star Back is going on IR" and ib.get("__news__irback|The QB|11", {}).get("title") == "The QB is back from IR", "the IR pushes read cleanly")
+tk2 = k(o["irTeam"])
+check(tk2 == ["__news__out|Nobody Special|11", "__news__out|Star Back|11"], f"a favorite team gets its ruled-out players but not its players already on IR ({tk2})")
+check(o["irHedged"] == [], f"'don't place on IR', 'expected to be placed', one non-ESPN headline and 'designated to return' push nothing ({k(o['irHedged'])})")
 if "realTeam" in o: print("   real feed, Colts + Chiefs as favorite teams right now:"); [print("     ", f["title"][:80], "|", f["url"][:60]) for f in o["realTeam"]]
 check(o["one"] == [], "one headline from a non-ESPN, non-RotoWire source is not enough for a release push")
 if "real" in o:

@@ -622,6 +622,50 @@ export async function promoUp(W: number, now: number, gone: string[]): Promise<n
 //             player was released / waived / cut - one ESPN or RotoWire item, or two from anywhere.
 // newsFinds is pure (no network), so tests run it as deployed. A device gets at most 3 of these a run (the rest follow on the next);
 // the feed is read at most once every 10 minutes.
+// IR (owner 11/24: "I don't think we need all the push notifications from players that are already on IR that they'll be out this
+// week. Only if there's a player going on IR or returning from IR"). Every Tuesday roll re-dates each injured-reserve row to the roll
+// day, so the sheet path pushed "X is out this week" for every big name on IR, every week. An availability row that says IR / injured
+// reserve / reserve list / PUP / NFI / out for the season is now never an "out this week" push (big-name or favorite team); the two IR
+// events come from the news feed instead, on the release bar (one ESPN or RotoWire item, or two from anywhere, last 36 hours):
+//   IRIN   "placed on injured reserve", "Name: Injured Reserve (Hand)", "headed to IR" ...  -> "X is going on IR"
+//   IRBACK "activated off injured reserve", "Name: Activated from IR" ...                   -> "X is back from IR"
+// Hedged or negative wording (expected to, could, may, won't, don't place, avoids, designated to return) is not the event.
+export function irRow(r: any[]): boolean {
+  const t = `${String(r[9] || "")} ${String(r[10] || "")}`;
+  return /\bIR\b/.test(t) || /injured reserve|\breserve\b|\bstatus RES\b|\bPUP\b|\bNFI\b|out for (the )?season|season[- ]ending/i.test(t);
+}
+export function irEvents(prom: any[], items: any[], W: number, now: number): { key: string; title: string; body: string; url: string }[] {
+  const out: { key: string; title: string; body: string; url: string }[] = []; const P = new Map<string, any>(); for (const p of prom || []) P.set(String(p.n), p);
+  const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const IR = "(?:injured reserve|IR|the IR|reserve/injured)";
+  const role = "(?:(?:star|starting|veteran|backup|QB|RB|WR|TE|quarterback|running back|wide receiver|tight end)\\s+){0,3}";
+  const hedge = /\b(expected|likely|could|might|may|possible|possibly|considering|consider|won't|will not|wouldn't|don't|doesn't|didn't|not|avoid\w*|no plans?|without|instead|rather than|if |designated to return|practice window|eligible|why|how|what)\b/i;
+  const found = { in: new Map<string, { n: number; strong: boolean; line: string }>(), back: new Map<string, { n: number; strong: boolean; line: string }>() };
+  for (const it of items || []) {
+    const ts = Date.parse(String(it.ts || "").trim().replace(/\s+(AM|PM)\s+(PST|PDT)$/i, " $1 GMT-0800")); if (!ts || now - ts > 36 * 3600e3 || ts - now > 3600e3) continue;
+    const title = String(it.title || ""), text = `${title}. ${String(it.text || "").slice(0, 300)}`;
+    if (!/injured reserve|\bIR\b|reserve\/injured/i.test(text)) continue;
+    for (const [name] of P) {
+      if (text.indexOf(name.split(" ").slice(-1)[0]) < 0) continue;
+      const N = esc(name);
+      const back = new RegExp(`^${N}:\\s*(?:activated|reinstated|returns?|back)\\b|\\b(?:activat(?:e|es|ed|ing)|reinstat(?:e|es|ed|ing))\\s+${role}${N}\\b|\\b${N}\\b[^.]{0,60}?\\b(?:activated|reinstated|returns?|returning|back)\\s+(?:off|from)\\s+${IR}\\b`, "i");
+      const into = new RegExp(`^${N}:\\s*(?:injured reserve\\b|(?:placed|headed|heads|lands|moved|goes|going|sent|put)\\s+(?:on|to)\\s+${IR}\\b)|\\b(?:plac(?:e|es|ed|ing)|put(?:s|ting)?|mov(?:e|es|ed|ing)|send(?:s|ing)?|sent)\\s+${role}${N}\\s+(?:on|to)\\s+${IR}\\b|\\b${N}(?:['\u2019]s?)?\\b[^.]{0,60}?\\b(?:placed|headed|heads|lands?|landed|moved|goes|going|sent|put)\\s+(?:on|to)\\s+${IR}\\b`, "i");
+      for (const [kind, re] of [["back", back], ["in", into]] as [string, RegExp][]) {
+        // the sentence that matched must not hedge it ("expected to be placed on IR", "won't go on IR", "Packers don't place Jacobs on IR")
+        const sent = re.test(title) ? title : (text.split(/(?<=[.!?])\s+/).find((x) => re.test(x)) || "");
+        const bare = sent.split(name).join(" ");   // the name itself is not wording ("Star Back", "Will Shipley")
+        if (!sent || hedge.test(bare)) continue;
+        if (kind === "in" && /activat|reinstat|return|\bback\b/i.test(bare)) continue;   // "activated off injured reserve" is the other event
+        const M = (found as any)[kind] as Map<string, { n: number; strong: boolean; line: string }>;
+        const h = M.get(name) || { n: 0, strong: false, line: "" }; h.n++; const strong = it.src === "espn" || it.src === "rotowire"; if (strong && !h.strong) h.line = title; if (!h.line) h.line = title; h.strong = h.strong || strong; M.set(name, h);
+        break;
+      }
+    }
+  }
+  for (const [name, h] of found.back) if (h.strong || h.n >= 2) out.push({ key: `__news__irback|${name}|${W}`, title: `${name} is back from IR`.slice(0, 90), body: h.line.slice(0, 240), url: "/news/" });
+  for (const [name, h] of found.in) if ((h.strong || h.n >= 2) && !found.back.has(name)) out.push({ key: `__news__irin|${name}|${W}`, title: `${name} is going on IR`.slice(0, 90), body: h.line.slice(0, 240), url: "/news/" });
+  return out;
+}
 const MIRROR = Deno.env.get("MIRROR_URL") ?? "https://raw.githubusercontent.com/joeymccarrick1/betsweep-site/sheet-mirror";
 export function newsFinds(prom: any[], avail: any[][], items: any[], W: number, now: number, koByTeam: Record<string, number>): { key: string; title: string; body: string; url: string }[] {
   const out: { key: string; title: string; body: string; url: string }[] = [];
@@ -631,6 +675,7 @@ export function newsFinds(prom: any[], avail: any[][], items: any[], W: number, 
   for (const r of (avail || []).slice(1)) {
     const name = String(r[1] || ""), p = P.get(name);
     if (!p || String(r[0]) !== String(W) || String(r[4] || "").toUpperCase() !== "OUT" || !days.includes(String(r[11] || "").slice(0, 10))) continue;
+    if (irRow(r)) continue;   // owner 11/24: already on IR is not news every week; going on / coming off IR is (irEvents)
     const ko = koByTeam[String(r[2] || p.tm)] || 0; if (!ko || ko <= now) continue;
     let why = String(r[9] || "").split(" | was:")[0].replace(/^(AUTO HOURLY|NEWS DESK|OWNER)[:\s-]*/i, "").trim();
     if (why.toLowerCase().startsWith(name.toLowerCase() + ":")) why = why.slice(name.length + 1).trim();
@@ -667,6 +712,7 @@ export function newsFinds(prom: any[], avail: any[][], items: any[], W: number, 
     }
   }
   for (const [name, h] of tr) if ((h.strong || h.n >= 2) && !out.some((f) => f.key === `__news__rel|${name}`)) out.push({ key: `__news__trd|${name}`, title: `${name} has been traded`.slice(0, 90), body: h.line.slice(0, 240), url: "/news/" });
+  for (const f of irEvents(prom, items, W, now)) { const nm = f.key.split("|")[1]; if (!out.some((g) => g.key === `__news__rel|${nm}`)) out.push(f); }
   return out;
 }
 // FAVORITE TEAM (owner 11/20: "a favorite team feature so you get all team news pushed also"). push_subs.team holds a team code
@@ -681,6 +727,7 @@ export function teamFinds(team: string, avail: any[][], items: any[], W: number,
   if (ko > now) for (const r of (avail || []).slice(1)) {
     const name = String(r[1] || "");
     if (!name || String(r[2] || "") !== team || String(r[0]) !== String(W) || String(r[4] || "").toUpperCase() !== "OUT" || !days.includes(String(r[11] || "").slice(0, 10))) continue;
+    if (irRow(r)) continue;   // owner 11/24: IR rows roll every week; only going on / coming off IR is pushed
     let why = String(r[9] || "").split(" | was:")[0].replace(/^(AUTO HOURLY|NEWS DESK|OWNER)[:\s-]*/i, "").trim();
     if (why.toLowerCase().startsWith(name.toLowerCase() + ":")) why = why.slice(name.length + 1).trim();
     out.push({ key: `__news__out|${name}|${W}`, title: `${full.split(" ").slice(-1)[0]}: ${name} is out this week`.slice(0, 90), body: (why || "Ruled out.").slice(0, 240), url: "/news/", ts: now });
@@ -713,6 +760,7 @@ export async function newsUp(W: number, now: number, gone: string[], games: any[
   let n = 0; const per = new Map<string, number>();
   const send = async (s: any, f: { key: string; title: string; body: string; url: string }, status: string): Promise<boolean> => {
     if (done.has(`${s.user_id}|${f.key}`) || (per.get(s.endpoint) || 0) >= 3) return false;
+    if (/^__news__ir(in|back)\|/.test(f.key) && done.has(`${s.user_id}|${f.key.replace(/\|\d+$/, `|${W - 1}`)}`)) return false;
     try { const c = await sendPush(s, { title: f.title, body: f.body, url: f.url, tag: `bs-news-${f.key.slice(8, 60)}` }); if (c === 404 || c === 410) { gone.push(s.endpoint); return false; } if (c >= 300) return false; }
     catch (e) { console.warn("push", String(e)); return false; }
     n++; per.set(s.endpoint, (per.get(s.endpoint) || 0) + 1); return true; };
