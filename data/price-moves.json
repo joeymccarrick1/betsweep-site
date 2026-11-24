@@ -2,8 +2,8 @@
  "news": [],
  "week": 11,
  "built": "Mon 11/23 4:57 PM",
- "checked": "2026-11-23T23:42:12Z",
- "legs_checked": 161,
+ "checked": "2026-11-24T00:12:19Z",
+ "legs_checked": 159,
  "moves": [
   {
    "key": "Drew Sample|Longest Reception|10",
@@ -13,14 +13,14 @@
    "gid": "CIN-WAS",
    "ko": 1795482900000,
    "built": 220,
-   "now": 150.0,
-   "pts": 8.8,
+   "now": 155.0,
+   "pts": 8.0,
    "p": 0.2746,
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-23 16:35",
-   "detail": "Drew Sample long rec 10+: FanDuel +220 at build -> +150 now (+8.8 implied pts toward the model)"
+   "pulled": "2026-11-23 17:35",
+   "detail": "Drew Sample long rec 10+: FanDuel +220 at build -> +155 now (+8.0 implied pts toward the model)"
   },
   {
    "key": "Drew Sample|Receiving Yards|10",
@@ -30,14 +30,14 @@
    "gid": "CIN-WAS",
    "ko": 1795482900000,
    "built": 164,
-   "now": 116.0,
-   "pts": 8.4,
+   "now": 118.0,
+   "pts": 8.0,
    "p": 0.3977,
    "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-23 16:35",
-   "detail": "Drew Sample rec yds 10+: FanDuel +164 at build -> +116 now (+8.4 implied pts toward the model)"
+   "pulled": "2026-11-23 17:35",
+   "detail": "Drew Sample rec yds 10+: FanDuel +164 at build -> +118 now (+8.0 implied pts toward the model)"
   },
   {
    "key": "Drew Sample|Receiving Yards|15",
@@ -47,14 +47,14 @@
    "gid": "CIN-WAS",
    "ko": 1795482900000,
    "built": 300,
-   "now": 200.0,
-   "pts": 8.3,
+   "now": 210.0,
+   "pts": 7.3,
    "p": 0.2745,
    "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-23 16:35",
-   "detail": "Drew Sample rec yds 15+: FanDuel +300 at build -> +200 now (+8.3 implied pts toward the model)"
+   "pulled": "2026-11-23 17:35",
+   "detail": "Drew Sample rec yds 15+: FanDuel +300 at build -> +210 now (+7.3 implied pts toward the model)"
   },
   {
    "key": "Van Jefferson|Receptions|2",
@@ -70,7 +70,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "plus",
-   "pulled": "2026-11-23 16:35",
+   "pulled": "2026-11-23 17:35",
    "detail": "Van Jefferson rec 2+: FanDuel +198 at build -> +280 now (-7.2 implied pts against us)"
   },
   {
@@ -87,7 +87,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-23 16:35",
+   "pulled": "2026-11-23 17:35",
    "detail": "Van Jefferson long rec 15+: FanDuel +270 at build -> +200 now (+6.3 implied pts toward the model)"
   },
   {
@@ -104,8 +104,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "plus",
-   "pulled": "2026-11-23 16:35",
+   "pulled": "2026-11-23 17:35",
    "detail": "Van Jefferson rec yds 20+: FanDuel +280 at build -> +230 now (+4.0 implied pts toward the model)"
+  },
+  {
+   "key": "Chig Okonkwo|Receptions|6",
+   "pl": "Chig Okonkwo",
+   "m": "Receptions",
+   "ln": 6.0,
+   "gid": "CIN-WAS",
+   "ko": 1795482900000,
+   "built": 194,
+   "now": 225.0,
+   "pts": -3.2,
+   "p": 0.2832,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-23 17:35",
+   "detail": "Chig Okonkwo rec 6+: FanDuel +194 at build -> +225 now (-3.2 implied pts against us)"
   }
  ]
 }

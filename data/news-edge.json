@@ -968,6 +968,264 @@
      "pulled": "2026-11-22 13:34"
     }
    }
+  },
+  "Robert Henry Jr.|2026-11-23T23:57": {
+   "pl": "Robert Henry Jr.",
+   "tm": "WAS",
+   "pos": "RB",
+   "st": "Inactive",
+   "ts": "2026-11-23T23:57:12Z",
+   "legs": {
+    "Rachaad White|Rush + Rec Yards|32": {
+     "pl": "Rachaad White",
+     "m": "Rush + Rec Yards",
+     "ln": 32.0,
+     "built": -115,
+     "p": 0.6707,
+     "first": null,
+     "moved": null,
+     "now": -115.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Receptions|2": {
+     "pl": "Austin Ekeler",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": 128,
+     "p": 0.4875,
+     "first": null,
+     "moved": null,
+     "now": 128.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Receiving Yards|15": {
+     "pl": "Austin Ekeler",
+     "m": "Receiving Yards",
+     "ln": 15.0,
+     "built": 205,
+     "p": 0.3505,
+     "first": null,
+     "moved": null,
+     "now": 205.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Receptions|2": {
+     "pl": "Rachaad White",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": -162,
+     "p": 0.6115,
+     "first": null,
+     "moved": null,
+     "now": -154.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Receiving Yards|5": {
+     "pl": "Rachaad White",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "built": -250,
+     "p": 0.6989,
+     "first": null,
+     "moved": null,
+     "now": -250.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Rushing Yards|30": {
+     "pl": "Rachaad White",
+     "m": "Rushing Yards",
+     "ln": 30.0,
+     "built": 220,
+     "p": 0.2667,
+     "first": null,
+     "moved": null,
+     "now": 220.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Rushing Yards|25": {
+     "pl": "Austin Ekeler",
+     "m": "Rushing Yards",
+     "ln": 25.0,
+     "built": 290,
+     "p": 0.2086,
+     "first": null,
+     "moved": null,
+     "now": 320.0,
+     "pulled": "2026-11-23 17:35"
+    }
+   }
+  },
+  "Robert Henry Jr.|2026-11-24T00:00": {
+   "pl": "Robert Henry Jr.",
+   "tm": "WAS",
+   "pos": "RB",
+   "st": "Inactive",
+   "ts": "2026-11-24T00:00:13Z",
+   "legs": {
+    "Rachaad White|Rush + Rec Yards|32": {
+     "pl": "Rachaad White",
+     "m": "Rush + Rec Yards",
+     "ln": 32.0,
+     "built": -115,
+     "p": 0.6707,
+     "first": null,
+     "moved": null,
+     "now": -115.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Receptions|2": {
+     "pl": "Austin Ekeler",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": 128,
+     "p": 0.4875,
+     "first": null,
+     "moved": null,
+     "now": 128.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Receiving Yards|15": {
+     "pl": "Austin Ekeler",
+     "m": "Receiving Yards",
+     "ln": 15.0,
+     "built": 205,
+     "p": 0.3505,
+     "first": null,
+     "moved": null,
+     "now": 205.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Receptions|2": {
+     "pl": "Rachaad White",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": -162,
+     "p": 0.6115,
+     "first": null,
+     "moved": null,
+     "now": -154.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Receiving Yards|5": {
+     "pl": "Rachaad White",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "built": -250,
+     "p": 0.6989,
+     "first": null,
+     "moved": null,
+     "now": -250.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Rushing Yards|30": {
+     "pl": "Rachaad White",
+     "m": "Rushing Yards",
+     "ln": 30.0,
+     "built": 220,
+     "p": 0.2667,
+     "first": null,
+     "moved": null,
+     "now": 220.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Rushing Yards|25": {
+     "pl": "Austin Ekeler",
+     "m": "Rushing Yards",
+     "ln": 25.0,
+     "built": 290,
+     "p": 0.2086,
+     "first": null,
+     "moved": null,
+     "now": 320.0,
+     "pulled": "2026-11-23 17:35"
+    }
+   }
+  },
+  "Robert Henry Jr.|2026-11-24T00:03": {
+   "pl": "Robert Henry Jr.",
+   "tm": "WAS",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-24T00:03:17Z",
+   "legs": {
+    "Rachaad White|Rush + Rec Yards|32": {
+     "pl": "Rachaad White",
+     "m": "Rush + Rec Yards",
+     "ln": 32.0,
+     "built": -115,
+     "p": 0.6707,
+     "first": null,
+     "moved": null,
+     "now": -115.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Receptions|2": {
+     "pl": "Austin Ekeler",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": 128,
+     "p": 0.4875,
+     "first": null,
+     "moved": null,
+     "now": 128.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Receiving Yards|15": {
+     "pl": "Austin Ekeler",
+     "m": "Receiving Yards",
+     "ln": 15.0,
+     "built": 205,
+     "p": 0.3505,
+     "first": null,
+     "moved": null,
+     "now": 205.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Receptions|2": {
+     "pl": "Rachaad White",
+     "m": "Receptions",
+     "ln": 2.0,
+     "built": -162,
+     "p": 0.6115,
+     "first": null,
+     "moved": null,
+     "now": -154.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Receiving Yards|5": {
+     "pl": "Rachaad White",
+     "m": "Receiving Yards",
+     "ln": 5.0,
+     "built": -250,
+     "p": 0.6989,
+     "first": null,
+     "moved": null,
+     "now": -250.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Rachaad White|Rushing Yards|30": {
+     "pl": "Rachaad White",
+     "m": "Rushing Yards",
+     "ln": 30.0,
+     "built": 220,
+     "p": 0.2667,
+     "first": null,
+     "moved": null,
+     "now": 220.0,
+     "pulled": "2026-11-23 17:35"
+    },
+    "Austin Ekeler|Rushing Yards|25": {
+     "pl": "Austin Ekeler",
+     "m": "Rushing Yards",
+     "ln": 25.0,
+     "built": 290,
+     "p": 0.2086,
+     "first": null,
+     "moved": null,
+     "now": 320.0,
+     "pulled": "2026-11-23 17:35"
+    }
+   }
   }
  }
 }
