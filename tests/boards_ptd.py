@@ -23,8 +23,10 @@ if not m:   # the published page moves the slip data into a hashed file next to 
 S = json.loads(m.group(1).rstrip(";")) if m else {"legs": []}
 emb = [l for l in S["legs"] if l.get("m") == "Passing TDs"]
 pluses = re.findall(r'data-k="([^"]*\|Passing TDs\|\d+)"', page)
-try:
-    bd = json.load(open(os.path.join(OUT, "builder_data.json")))
+try:   # the builder's numbers from the SAME build as the page: the site's own /build/ data file, else out/ (a site copy and an older out/ differ)
+    _bp = open(os.path.join(SITE, "build", "index.html"), encoding="utf-8").read(); _bn = re.findall(r"data-[0-9a-f]+\.js", _bp)
+    if _bn: _t = open(os.path.join(SITE, "build", _bn[0]), encoding="utf-8").read(); bd = json.loads(_t[_t.index("{"):_t.rindex("}") + 1])
+    else: bd = json.load(open(os.path.join(OUT, "builder_data.json")))
     B = {f"{l['pl']}|Passing TDs|{int(round(l['ln']))}": l for l in bd["legs"] if l.get("m") == "Passing TDs"}
 except Exception: B = None
 print(f"   {len(pluses)} passing-TD + buttons, {len(emb)} passing-TD rungs embedded" + ("" if B is None else f", {len(B)} in the builder"))
