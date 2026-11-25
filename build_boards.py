@@ -1614,6 +1614,8 @@ for l_ in SLIP_LEGS:   # trim: the page rebuilds the warning text from the bad f
     if l_.get("fl") and l_.get("w"): l_["w"] = ""; l_["wf"] = 1
     l_.pop("hra", None)
 SLIP_DATA = {"week": WEEK, "legs": SLIP_LEGS, "corr": CORR, "glcorr": GLCORR, "gsort": GSORT, "builder": "https://betsweep.co/build/"}
+try: SLIP_DATA["sgp"] = {"c": _SGPC["c"], "p": _SGPC.get("p", 2.0)}   # owner 11/24: the slip panel prices same-game legs like the builder (template.html slipDec)
+except Exception as _e: print("warn: no same-game discount for the slip panel:", _e)
 import live as LIVE
 import books as BOOKS
 os.makedirs(os.path.join(OUT, "data"), exist_ok=True)

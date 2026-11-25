@@ -3996,3 +3996,22 @@ slipPrice). FanDuel's +2924 is 36% of the multiplied payout - inside what we hav
   both QBs' overs with receivers on both sides - the long slips are where the error is (14% median at 5+ legs against 4% at 2-4);
   (3) keep every price typed into the builder's "Type FanDuel's price" box as a quote (today it lasts one visit) so the fit grows by
   itself; (4) show a range, not one number, at 7+ legs.
+
+## 11/24 11:42 PM - 11/25 12:30 AM CT: two lines of one bet on a slip; the boards' slip gets the same-game estimate
+
+**Slip clash (owner: "Matt Stafford +200 from the builder and then ... +275 from the today page ... those 2 legs conflict and won't
+work on FanDuel").** Every page writes the same slip key (bs_slipk_w<W>, "player|market|line") without looking at the others.
+`slipclash.py` CLASH_JS is appended to /account.js (build_site.py), which every page loads: when the slip holds two or more keys with
+the same player and market (an Under counts as its Over's market; Total / Spread / Moneyline are not judged), a bar above the bottom
+tabs names them, says FanDuel takes one line per player and market, and offers "Keep <line>" for each and "Leave both". Keep rewrites
+the key without the other line(s) and reloads the page; nothing is removed without a tap. It watches every write of the key
+(Storage.prototype.setItem is wrapped), the storage event, and pageshow. tests/slip_clash.py (17 checks, port 8896).
+
+**The boards' slip (owner 11:44 PM: "Okay we can do your suggestions for the odds fix").** template.html `slipDec(ls)` = the builder's
+slipPrice: per game with 2+ legs, exp(-c (n-1)^p) / FanDuel's implied chances joined with our correlations; `SLIP_DATA.sgp` carries c
+and p from sgp.py. The price cell reads "FanDuel price (about) ≈ +N - same-game estimate - FanDuel pays less than the legs multiplied
+(+M); its betslip has the real price"; the slider is labeled "Target price (legs multiplied)" on a same-game slip; saved-slip rows
+and the share text use the estimate too. **The owner's eight-leg GB-LA slip now reads ≈ +2782 against FanDuel's +2924 (it showed
++8204).** tests/boards_sgp.py (10 checks, port 8897).
+- Still to build from his yes: fit the discount by leg type (same-player pairs, a QB with his receivers), keep every typed FanDuel
+  price as a quote, a range at 7+ legs. The estimate's own error is the remaining math: 4% median at 2-4 legs, 14% at 5+ (13 quotes).
