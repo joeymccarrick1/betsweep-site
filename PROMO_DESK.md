@@ -8,6 +8,8 @@ Owner-facing playbook (calendar, rules, templates, video ideas): the Claude Doc 
 ## Hard rules
 - Draft only. NEVER write to the Google Sheet (no PROMO rows, no logs), never push to main or gen-overrides, never post anywhere. The only write
   allowed is the `promo-drafts` branch (see Weekly flow).
+- Since 11/24 `promo-drafts` and `gen-overrides` live in the PRIVATE repo joeymccarrick1/betsweep-site-archive, not the public site repo. If a clone or push there is
+  refused, attach that repository to the session and retry once; if still refused, stop and say so in the run's summary.
 - Never invent a number. Every probability, price, average or rank comes from the data below; if something is missing, say so.
 - Nobody is watching: no questions; make the call and say what you assumed in one line.
 - The final message is read on a phone: short headed sections, each promo as a copy-ready block.
@@ -148,8 +150,8 @@ A leg is usable only if ALL hold:
   this run" check is simply "not started". If a game's props are not in the data yet, say "props not posted yet" for that slot (the Saturday
   check fills it). Save the drafts: write `week<W>.md` (the full owner-facing drafts) and `week<W>.json` (per promo: slot, name, legs with
   pl / m / ln / o / p / fd ids, the FanDuel link, price, plus `type` ("+500" / "lottery" / ...), `game` ("CHI-SEA" for SGPs), a ready
-  `caption` for the post, and `"post": false`) to the branch `promo-drafts` of joeymccarrick1/betsweep-site
-  (`git fetch origin promo-drafts || git checkout --orphan promo-drafts`; only those two files; commit "Promo drafts week W"; push that branch only -
+  `caption` for the post, and `"post": false`) to the branch `promo-drafts` of the PRIVATE repo joeymccarrick1/betsweep-site-archive (moved 11/24; the public site repo no longer holds it)
+  (`git clone -q --depth 1 --branch promo-drafts https://github.com/joeymccarrick1/betsweep-site-archive.git pd`, or `git init pd && git checkout --orphan promo-drafts` there if the branch is missing; push with `git push https://github.com/joeymccarrick1/betsweep-site-archive.git HEAD:promo-drafts`; only those two files; commit "Promo drafts week W"; push that branch only -
   NEVER main or gen-overrides). This is the ONLY write any promo run may make.
 - **Approving a draft** (owner 11/3): the owner flips a draft's `"post"` to `true` (GitHub edit of week<W>.json, or tells a Claude session
   "approve week 9 <name>" - that session may set `post`, and `odds` / `link` to the FanDuel SGP price and shareCode link the owner got,
