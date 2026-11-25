@@ -4037,8 +4037,10 @@ short on slips of heavy favorites (miss vs count of legs under 45%: r = +0.40). 
 the typed price and our estimate go to the database (`fd_quote_add`), once per slip and price. Signed out = nothing is sent.
 - **sql/fd_quotes.sql - the owner runs it** (no secret in the file; `fd_quotes_dump` checks the cron secret already in feed_private).
   Until he does, the page's call fails quietly and the job step writes no file.
-- **On main:** `.github/fd_quotes.py` + a step in sheet-mirror.yml (env FEED_GRADE_SECRET): asks the database for the rows and writes
-  in/fd_quotes.json into the mirror. Never fails the job, prints no secret and no row.
+- **Drafted, NOT on main yet (11/25 10:25 AM: the push of a job change was refused for the session; it waits for the owner's plain
+  yes):** tools/fd_quotes_job/fd_quotes.py (goes to `.github/fd_quotes.py`) + sheet-mirror.patch (one step in sheet-mirror.yml, env
+  FEED_GRADE_SECRET): asks the database for the rows and writes in/fd_quotes.json into the mirror. Never fails the job, prints no
+  secret and no row. Until it is on main, typed prices collect in the database and wait.
 - research/sgp_discount.py site_quotes(IN): merges the mirror's rows into research/sgp_quotes_site.json (kept only if it can be a
   same-game price: 2-12 legs, real prices, two legs in one game, 3%-160% of the legs multiplied, not the legs multiplied itself; newest
   per identical slip) and fits them as "typed on the site". **Tuesday step e2: commit research/sgp_quotes_site.json with the refit.**

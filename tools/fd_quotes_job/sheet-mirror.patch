@@ -1,0 +1,15 @@
+diff --git a/.github/workflows/sheet-mirror.yml b/.github/workflows/sheet-mirror.yml
+index 58af8fb0c..0150e15ca 100644
+--- a/.github/workflows/sheet-mirror.yml
++++ b/.github/workflows/sheet-mirror.yml
+@@ -19,6 +19,10 @@ jobs:
+         env: {SHEETS_SA_JSON: "${{ secrets.SHEETS_SA_JSON }}"}
+       - run: python3 .github/sheets_pull.py
+         env: {SHEETS_SA_JSON: "${{ secrets.SHEETS_SA_JSON }}"}
++      # owner 11/25: FanDuel prices readers typed into the builder, for the weekly fit of its same-game discount (.github/fd_quotes.py).
++      # Reads the database with the cron secret the grading job uses; never fails this job, prints no secret and no row.
++      - run: python3 .github/fd_quotes.py
++        env: {FEED_GRADE_SECRET: "${{ secrets.FEED_GRADE_SECRET }}"}
+       - run: |
+           test -f out/in/MIRROR.json || { echo "no mirror written (secret missing?)"; exit 0; }
+           cd out
