@@ -117,8 +117,8 @@ def record_states():
     hm = K.record_block(wm)
     mc = re.findall(r'<tr data-k="(mk_\w+)"><th>.*?</th><td class="(\w*)">([\d.]+)</td><td class="(\w*)">([\d.]+)</td><td class="nbrc-w">([^<]*)', hm)
     mc = [c[:5] + (c[5].strip(),) for c in mc]
-    check(mc == [("mk_res", "", "0.65", "win", "0.60", "the price closer"), ("mk_o25", "", "0.24", "", "0.25", "model closer")][:1] + [("mk_o25", "win", "0.24", "", "0.25", "model closer")]
-          and "Against the posted price <i>(8 matches that had one)</i>" in hm and "likeliest right: model 4, price 5 of 8" in hm and "6 with a 2.5 line" in hm and "the bar the model has to beat" in hm
+    check(mc == [("mk_res", "", "0.65", "win", "0.60", "price closer"), ("mk_o25", "", "0.24", "", "0.25", "model closer")][:1] + [("mk_o25", "win", "0.24", "", "0.25", "model closer")]
+          and "<th>Against the posted price</th>" in hm and "8 matches had a posted price at the lock: the likeliest result was right 4 of 8 for the model and 5 for the price; 6 had a 2.5 goal line." in hm and "the bar the model has to beat" in hm
           and "Against the posted price" not in h and "the bar the model has to beat" not in h,
           f"the record sets the model beside the posted price on the matches that had one, names who is closer, and says the price is the bar to beat; with no priced match graded, none of that is shown ({mc})")
     pm = {"line": {"by": "Draft Kings", "details": "NFO +160", "total": 2.5, "home_ml": 160, "draw_ml": 240, "away_ml": -175}, "p": {"home": 0.39, "draw": 0.28, "away": 0.33}}

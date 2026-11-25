@@ -272,16 +272,18 @@ def record_block(R):
     rows = "".join(row(k, lab, S[k], f2) for k, lab in (("res", "Home, draw or away"), ("o25", "Over 2.5 goals"), ("btts", "Both teams score")) if S.get(k))
     if S.get("goals"): rows += row("goals", "Goals a side <i>(average miss)</i>", S["goals"], f2)
     table = ('<table class="nbrc-t"><thead><tr><th>Miss score, lower is better</th><th>Model</th><th>Every match alike</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>') if rows else ""
-    mkt = S.get("mkt"); mtab = ""
+    mkt = S.get("mkt"); mtab = ""; mnote = ""
     if mkt:
-        def mrow(k, lab, x, extra=""):
+        def mrow(k, lab, x):
             m_, p_ = f2(x["model"]), f2(x["price"])
             who = "same" if m_ == p_ else ("model" if x["model"] < x["price"] else "price")
             return (f'<tr data-k="{k}"><th>{lab}</th><td class="{"win" if who == "model" else ""}">{m_}</td><td class="{"win" if who == "price" else ""}">{p_}</td>'
-                    f'<td class="nbrc-w">{"model closer" if who == "model" else ("the price closer" if who == "price" else "the same")}{extra}</td></tr>')
-        mrows = mrow("mk_res", "Home, draw or away", mkt, f' <i>(likeliest right: model {mkt["mtop"]}, price {mkt["ptop"]} of {mkt["n"]})</i>')
-        if mkt.get("o25"): mrows += mrow("mk_o25", f'Over 2.5 goals <i>({mkt["o25"]["n"]} with a 2.5 line)</i>', mkt["o25"])
-        mtab = (f'<table class="nbrc-t nbrc-m"><thead><tr><th>Against the posted price <i>({mkt["n"]} {plural(mkt["n"], "match", "matches")} that had one)</i></th><th>Model</th><th>The price</th><th></th></tr></thead><tbody>' + mrows + '</tbody></table>')
+                    f'<td class="nbrc-w">{"model closer" if who == "model" else ("price closer" if who == "price" else "the same")}</td></tr>')
+        mrows = mrow("mk_res", "Home, draw or away", mkt)
+        if mkt.get("o25"): mrows += mrow("mk_o25", "Over 2.5 goals", mkt["o25"])
+        mtab = ('<table class="nbrc-t nbrc-m"><thead><tr><th>Against the posted price</th><th>Model</th><th>Price</th><th></th></tr></thead><tbody>' + mrows + '</tbody></table>')
+        mnote = (f'{mkt["n"]} {plural(mkt["n"], "match", "matches")} had a posted price at the lock: the likeliest result was right {mkt["mtop"]} of {mkt["n"]} for the model and {mkt["ptop"]} for the price'
+                 + (f'; {mkt["o25"]["n"]} had a 2.5 goal line.' if mkt.get("o25") else '.'))
     crow = "".join(f'<tr><th>{RBAND[i]}</th><td>{round(100 * c[1] / c[0])}%</td><td>{round(100 * c[2] / c[0])}%</td><td class="nbrc-w">{c[0]} {plural(c[0], "chance", "chances")}</td></tr>' for i, c in enumerate(T["cal"]) if c[0])
     ctab = ('<table class="nbrc-t nbrc-c"><thead><tr><th>Chance the board gave</th><th>Happened</th><th>Board said</th><th></th></tr></thead><tbody>' + crow + '</tbody></table>') if crow else ""
     notes, ptab, gtab = [], "", ""
@@ -297,6 +299,7 @@ def record_block(R):
         if pl["reg"]: notes.append(f'Of the {pl["reg"]} players it listed as regulars, {pl["reg_start"]} started.')
         if pl["sub"] or pl["dnp"]: notes.append(f'{pl["sub"]} came on and {pl["dnp"]} did not play: counted here, not graded, because every player number assumes a start.')
         if pl.get("min"): notes.append(f'Starters\' minutes were off by {round(pl["min"]["mae"])} on average.')
+    if mnote: notes.append(mnote)
     if pw: notes.append(f'Player results for {pw} {plural(pw, "match", "matches")} are still to come.')
     if w: notes.append(f'{w} {plural(w, "match is", "matches are")} locked and waiting for a final score.')
     if missed: notes.append(f'{missed} {plural(missed, "match", "matches")} could not be graded: no board had been built before kickoff.')
