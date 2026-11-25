@@ -68,7 +68,10 @@ if not PUB:
     check(all(l.get("sk") == "ptd" and l.get("c") == "QB_PTD" and l.get("pos") == "QB" for l in ptd), "  each reads the passing-TD column of the game log (not the old placeholder key) and carries its correlation code")
     # 11/24: this asked for two logged games, which a quarterback making his second start does not have (three legs failed on Week 12's
     # Tuesday board). The point is that the passing-TD column is filled: at least one logged game, and no fewer than his logged games minus one.
-    gl = D["gl"]; good = [l for l in ptd if (lambda G: len(G) >= 1 and len([g for g in G if g.get("ptd") is not None]) >= max(1, len(G) - 1))(gl.get(l["pl"], []))]
+    # 11/25: "minus one" was a guess too. The builder writes the column only for a game with 15+ pass attempts (the same games the price counts),
+    # so a cameo - Baker Mayfield's 64 yards in Week 7, Sam Darnold's 13 in Week 1 - rightly has none. What holds every week: he has at
+    # least one such game, and no game with 150+ passing yards is without the column.
+    gl = D["gl"]; good = [l for l in ptd if (lambda G: any(g.get("ptd") is not None for g in G) and all(g.get("ptd") is not None for g in G if (g.get("pass") or 0) >= 150))(gl.get(l["pl"], []))]
     check(len(good) == len(ptd), f"  each quarterback's game log has his passing TDs by week ({len(good)} of {len(ptd)})")
     _gm = {g["gid"]: g for g in D["games"]}; _sc = [l for l in ptd if l.get("sc")]
     _mix = [l for l in _sc if abs(sum(w * p for w, p in zip(_gm[l["g"]]["probs"], l["sc"])) / (sum(_gm[l["g"]]["probs"]) or 1) - l["p"]) > 0.004]

@@ -4048,3 +4048,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - The row keeps the account (daily cap of 60, and deleting an account deletes its rows); the dump never returns it. Privacy Policy
   wording is the owner's: asked 11/25.
 - tests/sgp_fit.py (9), tests/sgp_price.py (+1), tests/boards_sgp.py (+1 per theme).
+- **Found by the full set on Wednesday's data (11/25 11 AM), not by this work:** (1) hunches.py eng_qb never asked the builder about its
+  leg, so "Kirk Cousins against a defense that gives up passing TDs" was Backed with a leg flagged "Backup QB". It now adds the same
+  "The builder flags this leg" case against as every other engine (verdict Mixed). (2) tests/new_markets.py: the passing-TD column is
+  written only for games with 15+ pass attempts, so the check is "one such game, and none with 150+ passing yards without it".

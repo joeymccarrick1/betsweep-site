@@ -231,6 +231,9 @@ def eng_qb(BD, log, W, wind):
         if outs: ag.append({"t": "Missing pieces on his side: " + "; ".join(outs[:2]) + ".", "s": 1})
         if last and len(allr) >= 4 and sum(r["ptd"] for r in allr) / len(allr) < 1.2: ag.append({"t": f"He has averaged {sum(r['ptd'] for r in allr) / len(allr):.1f} passing TDs a game this season.", "s": 1})
         leg = pick_leg(BD, pl, "Passing TDs", lo=-400, hi=250, want=-120, line=2)
+        # 11/25: the quarterback hunch was the one engine that never asked the builder about its leg - Kirk Cousins came out "Backed" with a leg
+        # flagged "Backup QB" (the owner's own rule, 11/9). Same line as every other engine: a flagged leg is a serious case against.
+        if leg and leg["bad"]: ag.append({"t": "The builder flags this leg: " + ", ".join(leg["bad"]) + ".", "s": 1})
         if not ag: ag.append({"t": "Touchdowns are the least predictable stat on the board: a team can score three times on the ground.", "s": 0})
         out.append({"id": f"qb|{pl}", "kind": "qb", "g": gm["gid"], "tm": tm, "who": pl, "title": f"{pl} against a defense that gives up passing TDs", "strength": strength, "ev": ev, "vs": ag, "leg": leg, "verdict": verdict(strength, ag)})
     return out
