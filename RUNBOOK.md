@@ -3982,3 +3982,17 @@ build_soccer.py before the page and the shipped board are written): the later ma
 two lines at most and one line on every card without a HIGH / MED tag.
 **The 8:38 PM reprice failure** was nflverse's snap-count file answering an error for a minute (curl 22 in "role rising"); the 9:20 PM run
 passed. An outside file missing for one run fails that run and the next one publishes - nothing was changed.
+
+## 11/24 11:39 PM CT: the boards' slip showed +8204 for a slip FanDuel pays +2924 (owner: "What can we do to better predict parlay odds")
+
+Eight legs, all GB-LA (Watson 70+, Stafford 200+, Love 250+, Golden 60+ and anytime TD, CJ Daniels 15+, Kyren Williams anytime TD and
+20+ rec). +8204 is exactly the eight prices multiplied: **the boards page's own slip panel (template.html, "Target FanDuel price" /
+"FanDuel price ... legs multiplied") never got the same-game estimate the builder has had since 11/17** (sgp.py, build_builder.py
+slipPrice). FanDuel's +2924 is 36% of the multiplied payout - inside what we have measured for 7+ legs (median 29%, range 6-61%).
+- Saved as a quote: research/sgp_quotes_owner.json (15th owner quote, week 12). The fit files were NOT refitted tonight (this tree's
+  in/ and out/ are stale); Tuesday's step e2 picks it up.
+- Proposed, waiting for the owner's word: (1) give the boards' slip the builder's same-game estimate and "about" mark, one shared
+  function; (2) fit the discount by what the legs ARE, not only how many: same-player pairs (yards + TD), a QB with his own receivers,
+  both QBs' overs with receivers on both sides - the long slips are where the error is (14% median at 5+ legs against 4% at 2-4);
+  (3) keep every price typed into the builder's "Type FanDuel's price" box as a quote (today it lasts one visit) so the fit grows by
+  itself; (4) show a range, not one number, at 7+ legs.

@@ -641,6 +641,85 @@
      "c": "RB_REC"
     }
    ]
+  },
+  {
+   "week": 12,
+   "title": "Owner's boards slip: GB-LA 8 legs (11/24 11:38 PM; the boards showed +8204, the legs multiplied)",
+   "fanduel": 2924,
+   "legs": [
+    {
+     "pl": "Christian Watson",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "o": -148,
+     "tm": "GB",
+     "g": "GB-LA",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Matthew Stafford",
+     "m": "Passing Yards",
+     "ln": 200.0,
+     "o": -270,
+     "tm": "LA",
+     "g": "GB-LA",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Jordan Love",
+     "m": "Passing Yards",
+     "ln": 250.0,
+     "o": -210,
+     "tm": "GB",
+     "g": "GB-LA",
+     "c": "QB_PASS"
+    },
+    {
+     "pl": "Matthew Golden",
+     "m": "Receiving Yards",
+     "ln": 60.0,
+     "o": -215,
+     "tm": "GB",
+     "g": "GB-LA",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Matthew Golden",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 185,
+     "tm": "GB",
+     "g": "GB-LA",
+     "c": "WR_TD"
+    },
+    {
+     "pl": "CJ Daniels",
+     "m": "Receiving Yards",
+     "ln": 15.0,
+     "o": -188,
+     "tm": "LA",
+     "g": "GB-LA",
+     "c": "WR_RECYDS"
+    },
+    {
+     "pl": "Kyren Williams",
+     "m": "Anytime TD",
+     "ln": 1.0,
+     "o": 115,
+     "tm": "LA",
+     "g": "GB-LA",
+     "c": "RB_TD"
+    },
+    {
+     "pl": "Kyren Williams",
+     "m": "Receiving Yards",
+     "ln": 20.0,
+     "o": -128,
+     "tm": "LA",
+     "g": "GB-LA",
+     "c": "RB_RECYDS"
+    }
+   ]
   }
  ]
 }
