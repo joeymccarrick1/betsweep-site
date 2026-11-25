@@ -1,8 +1,43 @@
 {
  "news": [],
  "week": 12,
- "built": "Wed 11/25 3:22 PM",
- "checked": "2026-11-25T21:42:13Z",
+ "built": "Wed 11/25 4:05 PM",
+ "checked": "2026-11-25T22:12:16Z",
  "legs_checked": 1124,
- "moves": []
+ "moves": [
+  {
+   "key": "Colby Parkinson|Receiving Yards|30",
+   "pl": "Colby Parkinson",
+   "m": "Receiving Yards",
+   "ln": 30.0,
+   "gid": "GB-LA",
+   "ko": 1795654800000,
+   "built": 280,
+   "now": 225.0,
+   "pts": 4.5,
+   "p": 0.2652,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-25 15:35",
+   "detail": "Colby Parkinson rec yds 30+: FanDuel +280 at build -> +225 now (+4.5 implied pts toward the model)"
+  },
+  {
+   "key": "Colby Parkinson|Longest Reception|15",
+   "pl": "Colby Parkinson",
+   "m": "Longest Reception",
+   "ln": 15.0,
+   "gid": "GB-LA",
+   "ko": 1795654800000,
+   "built": 250,
+   "now": 210.0,
+   "pts": 3.7,
+   "p": 0.2372,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-25 15:35",
+   "detail": "Colby Parkinson long rec 15+: FanDuel +250 at build -> +210 now (+3.7 implied pts toward the model)"
+  }
+ ]
 }
