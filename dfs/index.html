@@ -142,7 +142,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 12</small><b>DFS Lineup Builder</b></h1>
-    <p>Build DraftKings and FanDuel lineups against the BetSweep model - classic, or single game with an MVP / Captain at 1.5x: load the site's player list, see every player's projection in that site's scoring and his points per $1K, tap players in or let the optimizer fill the lineup under the cap, then download the upload file. Built Wed 11/25 9:22 AM CT.</p>
+    <p>Build DraftKings and FanDuel lineups against the BetSweep model - classic, or single game with an MVP / Captain at 1.5x: load the site's player list, see every player's projection in that site's scoring and his points per $1K, tap players in or let the optimizer fill the lineup under the cap, then download the upload file. Built Wed 11/25 11:31 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"></nav>
   
@@ -162,7 +162,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
    <div class="msg" id="srcMsg" hidden></div>
   </div>
   </details>
-  <div class="status"><span id="srcStat"></span><span>Week 12 model · 356 active players · built Wed 11/25 9:22 AM CT</span></div>
+  <div class="status"><span id="srcStat"></span><span>Week 12 model · 356 active players · built Wed 11/25 11:31 AM CT</span></div>
  </section>
  <div id="dfTabs"></div>
  <div class="grid2">
@@ -213,7 +213,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   <dl><dt>Proj</dt><dd>projected fantasy points in the site's rules</dd><dt>Pts / $1K</dt><dd>projected points per $1,000 of salary - the value column; sort by it to find the cheap plays the model likes</dd><dt>Lock</dt><dd>keep this player when you re-optimize</dd><dt>✕</dt><dd>exclude from the optimizer (he stays in the list)</dd><dt>Single game (MVP)</dt><dd>for Showdown / single-game contests: pick the game, and the lineup is one MVP (Captain on DraftKings) plus FLEX slots, any position including K and D/ST. The MVP scores 1.5x and costs 1.5x salary on both sites (read straight from the player list when it has the MVP / Captain salary). The optimizer tries every realistic MVP, fills the rest exactly under the cap, and keeps at least one player from each team. A DraftKings Showdown file switches this on by itself. ★ on a FLEX row makes that player the MVP.</dd><dt>Upload file</dt><dd>a one-lineup CSV in the site's import format, built from the IDs in the list you loaded - import it on the contest's upload page instead of clicking nine players</dd></dl>
  </div></section>
 </div>
-<script src="/dfs/data-02a4c029af88.js"></script>
+<script src="/dfs/data-719740441672.js"></script>
 <script>
 (function(){
   function $(s, r){ return (r || document).querySelector(s); }
@@ -893,13 +893,16 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   /* owner 11/24 ("This bet is actually +2924 on FanDuel"): this slip showed the legs multiplied (+8204) for eight legs of one game. FanDuel
      does not pay that on a same-game slip. Same estimate as the builder (sgp.py, build_builder.py slipPrice): for each game with two or
      more legs, exp(-c (n-1)^p) / FanDuel's own implied chances joined with our same-game correlations; one leg per game still multiplies. */
-  function slipDec(ls){ var bl = bookLegs(ls), by = {}, order = [], mult = 1, d = 1, same = false, S = D.sgp || {}, c = S.c != null ? S.c : 0.00146, pw = S.p || (D.sgp ? 2 : 3);
+  function slipDec(ls){ var bl = bookLegs(ls), by = {}, order = [], mult = 1, d = 1, lg = 0, same = false, S = D.sgp || {}, c = S.c != null ? S.c : 0.00146, pw = S.p || (D.sgp ? 2 : 3);
     bl.forEach(function(l){ if(!by[l.g]){ by[l.g] = []; order.push(l.g); } by[l.g].push(l); mult *= dec(l.o); });
     order.forEach(function(g){ var v = by[g]; if(v.length < 2){ d *= dec(v[0].o); return; }
       var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); return x; }));
       if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
-      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
-    return {d: same ? d : mult, mult: mult, same: same}; }
+      var dg = S.dog ? v.filter(function(l){ return (l.bk != null ? l.bk : 1 / dec(l.o)) < (S.dog_under || 0.45); }).length : 0;
+      var m80 = S.spread ? S.spread[v.length <= 4 ? '2-4' : v.length <= 6 ? '5-6' : '7+'] : 0; if(m80 && m80 >= (S.show || 0.2)) lg += m80 * m80;
+      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw) - (dg ? S.dog * dg : 0)) / pb); });
+    var sd = Math.sqrt(lg);
+    return {d: same ? d : mult, mult: mult, same: same, rng: same && sd > 0 ? [Math.max(1.01, d / Math.exp(sd)), d * Math.exp(sd)] : null}; }
   function joint(ls){
     var ftd = ls.filter(function(l){ return l.m === 'First TD'; });
     for(var a = 0; a < ftd.length; a++) for(var b = a + 1; b < ftd.length; b++) if(ftd[a].g === ftd[b].g) return 0;
@@ -1064,7 +1067,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls), ev = fair*bookDec - 1;
     var sameGame = {}; ls.forEach(function(l){ sameGame[l.g] = (sameGame[l.g]||0) + 1; }); var sgp = Object.keys(sameGame).filter(function(g){ return sameGame[g] > 1; });
     $('#bslipPrice').innerHTML =
-      '<div><small>FanDuel price' + (SP.same ? ' (about)' : '') + '</small><b>' + (SP.same ? '\u2248 ' : '') + decToAm(bookDec) + '</b><span>' + (SP.same ? 'same-game estimate - FanDuel pays less than the legs multiplied (' + decToAm(SP.mult) + '); its betslip has the real price' : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
+      '<div><small>FanDuel price' + (SP.same ? ' (about)' : '') + '</small><b>' + (SP.same ? '\u2248 ' : '') + decToAm(bookDec) + '</b><span>' + (SP.same ? 'same-game estimate' + (SP.rng ? ', likely ' + decToAm(SP.rng[0]) + ' to ' + decToAm(SP.rng[1]) : '') + ' - FanDuel pays less than the legs multiplied (' + decToAm(SP.mult) + '); its betslip has the real price' : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+':'') + '$' + ev.toFixed(2) + '</b></div>' +
