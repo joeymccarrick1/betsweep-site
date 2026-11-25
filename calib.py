@@ -104,3 +104,33 @@ def shown(p, book, market=None, w=W_MODEL, line=None, proj=None):
     v = shrink(p, book if under else squeezed(base, book), w); cut = floor_cut(base, line, proj)
     if cut: v = max(0.01, min(0.99, v + cut if under else v - cut))   # the under is the other side of the same line
     return v
+
+# ---- owner 11/24 ("Yeah fix that"): the floor cut's upper taper could turn two rungs a yard apart upside down ----
+# Stefon Diggs, 11/23: 50+ showed 0.5133 and 51+ showed 0.5146 (projection 57.2). In the 85-90% taper the cut shrinks by c / (0.05 x proj)
+# a yard, which can be more than the blended ladder falls over that yard. A higher rung can never be likelier than the rung under it, so
+# after the cut a rung that the CUT lifted over the rung beneath it is brought down to it. Only pairs the cut flipped are touched (a pair
+# the blend itself had the other way round is the sheet's business, not this rule's); the move is at most the taper's step.
+def ladder(rungs, market):
+    """rungs: one player's OVER rungs of one market as (line, raw_p, book, proj, shown). Returns {position in rungs: lowered shown}
+    for the rungs the floor cut lifted above the rung under them. Empty for markets without a floor cut."""
+    if market not in FLOOR_CUT: return {}
+    order = sorted((i for i, r in enumerate(rungs) if r[0] is not None and r[1] is not None and r[2] is not None and r[4] is not None), key=lambda i: rungs[i][0])
+    out = {}; cur = {i: rungs[i][4] for i in order}
+    for a, b in zip(order, order[1:]):
+        if rungs[a][0] == rungs[b][0]: continue
+        if shown(rungs[a][1], rungs[a][2], market) >= shown(rungs[b][1], rungs[b][2], market) and cur[a] < cur[b]:
+            cur[b] = cur[a]; out[b] = cur[a]
+    return out
+
+def ladder_legs(legs, player, market, line, raw, book, proj, p, edge=None, nd=4):
+    """Apply ladder() across a list of leg dicts in place (field names passed in). Returns how many rungs moved."""
+    groups = {}
+    for l in legs:
+        if l.get(market) in FLOOR_CUT and l.get(p) is not None: groups.setdefault((l.get(player), l.get(market)), []).append(l)
+    n = 0
+    for (_, mk), xs in groups.items():
+        if len(xs) < 2: continue
+        for i, v in ladder([(l.get(line), l.get(raw), l.get(book), l.get(proj), l.get(p)) for l in xs], mk).items():
+            xs[i][p] = round(v, nd) if nd else v; n += 1
+            if edge and xs[i].get(book) is not None: xs[i][edge] = round(xs[i][p] - xs[i][book], nd) if nd else xs[i][p] - xs[i][book]
+    return n

@@ -234,4 +234,26 @@ try:
               "the data set's results are handed over only for a finished match with its starters on file: not one still to finish, not one with half its players missing")
 finally:
     shutil.rmtree(d, ignore_errors=True)
+# ---- 11/24 (owner: three-way prices; "the posted line as the bar the model has to beat") ----
+_L = {"by": "DraftKings", "home_ml": 160, "draw_ml": 240, "away_ml": 175, "total": 2.5, "over": -130, "under": 105}
+_mk = G.market(_L); _q = [100 / 260, 100 / 340, 100 / 275]
+check(_mk is not None and near(_mk["home"] + _mk["draw"] + _mk["away"], 1.0, 1e-9) and near(_mk["home"], _q[0] / sum(_q), 1e-9) and near(_mk["hold"], sum(_q) - 1, 1e-9) and near(_mk["over25"], (130 / 230) / (130 / 230 + 100 / 205), 1e-9),
+      f"the posted price becomes chances with the book's cut taken out evenly: +160 / +240 / +175 is {_mk['home'] * 100:.1f} / {_mk['draw'] * 100:.1f} / {_mk['away'] * 100:.1f}% (cut {_mk['hold'] * 100:.1f}%), over 2.5 at -130 / +105 is {_mk['over25'] * 100:.1f}%")
+check(G.market(None) is None and G.market({"home_ml": 160, "away_ml": 175}) is None and G.market(dict(_L, draw_ml="240")) is None and G.market(dict(_L, home_ml=50)) is None
+      and G.market({"home_ml": -110, "draw_ml": -110, "away_ml": -110}) is None and G.market({"home_ml": 900, "draw_ml": 900, "away_ml": 900}) is None
+      and "over25" not in G.market(dict(_L, total=3.5)) and "over25" not in G.market(dict(_L, under=None)),
+      "no market without all three prices, with a price that is not a price, or with three prices that do not add up to a book's cut; a total other than 2.5, or one side of it missing, gives no over-2.5 chance")
+_lk = {"p": {"home": 0.50, "draw": 0.25, "away": 0.25, "over15": 0.78, "over25": 0.55, "over35": 0.30, "btts": 0.56}, "base": BASE, "xg": {"home": 1.7, "away": 1.1}, "line": _L}
+_S, _i = G.grade_match(_lk, {"home": 2, "away": 0}); _M = _S["mkt"]
+check(_M["n"] == 1 and near(_M["model"], 0.25 + 0.0625 + 0.0625, 1e-9) and near(_M["price"], (1 - _mk["home"]) ** 2 + _mk["draw"] ** 2 + _mk["away"] ** 2, 1e-9) and _M["mtop"] == 1 and _M["ptop"] == 1
+      and _M["on"] == 1 and near(_M["omodel"], 0.55 ** 2, 1e-9) and near(_M["oprice"], _mk["over25"] ** 2, 1e-9) and near(_M["model"], _S["res"]["brier"], 1e-9),
+      "a match locked with a posted price is scored twice on the result - the model and the price, same miss score - and on over 2.5 when the posted total is 2.5 (a 2-0 home win: the model's 50% beat the price's 37%)")
+_S2, _ = G.grade_match(dict(_lk, line={"by": "DraftKings", "details": "AAA +110"}), {"home": 2, "away": 0}); _S3, _i3 = G.grade_match(_lk, {"home": 1, "away": 1, "beyond": True})
+check(_S2["mkt"]["n"] == 0 and _S2["res"]["n"] == 1 and _S3["mkt"]["n"] == 1 and _S3["mkt"]["on"] == 0 and _i3["result"] == "draw" and near(_S3["mkt"]["price"], _mk["home"] ** 2 + (1 - _mk["draw"]) ** 2 + _mk["away"] ** 2, 1e-9),
+      "a match locked without three prices is graded as before and stays out of the comparison; one that went past ninety minutes is the draw it was for the price too, its total left out")
+_old = {"gw": 12, "ids": ["a"], "pids": [], "matches": 1, "res": {"n": 1, "brier": 0.4, "base": 0.5, "ll": 0.7, "bll": 0.8, "top": 1, "btop": 1}}
+_T = G.add(G.add(G.empty(), G.norm(_old)), _S); _sm = G.summary({"total": _T, "rounds": []})
+check(G.norm(_old)["mkt"]["n"] == 0 and _T["matches"] == 2 and _T["mkt"]["n"] == 1 and _sm["mkt"]["n"] == 1 and near(_sm["mkt"]["model"], _M["model"], 1e-9) and _sm["mkt"]["o25"]["n"] == 1
+      and G.summary({"total": G.add(G.empty(), G.norm(_old)), "rounds": []})["mkt"] is None,
+      "a row graded before prices were read gains the new sums at zero, so the comparison counts only the matches that had a price; with none, the record says nothing about the price")
 print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)

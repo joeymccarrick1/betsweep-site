@@ -37,11 +37,31 @@ wt = C.W_MARKET["Anytime TD"]
 check(wt == 0.3 and abs(C.shown(0.40, 0.30, "Anytime TD") - (0.30 + wt * 0.10)) < 1e-12, f"touchdowns: the model moves the price by {wt:.0%} of its lead (11/18, two straight weeks FanDuel alone graded better)")
 
 bd = os.path.join(OUT, "builder_data.json")
+# ---- 11/24: the ladder rule on made-up rungs (Diggs 11/23: projection 57.2, 50+ and 51+ a yard apart in the upper taper) ----
+def _rung(ln, raw, bk, pj=57.2): return (ln, raw, bk, pj, C.shown(raw, bk, RY, line=ln, proj=pj))
+_a, _b = _rung(50, 0.5290, 0.5290), _rung(51, 0.5225, 0.5225)
+_fx = C.ladder([_a, _b], RY)
+check(_a[4] < _b[4] and list(_fx) == [1] and abs(_fx[1] - _a[4]) < 1e-12, f"ladder rule: a rung the cut lifted over the rung under it comes down to it (50+ {_a[4]:.4f}, 51+ {_b[4]:.4f} -> {_fx.get(1, 0):.4f})")
+check(C.ladder([_b, _a], RY) == {0: _a[4]}, "ladder rule: the order the rungs arrive in does not matter")
+check(C.ladder([_rung(30, 0.80, 0.80), _rung(40, 0.70, 0.70), _rung(60, 0.40, 0.40)], RY) == {}, "ladder rule: a ladder in order is left alone")
+_c, _d = _rung(50, 0.50, 0.50), _rung(51, 0.53, 0.53)
+check(C.ladder([_c, _d], RY) == {}, "ladder rule: a pair the blend itself had the other way round is not this rule's to move")
+check(C.ladder([_a, _b], "Receptions") == {} and C.ladder([_a], RY) == {} and C.ladder([(None, 0.5, 0.5, 57.2, 0.5), _b], RY) == {}, "ladder rule: no floor-cut market, one rung, or a rung without a line = nothing moves")
+_e3 = [_rung(49, 0.5360, 0.5360), _a, _b]; _f3 = C.ladder(_e3, RY)
+check(all(v <= _e3[0][4] + 1e-12 for v in _f3.values()) and (not _f3 or max(_f3.values()) <= min(r[4] for r in _e3[:2]) + 1e-12), f"ladder rule: three rungs a yard apart end in order ({[round(r[4], 4) for r in _e3]} -> moved {({k: round(v, 4) for k, v in _f3.items()})})")
+_lg = [{"pl": "A", "m": RY, "ln": 50, "raw_p": 0.5290, "bk": 0.5290, "proj": 57.2, "p": round(_a[4], 4), "e": 0}, {"pl": "A", "m": RY, "ln": 51, "raw_p": 0.5225, "bk": 0.5225, "proj": 57.2, "p": round(_b[4], 4), "e": 0},
+       {"pl": "B", "m": RY, "ln": 51, "raw_p": 0.5225, "bk": 0.5225, "proj": 57.2, "p": round(_b[4], 4), "e": 0}]
+_n = C.ladder_legs(_lg, "pl", "m", "ln", "raw_p", "bk", "proj", "p", "e")
+check(_n == 1 and _lg[1]["p"] == _lg[0]["p"] and abs(_lg[1]["e"] - (_lg[1]["p"] - 0.5225)) < 1e-9 and _lg[2]["p"] == round(_b[4], 4), "ladder rule on legs: one player's rung moves with its edge, another player's same rung does not")
 if os.path.exists(bd):
     L = [l for l in json.load(open(bd))["legs"] if not l.get("gl") and l.get("raw_p") is not None and l.get("bk") is not None and l.get("p") is not None]
     ry = [l for l in L if l.get("m") == RY]
     # build_builder's defense-vs-role step (defrole.py, l["dv"]) tilts the calibrated number a little afterwards; legs without it must match exactly
-    gap = lambda l, mk: abs(l["p"] - C.shown(l["raw_p"], l["bk"], mk, line=l.get("ln"), proj=l.get("proj")))
+    # 11/24: the expected number is the formula THEN the ladder rule (calib.ladder: a rung the cut lifted over the rung under it comes down to it)
+    _exp = [dict(l, p=round(C.shown(l["raw_p"], l["bk"], l.get("m"), line=l.get("ln"), proj=l.get("proj")), 4)) for l in L if not l.get("flat") and not str(l.get("m", "")).startswith("Under ")]
+    _moved = C.ladder_legs(_exp, "pl", "m", "ln", "raw_p", "bk", "proj", "p")
+    _want = {(l["pl"], l["m"], l["ln"]): l["p"] for l in _exp}
+    gap = lambda l, mk: abs(l["p"] - _want.get((l["pl"], mk, l.get("ln")), C.shown(l["raw_p"], l["bk"], mk, line=l.get("ln"), proj=l.get("proj"))))
     off = [l for l in ry if gap(l, RY) > (0.03 if l.get("dv") else 0.00011)]; plain_n = sum(1 for l in ry if not l.get("dv"))
     check(len(ry) > 0 and not off, f"every receiving-yards leg in the builder shows the calibrated number ({plain_n} exactly, {len(ry) - plain_n} within the defense-vs-role tilt" + (f"; first off: {off[0]['pl']} {off[0]['ln']}+ shows {off[0]['p']}" if off else "") + ")")
     band = [l for l in ry if C.floor_cut(RY, l.get("ln"), l.get("proj")) > 0]; bx = [l for l in band if not l.get("dv")]
@@ -71,7 +91,7 @@ if os.path.exists(bd):
         for lo, up in zip(xs, xs[1:]):
             p_lo = C.shrink(lo["raw_p"], lo["bk"], C.W_MARKET[RY]); p_up = C.shrink(up["raw_p"], up["bk"], C.W_MARKET[RY])
             if p_lo >= p_up and lo["p"] < up["p"] - 0.00011: flip.append(f"{pl} {lo['ln']:g}+ {lo['p']} under {up['ln']:g}+ {up['p']}")
-    check(not flip, f"the cut turns no ladder upside down ({len(lad)} players' ladders" + (f"; {flip[0]}" if flip else "") + ")")
+    check(not flip, f"the cut turns no ladder upside down ({len(lad)} players' ladders, {_moved} rung(s) brought down by the ladder rule" + (f"; {flip[0]}" if flip else "") + ")")
     td = [l for l in L if l.get("m") == "Anytime TD" and " or " not in l["pl"] and "/" not in l["pl"]]
     offt = [l for l in td if abs(l["p"] - C.shown(l["raw_p"], l["bk"], "Anytime TD")) > (0.03 if l.get("dv") else 0.00011)]
     check(not offt, f"touchdown legs carry the new weight ({len(td)} legs" + (f"; first off: {offt[0]['pl']} shows {offt[0]['p']}" if offt else "") + ")")

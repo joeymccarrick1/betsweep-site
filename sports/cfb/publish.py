@@ -227,6 +227,9 @@ def build(folder, feeds, now=None):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--feeds", required=True); ap.add_argument("--out", required=True); ap.add_argument("--data"); ap.add_argument("--now")
+    ap.add_argument("--prev", help="the branch as the last run left it (default: prev/ beside --out, where the feeds-sports job puts it)")
+    ap.add_argument("--site", help="a checkout of the live site, for the board it has published (default: the folder --out is in)")
+    ap.add_argument("--no-grade", action="store_true", help="write the board only: no lock, no grading (local work)")
     a, _ = ap.parse_known_args()
     now = when(a.now) if a.now else dt.datetime.now(dt.timezone.utc)
     folder = a.data or CD.data_dir()
@@ -239,6 +242,17 @@ def main():
     print(f"cfb board: {len(b['games'])} postseason game(s) with both teams known ({sum(1 for x in b['games'] if x['mkt'])} with a posted line), {len(b['tbd'])} still to be decided; "
           f"{b['played']} finals this season through {b['data_through']} ({b['from_mirror']} from the mirror; schedule file {how}); {b['n_teams']} teams rated; "
           f"{len(b['checks'])} check note(s){': ' + ' | '.join(b['checks'])[:300] if b['checks'] else ''}; {os.path.getsize(path) // 1024} KB")
+    if not a.no_grade:
+        # lock and grade (sports/cfb/grade.py), on every run. The board is already written, so nothing here can cost it.
+        try:
+            from . import grade as G
+            root = os.path.dirname(os.path.abspath(a.out))
+            rd = lambda p: G.load(p)
+            boards = [("the feed", b), ("the feed, one run earlier", rd(os.path.join(a.prev or os.path.join(root, "prev"), "cfb", "board.json"))),
+                      ("the published page", rd(os.path.join(a.site or root, "cfb", "board.json")))]
+            G.run(os.path.join(a.out, "cfb"), boards, scoreboard=rd(os.path.join(a.feeds, "cfb", "scoreboard.json")), now=now)
+        except Exception as e:
+            print(f"cfb grade: FAILED ({type(e).__name__}: {e}) - the board above is unaffected")
 
 
 if __name__ == "__main__":

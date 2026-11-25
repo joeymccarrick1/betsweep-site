@@ -123,6 +123,68 @@ def team_col(ab, g, B):
     return f'<ul class="col cfteam" data-team="{E(ab)}">{head}{stats}{last}</ul>'
 
 
+EARLY = 30          # graded games before the record stops calling itself too small to judge by (one postseason is about 45)
+
+
+def record_block(R):
+    """The grading record (sports/cfb/grade.py), as the page shows it. Three states, each saying only what is true:
+    no record in reach - nothing is shown; nothing graded yet - it says grading has started and how many games are locked and waiting;
+    graded games - the posted line beside our rating on the margin, the total and the winner, then our rating's side against the
+    spread and the total (every game, and only where the rating sat apart from the line), the games themselves, and what was left out."""
+    if not R or not isinstance(R.get("total"), dict) or not isinstance(R.get("rows"), list):
+        return ""
+    T, rows = R["total"], R["rows"]
+    w, missed, void = R.get("waiting") or 0, len(R.get("missed") or {}), len(R.get("void") or {})
+    plural = lambda n, one, many: one if n == 1 else many
+    if not rows:
+        return ('<p class="nbrec none" id="nbrec"><b>Grading has started.</b> '
+                + (f'{w} {plural(w, "game is", "games are")} locked and waiting for {plural(w, "its final score", "their final scores")}; the first results appear here.' if w
+                   else 'Each game is locked at kickoff - the posted line and our rating as they stood - and scored against the final; the first results appear here.') + '</p>')
+    B = T.get("both") or {}; n, nl = T.get("games") or 0, B.get("n") or 0
+    f1 = lambda x: f"{x:.1f}"
+    rec3 = lambda d: f'{d["won"]}–{d["lost"]}' + (f'–{d["push"]}' if d.get("push") else "")
+    head = (f'<summary><b>Graded so far</b><span class="nbrc-n">{n} {plural(n, "game", "games")}</span>'
+            + (f'<span class="nbrc-l">margin missed by {f1(B["line_margin_miss"] / nl)} (the line) and {f1(B["model_margin_miss"] / nl)} (our rating)</span>' if nl else '') + '</summary>')
+
+    def row(k, lab, line, ours, fmt=f1, low=True):
+        a, b = fmt(line), fmt(ours)
+        who = "same" if a == b else ("line" if (line < ours) == low else "ours")
+        return (f'<tr data-k="{k}"><th>{lab}</th><td class="{"win" if who == "line" else ""}">{a}</td><td class="{"win" if who == "ours" else ""}">{b}</td>'
+                f'<td class="nbrc-w">{"the line closer" if who == "line" else ("our rating closer" if who == "ours" else "the same")}</td></tr>')
+    table = ""
+    if nl:
+        lr, mr = B["line_right"], B["model_right"]
+        trs = (row("margin", "Final margin <i>(average miss, points)</i>", B["line_margin_miss"] / nl, B["model_margin_miss"] / nl)
+               + row("total", "Total points <i>(average miss)</i>", B["line_total_miss"] / nl, B["model_total_miss"] / nl)
+               + (f'<tr data-k="winner"><th>Picked the winner</th><td>{lr[0]} of {lr[1]}</td><td>{mr[0]} of {mr[1]}</td><td class="nbrc-w">the favorite, and our rating\'s side</td></tr>' if lr[1] or mr[1] else ""))
+        table = ('<table class="nbrc-t"><thead><tr><th>Lower is better</th><th>The line</th><th>Our rating</th><th></th></tr></thead><tbody>' + trs + '</tbody></table>')
+    ap = R.get("apart") or [NEAR, NEAR_TOTAL]
+    sides = ""
+    if nl:
+        sides = ('<table class="nbrc-t nbrc-c"><thead><tr><th>Taking our rating\'s side</th><th>Every game</th><th>Only when apart</th><th></th></tr></thead><tbody>'
+                 f'<tr data-k="ats"><th>Against the spread</th><td>{rec3(T["ats"])}</td><td>{rec3(T["ats_apart"])}</td><td class="nbrc-w">apart = {num(ap[0])}+ points from the spread</td></tr>'
+                 f'<tr data-k="ou"><th>Over or under the total</th><td>{rec3(T["ou"])}</td><td>{rec3(T["ou_apart"])}</td><td class="nbrc-w">apart = {num(ap[1])}+ points from the total</td></tr></tbody></table>')
+    early = (f'<p class="nbrc-early"><b>Too small to judge by.</b> {n} {plural(n, "game", "games")} is a first look, not a record. Nothing here is a pick.</p>' if n < EARLY else '')
+    gl = ""
+    for r in rows[::-1][:12]:
+        fa, fh = r["final"]; am = fh - fa
+        res = f'{E(r["away"])} {fa}, {E(r["home"])} {fh}'
+        ln = r.get("line")
+        bits = []
+        if ln: bits.append(f'line {E(by_text(ln["margin"], r["home"], r["away"]))} <small>missed by {f1(ln["margin_miss"])}</small>')
+        bits.append(f'ours {E(by_text(r["model"]["margin"], r["home"], r["away"]))} <small>missed by {f1(r["model"]["margin_miss"])}</small>')
+        if r.get("ats"): bits.append(f'our side of the spread ({E(r["ats"]["side"])}) <b class="r-{r["ats"]["res"]}">{r["ats"]["res"]}</b>')
+        gl += f'<li><span class="bl-p">{res}</span><span class="bl-m">{E(r.get("name") or "")}</span><span class="bl-n">{" · ".join(bits)}</span></li>'
+    games = f'<ul class="bl cfrc-g">{gl}</ul>' if gl else ""
+    notes = []
+    if n > nl: notes.append(f'{n - nl} {plural(n - nl, "game was", "games were")} locked with no line posted: graded on our rating alone and left out of the comparison.')
+    if w: notes.append(f'{w} {plural(w, "game is", "games are")} locked and waiting for a final score.')
+    if missed: notes.append(f'{missed} {plural(missed, "game", "games")} could not be graded: no board had been built before kickoff.')
+    if void: notes.append(f'{void} {plural(void, "game was", "games were")} postponed or canceled and set aside.')
+    notes.append('Each game is locked at kickoff from the last board built before it; overtime counts, as a sportsbook settles it. Margins are read from the final score.')
+    return (f'<details class="nbrec" id="nbrec">{head}<div class="nbrc-b">{early}{table}{sides}{games}<p class="nbrc-notes">{" ".join(notes)}</p></div></details>')
+
+
 def game_card(g, B):
     h, a = g["home"], g["away"]; th, ta = B["teams"][h], B["teams"][a]
     mkt, model = g.get("mkt"), g["model"]
@@ -190,11 +252,13 @@ body.compact .card:not(.expanded) > .cfgap{display:block}
 .cfh small{font-family:var(--body);font-weight:600;font-size:12px;letter-spacing:0;text-transform:none;margin-left:6px;color:var(--ink)}
 .cfg{list-style:none;display:grid;grid-template-columns:20px 58px 1fr auto;gap:8px;align-items:baseline;margin:0 14px;padding:5px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);font-size:14px;font-variant-numeric:tabular-nums}
 .cfg b{font-family:var(--display);font-weight:700} .cfg.res-W b{color:var(--good)} .cfg.res-L b{color:var(--bad)} .cfg .cfo{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cfg small{color:var(--mute);font-size:12px}
+.cfrc-g{margin:8px 0 2px} .cfrc-g b.r-won{color:var(--good)} .cfrc-g b.r-lost{color:var(--bad)} .cfrc-g b.r-push{color:var(--mute)} .cfrc-g small{color:var(--mute)}
+.nbrc-early{margin:0 0 8px;color:var(--mute)} .nbrc-early b{color:var(--ink)}
 @media (max-width:760px){ .cfst{gap:4px} .cfst span{padding:5px 6px} .cfst b{font-size:15.5px} .cfst small{font-size:10.5px} }
 """
 
 
-def page(B, have=None):
+def page(B, have=None, R=None):
     css = re.search(r"<style[^>]*>(.*?)</style>", open(os.path.join(HERE, "template.html"), encoding="utf-8").read(), re.S).group(1)
     n = len(B["games"]); rl = round_label(B); T = B.get("test") or {}
     nav = '<a href="#summary">Slate</a> ' + " ".join(f'<a href="#{E(g["key"])}">{E(g["away"])}·{E(g["home"])}</a>' for g in B["games"])
@@ -207,7 +271,7 @@ def page(B, have=None):
     except Exception:
         last_day = (last - dt.timedelta(hours=6)).date().isoformat()
     pre = ('<div class="nbpre"><b>College football preview.</b> Game lines only: Tennessee does not allow bets on individual college athletes. '
-           'The line is the one ESPN posts, not FanDuel\'s. Our rating sits beside it as a second opinion: this season the book has been the closer of the two, so nothing here is a pick.</div>')
+           'The line is the one ESPN posts, not FanDuel\'s. Our rating sits beside it as a second opinion: this season the book has been the closer of the two, so nothing here is a pick.' + (' Every game is locked at kickoff and graded against the final score.' if record_block(R) else '') + '</div>')
     key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'
            '<dt>Score</dt><dd>What the posted spread and total imply each side scores, visiting side first. A spread of −7 with a total of 55 is a 31–24 game. With no line posted yet, the score is our own rating and says so.</dd>'
            '<dt>Spread and total</dt><dd>The sportsbook line ESPN shows, with the book named. It is not FanDuel\'s.</dd>'
@@ -222,10 +286,11 @@ def page(B, have=None):
                 f'taking our rating\'s side against the spread went {ats[0]}–{ats[1]}. That is why the line leads on this page. ' if T.get("games") else '')
              + 'For entertainment; not betting advice.</p>' + (f'<ul class="nbstamp eplchk">{chk}</ul>' if chk else ""))
     cards = "\n".join(game_card(g, B) for g in B["games"])
+    rec = record_block(R)
     sw = sport_nav.switch("cfb", have or {})
     return (f'<title>BetSweep · College Football Matchup Boards</title>\n<style>{css}</style>\n<style>{N.NB_CSS}</style>\n<style>{EPL_MK}</style>\n<style>{CF_CSS}</style>\n'
             f'<div class="top">\n  <div class="mast">\n    <h1><small>College Football · {E(rl)}</small><b>Matchup Boards</b></h1>\n    <p>{E(desc)}</p>\n  </div>\n  <nav class="nav" aria-label="jump to game">{nav}</nav>\n</div>\n'
-            f'<div class="nbbar">{sw}{key}</div>\n{pre}\n'
+            f'<div class="nbbar">{sw}{key}</div>\n{pre}\n{rec}\n'
             f'<div class="nbold" id="nbold" hidden><b>Every game on this board has kicked off.</b> A newer board is not up yet, so the numbers below are from before those games.</div>\n'
             f'<div class="grid" data-day="{E(last_day)}">\n{summary_card(B)}\n{cards}\n</div>\n{stamp}\n{N.NB_JS}\n')
 
@@ -254,10 +319,15 @@ def main():
     named = "--board" in a
     if named:
         B = N.load(path=a[a.index("--board") + 1]); have = sport_nav.available(only=sport_nav.named(a))
+        R = None
+        if "--record" in a:
+            try: R = json.load(open(a[a.index("--record") + 1], encoding="utf-8"))
+            except Exception: R = None
     else:
         clone = a[0] if a else None
         have = sport_nav.available(clone)                   # fetches the branch
         B = N.feed_file(clone, "cfb/board.json")
+        R = N.feed_file(clone, "cfb/record.json")          # the grading record (sports/cfb/grade.py); None until the job has written one
     ok, why = usable(B, any_age=named)
     outs = (PAGE, os.path.join(OUT, "cfb_board.json"), os.path.join(OUT, "cfb_sig.json"))
     if not ok:
@@ -266,11 +336,13 @@ def main():
         print(f"cfb: no page written - {why}")
         return
     os.makedirs(OUT, exist_ok=True)
-    open(PAGE, "w", encoding="utf-8").write(page(B, have))
+    open(PAGE, "w", encoding="utf-8").write(page(B, have, R))
     json.dump(B, open(outs[1], "w"), separators=(",", ":"))
-    json.dump({"built": B.get("built"), "sig": signature(B) + "|nav:" + ",".join(sorted(have))}, open(outs[2], "w"))
+    rsig = f"|rec:{len(R.get('rows') or [])},{R.get('waiting') or 0},{len(R.get('missed') or {})},{len(R.get('void') or {})}" if record_block(R) else ""   # a newly graded game is news
+    json.dump({"built": B.get("built"), "sig": signature(B) + rsig + "|nav:" + ",".join(sorted(have))}, open(outs[2], "w"))
     print(f"cfb boards: {round_label(B)}, {len(B['games'])} games ({sum(1 for g in B['games'] if g.get('mkt'))} with a posted line), {len(B.get('tbd') or [])} still to be decided; "
-          f"board built {N.fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
+          + (f"record: {len(R.get('rows') or [])} graded, {R.get('waiting') or 0} waiting; " if record_block(R) else "no grading record in reach; ")
+          + f"board built {N.fmt_ct(B.get('built'))}; {os.path.getsize(PAGE) // 1024} KB -> {PAGE}")
 
 
 if __name__ == "__main__":

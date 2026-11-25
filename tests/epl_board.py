@@ -109,6 +109,22 @@ def record_states():
     for p in ({"xi": "start", "starts5": 0}, {"xi": None, "starts5": 3}, {"xi": None, "starts5": 2}, {"xi": "bench", "starts5": 5}, {"xi": "no", "starts5": 5}):
         if K.regular(p) != G.regular(p): check(False, f"the page and the grader disagree on who is a regular: {p}")
     check(K.REGULAR == G.REGULAR and len(K.RBAND) == len(G.EDGES) + 1 and len(K.GBAND) == len(G.GOAL_EDGES) + 1, "the page and the grader use one rule for a regular and the same chance bands")
+    # ---- 11/24: the posted three-way price on the card and in the record ----
+    wm = json.loads(json.dumps(rec)); wm["total"]["mkt"] = {"n": 8, "price": 4.8, "model": 5.2, "pll": 8.0, "mll": 8.4, "ptop": 5, "mtop": 4, "on": 6, "oprice": 1.5, "omodel": 1.44}
+    hm = K.record_block(wm)
+    mc = re.findall(r'<tr data-k="(mk_\w+)"><th>.*?</th><td class="(\w*)">([\d.]+)</td><td class="(\w*)">([\d.]+)</td><td class="nbrc-w">([^<]*)', hm)
+    check(mc == [("mk_res", "", "0.65", "win", "0.60", "the price closer"), ("mk_o25", "", "0.24", "", "0.25", "model closer")][:1] + [("mk_o25", "win", "0.24", "", "0.25", "model closer")]
+          and "Against the posted price <i>(8 matches that had one)</i>" in hm and "likeliest right: model 4, price 5 of 8" in hm and "6 with a 2.5 line" in hm and "the bar the model has to beat" in hm
+          and "Against the posted price" not in h and "the bar the model has to beat" not in h,
+          f"the record sets the model beside the posted price on the matches that had one, names who is closer, and says the price is the bar to beat; with no priced match graded, none of that is shown ({mc})")
+    pm = {"line": {"by": "Draft Kings", "details": "NFO +160", "total": 2.5, "home_ml": 160, "draw_ml": 240, "away_ml": -175}, "p": {"home": 0.39, "draw": 0.28, "away": 0.33}}
+    ps = K.price_strip(pm, "NFO", "CHE")
+    pc = re.findall(r'<span data-k="(\w+)"><small>([^<]*)</small><b>([^<]*)</b><i>price (\d+)%</i><i>model (\d+)%</i></span>', ps)
+    check([c[:3] for c in pc] == [("home", "NFO", "+160"), ("draw", "Draw", "+240"), ("away", "CHE", "−175")] and sum(int(c[3]) for c in pc) in (99, 100, 101) and [c[4] for c in pc] == ["39", "28", "33"]
+          and "DraftKings" in ps and "not FanDuel" in ps and "Not a pick" in ps and "when this board was built" in ps,
+          f"a card with all three prices posted shows each price, what it implies with the cut taken out, and the model beside it - the book named, not FanDuel, not a pick ({pc})")
+    check(K.price_strip(dict(pm, line={"details": "NFO +160", "total": 2.5}), "NFO", "CHE") == "" and K.price_strip(dict(pm, line=None), "NFO", "CHE") == "" and K.price_strip(dict(pm, p={}), "NFO", "CHE") == "",
+          "no three-way price posted (or no model chances) = no price strip: nothing is filled in")
 
 
 def expect(B):

@@ -142,8 +142,63 @@ def rules():
         R.SITE, R.OUT = keep; shutil.rmtree(d, ignore_errors=True)
 
 
+def grader():
+    """sports/cfb/grade.py (owner 11/24): lock at kickoff from the last board built before it, grade on the final, keep the record"""
+    from sports.cfb import grade as G
+    d = tempfile.mkdtemp(); folder = os.path.join(d, "cfb"); said = []
+    T = lambda s: dt.datetime.fromisoformat(s).replace(tzinfo=dt.timezone.utc)
+    game = lambda i, key, ko, spread, total, mm, mt, ph=0.6: {"id": str(i), "key": key, "name": f"Bowl {i}", "ko": ko, "home": key.split("-")[1], "away": key.split("-")[0], "neutral": True,
+        "line": (None if spread is None else {"by": "DraftKings", "spread": spread, "total": total}), "mkt": (None if spread is None else {"home": (total - spread) / 2, "away": (total + spread) / 2, "margin": -spread, "total": total, "p_home": 0.7}),
+        "model": {"home": (mt + mm) / 2, "away": (mt - mm) / 2, "margin": mm, "total": mt, "p_home": ph}}
+    # 1: home favored by 7.5 at the line, our rating says home by 12 (4.5 toward the home side: apart); total 55.5 at the line, ours 50 (5.5 lower: apart)
+    # 2: no line posted; 3: our rating within a point of the line; 4: kicks off before any board exists
+    early = {"built": "2026-12-04T20:00:00Z", "games": [game(1, "BBB-AAA", "2026-12-05T01:00Z", -7.5, 55.5, 12.0, 50.0), game(2, "DDD-CCC", "2026-12-05T01:00Z", None, None, -3.0, 44.0, 0.4),
+                                                        game(3, "FFF-EEE", "2026-12-05T17:00Z", 3.0, 60.0, -2.5, 61.0, 0.45)]}
+    late = {"built": "2026-12-05T00:50:00Z", "games": [dict(early["games"][0], line={"by": "DraftKings", "spread": -6.5, "total": 56.0}, mkt={"home": 31.25, "away": 24.75, "margin": 6.5, "total": 56.0, "p_home": 0.68}),
+                                                       early["games"][1], early["games"][2], game(4, "HHH-GGG", "2026-12-04T19:00Z", -3.0, 40.0, 1.0, 41.0)]}
+    after = dict(json.loads(json.dumps(late)), built="2026-12-05T01:05:00Z"); after["games"][0]["line"]["spread"] = -20.0; after["games"][0]["mkt"]["margin"] = 20.0
+    sb = lambda **fin: {"events": [{"id": str(i), "state": "post" if v else "in", "done": bool(v), "detail": "Final" if v else "2nd", "teams": [{"ha": "home", "score": str((v or (0, 0))[1])}, {"ha": "away", "score": str((v or (0, 0))[0])}]} for i, v in fin.items()]}
+    r0 = G.run(folder, [("the feed", early)], scoreboard={"events": []}, now=T("2026-12-04T20:01:00"), say=said.append)
+    check(r0["new"] == [] and r0["record"]["rows"] == [] and r0["record"]["waiting"] == 0 and "Grading has started" in C.record_block(r0["record"]) and "locked at kickoff" in C.record_block(r0["record"]),
+          "grading: before any kickoff nothing is locked, and the page says grading has started - no numbers")
+    r1 = G.run(folder, [("the feed", after), ("the feed, one run earlier", late), ("the published page", early)], scoreboard=sb(**{"1": None, "2": None}), now=T("2026-12-05T01:06:00"), say=said.append)
+    lk = json.load(open(os.path.join(folder, "locks", "2026-12-05.json")))["games"]
+    check(sorted((x[1], x[2]) for x in r1["new"]) == [("1", "locked"), ("2", "locked"), ("4", "missed")] and lk["1"]["line"]["spread"] == -6.5 and lk["1"]["board_built"] == late["built"] and lk["1"]["minutes_before_ko"] == 10 and lk["1"]["source"] == "the feed, one run earlier",
+          "  a game is locked from the LAST board built before its kickoff (the 12:50 line, not the earlier one and not the one written after kickoff)")
+    check(json.load(open(os.path.join(folder, "locks", "2026-12-04.json")))["games"]["4"].get("missed") is True and r1["record"]["missed"] == {"4": "2026-12-04"} and r1["record"]["waiting"] == 2
+          and "2 games are locked and waiting for their final scores" in C.record_block(r1["record"]),
+          "  a game with no board from before kickoff is marked missed and never graded; the page counts the games waiting")
+    r2 = G.run(folder, [("the feed", after)], scoreboard=sb(**{"1": (20, 34), "2": (27, 24)}), now=T("2026-12-05T05:00:00"), say=said.append)
+    rows = {r["id"]: r for r in r2["record"]["rows"]}; a = rows.get("1", {}); b = rows.get("2", {})
+    check(a.get("final") == [20, 34] and a["line"]["margin_miss"] == 7.5 and a["model"]["margin_miss"] == 2.0 and a["line"]["total_miss"] == 2.0 and a["model"]["total_miss"] == 4.0 and a["line"]["right"] == 1 and a["model"]["right"] == 1,
+          "  graded on the final (AAA 34, BBB 20): the line's 6.5 missed the 14-point margin by 7.5 and our 12 by 2; the totals by 2 and by 4; both had the winner")
+    check(a["ats"] == {"side": "AAA", "gap": 5.5, "apart": True, "res": "won"} and a["ou"] == {"side": "under", "gap": -6.0, "apart": True, "res": "won"},
+          "  our rating's side of the spread (AAA, 5.5 points apart) covered and its side of the total (under 56, 6 apart) won - both from the locked line")
+    check("line" not in b and "ats" not in b and b["model"]["margin_miss"] == 0.0 and b["model"]["right"] == 1 and abs(b["model"]["sq"] - 0.16) < 1e-9,
+          "  a game locked with no line posted is graded on our rating alone (DDD by 3, it won by 3) and has no side against a spread")
+    r3 = G.run(folder, [("the feed", after)], scoreboard=sb(**{"1": (99, 0), "2": (0, 99), "3": (30, 27)}), now=T("2026-12-05T21:00:00"), say=said.append)
+    rows = {r["id"]: r for r in r3["record"]["rows"]}; c = rows.get("3", {}); Tt = r3["record"]["total"]
+    check(rows["1"]["final"] == [20, 34] and len(r3["record"]["rows"]) == 3 and [r["id"] for r in r3["graded"]] == ["3"], "  a graded game is never graded twice, whatever the scoreboard says later")
+    check(c["ats"] == {"side": "EEE", "gap": 0.5, "apart": False, "res": "push"} and c["ou"]["res"] == "lost" and c["ou"]["apart"] is False and c["line"]["right"] == 1 and c["model"]["right"] == 1,
+          "  a final that lands on the spread is a push (FFF by 3 at FFF −3); a side within the 'apart' distance is counted in every game but not in 'only when apart'")
+    check(Tt["games"] == 3 and Tt["with_line"] == 2 and Tt["ats"] == {"won": 1, "lost": 0, "push": 1} and Tt["ats_apart"] == {"won": 1, "lost": 0, "push": 0} and Tt["ou"] == {"won": 1, "lost": 1, "push": 0} and Tt["ou_apart"] == {"won": 1, "lost": 0, "push": 0}
+          and Tt["both"]["n"] == 2 and abs(Tt["both"]["line_margin_miss"] - 7.5) < 1e-9 and abs(Tt["both"]["model_margin_miss"] - 2.5) < 1e-9 and Tt == G.totals(r3["record"]["rows"]),
+          "  the totals are the rows added up: 3 games, 2 with a line, 1-0-1 against the spread (1-0 when apart), 1-1 on totals")
+    h = C.record_block(r3["record"])
+    check("Graded so far" in h and "3 games" in h and "Too small to judge by" in h and 'data-k="margin"' in h and "3.8" in h and "1.2" in h and "our rating closer" in h and "1–0–1" in h and "apart = 3+ points from the spread" in h
+          and "BBB 20, AAA 34" in h and "1 game was locked with no line posted" in h and "1 game could not be graded" in h and "overtime counts" in h and "pick" in h,
+          "  the page's record block: the line beside our rating (margin missed by 3.8 and 1.2), the sides taken, the games, what was left out - and that it is too small to judge by")
+    check(C.record_block(None) == "" and C.record_block({}) == "" and C.record_block({"total": {}, "rows": "x"}) == "", "  with no record in reach the page shows no record block")
+    open(os.path.join(folder, "record.json"), "w").write("{broken")
+    r4 = G.run(folder, [("the feed", after)], scoreboard=sb(**{"3": (30, 27)}), now=T("2026-12-06T00:00:00"), say=said.append)
+    check(r4["record"] is None and open(os.path.join(folder, "record.json")).read() == "{broken" and any("cannot be read" in s for s in said), "  a record file that cannot be read is left exactly as it is and the run says so")
+    check(G.final_score({"state": "post", "done": True, "detail": "Postponed", "teams": []}) == "void" and G.final_score({"state": "in", "done": False, "detail": "", "teams": []}) is None and G.final_score(None) is None
+          and G.final_score({"state": "post", "done": True, "detail": "Final/OT", "teams": [{"ha": "home", "score": "31"}, {"ha": "away", "score": "28"}]}) == {"home": 31, "away": 28},
+          "  a postponed game is set aside, a game in play waits, and an overtime final counts as it ended")
+
+
 async def main():
-    publisher(); rules()
+    publisher(); rules(); grader()
     page_path = os.path.join(ROOT, "cfb", "index.html")
     if not os.path.exists(page_path):
         check(not os.path.exists(os.path.join(ROOT, "cfb", "board.json")), "this build has no college football page, and no leftover board file (the page is optional; a stale one is not allowed)")

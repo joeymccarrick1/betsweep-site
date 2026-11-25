@@ -3,7 +3,8 @@
 Each leg gets l["sc"] = its chance under each of its game's four endings, in the game's own frame [a by 10+, close & low, shootout,
 b by 10+] (a = the game's first team, as in g.probs). Player legs use the boards' tested script tables: probit.json for yardage and
 receptions (P' = Phi(alpha + beta * Phi^-1(P)); longest reception rides receiving yards) and the AUTO - Script Multipliers TD rows
-(anytime 1 - (1 - P)^m; 2+ / 3+ by scaling the Poisson mean; first TD x m). Role = rank on his team at his position by projected fantasy
+(anytime 1 - (1 - P)^m; 2+ / 3+ by scaling the Poisson mean; first TD x m; passing TDs by scaling the binomial mean with the
+QB1|passing_tds row, 11/24). Role = rank on his team at his position by projected fantasy
 points (WR4 reads as WR3, RB3 as RB2, TE2 / QB2 as TE1 / QB1). One probit shift per leg then makes the four endings mix back to the leg's
 own shown chance with the game's script odds, so "no scenario" is exactly the page. Game lines come from gamelines.by_script (the
 builder passes game_legs' own per-script chances; gl_sc() rebuilds them for a hotfix of an existing build).
@@ -36,6 +37,25 @@ def _pois_lam(k, p):
         if _pois_ge(k, mid) < p: lo = mid
         else: hi = mid
     return (lo + hi) / 2
+
+
+def _bin_ge(k, n, q): return sum(math.comb(n, i) * q ** i * (1 - q) ** (n - i) for i in range(k, n + 1))
+
+
+def _bin_q(k, n, p):
+    lo, hi = 1e-5, 0.999
+    for _ in range(50):
+        mid = (lo + hi) / 2
+        if _bin_ge(k, n, mid) < p: lo = mid
+        else: hi = mid
+    return (lo + hi) / 2
+
+
+def _ptd_n():
+    try:
+        import newmkt
+        return int(newmkt.PTD["n"])
+    except Exception: return 6
 
 
 def tables(IN, here):
@@ -83,6 +103,15 @@ def player_sc(l, G, prb, mul, role):
         elif mk == "First TD": ps = [min(0.95, p0 * x) for x in ms]
         else:
             kk = 2 if mk == "2+ TD" else 3; lam = _pois_lam(kk, p0); ps = [_pois_ge(kk, lam * x) for x in ms]
+    elif mk == "Passing TDs":
+        # owner 11/24 ("Do it"): the sheet's script table has a tested passing-TD row (QB1|passing_tds, 1,752 quarterback games 2022-25:
+        # x1.34 leading by 10+, x0.75 close and low, x1.47 in a shootout, x0.71 trailing by 10+). The leg is a count priced as a binomial
+        # (newmkt.py), so each ending scales its mean and the X+ chance is read off the same binomial.
+        mu = mul.get(f"{rk}|passing_tds")
+        if not mu or l.get("ln") is None: return None
+        kk = max(1, int(round(float(l["ln"])))); nb = _ptd_n()
+        if kk > nb: return None
+        q = _bin_q(kk, nb, p0); ps = [_bin_ge(kk, nb, min(0.999, q * (mu[IDX[sc]] or 1))) for sc in frame]
     else: return None
     w = [max(0.0, x or 0) for x in G["probs"]]; sw = sum(w)
     if sw <= 0: return None

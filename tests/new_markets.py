@@ -45,6 +45,22 @@ check(P.prob("Lead Back", "Passing TDs", 1, "ZZZ", 24.0) is None and P.prob("Lea
 i0 = P.prob("Steady Starter", "Interceptions", 1, "ZZZ"); c0 = P.prob("Steady Starter", "Completions", 20, "ZZZ")
 check(i0 is not None and c0 is not None and 0.03 <= i0[0] <= 0.97 and 0.03 <= c0[0] <= 0.97, "  interceptions and completions are untouched by the change")
 
+# ---------------- 1b. the game-ending check (owner 11/24): a passing-TD leg has a chance under each of its game's four endings ----------------
+import scenario as SC
+_mul = {"QB1|passing_tds": [1.341, 0.749, 1.47, 0.706], "QB1|td": [1.1, 0.9, 1.4, 0.8]}; _role = {"Home Passer": ("QB", 1), "Road Passer": ("QB", 1), "Third Passer": ("QB", 3)}
+_G = {"a": "AAA", "b": "BBB", "probs": [0.40, 0.25, 0.20, 0.15]}
+_h = SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, _mul, _role)
+_r = SC.player_sc({"pl": "Road Passer", "tm": "BBB", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, _mul, _role)
+check(_h is not None and len(_h) == 4 and abs(sum(w * p for w, p in zip(_G["probs"], _h)) - 0.55) < 0.002, f"game endings: a 2+ passing TDs leg gets four chances that mix back to the shown number ({_h})")
+check(_h is not None and _h[2] > _h[0] > _h[1] > _h[3], "  most likely in a shootout, then when his team wins big, then a close low game, least when it trails big (the sheet's tested QB1 passing-TD row)")
+check(_r is not None and _r[3] > _r[0] and abs(_r[3] - _h[0]) < 0.001 and abs(_r[0] - _h[3]) < 0.001, "  the visiting quarterback reads the endings from his own side (the game's first team winning big is him trailing)")
+_l3 = SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 3, "p": 0.25}, _G, {}, _mul, _role); _l1 = SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 1, "p": 0.88}, _G, {}, _mul, _role)
+check(_l3 and _l1 and all(_l1[i] > _h[i] > _l3[i] for i in range(4)), "  under every ending 1+ is likelier than 2+ and 2+ than 3+")
+check(SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, {"QB1|td": [1, 1, 1, 1]}, _role) is None and SC.player_sc({"pl": "Nobody", "tm": "AAA", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, _mul, _role) is None,
+      "  no tested row on the sheet, or a player the model has no role for = no ending numbers (nothing is guessed)")
+check(SC.player_sc({"pl": "Third Passer", "tm": "AAA", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, _mul, _role) == _h and SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Completions", "ln": 20, "p": 0.55}, _G, {}, _mul, _role) is None,
+      "  a backup named the starter reads the starter's row; completions and interceptions have no tested row and stay without ending numbers")
+
 # ---------------- 2. the built board ----------------
 if not PUB:
     D = json.load(open(os.path.join(HERE, "out", "builder_data.json"))); L = D["legs"]; ptd = [l for l in L if l["m"] == "Passing TDs"]
@@ -54,6 +70,9 @@ if not PUB:
     # Tuesday board). The point is that the passing-TD column is filled: at least one logged game, and no fewer than his logged games minus one.
     gl = D["gl"]; good = [l for l in ptd if (lambda G: len(G) >= 1 and len([g for g in G if g.get("ptd") is not None]) >= max(1, len(G) - 1))(gl.get(l["pl"], []))]
     check(len(good) == len(ptd), f"  each quarterback's game log has his passing TDs by week ({len(good)} of {len(ptd)})")
+    _gm = {g["gid"]: g for g in D["games"]}; _sc = [l for l in ptd if l.get("sc")]
+    _mix = [l for l in _sc if abs(sum(w * p for w, p in zip(_gm[l["g"]]["probs"], l["sc"])) / (sum(_gm[l["g"]]["probs"]) or 1) - l["p"]) > 0.004]
+    check(len(_sc) >= 0.8 * len(ptd) and not _mix, f"  the game-ending check prices them: {len(_sc)} of {len(ptd)} carry a chance under each ending, each mixing back to its shown number" + (f" (first off: {_mix[0]['pl']} {_mix[0]['ln']}+)" if _mix else ""))
     check(all(any(f[1] == "How it is priced" and "team total" in f[2] for f in (l.get("fh") or [])) for l in ptd), "  each says how it is priced: the team total at FanDuel and his average")
     check(all(l.get("dr") and l["dr"][0] is not None for l in ptd) and all(l.get("or") for l in ptd), "  each has the defence's and the offence's passing-TD rank for its matchup pill")
     check(all(((D["def"].get(l["opp"]) or {}).get("QB") or {}).get("ptd") for l in ptd), "  each opponent's passing TDs allowed, week by week, is on the page")

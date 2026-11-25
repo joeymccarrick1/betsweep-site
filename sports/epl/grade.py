@@ -161,6 +161,31 @@ def final_score(ev):
     return fs
 
 
+def _imp(ml):
+    """an American price as the chance it implies, the book's cut still in it; None for anything that is not a price"""
+    if isinstance(ml, bool) or not isinstance(ml, (int, float)) or abs(ml) < 100:
+        return None
+    return 100.0 / (ml + 100.0) if ml > 0 else -ml / (-ml + 100.0)
+
+
+def market(line):
+    """the posted three-way price as chances with the book's cut taken out evenly (each implied chance divided by their sum):
+    {"home", "draw", "away", "hold"} - plus "over25" when the posted total is 2.5 and both sides of it are priced. None unless all
+    three prices are there. Owner 11/24 ("Yes."): the posted price is the bar the model has to beat."""
+    line = line or {}
+    q = {k: _imp(line.get(k + "_ml")) for k in THREE}
+    if any(v is None for v in q.values()):
+        return None
+    s = sum(q.values())
+    if not (1.0 <= s <= 1.35):                       # three prices that do not add up to a book's cut are not a market (a stale or half-posted line)
+        return None
+    out = {k: q[k] / s for k in THREE}; out["hold"] = s - 1.0
+    o, u = _imp(line.get("over")), _imp(line.get("under"))
+    if line.get("total") == 2.5 and o is not None and u is not None and 1.0 <= o + u <= 1.25:
+        out["over25"] = o / (o + u)
+    return out
+
+
 def bucket(p, edges):
     return sum(1 for e in edges if p >= e)
 
@@ -173,6 +198,8 @@ def empty():
     return {"matches": 0, "pmatches": 0,
             "res": {"n": 0, "brier": 0.0, "base": 0.0, "ll": 0.0, "bll": 0.0, "top": 0, "btop": 0},
             "o25": ev(), "btts": ev(), "goals": ct(), "cal": z(len(EDGES) + 1),
+            # 11/24, against the posted price (market()), on the matches that had one at the lock: the price's miss score and the model's on those same matches
+            "mkt": {"n": 0, "price": 0.0, "model": 0.0, "pll": 0.0, "mll": 0.0, "ptop": 0, "mtop": 0, "on": 0, "oprice": 0.0, "omodel": 0.0},
             "pl": {"n": 0, "sub": 0, "dnp": 0, "reg": 0, "reg_start": 0, "goal": ch(), "assist": ch(), "shots": ct(), "sot": ct(),
                    "min": {"n": 0, "abs": 0.0, "err": 0.0},
                    "cal": {"goal": z(len(GOAL_EDGES) + 1), "assist": z(len(GOAL_EDGES) + 1), "shots": z(len(EDGES) + 1), "sot": z(len(EDGES) + 1)}}}
@@ -229,6 +256,14 @@ def grade_match(lk, fs):
         R["brier"] = sum((p[k] - hap[k]) ** 2 for k in THREE); R["base"] = sum((bp[k] - hap[k]) ** 2 for k in THREE)
         R["ll"] = -math.log(max(p[out], 1e-6)); R["bll"] = -math.log(max(bp[out], 1e-6))
         R["top"] = int(max(THREE, key=lambda k: p[k]) == out); R["btop"] = int(max(THREE, key=lambda k: bp[k]) == out)
+    mk = market(lk.get("line"))
+    if mk and ok(p, THREE):                          # a three-way price is a ninety-minute price, so a match that went beyond is graded here as its draw too
+        M = S["mkt"]; M["n"] = 1
+        M["price"] = sum((mk[k] - hap[k]) ** 2 for k in THREE); M["model"] = sum((p[k] - hap[k]) ** 2 for k in THREE)
+        M["pll"] = -math.log(max(mk[out], 1e-6)); M["mll"] = -math.log(max(p[out], 1e-6))
+        M["ptop"] = int(max(THREE, key=lambda k: mk[k]) == out); M["mtop"] = int(max(THREE, key=lambda k: p[k]) == out)
+        if not beyond and "over25" in mk and ok(p, ("over25",)):
+            M["on"] = 1; M["oprice"] = (mk["over25"] - hap["over25"]) ** 2; M["omodel"] = (p["over25"] - hap["over25"]) ** 2
     for key, k in (("o25", "over25"), ("btts", "btts")):
         if not beyond and ok(p, (k,)) and ok(bp, (k,)):
             S[key] = {"n": 1, "brier": (p[k] - hap[k]) ** 2, "base": (bp[k] - hap[k]) ** 2, "hit": int(hap[k])}
@@ -425,6 +460,9 @@ def summary(rec):
            "o25": ev(t["o25"]), "btts": ev(t["btts"]),
            "goals": ({"n": t["goals"]["n"], "model": t["goals"]["model"] / t["goals"]["n"], "base": t["goals"]["base"] / t["goals"]["n"], "bias": t["goals"]["err"] / t["goals"]["n"]} if t["goals"]["n"] else None),
            "pl": None}
+    M = t["mkt"]
+    out["mkt"] = ({"n": M["n"], "price": M["price"] / M["n"], "model": M["model"] / M["n"], "ptop": M["ptop"], "mtop": M["mtop"],
+                   "o25": ({"n": M["on"], "price": M["oprice"] / M["on"], "model": M["omodel"] / M["on"]} if M["on"] else None)} if M["n"] else None)
     P = t["pl"]
     if P["n"]:
         ch = lambda s: {"n": s["n"], "hit": s["hit"], "exp": s["exp"], "bn": s["bn"], "model": div(s["brier"], s["bn"]), "base": div(s["base"], s["bn"])}

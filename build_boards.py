@@ -334,6 +334,7 @@ for r in legs_raw[1:]:
     _p, _bk = pct(r[10]), pct(r[12]); _ps = CALIB.shown(_p, _bk, r[1], line=num(r[2]), proj=num(r[7]))   # shown % = raw model blended toward the price (calib.py); edge follows it
     LEGS.append({"player": r[0], "market": r[1], "line": num(r[2]), "odds": num(r[3]), "team": r[4], "opp": r[5], "status": r[6], "proj": num(r[7]),
                  "p": _ps, "fair": r[11], "book": _bk, "edge": (_ps - _bk) if _ps is not None and _bk is not None else pct(r[13]), "verdict": r[14], "warn": r[15], "game": r[16], "kick": r[17], "raw_p": _p})
+_nlad = CALIB.ladder_legs(LEGS, "player", "market", "line", "raw_p", "book", "proj", "p", "edge", nd=0)   # 11/24: same ladder rule as the builder (calib.ladder)
 # owner 11/6: the red-zone TD model (rztd.py) graded better than the projection model and FanDuel on Weeks 6-8 anytime-TD legs (345 legs: log loss
 # 0.600 vs 0.605 raw, 0.614 FanDuel) - the builder already averaged it in; the boards' TD picks and parlays now use the same average.
 try:

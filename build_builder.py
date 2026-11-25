@@ -564,6 +564,7 @@ import calib as CALIB
 for l in LEGS:
     if l.get("p") is None or l.get("bk") is None: continue
     l["raw_p"] = l["p"]; l["p"] = round(CALIB.shown(l["p"], l["bk"], l.get("m"), line=l.get("ln"), proj=l.get("proj")), 4); l["e"] = round(l["p"] - l["bk"], 4)
+_nlad = CALIB.ladder_legs(LEGS, "pl", "m", "ln", "raw_p", "bk", "proj", "p", "e")   # 11/24: the floor cut never lifts a rung over the rung under it
 # ---- FanDuel UNDERS on the main lines (owner 10/27) ------------------------------------------------------------------------------------
 # 'AUTO - FanDuel Unders' (FanDuelOdds.gs v2026-10-27) carries each main line's Under price + betslip ids. A main line X.5 is the same event as
 # the alt rung (X+1)+ on the Leg Board, so the under's model chance = 1 - that rung's model chance (raw = 1 - raw over; shown = the same
@@ -956,6 +957,8 @@ for _l in LEGS:
     _l["pm"] = _l["raw_p"]
     if _l.get("flat"): continue   # 11/11: a rushing under keeps the flat graded rate (see RUSH_UNDER_RATE)
     _l["p"] = round(CALIB.shown(_l["raw_p"], _l["bk"], _l.get("m"), line=_l.get("ln"), proj=_l.get("proj")), 4); _l["e"] = round(_l["p"] - _l["bk"], 4)
+_nlad = CALIB.ladder_legs([_l for _l in LEGS if not _l.get("gl") and not _l.get("flat")], "pl", "m", "ln", "raw_p", "bk", "proj", "p", "e")
+print(f"ladder pass: {_nlad} rung(s) brought down to the rung under them")
 # owner 11/5 ("how each team does against each stat percentage wise ... WR1 ... considered in our projections and parlays"): defense vs
 # role (defrole.py) - the opposing QB1 / RB1 / WR1 / WR2 / TE1's record vs this defense (beat his own average; FanDuel main line when
 # graded). Small tested weight (logit +0.25 x shrunk rate gap, research/def_role.py) on p, plus a flag with the numbers on the leg.

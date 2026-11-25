@@ -152,6 +152,7 @@ def match_card(m, B, ranks):
         who = (line.get("by") or "the sportsbook ESPN shows").replace("Draft Kings", "DraftKings")
         mk = f'<i>·</i><span class="mkt" title="{E(who)} line as shown by ESPN - not FanDuel">{E(txt)} <small>{E(who)}</small></span>'
     ginfo = f'<div class="ginfo"><span class="gk">{E(m["koct"])} CT</span>' + (f'<i>·</i><span>{E(m["venue"])}</span>' if m.get("venue") else "") + mk + '</div>'
+    px = price_strip(m, h, a)
     best = m["scores"][0]
     mkts = (f'<div class="eplmk" aria-label="The model\'s chances for this match"><span><small>Over 2.5</small><b>{pct(p["over25"])}</b></span><span><small>Both score</small><b>{pct(p["btts"])}</b></span>'
             f'<span><small>Likeliest</small><b>{E(best[0])} <i>{pct(best[1])}</i></b></span><span><small>Shots</small><b>{m["shots"]["home"]:.0f}–{m["shots"]["away"]:.0f}</b></span></div>')
@@ -159,10 +160,27 @@ def match_card(m, B, ranks):
     nout = sum(len(B["teams"][x].get("out") or []) + len(B["teams"][x].get("doubt") or []) for x in (h, a))
     xi = ' <i class="eplxi">line-ups in</i>' if m.get("lineups") else ""
     return (f'<section class="card" id="{E(m["key"])}" data-ko="{ko}"> <header class="hd"> <div class="tm a">{N.badge(h, th)}<b>{E(h)}</b><span>{E(HEADNAME.get(th["name"], th["name"]))}</span></div> '
-            f'<div class="score">{score}{N.SWOOSH}</div> <div class="tm b">{N.badge(a, ta)}<b>{E(a)}</b><span>{E(HEADNAME.get(ta["name"], ta["name"]))}</span></div> </header> {band}{ginfo}{mkts}'
+            f'<div class="score">{score}{N.SWOOSH}</div> <div class="tm b">{N.badge(a, ta)}<b>{E(a)}</b><span>{E(HEADNAME.get(ta["name"], ta["name"]))}</span></div> </header> {band}{ginfo}{mkts}{px}'
             f'<div class="vbtns"><button type="button" class="vbtn" data-view="proj">Projections{xi}</button><button type="button" class="vbtn" data-view="out">Who\'s out <small>{nout}</small></button></div>'
             f'<div class="cols">{team_col(h, m, B, top, ranks)}{team_col(a, m, B, top, ranks)}</div>'
             f'<footer class="nbfoot"><span>The score is each side\'s expected goals; home side first. Bar: chance to score if he starts, scaled to this match\'s likeliest scorer · tap a player for assists, shots and his last five</span></footer> </section>')
+
+
+def american(v): return ("+" if v > 0 else "−") + str(abs(int(round(v))))
+
+
+def price_strip(m, h, a):
+    """owner 11/24 (three-way prices on the soccer cards): the posted home / draw / away price, what each price says once the book's cut
+    is taken out, and the model's chance beside it. Shown only when all three prices are posted. Never an edge and never a pick: the
+    record block says which of the two has been closer so far."""
+    from sports.epl import grade as G
+    line = m.get("line") or {}; mk = G.market(line); p = m.get("p") or {}
+    if not mk or not all(isinstance(p.get(k), (int, float)) for k in ("home", "draw", "away")):
+        return ""
+    who = (line.get("by") or "the sportsbook ESPN shows").replace("Draft Kings", "DraftKings")
+    cell = lambda lab, k: (f'<span data-k="{k}"><small>{E(lab)}</small><b>{american(line[k + "_ml"])}</b><i>price {pct(mk[k])}</i><i>model {pct(p[k])}</i></span>')
+    return (f'<div class="eplpx" aria-label="The posted price for home, draw and away, and the model beside it">{cell(h, "home")}{cell("Draw", "draw")}{cell(a, "away")}'
+            f'<em>Posted price: {E(who)}, as ESPN showed it when this board was built - not FanDuel. "Price" is what it implies with the book\'s cut taken out. Not a pick.</em></div>')
 
 
 def summary_card(B, ranks):
@@ -236,6 +254,16 @@ def record_block(R):
     rows = "".join(row(k, lab, S[k], f2) for k, lab in (("res", "Home, draw or away"), ("o25", "Over 2.5 goals"), ("btts", "Both teams score")) if S.get(k))
     if S.get("goals"): rows += row("goals", "Goals a side <i>(average miss)</i>", S["goals"], f2)
     table = ('<table class="nbrc-t"><thead><tr><th>Miss score, lower is better</th><th>Model</th><th>Every match alike</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>') if rows else ""
+    mkt = S.get("mkt"); mtab = ""
+    if mkt:
+        def mrow(k, lab, x, extra=""):
+            m_, p_ = f2(x["model"]), f2(x["price"])
+            who = "same" if m_ == p_ else ("model" if x["model"] < x["price"] else "price")
+            return (f'<tr data-k="{k}"><th>{lab}</th><td class="{"win" if who == "model" else ""}">{m_}</td><td class="{"win" if who == "price" else ""}">{p_}</td>'
+                    f'<td class="nbrc-w">{"model closer" if who == "model" else ("the price closer" if who == "price" else "the same")}{extra}</td></tr>')
+        mrows = mrow("mk_res", "Home, draw or away", mkt, f' <i>(likeliest right: model {mkt["mtop"]}, price {mkt["ptop"]} of {mkt["n"]})</i>')
+        if mkt.get("o25"): mrows += mrow("mk_o25", f'Over 2.5 goals <i>({mkt["o25"]["n"]} with a 2.5 line)</i>', mkt["o25"])
+        mtab = (f'<table class="nbrc-t nbrc-m"><thead><tr><th>Against the posted price <i>({mkt["n"]} {plural(mkt["n"], "match", "matches")} that had one)</i></th><th>Model</th><th>The price</th><th></th></tr></thead><tbody>' + mrows + '</tbody></table>')
     crow = "".join(f'<tr><th>{RBAND[i]}</th><td>{round(100 * c[1] / c[0])}%</td><td>{round(100 * c[2] / c[0])}%</td><td class="nbrc-w">{c[0]} {plural(c[0], "chance", "chances")}</td></tr>' for i, c in enumerate(T["cal"]) if c[0])
     ctab = ('<table class="nbrc-t nbrc-c"><thead><tr><th>Chance the board gave</th><th>Happened</th><th>Board said</th><th></th></tr></thead><tbody>' + crow + '</tbody></table>') if crow else ""
     notes, ptab, gtab = [], "", ""
@@ -265,8 +293,10 @@ def record_block(R):
     early = ('<p class="nbrc-early">Early days: ' + (f'{S["matches"]} matches are' if S["matches"] != 1 else 'one match is') + ' too few to judge a model by. Nothing here is a pick yet.</p>') if S["matches"] < EARLY else ""
     how = ('<p class="nbrc-how">Each match\'s numbers are locked from the last board built before kickoff and are not changed afterwards. '
            '"Every match alike" is the same model given two average sides: what it would say knowing nothing about the clubs. '
-           'A miss score is the squared gap between the chance given and what happened, so 0 is perfect. Players are graded only when they started.</p>')
-    return (f'<details class="nbrec" id="nbrec">{head}<div class="nbrc-b">{early}{table}{ctab}{ptab}{gtab}' + (f'<p class="nbrc-notes">{" ".join(notes)}</p>' if notes else '')
+           'A miss score is the squared gap between the chance given and what happened, so 0 is perfect. '
+           + ('"The price" is the sportsbook price ESPN showed at the lock with the book\'s cut taken out - the bar the model has to beat before anything here is a pick. ' if mkt else '')
+           + 'Players are graded only when they started.</p>')
+    return (f'<details class="nbrec" id="nbrec">{head}<div class="nbrc-b">{early}{table}{mtab}{ctab}{ptab}{gtab}' + (f'<p class="nbrc-notes">{" ".join(notes)}</p>' if notes else '')
             + (f'<ul class="nbrc-nights">{rounds}</ul>' if rounds else '') + how + '</div></details>')
 
 
@@ -288,6 +318,11 @@ EPL_CSS = """
 .eplmk span{min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:5px 8px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .eplmk small{font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .eplmk b{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.15;color:var(--ink);white-space:nowrap}
 .eplmk i{font-style:normal;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--mute)}
+.eplpx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:4px 12px 6px}
+.eplpx span{min-width:0;display:flex;flex-direction:column;border:1px dashed var(--line);border-radius:10px;padding:5px 8px}
+.eplpx small{font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .eplpx b{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.15;color:var(--ink);white-space:nowrap}
+.eplpx i{font-style:normal;font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .eplpx em{grid-column:1 / -1;font-style:normal;font-size:11.5px;line-height:1.35;color:var(--mute)}
+@media (max-width:760px){ .eplpx{gap:4px;padding:4px 10px 6px} .eplpx span{padding:5px 6px} .eplpx b{font-size:16px} .eplpx i{font-size:10.5px} }
 body.compact .card:not(.expanded) > .eplmk{display:grid}
 @media (max-width:760px){ .eplmk{gap:4px;padding:8px 10px 4px} .eplmk span{padding:5px 6px} .eplmk small{font-size:10.5px} .eplmk b{font-size:16px} .eplmk i{font-size:10.5px} }
 .epldiv{list-style:none;margin:10px 0 2px;padding:6px 2px 4px;border-top:1px dashed var(--line);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}

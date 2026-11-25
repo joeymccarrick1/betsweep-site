@@ -108,6 +108,7 @@ The run after the week's games: build the weekly receipt and refresh the season 
 On non-Tuesday runs skip this step entirely (no receipt, no season rebuild).
 
 Unders check (11/4, Tuesdays, after grading): `python3 unders_check.py <GRADED WEEK>` -> the printed block (both sides of every frozen main line at real prices, by market / price band / the two cuts) goes in the dev-log row; nothing changes on the site until a cut is positive two graded weeks running with 60+ legs each. Red-zone TD check (11/3, Tuesdays, after grading): `python3 rz_check.py <GRADED WEEK>` -> one line ("rz check week W: n legs - log loss raw / rz / shown avg / FanDuel") for the summary and the dev-log row; if it prints REVERT, set RZ_W = 0 in rztd.py on gen-overrides and log it. Live 'from here' grade (11/4, Tuesdays, after grading, from Week 9): `python3 live_grade.py` -> research/live_grade_w<W>.txt and a DEVLOG line (Brier from-here vs pregame; anytime-TD live calls hit vs from-here). Inputs are the public `feeds` branch (livelog.json = in-game box scores every 10 min; livelegs_w<W>.json = the live page's tracked legs pinned on the first in-game run) and in/results.json; the sandbox cannot reach raw.githubusercontent.com so it falls back to `git fetch origin feeds` in /home/claude/betsweep-site. If it prints "no pinned legs" the feeds workflow never saw a live game that week - check the Actions log. Three weeks of Q3-Q4 TD calls landing near their from-here chance is the bar before anything is shown as a product (next step then: log FanDuel live TD prices in feeds.py). Calibration scoreboard (added 11/1, Tuesdays, after grading): `python3 calib_market.py <GRADED WEEK>` -> out/calib_market.md / .json and one line ("calib week W: ... drifting: ..."). Put the line in the dev-log row and the run summary, and the DRIFTING list on the receipt. When closing prices exist it also grades line movement (price moved our way / flat / away). Never change a projection from it without the owner.
+Weather scorecard (11/24, Tuesdays, after grading; owner 11/23: "Do better at catching weather"): in the site clone `git fetch -q origin feeds`, then `python3 wx_score.py <clone> <GRADED WEEK>` and `python3 wx_score.py <clone>` (season). Each prints one line per open-air game (our last forecast before kickoff -> WET or dry at the nearest weather station) and a tally line "weather scorecard ...: N open-air games graded | wet W: caught C, missed M | dry games called 60%+: F | waiting P". Copy the week's tally line and the season's tally line into the dev-log row and the run summary, and list every game marked "<-- MISSED" by name. A missed wet game is the owner's business the same day: say it first in the summary. "no file yet" or 0 graded = say so in one line (the file starts with Week 12; grades land four hours after each kickoff). Read-only: nothing on the site changes from this step.
 Loss autopsy (added 11/1, Tuesdays, after grading): `python3 loss_autopsy.py <GRADED WEEK>` -> out/autopsy.json and two lines ("All graded legs: N losses - variance a, role b, ...; k we could have seen coming" and the same for promo legs). Put both lines on the week's receipt under the scorecard (plain text, one line each), in the dev-log row, and in the run summary. Tags and rules are in the script's docstring; one tag per player + market (alt-line ladders are counted once).
 
 ## STEP 6 — Assemble and deploy the site (every run)
@@ -3908,3 +3909,57 @@ are repointed and the public branches deleted - ALSO to origin `gen-overrides` s
 mirror is read from the archive: `git -C /home/claude/work/sm fetch -q https://github.com/joeymccarrick1/betsweep-site-archive.git sheet-mirror && git -C /home/claude/work/sm reset -q --hard FETCH_HEAD`.
 The public `sheet-mirror` branch is frozen at 01:36Z 11/25 and goes stale. Still open: repoint the scheduled tasks (owner's OK needed),
 then the owner deletes the public branches (tools/engine_move/README.md steps 7-8). Undo: delete the variable ENGINE_REPO.
+
+## 11/24 8:50-10:30 PM CT: six items the owner approved ("1. Probably Beck but he's questionable. 2. Do it 3. Do it 4. Yeah fix that. 5. Yes please work on this. 6. Yes.")
+
+**1. Arizona's quarterback.** 'AUTO - Weekly Availability' row 92: Josh Johnson, Forced Role "DEPTH / CONTEXT" (owner: Beck is probably the
+starter at WAS 11/29, questionable). Row 80 keeps Carson Beck QUESTIONABLE + forced QB1. Health check "One starter per role": 32 teams OK.
+**If Beck is ruled OUT, remove row 92** (Johnson then starts by succession). The only FAIL left tonight is "FanDuel odds fresh" (14 hours
+old - the sheet's own refresh; nothing to fix from here).
+
+**2. Weather scorecard on Tuesdays.** Step 5 has a "Weather scorecard" paragraph: `python3 wx_score.py <clone> <GRADED WEEK>` and the season
+run; both tally lines go in the dev-log row and the summary, and a "<-- MISSED" game is said first. Tonight: 0 graded, 12 waiting (the
+file starts with Week 12).
+
+**3. Passing TDs in the builder's game-ending check.** scenario.py: a "Passing TDs" leg now gets l["sc"] (its chance under each of the
+game's four endings) from the sheet's tested row `QB1|passing_tds` in 'AUTO - Script Multipliers' (1,752 quarterback games 2022-25:
+x1.341 leading by 10+, x0.749 close and low, x1.47 shootout, x0.706 trailing by 10+). The leg is a binomial count (newmkt.PTD["n"] = 8),
+so each ending scales its mean (`_bin_q`, `_bin_ge`) and the four are mixed back to the shown number like every other leg. No row on
+the sheet, or no role for the player = no ending numbers. Completions / interceptions / rush attempts have no tested row and stay
+without. tests/new_markets.py part 1b (6 checks) and one built-board check (80%+ of passing-TD legs carry sc and mix back).
+Still open from the 11/23 note: the "his back ran one in" split on Tuesday's passing-TD scorecard.
+
+**4. The ladder flip (calib_floor, found 11/23).** calib.ladder(rungs, market) + calib.ladder_legs(...): after the floor cut, a rung the
+CUT lifted above the rung under it is brought down to it (only pairs whose plain blend was in order; a pair the blend itself has the
+other way round is not this rule's). Called once after each shown-% pass in build_builder.py (prints "ladder pass: N rung(s) ...") and
+in build_boards.py - one rule in calib.py. The move is at most the taper's step (Diggs 11/23: 51+ 0.5146 -> 0.5133; both read 51%).
+Unders are not touched (one main line each). home.py already skips rungs above 85% of the projection; faceoff.py's 80 / 100 rungs are
+20 yards apart; hrswap.py prices another book's single line. tests/calib_floor.py: 7 new checks; the builder check now expects the
+formula THEN the ladder rule, and the "no ladder upside down" check can no longer go red by the day's data.
+
+**5. College football lock-and-grade (before the title games 12/4).** `sports/cfb/grade.py`, run from sports/cfb/publish.py main on every
+feeds-sports run (new args --prev, --site, --no-grade, as the soccer step has).
+- LOCK at kickoff from the last board built before it: the posted spread and total, what they imply, our rating (cfb/locks/<day>.json).
+  No board from before kickoff = MISSED, never graded. A game locked with no line is graded on our rating alone.
+- GRADE on ESPN's final, overtime included: each margin's and total's miss (line and ours), who had the winner, each win chance's
+  squared error, and our rating's side against the spread and the total - every game, and only where the rating sat apart (3+ / 4+
+  points: build_cfb.NEAR / NEAR_TOTAL = grade.APART / APART_TOTAL - keep them equal). Postponed / canceled = set aside.
+- RECORD cfb/record.json: every graded game as a row; totals always re-added from the rows (grade.totals).
+- **On main:** `.github/feeds_sports.py` GRADING carries "cfb/locks/*.json" and "cfb/record.json" forward (site commit 95713855d,
+  selftest 32/32). It went to main BEFORE the generators, as the soccer note says it must.
+- The page (build_cfb.py record_block): nothing with no record; "Grading has started" with how many are waiting; then "Graded so far" -
+  the line beside our rating (margin, total, winner), our side against the spread and total, the games, what was left out, and "Too
+  small to judge by" under 30 games. A newly graded game moves the page's signature (|rec:...).
+- tests/cfb_board.py grader(): 13 checks. Watch the first real lock on 12/4 (feeds-sports log line "cfb grade: locked N ...").
+
+**6. Three-way soccer prices.** ESPN's posted home / draw / away prices were already on every board (`line`) and in every lock.
+- sports/epl/grade.py `market(line)`: the three prices as chances with the book's cut taken out evenly (plus over 2.5 when the posted
+  total is 2.5 and both sides are priced); None unless all three are there and they add up to a book's cut (100-135%).
+- grade_match: a match locked with a price is scored on the result for the model AND the price (S["mkt"]: n, model, price, mll, pll,
+  mtop, ptop, and on / omodel / oprice for over 2.5). Older rows gain the sums at zero (norm), so the comparison counts only matches
+  that had a price at the lock. summary()["mkt"].
+- The page (build_epl.py, all five leagues): `price_strip` under the four tiles - each price, "price N%" (cut removed) and "model N%";
+  the book named, "not FanDuel", "Not a pick". The record block gains "Against the posted price" (model vs the price, who is closer)
+  and says the price is the bar the model has to beat. The signature still ignores a price ticking (line_sig), so the strip says
+  "when this board was built".
+- tests/epl_grade.py (+5), tests/epl_board.py (+3).
