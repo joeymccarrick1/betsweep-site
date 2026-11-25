@@ -97,6 +97,16 @@ async def main():
             await pg.evaluate("document.querySelector('#sgqClr').scrollIntoView({block: 'center'})"); await pg.click('#sgqClr'); await pg.wait_for_timeout(350); q4 = await pg.evaluate(READ)
             check(q4["price"] == s["price"] and "same-game estimate" in q4["sub"] and bool(q4["why"]), f"{theme}: Back to the estimate restores it ({q4['price']} vs {s['price']})")
             check(got is not None and got < mult2, f"{theme}: a quarterback with his receiver is priced under the legs multiplied ({got:.3f} < {mult2:.3f})")
+            # 11/25: a typed price is kept as a data point - sent to the database only for a signed-in reader, once per slip and price
+            none = await pg.evaluate("typeof window.__sgqLast")
+            await pg.evaluate("window.__rpc = []; window.bsAccount = {user: {id: 'u1'}, client: {rpc: function(fn, a){ window.__rpc.push([fn, a]); return Promise.resolve({data: true}); }}}")
+            await pg.evaluate("document.querySelector('#sgq').scrollIntoView({block: 'center'})"); await pg.fill('#sgq', '310'); await pg.click('#sgqGo'); await pg.wait_for_timeout(300)
+            await pg.evaluate("document.querySelector('#sgq').scrollIntoView({block: 'center'})"); await pg.fill('#sgq', '310'); await pg.click('#sgqGo'); await pg.wait_for_timeout(300)
+            sent = await pg.evaluate("window.__rpc"); a0 = sent[0][1] if sent else {}
+            check(none == "undefined" and len(sent) == 1 and sent[0][0] == "fd_quote_add" and a0.get("p_fanduel") == 310 and a0.get("p_src") == "typed" and isinstance(a0.get("p_week"), int) and isinstance(a0.get("p_est"), int) and abs(a0["p_est"]) >= 100
+                  and len(a0.get("p_legs") or []) >= 2 and all(l.get("pl") and l.get("m") and l.get("g") and isinstance(l.get("o"), int) for l in a0["p_legs"]) and "p" not in a0["p_legs"][0],
+                  f"{theme}: signed out, a typed price stays on the page; signed in, it is sent once with the slip's legs, FanDuel's leg prices and our estimate ({a0.get('p_est')}, {len(a0.get('p_legs') or [])} legs)")
+            await pg.evaluate("delete window.bsAccount; document.querySelector('#sgqClr').scrollIntoView({block: 'center'})"); await pg.click('#sgqClr'); await pg.wait_for_timeout(300)
             check("FanDuel prices same-game legs together" in s["why"] and "Check the quote" in s["why"], f"{theme}: the panel says why, with the measured numbers ({s['why'][28:110]})")
             check("≈" in s["bar"], f"{theme}: the slip bar carries the about mark ({s['bar']})")
             check("about that price" in s["pay"], f"{theme}: the payout line says about ({s['pay'][:60]})")

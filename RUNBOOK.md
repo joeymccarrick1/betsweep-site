@@ -4015,3 +4015,34 @@ and the share text use the estimate too. **The owner's eight-leg GB-LA slip now 
 +8204).** tests/boards_sgp.py (10 checks, port 8897).
 - Still to build from his yes: fit the discount by leg type (same-player pairs, a QB with his receivers), keep every typed FanDuel
   price as a quote, a range at 7+ legs. The estimate's own error is the remaining math: 4% median at 2-4 legs, 14% at 5+ (13 quotes).
+
+## 11/25 10 AM CT: the same-game price - better math, a range, typed prices kept (owner 9:52 AM: "Do it")
+
+**What the quotes say (35 of them, each slip priced by a fit that never saw it).** Tried and NOT better than the formula in use
+(exp(-c (n-1)^p) / FanDuel's chances joined with our links): a term for same-player pairs, one for a QB with his own receivers, one
+for other teammates (all three fit to zero); our links scaled 0.6x to 2x (better median, worse on long slips); a cut that grows with
+the price itself (worse everywhere). One thing is in the misses: the formula says too long a price on slips full of long shots and too
+short on slips of heavy favorites (miss vs count of legs under 45%: r = +0.40). "Count + a cut per long-shot leg" has a better median
+(0.059 v 0.068), mean and 7+ error but a worse 5+ median (0.190 v 0.118) - so it is NOT in use. Scratch: /tmp/sgpx1.
+- **research/sgp_discount.py now tests that candidate on every refit** and promotes it only if it is no worse on all four measures
+  (median, mean, 2-4 legs, 5+ legs) and better on two, with 30+ quotes. Output: "dog" (0 until promoted), "dog_under" 0.45, "variants".
+  sgp.py price(n, joint, s, books) and both pages' JS already apply "dog", so a promotion needs no code.
+- **A range beside the estimate.** The fit writes "spread": the 80th percentile of the left-out misses by the slip's longest same-game
+  group (today x/÷ 1.10 at 2-4 legs, 1.27 at 5-6, 1.57 at 7+). sgp.SHOW_RANGE = 0.20: where the miss has been that big, the builder and
+  the boards' slip print "likely +A to +B" (groups' misses add in quadrature). The owner's eight-leg GB-LA slip: about +2820, likely
+  +1757 to +4494 (FanDuel +2924). The owner agreed to 7+; the rule is by measured miss, which today also covers 5-6.
+- Refit today on week 12 data: c 0.00343, p 2.5, 35 quotes.
+
+**Typed prices kept.** build_builder.py sgqSend: when a signed-in reader types FanDuel's price, the slip's legs, FanDuel's leg prices,
+the typed price and our estimate go to the database (`fd_quote_add`), once per slip and price. Signed out = nothing is sent.
+- **sql/fd_quotes.sql - the owner runs it** (no secret in the file; `fd_quotes_dump` checks the cron secret already in feed_private).
+  Until he does, the page's call fails quietly and the job step writes no file.
+- **On main:** `.github/fd_quotes.py` + a step in sheet-mirror.yml (env FEED_GRADE_SECRET): asks the database for the rows and writes
+  in/fd_quotes.json into the mirror. Never fails the job, prints no secret and no row.
+- research/sgp_discount.py site_quotes(IN): merges the mirror's rows into research/sgp_quotes_site.json (kept only if it can be a
+  same-game price: 2-12 legs, real prices, two legs in one game, 3%-160% of the legs multiplied, not the legs multiplied itself; newest
+  per identical slip) and fits them as "typed on the site". **Tuesday step e2: commit research/sgp_quotes_site.json with the refit.**
+- Imported FanDuel screenshots are NOT used as quotes: a betslip shows no leg prices, and ours may have moved since the bet.
+- The row keeps the account (daily cap of 60, and deleting an account deletes its rows); the dump never returns it. Privacy Policy
+  wording is the owner's: asked 11/25.
+- tests/sgp_fit.py (9), tests/sgp_price.py (+1), tests/boards_sgp.py (+1 per theme).

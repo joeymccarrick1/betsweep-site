@@ -1066,7 +1066,7 @@ try:
 except Exception as _e: print("warn: shadow list skipped:", _e)
 import sweep as _SWP
 import sgp as _sgp; _SGP = _sgp.load()   # FanDuel same-game price estimate (research/sgp_discount.py, owner 11/17)
-DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "tw": _SWP.TAG_W, "sgp": dict(_SGP, note=_sgp.note(_SGP)), "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
+DATA = {"week": WEEK, "built": stamp, "games": GAMES, "legs": LEGS, "pf": PF, "tw": _SWP.TAG_W, "sgp": dict(_SGP, note=_sgp.note(_SGP), show=_sgp.SHOW_RANGE), "posr": POSR, "osr": OSR, "rk": RKTAB, "corr": CORR, "glcorr": GLCORR, "nlink": NLINK, "rec": REC, "gl": PLAYERS, "def": {o: DEF[o] for o in OPPS if o in DEF}, "lg": LG}
 
 # owner 11/11 8:28 AM: "Having this same best legs where you can scroll and add to parlay on the parlay builder page would be cool" - the
 # Beat the model list (sugmatch.py: near -110, model 50%+, the matchup pair) as a sideways strip above the builder's grid.
@@ -1641,17 +1641,29 @@ BUILDER_JS = r"""
   function slipPrice(ls){
     var bl = bookLegs(ls), key = bl.map(function(l){ return l.i + ':' + l.ln + ':' + l.o + (l.u ? 'u' : ''); }).join(',');
     if(key === _spK) return _spV;
-    var by = {}, order = [], mult = 1, d = 1, same = false, c = D.sgp && D.sgp.c != null ? D.sgp.c : 0.00146, pw = (D.sgp && D.sgp.p) || (D.sgp ? 2 : 3);
+    var by = {}, order = [], mult = 1, d = 1, lg = 0, same = false, c = D.sgp && D.sgp.c != null ? D.sgp.c : 0.00146, pw = (D.sgp && D.sgp.p) || (D.sgp ? 2 : 3);
     bl.forEach(function(l){ if(!by[l.g]){ by[l.g] = []; order.push(l.g); } by[l.g].push(l); mult *= dec(l.o); });
     order.forEach(function(g){ var v = by[g]; if(v.length < 2){ d *= dec(v[0].o); return; }
       var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); x._sc = 0; return x; }));
       if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
-      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
-    var est = same ? d : mult, q = same ? SGQ[key] : null;
-    _spK = key; _spV = q ? {d: dec(q), mult: mult, same: true, quoted: q, est: est} : {d: est, mult: mult, same: same}; return _spV; }
+      var dg = (D.sgp && D.sgp.dog) ? v.filter(function(l){ return (l.bk != null ? l.bk : 1 / dec(l.o)) < (D.sgp.dog_under || 0.45); }).length : 0;
+      var m80 = D.sgp && D.sgp.spread ? D.sgp.spread[v.length <= 4 ? '2-4' : v.length <= 6 ? '5-6' : '7+'] : 0; if(m80 && m80 >= (D.sgp.show || 0.2)) lg += m80 * m80;
+      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw) - (dg ? D.sgp.dog * dg : 0)) / pb); });
+    var est = same ? d : mult, q = same ? SGQ[key] : null, sd = Math.sqrt(lg), rng = same && sd > 0 ? [Math.max(1.01, est / Math.exp(sd)), est * Math.exp(sd)] : null;
+    _spK = key; _spV = q ? {d: dec(q), mult: mult, same: true, quoted: q, est: est, rng: rng} : {d: est, mult: mult, same: same, rng: rng}; return _spV; }
   function sgqSet(){ var inp = $('#sgq'), sg = $('#sgqSign'); if(!inp) return; var n = parseInt(String(inp.value).replace(/[^0-9]/g, ''), 10), neg = /^\s*[-\u2212]/.test(inp.value) || !!(sg && sg.getAttribute('data-s') === '-');
     if(!(n >= 100 && n <= 200000)){ inp.classList.add('bad'); inp.focus(); return; }
-    SGQ[slipKey(slipLegs())] = neg ? -n : n; _spK = null; renderSlip(); }
+    var ls0 = slipLegs(), q0 = neg ? -n : n; delete SGQ[slipKey(ls0)]; _spK = null; var est0 = slipPrice(ls0).d;
+    SGQ[slipKey(ls0)] = q0; _spK = null; sgqSend(ls0, q0, est0); renderSlip(); }
+  /* owner 11/25 ("keep every FanDuel price you type as a data point"): a signed-in reader's typed price goes to the database with the
+     slip's legs and FanDuel's leg prices (fd_quote_add, sql/fd_quotes.sql), where the weekly fit of the same-game discount reads it.
+     Signed out, or the function not installed: nothing is sent and nothing on the page changes. One send per slip and price. */
+  var SGQ_SENT = {};
+  function sgqSend(ls, q, est){ try { var A = window.bsAccount, bl = bookLegs(ls), k = slipKey(ls) + '=' + q; if(!A || !A.user || !A.client || SGQ_SENT[k] || bl.length < 2 || bl.length > 12) return;
+      var e = est >= 2 ? Math.round((est - 1) * 100) : Math.round(-100 / (est - 1));
+      var legs = bl.map(function(l){ var o = {pl: l.pl, m: l.m, ln: l.ln, o: l.o, tm: l.tm, g: l.g, c: l.c || ''}; if(l.gl) o.gl = l.gl; if(l.u) o.u = 1; return o; });
+      SGQ_SENT[k] = 1; window.__sgqLast = {week: D.week, fanduel: q, est: e, legs: legs};
+      A.client.rpc('fd_quote_add', {p_week: D.week, p_fanduel: q, p_est: isFinite(e) ? e : null, p_src: 'typed', p_legs: legs}).then(function(){}, function(){}); } catch(e){} }
   document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return; var b = t.closest('#sgqSign');
     if(b){ var neg = b.getAttribute('data-s') !== '-'; b.setAttribute('data-s', neg ? '-' : '+'); b.textContent = neg ? '\u2212' : '+'; b.setAttribute('aria-label', neg ? 'Minus price - tap for plus' : 'Plus price - tap for minus'); return; }
     if(t.closest('#sgqGo')){ sgqSet(); return; }
@@ -2114,7 +2126,7 @@ BUILDER_JS = r"""
     var ev = fair*bookDec - 1;
     var sameGame = {}; ls.forEach(function(l){ sameGame[l.g] = (sameGame[l.g]||0) + 1; }); var sgp = Object.keys(sameGame).filter(function(g){ return sameGame[g] > 1; });
     $('#price').innerHTML =
-      '<div><small>FanDuel price</small><b>' + (sp.same && !sp.quoted ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.quoted ? 'the price you typed · our estimate was ≈ ' + decToAm(sp.est) : sp.same ? 'same-game estimate · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
+      '<div><small>FanDuel price</small><b>' + (sp.same && !sp.quoted ? '≈ ' : '') + decToAm(bookDec) + '</b><span>' + (sp.quoted ? 'the price you typed · our estimate was ≈ ' + decToAm(sp.est) : sp.same ? 'same-game estimate' + (sp.rng ? ' · likely ' + decToAm(sp.rng[0]) + ' to ' + decToAm(sp.rng[1]) + ' (four in five slips this long landed that close)' : '') + ' · legs multiply to ' + decToAm(sp.mult) : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="e ' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="e ' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+$':'−$') + Math.abs(ev).toFixed(2) + '</b></div>' +

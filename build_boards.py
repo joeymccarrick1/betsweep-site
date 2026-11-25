@@ -1180,7 +1180,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
             # owner 11/17 (the same-game discount): every slip here is one game, and FanDuel does not pay the legs multiplied on those.
             # The price is the estimate from its own quotes (sgp.py): exp(-c (n-1)^p) / its implied chances joined with these correlations.
             pb = joint_prob([r["l"]["book"] for r in combo], C, n=3000)
-            de = _SGPB.price(n, pb, _SGPC) if pb > 0 else d
+            de = _SGPB.price(n, pb, _SGPC, [r["l"]["book"] for r in combo]) if pb > 0 else d
             priced.append((pj, pj * de - 1, de, combo, C))
         if priced and max(x[1] for x in priced) < -_BPK.NEAR and not need_back:
             # Nothing is within 5 cents of fair, so the pick below compares slips inside a 3-cent tie. At 3,000 draws a slip's EV moves about
@@ -1188,7 +1188,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
             _fine = []
             for _pj, _ev, _de, combo, C in priced:
                 _pb = joint_prob([r["l"]["book"] for r in combo], C, n=30000)
-                de = _SGPB.price(len(combo), _pb, _SGPC) if _pb > 0 else _de
+                de = _SGPB.price(len(combo), _pb, _SGPC, [r["l"]["book"] for r in combo]) if _pb > 0 else _de
                 pj = sum(w[k] * joint_prob([r["ps"][k] for r in combo], C, n=12000) for k in range(4) if w[k] > 0)
                 _fine.append((pj, pj * de - 1, de, combo, C))
             priced = _fine
@@ -1238,7 +1238,7 @@ def best_parlay(a, b, players, s, wts=None, lean=None, edge_min=0.08):
     pj, ev, d, combo, C, plus, near = got
     d_mult = math.prod(dec_odds(r["l"]["odds"]) for r in combo)
     _pb = joint_prob([r["l"]["book"] for r in combo], C, n=30000)
-    if _pb > 0: d = _SGPB.price(len(combo), _pb, _SGPC)          # the same estimate, with more draws for the number on the card
+    if _pb > 0: d = _SGPB.price(len(combo), _pb, _SGPC, [r["l"]["book"] for r in combo])          # the same estimate, with more draws for the number on the card
     by_k = [joint_prob([r["ps"][k] for r in combo], C, n=12000) if w[k] > 0 else 0.0 for k in range(4)]
     pj = sum(w[k] * by_k[k] for k in range(4)); ev = pj * d - 1
     # the honest version of the same slip: each leg's chance under each ending scaled by (honest chance / model chance)
@@ -1614,7 +1614,7 @@ for l_ in SLIP_LEGS:   # trim: the page rebuilds the warning text from the bad f
     if l_.get("fl") and l_.get("w"): l_["w"] = ""; l_["wf"] = 1
     l_.pop("hra", None)
 SLIP_DATA = {"week": WEEK, "legs": SLIP_LEGS, "corr": CORR, "glcorr": GLCORR, "gsort": GSORT, "builder": "https://betsweep.co/build/"}
-try: SLIP_DATA["sgp"] = {"c": _SGPC["c"], "p": _SGPC.get("p", 2.0)}   # owner 11/24: the slip panel prices same-game legs like the builder (template.html slipDec)
+try: SLIP_DATA["sgp"] = {"c": _SGPC["c"], "p": _SGPC.get("p", 2.0), "dog": _SGPC.get("dog", 0.0), "dog_under": _SGPC.get("dog_under", 0.45), "spread": _SGPC.get("spread", {}), "show": _SGPB.SHOW_RANGE}   # owner 11/24: the slip panel prices same-game legs like the builder (template.html slipDec)
 except Exception as _e: print("warn: no same-game discount for the slip panel:", _e)
 import live as LIVE
 import books as BOOKS

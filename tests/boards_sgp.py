@@ -42,6 +42,8 @@ async def main():
             check(s["n"] >= 3 and "FanDuel price (about)" in s["price"] and shown is not None and "same-game estimate" in s["price"] and f"legs multiplied ({am(mult)})" in s["price"] and "its betslip has the real price" in s["price"],
                   f"[{theme}] three legs of one game: the price is marked as an estimate and the legs multiplied ({am(mult)}) is named beside it, not shown as FanDuel's price (shows {shown})")
             check(shown is not None and shown != am(mult) and "about that price" in s["price"] and s["tgt"] == "Target price (legs multiplied)", f"[{theme}] the estimate is its own number, the $10 payout says 'about', and the slider says it works in legs multiplied ({s['tgt']})")
+            want_rng = bool(((d["sgp"] or {}).get("spread") or {}).get("2-4", 0) >= ((d["sgp"] or {}).get("show") or 0.2))
+            check(("likely" in s["price"].split("Model fair")[0]) == want_rng, f"[{theme}] a range is printed beside the estimate only where slips this long have missed by 20% or more (three legs: {'yes' if want_rng else 'no'})")
             if d.get("other"):
                 s2 = await slip([d["same"][0]["k"], d["other"]["k"]]); m2 = dec(d["same"][0]["o"]) * dec(d["other"]["o"])
                 c2 = s2["price"].split("Model fair")[0]     # the FanDuel cell only: the row of other books further down has its own "about" marks
