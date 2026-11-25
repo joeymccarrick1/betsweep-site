@@ -3894,3 +3894,15 @@ every 10 minutes; far-off games are re-asked hourly):
   (`wxnow|<gid>`), also to the owner's promo watch. Until the redeploy the alerts still go by the old single forecast.
 - Tests: tests/wx_multi.py (module on made-up answers, the feed's fallback, the alert merge under node), tests/wx_label.py.
 - Not done: nothing reads ESPN's in-game weather; the scorecard has no page yet; soccer boards have no weather at all.
+
+## 11/24 7:55 PM CT: THE ENGINE IS PRIVATE (switch set by the owner)
+The owner made the token and set ENGINE_TOKEN / ENGINE_REPO (and, he reports, MIRROR_URL / MIRROR_TOKEN on the alert function - not
+verifiable from here). Verified: the 01:54Z sheet-mirror run wrote only to the archive repository; the 01:57Z reprice run checked the
+generators and the mirror out of `joeymccarrick1/betsweep-site-archive` (log: "Syncing repository"), published, and no token text is in
+the log; price-moves and feeds-sports succeeded.
+**From now on:** generators are pushed to the ARCHIVE repository's `gen-overrides` (that is what the jobs build with):
+`git push -q https://github.com/joeymccarrick1/betsweep-site-archive.git <SHA>:refs/heads/gen-overrides`, and - until the scheduled tasks
+are repointed and the public branches deleted - ALSO to origin `gen-overrides` so those tasks do not work from an old copy. The sheet
+mirror is read from the archive: `git -C /home/claude/work/sm fetch -q https://github.com/joeymccarrick1/betsweep-site-archive.git sheet-mirror && git -C /home/claude/work/sm reset -q --hard FETCH_HEAD`.
+The public `sheet-mirror` branch is frozen at 01:36Z 11/25 and goes stale. Still open: repoint the scheduled tasks (owner's OK needed),
+then the owner deletes the public branches (tools/engine_move/README.md steps 7-8). Undo: delete the variable ENGINE_REPO.
