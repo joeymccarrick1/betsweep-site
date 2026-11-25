@@ -32,6 +32,7 @@ def write(key, B, R, have, any_age=False):
     cfg = sport_nav.LEAGUE[key]; fs = outs(key)
     if not isinstance(R, dict) or R.get("sport") != cfg["feed"] or not isinstance(R.get("total"), dict):
         R = None
+    K.unique_keys(B)
     ok, why = K.usable(B, any_age=any_age, sport=cfg["feed"])
     if not ok:
         for f in fs:

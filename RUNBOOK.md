@@ -3963,3 +3963,22 @@ feeds-sports run (new args --prev, --site, --no-grade, as the soccer step has).
   and says the price is the bar the model has to beat. The signature still ignores a price ticking (line_sig), so the strip says
   "when this board was built".
 - tests/epl_grade.py (+5), tests/epl_board.py (+3).
+
+## 11/24 9:51-10:20 PM CT: "-20u or -25u" on My BetSweep, and two cards with one id on the MLS page
+
+**Units (owner 9:51 PM: "On week 11 for a lot of my bets it's saying a lot of the bets were -20u or -25u. That shouldn't be the case").**
+A saved slip's `stake` field has two writers that mean DOLLARS - the Live page's "stake $" box (build_live.py slipstake) and an imported
+FanDuel screenshot's "TOTAL WAGER" (slipimport.py) - and one that means a unit (the builder saves `stake: 1`). /me/ read all of them as
+units, so a $20 loss was -20u, the weekly profit bars and the bankroll tracker (units x the week's unit) with it. account.py ME_JS now has
+one rule, `wagerOf(s)` / `stakeU(s)` / `unitNow()`: a stake that is not the builder's default 1 (or any imported slip, or a `wager` field)
+is dollars; units = dollars / the bankroll tracker's unit (bankroll now x its percent), and with no tracker the slip counts 1 unit. The
+row shows "1u ($20 bet)". Nothing stored is changed - the fix is in how the page reads it, so old weeks correct themselves on load.
+tests/stake_units.py (4 checks, node; in the pre-publish set). Not done: the Live page still labels the builder's default as "$1.00".
+
+**MLS: two cards, one id.** San Jose v Houston twice on one board (11/24 and 12/2, same home side) gave two matches the key SJ-HOU:
+tests/soccer_leagues.py failed "ships its board" on tonight's feed, rightly. build_epl.unique_keys(B) (called by build_epl.py and
+build_soccer.py before the page and the shipped board are written): the later match's key gains its US Central date (SJ-HOU-1202).
+**tests/page_tight.py:** "one line on most cards" was a dry-week fact (9 of 16 Week 12 games carry a weather risk tag); the rule is now
+two lines at most and one line on every card without a HIGH / MED tag.
+**The 8:38 PM reprice failure** was nflverse's snap-count file answering an error for a minute (curl 22 in "role rising"); the 9:20 PM run
+passed. An outside file missing for one run fails that run and the next one publishes - nothing was changed.

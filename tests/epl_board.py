@@ -109,6 +109,9 @@ def record_states():
     for p in ({"xi": "start", "starts5": 0}, {"xi": None, "starts5": 3}, {"xi": None, "starts5": 2}, {"xi": "bench", "starts5": 5}, {"xi": "no", "starts5": 5}):
         if K.regular(p) != G.regular(p): check(False, f"the page and the grader disagree on who is a regular: {p}")
     check(K.REGULAR == G.REGULAR and len(K.RBAND) == len(G.EDGES) + 1 and len(K.GBAND) == len(G.GOAL_EDGES) + 1, "the page and the grader use one rule for a regular and the same chance bands")
+    Bk = {"matches": [{"id": "2", "key": "SJ-HOU", "ko": "2026-12-03T03:00Z"}, {"id": "1", "key": "SJ-HOU", "ko": "2026-11-25T03:00Z"}, {"id": "3", "key": "LAFC-STL", "ko": "2026-11-29T20:00Z"}, {"id": "4", "key": "SJ-HOU", "ko": "2026-12-03T03:00Z"}]}
+    check(K.unique_keys(Bk) == 2 and [m["key"] for m in Bk["matches"]] == ["SJ-HOU-1202", "SJ-HOU", "LAFC-STL", "SJ-HOU-1202-2"] and K.unique_keys(Bk) == 0 and K.unique_keys(None) == 0 and K.unique_keys({}) == 0,
+          "two matches with the same sides and home (a two-leg playoff tie) get two card ids: the earlier keeps its key, the later gains its date; nothing else moves, and a second pass changes nothing")
     # ---- 11/24: the posted three-way price on the card and in the record ----
     wm = json.loads(json.dumps(rec)); wm["total"]["mkt"] = {"n": 8, "price": 4.8, "model": 5.2, "pll": 8.0, "mll": 8.4, "ptop": 5, "mtop": 4, "on": 6, "oprice": 1.5, "omodel": 1.44}
     hm = K.record_block(wm)

@@ -49,6 +49,24 @@ def when(s):
         return None
 
 
+def unique_keys(B):
+    """11/24: a two-leg playoff tie with the same home side twice (MLS, San Jose v Houston on 11/24 and 12/2) put two matches on one board
+    with the same key - two cards with one id, so a Slate link or the jump row opened the first. The later match's key gains its date
+    (SJ-HOU-1202, US Central day). Changed in place, before the page and the shipped board are written, so both agree. Returns how many."""
+    seen, n = set(), 0
+    try: ms = sorted((B or {}).get("matches") or [], key=lambda m: (str(m.get("ko")), str(m.get("id"))))
+    except Exception: return 0
+    for m in ms:
+        k = m.get("key")
+        if k in seen:
+            t = when(m.get("ko")); tag = (t - dt.timedelta(hours=6)).strftime("%m%d") if t else str(m.get("id"))
+            k2 = f"{k}-{tag}"; i = 2
+            while k2 in seen: k2 = f"{k}-{tag}-{i}"; i += 1
+            m["key"] = k = k2; n += 1
+        seen.add(k)
+    return n
+
+
 def usable(B, now=None, any_age=False, sport="epl"):
     """(ok, why not). Drawn only if it is in the shape this page reads, has a match that is not long over, and was built in the last day:
     the feed job keeps its last board when the model step fails, so an old one can sit on the branch."""
@@ -434,6 +452,7 @@ def main():
         R = N.feed_file(a[0] if a else None, "epl/record.json")      # the grading record (sports/epl/grade.py); None until the job has written one
     if not isinstance(R, dict) or R.get("sport") != "epl" or not isinstance(R.get("total"), dict):
         R = None
+    unique_keys(B)
     ok, why = usable(B, any_age=named)
     outs = (PAGE, os.path.join(OUT, "epl_board.json"), os.path.join(OUT, "epl_sig.json"), os.path.join(OUT, "epl_record.json"))
     if not ok:
