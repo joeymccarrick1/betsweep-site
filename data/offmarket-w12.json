@@ -156,6 +156,30 @@
    "gap": 3.1,
    "p": 0.2086,
    "seen": "2026-11-25 10:35"
+  },
+  "Tutu Atwell|Anytime TD|1": {
+   "pl": "Tutu Atwell",
+   "m": "Anytime TD",
+   "ln": 1.0,
+   "g": "GB-LA",
+   "fd": 550.0,
+   "dk": 425.0,
+   "hr": 425.0,
+   "gap": 3.7,
+   "p": 0.1574,
+   "seen": "2026-11-25 12:35"
+  },
+  "Savion Williams|Receptions|3": {
+   "pl": "Savion Williams",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "GB-LA",
+   "fd": 178.0,
+   "dk": 154.0,
+   "hr": 145.0,
+   "gap": 3.4,
+   "p": 0.323,
+   "seen": "2026-11-25 12:35"
   }
  }
 }
