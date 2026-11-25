@@ -4037,6 +4037,7 @@ short on slips of heavy favorites (miss vs count of legs under 45%: r = +0.40). 
 the typed price and our estimate go to the database (`fd_quote_add`), once per slip and price. Signed out = nothing is sent.
 - **sql/fd_quotes.sql - the owner runs it** (no secret in the file; `fd_quotes_dump` checks the cron secret already in feed_private).
   Until he does, the page's call fails quietly and the job step writes no file.
+- **UPDATE 11/25 12:03 PM CT: the step IS on main now** (site commit 83bac5a5b, after the owner's "Yes push the job step"; he also ran the fd_quotes SQL). Verified: the mirror carries `in/fd_quotes.json` (0 rows so far). The note below is history.
 - **Drafted, NOT on main yet (11/25 10:25 AM: the push of a job change was refused for the session; it waits for the owner's plain
   yes):** tools/fd_quotes_job/fd_quotes.py (goes to `.github/fd_quotes.py`) + sheet-mirror.patch (one step in sheet-mirror.yml, env
   FEED_GRADE_SECRET): asks the database for the rows and writes in/fd_quotes.json into the mirror. Never fails the job, prints no
