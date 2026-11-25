@@ -60,6 +60,42 @@
    "gap": 3.7,
    "p": 0.2587,
    "seen": "2026-11-24 6:34"
+  },
+  "Ty Johnson|Receiving Yards|25": {
+   "pl": "Ty Johnson",
+   "m": "Receiving Yards",
+   "ln": 25.0,
+   "g": "BUF-KC",
+   "fd": 194.0,
+   "dk": 145.0,
+   "hr": 170.0,
+   "gap": 3.0,
+   "p": 0.407,
+   "seen": "2026-11-25 6:34"
+  },
+  "Ryan Flournoy|Receiving Yards|40": {
+   "pl": "Ryan Flournoy",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "DAL-PHI",
+   "fd": 162.0,
+   "dk": 140.0,
+   "hr": 140.0,
+   "gap": 3.5,
+   "p": 0.3927,
+   "seen": "2026-11-25 6:34"
+  },
+  "Dallas Goedert|Receiving Yards|50": {
+   "pl": "Dallas Goedert",
+   "m": "Receiving Yards",
+   "ln": 50.0,
+   "g": "DAL-PHI",
+   "fd": 280.0,
+   "dk": 237.0,
+   "hr": 225.0,
+   "gap": 3.4,
+   "p": 0.286,
+   "seen": "2026-11-25 6:34"
   }
  }
 }
