@@ -96,6 +96,42 @@
    "gap": 3.4,
    "p": 0.286,
    "seen": "2026-11-25 6:34"
+  },
+  "Baker Mayfield|Rushing Yards|25": {
+   "pl": "Baker Mayfield",
+   "m": "Rushing Yards",
+   "ln": 25.0,
+   "g": "CAR-TB",
+   "fd": 225.0,
+   "dk": 175.0,
+   "hr": 195.0,
+   "gap": 3.1,
+   "p": 0.2348,
+   "seen": "2026-11-25 6:34"
+  },
+  "DK Metcalf|Receptions|4": {
+   "pl": "DK Metcalf",
+   "m": "Receptions",
+   "ln": 4.0,
+   "g": "DEN-PIT",
+   "fd": 194.0,
+   "dk": 160.0,
+   "hr": 165.0,
+   "gap": 3.7,
+   "p": 0.3381,
+   "seen": "2026-11-25 6:34"
+  },
+  "DK Metcalf|Receiving Yards|40": {
+   "pl": "DK Metcalf",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "g": "DEN-PIT",
+   "fd": 178.0,
+   "dk": 155.0,
+   "hr": 155.0,
+   "gap": 3.2,
+   "p": 0.3534,
+   "seen": "2026-11-25 6:34"
   }
  }
 }
