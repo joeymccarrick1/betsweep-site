@@ -345,6 +345,16 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   function corr(l1, l2){ if(l1.g !== l2.g) return 0; if(l1.gl && l2.gl) return l1.gl.k !== l2.gl.k ? 0 : (l1.gl.side === l2.gl.side ? 0.999 : -0.999); if(l1.gl) return glProp(l1, l2); if(l2.gl) return glProp(l2, l1); if(!l1.c || !l2.c) return 0; var rel = l1.pl === l2.pl ? 'SP' : (l1.tm === l2.tm ? 'TM' : 'OPP'); var k = [l1.c, l2.c].sort(); return D.corr[rel + '|' + k[0] + '|' + k[1]] || 0; }
   function chol(C){ var n = C.length, L = []; for(var i=0;i<n;i++){ L.push(new Array(n).fill(0)); for(var j=0;j<=i;j++){ var s=0; for(var k=0;k<j;k++) s += L[i][k]*L[j][k]; L[i][j] = (i===j) ? Math.sqrt(Math.max(C[i][i]-s, 1e-9)) : (C[i][j]-s)/L[j][j]; } } return L; }
   function bookLegs(ls){ var f = ls.filter(function(l){ return l.m === 'First TD'; }); return f.length ? ls.filter(function(l){ return !(l.m === 'Anytime TD' && f.some(function(x){ return x.pl === l.pl; })); }) : ls; }
+  /* owner 11/24 ("This bet is actually +2924 on FanDuel"): this slip showed the legs multiplied (+8204) for eight legs of one game. FanDuel
+     does not pay that on a same-game slip. Same estimate as the builder (sgp.py, build_builder.py slipPrice): for each game with two or
+     more legs, exp(-c (n-1)^p) / FanDuel's own implied chances joined with our same-game correlations; one leg per game still multiplies. */
+  function slipDec(ls){ var bl = bookLegs(ls), by = {}, order = [], mult = 1, d = 1, same = false, S = D.sgp || {}, c = S.c != null ? S.c : 0.00146, pw = S.p || (D.sgp ? 2 : 3);
+    bl.forEach(function(l){ if(!by[l.g]){ by[l.g] = []; order.push(l.g); } by[l.g].push(l); mult *= dec(l.o); });
+    order.forEach(function(g){ var v = by[g]; if(v.length < 2){ d *= dec(v[0].o); return; }
+      var pb = joint(v.map(function(l){ var x = Object.create(l); x.p = l.bk != null ? l.bk : 1 / dec(l.o); return x; }));
+      if(!(pb > 0)){ v.forEach(function(l){ d *= dec(l.o); }); return; }
+      same = true; d *= Math.max(1.01, Math.exp(-c * Math.pow(v.length - 1, pw)) / pb); });
+    return {d: same ? d : mult, mult: mult, same: same}; }
   function joint(ls){
     var ftd = ls.filter(function(l){ return l.m === 'First TD'; });
     for(var a = 0; a < ftd.length; a++) for(var b = a + 1; b < ftd.length; b++) if(ftd[a].g === ftd[b].g) return 0;
@@ -505,16 +515,16 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
     ul.innerHTML = ls.map(function(l){ return '<li><div><b>' + esc(l.pl) + ' ' + (l.gl ? '<small class="glsrc">' + esc(l.ms) + (l.src === 'fd' ? '' : ' · consensus') + '</small>' : l.m === 'First TD' ? 'first TD scorer' : isTD(l) ? 'anytime TD' : esc(l.ms.toLowerCase()) + ' ' + (ladderOf(l) && ladderOf(l).length > 1 ? fader(l) : Math.round(l.ln) + '+')) + flagMark(l) + '</b><span>' + (started(l) ? '<em class="stx">Game started</em> · ' : '') + l.tm + ' vs ' + l.opp + ' · ' + (l.src === 'cons' ? 'Mkt ' : 'FD ') + am(l.o) + ' · model ' + pc(l.p) + ' vs book ' + pc(l.bk) + '</span></div><span class="e ' + (l.e>=0?'up':'dn') + '">' + (l.e>=0?'+':'') + (l.e*100).toFixed(1) + '</span><button class="x" type="button" data-k="' + esc(l.k) + '" aria-label="remove">×</button>' + whyBlock(l) + '</li>'; }).join('')
       + sel.filter(function(k){ return !byKey[k]; }).map(unkRow).join('');   // owner 10/28: builder-only legs are listed by name, so the slip reads the same on every page
     var bls = bookLegs(ls), implied = ls.length - bls.length;
-    var bookDec = bls.reduce(function(a,l){ return a*dec(l.o); }, 1), bookP = 1/bookDec;
+    var SP = slipDec(ls), bookDec = SP.d, bookP = 1/bookDec;
     var ind = ls.reduce(function(a,l){ return a*l.p; }, 1), fair = joint(ls), ev = fair*bookDec - 1;
     var sameGame = {}; ls.forEach(function(l){ sameGame[l.g] = (sameGame[l.g]||0) + 1; }); var sgp = Object.keys(sameGame).filter(function(g){ return sameGame[g] > 1; });
     $('#bslipPrice').innerHTML =
-      '<div><small>FanDuel price</small><b>' + decToAm(bookDec) + '</b><span>legs multiplied' + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
+      '<div><small>FanDuel price' + (SP.same ? ' (about)' : '') + '</small><b>' + (SP.same ? '\u2248 ' : '') + decToAm(bookDec) + '</b><span>' + (SP.same ? 'same-game estimate - FanDuel pays less than the legs multiplied (' + decToAm(SP.mult) + '); its betslip has the real price' : 'legs multiplied') + (implied ? ' (implied anytime TD not counted)' : '') + ' · implies ' + pc(bookP) + '</span></div>' +
       '<div><small>Model fair</small><b>' + toAm(fair) + '</b><span>' + pc(fair) + ' to hit' + (Math.abs(fair-ind) > 0.002 ? ' · ' + pc(ind) + ' if independent' : '') + '</span></div>' +
       '<div><small>Edge</small><b class="' + (fair-bookP>=0?'up':'dn') + '">' + (fair-bookP>=0?'+':'') + ((fair-bookP)*100).toFixed(1) + ' pts</b></div>' +
       '<div><small>EV per $1</small><b class="' + (ev>=0?'up':'dn') + '">' + (ev>=0?'+':'') + '$' + ev.toFixed(2) + '</b></div>' +
-      '<div class="wide"><small>Payout on $10 at the FanDuel price</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>' + stakeRow(fair, bookDec, ls.length) + bookRow(ls, bookDec);
-    syncTarget(ls, bookDec);
+      '<div class="wide"><small>Payout on $10 at ' + (SP.same ? 'about that price' : 'the FanDuel price') + '</small><b>$' + (10*bookDec).toFixed(2) + '</b></div>' + stakeRow(fair, bookDec, ls.length) + bookRow(ls, bookDec);
+    syncTarget(ls, SP.mult, SP.same);
     var tk = $('#bslipTake'); tk.hidden = false; tk.innerHTML = 'Take it at <b>' + toAm(fair*0.95) + '</b> or better' + (sgp.length ? ' — same-game legs are priced with the model\'s correlations, so compare to FanDuel\'s SGP quote.' : '.');
     var flags = [];
     var pls = {}; ls.forEach(function(l){ pls[l.pl] = (pls[l.pl]||0)+1; }); var dupe = Object.keys(pls).filter(function(p){ return pls[p] > 1; }); if(dupe.length) flags.push('same player twice: ' + dupe.join(', '));
@@ -557,7 +567,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
     (function walk(i, chosen, ld, ev){ if(i === cap.length){ var dist = Math.abs(ld - lt), score = (dist <= 0.08 ? 0 : dist) * 10 - ev; if(!best || score < best.score) best = {score: score, chosen: chosen.slice()}; return; }
       cap[i].forEach(function(l){ chosen.push(l); walk(i+1, chosen, ld + Math.log(dec(l.o)), ev + (l.e || 0)); chosen.pop(); }); })(0, [], 0, 0);
     if(!best) return; var keep = sel.filter(function(k){ return !byKey[k]; }); sel = best.chosen.map(function(l){ return l.k; }).concat(keep); TGT.busy = true; save(); render(); TGT.busy = false; }
-  function syncTarget(ls, bookDec){ var box = $('#btgt'); if(!box) return; var fadeable = ls.some(function(l){ var g = ladderOf(l); return g && g.length > 1 && !isTD(l); });
+  function syncTarget(ls, bookDec, same){ var box = $('#btgt'); if(!box) return; var tl = box.querySelector('.row span'); if(tl) tl.textContent = same ? 'Target price (legs multiplied)' : 'Target FanDuel price'; var fadeable = ls.some(function(l){ var g = ladderOf(l); return g && g.length > 1 && !isTD(l); });
     if(!ls.length || !fadeable){ box.hidden = true; return; } box.hidden = false; var r = priceRange(); TGT.min = r[0]; TGT.max = r[1];
     $('#btgtMin').textContent = 'safest ' + decToAm(TGT.min); $('#btgtMax').textContent = 'longest ' + decToAm(TGT.max); $('#btgtVal').textContent = decToAm(bookDec); if(!TGT.busy) $('#btgtRange').value = decToSlider(bookDec); }
   (function(){ var t = null, rg = $('#btgtRange'); if(!rg) return; rg.addEventListener('input', function(){ $('#btgtVal').textContent = decToAm(sliderToDec(+rg.value)); clearTimeout(t); t = setTimeout(function(){ retarget(sliderToDec(+rg.value)); }, 120); }); })();
@@ -565,7 +575,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   var SLKEY = 'bs_slips_w' + D.week;
   function savedSlips(){ try{ var a = JSON.parse(localStorage.getItem(SLKEY)||'[]'); return Array.isArray(a) ? a.filter(function(x){ return x && x.id && Array.isArray(x.keys); }) : []; }catch(e){ return []; } }
   function writeSlips(a){ try{ localStorage.setItem(SLKEY, JSON.stringify(a)); }catch(e){} }
-  function priceKeys(ks){ var ls = ks.map(function(k){ return byKey[k]; }).filter(Boolean); if(!ls.length) return null; var bookDec = bookLegs(ls).reduce(function(a,l){ return a*dec(l.o); }, 1); return {ls: ls, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
+  function priceKeys(ks){ var ls = ks.map(function(k){ return byKey[k]; }).filter(Boolean); if(!ls.length) return null; var bookDec = slipDec(ls).d; return {ls: ls, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
   function sameSet(a, b){ if(a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
   // saved slips: legs fold into a drop-down under each row (owner 10/23: one long line was unreadable on a phone)
   var SLOPEN = {};
@@ -596,7 +606,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   window.addEventListener('storage', function(e){ if(e.key === SLKEY) renderSaved(); });
   $('#bslipbar').addEventListener('click', function(){ var w = $('#bslip'); w.classList.toggle('open'); $('#bslipbar').setAttribute('aria-expanded', String(w.classList.contains('open'))); });
   $('#bslipClear').addEventListener('click', function(){ sel = []; save(); render(); });
-  function bslipText(){ var ls = slipLegs(); if(!ls.length) return ''; var bookDec = bookLegs(ls).reduce(function(a,l){ return a*dec(l.o); }, 1), fair = joint(ls); return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + decToAm(bookDec) + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co'; }
+  function bslipText(){ var ls = slipLegs(); if(!ls.length) return ''; var SPt = slipDec(ls), bookDec = SPt.d, fair = joint(ls); return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (SPt.same ? 'about ' : '') + decToAm(bookDec) + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co'; }
   if(window.BSBooks) BSBooks.attach($('#bslipBooks'), $('#bslipBooksPanel'), bslipText);
   $('#bslipCopy').addEventListener('click', function(){ var txt = bslipText();
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function(){ $('#bslipCopy').textContent = 'Copied'; setTimeout(function(){ $('#bslipCopy').textContent = 'Copy slip'; }, 1200); }).catch(function(){ window.prompt('Copy your slip', txt); }); });
