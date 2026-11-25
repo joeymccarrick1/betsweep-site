@@ -53,7 +53,7 @@ _h = SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 2
 _r = SC.player_sc({"pl": "Road Passer", "tm": "BBB", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, _mul, _role)
 check(_h is not None and len(_h) == 4 and abs(sum(w * p for w, p in zip(_G["probs"], _h)) - 0.55) < 0.002, f"game endings: a 2+ passing TDs leg gets four chances that mix back to the shown number ({_h})")
 check(_h is not None and _h[2] > _h[0] > _h[1] > _h[3], "  most likely in a shootout, then when his team wins big, then a close low game, least when it trails big (the sheet's tested QB1 passing-TD row)")
-check(_r is not None and _r[3] > _r[0] and abs(_r[3] - _h[0]) < 0.001 and abs(_r[0] - _h[3]) < 0.001, "  the visiting quarterback reads the endings from his own side (the game's first team winning big is him trailing)")
+check(_r is not None and _r[2] > _r[3] > _r[1] > _r[0] and abs(sum(w * p for w, p in zip(_G["probs"], _r)) - 0.55) < 0.002, f"  the visiting quarterback reads the endings from his own side: the game's first team winning big is him trailing ({_r})")
 _l3 = SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 3, "p": 0.25}, _G, {}, _mul, _role); _l1 = SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 1, "p": 0.88}, _G, {}, _mul, _role)
 check(_l3 and _l1 and all(_l1[i] > _h[i] > _l3[i] for i in range(4)), "  under every ending 1+ is likelier than 2+ and 2+ than 3+")
 check(SC.player_sc({"pl": "Home Passer", "tm": "AAA", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, {"QB1|td": [1, 1, 1, 1]}, _role) is None and SC.player_sc({"pl": "Nobody", "tm": "AAA", "m": "Passing TDs", "ln": 2, "p": 0.55}, _G, {}, _mul, _role) is None,

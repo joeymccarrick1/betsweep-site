@@ -359,7 +359,7 @@ def page(B, nba=False, R=None, have=None, cfg=None):
     except Exception:
         last_day = (last - dt.timedelta(hours=6)).date().isoformat()
     rec = record_block(R)
-    pre = (f'<div class="nbpre"><b>{E(name)} preview.</b> Model numbers only: no FanDuel prices yet, so no edges or betslip buttons. '
+    pre = (f'<div class="nbpre"><b>{E(name)} preview.</b> Model numbers only: no FanDuel prices yet, so no edges or betslip buttons. Where ESPN posts a sportsbook price it is shown beside the model for comparison. '
            'Player numbers assume he starts. ' + ('' if epl else 'This league has no expected-goals data, so a shot-based stand-in is used, and no injury list is read yet. ')
            + ('Nothing here is a pick: every match is locked at kickoff and graded against the result first.' if rec else 'Nothing here is a pick.') + '</div>')
     key = ('<details class="nbkey"><summary aria-label="How to read the board"><span class="nbk-l">How to read the board</span><span class="nbk-s" aria-hidden="true">?</span></summary><dl>'

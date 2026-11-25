@@ -113,6 +113,7 @@ def record_states():
     wm = json.loads(json.dumps(rec)); wm["total"]["mkt"] = {"n": 8, "price": 4.8, "model": 5.2, "pll": 8.0, "mll": 8.4, "ptop": 5, "mtop": 4, "on": 6, "oprice": 1.5, "omodel": 1.44}
     hm = K.record_block(wm)
     mc = re.findall(r'<tr data-k="(mk_\w+)"><th>.*?</th><td class="(\w*)">([\d.]+)</td><td class="(\w*)">([\d.]+)</td><td class="nbrc-w">([^<]*)', hm)
+    mc = [c[:5] + (c[5].strip(),) for c in mc]
     check(mc == [("mk_res", "", "0.65", "win", "0.60", "the price closer"), ("mk_o25", "", "0.24", "", "0.25", "model closer")][:1] + [("mk_o25", "win", "0.24", "", "0.25", "model closer")]
           and "Against the posted price <i>(8 matches that had one)</i>" in hm and "likeliest right: model 4, price 5 of 8" in hm and "6 with a 2.5 line" in hm and "the bar the model has to beat" in hm
           and "Against the posted price" not in h and "the bar the model has to beat" not in h,
@@ -237,6 +238,8 @@ async def main():
     rp = os.path.join(ROOT, KEY, "record.json"); R = json.load(open(rp)) if os.path.exists(rp) else None
     if R is not None: check(R.get("sport") == FEED, f"the grading record beside the page is this league's own ({R.get('sport')})")
     from sports.epl import grade as G
+    npx = sum(1 for m in B["matches"] if G.market(m.get("line"))); gpx = len(re.findall(r'<div class="eplpx"', src))
+    check(gpx == npx and (npx == 0 or ("not FanDuel" in src and "Not a pick" in src)), f"the posted three-way price is on every card that has all three prices and on no other ({gpx} of {len(B['matches'])} cards; the board has {npx})")
     RS = G.summary(R) if R else None
     if R is None:
         check('id="nbrec"' not in src and "locked at kickoff and graded" not in src, "no grading record ships with the page: no record block, and the note does not claim any grading")
@@ -247,13 +250,17 @@ async def main():
         blk = src[src.find('<details class="nbrec"'):]; blk = blk[:blk.find("</details>")]
         cells = re.findall(r'<tr data-k="(\w+)"><th>.*?</th><td class="\w*">([\d.]+)</td><td class="\w*">([\d.]+)</td>', blk)
         wantr = [(k, f"{RS[k]['model']:.2f}", f"{RS[k]['base']:.2f}") for k in ("res", "o25", "btts", "goals") if RS.get(k)]
+        if RS.get("mkt"):     # 11/24: the model beside the posted price, on the matches that had one
+            wantr.append(("mk_res", f"{RS['mkt']['model']:.2f}", f"{RS['mkt']['price']:.2f}"))
+            if RS["mkt"].get("o25"): wantr.append(("mk_o25", f"{RS['mkt']['o25']['model']:.2f}", f"{RS['mkt']['o25']['price']:.2f}"))
         if RS.get("pl"):
             wantr += [("p_" + k, f"{RS['pl'][k]['model']:.{d}f}", f"{RS['pl'][k]['base']:.{d}f}") for k, d in (("goal", 3), ("assist", 3), ("shots", 2), ("sot", 2)) if RS["pl"].get(k) and RS["pl"][k].get("model") is not None and RS["pl"][k].get("base") is not None]
         check(cells == wantr and f"{RS['matches']} match{'es' if RS['matches'] != 1 else ''}" in blk and "every match is locked at kickoff and graded against the result first" in src,
               f"the record block is the record file's: {RS['matches']} matches, players of {RS['pmatches']}, " + ", ".join(f"{k} {m} vs {b}" for k, m, b in wantr))
         tot = G.empty()
         for r_ in R["rounds"]: G.add(tot, r_)
-        check(G.rounded(tot) == R["total"] and len(re.findall(r"<li><b>", blk)) == min(5, len(R["rounds"])) and (("Early days" in blk) == (RS["matches"] < K.EARLY))
+        # a record written before a new sum existed (the posted-price sums, 11/24) has no such key yet: both sides are read with every sum this version knows
+        check(G.rounded(tot) == G.rounded(G.add(G.empty(), R["total"])) and len(re.findall(r"<li><b>", blk)) == min(5, len(R["rounds"])) and (("Early days" in blk) == (RS["matches"] < K.EARLY))
               and sum(len(r_.get("ids") or []) for r_ in R["rounds"]) == R["total"]["matches"] and sum(len(r_.get("pids") or []) for r_ in R["rounds"]) == R["total"]["pmatches"],
               f"the record's totals are the sum of its gameweeks, each graded match is named once, the last gameweeks are listed, and a record under {K.EARLY} matches says it is too small to judge by")
 
