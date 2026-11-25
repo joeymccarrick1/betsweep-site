@@ -11,7 +11,9 @@ BOX = {8: {"week": 8, "final": True, "games": {"AAA-BBB": [20, 17]}, "box": {"To
 SLIPS = {8: [{"name": "W8 winner", "keys": ["Tom Test|Passing Yards|200"], "odds": 150, "stake": 1}, {"name": "W8 loser", "keys": ["Tom Test|Passing Yards|300"], "odds": 200, "stake": 2}],
          9: [{"name": "W9 winner", "keys": ["Rex Runner|Rushing Yards|50", "Rex Runner|Anytime TD|1"], "odds": 300, "stake": 1}],
          10: [{"name": "Open one", "keys": ["Rex Runner|Rushing Yards|50"], "odds": 120, "stake": 2}, {"name": "Open two", "keys": ["Tom Test|Passing Yards|200", "Rex Runner|Anytime TD|1"], "odds": -110, "stake": 1}]}
-SEED = "try{ if(!localStorage.getItem('t_empty')){ var S = %s; Object.keys(S).forEach(function(w){ localStorage.setItem('bs_slips_w' + w, JSON.stringify(S[w])); }); } else { ['8','9','10'].forEach(function(w){ localStorage.removeItem('bs_slips_w' + w); }); } }catch(e){}" % json.dumps(SLIPS)
+# 11/24: a stake that is not the builder's default 1 is DOLLARS (account.py stakeU). The tracker below makes a unit $1 (start $100, 1%),
+# so the $2 slips here are 2 units, as this test has always read them.
+SEED = "try{ localStorage.setItem('bs_bankroll_plan', JSON.stringify({start: 100, pct: 1, since: 8})); if(!localStorage.getItem('t_empty')){ var S = %s; Object.keys(S).forEach(function(w){ localStorage.setItem('bs_slips_w' + w, JSON.stringify(S[w])); }); } else { ['8','9','10'].forEach(function(w){ localStorage.removeItem('bs_slips_w' + w); }); } }catch(e){}" % json.dumps(SLIPS)
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass

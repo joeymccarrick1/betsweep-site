@@ -396,9 +396,9 @@ ME_JS = r"""
   /* owner 11/24 ("it's saying a lot of the bets were -20u or -25u. That shouldn't be the case"): a slip's `stake` is DOLLARS whenever a
      person or a screenshot supplied it - the Live page's "stake $" box writes it, and an imported FanDuel slip carries its "TOTAL WAGER"
      ($20, $25) - and it was being counted as that many units. Only the builder's own default (1) is a unit. A dollar stake is turned
-     into units by the bankroll tracker's unit (bankroll now x its percent); with no tracker set there is no unit to measure dollars
+     into units by the bankroll tracker's unit (its starting bankroll x its percent); with no tracker set there is no unit to measure dollars
      in, so the slip counts 1 unit, as a slip saved in the builder does. */
-  function unitNow(){ var p = null; try{ p = JSON.parse(g('bs_bankroll_plan') || 'null'); }catch(e){} if (!p || !(+p.pct > 0)) return 0; var br = +g('bs_bankroll') || +p.start || 0; return Math.round(br * p.pct) / 100; }
+  function unitNow(){ var p = null; try{ p = JSON.parse(g('bs_bankroll_plan') || 'null'); }catch(e){} if (!p || !(+p.pct > 0)) return 0; var br = +p.start || 0; return Math.round(br * p.pct) / 100; }   // the STARTING bankroll: the running one is itself built from these units, so reading it here would move every slip's units each time the page loads
   function wagerOf(s){ var v = +s.stake || 0; if (s.wager != null) return +s.wager || 0; return (s.src === 'fanduel-screenshot' || (v > 0 && v !== 1)) ? v : 0; }
   function stakeU(s){ var d = wagerOf(s), u = unitNow(); return d > 0 && u > 0 ? Math.max(0.01, Math.round(d / u * 100) / 100) : 1; }
   function keys(re){ var out = []; try{ for (var i=0;i<localStorage.length;i++){ var k = localStorage.key(i); if (re.test(k)) out.push(k); } }catch(e){} return out.sort(); }
