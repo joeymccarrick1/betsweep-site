@@ -4053,3 +4053,16 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   leg, so "Kirk Cousins against a defense that gives up passing TDs" was Backed with a leg flagged "Backup QB". It now adds the same
   "The builder flags this leg" case against as every other engine (verdict Mixed). (2) tests/new_markets.py: the passing-TD column is
   written only for games with 15+ pass attempts, so the check is "one such game, and none with 150+ passing yards without it".
+
+## 11/25, 1:00 PM CT: Week 12 WR-CB chart loaded; owner's Packers read
+- **Loaded** (owner upload NFL26_CS_WRCB_Week_12.pdf, 2 pages): 'AUTO - WR CB Matchups' rows 503-598, 96 receivers, 32 offenses, no
+  byes, 3 shadows (Olave by D.J. Turner, Metcalf by Surtain, Carnell Tate by Travis Hunter). `wrcb_load.py ... --check` on the
+  mirror: 0 mismatched cells. Column G text was hand-set to "full slate; no byes" (the loader prints "full slate;  on bye" when
+  there are no byes - cosmetic, fix in the loader when next touched). **The tab is at row 598 of the mirror's 2500.**
+- Clay coverage edges: London, Lamb, St. Brown, Golden, Collins, Parker Washington, Jefferson, Smith-Njigba, Evans. Tough coverage:
+  Zay Jones, Fehoko, Iosivas, CJ Daniels, Atwell, Chris Bell, Jennings, Malachi Fields, Tez Johnson, Godwin.
+- Slip read: GB wideouts carry the sheet flag DIFFICULT (LAR ranks 31st v left WRs) though Clay's own delta favors Golden and
+  Watson; all three Rams wideouts have negative deltas. Thursday receiver legs in the logged slips pass the corner check (Burden
+  FAVORABLE; Pickens, Flournoy, Lamb NEUTRAL). research/slipcheck/statcheck.py reads the corner from the BUILD's evidence, so it says
+  "not on chart" until a build made after the load - read in/wrcb.json directly, or rebuild first.
+- Slip log rows 85-94 hold the Thanksgiving-week chat slips (93-94 are the owner's-read Packers slips). None posted as a promo.
