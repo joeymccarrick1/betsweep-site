@@ -145,7 +145,9 @@ def keep(path, why):
 
 GRADING = (("nba/locks/*.json", "nba/record.json", "nba/graded-*.json")
            # 11/22 night: the Premier League's (sports/epl/grade.py); 11/23: the same grader, a folder for each of the other leagues
-           + tuple(f"{lg}/{pat}" for lg in ("epl", "bun", "lal", "sea", "mls") for pat in ("locks/*.json", "record.json", "graded-*.json")))
+           + tuple(f"{lg}/{pat}" for lg in ("epl", "bun", "lal", "sea", "mls") for pat in ("locks/*.json", "record.json", "graded-*.json"))
+           # 11/24: college football's (sports/cfb/grade.py): each postseason game locked at kickoff, and the record
+           + ("cfb/locks/*.json", "cfb/record.json"))
 
 
 def carry():
