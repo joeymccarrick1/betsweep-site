@@ -133,7 +133,7 @@ async def pages():
             opts = await pg.evaluate("Array.from(document.querySelectorAll('#fMarket option')).map(o => o.textContent)")
             check("Passing TDs" in opts and opts.index("Passing TDs") == opts.index("Passing Yards") + 1, T + "the market filter lists Passing TDs, right after Passing Yards")
             check("Kicking Points" in opts and opts.index("Kicking Points") < opts.index("Moneyline"), T + "a market the page was never told about gets a filter option by itself (a new FanDuel market cannot sit unlisted again)")
-            await pg.evaluate("(g) => document.querySelector('.gswb[data-gp=\"' + g + '\"]').click()", gid); await pg.wait_for_timeout(500)
+            await pg.evaluate("(g) => { document.querySelector('.gswb[data-gp=\"' + g + '\"]').click(); for(var n = 0; n < 12; n++){ var pb = document.querySelector('#g-' + g + ' .pgb[aria-expanded=\"false\"]'); if(!pb) break; pb.click(); } }", gid); await pg.wait_for_timeout(500)   # 11/25: the players sit in position folders
             CARD = "(q) => Array.from(document.querySelectorAll('li.pc')).filter(e => e.querySelector('.pname') && e.querySelector('.pname').textContent === q)[0]"
             st = await pg.evaluate("(q) => { var c = (" + CARD + ")(q); if(!c) return null; c.scrollIntoView({block:'start'}); var a = c.querySelector('.pcall'); return {btn: a ? a.textContent : '', boxes: Array.from(c.querySelectorAll('.pb')).map(b => b.dataset.m)}; }", qb)
             check(st is not None and "All props" in st["btn"], T + f"{qb}'s card is in his game with an All props button ({(st or {}).get('btn', '').strip()})")

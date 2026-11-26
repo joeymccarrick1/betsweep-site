@@ -64,7 +64,26 @@ async def main():
                 h_open = (await pg.evaluate(STATE))["h"]; check(s["h"] < h_open, f"[{theme}] folding the played games shortens the page ({s['h']}px closed, {h_open}px open)")
             # ---- a leg's details lead with the last-games picture (in a game still to come) ----
             await pg.goto("http://127.0.0.1:8853/build/?t=2", wait_until="domcontentloaded"); await pg.wait_for_timeout(1800)
+            # ---- 11/25 (owner: "too much scrolling on the parlay builder ... position group as folders ... more compact") ----
+            f = await pg.evaluate("""() => { var g = document.querySelector('#games > section.gcard'); if(!g) return {none: 1}; if(!g.classList.contains('open')) g.querySelector('.ghd').click();
+                g = document.querySelector('#games > section.gcard'); var fs = Array.from(g.querySelectorAll('.pgb')), out = {n: fs.length, open0: fs.filter(function(b){ return b.getAttribute('aria-expanded') === 'true'; }).length, cards0: g.querySelectorAll('li.pc').length,
+                  h0: Math.round(g.getBoundingClientRect().height), names: fs.map(function(b){ return b.querySelector('b').textContent; }), who: fs.every(function(b){ return (b.querySelector('small').textContent || '').length > 2; }), tap: Math.min.apply(null, fs.map(function(b){ return Math.round(b.getBoundingClientRect().height); }))};
+                var k = fs[0].getAttribute('data-pg'); fs[0].click(); g = document.querySelector('#games > section.gcard'); var on = g.querySelector('.pgrp.on');
+                out.cards1 = g.querySelectorAll('li.pc').length; out.inFolder = on ? on.querySelectorAll('li.pc').length : 0; out.openKey = (g.querySelector('.pgb[aria-expanded="true"]') || {getAttribute: function(){}}).getAttribute('data-pg') === k;
+                var o = document.documentElement; out.over = o.scrollWidth - o.clientWidth; out.right = Math.max.apply(null, Array.from(g.querySelectorAll('li.pc, li.pc .pb, li.pc .add')).map(function(e){ return Math.round(e.getBoundingClientRect().right); }).concat([0])); out.vw = innerWidth;
+                var add = g.querySelector('li.pc .add:not(.lockd)'); if(add){ add.click(); g = document.querySelector('#games > section.gcard'); var em = g.querySelector('.pgb[data-pg="' + k + '"] em'); out.pill = em ? em.textContent : ''; add = g.querySelector('li.pc .add.in'); if(add) add.click(); g = document.querySelector('#games > section.gcard'); out.pillGone = !g.querySelector('.pgb[data-pg="' + k + '"] em'); }
+                g.querySelector('.pgb[data-pg="' + k + '"]').click(); g = document.querySelector('#games > section.gcard'); out.cards2 = g.querySelectorAll('li.pc').length; out.h2 = Math.round(g.getBoundingClientRect().height); return out; }""")
+            if f.get("none"): print(f"   [{theme}] no game still to come - folder checks skipped")
+            else:
+                print(f"   [{theme}]", json.dumps(f)[:500])
+                check(f["n"] >= 2 and f["open0"] == 0 and f["cards0"] == 0 and f["who"] and f["tap"] >= 44 and set(f["names"]) <= {"Quarterbacks", "Running backs", "Wide receivers", "Tight ends", "Other"}, f"[{theme}] an open game shows a folder per position naming who is inside, none open, no player card drawn yet ({f['n']} folders, {f['h0']}px)")
+                check(f["h0"] <= 1100, f"[{theme}] an open game with its folders shut is about a screen, not a scroll ({f['h0']}px)")
+                check(f["cards1"] >= 1 and f["cards1"] == f["inFolder"] and f["openKey"], f"[{theme}] opening a folder draws only that position's players ({f['cards1']} cards)")
+                check(f["over"] <= 0 and f["right"] <= f["vw"], f"[{theme}] the cards in a folder stay inside the screen (right edge {f['right']} of {f['vw']})")
+                check(f.get("pill") == "1 in slip" and f.get("pillGone"), f"[{theme}] the folder says how many of its legs are in the slip, and stops when the leg comes out ({f.get('pill')!r})")
+                check(f["cards2"] == 0 and f["h2"] == f["h0"], f"[{theme}] closing the folder puts the game back to its short form ({f['h2']}px)")
             l = await pg.evaluate("""() => { var g = document.querySelector('#games > section.gcard'); if(!g) return {none: 'no game still to come'}; if(!g.classList.contains('open')) g.querySelector('.ghd').click();
+                for(var n = 0; n < 12; n++){ var pb = document.querySelector('#games > section.gcard').querySelector('.pgb[aria-expanded="false"]'); if(!pb) break; pb.click(); }
                 g = document.querySelector('#games > section.gcard'); var bs = Array.from(g.querySelectorAll('.l5, .mkbtn')), out = {tried: 0, n: bs.length};
                 for(var i = 0; i < bs.length && i < 40; i++){ var host = bs[i].closest('.ar') || bs[i].closest('.lg'); if(!host) continue; bs[i].click(); out.tried++; g = document.querySelector('#games > section.gcard');
                   var c = g.querySelector('.hist .l10b'); if(c){ var hist = c.closest('.hist'), o = document.documentElement; c.scrollIntoView({block: 'center'});

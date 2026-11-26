@@ -4087,3 +4087,20 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   leg-by-leg link (`fdUrl`) as before. Save slip on a card stores the same link. A share link is the poster's word for what is on
   his slip - the card's legs are still what we grade. Tests: fd_share (new, in the prepublish list), import_batch, me_livebox.
 - Not done: a share-link box on builder saves or on the post form itself; ask before adding.
+
+## 11/25 11:40 PM: Parlay Builder - position folders in an open game, tighter cards
+- Owner: "There's too much scrolling on the parlay builder ... go by position group as folders and also make everything more compact."
+  An open game was one card per player in a single run: CHI-DET had 18 players and stood about 6,900px tall on a phone.
+- **Folders** (build_builder.py `renderGames`): under each team an open game lists a folder per position - Quarterbacks, Running backs,
+  Wide receivers, Tight ends (`.pgrp` > `button.pgb[data-pg="game|team|pos"]`), each naming who is inside by last name. All start
+  shut; a folder's cards are drawn only while it is open (`openPos`, kept across re-draws; the click handler sits just above the
+  game-header one). The same game is about 760px with the folders shut. `pgMarks()` (called from `renderSlip`) keeps an "N in slip"
+  pill on each folder without re-drawing the games.
+- **Tighter cards** (`.gbody.cmp` only - the Search list keeps the old card): the matchup pill, player page link and snaps chip run
+  across the full card width under the name (`.pcn{display:contents}` on a three-column grid), the "TEAM vs OPP · kickoff" text is
+  dropped there (the game card already says it; `st.view === 'games'` in `card()`), smaller paddings.
+- **Fixed on the way**: on phones the prop box ran past its card - `.pc .pcb` was a grid with an auto column, so a long chip row
+  ("best rung", "proven zone") widened the box and cut off the 3+ button and half of "+ Add". Now `minmax(0,1fr)` up to 900px, the
+  segment row wraps, and the chips wrap inside the model column.
+- Tests that open a game now open its folders first (builder_fold, inactive_block, new_markets); builder_fold carries the folder
+  checks. Anything new that looks for `li.pc` inside `#games` must open a folder (`.pgb[aria-expanded="false"]`) first.

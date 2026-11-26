@@ -94,7 +94,7 @@ async def main():
 
         # ---- Builder: open his game, tap one of his legs ----
         pg, ctx, errs, _ = await page("/build/", P1)
-        r = await pg.evaluate("(a) => { " + VIS + """ var c = document.getElementById('g-' + a[1]); if(!c) return {card: false}; var h = c.querySelector('.ghd'); if(h && h.getAttribute('aria-expanded') !== 'true') h.click(); return {card: true}; }""", [P1, lastg])
+        r = await pg.evaluate("(a) => { " + VIS + """ var c = document.getElementById('g-' + a[1]); if(!c) return {card: false}; var h = c.querySelector('.ghd'); if(h && h.getAttribute('aria-expanded') !== 'true') h.click(); for(var n = 0; n < 12; n++){ var pb = document.getElementById('g-' + a[1]).querySelector('.pgb[aria-expanded="false"]'); if(!pb) break; pb.click(); } return {card: true}; }""", [P1, lastg])
         await pg.wait_for_timeout(1300)
         r = await pg.evaluate("(P) => { " + VIS + """ var pc = qa('li.pc[data-pk]').filter(function(e){ return e.getAttribute('data-pk').split('|')[0] === P; })[0]; if(!pc) return {row: false};
           pc.scrollIntoView({block: 'center'}); var bt = qa('button.add', pc).filter(vis)[0]; if(bt) bt.click();
