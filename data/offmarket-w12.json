@@ -480,6 +480,30 @@
    "gap": 5.9,
    "p": 0.4642,
    "seen": "2026-11-26 6:35"
+  },
+  "Javonte Williams|Receptions|3": {
+   "pl": "Javonte Williams",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "DAL-PHI",
+   "fd": 210.0,
+   "dk": 182.0,
+   "hr": 165.0,
+   "gap": 3.2,
+   "p": 0.3675,
+   "seen": "2026-11-26 9:35"
+  },
+  "Brevyn Spann-Ford|Receptions|3": {
+   "pl": "Brevyn Spann-Ford",
+   "m": "Receptions",
+   "ln": 3.0,
+   "g": "DAL-PHI",
+   "fd": 188.0,
+   "dk": 159.0,
+   "hr": 145.0,
+   "gap": 3.9,
+   "p": 0.257,
+   "seen": "2026-11-26 9:35"
   }
  }
 }
