@@ -1,8 +1,8 @@
 {
  "news": [],
  "week": 12,
- "built": "Thu 11/26 1:21 PM",
- "checked": "2026-11-26T20:12:12Z",
+ "built": "Thu 11/26 2:22 PM",
+ "checked": "2026-11-26T20:42:14Z",
  "legs_checked": 1136,
  "moves": [
   {
@@ -15,7 +15,7 @@
    "built": -145,
    "now": 100.0,
    "pts": -9.2,
-   "p": 0.5454,
+   "p": 0.5465,
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
