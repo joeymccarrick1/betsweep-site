@@ -432,6 +432,54 @@
    "gap": 10.5,
    "p": 0.2146,
    "seen": "2026-11-26 6:35"
+  },
+  "Kaytron Allen|Anytime TD|1": {
+   "pl": "Kaytron Allen",
+   "m": "Anytime TD",
+   "ln": 1,
+   "g": "MIA-NYJ",
+   "fd": 2700.0,
+   "dk": 1300.0,
+   "hr": 1400.0,
+   "gap": 3.1,
+   "p": 0.0546,
+   "seen": "2026-11-26 6:35"
+  },
+  "Jaylen Wright|Anytime TD|1": {
+   "pl": "Jaylen Wright",
+   "m": "Anytime TD",
+   "ln": 1,
+   "g": "MIA-NYJ",
+   "fd": 750.0,
+   "dk": 475.0,
+   "hr": 450.0,
+   "gap": 5.6,
+   "p": 0.1343,
+   "seen": "2026-11-26 6:35"
+  },
+  "Noah Gray|Anytime TD|1": {
+   "pl": "Noah Gray",
+   "m": "Anytime TD",
+   "ln": 1,
+   "g": "BUF-KC",
+   "fd": 750.0,
+   "dk": 550.0,
+   "hr": 525.0,
+   "gap": 3.6,
+   "p": 0.1202,
+   "seen": "2026-11-26 6:35"
+  },
+  "Breece Hall|Anytime TD|1": {
+   "pl": "Breece Hall",
+   "m": "Anytime TD",
+   "ln": 1,
+   "g": "MIA-NYJ",
+   "fd": 115.0,
+   "dk": -110.0,
+   "hr": -110.0,
+   "gap": 5.9,
+   "p": 0.4642,
+   "seen": "2026-11-26 6:35"
   }
  }
 }
