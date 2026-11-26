@@ -113,6 +113,20 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
 .gteamlist h3 .hint{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:3px 10px;white-space:nowrap} .gteamlist h3 .hint .car{font-style:normal} @media (max-width:560px){ .gteamlist h3 .hint span{display:none} .gteamlist h3 .hint{font-size:10.5px;padding:3px 8px} }
 .gteamlist h3 .badge{width:26px;height:26px;font-size:10px;border-radius:5px} .gteamlist h3 small{font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;color:var(--mute);margin-left:auto;font-size:11px}
 .gteamlist .legs{max-height:none;overflow:visible}
+/* 11/25: position folders in an open game, and tighter player cards inside them */
+.pgrp{border-bottom:1px solid var(--line)} .gteamlist .pgrp:last-child{border-bottom:0}
+.pgb{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:8px 14px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.pgb b{flex:none;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.03em} .pgb small{flex:1;min-width:0;font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgb em{flex:none;font-style:normal;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--red);color:#fff} .pgb .car{flex:none;font-style:normal;font-size:11px;color:var(--mute)}
+.pgrp.on > .pgb{background:color-mix(in srgb,var(--chalk) 60%,transparent)} .pgb:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.gbody.cmp > .gteamlist{min-width:0} .gbody.cmp .pgrp .legs{padding:8px 8px 0}
+.gbody.cmp .pc{margin:0 0 8px;border-radius:11px} .gbody.cmp .pc .pch{padding:9px 10px 5px;gap:8px} .gbody.cmp .pc .pcn > b{font-size:15.5px} .gbody.cmp .pc .pcn .pcg{margin-top:2px;gap:3px 8px;font-size:11.5px}
+@media (max-width:900px){ .pc .pcb{grid-template-columns:minmax(0,1fr)} }
+.gbody.cmp .pc .pch{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:8px;row-gap:5px} .gbody.cmp .pc .pch .pz{padding-top:0;width:auto;min-width:20px}
+.gbody.cmp .pc .pcn{display:contents} .gbody.cmp .pc .pcn > b{grid-column:2;grid-row:1} .gbody.cmp .pc .pcall{grid-column:3;grid-row:1} .gbody.cmp .pc .pcn .pcg{grid-column:1 / -1;grid-row:2;margin-top:0}
+.gbody.cmp .pb .pbh{flex-wrap:wrap;row-gap:6px} .gbody.cmp .pb .seg{max-width:100%} .gbody.cmp .pb .seg button{padding:4px 8px}
+.gbody.cmp .pb .pbn{min-width:0;max-width:100%} .gbody.cmp .pb .pbn small{line-height:1.55;white-space:normal}
+.gbody.cmp .pc .pcb{gap:6px;padding:0 8px 8px} .gbody.cmp .pb{padding:7px 10px 8px} .gbody.cmp .pb .pbh{margin-bottom:2px} .gbody.cmp .pb .pbm{margin:5px 0 5px} .gbody.cmp .pb .tierb{margin-top:6px}
 .ghd .gsum .opn{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:4px 11px;white-space:nowrap;transition:background .12s,color .12s}
 .ghd .gsum .opn.on{background:var(--red);color:#fff}
 @media (hover:hover) and (pointer:fine){ .ghd:hover:not(:disabled) .gsum .opn{background:var(--red);color:#fff} }
@@ -448,7 +462,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
   <div class="mast">
     <img src="/logo.png" alt="BetSweep">
     <h1><small>Week 12</small><b>Parlay Builder</b></h1>
-    <p>Every FanDuel player prop on the Week 12 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Thu 11/26 12:08 AM CT.</p>
+    <p>Every FanDuel player prop on the Week 12 slate, priced against the model. Filter to what you like, tap legs into a slip, and see the model's fair odds for the whole parlay next to FanDuel's. Built Thu 11/26 12:54 AM CT.</p>
   </div>
   <nav class="nav" aria-label="jump to game"><a href="/boards/" class="tool">Matchup Boards</a> <a href="#g-CHI-DET">CHI·DET</a> <a href="#g-DAL-PHI">DAL·PHI</a> <a href="#g-BUF-KC">BUF·KC</a> <a href="#g-DEN-PIT">DEN·PIT</a> <a href="#g-ATL-MIN">ATL·MIN</a> <a href="#g-BAL-HOU">BAL·HOU</a> <a href="#g-CIN-NO">CIN·NO</a> <a href="#g-IND-NYG">IND·NYG</a> <a href="#g-JAX-TEN">JAX·TEN</a> <a href="#g-MIA-NYJ">MIA·NYJ</a> <a href="#g-LAC-NE">LAC·NE</a> <a href="#g-ARI-WAS">ARI·WAS</a> <a href="#g-SEA-SF">SEA·SF</a> <a href="#g-CLE-LV">CLE·LV</a> <a href="#g-CAR-TB">CAR·TB</a> <a href="#g-GB-LA" class="played">GB·LA</a></nav>
   
@@ -523,7 +537,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
    <p class="note" id="bknote" style="padding-top:0"></p>
    <p class="note" style="padding-top:0">DraftKings and Hard Rock load the same legs on their betslip at their price (nearest line where they don't post ours - the note above lists any). Model, edges and grading stay against FanDuel.</p>
    <div class="saved" id="saved"><h3>Saved slips <small>build a few, compare, send the one you like · <a href="/me/#import" style="color:inherit">import a FanDuel screenshot</a></small></h3><div id="savedList"></div></div>
-   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Thu 11/26 12:08 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
+   <p class="note">Model % is the model's history-adjusted hit rate for that line, blended 50/50 with FanDuel's price (see "What do the numbers mean?"); book % is what FanDuel's price implies; edge is the difference in points (positive = the price pays more than the risk deserves). "Fair" prices the whole combination: legs from different games are independent, legs from the same game are linked with the model's correlations (receptions ↔ receiving yards, QB ↔ his receivers, and so on). Odds move; this page was built Thu 11/26 12:54 AM CT. Information only, not a guarantee — 21+, please bet responsibly.</p>
   </section>
  </aside>
 </div>
@@ -549,7 +563,7 @@ body.compact .card:not(.expanded) > .tick:not([hidden]){display:grid}
 .sdlg .asn{font-size:13px;color:var(--ink,#141a24)} .sdlg .asn b{font-weight:700} .sdlg .sdl{padding:8px 10px;border:1px solid var(--line,#d3cbb8);border-radius:9px;line-height:1.45} .sdlg .sdl[hidden]{display:none}
 .sdlg .msg{font-size:13px;margin-top:8px;min-height:1.2em}.sdlg .msg.err{color:#d7332a}
 </style>
-<script src="/build/data-eb844bd675f1.js"></script>
+<script src="/build/data-5dca00144453.js"></script>
 <script>
 window.BSLive = (function(){
   var ESPN = {WSH:'WAS', LAR:'LA'};
@@ -737,6 +751,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
   function snChip(l){ if(l.sn == null) return ''; var l3 = (l.sn3 || []).map(function(x){ return Math.round(x*100); }).join(' · ');
     return '<span class="snchip" title="Projected offensive snap share for this game; last three games newest first' + (l.snw ? '; ' + esc(l.snw) : '') + '">Snaps ~' + Math.round(l.sn*100) + '%' + (l3 ? ' (' + l3 + ')' : '') + '</span>'; }
   var openG = {};   // game cards opened on the Games view
+  var openPos = {};   // 11/25: position folders opened inside a game card, keyed game|team|position
   var openL = {};   // 11/18: game cards whose price grid is open on a phone (the "Game lines" button; wide screens always show the grid)
   var openAlt = {}; // Alt game lines panel open per game
   function lum(h){ h = h.replace('#',''); var r = parseInt(h.substr(0,2),16)/255, g = parseInt(h.substr(2,2),16)/255, b = parseInt(h.substr(4,2),16)/255; return 0.2126*r + 0.7152*g + 0.0722*b; }
@@ -1095,10 +1110,19 @@ window.BSBooks = { attach: function(btn, panel, getText){
         (off || !gl.length ? '' : '<span class="opn' + (open ? ' on' : '') + '">' + (open ? 'Hide player legs <i class="car">▴</i>' : 'Tap for player legs <i class="car">▾</i>') + '</span>') + '</span></button>';
       var body = '';
       if(open){
-        var teams = [g.a, g.b]; body = '<div class="gbody">' + teams.map(function(tm){
+        // owner 11/25 11:35 PM ("There's too much scrolling on the parlay builder ... go by position group as folders and also make
+        // everything more compact"): an open game was every player's card in one run - 18 players, about 6,900px on a phone. Each team
+        // now shows a folder per position (Quarterbacks, Running backs, Wide receivers, Tight ends) naming who is inside; a folder's
+        // cards are drawn only while it is open, and `openPos` keeps the reader's folders across re-draws.
+        var PN = {QB: 'Quarterbacks', RB: 'Running backs', WR: 'Wide receivers', TE: 'Tight ends', X: 'Other'};
+        var lastN = function(n){ var q = String(n).replace(/\s+(Jr\.?|Sr\.?|II|III|IV|V)$/i, '').split(' '); return (q.length > 2 && /^(St\.?|Van|De|Del|La|Le|Mc)$/i.test(q[q.length - 2]) ? q[q.length - 2] + ' ' : '') + q[q.length - 1]; };
+        var teams = [g.a, g.b]; body = '<div class="gbody cmp">' + teams.map(function(tm){
           var rows = gl.filter(function(l){ return l.tm === tm; }).sort(function(a,b){ return (posOrd[a.pos] != null ? posOrd[a.pos] : 9) - (posOrd[b.pos] != null ? posOrd[b.pos] : 9) || b.p - a.p; });
-          var html = cards(rows);   // QB, then RB, WR, TE - one card per player
-          return '<div class="gteamlist"><h3>' + badge(tm, tm === g.a ? g.ca : g.cb) + ' ' + (tm === g.a ? esc(g.na) : esc(g.nb)) + '</h3><ul class="legs">' + (html || '<li class="more">No FanDuel legs priced yet.</li>') + '</ul></div>';
+          var html = ['QB', 'RB', 'WR', 'TE', 'X'].map(function(ps){ var rs = rows.filter(function(l){ return ps === 'X' ? posOrd[l.pos] == null : l.pos === ps; }); if(!rs.length) return '';
+            var k = gid + '|' + tm + '|' + ps, on = !!openPos[k], ins = legs.filter(function(l){ return sel[l.i] && l.g === gid && l.tm === tm && !isGL(l) && (ps === 'X' ? posOrd[l.pos] == null : l.pos === ps); }).length;
+            return '<div class="pgrp' + (on ? ' on' : '') + '"><button type="button" class="pgb" data-pg="' + esc(k) + '" aria-expanded="' + on + '"><b>' + PN[ps] + '</b><small>' + rs.map(function(l){ return esc(lastN(l.pl)); }).join(', ') + '</small>' +
+              (ins ? '<em>' + ins + ' in slip</em>' : '') + '<i class="car">' + (on ? '▴' : '▾') + '</i></button>' + (on ? '<ul class="legs">' + cards(rs) + '</ul>' : '') + '</div>'; }).join('');   // QB, then RB, WR, TE - one card per player
+          return '<div class="gteamlist"><h3>' + badge(tm, tm === g.a ? g.ca : g.cb) + ' ' + (tm === g.a ? esc(g.na) : esc(g.nb)) + '</h3>' + (html || '<ul class="legs"><li class="more">No FanDuel legs priced yet.</li></ul>') + '</div>';
         }).join('') + '</div>';
       }
       var lv = LV[gid], tk = (lv && window.BSLive) ? window.BSLive.tickHtml(g, lv) : '';
@@ -1284,7 +1308,12 @@ window.BSBooks = { attach: function(btn, panel, getText){
   document.addEventListener('click', function(ev){ var t = ev.target; if(!t.closest) return;
     var b = t.closest('#scen .scr'); if(b){ var gid = b.getAttribute('data-g'), k = +b.getAttribute('data-k'); if(SCN[gid] === k) delete SCN[gid]; else SCN[gid] = k; renderSlip(); renderList(); return; }
     if(t.closest('#scen .scclr')){ SCN = {}; renderSlip(); renderList(); } });
+  // 11/25: each position folder says how many of its players' legs are in the slip; kept right without re-drawing the games
+  function pgMarks(){ document.querySelectorAll('#games .pgb[data-pg]').forEach(function(b){ var q = b.dataset.pg.split('|'), ps = q[2], em = b.querySelector('em');
+    var n = legs.filter(function(l){ return sel[l.i] && l.g === q[0] && l.tm === q[1] && !isGL(l) && (ps === 'X' ? ['QB', 'RB', 'WR', 'TE'].indexOf(l.pos) < 0 : l.pos === ps); }).length;
+    if(n){ if(!em){ em = document.createElement('em'); b.insertBefore(em, b.querySelector('.car')); } em.textContent = n + ' in slip'; } else if(em) em.remove(); }); }
   function renderSlip(){
+    pgMarks();
     try { document.dispatchEvent(new CustomEvent('bs-slip')); } catch(e){}   // the menu's Ask BetSweep repaints its "In your slip" buttons (ask.py)
     var scb = $('#scen'); if(!scb){ var tk = $('#take'); if(tk){ scb = document.createElement('div'); scb.id = 'scen'; scb.className = 'scen'; tk.parentNode.insertBefore(scb, tk.nextSibling); } }
     var ls = slipLegs(); var ul = $('#slipLegs');
@@ -1623,7 +1652,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var boxes = shownM.map(function(m){ return m === 'TD' ? tdBox(pl, pos) : statBox(pl, m, pos); }).join('');
     return '<li class="pc' + (open ? ' open' : '') + '" data-pk="' + esc(key) + '" data-i="' + any.i + '">' +
       '<div class="pch"><span class="pz">' + pos + '</span><div class="pcn"><b><a class="pname" href="/player/' + plSlug(pl) + '/" title="' + esc(pl) + ': lines at every book, hit rates, game log">' + esc(pl) + '</a>' + flagMark(any) + (any.gd ? ' <span class="gdo">' + esc(any.gd) + '</span>' : '') + '</b>' +
-      '<span class="pcg">' + posMatch(any) + '<small>' + any.tm + ' vs ' + any.opp + ' · ' + esc(g.kick) + ' · <a class="pplink" href="https://betsweep.co/player/' + plSlug(pl) + '/" title="His page: lines at every book, hit rates, snap share, game log">player page</a></small>' + snChip(any) + '</span></div>' +
+      '<span class="pcg">' + posMatch(any) + '<small>' + (st.view === 'games' ? '' : any.tm + ' vs ' + any.opp + ' · ' + esc(g.kick) + ' · ') + '<a class="pplink" href="https://betsweep.co/player/' + plSlug(pl) + '/" title="His page: lines at every book, hit rates, snap share, game log">player page</a></small>' + snChip(any) + '</span></div>' +
       (nAll > 1 ? '<button type="button" class="pcall" aria-expanded="' + open + '" title="Every prop for this player">' + (open ? 'Less <i class="car">▴</i>' : 'All props' + (more ? ' (' + nAll + ')' : '') + ' <i class="car">▾</i>') + '</button>' : '') + '</div>' +
       whyBlock(any) + '<div class="pcb">' + boxes + '</div></li>';
   }
@@ -1663,6 +1692,7 @@ window.BSBooks = { attach: function(btn, panel, getText){
     var gb = ev.target.closest('.glb[data-i]'); if(gb){ if(!gb.disabled) toggle(+gb.dataset.i); return; }
     var ab = ev.target.closest('.altbtn'); if(ab){ var ag = ab.dataset.g; if(openAlt[ag]) delete openAlt[ag]; else openAlt[ag] = true; renderGames(); return; }
     var gsl = ev.target.closest('.gswb[data-gl]'); if(gsl){ var lg = gsl.dataset.gl; if(openL[lg]) delete openL[lg]; else openL[lg] = true; renderGames(); return; }
+    var pg = ev.target.closest('.pgb[data-pg]'); if(pg){ var pk = pg.dataset.pg; if(openPos[pk]) delete openPos[pk]; else openPos[pk] = true; renderGames(); return; }
     var gh = ev.target.closest('.ghd, .gswb[data-gp]'); if(gh){ var gid = gh.dataset.g || gh.dataset.gp; if(openG[gid]) delete openG[gid]; else openG[gid] = true; renderGames(); if(openG[gid]) $('#g-' + gid).scrollIntoView({block:'start', behavior:'smooth'}); return; }
     var pn = ev.target.closest('.pn.cyc'); if(pn){ var ok = pn.dataset.orig; var li = pn.closest('.lg'); var cur = legs[+li.dataset.i];
       var orig = legs.filter(function(x){ return x.pl + '|' + x.m === ok; })[0]; if(!orig) return; var cl = cycleList(orig); var j = cl.findIndex(function(x){ return x.i === cur.i; }); var nx = cl[(j + 1) % cl.length];
