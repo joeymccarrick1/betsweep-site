@@ -65,7 +65,7 @@ VIEW = """() => { var out = document.getElementById('impout'), sb = document.get
     all: sb ? sb.textContent + (sb.disabled ? ' (off)' : '') : null, one: !!document.getElementById('impsave'), load: !!document.getElementById('impload'), more: !!document.getElementById('impmore'), clear: !!document.getElementById('impclear'),
     count: (out.querySelector('.impcount') || {}).textContent || '', note: (out.querySelector('.impnote') || {}).textContent || '', st0: (out.querySelector('.st') || {}).textContent || '', over: document.documentElement.scrollWidth - innerWidth,
     hs: Array.from(out.querySelectorAll('.impact button')).map(function(x){ return Math.round(x.getBoundingClientRect().height); })}; }"""
-SAVED = "() => (JSON.parse(localStorage.getItem('bs_slips_w%d') || '[]')).map(function(s){ return {id: s.id, name: s.name, keys: s.keys, odds: s.odds, stake: s.stake, src: s.src, posted: s.posted}; })" % W
+SAVED = "() => (JSON.parse(localStorage.getItem('bs_slips_w%d') || '[]')).map(function(s){ return {id: s.id, name: s.name, keys: s.keys, odds: s.odds, stake: s.stake, src: s.src, posted: s.posted, sc: s.sc || null, fd: s.fd || null}; })" % W
 DONE = """() => { var out = document.getElementById('impout'); return {st: (out.querySelector('.st') || {}).textContent || '', rows: Array.from(out.querySelectorAll('.impdone li')).map(function(li){ var p = li.querySelector('button[data-psb]'), n = li.querySelector('.psn');
   return {name: li.querySelector('b').textContent, sub: li.querySelector('small').textContent, load: !!li.querySelector('button[data-load]'), post: p ? (p.hidden ? 'hidden' : p.textContent + ' ' + Math.round(p.getBoundingClientRect().height)) : null, note: n && !n.hidden ? n.textContent : ''}; }),
   list: Array.from(document.querySelectorAll('#slips li.sl')).map(function(li){ return li.querySelector('b').textContent + (li.querySelector('a.pon') ? ' [on social]' : li.querySelector('button.psb') ? ' [post]' : ''); }), over: document.documentElement.scrollWidth - innerWidth}; }"""
@@ -125,11 +125,20 @@ async def main():
             await pg.evaluate("document.querySelectorAll('#impout .impon')[1].click()"); await pg.wait_for_timeout(120); t2 = await pg.evaluate("document.getElementById('impsaveall').textContent")
             check(t1 == "Save 1 slip" and t2 == "Save 2 slips", f"[{theme}] unticking a screenshot takes it out of the count ({t1} -> {t2})")
             if SHOTS: await pg.evaluate("document.getElementById('import').scrollIntoView({block: 'start'}); window.scrollBy(0, -70)"); await pg.wait_for_timeout(200); await pg.screenshot(path=f"{SHOTS}/import-two-{theme}.png", full_page=False)
+            # ---------- 11/25: the optional FanDuel share link (owner: "add the fanduel link when they import a slip") ----------
+            lk = await pg.evaluate("Array.from(document.querySelectorAll('#impout .impb .implink')).map(function(x){ var r = x.getBoundingClientRect(); return [x.value, Math.round(r.height), Math.round(r.right), x.getAttribute('aria-label')]; })")
+            check(len(lk) == 2 and all(x[0] == "" and x[1] >= 34 and x[2] <= 390 and x[3] == "FanDuel share link (optional)" for x in lk), f"[{theme}] each screenshot has an optional FanDuel share link box that fits the screen ({lk})")
+            await pg.evaluate("(function(){ var x = document.querySelectorAll('#impout .impb .implink')[1]; x.value = 'https://evil.example/addToBetslip?shareCode=abcd1234'; })()")
+            await pg.click("#impsaveall"); await pg.wait_for_timeout(400); nt = await pg.evaluate("(document.querySelector('#impout .impnote') || {}).textContent || ''"); svb = await pg.evaluate(SAVED)
+            check("Screenshot 2" in nt and "not a FanDuel share link" in nt and len(svb) == 1, f"[{theme}] a link that is not FanDuel's stops the save and says which screenshot ({nt[:70]!r}, {len(svb)} saved)")
+            await pg.evaluate("(function(){ var x = document.querySelectorAll('#impout .impb .implink')[1]; x.value = ' https://sportsbook.fanduel.com/addToBetslip?shareCode=awW1ftu '; })()")
             await pg.click("#impsaveall"); await pg.wait_for_timeout(1500); sv = await pg.evaluate(SAVED); dn = await pg.evaluate(DONE)
             print(f"   [{theme}]", json.dumps(sv, ensure_ascii=False)[:700]); print(f"   [{theme}]", json.dumps(dn, ensure_ascii=False)[:800])
             new = [s for s in sv if s["src"] == "fanduel-screenshot"]
             check(len(sv) == 3 and len(new) == 2 and new[0]["name"] == "My first" and new[0]["keys"] == [A] and new[0]["odds"] == 264 and new[1]["name"] == "FanDuel 2-leg +650" and new[1]["keys"] == [A, C] and new[1]["odds"] == 650 and new[1]["stake"] == 5 and new[0]["id"] != new[1]["id"],
                   f"[{theme}] Save 2 slips saves both, each with its own legs, name, price and stake ({[(s['name'], len(s['keys']), s['odds']) for s in new]})")
+            check(new[1]["sc"] == "awW1ftu" and new[1]["fd"] == "https://sportsbook.fanduel.com/addToBetslip?shareCode=awW1ftu" and new[0]["sc"] is None and new[0]["fd"] is None,
+                  f"[{theme}] the slip keeps the share code and FanDuel's link; the one saved without a link has neither ({new[1]['sc']}, {new[0]['sc']})")
             check(dn["st"].startswith("Saved 2 slips. They are in your list below") and [r["name"] for r in dn["rows"]] == ["My first", "FanDuel 2-leg +650"] and all(r["load"] and (r["post"] or "").startswith("Post to Social") and int(r["post"].split(" ")[-1]) >= 40 for r in dn["rows"]) and dn["over"] <= 0,
                   f"[{theme}] the card then lists what was saved, each with Load into betslip and Post to Social ({dn['st'][:40]} | {[r['post'] for r in dn['rows']]})")
             check("My first [post]" in dn["list"] and "FanDuel 2-leg +650 [post]" in dn["list"] and "Saved before [post]" in dn["list"], f"[{theme}] and both are in the saved slips list under it straight away ({dn['list']})")
@@ -140,6 +149,8 @@ async def main():
             check(d["open"] and d["odds"] == "+650" and d["title"] == "" and d["legs"].startswith("2 legs: "), f"[{theme}] Post to Social in that list opens the post form with the screenshot's price ({d})")
             await pg.click("#sdGo"); await pg.wait_for_timeout(1800); dn = await pg.evaluate(DONE); sv = await pg.evaluate(SAVED)
             po = await pg.evaluate("() => { var r = window.__posted; return r ? {keys: r.legs.map(function(l){ return l.k; }), odds: r.fd_odds, week: r.week} : null; }")
+            psc = await pg.evaluate("() => { var r = window.__posted; return r ? r.legs.map(function(l){ return l.sc || null; }) : null; }")
+            check(psc == ["awW1ftu", None], f"[{theme}] posting it to Social carries the share code on the post ({psc})")
             check(po == {"keys": [A, C], "odds": 650, "week": W} and dn["rows"][1]["post"] == "hidden" and dn["rows"][1]["note"].startswith("Posted to Social.") and dn["rows"][0]["post"].startswith("Post to Social") and [s for s in sv if s["name"] == "FanDuel 2-leg +650"][0]["posted"] == 77,
                   f"[{theme}] it posts that slip, its button goes away and the row says Posted to Social; the other slip can still be posted ({po}, {dn['rows'][1]})")
             check("FanDuel 2-leg +650 [on social]" in dn["list"] and "My first [post]" in dn["list"], f"[{theme}] the saved slips list under it shows it as On Social ({dn['list']})")

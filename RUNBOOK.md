@@ -4066,3 +4066,24 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   FAVORABLE; Pickens, Flournoy, Lamb NEUTRAL). research/slipcheck/statcheck.py reads the corner from the BUILD's evidence, so it says
   "not on chart" until a build made after the load - read in/wrcb.json directly, or rebuild first.
 - Slip log rows 85-94 hold the Thanksgiving-week chat slips (93-94 are the owner's-read Packers slips). None posted as a promo.
+
+## 11/25 late: saved-slip rows on My BetSweep, and the FanDuel share link on an imported slip
+- **Slip rows** (owner screenshot 11:19 PM, "Make this look better"; account.py ME_JS + its CSS): name and result chip on one line, the
+  meta line under it (price with thousands separators via `oddsC`, units won or lost colored in `.pl.up` / `.pl.dn`), "One leg away" in
+  a quiet box, then one action row (`.sla`: Bet / Load into betslip / Post to Social, with the Legs button at its right - the Legs
+  button now lives INSIDE `.sla`, and its handler toggles `closest('li')`). Legs open one per row (`.legs .lg`: icon, label `.ln`,
+  result `em.ra` on the right, no brackets). Tests still read the first `<b>` as the name and `.res` as the result.
+- **"not played yet"**: while a week is read live from ESPN (`d.live`), a leg with no stat line says "not played yet" when its game
+  (the slip's game map) is not among the finished ones, or, with no game on record, while any game of the week is still open
+  (`d.open` = scoreboard events not final). "no stat line yet" when his game is final. Tuesday's file keeps "no box score (did not
+  play?)". `noBox(d, gid)` in gradeKey. Before this every Thursday leg under a Wednesday-night slip read "did not play?".
+- **FanDuel share link on import** (owner 11:22 PM: "people can add the fanduel link when they import a slip ... use directly to
+  fanduel from people's slips on socials ... each legs url as a backup"): each screenshot block has an optional box (`.implink`).
+  `fdCode()` (slipimport.py, also `BSImport.fdCode`) accepts ONLY https://[xx.]sportsbook.fanduel.com/addToBetslip?...shareCode=<4-16
+  letters/digits> and keeps the code; anything else typed stops the save with a note naming the screenshot. The slip is saved with
+  `sc` (the code) and `fd` (the link rebuilt on FanDuel's address), so its row gets Bet on FanDuel. Posting the WHOLE slip to Social
+  puts the code on the first leg of the post (`legs[0].sc`; no new column, the post guard does not check leg keys). The feed's
+  `shareUrl(ls)` rebuilds the link from a code that passes the same pattern and uses it while no leg has kicked off; otherwise the
+  leg-by-leg link (`fdUrl`) as before. Save slip on a card stores the same link. A share link is the poster's word for what is on
+  his slip - the card's legs are still what we grade. Tests: fd_share (new, in the prepublish list), import_batch, me_livebox.
+- Not done: a share-link box on builder saves or on the post form itself; ask before adding.

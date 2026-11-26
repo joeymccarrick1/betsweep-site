@@ -386,6 +386,13 @@ ME_CSS = """
 .me li.sl.wkoff{display:none} .me li.sl .legs{display:none} .me li.sl.lo .legs{display:block}
 .me .sla{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px} .me .sla a.fdl,.me .sla button{display:inline-flex;align-items:center;min-height:34px;padding:0 11px;margin-left:0;font-size:12.5px}
 .me li.sl small.clv,.me li.sl small.away{display:block;margin-top:3px;font-size:12.5px;color:var(--mute)} .me li.sl small.away b{color:var(--ink)} .me li.sl .legs em.cl{font-style:normal;font-size:11.5px;color:var(--mute);margin-left:4px} .me li.sl .legs em.cl.up{color:var(--good)} .me li.sl .legs em.cl.dn{color:var(--bad)}
+.me li.sl{row-gap:6px} .me li.sl > b{font-size:19px;line-height:1.15;min-width:0} .me li.sl > .res{margin-left:auto}
+.me li.sl small.mt{flex-basis:100%;font-size:13px;line-height:1.5} .me li.sl .pl{font-weight:700;white-space:nowrap} .me li.sl .pl.up{color:var(--good)} .me li.sl .pl.dn{color:var(--bad)}
+.me li.sl small.clv{flex-basis:100%} .me li.sl small.away{flex-basis:100%;box-sizing:border-box;margin-top:0;padding:8px 10px;border-radius:8px;background:var(--chalk);line-height:1.45} .me li.sl small.away b{font-family:inherit;font-size:13px;font-weight:600}
+.me li.sl .sla{flex-basis:100%;margin:2px 0 0;align-items:center} .me li.sl .sla .lgt{margin-left:auto;min-height:34px;padding:0 12px;border-radius:17px} .me li.sl .sla .lgt i{margin-left:5px}
+.me li.sl.lo .legs{display:block;margin-top:2px} .me .legs .lg{display:flex;gap:9px;align-items:center;padding:8px 0;border-top:1px solid var(--line)} .me .legs .lg:first-child{border-top:0}
+.me .legs .lg .ln{flex:1;min-width:0;color:var(--ink);font-size:13.5px;line-height:1.35} .me .legs .lg em.ra{font-style:normal;color:var(--mute);font-size:12.5px;text-align:right;white-space:nowrap}
+.me .legs .lg i.g{flex:none;box-sizing:border-box;width:20px;height:20px;line-height:20px;font-size:12px;margin-right:0} .me .legs .lg i.g.na{background:transparent;border:1.5px solid var(--line);color:var(--mute);line-height:17px}
 .me .lgt{font:inherit;font-size:12px;font-weight:600;color:var(--mute,#6b655c);background:none;border:1px solid var(--line,#d8d1c2);border-radius:12px;padding:1px 9px;cursor:pointer} .me .lgt i{font-style:normal;display:inline-block;transition:transform .15s} .me li.sl.lo .lgt i{transform:rotate(180deg)}
 .me a.fdl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#1493ff;color:#fff;padding:3px 9px;border-radius:4px;text-decoration:none}
 """
@@ -404,6 +411,7 @@ ME_JS = r"""
   function keys(re){ var out = []; try{ for (var i=0;i<localStorage.length;i++){ var k = localStorage.key(i); if (re.test(k)) out.push(k); } }catch(e){} return out.sort(); }
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function odds(o){ o = +o; return isNaN(o) ? '' : (o > 0 ? '+' + o : String(o)); }
+  function oddsC(o){ o = +o; if (isNaN(o)) return ''; var t = String(Math.abs(Math.round(o))).replace(/\B(?=(\d{3})+(?!\d))/g, ','); return (o > 0 ? '+' : '-') + t; }   // 11/25: +199085 reads as +199,085 in the slip list
   var NICK = {"Cardinals":"ARI","Falcons":"ATL","Ravens":"BAL","Bills":"BUF","Panthers":"CAR","Bears":"CHI","Bengals":"CIN","Browns":"CLE","Cowboys":"DAL","Broncos":"DEN","Lions":"DET","Packers":"GB","Texans":"HOU","Colts":"IND","Jaguars":"JAX","Chiefs":"KC","Raiders":"LV","Chargers":"LAC","Rams":"LA","Dolphins":"MIA","Vikings":"MIN","Patriots":"NE","Saints":"NO","Giants":"NYG","Jets":"NYJ","Eagles":"PHI","Steelers":"PIT","49ers":"SF","Seahawks":"SEA","Buccaneers":"TB","Titans":"TEN","Commanders":"WAS"};
   var BOX = {};   // week -> {box, games} once fetched
   // 11/21 (owner: "Why haven't the box scores hit yet for Thursday night's game? It's saying game hasn't been played yet on daily sweep and
@@ -416,7 +424,7 @@ ME_JS = r"""
   function espnBox(w){ var S = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl', num = function(v){ var x = parseFloat(String(v).split('/')[0]); return isFinite(x) ? x : 0; };
     return fetch(S + '/scoreboard?seasontype=2&week=' + w, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(sb){
       var fin = ((sb && sb.events) || []).filter(function(ev){ var t = (ev.status || {}).type || {}; return t.state === 'post' && t.completed !== false; }); if (!fin.length) return null;
-      var d = {week: w, box: {}, games: {}, final: false, live: true}, idx = {};
+      var d = {week: w, box: {}, games: {}, final: false, live: true, open: ((sb && sb.events) || []).length - fin.length}, idx = {};
       return Promise.all(fin.map(function(ev){ var c = (ev.competitions || [])[0] || {}, by = {}; (c.competitors || []).forEach(function(x){ by[x.homeAway] = x; });
         var a = by.away && by.away.team ? (EAB[by.away.team.abbreviation] || by.away.team.abbreviation) : null, h = by.home && by.home.team ? (EAB[by.home.team.abbreviation] || by.home.team.abbreviation) : null;
         return fetch(S + '/summary?event=' + ev.id, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(sm){ if (!sm) return; var n0 = Object.keys(idx).length;
@@ -438,6 +446,11 @@ ME_JS = r"""
   function clvOf(s, k, c){ var mine = (s.px && s.px[k] && s.px[k].o != null) ? +s.px[k].o : (c && c.build && c.build[k] ? +c.build[k].o : null); var cl = c && c.close && c.close[k] ? +c.close[k].o : null;
     if (mine == null || cl == null) return null; return {mine: mine, close: cl, pts: Math.round((imp(cl) - imp(mine)) * 1000) / 10}; }
   // grade one slip key against the week's box scores: returns {r: 'HIT'|'MISS'|'PUSH'|'?', a: actual text}
+  // 11/25 (owner screenshot: Thursday's players under a Wednesday slip all read "no box score (did not play?)"): while the week is read
+  // live from ESPN, a man with no stat line whose game has not been played is "not played yet"; only Tuesday's file can say he sat.
+  function noBox(d, gid){ if (!d.live) return 'no box score (did not play?)'; var played = false, want = gid ? String(gid).split('-').sort().join() : null;
+    if (want) Object.keys(d.games || {}).forEach(function(g){ if (g.split('-').sort().join() === want) played = true; });
+    return played ? 'no stat line yet' : (want || d.open) ? 'not played yet' : 'no stat line yet'; }
   function onlyGame(){ return null; }   // a total saved before 11/14 carries no game: left ungraded rather than guessed
   function gradeKey(k, d, gid){ if (!d) return {r: '?', a: 'not final'}; var p = String(k).split('|'); if (p.length < 3) return {r: '?', a: ''};
     var who = p[0], m = p[1], ln = parseFloat(p[2]); var S = {"Passing Yards":0, "Passing TDs":1, "Rushing Yards":3, "Receptions":5, "Receiving Yards":6, "Longest Reception":8};
@@ -450,8 +463,8 @@ ME_JS = r"""
       if (!tt || !gg) return {r:'?', a: gid ? 'game not final' : 'game not on record'}; var sum = (+gg[0]) + (+gg[1]), line = parseFloat(tt[2]), over = /^o/i.test(tt[1]);
       return {r: sum === line ? 'PUSH' : ((sum > line) === over ? 'HIT' : 'MISS'), a: sum + ' total'}; }
     if (m === 'First TD') return {r:'?', a:'first TD graded on the receipt'};
-    if (m === 'Either TD'){ var names = who.split(/\s+or\s+/); var hit = names.some(function(n){ var b = d.box[n.trim()]; return b && (b[4]+b[7]) >= 1; }); var any = names.some(function(n){ return !!d.box[n.trim()]; }); return any ? {r: hit?'HIT':'MISS', a: hit?'scored':'no TD'} : {r:'?', a:'no box score'}; }
-    var b = d.box[who]; if (!b) return {r:'?', a:'no box score (did not play?)'};
+    if (m === 'Either TD'){ var names = who.split(/\s+or\s+/); var hit = names.some(function(n){ var b = d.box[n.trim()]; return b && (b[4]+b[7]) >= 1; }); var any = names.some(function(n){ return !!d.box[n.trim()]; }); return any ? {r: hit?'HIT':'MISS', a: hit?'scored':'no TD'} : {r:'?', a: d.live ? noBox(d, gid) : 'no box score'}; }
+    var b = d.box[who]; if (!b) return {r:'?', a: noBox(d, gid)};
     if (/^Under /.test(m)){ var mu = S[m.slice(6)]; if (mu == null) return {r:'?', a:''}; var vu = b[mu]; return {r: vu < ln - 0.5 ? 'HIT' : 'MISS', a: String(vu)}; }   // FanDuel main-line unders (key line = rounded X.5)
     if (m === 'Anytime TD'){ var td = b[4]+b[7]; return {r: td>=1?'HIT':'MISS', a: td+' TD'}; }
     if (m === '2+ TD' || m === '3+ TD'){ var td2 = b[4]+b[7], need2 = m === '2+ TD' ? 2 : 3; return {r: td2>=need2?'HIT':'MISS', a: td2+' TD'}; }
@@ -526,7 +539,7 @@ ME_JS = r"""
           // a slip saved from someone's post, or a tailed BetSweep promo, is not yours to post. Once posted the row links to it instead.
           if (res==='PENDING' && x.w === topW && s.id != null && !s.promo && !s.post) bet += s.posted ? '<a class="fdl pon" href="/social/'+(s.posted === true ? '' : '#p'+esc(s.posted))+'">On Social \u2713</a>' : '<button type="button" class="fdl psb" data-psb data-w="'+x.w+'" data-id="'+esc(s.id)+'">Post to Social</button>';   // NOT class ldb: that is Load into betslip's own handler
           if (x.w !== lastW){ lastW = x.w; var wn = sl.filter(function(y){ return y.w === x.w; }).length; html += '<li class="wkh'+(x.w === topW ? ' on' : '')+'" data-w="'+x.w+'"><button type="button" class="wkt">Week '+x.w+' <small>'+wn+' slip'+(wn===1?'':'s')+'</small><i>▾</i></button></li>'; }
-          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+(bet ? '<span class="sla">'+bet+'</span>' : '')+'<small>Week '+x.w+' · '+gs.length+(gs.length===1?' leg':' legs')+(s.odds? ' · '+odds(s.odds) : '')+' · '+stake+'u'+(wagerOf(s) ? ' ($'+wagerOf(s)+' bet)' : '')+(u!=null? ' · '+(u>=0?'+':'')+u.toFixed(2)+'u' : '')+'</small>'+extra+'<button type="button" class="lgt">Legs <i>▾</i></button><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i>'+esc(lab)+(g.g.a? ' <em>('+esc(g.g.a)+')</em>' : '')+cv; }).join(' &nbsp; ')+'</span></li>'; });
+          html += '<li class="sl w'+x.w+(x.w === topW ? '' : ' wkoff')+'"><b>'+esc(s.name||'Slip')+'</b><span class="res '+res.toLowerCase()+'">'+(res==='HIT'?'Cashed':res==='MISS'?'Missed':d?'Pending':'Not played yet')+'</span>'+'<small class="mt">Week '+x.w+' · '+gs.length+(gs.length===1?' leg':' legs')+(s.odds? ' · '+oddsC(s.odds) : '')+' · '+stake+'u'+(wagerOf(s) ? ' ($'+wagerOf(s)+' bet)' : '')+(u!=null? ' · <span class="pl '+(u>=0?'up':'dn')+'">'+(u>=0?'+':'')+u.toFixed(2)+'u</span>' : '')+'</small>'+extra+'<span class="sla">'+bet+'<button type="button" class="lgt" aria-expanded="false">Legs <i>▾</i></button></span><span class="legs">'+gs.map(function(g){ var q = String(g.k).split('|'); var lab = q[1]==='Anytime TD'||q[1]==='First TD'||q[1]==='Either TD' ? q[0]+' '+q[1].toLowerCase() : q[1]==='Moneyline'||q[1]==='Spread'||q[1]==='Total' ? q[0] : q[0]+' '+q[2]+'+ '+q[1].toLowerCase(); var cv = g.clv ? ' <em class="cl '+(g.clv.pts>0?'up':g.clv.pts<0?'dn':'')+'" title="your price '+odds(g.clv.mine)+' · closed '+odds(g.clv.close)+'">'+(g.clv.pts>0?'▲':g.clv.pts<0?'▼':'=')+' '+(g.clv.pts>0?'+':'')+g.clv.pts+' vs close</em>' : ''; return '<span class="lg"><i class="g '+g.g.r.replace('?','na').toLowerCase()+'">'+(g.g.r==='HIT'?'✓':g.g.r==='MISS'?'✗':g.g.r==='PUSH'?'=':'·')+'</i><span class="ln">'+esc(lab)+cv+'</span>'+(g.g.a? '<em class="ra">'+esc(g.g.a)+'</em>' : '')+'</span>'; }).join('')+'</span></li>'; });   // 11/25 (owner screenshot, "Make this look better"): one leg per row, result on the right
         // owner 11/15 ("check the whole day, not each slip"): the same player on more than one open slip means one quiet game costs several bets
         (function(){ var by = {}; OPEN.forEach(function(o, i){ var seen = {}; o.keys.forEach(function(k){ var pl = String(k).split('|')[0]; if (!pl || /\|(Total|Spread|Moneyline)\|/.test(k) || seen[pl]) return; seen[pl] = 1; (by[pl] = by[pl] || []).push(o); }); });
           var rep = Object.keys(by).filter(function(p){ return by[p].length > 1; }).sort(function(a, b){ return by[b].length - by[a].length; });
@@ -623,7 +636,7 @@ ME_JS = r"""
     document.addEventListener('click', function(e){
       var h = e.target.closest && e.target.closest('.me .card > h2'); if (h && !e.target.closest('a,button')){ var c = h.parentNode; c.classList.toggle('shut'); st[c.id] = !c.classList.contains('shut'); try{ localStorage.setItem('bs_me_fold2', JSON.stringify(st)); }catch(x){} return; }
       var w = e.target.closest && e.target.closest('.wkt'); if (w){ var li = w.parentNode, on = !li.classList.contains('on'); li.classList.toggle('on', on); document.querySelectorAll('.me li.sl.w' + li.dataset.w).forEach(function(x){ x.classList.toggle('wkoff', !on); }); return; }
-      var g = e.target.closest && e.target.closest('.lgt'); if (g){ g.parentNode.classList.toggle('lo'); } }); })();
+      var g = e.target.closest && e.target.closest('.lgt'); if (g){ var gl = g.closest('li'); if (gl){ g.setAttribute('aria-expanded', gl.classList.toggle('lo') ? 'true' : 'false'); } } }); })();
   document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.ldb'); if (!b) return; var ks = [], gm = {}; try{ ks = JSON.parse(b.getAttribute('data-keys')) || []; gm = JSON.parse(b.getAttribute('data-g') || '{}') || {}; }catch(x){}
     if (window.BSLoadSlip) window.BSLoadSlip(ks, gm); else { b.textContent = 'Loading…'; setTimeout(function(){ if (window.BSLoadSlip) window.BSLoadSlip(ks, gm); }, 800); } });
 })();

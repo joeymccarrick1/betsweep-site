@@ -4,7 +4,7 @@ exists the page reads ESPN's scoreboard and final box scores. Stand-in ESPN, no 
 import asyncio, json, os, sys, threading, http.server, functools
 from playwright.async_api import async_playwright
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); ROOT = os.environ.get("SITE") or os.path.join(HERE, "site"); PORT = 8868
-ok = [0, 0]
+ok = [0, 0]; LEGS = [None]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 def ath(n, *st): return {"athlete": {"displayName": n}, "stats": [str(x) for x in st]}
 RUSH = ["rushingAttempts", "rushingYards", "yardsPerRushAttempt", "rushingTouchdowns", "longRushing"]; REC = ["receptions", "receivingYards", "yardsPerReception", "receivingTouchdowns", "longReception", "receivingTargets"]
@@ -39,6 +39,13 @@ async def run(b, have_file):
     pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
     await pg.goto(f"http://127.0.0.1:{PORT}/me/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
     rows = await pg.evaluate("[...document.querySelectorAll('li.sl')].map(function(li){ return [li.querySelector('b').textContent, li.querySelector('.res').textContent]; })")
+    # 11/25 (owner screenshot, "Make this look better"): the legs open one per row with the result on the right, and a leg whose game has
+    # not been played says so instead of "no box score (did not play?)".
+    LEGS[0] = await pg.evaluate("""() => { var out = {}; Array.from(document.querySelectorAll('li.sl')).forEach(function(li){ var t = li.querySelector('.lgt'); t.click();
+      var rows = Array.from(li.querySelectorAll('.legs .lg')); out[li.querySelector('b').textContent] = {open: li.classList.contains('lo') && t.getAttribute('aria-expanded') === 'true',
+        legs: rows.map(function(r){ var e = r.querySelector('em.ra'); return [r.querySelector('.ln').textContent, e ? e.textContent : '', Math.round(r.getBoundingClientRect().top), Math.round(r.getBoundingClientRect().right)]; }),
+        meta: li.querySelector('small.mt').textContent, pl: (li.querySelector('.pl') || {}).className || '', tgl: Math.round(t.getBoundingClientRect().height)}; });
+      out.__w = [document.documentElement.scrollWidth, window.innerWidth]; return out; }""")
     await ctx.close(); return dict(rows), calls, errs
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
@@ -52,7 +59,16 @@ async def main():
         check(r.get("Winner") == "Cashed", f"a slip whose legs all cleared is Cashed, with 'C.J. Stroud' found from ESPN's name ({r.get('Winner')})")
         check(r.get("Sunday") == "Pending" and r.get("Mixed") == "Pending", f"legs in games not yet played stay open - nothing is graded early ({r.get('Sunday')}, {r.get('Mixed')})")
         check(sorted(calls) == ["scoreboard?seasontype=2&week=11", "summary?event=1"], f"ESPN is asked for the week's scoreboard and only the finished game's box score ({calls})")
+        L = LEGS[0]; ds = L["Daily Sweep"]["legs"]; tops = [x[2] for x in ds]
+        check(L["Daily Sweep"]["open"] and len(ds) == 5 and len(set(tops)) == 5 and tops == sorted(tops), f"the Legs button opens one leg per row ({tops})")
+        check(all(x[3] <= 390 for x in ds) and L["__w"][0] <= L["__w"][1], f"no leg row runs off a phone screen (page {L['__w']})")
+        check(L["Sunday"]["legs"][0][1] == "not played yet" and L["Mixed"]["legs"][1][1] == "not played yet", f"a leg in a game still to come reads 'not played yet' ({L['Sunday']['legs'][0][1]!r})")
+        check([x[1] for x in ds if x[0].startswith("Tank Dell")] == ["27"] and not any("(" in x[1] for x in ds), f"a graded leg shows its number on the right, no brackets ({[x[1] for x in ds]})")
+        check("dn" in L["Daily Sweep"]["pl"] and "up" in L["Winner"]["pl"] and "+484" in L["Daily Sweep"]["meta"], f"the units won or lost are colored ({L['Daily Sweep']['pl']!r}, {L['Winner']['pl']!r})")
+        check(L["Daily Sweep"]["tgl"] >= 34, f"the Legs button is a fair tap target ({L['Daily Sweep']['tgl']}px)")
         r2, calls2, _ = await run(b, True)
+        L2 = LEGS[0]
+        check(L2["Sunday"]["legs"][0][1] == "no box score (did not play?)", f"with Tuesday's file a man with no line is still 'did not play?' ({L2['Sunday']['legs'][0][1]!r})")
         check(calls2 == [] and r2.get("Mixed") == "Pending" and r2.get("Winner") in ("Pending", "Missed"), f"once the Tuesday file exists it is used and ESPN is not asked ({calls2})")
         await b.close()
     srv.shutdown(); print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1 if ok[1] else 0)
