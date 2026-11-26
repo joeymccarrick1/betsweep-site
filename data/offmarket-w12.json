@@ -516,6 +516,30 @@
    "gap": 3.3,
    "p": 0.1965,
    "seen": "2026-11-26 12:35"
+  },
+  "Emmett Johnson|Receiving Yards|50": {
+   "pl": "Emmett Johnson",
+   "m": "Receiving Yards",
+   "ln": 50.0,
+   "g": "BUF-KC",
+   "fd": 280.0,
+   "dk": 235.0,
+   "hr": 240.0,
+   "gap": 3.1,
+   "p": 0.2792,
+   "seen": "2026-11-26 12:35"
+  },
+  "Khalil Shakir|Receptions|5": {
+   "pl": "Khalil Shakir",
+   "m": "Receptions",
+   "ln": 5.0,
+   "g": "BUF-KC",
+   "fd": 220.0,
+   "dk": 178.0,
+   "hr": 190.0,
+   "gap": 3.2,
+   "p": 0.2975,
+   "seen": "2026-11-26 12:35"
   }
  }
 }
