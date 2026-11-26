@@ -670,7 +670,7 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
   function koOf(g){ return SRC && SRC.ko ? SRC.ko(g) : (window.bsGameKo ? window.bsGameKo(g) : null); }
   function msg(t, err){ var m = $('sdM'); m.textContent = t || ''; m.className = 'msg' + (err ? ' err' : ''); }
   if(btn) btn.addEventListener('click', function(){ SRC = null; openForm(); });
-  window.BSPostLegs = function(ls, opt){ opt = opt || {}; SRC = {legs: ls || [], ko: opt.ko, week: opt.week, done: opt.done, say: opt.say};
+  window.BSPostLegs = function(ls, opt){ opt = opt || {}; SRC = {legs: ls || [], ko: opt.ko, week: opt.week, done: opt.done, say: opt.say, sc: /^[A-Za-z0-9]{4,16}$/.test(opt.sc || '') ? opt.sc : null};
     $('sdT').value = opt.title || ''; $('sdO').value = opt.odds ? ((+opt.odds > 0 ? '+' : '') + (+opt.odds)) : ''; openForm(); };
   function legLine(l){ if(l.gl) return l.pl; if(/^(Anytime|First|Either|2\+|3\+) ?TD$/.test(l.m)) return l.pl + ' ' + l.m.toLowerCase(); if(/^Under /.test(l.m)) return l.pl + ' under ' + l.ln + ' ' + l.m.slice(6).toLowerCase(); return l.pl + ' ' + Math.round(l.ln || 1) + '+ ' + String(l.m).toLowerCase(); }
   function openForm(){
@@ -707,6 +707,7 @@ document.addEventListener('click',go,true);document.addEventListener('keydown',g
     if(!kos.length){ msg('Could not read kickoff times for these legs.', true); return; }
     var legs = ls.map(function(l){ return {k: l.pl + '|' + l.m + '|' + Math.round(l.ln || 1), pl: l.pl, m: l.m, ms: l.ms, ln: l.ln, o: l.o, g: l.g, tm: l.tm, opp: l.opp,
       fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: koOf(l.g)}; });
+    if(SRC && SRC.sc && legs.length) legs[0].sc = SRC.sc;   // 11/25: the poster's own FanDuel share code rides on the first leg (no new column); the feed rebuilds the link from it
     var dec = ls.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
     var row = {handle: h, title: t || null, week: ((SRC && SRC.week) || (window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), legs: legs, fd_odds: odds != null ? odds : Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)),
       first_ko: new Date(Math.min.apply(null, kos)).toISOString(), last_ko: new Date(Math.max.apply(null, kos)).toISOString()};

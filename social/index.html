@@ -283,6 +283,12 @@ a{color:var(--ink)}
   function fdIds(l){ var f = l.k && ((l.g && FDMAP[l.k + '@' + l.g]) || (l.gl ? null : FDMAP[l.k])); if(f) return {m: f[0], s: f[1], fresh: true}; return l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s, fresh: false} : null; }
   function fdUrl(ls){ var ok = ls.map(function(l){ return (l.ko && Date.now() >= l.ko) ? null : fdIds(l); }).filter(Boolean); if(!ok.length) return null;
     return 'https://sportsbook.fanduel.com/addToBetslip?' + ok.map(function(f, i){ return 'marketId[' + i + ']=' + encodeURIComponent(f.m) + '&selectionId[' + i + ']=' + encodeURIComponent(f.s); }).join('&'); }
+  // owner 11/25 ("That link we can use directly to fanduel from people's slips on socials. We use how we've currently been building
+  // slips using each legs url as a backup"): a post whose first leg carries the poster's FanDuel share code opens that exact slip
+  // while no leg has kicked off. The code is letters and digits only and the link is built here, so it can only go to FanDuel's
+  // betslip page. After a kickoff, or with no code, the leg-by-leg link above is used.
+  function shareUrl(ls){ var c = ls && ls[0] && ls[0].sc; if(!c || !/^[A-Za-z0-9]{4,16}$/.test(c)) return null; if(ls.some(function(l){ return l.ko && Date.now() >= l.ko; })) return null;
+    return 'https://sportsbook.fanduel.com/addToBetslip?shareCode=' + c; }
   // owner 11/22 1:10 AM ("Make it so that you can save slips right from social page"): Save slip on every card that has not kicked
   // off. It writes the entry the Parlay Builder's Save slip writes into bs_slips_w<week> (leg keys, the game map for totals, the
   // posted price, each leg's price, the FanDuel link), so the slip shows on My BetSweep and the Live page and is graded after the
@@ -295,7 +301,7 @@ a{color:var(--ink)}
     else { var ls = (p.legs || []).filter(function(l){ return l && l.k; }), gm = {}, px = {}; if(!ls.length) return null;
       ls.forEach(function(l){ if(l.gl && l.g) (gm[l.k] = gm[l.k] || []).push(l.g); if(l.o != null) px[l.k] = {o: l.o}; });
       a.push({id: id, name: String(p.title || ('@' + p.handle + ' slip')).slice(0, 60), keys: ls.map(function(l){ return l.k; }), odds: p.fd_odds != null && !isNaN(+p.fd_odds) ? +p.fd_odds : null, stake: 1,
-              fd: fdUrl(ls), px: px, g: gm, saved: Date.now(), from: p.handle, post: p.id}); }
+              fd: shareUrl(ls) || fdUrl(ls), px: px, g: gm, saved: Date.now(), from: p.handle, post: p.id}); }
     try{ localStorage.setItem(k, JSON.stringify(a)); }catch(e){ return null; }
     return !on; }
   function toast(t){ var d = document.createElement('div'); d.className = 'soctoast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2800); }
@@ -351,14 +357,14 @@ a{color:var(--ink)}
   function held(p){ return !p.result && +p.week === W && T0 >= 0 && tick() - T0 < HOLD_MS && (p.legs || []).some(function(l){ return !legRead(l); }); }
   function holdTimer(){ if(HT) return; HT = setTimeout(function(){ HT = 0; SIG = null; render(); }, Math.max(60, T0 + HOLD_MS - tick() + 40)); }
   function card(p, me, C, old){
-    var ls = p.legs || [], x = p.result ? {st: p.result === 'won' ? 'cashed' : p.result === 'lost' ? 'busted' : 'done', hits: p.result === 'won' ? ls.length : 0, n: ls.length, graded: 1} : stateOf(p, C), over = settled(x), url = over || old ? null : fdUrl(ls), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
+    var ls = p.legs || [], x = p.result ? {st: p.result === 'won' ? 'cashed' : p.result === 'lost' ? 'busted' : 'done', hits: p.result === 'won' ? ls.length : 0, n: ls.length, graded: 1} : stateOf(p, C), over = settled(x), surl = over || old ? null : shareUrl(ls), url = over || old ? null : (surl || fdUrl(ls)), started = ls.some(function(l){ return l.ko && Date.now() >= l.ko; });
     var badge = x.st === 'cashed' ? '<span class="res won">Cashed' + (p.units != null ? ' · +' + (+p.units).toFixed(1) + 'u' : '') + '</span>' : x.st === 'busted' ? '<span class="res lost">Busted' + (x.graded ? '' : ' · ' + x.hits + ' of ' + x.n + ' hit') + '</span>' : x.st === 'done' ? '<span class="res">Final · ' + x.hits + ' of ' + x.n + ' graded hits</span>' : '';
     /* the card's actions (owner 11/22: "They look like they're onto of each other and can be organized better"). Three rows instead of one
        wrapping row: Tail on FanDuel (the one filled button) with I'm tailing beside it on somebody else's slip; Save slip and Load into my
        slip as two equal buttons; then a quiet last line - the kickoff or the result on the left, Delete / Report and Open slip on the right.
        A row with nothing in it is not written. tests/social_card.py measures every state. */
     var tailB = V3 && !old && !started && !over && p.user_id !== me ? '<button type="button" class="tl' + (MYT[p.id] ? ' on' : '') + '" data-tail="' + p.id + '" aria-pressed="' + !!MYT[p.id] + '">' + (MYT[p.id] ? 'Tailing ✓' : 'I\'m tailing') + '</button>' : '';
-    var fdB = url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '';
+    var fdB = url ? '<a class="fd" href="' + url + '" target="_blank" rel="noopener">Tail on FanDuel' + (function(){ if(surl) return ''; var n = ls.filter(function(l){ return fdIds(l) && !(l.ko && Date.now() >= l.ko); }).length; return n < ls.length ? ' <small>(' + n + ' of ' + ls.length + ' legs - add the rest by hand)</small>' : ''; })() + '</a>' : '';
     var saveB = !started && !old ? '<button type="button" class="sv' + (slHas(p) ? ' on' : '') + '" data-save="' + p.id + '" aria-pressed="' + slHas(p) + '">' + (slHas(p) ? 'Saved ✓' : 'Save slip') + '</button>' : '';
     var loadB = !started && !old ? '<button type="button" data-load="' + p.id + '">Load into my slip</button>' : '';
     var modB = old ? '' : (p.user_id === me ? '<button type="button" class="mini" data-del="' + p.id + '">Delete</button>' : (me && !over ? '<button type="button" class="mini" data-rep="' + p.id + '">Report</button>' : ''));
@@ -737,7 +743,7 @@ a{color:var(--ink)}
   function koOf(g){ return SRC && SRC.ko ? SRC.ko(g) : (window.bsGameKo ? window.bsGameKo(g) : null); }
   function msg(t, err){ var m = $('sdM'); m.textContent = t || ''; m.className = 'msg' + (err ? ' err' : ''); }
   if(btn) btn.addEventListener('click', function(){ SRC = null; openForm(); });
-  window.BSPostLegs = function(ls, opt){ opt = opt || {}; SRC = {legs: ls || [], ko: opt.ko, week: opt.week, done: opt.done, say: opt.say};
+  window.BSPostLegs = function(ls, opt){ opt = opt || {}; SRC = {legs: ls || [], ko: opt.ko, week: opt.week, done: opt.done, say: opt.say, sc: /^[A-Za-z0-9]{4,16}$/.test(opt.sc || '') ? opt.sc : null};
     $('sdT').value = opt.title || ''; $('sdO').value = opt.odds ? ((+opt.odds > 0 ? '+' : '') + (+opt.odds)) : ''; openForm(); };
   function legLine(l){ if(l.gl) return l.pl; if(/^(Anytime|First|Either|2\+|3\+) ?TD$/.test(l.m)) return l.pl + ' ' + l.m.toLowerCase(); if(/^Under /.test(l.m)) return l.pl + ' under ' + l.ln + ' ' + l.m.slice(6).toLowerCase(); return l.pl + ' ' + Math.round(l.ln || 1) + '+ ' + String(l.m).toLowerCase(); }
   function openForm(){
@@ -774,6 +780,7 @@ a{color:var(--ink)}
     if(!kos.length){ msg('Could not read kickoff times for these legs.', true); return; }
     var legs = ls.map(function(l){ return {k: l.pl + '|' + l.m + '|' + Math.round(l.ln || 1), pl: l.pl, m: l.m, ms: l.ms, ln: l.ln, o: l.o, g: l.g, tm: l.tm, opp: l.opp,
       fd: l.fd && l.fd.m && l.fd.s ? {m: l.fd.m, s: l.fd.s} : null, gl: l.gl ? {k: l.gl.k, side: l.gl.side} : null, ko: koOf(l.g)}; });
+    if(SRC && SRC.sc && legs.length) legs[0].sc = SRC.sc;   // 11/25: the poster's own FanDuel share code rides on the first leg (no new column); the feed rebuilds the link from it
     var dec = ls.reduce(function(a, l){ return a * (l.o > 0 ? 1 + l.o / 100 : 1 + 100 / -l.o); }, 1);
     var row = {handle: h, title: t || null, week: ((SRC && SRC.week) || (window.__BS || {}).week || (window.__BSL || {}).week || +window.__BSW || null), legs: legs, fd_odds: odds != null ? odds : Math.round(dec >= 2 ? (dec - 1) * 100 : -100 / (dec - 1)),
       first_ko: new Date(Math.min.apply(null, kos)).toISOString(), last_ko: new Date(Math.max.apply(null, kos)).toISOString()};
@@ -817,7 +824,7 @@ a{color:var(--ink)}
     var whole = !c.no.length, nm = String(c.s.name || '').trim();
     if(/^(Slip( \d+)?( · [+\-−]?\d+)?|FanDuel slip|FanDuel \d+-leg( [+\-]\d+)?)$/i.test(nm)) nm = '';   // a name the page made up is not a title
     // the price is offered only when it is the price of the whole slip as the book gave it (a screenshot import); a builder save holds an estimate
-    window.BSPostLegs(c.ok, {week: c.w, ko: function(g){ return c.G[g] && c.G[g].ko ? +c.G[g].ko : null; }, title: nm.slice(0, 60), odds: whole && c.s.src === 'fanduel-screenshot' && +c.s.odds ? +c.s.odds : null,
+    window.BSPostLegs(c.ok, {week: c.w, ko: function(g){ return c.G[g] && c.G[g].ko ? +c.G[g].ko : null; }, title: nm.slice(0, 60), odds: whole && c.s.src === 'fanduel-screenshot' && +c.s.odds ? +c.s.odds : null, sc: whole ? c.s.sc : null,
       say: function(t){ ui.say(esc(t), 1); },
       done: function(pid){ var all = read(c.w), hit = 0; all.forEach(function(x){ if(x && String(x.id) === String(c.s.id)){ x.posted = pid || true; hit = 1; } });
         if(hit){ try{ localStorage.setItem('bs_slips_w' + c.w, JSON.stringify(all)); }catch(e){} }

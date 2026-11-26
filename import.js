@@ -27,6 +27,10 @@
       else { var k = p.n.split(' ').length; for (var i = 0; i + k <= words.length; i++){ var w = words.slice(i, i + k).join(' '), d = lev(w, p.n), r = 1 - d / Math.max(w.length, p.n.length); if (r >= 0.8 && r * 100 > s) s = r * 100; } }
       if (s > bs){ bs = s; best = p.pl; } });
     return best; }
+  // FanDuel's share link -> its share code (letters and digits only), or null. Nothing else is accepted, so a slip can never carry
+  // a link to anywhere but FanDuel's own betslip page; the link is rebuilt from the code wherever it is shown.
+  var FDSHARE = 'https://sportsbook.fanduel.com/addToBetslip?shareCode=';
+  function fdCode(v){ var m = String(v == null ? '' : v).trim().match(/^https:\/\/(?:[a-z]{2}\.)?sportsbook\.fanduel\.com\/addToBetslip\/?\?(?:[A-Za-z0-9_.%\[\]=-]+&)*shareCode=([A-Za-z0-9]{4,16})(?:&[A-Za-z0-9_.%\[\]=-]*)*$/); return m ? m[1] : null; }
   function parse(text, BS){
     var P = players(BS), legs = BS.legs || [], out = {legs: [], odds: null, stake: null};
     var L = String(text).split(/\n+/).map(function(s){ return s.replace(/[|]/g, ' ').replace(/\s+/g, ' ').trim(); }).filter(Boolean);
@@ -137,7 +141,7 @@
       : '<li class="no"><span>✗ ' + esc(l.raw) + '<small>' + esc(l.why) + ' - not imported</small></span></li>'; }
     // what is typed and ticked survives a repaint (another screenshot arriving)
     function sync(){ out.querySelectorAll('.impb[data-n]').forEach(function(b){ var x = PEND[+b.dataset.n]; if (!x) return; var on = b.querySelector('.impon'); if (on) x.inc = on.checked;
-      x.nm = b.querySelector('.impname').value; x.od = b.querySelector('.impodds').value; x.un = {}; b.querySelectorAll('li input[type=checkbox]').forEach(function(c){ if (!c.checked) x.un[c.dataset.i] = 1; }); var d = b.querySelector('details'); x.open = !!(d && d.open); }); }
+      x.nm = b.querySelector('.impname').value; x.od = b.querySelector('.impodds').value; var lk0 = b.querySelector('.implink'); x.lk = lk0 ? lk0.value : ''; x.un = {}; b.querySelectorAll('li input[type=checkbox]').forEach(function(c){ if (!c.checked) x.un[c.dataset.i] = 1; }); var d = b.querySelector('details'); x.open = !!(d && d.open); }); }
     function picked(b){ var x = PEND[+b.dataset.n], ls = []; b.querySelectorAll('li input[type=checkbox]').forEach(function(c){ if (c.checked) ls.push(x.R.legs[+c.dataset.i]); }); return ls; }
     function count(){ var sb = document.getElementById('impsaveall'); if (!sb) return; var n = 0; out.querySelectorAll('.impb[data-n]').forEach(function(b){ var on = b.querySelector('.impon'); if ((!on || on.checked) && picked(b).length) n++; });
       sb.textContent = 'Save ' + (n === 1 ? '1 slip' : n + ' slips'); sb.disabled = !n; }
@@ -161,7 +165,9 @@
           '<p class="st">Found ' + good.length + ' of ' + legs.length + ' legs' + (x.R.odds ? ' · FanDuel ' + am(x.R.odds) : '') + '.' + (many ? '' : ' Untick anything that is wrong.') + '</p>' +
           (dup ? '<small class="warn dup">Same legs as ' + esc(dup) + (many ? ' - left out unless you tick it.' : '.') + '</small>' : '') +
           (many ? '<details' + (odd || x.open || (x.un && Object.keys(x.un).length) ? ' open' : '') + '><summary>Check the legs</summary>' : '') + '<ul>' + legs.map(function(l, i){ return legRow(l, i, x.un && x.un[i]); }).join('') + '</ul>' + (many ? '</details>' : '') +
-          '<div class="row"><input type="text" class="impname"' + (many ? '' : ' id="impname"') + ' maxlength="60" aria-label="Slip name" value="' + esc(x.nm != null ? x.nm : dn) + '"><input type="text" class="impodds"' + (many ? '' : ' id="impodds"') + ' inputmode="text" maxlength="9" aria-label="FanDuel odds" style="flex:0 0 110px;min-width:0" placeholder="Odds +650" value="' + esc(x.od != null ? x.od : (x.R.odds ? am(x.R.odds) : '')) + '"></div></div>'; });
+          '<div class="row"><input type="text" class="impname"' + (many ? '' : ' id="impname"') + ' maxlength="60" aria-label="Slip name" value="' + esc(x.nm != null ? x.nm : dn) + '"><input type="text" class="impodds"' + (many ? '' : ' id="impodds"') + ' inputmode="text" maxlength="9" aria-label="FanDuel odds" style="flex:0 0 110px;min-width:0" placeholder="Odds +650" value="' + esc(x.od != null ? x.od : (x.R.odds ? am(x.R.odds) : '')) + '"></div>' +
+          '<div class="row"><input type="url" class="implink"' + (many ? '' : ' id="implink"') + ' inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" maxlength="200" aria-label="FanDuel share link (optional)" placeholder="FanDuel share link (optional)" value="' + esc(x.lk || '') + '"></div>' +
+          '<small class="implh">Paste the link from the Share button on your FanDuel slip. If you post this slip to Social, people open your exact slip on FanDuel.</small></div>'; });
       var full = PEND.length >= MAXB;
       h += '<p class="st impnote" aria-live="polite">' + (msg || '') + '</p><div class="row impact">' +
         (many ? '<button type="button" class="cta" id="impsaveall">Save slips</button>' : '<button type="button" class="cta" id="impsave">Save slip</button><button type="button" class="impsec" id="impload">Load into betslip</button>') +
@@ -170,10 +176,16 @@
       out.innerHTML = h; count(); }
     function saveAll(){
       var BS = board(); if (!BS) return; var W = BS.week, k = 'bs_slips_w' + W, all = []; try{ all = JSON.parse(localStorage.getItem(k) || '[]') || []; }catch(e){ all = []; }
-      var t0 = Date.now(), saved = [];
+      var t0 = Date.now(), saved = [], badLink = null;
+      // owner 11/25 ("Make it so that people can add the fanduel link when they import a slip"): the link is optional; one that is typed
+      // must be FanDuel's own share link, or nothing is saved and the note says which one to fix. Only its share code is kept.
+      out.querySelectorAll('.impb[data-n]').forEach(function(b){ var on = b.querySelector('.impon'); if (on && !on.checked) return; var lk = b.querySelector('.implink'), lv = lk ? lk.value.trim() : '';
+        if (lv && !fdCode(lv) && badLink == null) badLink = +b.dataset.n; });
+      if (badLink != null){ note((out.querySelectorAll('.impb[data-n]').length > 1 ? 'Screenshot ' + (badLink + 1) + ': that' : 'That') + ' is not a FanDuel share link. It should look like sportsbook.fanduel.com/addToBetslip?shareCode=… - fix it or clear the box.'); return; }
       out.querySelectorAll('.impb[data-n]').forEach(function(b){ var on = b.querySelector('.impon'); if (on && !on.checked) return; var x = PEND[+b.dataset.n], tl = picked(b); if (!tl.length) return;
         var od = parseInt(String(b.querySelector('.impodds').value || '').replace(/[^0-9+-]/g, ''), 10); if (isNaN(od) || Math.abs(od) < 100) od = x.R.odds || null;
         var e = {id: 'fd' + (t0 + saved.length), name: (b.querySelector('.impname').value || 'FanDuel slip').trim().slice(0, 60), keys: tl.map(function(l){ return l.key; }), g: gmapOf(BS, tl), odds: od, stake: x.R.stake || undefined, saved: t0, src: 'fanduel-screenshot'};
+        var lk = b.querySelector('.implink'), sc = lk ? fdCode(lk.value) : null; if (sc){ e.sc = sc; e.fd = FDSHARE + sc; }
         all.push(e); saved.push(e); });
       if (!saved.length){ note('Nothing ticked - nothing saved.'); return; }
       try{ localStorage.setItem(k, JSON.stringify(all)); }catch(e){ note('Your browser would not let us save ' + (saved.length === 1 ? 'it' : 'them') + ' (private mode?).'); return; }
@@ -211,7 +223,7 @@
     window.addEventListener('hashchange', function(){ if (location.hash === '#import') reveal(); });
   }
   // owner 11/10 "Sweep my slip" (/sweep/): the same reader for another page - picture in, {R: parsed legs, BS: this week's board} out
-  window.BSImport = {parse: parse, data: builderData, gmap: gmapOf, read: function(file){
+  window.BSImport = {fdCode: fdCode, parse: parse, data: builderData, gmap: gmapOf, read: function(file){
     return Promise.all([builderData(), loadTess().then(function(T){ return prep(file).then(function(c){ return T.recognize(c, 'eng', {tessedit_pageseg_mode: '4'}); }); })])
       .then(function(r){ return {R: parse(r[1].data.text || '', r[0]), BS: r[0]}; }); }};
   if (typeof document !== 'undefined') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup(); }
