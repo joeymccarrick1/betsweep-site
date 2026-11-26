@@ -1,9 +1,9 @@
 {
  "news": [],
  "week": 12,
- "built": "Thu 11/26 11:21 AM",
- "checked": "2026-11-26T17:42:14Z",
- "legs_checked": 1239,
+ "built": "Thu 11/26 11:39 AM",
+ "checked": "2026-11-26T18:12:17Z",
+ "legs_checked": 1097,
  "moves": [
   {
    "key": "David Montgomery|Anytime TD|1",
@@ -72,23 +72,6 @@
    "tier": "",
    "pulled": "2026-11-26 10:35",
    "detail": "Josh Allen pass yds 250+: FanDuel +144 at build -> +198 now (-7.4 implied pts against us)"
-  },
-  {
-   "key": "Sione Vaki|Receptions|1",
-   "pl": "Sione Vaki",
-   "m": "Receptions",
-   "ln": 1.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": -138,
-   "now": -188.0,
-   "pts": 7.3,
-   "p": 0.539,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Sione Vaki rec 1+: FanDuel -138 at build -> -188 now (+7.3 implied pts toward the model)"
   },
   {
    "key": "Patrick Mahomes|Rushing Yards|25",
@@ -227,23 +210,6 @@
    "detail": "Josh Downs rec yds 70+: FanDuel +300 at build -> +410 now (-5.4 implied pts against us)"
   },
   {
-   "key": "Sam LaPorta|Receiving Yards|70",
-   "pl": "Sam LaPorta",
-   "m": "Receiving Yards",
-   "ln": 70.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": 300,
-   "now": 230.0,
-   "pts": 5.3,
-   "p": 0.2486,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Sam LaPorta rec yds 70+: FanDuel +300 at build -> +230 now (+5.3 implied pts toward the model)"
-  },
-  {
    "key": "Nico Collins|Anytime TD|1",
    "pl": "Nico Collins",
    "m": "Anytime TD",
@@ -293,23 +259,6 @@
    "tier": "",
    "pulled": "2026-11-26 10:35",
    "detail": "Josh Downs long rec 30+: FanDuel +270 at build -> +360 now (-5.3 implied pts against us)"
-  },
-  {
-   "key": "Sione Vaki|Receiving Yards|10",
-   "pl": "Sione Vaki",
-   "m": "Receiving Yards",
-   "ln": 10.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": 230,
-   "now": 182.0,
-   "pts": 5.2,
-   "p": 0.3063,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Sione Vaki rec yds 10+: FanDuel +230 at build -> +182 now (+5.2 implied pts toward the model)"
   },
   {
    "key": "Makai Lemon|Receptions|5",
@@ -395,57 +344,6 @@
    "tier": "",
    "pulled": "2026-11-26 10:35",
    "detail": "Keon Coleman long rec 10+: FanDuel -320 at build -> -250 now (-4.8 implied pts against us)"
-  },
-  {
-   "key": "Zavion Thomas|Longest Reception|15",
-   "pl": "Zavion Thomas",
-   "m": "Longest Reception",
-   "ln": 15.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": 210,
-   "now": 170.0,
-   "pts": 4.8,
-   "p": 0.2668,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Zavion Thomas long rec 15+: FanDuel +210 at build -> +170 now (+4.8 implied pts toward the model)"
-  },
-  {
-   "key": "Isaac TeSlaa|Longest Reception|10",
-   "pl": "Isaac TeSlaa",
-   "m": "Longest Reception",
-   "ln": 10.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": -230,
-   "now": -185.0,
-   "pts": -4.8,
-   "p": 0.6231,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Isaac TeSlaa long rec 10+: FanDuel -230 at build -> -185 now (-4.8 implied pts against us)"
-  },
-  {
-   "key": "Kalif Raymond|Receptions|4",
-   "pl": "Kalif Raymond",
-   "m": "Receptions",
-   "ln": 4.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": 225,
-   "now": 182.0,
-   "pts": 4.7,
-   "p": 0.262,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Kalif Raymond rec 4+: FanDuel +225 at build -> +182 now (+4.7 implied pts toward the model)"
   },
   {
    "key": "Saquon Barkley|Longest Reception|10",
@@ -584,23 +482,6 @@
    "detail": "Will Shipley rec 2+: FanDuel +130 at build -> +154 now (-4.1 implied pts against us)"
   },
   {
-   "key": "Brock Wright|Receptions|2",
-   "pl": "Brock Wright",
-   "m": "Receptions",
-   "ln": 2.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": 280,
-   "now": 230.0,
-   "pts": 4.0,
-   "p": 0.335,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "plus",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Brock Wright rec 2+: FanDuel +280 at build -> +230 now (+4.0 implied pts toward the model)"
-  },
-  {
    "key": "Jonah Coleman|Longest Reception|20",
    "pl": "Jonah Coleman",
    "m": "Longest Reception",
@@ -703,23 +584,6 @@
    "detail": "Keon Coleman rec 3+: FanDuel +144 at build -> +168 now (-3.7 implied pts against us)"
   },
   {
-   "key": "Isaac TeSlaa|Receiving Yards|10",
-   "pl": "Isaac TeSlaa",
-   "m": "Receiving Yards",
-   "ln": 10.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": -250,
-   "now": -210.0,
-   "pts": -3.7,
-   "p": 0.7057,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Isaac TeSlaa rec yds 10+: FanDuel -250 at build -> -210 now (-3.7 implied pts against us)"
-  },
-  {
    "key": "Dalton Kincaid|Receptions|5",
    "pl": "Dalton Kincaid",
    "m": "Receptions",
@@ -769,23 +633,6 @@
    "tier": "",
    "pulled": "2026-11-26 10:35",
    "detail": "Rashee Rice rec yds 60+: FanDuel +162 at build -> +188 now (-3.4 implied pts against us)"
-  },
-  {
-   "key": "Brock Wright|Receiving Yards|10",
-   "pl": "Brock Wright",
-   "m": "Receiving Yards",
-   "ln": 10.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": 178,
-   "now": 154.0,
-   "pts": 3.4,
-   "p": 0.3697,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "plus",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Brock Wright rec yds 10+: FanDuel +178 at build -> +154 now (+3.4 implied pts toward the model)"
   },
   {
    "key": "Isaiah Likely|Anytime TD|1",
@@ -871,23 +718,6 @@
    "tier": "",
    "pulled": "2026-11-26 6:35",
    "detail": "Brock Purdy rush yds 30+: FanDuel +310 at build -> +370 now (-3.1 implied pts against us)"
-  },
-  {
-   "key": "Sam LaPorta|Longest Reception|15",
-   "pl": "Sam LaPorta",
-   "m": "Longest Reception",
-   "ln": 15.0,
-   "gid": "CHI-DET",
-   "ko": 1795716000000,
-   "built": -240,
-   "now": -280.0,
-   "pts": 3.1,
-   "p": 0.643,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-26 10:35",
-   "detail": "Sam LaPorta long rec 15+: FanDuel -240 at build -> -280 now (+3.1 implied pts toward the model)"
   },
   {
    "key": "Travis Kelce|Anytime TD|1",
