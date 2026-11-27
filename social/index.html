@@ -114,7 +114,7 @@ a{color:var(--ink)}
 .soc .prof{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
 .soc .prof .av.big{width:52px;height:52px;font-size:19px} .soc .prof h2{margin:0;font-family:var(--display);font-size:22px;color:var(--ink);overflow-wrap:anywhere} .soc .prof .pn p{margin:2px 0 0;color:var(--mute);font-size:13px}
 .soc .prof .fol{font:inherit;font-weight:700;font-size:13.5px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--red);background:var(--red);color:#fff;cursor:pointer} .soc .prof .fol.on{background:none;color:var(--ink);border-color:var(--line)}
-.soc h2.sec{font-family:var(--display);font-size:20px;margin:22px 0 10px;color:var(--ink)}
+.soc h2.sec{font-family:var(--display);font-size:20px;margin:22px 0 10px;color:var(--ink)} .soc h2.sec .awn{font-family:var(--body, inherit);font-size:12px;font-weight:600;color:var(--mute);margin-left:6px}
 .soc details.bust{margin:6px 0 12px} .soc details.bust summary{cursor:pointer;color:var(--mute);font-weight:700;font-size:14px;padding:12px 2px;min-height:44px} .soc details.bust[open] summary{margin-bottom:6px}
 .post.over.busted{opacity:.78} .post.over.cashed{border-color:var(--good)}
 .post .pf .res{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--mute)} .post .pf .res.won{color:var(--good)} .post .pf .res.lost{color:var(--bad)}
@@ -386,7 +386,22 @@ a{color:var(--ink)}
     var won = LAST.posts.filter(function(p){ return stateOf(p, LAST.C).st === 'cashed'; }).sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); }).slice(0, 5);
     return won.length ? '<h2 class="sec">Last week\'s winners</h2>' + won.map(function(p){ return card(p, me, LAST.C, true); }).join('') : '';
   }
-  function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (held(p) ? 'h' : '') + (MYV[p.id] ? 'v' : '') + p.score + (MYT[p.id] ? 't' : '') + (p.tails || 0) + (MYRX[p.id] || '') + JSON.stringify(p.rx || {}) + (FOL[p.user_id] ? 'f' : ''); }).join(',') + '|' + (LAST ? LAST.posts.length : '-'); }
+  /* owner 11/27 ("Can we have all time winners from social. So anyone who's posted a slip no matter who's tailed gets saved"): every
+     posted slip the grading job has on record as won, from any week and with or without tails, newest first, under the Cashed tab.
+     It reads the stored result, so it needs no box file. This week's winners are already listed above it and are left out here. */
+  var ALLW = null, ALLW_BUSY = false;
+  function loadAllWon(){
+    if(ALLW || ALLW_BUSY || !A || !V3) return; ALLW_BUSY = true;
+    A.client.from('feed_posts').select(COLS3).eq('status', 'open').eq('result', 'won').order('created_at', {ascending: false}).limit(300)
+      .then(function(q){ ALLW = ((q && !q.error && q.data) || []).filter(function(p){ return p && p.id != null && p.legs && p.legs.length; }); if(sort === 'cashed') render(); })
+      .catch(function(){ ALLW = []; });
+  }
+  function allWonHtml(me, skip){
+    if(!ALLW) return '';
+    var w = ALLW.filter(function(p){ return +p.week !== W && !skip[p.id]; });
+    return w.length ? '<h2 class="sec">All-time winners <small class="awn">' + w.length + ' slip' + (w.length === 1 ? '' : 's') + '</small></h2>' + w.map(function(p){ return card(p, me, CUR, true); }).join('') : '';
+  }
+  function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (held(p) ? 'h' : '') + (MYV[p.id] ? 'v' : '') + p.score + (MYT[p.id] ? 't' : '') + (p.tails || 0) + (MYRX[p.id] || '') + JSON.stringify(p.rx || {}) + (FOL[p.user_id] ? 'f' : ''); }).join(',') + '|' + (LAST ? LAST.posts.length : '-') + '|' + (ALLW ? ALLW.length : '-'); }
   var SIG = null;
   function render(){
     var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'sharp';   // the pinned house slips belong to the open feed
@@ -411,8 +426,10 @@ a{color:var(--ink)}
     if(sort === 'cashed'){
       info.textContent = won.length ? won.length + ' slip' + (won.length === 1 ? '' : 's') + ' cashed this week' : 'Slips that hit every leg land here';
       if(!won.length && !wait && !LAST) loadLast();
-      list.innerHTML = won.length ? won.map(function(p){ return card(p, me); }).join('') + SK : wait ? SK
-        : '<div class="empty"><b>Nothing has cashed yet this week.</b>A posted slip moves here the moment its last leg hits.' + POSTBTN + '</div>' + lastWeekHtml(me);
+      loadAllWon();
+      var lwShown = {}; if(!won.length && !wait && LAST) LAST.posts.filter(function(p){ return stateOf(p, LAST.C).st === 'cashed'; }).sort(function(a, b){ return (+b.fd_odds || 0) - (+a.fd_odds || 0); }).slice(0, 5).forEach(function(p){ lwShown[p.id] = 1; });
+      list.innerHTML = (won.length ? won.map(function(p){ return card(p, me); }).join('') + SK : wait ? SK
+        : '<div class="empty"><b>Nothing has cashed yet this week.</b>A posted slip moves here the moment its last leg hits.' + POSTBTN + '</div>' + lastWeekHtml(me)) + allWonHtml(me, lwShown);
     } else if(GF){
       // one game asked for (a Boards card says "3 slips on Social"): the slips on it that are still up - open first, then cashed. The Boards count leaves the lost ones out too, so the count on the card is what the reader finds
       var allg = open.concat(won);
