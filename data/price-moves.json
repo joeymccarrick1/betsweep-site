@@ -1,8 +1,8 @@
 {
  "news": [],
  "week": 12,
- "built": "Fri 11/27 12:32 PM",
- "checked": "2026-11-27T19:12:20Z",
+ "built": "Fri 11/27 1:31 PM",
+ "checked": "2026-11-27T19:42:17Z",
  "legs_checked": 1289,
  "moves": [
   {
@@ -38,23 +38,6 @@
    "tier": "",
    "pulled": "2026-11-27 12:35",
    "detail": "Jonah Coleman anytime TD: FanDuel -130 at build -> -155 now (+4.3 implied pts toward the model)"
-  },
-  {
-   "key": "Adam Trautman|Anytime TD|1",
-   "pl": "Adam Trautman",
-   "m": "Anytime TD",
-   "ln": 1,
-   "gid": "DEN-PIT",
-   "ko": 1795809600000,
-   "built": 1600,
-   "now": 1000.0,
-   "pts": 3.2,
-   "p": 0.0803,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "plus",
-   "pulled": "2026-11-27 12:35",
-   "detail": "Adam Trautman anytime TD: FanDuel +1600 at build -> +1000 now (+3.2 implied pts toward the model)"
   }
  ]
 }
