@@ -102,6 +102,10 @@ def css():
     # A long thin mark gets taller and a short tall one gets wider; a lone wordmark elsewhere keeps its own shape.
     out.append(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%;-webkit-mask-size:100% 100%;mask-size:100% 100%}")
     out.append(".wmrow .wm[data-wm]{width:118px;height:28px}")
+    # owner 11/27 5:47 PM, on a team page: "Maybe the logo and the watermark on the same line?" The logo sits beside the wordmark on
+    # one row, at the same height; the record line and the buttons run full width under them.
+    out.append(".pp header:has(h1 .wm[data-wm]){row-gap:8px} .pp header:has(h1 .wm[data-wm]) > [data-hm]{grid-row:1;grid-column:1;height:46px !important;align-self:center} .pp header:has(h1 .wm[data-wm]) > h1{grid-row:1;grid-column:2;margin:0;align-self:center} .pp header:has(h1 .wm[data-wm]) > .sub,.pp header:has(h1 .wm[data-wm]) > .acts{grid-column:1/-1}")
+    out.append(".pp header h1 .wm[data-wm]{height:42px;width:min(230px,100%)}")
     # the bottom tab bar on its own layer: on an iPhone it came loose from the bottom mid-scroll (owner 1:26 PM, screenshot)
     out.append(".apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}")
     for t in TEAMS:

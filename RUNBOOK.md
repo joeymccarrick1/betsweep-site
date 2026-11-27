@@ -4242,3 +4242,5 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - 11/27 5:40 PM: the owner sent one-line Buccaneers and Vikings wordmarks (both already transparent); swapped in, WM_AR refreshed. The new
   Vikings mark is purple with its own gold outline, so it left WM_DARK (shown as the file on both themes). Older versions in
   /home/claude/nfl1/wm_src_v2. PROMO rows 73 and 74 set to Missed on the owner's word ("They both lost").
+- 11/27 6:20 PM: side-by-side wordmarks fill one box (promo matchup row, First TD heading) so a pair matches - owner asked to
+  "stretch or shrink" them; team page header puts the logo and wordmark on one row (`.pp header:has(h1 .wm[data-wm])`).
