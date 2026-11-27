@@ -4149,3 +4149,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   /s/<set>/. Logos are never mirrored and carry a thin light edge so navy marks read on the dark theme; the helmet set mirrors the
   right-hand side. To go back to helmets: set SET = "hm", full set, publish.
 - I did not source or draw any official logo. If he asks for more official marks (NBA, colleges, the league shield), same rule: his files.
+
+## 11/27 11:00 AM: all-time winners on Social; Black Friday house slips; wordmarks staged
+- **All-time winners** (owner: "anyone who's posted a slip no matter who's tailed gets saved on social"): under the Cashed tab, below this
+  week's winners, every open post whose stored `result` is `won`, any week, newest first, up to 300 (`loadAllWon` / `allWonHtml` in
+  social.py). It reads the grading job's stored result, so no box file and no new SQL: the "read open" policy already allows it. A
+  winner only appears once the social-grade job has written `won`. This week's slips and the five shown as last week's are skipped.
+- PROMO rows 73 (w12-7 Daily Sweep: Doorbuster) and 74 (w12-8 Rain Check) posted on the owner's word, both at OUR ESTIMATE; row 72 set
+  to Hit at FanDuel's +259 from his settled slip.
+- **Wordmarks:** 32 files from the owner in /home/claude/nfl1/wm_src, white removed by wm.py into wm_out (letter counters included; the
+  Rams and Commanders files were already clear). He chose a thin light outline for dark mode. Not on the site: placement not agreed.

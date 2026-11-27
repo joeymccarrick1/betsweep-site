@@ -38,6 +38,10 @@ window.bsAccount = {user: SIGNED ? {id: ME} : null, client: {rpc: function(n, a)
     if(n === 'feed_profile_set'){ if(/taken/i.test(a.p_handle)) return Promise.resolve({data: null, error: {message: 'That username is taken'}}); return Promise.resolve({data: {user_id: ME, handle: a.p_handle, color: a.p_color, emoji: a.p_emoji}, error: null}); }
     return Promise.resolve({data: {user_id: ME, handle: "MeUser", color: 4, emoji: null}, error: null}); },
   from: function(t){ return t === 'feed_posts' ? Q(window.__POSTS.concat(window.__LASTW), t) : Q(T[t] || [], t); }}};""" % (json.dumps(POSTS), json.dumps(LASTW))
+# 11/27 all-time winners: a slip from five weeks back that the grading job has on record as won, with no tails and no votes. It joins the
+# fake's winners only when the page sets t_allw, so the checks above it see the feed they always saw.
+ALLW = dict(post(7, "vintage", "Week 5 hit", [leg("Travis Kelce", "Receiving Yards", 40, "NYJ-KC", PAST - 35 * 864e5)], 0, week=WEEK - 5), result="won", units=3.1, tails=0, rx={}, status="open")
+FAKE += "try{ if(localStorage.getItem('t_allw')) window.__WON = window.__WON.concat([%s]); }catch(e){}" % json.dumps(ALLW)
 ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
 async def main():
@@ -109,6 +113,16 @@ async def main():
             check("No open slips right now" in t and "Build a slip and post it" in t, f"[{theme}] empty feed says so and offers the action")
             check("Last week's winners" in t and await pg.locator("#feed article.post").count() == 1 and "Week 9 hit" in t, f"[{theme}] last week's winner shown from the graded box file, the loser is not")
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/social-empty-{theme}.png")
+            # ---- 11/27: all-time winners under the Cashed tab (any week, tailed or not) ----
+            await pg.click('.seg button[data-s="cashed"]'); await pg.wait_for_timeout(900); t0 = await pg.inner_text("#feed")
+            check("All-time winners" not in t0, f"[{theme}] with no winner on record from an earlier week there is no All-time winners heading")
+            await pg.evaluate("localStorage.setItem('t_allw', '1')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
+            await pg.click('.seg button[data-s="cashed"]'); await pg.wait_for_timeout(1200); t1 = await pg.inner_text("#feed")
+            check("All-time winners" in t1 and "Week 5 hit" in t1 and "1 slip" in t1 and "Cashed" in t1, f"[{theme}] an untailed winner from five weeks back is listed under All-time winners as Cashed")
+            check(t1.count("Week 9 hit") == 1, f"[{theme}] last week's winner is not listed twice ({t1.count('Week 9 hit')})")
+            await pg.click('.seg button[data-s="top"]'); await pg.wait_for_timeout(600)
+            check("All-time winners" not in await pg.inner_text("#feed"), f"[{theme}] the All-time list sits under Cashed only")
+            await pg.evaluate("localStorage.removeItem('t_allw')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
             # ---- people (v3): avatar, record, tail, reactions, profile, follow, Following tab ----
             await pg.evaluate("localStorage.removeItem('t_empty'); localStorage.setItem('t_user', '1'); localStorage.setItem('bs_social_sort', 'top')"); await pg.reload(wait_until="domcontentloaded"); await pg.wait_for_timeout(3000)
             c1 = await pg.evaluate("(function(){ var c = document.getElementById('p1'); return {av: (c.querySelector('.av')||{}).textContent, fire: (c.querySelector('[data-rx=\"1|fire\"] b')||{}).textContent, tn: (c.querySelector('.tn')||{}).textContent, tail: (c.querySelector('[data-tail]')||{}).textContent}; })()")
