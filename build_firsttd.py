@@ -189,7 +189,7 @@ for gid in dict.fromkeys(r["gid"] for r in rows):
     cards.append(f'''<section class="ftd" id="ftd-{gid}" data-ko="{ko or ""}">
  <details class="fgd">
  <summary class="fhd" style="--ca:{TEAMCOL.get(a, ("#333","#333"))[0]};--cb:{TEAMCOL.get(b, ("#333","#333"))[0]}">
-  <h2 class="wmh">{badge(a)} {_HMW.wm(a, NAMES.get(a, a))} <small>@</small> {badge(b)} {_HMW.wm(b, NAMES.get(b, b))}</h2>
+  <h2 class="wmh">{badge(a)} {_HMW.wm(a, NAMES.get(a, a), dark=True)} <small>@</small> {badge(b)} {_HMW.wm(b, NAMES.get(b, b), dark=True)}</h2>
   <p class="fwhen">{E(rs[0]["kick"])}{" · " if rs[0]["kick"] else ""}{len(rs)} players</p>
   <p class="ftop3">{top3}</p>
  </summary>

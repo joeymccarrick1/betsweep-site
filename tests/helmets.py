@@ -34,7 +34,9 @@ check(H.matchup("DEN", "PIT", at=True).count("data-wm") == 2 and "@" in H.matchu
 check("\n.wm{" not in css and not css.startswith(".wm{") and ".wm[data-wm]{" in css, "the wordmark base rule only applies to an element that names a team")
 for f_, pat in (("build_stocks.py", 'class="sktb" data-hm="{t}"'), ("build_builder.py", "hmI(any.tm)"), ("build_builder.py", "hmI(l.tm) + esc(l.pl)"), ("social.py", "hmI(l.tm) + legText(l)")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: a small logo sits by the player or leg ({pat[:24]})")
-check("rgba(255,255,255,.75)" not in css and "[data-hm]{filter" not in css and css.count("filter:drop-shadow") == 1, "no outline or shadow on a logo; one faint hairline rule, for the dark wordmarks only")
+check("filter:drop-shadow" not in css, "no outline or shadow on any logo or wordmark")
+check(all(css.count(".wm[data-wm='%s']{background-image:none;background-color:%s;" % (t, c)) == 1 and css.count(":root[data-theme='light'] .wm:not(.dk)[data-wm='%s']{background-image:url(/s/wm/%s.webp);background-color:transparent" % (t, t.lower())) == 1 for t, c in H.WM_DARK.items()) and "BAL" not in H.WM_DARK, "a dark one-colour wordmark is painted in the team's bright colour on the dark theme and shown as the file on the light theme")
+check(sorted(H.WM_AR) == sorted(H.TEAMS), "every wordmark has its shape on record")
 check(".apptabs{transform:translateZ(0)" in css, "the tab bar has its own layer")
 # 11/27 afternoon: saved legs on My BetSweep, promo posters, the Sweep says share card
 import posters as PO

@@ -4230,3 +4230,12 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - **Cashed moment** on Social (`cashPop`): gold edge on every cashed card; the first time this browser sees a winner, one confetti
   burst (off for reduced motion). Seen ids in localStorage `bs_cashseen`.
 - Needs the owner: player headshots (a source he has rights to) and stadium line art.
+
+## 11/27 6:30 PM: one-line wordmarks, team colour on the dark theme
+- Owner 4:52 PM: "edit some of the wordmarks so they just fit on one line ... get rid of the Denver and just have the Broncos", and
+  on dark mode use the team's bright colour ("instead of Denver's dark blue can it be their orange"). Both are edits to HIS files:
+  a crop and a tint, nothing drawn. 16 marks lost their city line (a row-gap split, keep the nickname line: /home/claude/nfl1/wm_one);
+  the Vikings and Buccaneers marks have no clean gap between lines and stay as sent. `helmets.WM_AR` refreshed.
+- Dark theme: `helmets.WM_DARK` maps 20 one-colour dark marks to a bright team colour; the file is the CSS mask, the colour shows
+  through. Light theme shows the file itself. A surface that is dark on both themes (First TD cards) passes `dark=True` to `wm()`
+  (class `dk`) and keeps the bright version. The Ravens mark (own gold outline) is untouched. The hairline filter is gone.

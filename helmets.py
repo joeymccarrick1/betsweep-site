@@ -16,12 +16,16 @@ NOFLIP = ["LV", "SF"]
 SET = "nfl"
 # width / height of each wordmark file (assets/wm), so a board header can give every mark the same width and let its height follow
 # (owner 11/27: "I love how the raiders word mark fits under the logo and LV ... Can every word mark fit like that?")
-WM_AR = {'ARI': 5.14, 'ATL': 5.22, 'BAL': 5.07, 'BUF': 3.79, 'CAR': 2.59, 'CHI': 6.92, 'CIN': 5.71, 'CLE': 2.2, 'DAL': 5.71, 'DEN': 5.62, 'DET': 3.71, 'GB': 3.36, 'HOU': 6.43, 'IND': 4.04, 'JAX': 2.92, 'KC': 4.39, 'LA': 3.5, 'LAC': 3.67, 'LV': 5.71, 'MIA': 3.64, 'MIN': 2.31, 'NE': 4.24, 'NO': 4.29, 'NYG': 2.58, 'NYJ': 3.16, 'PHI': 5.9, 'PIT': 3.56, 'SEA': 6.32, 'SF': 5.14, 'TB': 3.6, 'TEN': 4.09, 'WAS': 3.19}
-WM_DARK = ["ARI", "ATL", "BAL", "CIN", "DAL", "DEN", "GB", "HOU", "IND", "JAX", "LAC", "LV", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "WAS"]
-def wm(t, text):
+WM_AR = {'ARI': 10.59, 'ATL': 11.25, 'BAL': 7.06, 'BUF': 3.79, 'CAR': 4.86, 'CHI': 6.92, 'CIN': 10.91, 'CLE': 4.09, 'DAL': 5.71, 'DEN': 8.57, 'DET': 3.71, 'GB': 3.36, 'HOU': 10.0, 'IND': 4.04, 'JAX': 4.44, 'KC': 4.39, 'LA': 4.56, 'LAC': 5.22, 'LV': 5.71, 'MIA': 5.07, 'MIN': 2.31, 'NE': 4.24, 'NO': 4.29, 'NYG': 3.19, 'NYJ': 3.16, 'PHI': 5.9, 'PIT': 3.56, 'SEA': 9.23, 'SF': 5.14, 'TB': 3.6, 'TEN': 6.32, 'WAS': 6.67}
+# owner 11/27 4:52 PM: "when in dark mode can you change the color? ... instead of Denver's dark blue can it be their orange". On the dark
+# theme a one-colour dark wordmark is painted in the team's bright colour: the file is used as a mask (its shape, untouched) and the
+# colour is laid through it. The light theme shows the file as it is. The Ravens mark has its own gold outline and is left alone.
+WM_DARK = {"ARI": "#F4EFE3", "ATL": "#E0313E", "CIN": "#FB4F14", "DAL": "#B0B7BC", "DEN": "#FB4F14", "GB": "#FFB612", "HOU": "#E0313E", "IND": "#F4EFE3", "JAX": "#D7A22A",
+           "LAC": "#FFC20E", "LV": "#A5ACAF", "MIN": "#FFC62F", "NE": "#E0313E", "NO": "#D3BC8D", "NYG": "#F4EFE3", "NYJ": "#F4EFE3", "PHI": "#A5ACAF", "PIT": "#FFB612", "SEA": "#69BE28", "WAS": "#FFB612"}
+def wm(t, text, dark=False):
     """a team's wordmark picture with its name kept as text for screen readers (owner 11/27: "team fonts ... throughout the site")"""
     k = ALIAS.get(t, t)
-    return f'<span class="wm" data-wm="{html.escape(k)}">{html.escape(text)}</span>' if k in TEAMS else f"<span>{html.escape(text)}</span>"
+    return f'<span class="wm{" dk" if dark else ""}" data-wm="{html.escape(k)}">{html.escape(text)}</span>' if k in TEAMS else f"<span>{html.escape(text)}</span>"
 def matchup(a, b, at=False):
     """logo + wordmark for two teams side by side (a promo page for a one-game slip); `at` only when a is known to be the visitor"""
     if ALIAS.get(a, a) not in TEAMS or ALIAS.get(b, b) not in TEAMS: return ""
@@ -85,9 +89,14 @@ def css():
     # owner 11/27 1:08 PM: "I don't think I love the light outline. It like neons too much." No outline on any logo, and none on a
     # wordmark that has colour of its own. The black and navy marks would vanish on the dark theme, so those alone keep one faint
     # hairline there (not a glow), and nothing on the light theme.
-    dk = ",".join("[data-wm='%s']" % t for t in WM_DARK)
-    out.append(dk + "{filter:drop-shadow(0 0 .5px rgba(255,255,255,.42))}")
-    out.append(":root[data-theme='light'] .wm[data-wm]{filter:none} @media (prefers-color-scheme: light){ :root:not([data-theme='dark']) .wm[data-wm]{filter:none} }")
+    lt = []
+    for t, c in WM_DARK.items():
+        u = "/s/wm/%s.webp" % t.lower()
+        out.append(".wm[data-wm='%s']{background-image:none;background-color:%s;-webkit-mask:url(%s) left center/contain no-repeat;mask:url(%s) left center/contain no-repeat}" % (t, c, u, u))
+        lt.append("SEL .wm:not(.dk)[data-wm='%s']{background-image:url(%s);background-color:transparent;-webkit-mask:none;mask:none}" % (t, u))
+    out.append(".wmrow span:last-child .wm[data-wm]{-webkit-mask-position:right center;mask-position:right center}")
+    out.append(" ".join(x.replace("SEL", ":root[data-theme='light']") for x in lt))
+    out.append("@media (prefers-color-scheme: light){ " + " ".join(x.replace("SEL", ":root:not([data-theme='dark'])") for x in lt) + " }")
     # the bottom tab bar on its own layer: on an iPhone it came loose from the bottom mid-scroll (owner 1:26 PM, screenshot)
     out.append(".apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}")
     for t in TEAMS:
