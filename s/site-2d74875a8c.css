@@ -319,15 +319,22 @@ i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-
 body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}
 .ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}
 @media (max-width:560px){ .hd.hmh{padding:10px 14px 8px} .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:40px;grid-row:1} .hd.hmh .tm b{font-size:32px;grid-row:1} }
+/* 11/27 sizing pass: bigger logos in the Live header, and small ones beside player names (builder cards, Social legs, Stock Market tiles) */
+.lg2 .ghd2 .t [data-hm]{height:40px !important}
+@media (max-width:560px){ .lg2 .ghd2 .t [data-hm]{height:36px !important} }
+.bqc .t b i.hm,.pcn b i.hm{height:18px;vertical-align:-4px;margin-right:6px}
+.post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}
+i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}
 /* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */
-.wm{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}
+.wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}
 .tm.b .wm{background-position:right center;margin-left:auto}
 .hd.hmh .tm .wm{margin-top:4px}
 .hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}
 .hd.hmh.ah .tm.a b::after{content:'away'} .hd.hmh.ah .tm.b b::before{content:'home'}
 .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font:600 10px/1 var(--body, system-ui);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 6px;vertical-align:middle}
-@media (min-width:561px){ .hd.hmh .tm .wm{height:34px;width:190px} }
-@media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:112px;height:20px;margin-top:5px} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }
+.hd.hmh .tm .wm{height:auto;aspect-ratio:var(--war, 5);max-height:42px}
+@media (min-width:561px){ .hd.hmh .tm .wm{width:190px;max-height:64px} }
+@media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:118px;margin-top:5px;align-self:start} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }
 .pp header h1 .wm{height:44px;width:min(320px,100%)} .tdir header h1 .wm{display:inline}
 .wmrow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px} .wmrow span{display:flex;align-items:center;gap:8px;min-width:0} .wmrow i{font-style:normal;color:var(--mute);font-weight:700} .wmrow i.hm{height:34px;margin:0} .wmrow .wm{display:block;height:26px;width:120px} .wmrow span:last-child .wm{background-position:right center}
 [data-wm='ARI']{background-image:url(/s/wm/ari.webp)}
@@ -362,6 +369,38 @@ body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}
 [data-wm='TB']{background-image:url(/s/wm/tb.webp)}
 [data-wm='TEN']{background-image:url(/s/wm/ten.webp)}
 [data-wm='WAS']{background-image:url(/s/wm/was.webp)}
+[data-wm='ARI']{--war:5.14}
+[data-wm='ATL']{--war:5.22}
+[data-wm='BAL']{--war:5.07}
+[data-wm='BUF']{--war:3.79}
+[data-wm='CAR']{--war:2.59}
+[data-wm='CHI']{--war:6.92}
+[data-wm='CIN']{--war:5.71}
+[data-wm='CLE']{--war:2.2}
+[data-wm='DAL']{--war:5.71}
+[data-wm='DEN']{--war:5.62}
+[data-wm='DET']{--war:3.71}
+[data-wm='GB']{--war:3.36}
+[data-wm='HOU']{--war:6.43}
+[data-wm='IND']{--war:4.04}
+[data-wm='JAX']{--war:2.92}
+[data-wm='KC']{--war:4.39}
+[data-wm='LA']{--war:3.5}
+[data-wm='LAC']{--war:3.67}
+[data-wm='LV']{--war:5.71}
+[data-wm='MIA']{--war:3.64}
+[data-wm='MIN']{--war:2.31}
+[data-wm='NE']{--war:4.24}
+[data-wm='NO']{--war:4.29}
+[data-wm='NYG']{--war:2.58}
+[data-wm='NYJ']{--war:3.16}
+[data-wm='PHI']{--war:5.9}
+[data-wm='PIT']{--war:3.56}
+[data-wm='SEA']{--war:6.32}
+[data-wm='SF']{--war:5.14}
+[data-wm='TB']{--war:3.6}
+[data-wm='TEN']{--war:4.09}
+[data-wm='WAS']{--war:3.19}
 [data-hm='ARI']{background-image:url(/s/nfl/ari.webp) !important}
 [data-hm='ATL']{background-image:url(/s/nfl/atl.webp) !important}
 [data-hm='BAL']{background-image:url(/s/nfl/bal.webp) !important}
