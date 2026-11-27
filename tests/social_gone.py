@@ -110,7 +110,7 @@ async def main():
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/gone-top-{theme}-{vp[0]}.png")
             await pg.click('.seg button[data-s="new"]'); await pg.wait_for_timeout(300); n1 = await pg.evaluate(IDS)
             await pg.click('.seg button[data-s="cashed"]'); await pg.wait_for_timeout(300); c1 = await pg.evaluate(IDS)
-            check(sorted(n1) == ["p1", "p10", "p9"] and sorted(c1) == ["p11", "p2"], f"[{tag}] New has the same three; Cashed has the two winners ({n1}, {c1})")
+            check(sorted(n1) == ["p1", "p10", "p9"] and sorted(c1) == ["p11", "p2", "p20"] and c1[-1] == "p20", f"[{tag}] New has the same three; Cashed has the two winners, then last week's winner under All-time winners (11/27) ({n1}, {c1})")
             ev = await ever(pg)
             check(not [x for x in ev if x in GONE], f"[{tag}] a slip with a dead leg, a lost or pushed result, or its games over without a win was never on the page, not even for a moment (ever drawn: {ev})")
             # one game: the finished one keeps its winner only; the one to come leaves out the slip that already lost a leg elsewhere
