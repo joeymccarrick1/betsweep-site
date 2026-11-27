@@ -234,6 +234,81 @@
      "pulled": "2026-11-27 6:34"
     }
    }
+  },
+  "Jahan Dotson|2026-11-27T18:50": {
+   "pl": "Jahan Dotson",
+   "tm": "ATL",
+   "pos": "WR",
+   "st": "Out",
+   "ts": "2026-11-27T18:50:11Z",
+   "legs": {
+    "Kyle Pitts|Receiving Yards|26": {
+     "pl": "Kyle Pitts",
+     "m": "Receiving Yards",
+     "ln": 26.0,
+     "built": -114,
+     "p": 0.5094,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-27 6:34"
+    },
+    "Drake London|Receiving Yards|70": {
+     "pl": "Drake London",
+     "m": "Receiving Yards",
+     "ln": 70.0,
+     "built": -104,
+     "p": 0.4861,
+     "first": null,
+     "moved": null,
+     "now": -104.0,
+     "pulled": "2026-11-27 6:34"
+    },
+    "Kyle Pitts|Longest Reception|20": {
+     "pl": "Kyle Pitts",
+     "m": "Longest Reception",
+     "ln": 20.0,
+     "built": 290,
+     "p": 0.2125,
+     "first": null,
+     "moved": null,
+     "now": 290.0,
+     "pulled": "2026-11-27 6:34"
+    },
+    "Drake London|Receptions|7": {
+     "pl": "Drake London",
+     "m": "Receptions",
+     "ln": 7.0,
+     "built": 225,
+     "p": 0.2506,
+     "first": null,
+     "moved": null,
+     "now": 225.0,
+     "pulled": "2026-11-27 6:34"
+    },
+    "Kyle Pitts|Receptions|5": {
+     "pl": "Kyle Pitts",
+     "m": "Receptions",
+     "ln": 5.0,
+     "built": 270,
+     "p": 0.2117,
+     "first": null,
+     "moved": null,
+     "now": 270.0,
+     "pulled": "2026-11-27 6:34"
+    },
+    "Drake London|Longest Reception|30": {
+     "pl": "Drake London",
+     "m": "Longest Reception",
+     "ln": 30.0,
+     "built": 155,
+     "p": 0.3303,
+     "first": null,
+     "moved": null,
+     "now": 155.0,
+     "pulled": "2026-11-27 6:34"
+    }
+   }
   }
  }
 }

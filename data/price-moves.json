@@ -2,7 +2,7 @@
  "news": [],
  "week": 12,
  "built": "Fri 11/27 12:32 PM",
- "checked": "2026-11-27T18:42:13Z",
+ "checked": "2026-11-27T19:12:20Z",
  "legs_checked": 1289,
  "moves": [
   {
@@ -19,7 +19,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-27 11:35",
+   "pulled": "2026-11-27 12:35",
    "detail": "Pat Bryant long rec 10+: FanDuel -350 at build -> -270 now (-4.8 implied pts against us)"
   },
   {
@@ -30,14 +30,31 @@
    "gid": "DEN-PIT",
    "ko": 1795809600000,
    "built": -130,
-   "now": -150.0,
-   "pts": 3.5,
+   "now": -155.0,
+   "pts": 4.3,
    "p": 0.5531,
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-27 11:35",
-   "detail": "Jonah Coleman anytime TD: FanDuel -130 at build -> -150 now (+3.5 implied pts toward the model)"
+   "pulled": "2026-11-27 12:35",
+   "detail": "Jonah Coleman anytime TD: FanDuel -130 at build -> -155 now (+4.3 implied pts toward the model)"
+  },
+  {
+   "key": "Adam Trautman|Anytime TD|1",
+   "pl": "Adam Trautman",
+   "m": "Anytime TD",
+   "ln": 1,
+   "gid": "DEN-PIT",
+   "ko": 1795809600000,
+   "built": 1600,
+   "now": 1000.0,
+   "pts": 3.2,
+   "p": 0.0803,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "plus",
+   "pulled": "2026-11-27 12:35",
+   "detail": "Adam Trautman anytime TD: FanDuel +1600 at build -> +1000 now (+3.2 implied pts toward the model)"
   }
  ]
 }
