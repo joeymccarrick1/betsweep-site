@@ -57,7 +57,17 @@ def css():
             ".gteamlist h3 .wm[data-wm]{display:inline-block;height:26px;width:124px;vertical-align:middle;margin-left:4px}",
             "h2.wmh .wm[data-wm]{display:inline-block;height:20px;width:84px;vertical-align:middle} h2.wmh{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}",
             "a.wma .wm[data-wm]{display:inline-block;height:18px;width:96px;vertical-align:middle}",
-            ".wmrow.l{justify-content:flex-start;margin:8px 16px 0}"]
+            ".wmrow.l{justify-content:flex-start;margin:8px 16px 0}",
+            "/* 11/27 4:30 PM: team colour wash behind a game header (boards, builder, Live) */",
+            ".hd.wash{background:linear-gradient(90deg,color-mix(in srgb,var(--wa,transparent) 34%,transparent),transparent 44%,transparent 56%,color-mix(in srgb,var(--wb,transparent) 34%,transparent)),var(--plays) center/360px 130px repeat,var(--chalk)}",
+            ".ghd.wash,.ghd2.wash{background-image:linear-gradient(90deg,color-mix(in srgb,var(--wa,transparent) 30%,transparent),transparent 42%,transparent 58%,color-mix(in srgb,var(--wb,transparent) 30%,transparent))}",
+            "/* Today: weather picture on a slate row, and the live scoreboard strip */",
+            ".game .gk i.wxi{font-style:normal;font-size:13px}",
+            "#lstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 0 4px;scrollbar-width:none} #lstrip::-webkit-scrollbar{display:none}",
+            "#lstrip .lsc{flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);text-decoration:none;font-family:var(--display);font-weight:800;font-size:17px}",
+            "#lstrip .lsc i.hm{height:22px;margin:0;vertical-align:0} #lstrip .lsc span{color:var(--mute)} #lstrip .lsc small{font-family:var(--body);font-weight:600;font-size:11px;color:var(--mute);margin-left:4px;display:inline-flex;align-items:center;gap:5px}",
+            "#lstrip .lsc.in{border-color:var(--red)} #lstrip .lsc.in small{color:var(--ink)} #lstrip .lsc.in em{width:7px;height:7px;border-radius:50%;background:var(--red);animation:lsp 1.4s ease-in-out infinite}",
+            "@keyframes lsp{0%,100%{opacity:1}50%{opacity:.25}} @media (prefers-reduced-motion: reduce){ #lstrip .lsc.in em{animation:none} }"]
     out += ["/* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */",
             ".wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}",
             ".tm.b .wm{background-position:right center;margin-left:auto}",

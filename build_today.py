@@ -333,6 +333,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <script>window.__TD = {json.dumps({"week": W, "built": built.isoformat(), "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""), "home": (GL.get(g["gid"]) or {}).get("home", g["b"]), "away": (GL.get(g["gid"]) or {}).get("away", g["a"])} for g in games], "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
 {TODAY_JS}
 {HOME.home_js(games)}
+{HOME.strip_js(games)}
 {HOME.HOME_SLIP_JS}
 '''
     if swb and any(vg.get(g["gid"]) and swb.get(g["gid"]) for g in games): body += SWC.get("js", "") + "\n"   # the share-card style + script, once (same one the boards carry)

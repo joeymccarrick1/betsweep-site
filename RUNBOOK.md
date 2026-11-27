@@ -4217,3 +4217,16 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   abbreviation on one row. Wordmarks now: Parlay Builder team headings (`.gteamlist h3 .wm`), First TD game headings (`h2.wmh`),
   the team link on a player page (`a.wma`), and a one-game promo card on Today (`.wmrow.l`, home._phm), plus team pages and promo pages.
 - Known weak spot: black / navy / dark-green marks are faint on the dark theme with only the hairline (his choice over the glow).
+
+## 11/27 5:30 PM: five "liven it up" pieces (owner: "Do all of the ones you can do without me")
+- **Team colour wash** behind game headers: boards (`.hd.wash`, `--wa` / `--wb` from TEAMCOL), Parlay Builder (`.ghd.wash`), Live (`.ghd2.wash`).
+- **Live strip on Today:** `home.strip_js(games)`, included by build_today. Its own ESPN scoreboard read every 30 s inside a game window,
+  page visible only; draws `#lstrip` (logos, score, clock, pulsing dot; that day's finals ride along) only after a live score is read.
+  Today does NOT load BSLive (live.py) - home_js's `apply()` never runs there - so the strip is separate on purpose.
+- **Weather picture** on slate rows (`home._wx_icons`, emoji with a label: dome, rain, snow, wind, roof can close, dry). The slate
+  section is not on Today right now, so this shows wherever the slate is drawn. Boards already had weather icons.
+- **Progress bar** on a Social slip leg whose game has started (`legPct`): 3 px line along the bottom of the row, no height change.
+  Site accent colour, green when hit - not the team colour (the page has no colour table).
+- **Cashed moment** on Social (`cashPop`): gold edge on every cashed card; the first time this browser sees a winner, one confetti
+  burst (off for reduced motion). Seen ids in localStorage `bs_cashseen`.
+- Needs the owner: player headshots (a source he has rights to) and stadium line art.

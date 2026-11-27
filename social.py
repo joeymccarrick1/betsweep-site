@@ -413,6 +413,11 @@ PAGE_CSS = """.soc .house{margin:0 0 14px} .soc .house .lab{display:block;font-f
 .post ul{list-style:none;margin:0;padding:2px 14px 6px}
 .post li{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}
 .post li:first-child{border-top:0}
+.post li{position:relative} .post li i.pg{position:absolute;left:0;bottom:0;height:3px;border-radius:2px;background:var(--red);opacity:.85;max-width:100%} .post li.hit i.pg{background:var(--good)} .post li.dead i.pg{background:var(--mute)}
+.post.over.cashed{border-color:#d9a520;box-shadow:0 0 0 1px #d9a520 inset} .post{position:relative}
+.cburst{position:absolute;left:50%;top:38%;width:0;height:0;pointer-events:none;z-index:3} .cburst i{position:absolute;width:7px;height:11px;border-radius:2px;background:hsl(var(--h),85%,58%);opacity:0;animation:cb 1.5s ease-out forwards}
+@keyframes cb{0%{transform:translate(0,0) rotate(0);opacity:1}70%{opacity:1}100%{transform:translate(var(--x),calc(var(--y) + 190px)) rotate(540deg);opacity:0}}
+@media (prefers-reduced-motion: reduce){ .cburst{display:none} }
 .post li .lg{flex:1;min-width:0}.post li small{color:var(--mute)}
 .post li.hit .lg::before{content:"✓ ";color:var(--good);font-weight:800}.post li.dead .lg::before{content:"✗ ";color:var(--bad);font-weight:800}
 .post li.dead{opacity:.6}
@@ -464,6 +469,16 @@ GRADE_JS = r"""  // ---- grading (social.GRADE_JS: the same code on every page t
     if((js.boxscore.players || []).length) SUMOK[gid] = 1;   // 11/17: this game's box score really was read
   } catch(e){} }
   var CUR = {G: G, BOX: BOX, FIRST: FIRST};
+  /* owner 11/27: how far along a yardage / catches leg is - a thin bar under the leg on a slip whose game has started. 0..1, or null for a
+     leg with nothing to measure (a TD, a game line, an under, a player with no box line yet). */
+  function legPct(l, C){ C = C || CUR; var g = C.G[l.g]; if(!g || g.st === 'pre' || l.gl || /^Under /.test(l.m) || !(+l.ln > 0)) return null; var r = C.BOX[norm(l.pl)]; if(!r) return null;
+    var v = l.m === 'Passing Yards' ? r.pass : l.m === 'Rushing Yards' ? r.rush : l.m === 'Receiving Yards' ? r.recy : l.m === 'Receptions' ? r.rec : l.m === 'Rush + Rec Yards' ? (r.rush || 0) + (r.recy || 0) : l.m === 'Passing TDs' ? r.ptd : null;
+    return v == null || isNaN(+v) ? null : {v: +v, p: Math.max(0, Math.min(1, +v / Math.ceil(+l.ln)))}; }
+  /* the cashed moment: the first time this browser sees a posted slip as cashed, the card gets a gold edge and one short burst. Seen ids
+     are kept in this browser; on a first visit only the newest winner bursts. */
+  function cashPop(){ try { var seen = JSON.parse(localStorage.getItem('bs_cashseen') || 'null'), first = !seen, ids = [].map.call(document.querySelectorAll('.post.over.cashed[data-id]'), function(n){ return n.getAttribute('data-id'); }); seen = seen || {};
+      var fresh = ids.filter(function(i){ return !seen[i]; }); if(!fresh.length) return; (first ? fresh.slice(0, 1) : fresh.slice(0, 3)).forEach(function(i){ var n = document.getElementById('p' + i); if(n && !n.querySelector('.cburst')){ n.classList.add('pop'); var b = document.createElement('span'); b.className = 'cburst'; b.setAttribute('aria-hidden', 'true'); for(var k = 0; k < 14; k++){ var d = document.createElement('i'); d.style.setProperty('--x', Math.round((Math.random() * 2 - 1) * 150) + 'px'); d.style.setProperty('--y', Math.round(-40 - Math.random() * 110) + 'px'); d.style.setProperty('--h', String(Math.round(Math.random() * 360))); d.style.animationDelay = Math.round(Math.random() * 120) + 'ms'; b.appendChild(d); } n.appendChild(b); setTimeout(function(){ if(b.parentNode) b.remove(); }, 2200); } });
+      fresh.forEach(function(i){ seen[i] = 1; }); localStorage.setItem('bs_cashseen', JSON.stringify(seen)); } catch(e){} }
   function gradeLeg(l, C){
     C = C || CUR;
     if(/^Under /.test(l.m)){ var s0 = gradeLeg(Object.assign({}, l, {m: l.m.slice(6), ln: Math.floor(l.ln) + 1}), C); return s0 === 'hit' ? 'dead' : s0 === 'dead' ? 'hit' : s0; }   // unders: the other side of the (X+1)+ over
@@ -669,7 +684,7 @@ PAGE_JS = r"""<script>(function(){
       av(p) +
       '<div class="who"><b' + (V3 ? ' class="h" data-u="' + esc(p.user_id) + '" role="link" tabindex="0"' : '') + '>@' + esc(p.handle) + '</b>' + hot(p.user_id) + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
       '<div class="od">' + esc(am(p.fd_odds)) + '</div></div>' +
-      '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + hmI(l.tm) + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
+      '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + hmI(l.tm) + legText(l) + '</span><small>' + esc(am(l.o)) + '</small>' + (function(){ var q = legPct(l, C); return q ? '<i class="pg" title="' + q.v + ' so far" style="width:' + Math.round(q.p * 100) + '%"></i>' : ''; })() + '</li>'; }).join('') + '</ul>' +
       (V3 && !old ? '<div class="rx">' + RXK.map(function(k){ var n = (p.rx || {})[k[0]] || 0; return '<button type="button" data-rx="' + p.id + '|' + k[0] + '" class="' + (MYRX[p.id] === k[0] ? 'on' : '') + '" aria-pressed="' + (MYRX[p.id] === k[0]) + '" aria-label="' + k[2] + (n ? ', ' + n : '') + '"><i>' + k[1] + '</i>' + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
         (p.tails ? '<span class="tn">' + p.tails + ' tailing</span>' : '') + '</div>' : '') +
       '<div class="pf">' + (fdB || tailB ? '<div class="pa' + (fdB && tailB ? ' two' : '') + '">' + fdB + tailB + '</div>' : '') + (saveB || loadB ? '<div class="pa">' + saveB + loadB + '</div>' : '') +
@@ -699,7 +714,7 @@ PAGE_JS = r"""<script>(function(){
   }
   function sig(){ return sort + '|' + POSTS.map(function(p){ var x = stateOf(p); return p.id + x.st + x.hits + (held(p) ? 'h' : '') + (MYV[p.id] ? 'v' : '') + p.score + (MYT[p.id] ? 't' : '') + (p.tails || 0) + (MYRX[p.id] || '') + JSON.stringify(p.rx || {}) + (FOL[p.user_id] ? 'f' : ''); }).join(',') + '|' + (LAST ? LAST.posts.length : '-') + '|' + (ALLW ? ALLW.length : '-'); }
   var SIG = null;
-  function render(){
+  function render(){ setTimeout(cashPop, 60);
     var hb = document.querySelector('.soc .house'); if(hb) hb.hidden = sort === 'cashed' || sort === 'sharp';   // the pinned house slips belong to the open feed
     if(VIEW){ SIG = null; if(hb) hb.hidden = true; profile(); return; }
     if(sort === 'sharp'){ SIG = null; sharps(); return; }

@@ -1481,13 +1481,14 @@ for a, b, pl_all in blocks:
         if k != kk: ph = ph.replace('<div class="splays"', '<div class="splays" hidden', 1); sh = sh.replace('<div class="slip"', '<div class="slip" hidden', 1)
         sc_blocks += (ph or f'<div class="splays none" data-sc="{k}"{"" if k == kk else " hidden"}><span class="lt">If {E(SC_LABEL(a, b)[k])} <small>({s[5+k]:.0f}%)</small></span><small>no leg clears 55% under this script</small></div>') + sh
     _ko = kick_ms(a, b); _fin = final_text(a, b)
+    BRAND_COL = lambda t: (TEAMCOL.get(t) or ("transparent",))[0]   # 11/27: a soft wash of each team's colour behind its side of the header
     # owner 11/27: the header reads away on the left, home on the right (the schedule's word; a-b is the scripts tab's order). A neutral
     # site, or a game the schedule does not have, keeps a-b. Only the header turns: the columns under it are labelled by team.
     # owner 11/27 2:15 PM: no wordmark in a board header ("It just makes everything a little long") - the nickname is plain text again
     _hg = game_for(a, b); _ah = bool(_hg) and str(_hg.get("location") or "").strip().lower() != "neutral"
     _hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b)); _sl, _sr = ((s[3], s[2]) if _hl == b else (s[2], s[3]))
     cards.append(f'''<section class="card" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
- <header class="hd hmh{" ah" if _ah else ""}">{PLAYS}
+ <header class="hd hmh wash{" ah" if _ah else ""}" style="--wa:{BRAND_COL(_hl)};--wb:{BRAND_COL(_hr)}">{PLAYS}
   <div class="tm a">{badge(_hl)}<b title="{NAMES.get(_hl, _hl)}">{_hl}</b></div>
   <div class="score"><span class="pt">{_sl:.1f}</span><span class="dash">–</span><span class="pt">{_sr:.1f}</span>
     <small>total {s[4]:.1f} · {fav} by {margin:.1f}</small>{SWOOSH}</div>

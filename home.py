@@ -59,6 +59,7 @@ def at_gid(gid):
     return AT.get(gid) or E(str(gid or "").replace("-", " vs "))
 
 def load(IN, OUT):
+    global _IN; _IN = IN   # for _wx_icons (the slate rows' weather picture)
     D = {}
     try: D["bd"] = json.load(open(os.path.join(OUT, "builder_data.json")))
     except Exception: D["bd"] = {"games": [], "legs": [], "week": 0}
@@ -357,13 +358,34 @@ def parlay_block(ps, compact=False):
             + (f'<div class="pothers">{others}</div>' if (others and not compact) else ""))
 
 # ---------- slate ----------
+def _wx_icons():
+    """{frozenset(two teams): (icon, words)} from this week's weather rows - a small picture on each slate row (owner 11/27: liven up the screens)"""
+    out = {}
+    try:
+        rows = json.load(open(os.path.join(globals().get("_IN") or "", "weather.json")))["values"]; wk = max(int(r[0]) for r in rows[1:] if str(r[0]).isdigit())
+        for r in rows[1:]:
+            r = list(r) + [""] * 16
+            if str(r[0]) != str(wk) or not r[2] or not r[3]: continue
+            roof = str(r[5]).lower(); pt = str(r[11]).lower()
+            try: wind = float(r[9]); gust = float(r[10] or 0); pch = float(r[12] or 0)
+            except Exception: wind = gust = pch = 0
+            if roof == "dome": ic = ("\U0001F3DF\uFE0F", "Dome")
+            elif "snow" in pt and pch >= 40: ic = ("\u2744\uFE0F", "Snow likely")
+            elif "rain" in pt and pch >= 50: ic = ("\U0001F327\uFE0F", "Rain likely")
+            elif gust >= 28 or wind >= 15: ic = ("\U0001F4A8", "Windy")
+            elif roof == "retractable": ic = ("\U0001F3DF\uFE0F", "Roof can close")
+            else: ic = ("\u2600\uFE0F", "Dry")
+            out[frozenset([r[2], r[3]])] = ic
+    except Exception: pass
+    return out
 def slate(D):
+    _wxi = _wx_icons(); _wxs = lambda g: (lambda x: f'<i class="wxi" role="img" aria-label="{x[1]}" title="{x[1]}">{x[0]}</i> ' if x else "")(_wxi.get(frozenset([g["a"], g["b"]])))
     gs = sorted(D["bd"]["games"], key=lambda g: g.get("ko") or 0)
     items = []
     for g in gs:
         fav = g["a"] if g["pa"] > g["pb"] else g["b"]; marg = abs(g["pa"] - g["pb"])
         items.append(f'<a class="game" href="/boards/#g-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-fin="{E(g.get("fin",""))}">'
-                     f'<span class="gk">{E(g.get("kick",""))}</span><span class="gm">{_at_hm(g)}</span>'
+                     f'<span class="gk">{_wxs(g)}{E(g.get("kick",""))}</span><span class="gm">{_at_hm(g)}</span>'
                      f'<span class="gp">{E(fav)} by {marg:.1f} · O/U {g["tot"]:.1f}</span><span class="gs">{E(g.get("most",""))}</span><span class="gl"></span></a>')
     return '<div class="slate">' + "".join(items) + "</div>"
 
@@ -1125,6 +1147,30 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 @media (max-width:420px){ .mb1{flex-wrap:wrap} .mbn{flex:1 1 100%} }
 """
 
+def strip_js(games):
+    """owner 11/27: a scoreboard strip across the top of Today while a game is in play - logos, score, clock; that day's finals ride
+    along. It reads ESPN's public scoreboard itself (every 30 s, only inside a game window, only while the page is showing) and draws
+    nothing until a live score has been read, so a page with no game on is unchanged."""
+    gs = json.dumps([{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko")} for g in games if g.get("ko")])
+    return r"""<script>(function(){
+  var GAMES = """ + gs + r""", EA = {WSH: 'WAS', LAR: 'LA'}, busy = false;
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
+  function near(){ var n = Date.now(); return GAMES.filter(function(g){ return n >= g.ko - 15 * 60e3 && n < g.ko + 5 * 3600e3; }); }
+  function lg(t){ return /^[A-Z]{2,3}$/.test(t) ? '<i class="hm" data-hm="' + t + '" role="img" aria-label="' + t + '"></i>' : esc(t); }
+  function draw(st){ var liveN = 0, chips = GAMES.map(function(g){ var s = st[g.gid]; if(!s || s.st === 'pre' || s.sa == null) return ''; if(s.st === 'post' && Date.now() - g.ko > 16 * 3600e3) return ''; if(s.st === 'in') liveN++;
+      return '<a class="lsc ' + (s.st === 'in' ? 'in' : 'fin') + '" href="/live/#lv-' + esc(g.gid) + '">' + lg(g.a) + '<b>' + esc(s.sa) + '</b><span>–</span><b>' + esc(s.sb) + '</b>' + lg(g.b) + '<small>' + (s.st === 'in' ? '<em></em>' + esc(s.det || 'Live') : 'Final') + '</small></a>'; }).join('');
+    var bar = document.getElementById('lstrip');
+    if(liveN && chips){ if(!bar){ bar = document.createElement('div'); bar.id = 'lstrip'; bar.setAttribute('aria-label', 'Live scores'); var first = document.querySelector('section.sec, section'); if(!first) return; first.parentNode.insertBefore(bar, first); } bar.innerHTML = chips; }
+    else if(bar) bar.remove(); }
+  function poll(){ if(busy || document.hidden || !window.fetch) return; var w = near(); if(!w.length) return; busy = true;
+    var t0 = Math.min.apply(null, w.map(function(g){ return g.ko; })), t1 = Math.max.apply(null, w.map(function(g){ return g.ko; }));
+    fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + ymd(t0 - 864e5) + '-' + ymd(t1 + 864e5), {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){ busy = false; if(!js || !js.events) return;
+      var st = {}; js.events.forEach(function(ev){ var c = (ev.competitions || [])[0]; if(!c) return; var by = {}; (c.competitors || []).forEach(function(x){ var a = x.team && x.team.abbreviation; by[EA[a] || a] = x.score; });
+        GAMES.forEach(function(g){ if(!(g.a in by) || !(g.b in by)) return; var ty = ((ev.status || c.status || {}).type) || {}; st[g.gid] = {st: ty.state || 'pre', sa: by[g.a], sb: by[g.b], det: ty.shortDetail || ''}; }); });
+      draw(st); }).catch(function(){ busy = false; }); }
+  poll(); setInterval(poll, 30e3); document.addEventListener('visibilitychange', function(){ if(!document.hidden) poll(); });
+})();</script>"""
 def home_js(games):
     gs = json.dumps([{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "fin": g.get("fin", "")} for g in games])
     return r"""

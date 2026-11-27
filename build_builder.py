@@ -1935,7 +1935,7 @@ BUILDER_JS = r"""
       var nAll = legs.filter(function(l){ return l.g === gid; }).length;
       var fav = g.pa >= g.pb ? g.a : g.b, mar = Math.abs(g.pa - g.pb);
       var hx = sides(g);
-      var head = '<button type="button" class="ghd" data-g="' + gid + '" aria-expanded="' + open + '"' + (off ? ' disabled' : '') + '>' +
+      var head = '<button type="button" class="ghd wash" style="--wa:' + hx.l.c[0] + ';--wb:' + hx.r.c[0] + '" data-g="' + gid + '" aria-expanded="' + open + '"' + (off ? ' disabled' : '') + '>' +
         '<span class="gteam">' + badge(hx.l.t, hx.l.c) + '<b>' + hx.l.t + '</b><small>' + esc(hx.l.n) + '</small></span>' +
         '<span class="gmid"><b>' + hx.l.p.toFixed(1) + '<i>–</i>' + hx.r.p.toFixed(1) + '</b><small>' + (finished(gid) ? (g.fin ? 'Final: ' + esc(g.fin) : 'Final') + ' · projected above' : off ? '<em class="livetag">Live</em> · projected above' : esc(g.kick) + ' · ' + esc(g.most)) + '</small></span>' +
         '<span class="gteam r">' + badge(hx.r.t, hx.r.c) + '<b>' + hx.r.t + '</b><small>' + esc(hx.r.n) + '</small></span>' +
