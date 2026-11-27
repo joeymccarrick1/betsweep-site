@@ -134,7 +134,8 @@ async def main():
             print(f"   [{theme}] finals in the build, no ESPN:", json.dumps({k: s[k] for k in ("slip", "facts", "week", "score", "tog", "subs", "bar")})[:520])
             check(s["slip"] == "CASHED" and f"{NW} hit" in (s["facts"] or "") and s["dead"] == 0, f"[{theme}] {NW} winning legs read CASHED with {NW} hit and nothing dead, with ESPN cut off (was: 0 hit, all dead)")
             check(s["week"] == f"{NW}–0" and len(wins(s)) == NW and not losses(s), f"[{theme}] My week reads {NW}-0 and the saved season record holds {NW} wins and no loss ({s['week']}, {len(wins(s))} wins / {len(losses(s))} losses saved)")
-            check(re.sub(r"\D+", " ", s["score"] or "").split() == [str(SA), str(SB)], f"[{theme}] the finished game shows its score ({s['score']!r}), not dashes")
+            # 11/27: the header reads away-left, home-right, so the two numbers may come in either order - both must be there
+            check(sorted(re.sub(r"\D+", " ", s["score"] or "").split()) == sorted([str(SA), str(SB)]), f"[{theme}] the finished game shows its score ({s['score']!r}), not dashes")
             check(s["gopen"] and "Week" in s["bar"] and "finished" in s["bar"] and "watch list below" not in s["bar"], f"[{theme}] a link to the game opens it inside the Final fold; the top line says the week is finished ({s['bar'][:60]!r})")
             labels = await pg.evaluate("""(gid) => { var c = function(sel){ var e = document.querySelector(sel); return e ? getComputedStyle(e, '::before').content.replace(/"/g, '').trim() : null; };
                 var card = '#lv-' + gid, was = c(card + ' > .ghd2 .tog .car'); document.querySelector(card + ' > .ghd2').click();
@@ -185,7 +186,7 @@ async def main():
         s, asked, errs, pg, ctx = await run("in-play", t=KO + 75 * 60e3, fb=None, fin=False, espn="on", sb=scoreboard("in", 13, 17), sm=summary(lose=(Y1,)), keys=WIN + [ABS], wait=3600); await ctx.close()
         row_abs = next((r for r in s["rows"] if r.startswith("×" + ABS["pl"]) or ABS["pl"] in r), "")
         print("   in play:", json.dumps({k: s[k] for k in ("slip", "facts", "score", "week")})[:300], "|", row_abs[:110])
-        check(re.sub(r"\D+", " ", s["score"]).split() == ["13", "17"] and re.fullmatch(r"\d+%", s["slip"] or "") is not None and "not graded" not in s["facts"], f"in play: live score, a chance from here, nothing waiting ({s['score']!r}, {s['slip']}, {s['facts']})")
+        check(sorted(re.sub(r"\D+", " ", s["score"]).split()) == ["13", "17"] and re.fullmatch(r"\d+%", s["slip"] or "") is not None and "not graded" not in s["facts"], f"in play: live score, a chance from here, nothing waiting ({s['score']!r}, {s['slip']}, {s['facts']})")
         check(f"0 / {int(ABS['ln'])}" in row_abs and "Dead" not in row_abs, f"in play a man who is not in the box score yet stands at 0, still open ({row_abs[:80]!r})")
         s, asked, errs, pg, ctx = await run("end-of-regulation", t=KO + 190 * 60e3, fb=None, fin=False, espn="on", sb=scoreboard("in", 20, 20, period=4, clock="0:00"), sm=summary(lose=(Y1,)), keys=[Y1, ML], wait=3600); await ctx.close()
         check(s["dead"] == 0 and not s["log"], f"tied at the end of regulation (overtime to come): nothing is dead and nothing is saved yet ({s['slip']}: {s['facts']})")
