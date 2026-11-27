@@ -17,6 +17,7 @@ SET = "nfl"
 # width / height of each wordmark file (assets/wm), so a board header can give every mark the same width and let its height follow
 # (owner 11/27: "I love how the raiders word mark fits under the logo and LV ... Can every word mark fit like that?")
 WM_AR = {'ARI': 5.14, 'ATL': 5.22, 'BAL': 5.07, 'BUF': 3.79, 'CAR': 2.59, 'CHI': 6.92, 'CIN': 5.71, 'CLE': 2.2, 'DAL': 5.71, 'DEN': 5.62, 'DET': 3.71, 'GB': 3.36, 'HOU': 6.43, 'IND': 4.04, 'JAX': 2.92, 'KC': 4.39, 'LA': 3.5, 'LAC': 3.67, 'LV': 5.71, 'MIA': 3.64, 'MIN': 2.31, 'NE': 4.24, 'NO': 4.29, 'NYG': 2.58, 'NYJ': 3.16, 'PHI': 5.9, 'PIT': 3.56, 'SEA': 6.32, 'SF': 5.14, 'TB': 3.6, 'TEN': 4.09, 'WAS': 3.19}
+WM_DARK = ["ARI", "ATL", "BAL", "CIN", "DAL", "DEN", "GB", "HOU", "IND", "JAX", "LAC", "LV", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "WAS"]
 def wm(t, text):
     """a team's wordmark picture with its name kept as text for screen readers (owner 11/27: "team fonts ... throughout the site")"""
     k = ALIAS.get(t, t)
@@ -29,8 +30,8 @@ def css():
     big = ".tm > [data-hm='%s'],.pp header > [data-hm='%s'],.ghd [data-hm='%s'],.tdir [data-hm='%s'],.phm [data-hm='%s']"
     flip = ".tm.b [data-hm],.gteam.r [data-hm],.ghd2 .t.r [data-hm],.phm span i.hm:last-child,.game .gm i.hm:last-of-type"
     out = ["/* team helmets (helmets.py): the owner's pictures with the backdrop cut away */",
-           "[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.38))}",
-           (flip + "{transform:scaleX(-1)}") if SET == "hm" else "/* logos are never mirrored */ [data-hm]{filter:drop-shadow(0 0 1px rgba(255,255,255,.75)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}",
+           "[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important}",
+           (flip + "{transform:scaleX(-1)}") if SET == "hm" else "/* logos are never mirrored, and carry no outline or shadow (owner 11/27: the light outline read as neon) */",
            ",".join(f"[data-hm='{t}']" for t in NOFLIP) + "{transform:none !important}",
            "i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-style:normal}",
            ".phm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 16px 0} .phm span{display:inline-flex;gap:2px} .phm i.hm{height:36px;margin:0}",
@@ -49,7 +50,7 @@ def css():
             ".post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}",
             "i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}"]
     out += ["/* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */",
-            ".wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}",
+            ".wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}",
             ".tm.b .wm{background-position:right center;margin-left:auto}",
             ".hd.hmh .tm .wm{margin-top:4px}",
             ".hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}",
@@ -62,6 +63,14 @@ def css():
             ".wmrow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px} .wmrow span{display:flex;align-items:center;gap:8px;min-width:0} .wmrow i{font-style:normal;color:var(--mute);font-weight:700} .wmrow i.hm{height:34px;margin:0} .wmrow .wm{display:block;height:26px;width:120px} .wmrow span:last-child .wm{background-position:right center}"]
     for t in TEAMS: out.append("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower()))
     for t in TEAMS: out.append("[data-wm='%s']{--war:%s}" % (t, WM_AR.get(t, 5)))
+    # owner 11/27 1:08 PM: "I don't think I love the light outline. It like neons too much." No outline on any logo, and none on a
+    # wordmark that has colour of its own. The black and navy marks would vanish on the dark theme, so those alone keep one faint
+    # hairline there (not a glow), and nothing on the light theme.
+    dk = ",".join("[data-wm='%s']" % t for t in WM_DARK)
+    out.append(dk + "{filter:drop-shadow(0 0 .5px rgba(255,255,255,.42))}")
+    out.append(":root[data-theme='light'] .wm[data-wm]{filter:none} @media (prefers-color-scheme: light){ :root:not([data-theme='dark']) .wm[data-wm]{filter:none} }")
+    # the bottom tab bar on its own layer: on an iPhone it came loose from the bottom mid-scroll (owner 1:26 PM, screenshot)
+    out.append(".apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}")
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/" + SET + "/%s.webp) !important}" % t.lower())

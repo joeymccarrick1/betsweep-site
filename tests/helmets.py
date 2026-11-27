@@ -34,6 +34,8 @@ check(H.matchup("DEN", "PIT", at=True).count("data-wm") == 2 and "@" in H.matchu
 check("\n.wm{" not in css and not css.startswith(".wm{") and ".wm[data-wm]{" in css, "the wordmark base rule only applies to an element that names a team")
 for f_, pat in (("build_stocks.py", 'class="sktb" data-hm="{t}"'), ("build_builder.py", "hmI(any.tm)"), ("build_builder.py", "hmI(l.tm) + esc(l.pl)"), ("social.py", "hmI(l.tm) + legText(l)")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: a small logo sits by the player or leg ({pat[:24]})")
+check("rgba(255,255,255,.75)" not in css and "[data-hm]{filter" not in css and css.count("filter:drop-shadow") == 1, "no outline or shadow on a logo; one faint hairline rule, for the dark wordmarks only")
+check(".apptabs{transform:translateZ(0)" in css, "the tab bar has its own layer")
 for f_, pat in (("build_boards.py", '_hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b))'), ("build_builder.py", "g.home === g.a) ? {l: B, r: A} : {l: A, r: B}"), ("build_live.py", "sw = ah && hm_ === g.a")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: the header puts the away team on the left and the home team on the right")
 check("[data-hm='LAR']" in css and "[data-hm='WSH']" in css, "LAR and WSH are understood as LA and WAS")

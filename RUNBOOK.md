@@ -4187,3 +4187,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   from the noon publish that image was stretched to 118 px with a white edge. The rule is now `.wm[data-wm]` (tests/helmets.py checks it).
 - **Left as they are:** My BetSweep slip rows (saved legs do not carry a team), Receipts (slip titles, no teams), Fantasy tools,
   share images and posters (drawn on a canvas, need their own pass), the Builder's game header (no room for a wordmark beside the score).
+
+## 11/27 1:40 PM: outlines off; the tab bar came loose on an iPhone
+- Owner 1:08 PM: "I don't think I love the light outline. It like neons too much." All drop-shadow filters are off the logos. Wordmarks
+  with colour of their own have none; the black / navy ones (`helmets.WM_DARK`) keep one faint hairline on the dark theme only, or
+  they vanish. If he wants that gone too, the honest alternative is a light chip behind those marks.
+- Owner 1:26 PM, screenshot of Today in the installed app: the bottom tab bar sitting mid-screen while scrolling. The bar is a direct
+  child of body and `position:fixed; bottom:0`, nothing in the markup moves it. NOT reproduced here (desktop Chromium). Best
+  explanation: a `filter` on every logo made hundreds of composited layers (334 on First TD) and iOS dropped the fixed bar while
+  scrolling. Two changes: the filters are gone, and `.apptabs` gets its own layer (`transform:translateZ(0)`). Unconfirmed until he
+  says it holds on his phone. If it comes back: look at the game sheet on Today and at `env(safe-area-inset-bottom)` in standalone.
