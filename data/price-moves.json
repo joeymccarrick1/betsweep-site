@@ -2,8 +2,8 @@
  "news": [],
  "week": 12,
  "built": "Fri 11/27 1:52 AM",
- "checked": "2026-11-27T12:42:17Z",
- "legs_checked": 820,
+ "checked": "2026-11-27T13:12:12Z",
+ "legs_checked": 816,
  "moves": [
   {
    "key": "David Montgomery|Anytime TD|1",
@@ -19,7 +19,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "David Montgomery anytime TD: FanDuel -145 at build -> +100 now (-9.2 implied pts against us)"
   },
   {
@@ -36,7 +36,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Derrick Henry anytime TD: FanDuel -115 at build -> -160 now (+8.1 implied pts toward the model)"
   },
   {
@@ -53,7 +53,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Tommy Tremble long rec 20+: FanDuel +350 at build -> +230 now (+8.1 implied pts toward the model)"
   },
   {
@@ -70,7 +70,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Alvin Kamara anytime TD: FanDuel +310 at build -> +500 now (-7.7 implied pts against us)"
   },
   {
@@ -87,7 +87,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Jonah Coleman rec yds 40+: FanDuel +225 at build -> +310 now (-6.4 implied pts against us)"
   },
   {
@@ -104,8 +104,25 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Tommy Tremble rec yds 30+: FanDuel +210 at build -> +162 now (+5.9 implied pts toward the model)"
+  },
+  {
+   "key": "Troy Franklin|Longest Reception|15",
+   "pl": "Troy Franklin",
+   "m": "Longest Reception",
+   "ln": 15.0,
+   "gid": "DEN-PIT",
+   "ko": 1795809600000,
+   "built": 280,
+   "now": 390.0,
+   "pts": -5.9,
+   "p": 0.2235,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-27 6:34",
+   "detail": "Troy Franklin long rec 15+: FanDuel +280 at build -> +390 now (-5.9 implied pts against us)"
   },
   {
    "key": "Jonah Coleman|Receptions|6",
@@ -121,7 +138,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Jonah Coleman rec 6+: FanDuel +280 at build -> +390 now (-5.9 implied pts against us)"
   },
   {
@@ -138,25 +155,8 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Chase Brown anytime TD: FanDuel -150 at build -> -120 now (-5.5 implied pts against us)"
-  },
-  {
-   "key": "Troy Franklin|Longest Reception|15",
-   "pl": "Troy Franklin",
-   "m": "Longest Reception",
-   "ln": 15.0,
-   "gid": "DEN-PIT",
-   "ko": 1795809600000,
-   "built": 280,
-   "now": 380.0,
-   "pts": -5.5,
-   "p": 0.2235,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-26 18:34",
-   "detail": "Troy Franklin long rec 15+: FanDuel +280 at build -> +380 now (-5.5 implied pts against us)"
   },
   {
    "key": "Nico Collins|Anytime TD|1",
@@ -172,7 +172,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Nico Collins anytime TD: FanDuel +105 at build -> +130 now (-5.3 implied pts against us)"
   },
   {
@@ -189,7 +189,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Evan Engram long rec 20+: FanDuel +330 at build -> +250 now (+5.3 implied pts toward the model)"
   },
   {
@@ -206,7 +206,7 @@
    "value": false,
    "dir": "SHORTENED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Justice Hill anytime TD: FanDuel +480 at build -> +350 now (+5.0 implied pts toward the model)"
   },
   {
@@ -223,7 +223,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Foster Moreau anytime TD: FanDuel +470 at build -> +700 now (-5.0 implied pts against us)"
   },
   {
@@ -240,7 +240,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Kayshon Boutte anytime TD: FanDuel +420 at build -> +600 now (-4.9 implied pts against us)"
   },
   {
@@ -257,7 +257,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "plus",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Troy Franklin rec yds 15+: FanDuel +210 at build -> +265 now (-4.9 implied pts against us)"
   },
   {
@@ -274,7 +274,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Malik Nabers anytime TD: FanDuel +120 at build -> +145 now (-4.6 implied pts against us)"
   },
   {
@@ -291,7 +291,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Zay Flowers anytime TD: FanDuel +175 at build -> +210 now (-4.1 implied pts against us)"
   },
   {
@@ -308,7 +308,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Jonah Coleman long rec 20+: FanDuel +310 at build -> +390 now (-4.0 implied pts against us)"
   },
   {
@@ -325,7 +325,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "plus",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Troy Franklin rec yds 20+: FanDuel +310 at build -> +390 now (-4.0 implied pts against us)"
   },
   {
@@ -342,7 +342,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Jonah Coleman rush yds 100+: FanDuel +220 at build -> +265 now (-3.9 implied pts against us)"
   },
   {
@@ -359,7 +359,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Emeka Egbuka long rec 15+: FanDuel -200 at build -> -170 now (-3.7 implied pts against us)"
   },
   {
@@ -376,7 +376,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Troy Franklin rec yds 5+: FanDuel -130 at build -> -113 now (-3.5 implied pts against us)"
   },
   {
@@ -393,7 +393,7 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Mark Andrews anytime TD: FanDuel +340 at build -> +420 now (-3.5 implied pts against us)"
   },
   {
@@ -410,7 +410,7 @@
    "value": true,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Tory Horton rec yds 5+: FanDuel -114 at build -> +100 now (-3.3 implied pts against us)"
   },
   {
@@ -427,8 +427,59 @@
    "value": false,
    "dir": "DRIFTED",
    "tier": "",
-   "pulled": "2026-11-26 18:34",
+   "pulled": "2026-11-27 6:34",
    "detail": "Isaiah Likely anytime TD: FanDuel +165 at build -> +190 now (-3.3 implied pts against us)"
+  },
+  {
+   "key": "Evan Engram|Receiving Yards|40",
+   "pl": "Evan Engram",
+   "m": "Receiving Yards",
+   "ln": 40.0,
+   "gid": "DEN-PIT",
+   "ko": 1795809600000,
+   "built": 320,
+   "now": 270.0,
+   "pts": 3.2,
+   "p": 0.2345,
+   "value": false,
+   "dir": "SHORTENED",
+   "tier": "",
+   "pulled": "2026-11-27 6:34",
+   "detail": "Evan Engram rec yds 40+: FanDuel +320 at build -> +270 now (+3.2 implied pts toward the model)"
+  },
+  {
+   "key": "Jaylen Warren|Rushing Yards|90",
+   "pl": "Jaylen Warren",
+   "m": "Rushing Yards",
+   "ln": 90.0,
+   "gid": "DEN-PIT",
+   "ko": 1795809600000,
+   "built": 270,
+   "now": 320.0,
+   "pts": -3.2,
+   "p": 0.2082,
+   "value": false,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-27 6:34",
+   "detail": "Jaylen Warren rush yds 90+: FanDuel +270 at build -> +320 now (-3.2 implied pts against us)"
+  },
+  {
+   "key": "Roman Wilson|Receiving Yards|20",
+   "pl": "Roman Wilson",
+   "m": "Receiving Yards",
+   "ln": 20.0,
+   "gid": "DEN-PIT",
+   "ko": 1795809600000,
+   "built": 148,
+   "now": 168.0,
+   "pts": -3.0,
+   "p": 0.4183,
+   "value": true,
+   "dir": "DRIFTED",
+   "tier": "",
+   "pulled": "2026-11-27 6:34",
+   "detail": "Roman Wilson rec yds 20+: FanDuel +148 at build -> +168 now (-3.0 implied pts against us)"
   }
  ]
 }
