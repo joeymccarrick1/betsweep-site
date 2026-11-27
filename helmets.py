@@ -97,6 +97,11 @@ def css():
     out.append(".wmrow span:last-child .wm[data-wm]{-webkit-mask-position:right center;mask-position:right center}")
     out.append(" ".join(x.replace("SEL", ":root[data-theme='light']") for x in lt))
     out.append("@media (prefers-color-scheme: light){ " + " ".join(x.replace("SEL", ":root:not([data-theme='dark'])") for x in lt) + " }")
+    # owner 11/27 5:44 PM, on a promo card: "Can you stretch or shrink the team watermarks so that they match in size?" Where two
+    # wordmarks sit side by side (a promo's matchup row, a First TD heading) each fills the same box exactly, so the pair matches.
+    # A long thin mark gets taller and a short tall one gets wider; a lone wordmark elsewhere keeps its own shape.
+    out.append(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%;-webkit-mask-size:100% 100%;mask-size:100% 100%}")
+    out.append(".wmrow .wm[data-wm]{width:118px;height:28px}")
     # the bottom tab bar on its own layer: on an iPhone it came loose from the bottom mid-scroll (owner 1:26 PM, screenshot)
     out.append(".apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}")
     for t in TEAMS:
