@@ -4239,3 +4239,6 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - Dark theme: `helmets.WM_DARK` maps 20 one-colour dark marks to a bright team colour; the file is the CSS mask, the colour shows
   through. Light theme shows the file itself. A surface that is dark on both themes (First TD cards) passes `dark=True` to `wm()`
   (class `dk`) and keeps the bright version. The Ravens mark (own gold outline) is untouched. The hairline filter is gone.
+- 11/27 5:40 PM: the owner sent one-line Buccaneers and Vikings wordmarks (both already transparent); swapped in, WM_AR refreshed. The new
+  Vikings mark is purple with its own gold outline, so it left WM_DARK (shown as the file on both themes). Older versions in
+  /home/claude/nfl1/wm_src_v2. PROMO rows 73 and 74 set to Missed on the owner's word ("They both lost").
