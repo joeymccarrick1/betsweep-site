@@ -307,8 +307,8 @@ body > .storyframe{zoom:1 !important}
   .card.scorecard .tiles > .tile:last-child:nth-child(odd){grid-column:1 / -1}
 }
 /* team helmets (helmets.py): the owner's pictures with the backdrop cut away */
-[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.38))}
-/* logos are never mirrored */ [data-hm]{filter:drop-shadow(0 0 1px rgba(255,255,255,.75)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important}
+/* logos are never mirrored, and carry no outline or shadow (owner 11/27: the light outline read as neon) */
 [data-hm='LV'],[data-hm='SF']{transform:none !important}
 i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-style:normal}
 .phm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 16px 0} .phm span{display:inline-flex;gap:2px} .phm i.hm{height:36px;margin:0}
@@ -325,8 +325,9 @@ body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}
 .bqc .t b i.hm,.pcn b i.hm{height:18px;vertical-align:-4px;margin-right:6px}
 .post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}
 i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}
+.sl .legs .ln i.hm{height:16px;vertical-align:-3px;margin-right:6px}
 /* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */
-.wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}
+.wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}
 .tm.b .wm{background-position:right center;margin-left:auto}
 .hd.hmh .tm .wm{margin-top:4px}
 .hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}
@@ -337,38 +338,38 @@ i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}
 @media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:118px;margin-top:5px;align-self:start} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }
 .pp header h1 .wm{height:44px;width:min(320px,100%)} .tdir header h1 .wm{display:inline}
 .wmrow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px} .wmrow span{display:flex;align-items:center;gap:8px;min-width:0} .wmrow i{font-style:normal;color:var(--mute);font-weight:700} .wmrow i.hm{height:34px;margin:0} .wmrow .wm{display:block;height:26px;width:120px} .wmrow span:last-child .wm{background-position:right center}
-[data-wm='ARI']{background-image:url(/s/wm/ari.webp)}
-[data-wm='ATL']{background-image:url(/s/wm/atl.webp)}
-[data-wm='BAL']{background-image:url(/s/wm/bal.webp)}
-[data-wm='BUF']{background-image:url(/s/wm/buf.webp)}
-[data-wm='CAR']{background-image:url(/s/wm/car.webp)}
-[data-wm='CHI']{background-image:url(/s/wm/chi.webp)}
-[data-wm='CIN']{background-image:url(/s/wm/cin.webp)}
-[data-wm='CLE']{background-image:url(/s/wm/cle.webp)}
-[data-wm='DAL']{background-image:url(/s/wm/dal.webp)}
-[data-wm='DEN']{background-image:url(/s/wm/den.webp)}
-[data-wm='DET']{background-image:url(/s/wm/det.webp)}
-[data-wm='GB']{background-image:url(/s/wm/gb.webp)}
-[data-wm='HOU']{background-image:url(/s/wm/hou.webp)}
-[data-wm='IND']{background-image:url(/s/wm/ind.webp)}
-[data-wm='JAX']{background-image:url(/s/wm/jax.webp)}
-[data-wm='KC']{background-image:url(/s/wm/kc.webp)}
-[data-wm='LA']{background-image:url(/s/wm/la.webp)}
-[data-wm='LAC']{background-image:url(/s/wm/lac.webp)}
-[data-wm='LV']{background-image:url(/s/wm/lv.webp)}
-[data-wm='MIA']{background-image:url(/s/wm/mia.webp)}
-[data-wm='MIN']{background-image:url(/s/wm/min.webp)}
-[data-wm='NE']{background-image:url(/s/wm/ne.webp)}
-[data-wm='NO']{background-image:url(/s/wm/no.webp)}
-[data-wm='NYG']{background-image:url(/s/wm/nyg.webp)}
-[data-wm='NYJ']{background-image:url(/s/wm/nyj.webp)}
-[data-wm='PHI']{background-image:url(/s/wm/phi.webp)}
-[data-wm='PIT']{background-image:url(/s/wm/pit.webp)}
-[data-wm='SEA']{background-image:url(/s/wm/sea.webp)}
-[data-wm='SF']{background-image:url(/s/wm/sf.webp)}
-[data-wm='TB']{background-image:url(/s/wm/tb.webp)}
-[data-wm='TEN']{background-image:url(/s/wm/ten.webp)}
-[data-wm='WAS']{background-image:url(/s/wm/was.webp)}
+.wm[data-wm='ARI']{background-image:url(/s/wm/ari.webp)}
+.wm[data-wm='ATL']{background-image:url(/s/wm/atl.webp)}
+.wm[data-wm='BAL']{background-image:url(/s/wm/bal.webp)}
+.wm[data-wm='BUF']{background-image:url(/s/wm/buf.webp)}
+.wm[data-wm='CAR']{background-image:url(/s/wm/car.webp)}
+.wm[data-wm='CHI']{background-image:url(/s/wm/chi.webp)}
+.wm[data-wm='CIN']{background-image:url(/s/wm/cin.webp)}
+.wm[data-wm='CLE']{background-image:url(/s/wm/cle.webp)}
+.wm[data-wm='DAL']{background-image:url(/s/wm/dal.webp)}
+.wm[data-wm='DEN']{background-image:url(/s/wm/den.webp)}
+.wm[data-wm='DET']{background-image:url(/s/wm/det.webp)}
+.wm[data-wm='GB']{background-image:url(/s/wm/gb.webp)}
+.wm[data-wm='HOU']{background-image:url(/s/wm/hou.webp)}
+.wm[data-wm='IND']{background-image:url(/s/wm/ind.webp)}
+.wm[data-wm='JAX']{background-image:url(/s/wm/jax.webp)}
+.wm[data-wm='KC']{background-image:url(/s/wm/kc.webp)}
+.wm[data-wm='LA']{background-image:url(/s/wm/la.webp)}
+.wm[data-wm='LAC']{background-image:url(/s/wm/lac.webp)}
+.wm[data-wm='LV']{background-image:url(/s/wm/lv.webp)}
+.wm[data-wm='MIA']{background-image:url(/s/wm/mia.webp)}
+.wm[data-wm='MIN']{background-image:url(/s/wm/min.webp)}
+.wm[data-wm='NE']{background-image:url(/s/wm/ne.webp)}
+.wm[data-wm='NO']{background-image:url(/s/wm/no.webp)}
+.wm[data-wm='NYG']{background-image:url(/s/wm/nyg.webp)}
+.wm[data-wm='NYJ']{background-image:url(/s/wm/nyj.webp)}
+.wm[data-wm='PHI']{background-image:url(/s/wm/phi.webp)}
+.wm[data-wm='PIT']{background-image:url(/s/wm/pit.webp)}
+.wm[data-wm='SEA']{background-image:url(/s/wm/sea.webp)}
+.wm[data-wm='SF']{background-image:url(/s/wm/sf.webp)}
+.wm[data-wm='TB']{background-image:url(/s/wm/tb.webp)}
+.wm[data-wm='TEN']{background-image:url(/s/wm/ten.webp)}
+.wm[data-wm='WAS']{background-image:url(/s/wm/was.webp)}
 [data-wm='ARI']{--war:5.14}
 [data-wm='ATL']{--war:5.22}
 [data-wm='BAL']{--war:5.07}
@@ -401,6 +402,9 @@ i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}
 [data-wm='TB']{--war:3.6}
 [data-wm='TEN']{--war:4.09}
 [data-wm='WAS']{--war:3.19}
+[data-wm='ARI'],[data-wm='ATL'],[data-wm='BAL'],[data-wm='CIN'],[data-wm='DAL'],[data-wm='DEN'],[data-wm='GB'],[data-wm='HOU'],[data-wm='IND'],[data-wm='JAX'],[data-wm='LAC'],[data-wm='LV'],[data-wm='MIN'],[data-wm='NE'],[data-wm='NO'],[data-wm='NYG'],[data-wm='NYJ'],[data-wm='PHI'],[data-wm='PIT'],[data-wm='SEA'],[data-wm='WAS']{filter:drop-shadow(0 0 .5px rgba(255,255,255,.42))}
+:root[data-theme='light'] .wm[data-wm]{filter:none} @media (prefers-color-scheme: light){ :root:not([data-theme='dark']) .wm[data-wm]{filter:none} }
+.apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}
 [data-hm='ARI']{background-image:url(/s/nfl/ari.webp) !important}
 [data-hm='ATL']{background-image:url(/s/nfl/atl.webp) !important}
 [data-hm='BAL']{background-image:url(/s/nfl/bal.webp) !important}
