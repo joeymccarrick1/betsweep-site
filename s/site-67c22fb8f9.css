@@ -306,3 +306,80 @@ body > .storyframe{zoom:1 !important}
   .card.scorecard .tiles{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px} .card.scorecard .tile{padding:10px 11px} .card.scorecard .tile b{font-size:26px}
   .card.scorecard .tiles > .tile:last-child:nth-child(odd){grid-column:1 / -1}
 }
+/* team helmets (helmets.py): the owner's pictures with the backdrop cut away */
+[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.38))}
+.tm.b [data-hm],.gteam.r [data-hm],.ghd2 .t.r [data-hm],.phm span i.hm:last-child,.game .gm i.hm:last-of-type{transform:scaleX(-1)}
+[data-hm='LV'],[data-hm='SF']{transform:none !important}
+i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-style:normal}
+.phm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 16px 0} .phm span{display:inline-flex;gap:2px} .phm i.hm{height:36px;margin:0}
+.game .gm i.hm{height:22px;vertical-align:-4px}
+/* the matchup header on a board: helmets on the outside facing in, away left, home right */
+@media (min-width:561px){ .hd.hmh{align-items:end;padding-top:14px} .hd.hmh .tm{display:flex;flex-direction:column;align-items:flex-start;gap:0} .hd.hmh .tm.b{align-items:flex-end;text-align:right} .hd.hmh .tm [data-hm]{height:66px;margin:0 0 6px} .hd.hmh .tm span:not(.badge){margin-top:5px} .hd.hmh .score{align-self:end;padding-bottom:2px} }
+.hd.hmh.ah .tm.a span:not(.badge)::after{content:' \00b7 away'} .hd.hmh.ah .tm.b span:not(.badge)::after{content:' \00b7 home'}
+body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}
+.ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}
+@media (max-width:560px){ .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:46px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.06em;font-size:10px} }
+[data-hm='ARI']{background-image:url(/s/hm/ari.webp) !important}
+[data-hm='ATL']{background-image:url(/s/hm/atl.webp) !important}
+[data-hm='BAL']{background-image:url(/s/hm/bal.webp) !important}
+[data-hm='BUF']{background-image:url(/s/hm/buf.webp) !important}
+[data-hm='CAR']{background-image:url(/s/hm/car.webp) !important}
+[data-hm='CHI']{background-image:url(/s/hm/chi.webp) !important}
+[data-hm='CIN']{background-image:url(/s/hm/cin.webp) !important}
+[data-hm='CLE']{background-image:url(/s/hm/cle.webp) !important}
+[data-hm='DAL']{background-image:url(/s/hm/dal.webp) !important}
+[data-hm='DEN']{background-image:url(/s/hm/den.webp) !important}
+[data-hm='DET']{background-image:url(/s/hm/det.webp) !important}
+[data-hm='GB']{background-image:url(/s/hm/gb.webp) !important}
+[data-hm='HOU']{background-image:url(/s/hm/hou.webp) !important}
+[data-hm='IND']{background-image:url(/s/hm/ind.webp) !important}
+[data-hm='JAX']{background-image:url(/s/hm/jax.webp) !important}
+[data-hm='KC']{background-image:url(/s/hm/kc.webp) !important}
+[data-hm='LA'],[data-hm='LAR']{background-image:url(/s/hm/la.webp) !important}
+[data-hm='LAC']{background-image:url(/s/hm/lac.webp) !important}
+[data-hm='LV']{background-image:url(/s/hm/lv.webp) !important}
+[data-hm='MIA']{background-image:url(/s/hm/mia.webp) !important}
+[data-hm='MIN']{background-image:url(/s/hm/min.webp) !important}
+[data-hm='NE']{background-image:url(/s/hm/ne.webp) !important}
+[data-hm='NO']{background-image:url(/s/hm/no.webp) !important}
+[data-hm='NYG']{background-image:url(/s/hm/nyg.webp) !important}
+[data-hm='NYJ']{background-image:url(/s/hm/nyj.webp) !important}
+[data-hm='PHI']{background-image:url(/s/hm/phi.webp) !important}
+[data-hm='PIT']{background-image:url(/s/hm/pit.webp) !important}
+[data-hm='SEA']{background-image:url(/s/hm/sea.webp) !important}
+[data-hm='SF']{background-image:url(/s/hm/sf.webp) !important}
+[data-hm='TB']{background-image:url(/s/hm/tb.webp) !important}
+[data-hm='TEN']{background-image:url(/s/hm/ten.webp) !important}
+[data-hm='WAS'],[data-hm='WSH']{background-image:url(/s/hm/was.webp) !important}
+.tm > [data-hm='ARI'],.pp header > [data-hm='ARI'],.ghd [data-hm='ARI'],.tdir [data-hm='ARI'],.phm [data-hm='ARI']{background-image:url(/s/hm/ari-l.webp) !important}
+.tm > [data-hm='ATL'],.pp header > [data-hm='ATL'],.ghd [data-hm='ATL'],.tdir [data-hm='ATL'],.phm [data-hm='ATL']{background-image:url(/s/hm/atl-l.webp) !important}
+.tm > [data-hm='BAL'],.pp header > [data-hm='BAL'],.ghd [data-hm='BAL'],.tdir [data-hm='BAL'],.phm [data-hm='BAL']{background-image:url(/s/hm/bal-l.webp) !important}
+.tm > [data-hm='BUF'],.pp header > [data-hm='BUF'],.ghd [data-hm='BUF'],.tdir [data-hm='BUF'],.phm [data-hm='BUF']{background-image:url(/s/hm/buf-l.webp) !important}
+.tm > [data-hm='CAR'],.pp header > [data-hm='CAR'],.ghd [data-hm='CAR'],.tdir [data-hm='CAR'],.phm [data-hm='CAR']{background-image:url(/s/hm/car-l.webp) !important}
+.tm > [data-hm='CHI'],.pp header > [data-hm='CHI'],.ghd [data-hm='CHI'],.tdir [data-hm='CHI'],.phm [data-hm='CHI']{background-image:url(/s/hm/chi-l.webp) !important}
+.tm > [data-hm='CIN'],.pp header > [data-hm='CIN'],.ghd [data-hm='CIN'],.tdir [data-hm='CIN'],.phm [data-hm='CIN']{background-image:url(/s/hm/cin-l.webp) !important}
+.tm > [data-hm='CLE'],.pp header > [data-hm='CLE'],.ghd [data-hm='CLE'],.tdir [data-hm='CLE'],.phm [data-hm='CLE']{background-image:url(/s/hm/cle-l.webp) !important}
+.tm > [data-hm='DAL'],.pp header > [data-hm='DAL'],.ghd [data-hm='DAL'],.tdir [data-hm='DAL'],.phm [data-hm='DAL']{background-image:url(/s/hm/dal-l.webp) !important}
+.tm > [data-hm='DEN'],.pp header > [data-hm='DEN'],.ghd [data-hm='DEN'],.tdir [data-hm='DEN'],.phm [data-hm='DEN']{background-image:url(/s/hm/den-l.webp) !important}
+.tm > [data-hm='DET'],.pp header > [data-hm='DET'],.ghd [data-hm='DET'],.tdir [data-hm='DET'],.phm [data-hm='DET']{background-image:url(/s/hm/det-l.webp) !important}
+.tm > [data-hm='GB'],.pp header > [data-hm='GB'],.ghd [data-hm='GB'],.tdir [data-hm='GB'],.phm [data-hm='GB']{background-image:url(/s/hm/gb-l.webp) !important}
+.tm > [data-hm='HOU'],.pp header > [data-hm='HOU'],.ghd [data-hm='HOU'],.tdir [data-hm='HOU'],.phm [data-hm='HOU']{background-image:url(/s/hm/hou-l.webp) !important}
+.tm > [data-hm='IND'],.pp header > [data-hm='IND'],.ghd [data-hm='IND'],.tdir [data-hm='IND'],.phm [data-hm='IND']{background-image:url(/s/hm/ind-l.webp) !important}
+.tm > [data-hm='JAX'],.pp header > [data-hm='JAX'],.ghd [data-hm='JAX'],.tdir [data-hm='JAX'],.phm [data-hm='JAX']{background-image:url(/s/hm/jax-l.webp) !important}
+.tm > [data-hm='KC'],.pp header > [data-hm='KC'],.ghd [data-hm='KC'],.tdir [data-hm='KC'],.phm [data-hm='KC']{background-image:url(/s/hm/kc-l.webp) !important}
+.tm > [data-hm='LA'],.pp header > [data-hm='LA'],.ghd [data-hm='LA'],.tdir [data-hm='LA'],.phm [data-hm='LA'],.tm > [data-hm='LAR'],.pp header > [data-hm='LAR'],.ghd [data-hm='LAR'],.tdir [data-hm='LAR'],.phm [data-hm='LAR']{background-image:url(/s/hm/la-l.webp) !important}
+.tm > [data-hm='LAC'],.pp header > [data-hm='LAC'],.ghd [data-hm='LAC'],.tdir [data-hm='LAC'],.phm [data-hm='LAC']{background-image:url(/s/hm/lac-l.webp) !important}
+.tm > [data-hm='LV'],.pp header > [data-hm='LV'],.ghd [data-hm='LV'],.tdir [data-hm='LV'],.phm [data-hm='LV']{background-image:url(/s/hm/lv-l.webp) !important}
+.tm > [data-hm='MIA'],.pp header > [data-hm='MIA'],.ghd [data-hm='MIA'],.tdir [data-hm='MIA'],.phm [data-hm='MIA']{background-image:url(/s/hm/mia-l.webp) !important}
+.tm > [data-hm='MIN'],.pp header > [data-hm='MIN'],.ghd [data-hm='MIN'],.tdir [data-hm='MIN'],.phm [data-hm='MIN']{background-image:url(/s/hm/min-l.webp) !important}
+.tm > [data-hm='NE'],.pp header > [data-hm='NE'],.ghd [data-hm='NE'],.tdir [data-hm='NE'],.phm [data-hm='NE']{background-image:url(/s/hm/ne-l.webp) !important}
+.tm > [data-hm='NO'],.pp header > [data-hm='NO'],.ghd [data-hm='NO'],.tdir [data-hm='NO'],.phm [data-hm='NO']{background-image:url(/s/hm/no-l.webp) !important}
+.tm > [data-hm='NYG'],.pp header > [data-hm='NYG'],.ghd [data-hm='NYG'],.tdir [data-hm='NYG'],.phm [data-hm='NYG']{background-image:url(/s/hm/nyg-l.webp) !important}
+.tm > [data-hm='NYJ'],.pp header > [data-hm='NYJ'],.ghd [data-hm='NYJ'],.tdir [data-hm='NYJ'],.phm [data-hm='NYJ']{background-image:url(/s/hm/nyj-l.webp) !important}
+.tm > [data-hm='PHI'],.pp header > [data-hm='PHI'],.ghd [data-hm='PHI'],.tdir [data-hm='PHI'],.phm [data-hm='PHI']{background-image:url(/s/hm/phi-l.webp) !important}
+.tm > [data-hm='PIT'],.pp header > [data-hm='PIT'],.ghd [data-hm='PIT'],.tdir [data-hm='PIT'],.phm [data-hm='PIT']{background-image:url(/s/hm/pit-l.webp) !important}
+.tm > [data-hm='SEA'],.pp header > [data-hm='SEA'],.ghd [data-hm='SEA'],.tdir [data-hm='SEA'],.phm [data-hm='SEA']{background-image:url(/s/hm/sea-l.webp) !important}
+.tm > [data-hm='SF'],.pp header > [data-hm='SF'],.ghd [data-hm='SF'],.tdir [data-hm='SF'],.phm [data-hm='SF']{background-image:url(/s/hm/sf-l.webp) !important}
+.tm > [data-hm='TB'],.pp header > [data-hm='TB'],.ghd [data-hm='TB'],.tdir [data-hm='TB'],.phm [data-hm='TB']{background-image:url(/s/hm/tb-l.webp) !important}
+.tm > [data-hm='TEN'],.pp header > [data-hm='TEN'],.ghd [data-hm='TEN'],.tdir [data-hm='TEN'],.phm [data-hm='TEN']{background-image:url(/s/hm/ten-l.webp) !important}
+.tm > [data-hm='WAS'],.pp header > [data-hm='WAS'],.ghd [data-hm='WAS'],.tdir [data-hm='WAS'],.phm [data-hm='WAS'],.tm > [data-hm='WSH'],.pp header > [data-hm='WSH'],.ghd [data-hm='WSH'],.tdir [data-hm='WSH'],.phm [data-hm='WSH']{background-image:url(/s/hm/was-l.webp) !important}
