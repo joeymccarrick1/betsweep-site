@@ -1,43 +1,8 @@
 {
  "news": [],
  "week": 12,
- "built": "Fri 11/27 1:31 PM",
- "checked": "2026-11-27T19:42:17Z",
- "legs_checked": 1289,
- "moves": [
-  {
-   "key": "Pat Bryant|Longest Reception|10",
-   "pl": "Pat Bryant",
-   "m": "Longest Reception",
-   "ln": 10.0,
-   "gid": "DEN-PIT",
-   "ko": 1795809600000,
-   "built": -350,
-   "now": -270.0,
-   "pts": -4.8,
-   "p": 0.7253,
-   "value": false,
-   "dir": "DRIFTED",
-   "tier": "",
-   "pulled": "2026-11-27 12:35",
-   "detail": "Pat Bryant long rec 10+: FanDuel -350 at build -> -270 now (-4.8 implied pts against us)"
-  },
-  {
-   "key": "Jonah Coleman|Anytime TD|1",
-   "pl": "Jonah Coleman",
-   "m": "Anytime TD",
-   "ln": 1.0,
-   "gid": "DEN-PIT",
-   "ko": 1795809600000,
-   "built": -130,
-   "now": -155.0,
-   "pts": 4.3,
-   "p": 0.5531,
-   "value": false,
-   "dir": "SHORTENED",
-   "tier": "",
-   "pulled": "2026-11-27 12:35",
-   "detail": "Jonah Coleman anytime TD: FanDuel -130 at build -> -155 now (+4.3 implied pts toward the model)"
-  }
- ]
+ "built": "Fri 11/27 2:02 PM",
+ "checked": "2026-11-27T20:12:14Z",
+ "legs_checked": 1139,
+ "moves": []
 }
