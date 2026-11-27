@@ -14,6 +14,7 @@ octile and by position; multipliers/exponents on the share did not help):
 The Sheet tab 'V2 - First TD Board' computes the same thing with formulas; when in/firsttd.json is present this script prints the largest
 disagreement so a drift between the tab and the site is caught by the weekly run.
 """
+import helmets as _HMW
 import json, os, re, csv, html, datetime, math
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 os.makedirs(OUT, exist_ok=True)
@@ -188,7 +189,7 @@ for gid in dict.fromkeys(r["gid"] for r in rows):
     cards.append(f'''<section class="ftd" id="ftd-{gid}" data-ko="{ko or ""}">
  <details class="fgd">
  <summary class="fhd" style="--ca:{TEAMCOL.get(a, ("#333","#333"))[0]};--cb:{TEAMCOL.get(b, ("#333","#333"))[0]}">
-  <h2>{badge(a)} {E(NAMES.get(a, a))} <small>@</small> {badge(b)} {E(NAMES.get(b, b))}</h2>
+  <h2 class="wmh">{badge(a)} {_HMW.wm(a, NAMES.get(a, a))} <small>@</small> {badge(b)} {_HMW.wm(b, NAMES.get(b, b))}</h2>
   <p class="fwhen">{E(rs[0]["kick"])}{" · " if rs[0]["kick"] else ""}{len(rs)} players</p>
   <p class="ftop3">{top3}</p>
  </summary>

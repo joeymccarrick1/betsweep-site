@@ -1955,7 +1955,7 @@ BUILDER_JS = r"""
             var k = gid + '|' + tm + '|' + ps, on = !!openPos[k], ins = legs.filter(function(l){ return sel[l.i] && l.g === gid && l.tm === tm && !isGL(l) && (ps === 'X' ? posOrd[l.pos] == null : l.pos === ps); }).length;
             return '<div class="pgrp' + (on ? ' on' : '') + '"><button type="button" class="pgb" data-pg="' + esc(k) + '" aria-expanded="' + on + '"><b>' + PN[ps] + '</b><small>' + rs.map(function(l){ return esc(lastN(l.pl)); }).join(', ') + '</small>' +
               (ins ? '<em>' + ins + ' in slip</em>' : '') + '<i class="car">' + (on ? '▴' : '▾') + '</i></button>' + (on ? '<ul class="legs">' + cards(rs) + '</ul>' : '') + '</div>'; }).join('');   // QB, then RB, WR, TE - one card per player
-          return '<div class="gteamlist"><h3>' + badge(tm, tm === g.a ? g.ca : g.cb) + ' ' + (tm === g.a ? esc(g.na) : esc(g.nb)) + '</h3>' + (html || '<ul class="legs"><li class="more">No FanDuel legs priced yet.</li></ul>') + '</div>';
+          return '<div class="gteamlist"><h3>' + badge(tm, tm === g.a ? g.ca : g.cb) + ' <span class="wm" data-wm="' + tm + '">' + (tm === g.a ? esc(g.na) : esc(g.nb)) + '</span></h3>' + (html || '<ul class="legs"><li class="more">No FanDuel legs priced yet.</li></ul>') + '</div>';
         }).join('') + '</div>';
       }
       var lv = LV[gid], tk = (lv && window.BSLive) ? window.BSLive.tickHtml(g, lv) : '';

@@ -1488,10 +1488,10 @@ for a, b, pl_all in blocks:
     _hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b)); _sl, _sr = ((s[3], s[2]) if _hl == b else (s[2], s[3]))
     cards.append(f'''<section class="card" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
  <header class="hd hmh{" ah" if _ah else ""}">{PLAYS}
-  <div class="tm a">{badge(_hl)}<b>{_hl}</b><span>{NAMES.get(_hl, _hl)}</span></div>
+  <div class="tm a">{badge(_hl)}<b title="{NAMES.get(_hl, _hl)}">{_hl}</b></div>
   <div class="score"><span class="pt">{_sl:.1f}</span><span class="dash">–</span><span class="pt">{_sr:.1f}</span>
     <small>total {s[4]:.1f} · {fav} by {margin:.1f}</small>{SWOOSH}</div>
-  <div class="tm b">{badge(_hr)}<b>{_hr}</b><span>{NAMES.get(_hr, _hr)}</span></div>
+  <div class="tm b">{badge(_hr)}<b title="{NAMES.get(_hr, _hr)}">{_hr}</b></div>
  </header>
  {info}
  {conf_html}

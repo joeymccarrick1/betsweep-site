@@ -4210,3 +4210,10 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - 11/27 2:15 PM, owner: "maybe we take the word mark off the matchup boards. It just makes everything a little long." Board headers
   are back to the plain nickname (the header CSS for `.hd.hmh .tm .wm` stays, unused). Wordmarks remain on team pages and one-game
   promo pages. With the wordmarks painting again, page_tight had gone over its 600 px card limit (617) - this removes that too.
+
+## 11/27 3:40 PM: board header is logo + abbreviation; wordmarks moved to headings
+- Owner 3:14 PM: no team names on the boards ("fine with just the logo and abbreviations. Condense the sizing"), and yes to the four
+  wordmark spots. Board header: nickname gone (kept as the abbreviation's title), tighter padding; wide screens put logo and
+  abbreviation on one row. Wordmarks now: Parlay Builder team headings (`.gteamlist h3 .wm`), First TD game headings (`h2.wmh`),
+  the team link on a player page (`a.wma`), and a one-game promo card on Today (`.wmrow.l`, home._phm), plus team pages and promo pages.
+- Known weak spot: black / navy / dark-green marks are faint on the dark theme with only the hairline (his choice over the glow).

@@ -49,7 +49,15 @@ def css():
             ".bqc .t b i.hm,.pcn b i.hm{height:18px;vertical-align:-4px;margin-right:6px}",
             ".post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}",
             "i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}",
-            ".sl .legs .ln i.hm{height:16px;vertical-align:-3px;margin-right:6px}"]
+            ".sl .legs .ln i.hm{height:16px;vertical-align:-3px;margin-right:6px}",
+            "/* 11/27 3:15 PM: board header is logo + abbreviation only, so it is shorter; wordmarks moved to section headings */",
+            ".hd.hmh{padding-top:10px;padding-bottom:6px} .hd.hmh .score .pt{line-height:1}",
+            "@media (max-width:560px){ .hd.hmh{padding:8px 14px 4px;row-gap:2px} .hd.hmh .tm [data-hm]{height:44px} .hd.hmh .tm{align-items:center} }",
+            "@media (min-width:561px){ .hd.hmh .tm{flex-direction:row;align-items:center;gap:10px} .hd.hmh .tm.b{flex-direction:row-reverse} .hd.hmh .tm [data-hm]{height:56px;margin:0} }",
+            ".gteamlist h3 .wm[data-wm]{display:inline-block;height:26px;width:124px;vertical-align:middle;margin-left:4px}",
+            "h2.wmh .wm[data-wm]{display:inline-block;height:20px;width:84px;vertical-align:middle} h2.wmh{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}",
+            "a.wma .wm[data-wm]{display:inline-block;height:18px;width:96px;vertical-align:middle}",
+            ".wmrow.l{justify-content:flex-start;margin:8px 16px 0}"]
     out += ["/* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */",
             ".wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}",
             ".tm.b .wm{background-position:right center;margin-left:auto}",

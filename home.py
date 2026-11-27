@@ -50,6 +50,9 @@ def _phm(p):   # a promo card's helmet row: both helmets for each game on the sl
     for l in p["legs"]:
         if l.get("gid") and l["gid"] not in gids: gids.append(l["gid"])
     prs = ["".join(HM.hm(t) for t in _r.findall(r"[A-Z]{2,3}", _hh.unescape(at_gid(g)))[:2]) for g in gids[:6]]
+    if len(gids) == 1:   # owner 11/27: a one-game slip wears both wordmarks under its title, like its promo page
+        ts = _r.findall(r"[A-Z]{2,3}", _hh.unescape(at_gid(gids[0])))[:2]; mu = HM.matchup(ts[0], ts[1], at="@" in _hh.unescape(at_gid(gids[0]))) if len(ts) == 2 else ""
+        if mu: return mu.replace('class="wmrow"', 'class="wmrow l"')
     prs = [x for x in prs if x]
     return ('<div class="phm">' + "".join(f"<span>{x}</span>" for x in prs) + "</div>") if prs else ""
 def at_gid(gid):

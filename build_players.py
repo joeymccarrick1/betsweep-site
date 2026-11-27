@@ -496,7 +496,7 @@ def page(k, p):
     opp = (g["b"] if g["a"] == p["team"] else g["a"]) if g else None
     home = g and g.get("b") == p["team"]
     tp = (g["pb"] if home else g["pa"]) if g else None
-    sub = f'<b>{p["pos"]}</b><span><a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a></span>'
+    sub = f'<b>{p["pos"]}</b><span><a class="wma" href="/teams/{p["team"].lower()}/">{__import__("helmets").wm(p["team"], p["team"])}</a></span>'
     if g: sub += f'<span>{"vs" if home else "@"} <a href="/teams/{opp.lower()}/">{E(opp)}</a></span><span>{kick_text(g)}</span>' + (f'<span>team total {tp:.1f} (model)</span>' if isinstance(tp, (int, float)) else "")
     nu, nsrc = news_url(p["name"])
     top = sorted([l for l in p["legs"] if l["m"] in MORDER and l.get("e") is not None], key=lambda l: -l["e"])[:1]
