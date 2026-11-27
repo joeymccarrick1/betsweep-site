@@ -4207,3 +4207,6 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   logo before each saved leg. A spread / moneyline leg reads its own abbreviation; a player not playing this week gets none.
 - **Promo posters** (posters.py `_logo`, `leg_row`): the team's logo replaces the colour bar, embedded from assets/<SET>.
 - **Sweep says share card** (build_boards SWEEPCARD_JS): both logos top right, drawn when loaded; `__HMSET__` is filled from helmets.SET.
+- 11/27 2:15 PM, owner: "maybe we take the word mark off the matchup boards. It just makes everything a little long." Board headers
+  are back to the plain nickname (the header CSS for `.hd.hmh .tm .wm` stays, unused). Wordmarks remain on team pages and one-game
+  promo pages. With the wordmarks painting again, page_tight had gone over its 600 px card limit (617) - this removes that too.
