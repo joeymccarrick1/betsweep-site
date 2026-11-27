@@ -22,13 +22,12 @@ def css():
            ".phm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 16px 0} .phm span{display:inline-flex;gap:2px} .phm i.hm{height:36px;margin:0}",
            ".game .gm i.hm{height:22px;vertical-align:-4px}",
            "/* the matchup header on a board: helmets on the outside facing in, away left, home right */",
-           ".hd.hmh{align-items:end;padding-top:14px} .hd.hmh .tm{display:flex;flex-direction:column;align-items:flex-start;gap:0} .hd.hmh .tm.b{align-items:flex-end;text-align:right}",
-           ".hd.hmh .tm [data-hm]{height:66px;margin:0 0 6px} .hd.hmh .tm span:not(.badge){margin-top:5px}",
+           "@media (min-width:561px){ .hd.hmh{align-items:end;padding-top:14px} .hd.hmh .tm{display:flex;flex-direction:column;align-items:flex-start;gap:0} .hd.hmh .tm.b{align-items:flex-end;text-align:right}"
+           " .hd.hmh .tm [data-hm]{height:66px;margin:0 0 6px} .hd.hmh .tm span:not(.badge){margin-top:5px} .hd.hmh .score{align-self:end;padding-bottom:2px} }",
            ".hd.hmh.ah .tm.a span:not(.badge)::after{content:' \\00b7 away'} .hd.hmh.ah .tm.b span:not(.badge)::after{content:' \\00b7 home'}",
-           ".hd.hmh .score{align-self:end;padding-bottom:2px}",
            "body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}",
            ".ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}",
-           "@media (max-width:560px){ .hd.hmh{padding:10px 16px 8px} .hd.hmh .tm [data-hm]{height:44px;margin:0 0 2px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.08em} }"]
+           "@media (max-width:560px){ .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:46px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.06em;font-size:10px} }"]
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/hm/%s.webp) !important}" % t.lower())
