@@ -669,7 +669,7 @@ PAGE_JS = r"""<script>(function(){
       av(p) +
       '<div class="who"><b' + (V3 ? ' class="h" data-u="' + esc(p.user_id) + '" role="link" tabindex="0"' : '') + '>@' + esc(p.handle) + '</b>' + hot(p.user_id) + (SHARP_BADGE[p.handle] ? '<span class="shp" title="Top closing-line value on Social this season">Sharp</span>' : '') + (p.title ? '<span class="t">' + esc(p.title) + '</span>' : '') + '<small>' + ls.length + ' leg' + (ls.length > 1 ? 's' : '') + ' · ' + ago(p.created_at) + '</small></div>' +
       '<div class="od">' + esc(am(p.fd_odds)) + '</div></div>' +
-      '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
+      '<ul>' + ls.map(function(l, i){ var g = gradeLeg(l, C); return '<li data-i="' + i + '"' + (g === 'hit' ? ' class="hit"' : g === 'dead' ? ' class="dead"' : '') + '><span class="lg">' + hmI(l.tm) + legText(l) + '</span><small>' + esc(am(l.o)) + '</small></li>'; }).join('') + '</ul>' +
       (V3 && !old ? '<div class="rx">' + RXK.map(function(k){ var n = (p.rx || {})[k[0]] || 0; return '<button type="button" data-rx="' + p.id + '|' + k[0] + '" class="' + (MYRX[p.id] === k[0] ? 'on' : '') + '" aria-pressed="' + (MYRX[p.id] === k[0]) + '" aria-label="' + k[2] + (n ? ', ' + n : '') + '"><i>' + k[1] + '</i>' + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
         (p.tails ? '<span class="tn">' + p.tails + ' tailing</span>' : '') + '</div>' : '') +
       '<div class="pf">' + (fdB || tailB ? '<div class="pa' + (fdB && tailB ? ' two' : '') + '">' + fdB + tailB + '</div>' : '') + (saveB || loadB ? '<div class="pa">' + saveB + loadB + '</div>' : '') +
@@ -684,6 +684,7 @@ PAGE_JS = r"""<script>(function(){
   /* owner 11/27 ("Can we have all time winners from social. So anyone who's posted a slip no matter who's tailed gets saved"): every
      posted slip the grading job has on record as won, from any week and with or without tails, newest first, under the Cashed tab.
      It reads the stored result, so it needs no box file. This week's winners are already listed above it and are left out here. */
+  function hmI(t){ return t && /^[A-Z]{2,3}$/.test(t) ? '<i class="hm" data-hm="' + t + '" role="img" aria-label="' + t + '"></i>' : ''; }
   var ALLW = null, ALLW_BUSY = false;
   function loadAllWon(){
     if(ALLW || ALLW_BUSY || !A || !V3) return; ALLW_BUSY = true;
@@ -998,7 +999,7 @@ def house_html(OUT, week, limit=3, _records=None, _now=None):
     for p in ps:
         hid = f'{p.get("week")}-{p.get("slot")}'; gl = legs_of(p)
         if gl: data.append({"id": hid, "legs": gl})
-        li = [f'<li data-i="{i}"><span class="dot"></span><span>{E(str(l.get("disp") or l.get("who") or "").replace(" tds", " TDs"))}</span><em>{E(am(l.get("o")))}</em></li>' for i, l in enumerate(p["legs"])]
+        li = [f'<li data-i="{i}"><span class="dot"></span><span>{__import__("helmets").hm(l.get("tm") or "")}{E(str(l.get("disp") or l.get("who") or "").replace(" tds", " TDs"))}</span><em>{E(am(l.get("o")))}</em></li>' for i, l in enumerate(p["legs"])]
         legs = "".join(li[:4]) + (f'<li class="more"><details><summary>+{len(li) - 4} more legs</summary><ul>{"".join(li[4:])}</ul></details></li>' if len(li) > 4 else "")   # a 12-leg slip must not fill the screen
         _pd = str(p.get("posted") or ""); _pd = f"{int(_pd[5:7])}/{int(_pd[8:10])}" if len(_pd) >= 10 and _pd[4] == "-" else _pd
         meta = ("graded chance under 1%" if p["hp"] < 0.01 else f'graded chance about {p["hp"] * 100:.0f}%') if p.get("hp") else (f'model {p["p"] * 100:.0f}% to hit' if p.get("p") else f'{len(p["legs"])} legs')

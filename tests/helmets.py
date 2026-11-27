@@ -30,6 +30,10 @@ missw = [t for t in H.TEAMS if not os.path.exists(os.path.join(HERE, "assets", "
 check(not missw and all(css.count("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower())) == 1 for t in H.TEAMS), f"every team has a wordmark file and one rule ({missw or 'none missing'})")
 check('data-wm="GB"' in H.wm("GB", "Packers") and ">Packers<" in H.wm("GB", "Packers") and H.wm("XYZ", "A & B") == "<span>A &amp; B</span>", "wm() keeps the name as text and leaves a non-team name plain")
 check(H.matchup("DEN", "PIT", at=True).count("data-wm") == 2 and "@" in H.matchup("DEN", "PIT", at=True) and "@" not in H.matchup("DEN", "PIT") and H.matchup("DEN", "XYZ") == "", "matchup() says @ only when told who is visiting")
+# 11/27: Social's house cards already use class "wm" for the BetSweep wordmark image - the team rule must not catch it
+check("\n.wm{" not in css and not css.startswith(".wm{") and ".wm[data-wm]{" in css, "the wordmark base rule only applies to an element that names a team")
+for f_, pat in (("build_stocks.py", 'class="sktb" data-hm="{t}"'), ("build_builder.py", "hmI(any.tm)"), ("build_builder.py", "hmI(l.tm) + esc(l.pl)"), ("social.py", "hmI(l.tm) + legText(l)")):
+    check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: a small logo sits by the player or leg ({pat[:24]})")
 for f_, pat in (("build_boards.py", '_hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b))'), ("build_builder.py", "g.home === g.a) ? {l: B, r: A} : {l: A, r: B}"), ("build_live.py", "sw = ah && hm_ === g.a")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: the header puts the away team on the left and the home team on the right")
 check("[data-hm='LAR']" in css and "[data-hm='WSH']" in css, "LAR and WSH are understood as LA and WAS")

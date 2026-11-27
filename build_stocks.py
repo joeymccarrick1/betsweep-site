@@ -119,7 +119,7 @@ ORDER = {"QB": ["ppr", "pass", "ptd", "cmp", "att", "ypa", "cpct", "int", "rush"
 # Filled by fill() here and by fill() in the page script - same template, same fields. Player, team, then the graph (the owner's order).
 TILE = ('<li class="sk {dir}" data-k="{k}" data-pos="{pos}"><button type="button" class="skb" aria-expanded="false" aria-label="{aria}">'
         '<b class="sknm">{n}</b>'
-        '<span class="sktm {tg}"><i class="sktb" style="--p:{c1};--s:{c2};--i:{ink}">{t}</i><span class="sksu">{pos}<span> · {tn}</span></span><i class="skst {stc}">{st}</i></span>'
+        '<span class="sktm {tg}"><i class="sktb" data-hm="{t}" style="--p:{c1};--s:{c2};--i:{ink}">{t}</i><span class="sksu">{pos}<span> · {tn}</span></span><i class="skst {stc}">{st}</i></span>'
         '<svg class="sksp" viewBox="0 0 120 40" aria-hidden="true" focusable="false"><path class="ska" d="{pa}"/><path class="skr" d="{pr}"/><circle cx="{ex}" cy="{ey}" r="3.5"/></svg>'
         '<span class="skpx"><span class="skv"><b>{val}</b><small>{lab}</small></span><em>{dt}</em></span>'
         '</button></li>')
@@ -352,7 +352,7 @@ def mover_html(c):
     x = BYK[c["k"]]; col = TC[x["t"]]; f = x["f"]
     aria = f"{c['l']}: {x['n']}, {PNAME[x['p']]}, {x['tn']}. {c['say']}. Open his stats."
     return (f'<li><button type="button" class="skmc {c["tone"]} {f["dir"]}" data-k="{E(x["k"])}" data-m="{c["id"]}" aria-label="{E(aria)}"><span class="skmt">{E(c["l"])}</span><b class="skmn">{E(x["n"])}</b>'
-            f'<span class="skmw"><i class="sktb" style="--p:{col[0]};--s:{col[1]};--i:{col[2]}">{E(x["t"])}</i><span>{x["p"]}</span>'
+            f'<span class="skmw"><i class="sktb" data-hm="{E(x["t"])}" style="--p:{col[0]};--s:{col[1]};--i:{col[2]}">{E(x["t"])}</i><span>{x["p"]}</span>'
             f'<svg class="sksp" viewBox="0 0 120 40" aria-hidden="true" focusable="false"><path class="ska" d="{f["pa"]}"/><path class="skr" d="{f["pr"]}"/></svg></span>'
             f'<span class="skmx"><b>{E(c["v"])}</b><small>{E(c["s"])}</small></span></button></li>')
 

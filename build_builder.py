@@ -1585,6 +1585,8 @@ BUILDER_JS = r"""
   function lum(h){ h = h.replace('#',''); var r = parseInt(h.substr(0,2),16)/255, g = parseInt(h.substr(2,2),16)/255, b = parseInt(h.substr(4,2),16)/255; return 0.2126*r + 0.7152*g + 0.0722*b; }
   /* owner 11/27: a game header reads away on the left, home on the right; a neutral site keeps the data's own order */
   function sides(g){ var A = {t: g.a, c: g.ca, n: g.na, p: g.pa}, B = {t: g.b, c: g.cb, n: g.nb, p: g.pb}; return (g.home && g.away && !g.nt && g.home === g.a) ? {l: B, r: A} : {l: A, r: B}; }
+  /* owner 11/27 ("Figure out where else we need to put the logos"): a small team logo in front of a player's name */
+  function hmI(t){ return t && /^[A-Z]{2,3}$/.test(t) ? '<i class="hm" data-hm="' + t + '" role="img" aria-label="' + t + '"></i>' : ''; }
   function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" data-hm="' + t + '" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   var $ = function(s, r){ return (r||document).querySelector(s); }, $$ = function(s, r){ return [].slice.call((r||document).querySelectorAll(s)); };
   function am(o){ return o > 0 ? '+' + o : '' + o; }
@@ -2300,7 +2302,7 @@ BUILDER_JS = r"""
       ul.innerHTML = S.map(function(s){ var i = KEYIDX[s[0]], l = i == null ? null : legs[i]; if(!l || started(l.g) || out(l) || (!!l.u) !== (side === 'under') || (pos && s[1] !== pos)) return '';
         var g = games[l.g] || {}, on = !!sel[i];
         var mu = s[2].map(function(m){ return '<span class="mup" title="' + esc(l.tm) + ' ' + s[1] + 's rank #' + m[1] + ' in ' + esc(m[0]) + ' produced; ' + esc(l.opp) + ' ranks #' + m[2] + ' allowed to ' + s[1] + 's"><i style="background:' + rankColor(l.u ? 33 - m[1] : m[1]) + '">' + esc(l.tm) + ' ' + s[1] + 's #' + m[1] + '</i><b>vs</b><i style="background:' + rankColor(l.u ? 33 - m[2] : m[2]) + '">' + esc(l.opp) + ' def #' + m[2] + '</i></span><em>' + esc(m[0]) + '</em>'; }).join('');
-        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small><div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }).join('') ||
+        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + hmI(l.tm) + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small><div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }).join('') ||
         '<p class="bqe">No ' + (side === 'under' ? 'under' : 'over') + (pos ? ' for a ' + pos : '') + ' near -110 clears 50% right now.</p>';
       ul.scrollLeft = x; }
     ul.addEventListener('click', function(e){ var b = e.target.closest('button[data-i]'); if(b) toggle(+b.getAttribute('data-i')); });
@@ -2482,7 +2484,7 @@ BUILDER_JS = r"""
     var nAll = all.length + (hasTD ? 1 : 0), more = nAll - shownM.length;
     var boxes = shownM.map(function(m){ return m === 'TD' ? tdBox(pl, pos) : statBox(pl, m, pos); }).join('');
     return '<li class="pc' + (open ? ' open' : '') + '" data-pk="' + esc(key) + '" data-i="' + any.i + '">' +
-      '<div class="pch"><span class="pz">' + pos + '</span><div class="pcn"><b><a class="pname" href="/player/' + plSlug(pl) + '/" title="' + esc(pl) + ': lines at every book, hit rates, game log">' + esc(pl) + '</a>' + flagMark(any) + (any.gd ? ' <span class="gdo">' + esc(any.gd) + '</span>' : '') + '</b>' +
+      '<div class="pch"><span class="pz">' + pos + '</span><div class="pcn"><b>' + hmI(any.tm) + '<a class="pname" href="/player/' + plSlug(pl) + '/" title="' + esc(pl) + ': lines at every book, hit rates, game log">' + esc(pl) + '</a>' + flagMark(any) + (any.gd ? ' <span class="gdo">' + esc(any.gd) + '</span>' : '') + '</b>' +
       '<span class="pcg">' + posMatch(any) + '<small>' + (st.view === 'games' ? '' : any.tm + ' vs ' + any.opp + ' · ' + esc(g.kick) + ' · ') + '<a class="pplink" href="https://betsweep.co/player/' + plSlug(pl) + '/" title="His page: lines at every book, hit rates, snap share, game log">player page</a></small>' + snChip(any) + '</span></div>' +
       (nAll > 1 ? '<button type="button" class="pcall" aria-expanded="' + open + '" title="Every prop for this player">' + (open ? 'Less <i class="car">▴</i>' : 'All props' + (more ? ' (' + nAll + ')' : '') + ' <i class="car">▾</i>') + '</button>' : '') + '</div>' +
       whyBlock(any) + '<div class="pcb">' + boxes + '</div></li>';

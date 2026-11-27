@@ -4177,3 +4177,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   mark fit like that?"): in a board header every wordmark now has the same width (118 px on a phone, 190 wide) and its height follows
   its own shape (`helmets.WM_AR`, written as `--war` per team), capped at 42 / 64 px so the two-line marks do not make the card tall.
   WM_AR must be refreshed when a wordmark file is replaced. page_tight passed on the patched build (68 of 68).
+
+## 11/27 1:15 PM: logo sizing pass and more places (owner: "make sizing all over fit better ... Figure out where else we need to put the logos")
+- Audit by phone screenshots of Today, Builder, Live, Social, Teams, a team page, First TD, Receipts, Stock Market, Fantasy, My BetSweep.
+- **Added:** a small logo before the player's name on Parlay Builder cards (best-legs strip `.bqc`, player cards `.pcn`; JS `hmI(t)`),
+  before each leg on a Social slip (posted slips via `hmI(l.tm)`, house cards via helmets.hm), and the Stock Market tile's team chip is
+  now the logo (`i.sktb[data-hm]`). **Bigger:** Live header logos 30 -> 36 px tall on a phone, 40 wide.
+- **Bug found and fixed:** the wordmark base rule was `.wm{...}` and Social's house cards use `img.wm` for the BetSweep wordmark, so
+  from the noon publish that image was stretched to 118 px with a white edge. The rule is now `.wm[data-wm]` (tests/helmets.py checks it).
+- **Left as they are:** My BetSweep slip rows (saved legs do not carry a team), Receipts (slip titles, no teams), Fantasy tools,
+  share images and posters (drawn on a canvas, need their own pass), the Builder's game header (no room for a wordmark beside the score).

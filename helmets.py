@@ -42,8 +42,14 @@ def css():
            "body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}",
            ".ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}",
            "@media (max-width:560px){ .hd.hmh{padding:10px 14px 8px} .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:40px;grid-row:1} .hd.hmh .tm b{font-size:32px;grid-row:1} }"]
+    out += ["/* 11/27 sizing pass: bigger logos in the Live header, and small ones beside player names (builder cards, Social legs, Stock Market tiles) */",
+            ".lg2 .ghd2 .t [data-hm]{height:40px !important}",
+            "@media (max-width:560px){ .lg2 .ghd2 .t [data-hm]{height:36px !important} }",
+            ".bqc .t b i.hm,.pcn b i.hm{height:18px;vertical-align:-4px;margin-right:6px}",
+            ".post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}",
+            "i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}"]
     out += ["/* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */",
-            ".wm{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}",
+            ".wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}",
             ".tm.b .wm{background-position:right center;margin-left:auto}",
             ".hd.hmh .tm .wm{margin-top:4px}",
             ".hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}",
