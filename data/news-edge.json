@@ -309,6 +309,37 @@
      "pulled": "2026-11-27 6:34"
     }
    }
+  },
+  "Keaton Mitchell|2026-11-27T22:30": {
+   "pl": "Keaton Mitchell",
+   "tm": "LAC",
+   "pos": "RB",
+   "st": "Out",
+   "ts": "2026-11-27T22:30:16Z",
+   "legs": {
+    "Kimani Vidal|Rushing Yards|20": {
+     "pl": "Kimani Vidal",
+     "m": "Rushing Yards",
+     "ln": 20.0,
+     "built": -114,
+     "p": 0.4302,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-27 6:34"
+    },
+    "Omarion Hampton|Rushing Yards|64": {
+     "pl": "Omarion Hampton",
+     "m": "Rushing Yards",
+     "ln": 64.0,
+     "built": -114,
+     "p": 0.4174,
+     "first": null,
+     "moved": null,
+     "now": -114.0,
+     "pulled": "2026-11-27 6:34"
+    }
+   }
   }
  }
 }
