@@ -8,12 +8,20 @@ ALIAS = {"LAR": "LA", "WSH": "WAS"}
 def hm(t, cls=""):
     t = ALIAS.get(t, t)
     if t not in TEAMS: return ""
-    return f'<i class="hm{(" " + cls) if cls else ""}" data-hm="{html.escape(t)}" role="img" aria-label="{html.escape(t)} helmet"></i>'
+    return f'<i class="hm{(" " + cls) if cls else ""}" data-hm="{html.escape(t)}" role="img" aria-label="{html.escape(t)}"></i>'
 # The right-hand helmet of a matchup is mirrored so the two face each other (owner 11/27). A picture with lettering is never mirrored.
 NOFLIP = ["LV", "SF"]
 # Which pictures are up (owner 11/27): "nfl" = the official team logos he sent (assets/nfl, white backgrounds removed, nothing redrawn),
 # "hm" = his own helmet set (assets/hm), kept ready "in case we ever have to change to these". One word switches the whole site.
 SET = "nfl"
+def wm(t, text):
+    """a team's wordmark picture with its name kept as text for screen readers (owner 11/27: "team fonts ... throughout the site")"""
+    k = ALIAS.get(t, t)
+    return f'<span class="wm" data-wm="{html.escape(k)}">{html.escape(text)}</span>' if k in TEAMS else f"<span>{html.escape(text)}</span>"
+def matchup(a, b, at=False):
+    """logo + wordmark for two teams side by side (a promo page for a one-game slip); `at` only when a is known to be the visitor"""
+    if ALIAS.get(a, a) not in TEAMS or ALIAS.get(b, b) not in TEAMS: return ""
+    return f'<div class="wmrow"><span>{hm(a)}{wm(a, a)}</span><i>{"@" if at else "·"}</i><span>{wm(b, b)}{hm(b)}</span></div>'
 def css():
     big = ".tm > [data-hm='%s'],.pp header > [data-hm='%s'],.ghd [data-hm='%s'],.tdir [data-hm='%s'],.phm [data-hm='%s']"
     flip = ".tm.b [data-hm],.gteam.r [data-hm],.ghd2 .t.r [data-hm],.phm span i.hm:last-child,.game .gm i.hm:last-of-type"
@@ -30,7 +38,19 @@ def css():
            ".hd.hmh.ah .tm.a span:not(.badge)::after{content:' \\00b7 away'} .hd.hmh.ah .tm.b span:not(.badge)::after{content:' \\00b7 home'}",
            "body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}",
            ".ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}",
-           "@media (max-width:560px){ .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:46px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.06em;font-size:10px} }"]
+           "@media (max-width:560px){ .hd.hmh{padding:10px 14px 8px} .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:40px;grid-row:1} .hd.hmh .tm b{font-size:32px;grid-row:1} }"]
+    out += ["/* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */",
+            ".wm{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}",
+            ".tm.b .wm{background-position:right center;margin-left:auto}",
+            ".hd.hmh .tm .wm{margin-top:4px}",
+            ".hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}",
+            ".hd.hmh.ah .tm.a b::after{content:'away'} .hd.hmh.ah .tm.b b::before{content:'home'}",
+            ".hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font:600 10px/1 var(--body, system-ui);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 6px;vertical-align:middle}",
+            "@media (min-width:561px){ .hd.hmh .tm .wm{height:34px;width:190px} }",
+            "@media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:112px;height:20px;margin-top:5px} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }",
+            ".pp header h1 .wm{height:44px;width:min(320px,100%)} .tdir header h1 .wm{display:inline}",
+            ".wmrow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px} .wmrow span{display:flex;align-items:center;gap:8px;min-width:0} .wmrow i{font-style:normal;color:var(--mute);font-weight:700} .wmrow i.hm{height:34px;margin:0} .wmrow .wm{display:block;height:26px;width:120px} .wmrow span:last-child .wm{background-position:right center}"]
+    for t in TEAMS: out.append("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower()))
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/" + SET + "/%s.webp) !important}" % t.lower())

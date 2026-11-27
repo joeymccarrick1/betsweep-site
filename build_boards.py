@@ -1475,14 +1475,15 @@ for a, b, pl_all in blocks:
     _ko = kick_ms(a, b); _fin = final_text(a, b)
     # owner 11/27: the header reads away on the left, home on the right (the schedule's word; a-b is the scripts tab's order). A neutral
     # site, or a game the schedule does not have, keeps a-b. Only the header turns: the columns under it are labelled by team.
+    import helmets as _HMW
     _hg = game_for(a, b); _ah = bool(_hg) and str(_hg.get("location") or "").strip().lower() != "neutral"
     _hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b)); _sl, _sr = ((s[3], s[2]) if _hl == b else (s[2], s[3]))
     cards.append(f'''<section class="card" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
  <header class="hd hmh{" ah" if _ah else ""}">{PLAYS}
-  <div class="tm a">{badge(_hl)}<b>{_hl}</b><span>{NAMES.get(_hl, _hl)}</span></div>
+  <div class="tm a">{badge(_hl)}<b>{_hl}</b>{_HMW.wm(_hl, NAMES.get(_hl, _hl))}</div>
   <div class="score"><span class="pt">{_sl:.1f}</span><span class="dash">–</span><span class="pt">{_sr:.1f}</span>
     <small>total {s[4]:.1f} · {fav} by {margin:.1f}</small>{SWOOSH}</div>
-  <div class="tm b">{badge(_hr)}<b>{_hr}</b><span>{NAMES.get(_hr, _hr)}</span></div>
+  <div class="tm b">{badge(_hr)}<b>{_hr}</b>{_HMW.wm(_hr, NAMES.get(_hr, _hr))}</div>
  </header>
  {info}
  {conf_html}

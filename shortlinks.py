@@ -200,6 +200,12 @@ def books_map(builder_data):
         if e and k not in m: m[k] = e
     return {"week": builder_data.get("week"), "m": m}
 
+def _mu(pr):   # a one-game slip wears both teams' logos and wordmarks under its title (owner 11/27)
+    import helmets as HM
+    g = {l.get("gid") for l in pr["legs"]}
+    if len(g) != 1 or not list(g)[0] or "-" not in list(g)[0]: return ""
+    a, b = list(g)[0].split("-", 1); h = pr.get("home")
+    return HM.matchup(b if h == a else a, a if h == a else b, at=h in (a, b))
 def promo_page(pr):
     """inner HTML (wrap() adds the site chrome and OG tags) for one promoted bet's landing page"""
     code = promo_code(pr); url = promo_url(pr); n = len(pr["legs"])
@@ -215,7 +221,7 @@ def promo_page(pr):
     fdbtn += book_buttons(pr.get("books") or {})
     return f'''<div class="bl" data-code="{E(code)}" data-week="{pr["week"]}" data-last-ko="{pr.get("last_ko") or ""}">
 <div class="hd"><span class="tag">{"The Daily Sweep" if pr.get("sweep") else "Promoted"}</span><span class="wk">Week {pr["week"]}</span>{st}</div>
-<h1>{E((pr.get("name") or pr["title"]) if pr.get("sweep") else pr["title"])}</h1><div class="meta">{n} legs · one tap on FanDuel · snapshot at post time, prices move</div>
+<h1>{E((pr.get("name") or pr["title"]) if pr.get("sweep") else pr["title"])}</h1>{_mu(pr)}<div class="meta">{n} legs · one tap on FanDuel · snapshot at post time, prices move</div>
 <ul class="legs">{leg_rows(pr["legs"])}</ul>
 <div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(pr["fd"])) if pr.get("fd") else '<span style="font-size:16px;font-weight:600">price on FanDuel</span>'}</div><div class="md">{_model_line(pr.get("p"), pr.get("fair"))}</div></div>
 <div class="go">{fdbtn}<div class="row"><button type="button" class="sv" data-slip="{E(json.dumps({"w": int(pr["week"]), "n": pr["title"], "k": keys, "o": pr.get("fd"), "fd": pr.get("link")}))}"{"" if keys and len(keys) == n else " hidden"}>Save slip</button><a href="{E(build)}">Load into the builder</a><button type="button" class="shb" data-st="{E(stext)}" data-su="{E(url)}">Share</button></div></div>

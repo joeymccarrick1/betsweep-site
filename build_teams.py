@@ -328,7 +328,7 @@ for t in TEAMS:
     _th, _tb = _FN.panels("tpTabs", [(i, lab, h) for i, lab, h in (("stats", "Stats", sheet(t) + stat_table(t) + vs_roles(t)), ("games", "Games", games_block(t)), ("leaders", "Leaders", leaders(t))) if h], None)
     body = (head(f'{full(t)} stats, results & box scores · BetSweep', desc) +
             f'<div class="pp tpage" data-team="{t}"><p class="crumb"><a href="/teams/">Teams</a> › {E(DIV.get(t, ""))} › {E(full(t))}</p>'
-            f'<header><span class="tb" style="--p:{c1};--s:{c2}">{E(t)}</span><h1>{E(full(t))}</h1><div class="sub">{sub}</div><div class="acts">{acts}</div></header>'
+            f'<header><span class="tb" data-hm="{E(t)}" style="--p:{c1};--s:{c2}">{E(t)}</span><h1>{__import__("helmets").wm(t, full(t))}</h1><div class="sub">{sub}</div><div class="acts">{acts}</div></header>'
             + _th + _tb + '</div><script src="/teams/teams.js" defer></script>')
     open(os.path.join(OUT, "teams", t.lower() + ".html"), "w").write(body)
 # ---- directory: divisions + a sortable league table ------------------------------------------------------------------------------------

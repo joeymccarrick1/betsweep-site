@@ -4159,3 +4159,14 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   to Hit at FanDuel's +259 from his settled slip.
 - **Wordmarks:** 32 files from the owner in /home/claude/nfl1/wm_src, white removed by wm.py into wm_out (letter counters included; the
   Rams and Commanders files were already clear). He chose a thin light outline for dark mode. Not on the site: placement not agreed.
+
+## 11/27 noon: team wordmarks on the site (owner: "I like it add them! I definitely want them on the phone")
+- `assets/wm/<team>.webp` (owner's files, white removed, up to 360 px wide, 432 KB for 32), shipped to /s/wm/ by build_site.
+  `helmets.wm(t, text)` writes `<span class="wm" data-wm="GB">Packers</span>`: the picture is a background, the name stays as text.
+  A thin light edge (two 1px drop shadows) keeps black and navy marks readable on the dark theme - his choice.
+- **Where:** board headers in place of the nickname (phone: own row under the logo and abbreviation, 112 x 20; wide: 190 x 34);
+  team page title (and that header's badge is now the logo too); a promo page for a one-game slip gets logo + wordmark for both teams
+  under its title (shortlinks `_mu`; "@" only if the promo row carries `home`, else a dot).
+- The away / home tags moved from after the nickname to beside the abbreviation (`b::after` / `b::before`).
+- The Rams file is a logo-and-name lockup and reads small; the two-line marks (Browns, Panthers, Vikings, Colts) are small on a phone.
+  He offered to find other files if sizing needs them.

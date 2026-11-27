@@ -444,6 +444,7 @@ def _write_shared():
     import helmets as _HMS
     if os.path.isdir(os.path.join(_ASSETS, _HMS.SET)):   # only the set that is up is shipped (helmets.SET)
         shutil.copytree(os.path.join(_ASSETS, _HMS.SET), os.path.join(SITE, "s", _HMS.SET), dirs_exist_ok=True); site_css += _HMS.css()
+        if os.path.isdir(os.path.join(_ASSETS, "wm")): shutil.copytree(os.path.join(_ASSETS, "wm"), os.path.join(SITE, "s", "wm"), dirs_exist_ok=True)
     # the section tabs ride in the shared script too (11/17): the pages a reprice keeps as they are - the weekly receipts - get
     # their tabs from foldScore() below and have no inline copy. A page that carries its own copy has already defined it.
     app_js = "if(!window.bsTabs){" + _FN.TABS_JS + "}\n" + _inner(APP_JS, "script")

@@ -25,6 +25,11 @@ try:
     check(not al, f"every picture has its backdrop cut away (each has clear pixels; off: {al or 'none'})")
 except ImportError: print("SKIP backdrop check: no image library here")
 css = H.css()
+# 11/27 wordmarks: one file per team, one rule per team, the name kept as text; a name that is not a team stays plain text
+missw = [t for t in H.TEAMS if not os.path.exists(os.path.join(HERE, "assets", "wm", t.lower() + ".webp"))]
+check(not missw and all(css.count("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower())) == 1 for t in H.TEAMS), f"every team has a wordmark file and one rule ({missw or 'none missing'})")
+check('data-wm="GB"' in H.wm("GB", "Packers") and ">Packers<" in H.wm("GB", "Packers") and H.wm("XYZ", "A & B") == "<span>A &amp; B</span>", "wm() keeps the name as text and leaves a non-team name plain")
+check(H.matchup("DEN", "PIT", at=True).count("data-wm") == 2 and "@" in H.matchup("DEN", "PIT", at=True) and "@" not in H.matchup("DEN", "PIT") and H.matchup("DEN", "XYZ") == "", "matchup() says @ only when told who is visiting")
 for f_, pat in (("build_boards.py", '_hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b))'), ("build_builder.py", "g.home === g.a) ? {l: B, r: A} : {l: A, r: B}"), ("build_live.py", "sw = ah && hm_ === g.a")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: the header puts the away team on the left and the home team on the right")
 check("[data-hm='LAR']" in css and "[data-hm='WSH']" in css, "LAR and WSH are understood as LA and WAS")
