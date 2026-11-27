@@ -27,7 +27,7 @@ except ImportError: print("SKIP backdrop check: no image library here")
 css = H.css()
 # 11/27 wordmarks: one file per team, one rule per team, the name kept as text; a name that is not a team stays plain text
 missw = [t for t in H.TEAMS if not os.path.exists(os.path.join(HERE, "assets", "wm", t.lower() + ".webp"))]
-check(not missw and all(css.count("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower())) == 1 for t in H.TEAMS), f"every team has a wordmark file and one rule ({missw or 'none missing'})")
+check(not missw and all(css.count(".wm[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower())) == 1 for t in H.TEAMS), f"every team has a wordmark file and one rule ({missw or 'none missing'})")
 check('data-wm="GB"' in H.wm("GB", "Packers") and ">Packers<" in H.wm("GB", "Packers") and H.wm("XYZ", "A & B") == "<span>A &amp; B</span>", "wm() keeps the name as text and leaves a non-team name plain")
 check(H.matchup("DEN", "PIT", at=True).count("data-wm") == 2 and "@" in H.matchup("DEN", "PIT", at=True) and "@" not in H.matchup("DEN", "PIT") and H.matchup("DEN", "XYZ") == "", "matchup() says @ only when told who is visiting")
 # 11/27: Social's house cards already use class "wm" for the BetSweep wordmark image - the team rule must not catch it
@@ -36,6 +36,12 @@ for f_, pat in (("build_stocks.py", 'class="sktb" data-hm="{t}"'), ("build_build
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: a small logo sits by the player or leg ({pat[:24]})")
 check("rgba(255,255,255,.75)" not in css and "[data-hm]{filter" not in css and css.count("filter:drop-shadow") == 1, "no outline or shadow on a logo; one faint hairline rule, for the dark wordmarks only")
 check(".apptabs{transform:translateZ(0)" in css, "the tab bar has its own layer")
+# 11/27 afternoon: saved legs on My BetSweep, promo posters, the Sweep says share card
+import posters as PO
+row = PO.leg_row({"who": "Jonah Coleman", "disp": "Jonah Coleman anytime TD", "tm": "DEN", "o": -130}, "#fff"); row0 = PO.leg_row({"who": "X", "disp": "X", "tm": "", "o": 100}, "#fff")
+check('class="leg lgo"' in row and "data:image/webp;base64," in row and 'class="bar"' in row0 and "base64" not in row0, "a poster leg wears its team's logo; a leg with no team keeps the colour bar")
+for f_, pat in (("account.py", "data-pl=\"'+esc(q[0])+'\""), ("account.py", "/data/pteam.json"), ("build_site.py", '"pteam.json"'), ("build_boards.py", "/s/__HMSET__/"), ("build_boards.py", 'replace("__HMSET__"')):
+    check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: wired ({pat[:26]})")
 for f_, pat in (("build_boards.py", '_hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b))'), ("build_builder.py", "g.home === g.a) ? {l: B, r: A} : {l: A, r: B}"), ("build_live.py", "sw = ah && hm_ === g.a")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: the header puts the away team on the left and the home team on the right")
 check("[data-hm='LAR']" in css and "[data-hm='WSH']" in css, "LAR and WSH are understood as LA and WAS")

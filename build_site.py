@@ -982,6 +982,10 @@ for _lk in ("bundesliga", "laliga", "seriea", "mls"):
         shutil.rmtree(_ld)
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
+try:   # owner 11/27: player -> team for the small logos beside saved legs on My BetSweep (a saved leg is "player|market|line", no team)
+    _pt = {l["pl"]: l["tm"] for l in json.load(open(os.path.join(OUT, "builder_data.json"))).get("legs", []) if l.get("tm") and not l.get("gl") and " or " not in l.get("pl", "")}
+    os.makedirs(os.path.join(SITE, "data"), exist_ok=True); json.dump(_pt, open(os.path.join(SITE, "data", "pteam.json"), "w"), separators=(",", ":"))
+except Exception as _e: print("pteam.json not written:", _e)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)
     shutil.copytree(os.path.join(OUT, "promo"), os.path.join(SITE, "promo"), dirs_exist_ok=True)
 # 11/18 (owner: "Can you do the promo studio"): the Promo Studio at /studio/ - the owner's tool for putting a promo's exact legs and

@@ -4197,3 +4197,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   explanation: a `filter` on every logo made hundreds of composited layers (334 on First TD) and iOS dropped the fixed bar while
   scrolling. Two changes: the filters are gone, and `.apptabs` gets its own layer (`transform:translateZ(0)`). Unconfirmed until he
   says it holds on his phone. If it comes back: look at the game sheet on Today and at `env(safe-area-inset-bottom)` in standalone.
+
+## 11/27 2:30 PM: wordmarks blanked for 30 minutes; logos on My BetSweep legs, promo posters and the Sweep says card
+- **My mistake:** scoping the wordmark base rule to `.wm[data-wm]` (1:35 PM publish) made it outrank the per-team `[data-wm='GB']`
+  rule, and its `background:` shorthand cleared every picture. Owner 1:57 PM: "I'm not seeing any wordmarks on the site now." Fixed in
+  0ae8d3e7 (per-team rule is now `.wm[data-wm='GB']`). Lesson: tests/helmets.py checks the text of the rules, not what a browser
+  paints - a painted-picture check (computed background-image on a board header) belongs in a page test.
+- **My BetSweep:** build_site writes /data/pteam.json (player -> team from this week's builder data); account.py `hmFill()` puts a small
+  logo before each saved leg. A spread / moneyline leg reads its own abbreviation; a player not playing this week gets none.
+- **Promo posters** (posters.py `_logo`, `leg_row`): the team's logo replaces the colour bar, embedded from assets/<SET>.
+- **Sweep says share card** (build_boards SWEEPCARD_JS): both logos top right, drawn when loaded; `__HMSET__` is filled from helmets.SET.

@@ -2,8 +2,8 @@
 
 Design-led rather than illustration-led: BetSweep type, team colours, the real FanDuel slip in a phone frame when the owner
 has dropped a screenshot in in/promo_slips/<week>-<slot>.(png|jpg) (otherwise a BetSweep-styled slip is drawn), and the
-model's numbers as the hook (matchup rank, this-season hit rate, model % and fair odds). No team logos (trademarks), no
-stock art.
+model's numbers as the hook (matchup rank, this-season hit rate, model % and fair odds). No stock art. Team logos: since 11/27 each
+leg row carries its team's logo from the owner's own files (assets/<helmets.SET>), his call; a leg with no known team keeps the bar.
 """
 import os, base64, html, json
 E = html.escape
@@ -50,6 +50,8 @@ body{background:#0f141c;color:#efe9da;font-family:'IBM Plex Sans',system-ui,sans
 .legs{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden}
 .leg{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:0 16px;align-items:center;background:rgba(22,29,40,.92);border:1px solid #2b3442;border-radius:12px;padding:12px 18px 12px 0;overflow:hidden}
 .leg .bar{align-self:stretch;width:10px;border-radius:12px 0 0 12px}
+.leg.lgo{grid-template-columns:64px minmax(0,1fr) auto;gap:0 12px;padding-left:14px !important} .leg .tl{align-self:stretch;min-height:40px;background:center/contain no-repeat}
+.legs.few .leg.lgo{grid-template-columns:86px minmax(0,1fr) auto} .legs.many .leg.lgo{grid-template-columns:44px minmax(0,1fr) auto;gap:0 10px;padding-left:10px !important}
 .leg b{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:36px;letter-spacing:.01em;line-height:1}
 .leg small{display:block;font-size:18px;color:#9aa3b2;margin-top:4px;line-height:1.3}
 .leg small i{font-style:normal;color:#5fcf93;font-weight:600}
@@ -82,6 +84,17 @@ body{background:#0f141c;color:#efe9da;font-family:'IBM Plex Sans',system-ui,sans
 .square .leg b{font-size:28px} .square .leg .o{font-size:28px} .square .leg small{font-size:16px} .square .leg{padding:9px 14px 9px 0}
 """
 
+_LOGO = {}
+def _logo(t):
+    """data URI of a team's logo from the set that is up (helmets.SET), or None"""
+    if t not in _LOGO:
+        _LOGO[t] = None
+        try:
+            import helmets as HM
+            k = HM.ALIAS.get(t, t); p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", HM.SET, k.lower() + "-l.webp")
+            if k in HM.TEAMS and os.path.exists(p): _LOGO[t] = "data:image/webp;base64," + _b64(p)
+        except Exception: pass
+    return _LOGO[t]
 def leg_row(l, color):
     rk = l.get("rank"); pos = l.get("pos", "")
     who = l["who"]; ml = l["disp"][len(who):].strip(" ·") if l["disp"].startswith(who) else l["disp"]
@@ -89,6 +102,8 @@ def leg_row(l, color):
     hist = l.get("hist", "")
     sub = " · ".join(x for x in [ml, mk] if x)
     extra = f' <i>{E(hist)}</i>' if hist else ""
+    lg = _logo(str(l.get("tm") or "").split("/")[0])
+    if lg: return f'<div class="leg lgo"><span class="tl" style="background-image:url({lg})"></span><div><b>{E(who)}<em>{E(ml)}</em></b><small>{E(sub)}{extra}</small></div><span class="o">{E(odds_str(l.get("o")))}</span></div>'
     return f'<div class="leg"><span class="bar" style="background:{color}"></span><div><b>{E(who)}<em>{E(ml)}</em></b><small>{E(sub)}{extra}</small></div><span class="o">{E(odds_str(l.get("o")))}</span></div>'
 
 def poster_html(pr, kind, BANNER, WORDMARK, slip_src, colors, callouts, slip_ratio=None):

@@ -140,7 +140,12 @@ SWEEPCARD_JS = r"""<style>.swcard{display:block;margin:6px 0 10px;font:inherit;f
 .swov img{max-width:min(92vw,520px);max-height:70vh;border-radius:12px}.swov .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.swov button,.swov a{font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-radius:10px;border:0;background:#f4efe3;color:#0d1626;text-decoration:none;cursor:pointer}.swov .p{background:#d7332a;color:#fff}</style>
 <script>(function(){   // owner 11/10: Sweep says share cards - drawn in the browser, square (feed) or story size, shared as an image
   if (window.__swc) return; window.__swc = 1;
-  var LOGO = new Image(); LOGO.src = '/wordmark.png';   // owner 11/10: the real wordmark on the card (cream letters, red sweep), not the word set in red type
+  var LOGO = new Image(); LOGO.src = '/wordmark.png';
+  /* owner 11/27: both teams' logos in the card's top right corner. They load when a card is first opened; a card drawn before they
+     arrive is drawn again when they do. A game id that is not two NFL teams gets none. */
+  var TL = {};
+  function tlogo(t, done){ t = ({LAR: 'LA', WSH: 'WAS'})[t] || t; if (!/^[A-Z]{2,3}$/.test(t)) return null; if (!TL[t]){ TL[t] = new Image(); TL[t].src = '/s/__HMSET__/' + t.toLowerCase() + '-l.webp'; }
+    if (done && !(TL[t].complete)) TL[t].addEventListener('load', done); return TL[t]; }   // owner 11/10: the real wordmark on the card (cream letters, red sweep), not the word set in red type
   function wrap(ctx, text, maxW){ var w = String(text).split(/\s+/), lines = [], cur = ''; w.forEach(function(x){ var t = cur ? cur + ' ' + x : x; if (ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = x; } else cur = t; }); if (cur) lines.push(cur); return lines; }
   function draw(d, story){
     var W = 1080, H = story ? 1920 : 1080, c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
@@ -160,6 +165,8 @@ SWEEPCARD_JS = r"""<style>.swcard{display:block;margin:6px 0 10px;font:inherit;f
       x.fillStyle = '#6b655c'; x.font = '700 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('THE LEG THAT BACKS IT', pad + 44, y + 52);
       x.fillStyle = '#0d1626'; var lf = 52, lt = d.l; x.font = '800 52px "Barlow Condensed", Arial Narrow, sans-serif'; while (x.measureText(lt + '   ' + d.o).width > W - pad * 2 - 80 && lf > 30){ lf -= 2; x.font = '800 ' + lf + 'px "Barlow Condensed", Arial Narrow, sans-serif'; }
       x.fillText(lt, pad + 44, y + 122); x.fillStyle = '#d7332a'; x.textAlign = 'right'; x.fillText(d.o || '', W - pad - 30, y + 122); x.textAlign = 'left'; }
+    (String(d.g || '').match(/\b[A-Z]{2,3}\b/g) || []).slice(0, 2).reverse().forEach(function(t, i){ var im = tlogo(t); if (!im || !im.complete || !im.naturalWidth) return;
+      var bh2 = 120, bw2 = Math.min(170, bh2 * im.naturalWidth / im.naturalHeight), hh = bw2 * im.naturalHeight / im.naturalWidth; x.drawImage(im, W - pad - (i + 1) * 180 + (180 - bw2) / 2, top + (bh2 - hh) / 2, bw2, hh); });
     if (hasLogo) x.drawImage(LOGO, pad, ty - 44 - lh, lw, lh); else { x.fillStyle = '#d7332a'; x.font = 'italic 900 64px "Barlow Condensed", Impact, sans-serif'; x.fillText('BetSweep', pad, ty - 48); }
     x.fillStyle = 'rgba(244,239,227,.75)'; x.font = '600 32px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('betsweep.co  \u00b7  21+  \u00b7  gamble responsibly', pad, ty);
     return c; }
@@ -168,6 +175,7 @@ SWEEPCARD_JS = r"""<style>.swcard{display:block;margin:6px 0 10px;font:inherit;f
       ov.querySelector('img').src = c.toDataURL('image/png'); ov._c = c; }
     render();
     if (!(LOGO.complete && LOGO.naturalWidth > 0)) LOGO.addEventListener('load', function(){ if (ov.parentNode) render(); });
+    (String(d.g || '').match(/\b[A-Z]{2,3}\b/g) || []).slice(0, 2).forEach(function(t){ tlogo(t, function(){ if (ov.parentNode) render(); }); });
     ov.addEventListener('click', function(ev){ var a = ev.target.getAttribute && ev.target.getAttribute('data-a'); if (ev.target === ov || a === 'close'){ ov.remove(); return; }
       if (a === 'size'){ story = !story; render(); return; }
       if (a === 'share'){ ov._c.toBlob(function(b){ var fn = 'sweep-says-' + String(d.g).replace(/\W+/g, '-').toLowerCase() + (story ? '-story' : '') + '.png', file = new File([b], fn, {type: 'image/png'}), txt = 'Sweep says: ' + d.t + (d.l ? '\nThe leg: ' + d.l + ' ' + d.o : '') + '\nbetsweep.co';
@@ -1635,6 +1643,7 @@ print(f"sweep leans: {len(LEAN_LOG)} games with a lean on record" + ("" if not L
 page = (open(os.path.join(HERE, "template.html")).read().replace("/*SLIPDATA*/null", json.dumps(SLIP_DATA, separators=(",", ":"))).replace("/*LIVEJS*/", LIVE.LIVE_JS).replace("/*BOOKSJS*/", BOOKS.BOOKS_JS).replace("/*BOOKSCSS*/", BOOKS.BOOKS_CSS).replace("<!--BOOKSHTML-->", BOOKS.panel_html("bslipBooksPanel")).replace("/*LIVECSS*/", LIVE.LIVE_CSS)
         .replace("{{NAV}}", '<a href="https://claude.ai/artifact/FQVqm3BhG4BfMPd63tRQRa" class="tool">Parlay Builder →</a> <a href="#summary">Slate</a> ' + " ".join(nav)).replace("{{CARDS}}", summary + "\n" + "\n".join(cards))
         .replace("{{LOGO}}", LOGO).replace("{{BANNER}}", BANNER).replace("{{WEEK}}", str(WEEK)).replace("{{STAMP}}", stamp).replace("{{ARCHIVE}}", ARCHIVE).replace("{{DESC}}", f"Model projections, matchup colors and the best FanDuel leg per player, from the Fantasy Projection Model 2026. Page built {stamp} CT from the live sheet: projections, per-game defense ranks (season and last 3 weeks), FanDuel lines and the kickoff-hour forecast."))
+SWEEPCARD_JS = SWEEPCARD_JS.replace("__HMSET__", __import__("helmets").SET)
 page = (page.replace("</body>", SWEEPCARD_JS + "</body>", 1) if "</body>" in page else page + SWEEPCARD_JS)   # owner 11/10: Sweep says share cards
 try:   # alpha plan step 5 (11/16): each game card says how many posted slips have a leg in that game and links to them
     import social as _SOCB; _sj = _SOCB.cards_js(WEEK)
