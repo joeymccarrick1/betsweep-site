@@ -14,6 +14,9 @@ NOFLIP = ["LV", "SF"]
 # Which pictures are up (owner 11/27): "nfl" = the official team logos he sent (assets/nfl, white backgrounds removed, nothing redrawn),
 # "hm" = his own helmet set (assets/hm), kept ready "in case we ever have to change to these". One word switches the whole site.
 SET = "nfl"
+# width / height of each wordmark file (assets/wm), so a board header can give every mark the same width and let its height follow
+# (owner 11/27: "I love how the raiders word mark fits under the logo and LV ... Can every word mark fit like that?")
+WM_AR = {'ARI': 5.14, 'ATL': 5.22, 'BAL': 5.07, 'BUF': 3.79, 'CAR': 2.59, 'CHI': 6.92, 'CIN': 5.71, 'CLE': 2.2, 'DAL': 5.71, 'DEN': 5.62, 'DET': 3.71, 'GB': 3.36, 'HOU': 6.43, 'IND': 4.04, 'JAX': 2.92, 'KC': 4.39, 'LA': 3.5, 'LAC': 3.67, 'LV': 5.71, 'MIA': 3.64, 'MIN': 2.31, 'NE': 4.24, 'NO': 4.29, 'NYG': 2.58, 'NYJ': 3.16, 'PHI': 5.9, 'PIT': 3.56, 'SEA': 6.32, 'SF': 5.14, 'TB': 3.6, 'TEN': 4.09, 'WAS': 3.19}
 def wm(t, text):
     """a team's wordmark picture with its name kept as text for screen readers (owner 11/27: "team fonts ... throughout the site")"""
     k = ALIAS.get(t, t)
@@ -46,11 +49,13 @@ def css():
             ".hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}",
             ".hd.hmh.ah .tm.a b::after{content:'away'} .hd.hmh.ah .tm.b b::before{content:'home'}",
             ".hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font:600 10px/1 var(--body, system-ui);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 6px;vertical-align:middle}",
-            "@media (min-width:561px){ .hd.hmh .tm .wm{height:34px;width:190px} }",
-            "@media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:112px;height:20px;margin-top:5px} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }",
+            ".hd.hmh .tm .wm{height:auto;aspect-ratio:var(--war, 5);max-height:42px}",
+            "@media (min-width:561px){ .hd.hmh .tm .wm{width:190px;max-height:64px} }",
+            "@media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:118px;margin-top:5px;align-self:start} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }",
             ".pp header h1 .wm{height:44px;width:min(320px,100%)} .tdir header h1 .wm{display:inline}",
             ".wmrow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px} .wmrow span{display:flex;align-items:center;gap:8px;min-width:0} .wmrow i{font-style:normal;color:var(--mute);font-weight:700} .wmrow i.hm{height:34px;margin:0} .wmrow .wm{display:block;height:26px;width:120px} .wmrow span:last-child .wm{background-position:right center}"]
     for t in TEAMS: out.append("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower()))
+    for t in TEAMS: out.append("[data-wm='%s']{--war:%s}" % (t, WM_AR.get(t, 5)))
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/" + SET + "/%s.webp) !important}" % t.lower())

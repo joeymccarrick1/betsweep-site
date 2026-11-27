@@ -4173,3 +4173,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - 11/27 12:20 PM: the owner sent replacement wordmarks for the Rams (name-only), Browns, Colts (one line), Panthers and Vikings - all
   already transparent. Swapped into assets/wm (first versions kept in /home/claude/nfl1/wm_src_v1). wm.py no longer drops pieces that
   touch the picture's edge on an already-clear file: that rule is for stray screenshot bits and it ate letters on these tight crops.
+- 11/27 12:45 PM (owner, with a phone screenshot: "I love how the raiders word mark fits under the logo and LV ... Can every word
+  mark fit like that?"): in a board header every wordmark now has the same width (118 px on a phone, 190 wide) and its height follows
+  its own shape (`helmets.WM_AR`, written as `--war` per team), capped at 42 / 64 px so the two-line marks do not make the card tall.
+  WM_AR must be refreshed when a wordmark file is replaced. page_tight passed on the patched build (68 of 68).
