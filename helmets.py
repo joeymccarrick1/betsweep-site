@@ -1,6 +1,6 @@
 """Team helmets (owner 11/26: "Use this all over the site to represent the NFL teams").
-The 32 pictures are the owner's own files, cropped to the helmet and resized (assets/hm/<team>.webp 100 px wide, <team>-l.webp 220 px).
-Nothing is redrawn. A helmet is a background on an element that carries data-hm="<TEAM>": the old colour badges keep their
+The 32 pictures are the owner's own files, with the dark backdrop cut away (owner 11/27), cropped and resized (assets/hm/<team>.webp 110 px wide,
+<team>-l.webp 240 px). Nothing is redrawn. A helmet is a background on an element that carries data-hm="<TEAM>": the old colour badges keep their
 markup and their abbreviation (read by screen readers, hidden to the eye), and hm() gives a small stand-alone helmet."""
 import html
 TEAMS = ["ARI","ATL","BAL","BUF","CAR","CHI","CIN","CLE","DAL","DEN","DET","GB","HOU","IND","JAX","KC","LA","LAC","LV","MIA","MIN","NE","NO","NYG","NYJ","PHI","PIT","SEA","SF","TB","TEN","WAS"]
@@ -9,13 +9,26 @@ def hm(t, cls=""):
     t = ALIAS.get(t, t)
     if t not in TEAMS: return ""
     return f'<i class="hm{(" " + cls) if cls else ""}" data-hm="{html.escape(t)}" role="img" aria-label="{html.escape(t)} helmet"></i>'
+# The right-hand helmet of a matchup is mirrored so the two face each other (owner 11/27). A picture with lettering is never mirrored.
+NOFLIP = ["LV", "SF"]
 def css():
     big = ".tm > [data-hm='%s'],.pp header > [data-hm='%s'],.ghd [data-hm='%s'],.tdir [data-hm='%s'],.phm [data-hm='%s']"
-    out = ["/* team helmets (helmets.py) */",
-           "[data-hm]{background:#0c0d10 center/cover no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;overflow:hidden;flex:none;padding:0 !important}",
-           "i.hm{display:inline-block;height:20px;border-radius:4px;vertical-align:-5px;margin-right:5px;font-style:normal}",
-           ".phm{display:flex;flex-wrap:wrap;gap:6px 12px;margin:8px 16px 0} .phm span{display:inline-flex;gap:3px} .phm i.hm{height:34px;border-radius:6px;margin:0}",
-           ".game .gm i.hm{height:22px;vertical-align:-4px}"]
+    flip = ".tm.b [data-hm],.gteam.r [data-hm],.ghd2 .t.r [data-hm],.phm span i.hm:last-child,.game .gm i.hm:last-of-type"
+    out = ["/* team helmets (helmets.py): the owner's pictures with the backdrop cut away */",
+           "[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.38))}",
+           flip + "{transform:scaleX(-1)}",
+           ",".join(f"[data-hm='{t}']" for t in NOFLIP) + "{transform:none !important}",
+           "i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-style:normal}",
+           ".phm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 16px 0} .phm span{display:inline-flex;gap:2px} .phm i.hm{height:36px;margin:0}",
+           ".game .gm i.hm{height:22px;vertical-align:-4px}",
+           "/* the matchup header on a board: helmets on the outside facing in, away left, home right */",
+           ".hd.hmh{align-items:end;padding-top:14px} .hd.hmh .tm{display:flex;flex-direction:column;align-items:flex-start;gap:0} .hd.hmh .tm.b{align-items:flex-end;text-align:right}",
+           ".hd.hmh .tm [data-hm]{height:66px;margin:0 0 6px} .hd.hmh .tm span:not(.badge){margin-top:5px}",
+           ".hd.hmh.ah .tm.a span:not(.badge)::after{content:' \\00b7 away'} .hd.hmh.ah .tm.b span:not(.badge)::after{content:' \\00b7 home'}",
+           ".hd.hmh .score{align-self:end;padding-bottom:2px}",
+           "body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}",
+           ".ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}",
+           "@media (max-width:560px){ .hd.hmh .tm [data-hm]{height:56px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.08em} }"]
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/hm/%s.webp) !important}" % t.lower())

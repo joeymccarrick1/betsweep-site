@@ -1583,6 +1583,8 @@ BUILDER_JS = r"""
   var openL = {};   // 11/18: game cards whose price grid is open on a phone (the "Game lines" button; wide screens always show the grid)
   var openAlt = {}; // Alt game lines panel open per game
   function lum(h){ h = h.replace('#',''); var r = parseInt(h.substr(0,2),16)/255, g = parseInt(h.substr(2,2),16)/255, b = parseInt(h.substr(4,2),16)/255; return 0.2126*r + 0.7152*g + 0.0722*b; }
+  /* owner 11/27: a game header reads away on the left, home on the right; a neutral site keeps the data's own order */
+  function sides(g){ var A = {t: g.a, c: g.ca, n: g.na, p: g.pa}, B = {t: g.b, c: g.cb, n: g.nb, p: g.pb}; return (g.home && g.away && !g.nt && g.home === g.a) ? {l: B, r: A} : {l: A, r: B}; }
   function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" data-hm="' + t + '" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   var $ = function(s, r){ return (r||document).querySelector(s); }, $$ = function(s, r){ return [].slice.call((r||document).querySelectorAll(s)); };
   function am(o){ return o > 0 ? '+' + o : '' + o; }
@@ -1930,10 +1932,11 @@ BUILDER_JS = r"""
       var best = null; gl.forEach(function(l){ if(isTD(l) && !l.tdr) return; try { if(riskScore(l) >= 4) return; } catch(e){} if(!best || l.e > best.e) best = l; });
       var nAll = legs.filter(function(l){ return l.g === gid; }).length;
       var fav = g.pa >= g.pb ? g.a : g.b, mar = Math.abs(g.pa - g.pb);
+      var hx = sides(g);
       var head = '<button type="button" class="ghd" data-g="' + gid + '" aria-expanded="' + open + '"' + (off ? ' disabled' : '') + '>' +
-        '<span class="gteam">' + badge(g.a, g.ca) + '<b>' + g.a + '</b><small>' + esc(g.na) + '</small></span>' +
-        '<span class="gmid"><b>' + g.pa.toFixed(1) + '<i>–</i>' + g.pb.toFixed(1) + '</b><small>' + (finished(gid) ? (g.fin ? 'Final: ' + esc(g.fin) : 'Final') + ' · projected above' : off ? '<em class="livetag">Live</em> · projected above' : esc(g.kick) + ' · ' + esc(g.most)) + '</small></span>' +
-        '<span class="gteam r">' + badge(g.b, g.cb) + '<b>' + g.b + '</b><small>' + esc(g.nb) + '</small></span>' +
+        '<span class="gteam">' + badge(hx.l.t, hx.l.c) + '<b>' + hx.l.t + '</b><small>' + esc(hx.l.n) + '</small></span>' +
+        '<span class="gmid"><b>' + hx.l.p.toFixed(1) + '<i>–</i>' + hx.r.p.toFixed(1) + '</b><small>' + (finished(gid) ? (g.fin ? 'Final: ' + esc(g.fin) : 'Final') + ' · projected above' : off ? '<em class="livetag">Live</em> · projected above' : esc(g.kick) + ' · ' + esc(g.most)) + '</small></span>' +
+        '<span class="gteam r">' + badge(hx.r.t, hx.r.c) + '<b>' + hx.r.t + '</b><small>' + esc(hx.r.n) + '</small></span>' +
         '<span class="gsum"><span>' + (off ? 'Legs locked at kickoff' : !gl.length ? 'Game lines only - player props not posted yet' : (gl.length + ' players · ' + nAll + ' legs' + (best ? ' · best edge ' + esc(best.pl.split(' ').slice(-1)[0]) + ' ' + (best.e>=0?'+':'') + (best.e*100).toFixed(1) : ''))) + '</span>' +
         (off || !gl.length ? '' : '<span class="opn' + (open ? ' on' : '') + '">' + (open ? 'Hide player legs <i class="car">▴</i>' : 'Tap for player legs <i class="car">▾</i>') + '</span>') + '</span></button>';
       var body = '';

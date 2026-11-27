@@ -13,6 +13,14 @@ big = [f for f in os.listdir(os.path.join(HERE, "assets", "hm")) if os.path.gets
 check(not big, f"no picture over 20 KB ({big or 'none'})")
 css = H.css()
 check(all(css.count("url(/s/hm/%s.webp)" % t.lower()) == 1 and css.count("url(/s/hm/%s-l.webp)" % t.lower()) == 1 for t in H.TEAMS), "the shared rule names each picture once")
+check(".tm.b [data-hm]" in css and "scaleX(-1)" in css and "[data-hm='LV'],[data-hm='SF']{transform:none !important}" in css, "the right-hand helmet is mirrored to face in, and the two with lettering never are")
+try:
+    from PIL import Image
+    al = [t for t in H.TEAMS if Image.open(os.path.join(HERE, "assets", "hm", t.lower() + ".webp")).convert("RGBA").getpixel((0, 0))[3] != 0]
+    check(not al, f"every picture has its backdrop cut away (corner is clear; off: {al or 'none'})")
+except ImportError: print("SKIP backdrop check: no image library here")
+for f_, pat in (("build_boards.py", '_hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b))'), ("build_builder.py", "g.home === g.a) ? {l: B, r: A} : {l: A, r: B}"), ("build_live.py", "sw = ah && hm_ === g.a")):
+    check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: the header puts the away team on the left and the home team on the right")
 check("[data-hm='LAR']" in css and "[data-hm='WSH']" in css, "LAR and WSH are understood as LA and WAS")
 check(H.hm("GB").count('data-hm="GB"') == 1 and "aria-label" in H.hm("GB") and H.hm("LAR").count('data-hm="LA"') == 1, "hm() gives a labelled helmet")
 check(H.hm("XYZ") == "" and H.hm("") == "" and H.hm('"><b>') == "", "hm() gives nothing for a name that is not an NFL team")

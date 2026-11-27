@@ -1473,12 +1473,16 @@ for a, b, pl_all in blocks:
         if k != kk: ph = ph.replace('<div class="splays"', '<div class="splays" hidden', 1); sh = sh.replace('<div class="slip"', '<div class="slip" hidden', 1)
         sc_blocks += (ph or f'<div class="splays none" data-sc="{k}"{"" if k == kk else " hidden"}><span class="lt">If {E(SC_LABEL(a, b)[k])} <small>({s[5+k]:.0f}%)</small></span><small>no leg clears 55% under this script</small></div>') + sh
     _ko = kick_ms(a, b); _fin = final_text(a, b)
+    # owner 11/27: the header reads away on the left, home on the right (the schedule's word; a-b is the scripts tab's order). A neutral
+    # site, or a game the schedule does not have, keeps a-b. Only the header turns: the columns under it are labelled by team.
+    _hg = game_for(a, b); _ah = bool(_hg) and str(_hg.get("location") or "").strip().lower() != "neutral"
+    _hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b)); _sl, _sr = ((s[3], s[2]) if _hl == b else (s[2], s[3]))
     cards.append(f'''<section class="card" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
- <header class="hd">{PLAYS}
-  <div class="tm a">{badge(a)}<b>{a}</b><span>{NAMES.get(a, a)}</span></div>
-  <div class="score"><span class="pt">{s[2]:.1f}</span><span class="dash">–</span><span class="pt">{s[3]:.1f}</span>
+ <header class="hd hmh{" ah" if _ah else ""}">{PLAYS}
+  <div class="tm a">{badge(_hl)}<b>{_hl}</b><span>{NAMES.get(_hl, _hl)}</span></div>
+  <div class="score"><span class="pt">{_sl:.1f}</span><span class="dash">–</span><span class="pt">{_sr:.1f}</span>
     <small>total {s[4]:.1f} · {fav} by {margin:.1f}</small>{SWOOSH}</div>
-  <div class="tm b">{badge(b)}<b>{b}</b><span>{NAMES.get(b, b)}</span></div>
+  <div class="tm b">{badge(_hr)}<b>{_hr}</b><span>{NAMES.get(_hr, _hr)}</span></div>
  </header>
  {info}
  {conf_html}

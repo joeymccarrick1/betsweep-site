@@ -4123,3 +4123,19 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   stop, by design - the owner has to attach the repo to the 12 tasks. PROMO rows 68 and 70 were set to Missed by hand because
   home.built_state grades player legs only (moneyline / spread / total legs are not graded at build time); fix offered, not approved.
   Promos w12-5 (Turkey Day Geemer) and w12-6 (Daily Sweep: Pass the Stuffing, price is our estimate) posted.
+
+## 11/27 1:00 AM: helmets cut out, away left / home right, facing each other
+- Owner: "Take the black background out of the photos ... away team on the left with the home team on the right ... flip the logo so that
+  the helmet faces the other way on the right side ... make that whole section look better." Then, mid-build: "just use these in case we
+  ever have to change to these. In the mean time use the actual NFL logos where it makes sense." **Official logos: not sourced or drawn
+  by me.** He was told to send the 32 files; they would be used as given. Until then his helmet set stays up.
+- **Cut-outs:** /home/claude/helmets1/cut.py + cut2.py (OpenCV GrabCut for the shell; the facemask outline is one template taken from the
+  Cowboys picture - silver mask, separates cleanly - and fitted to each picture by scale and shift, because a black facemask cannot be told
+  from the backdrop). The space between the bars stays dark. Output assets/hm/*.webp with alpha, 110 and 240 px, 573 KB for 64.
+- **Logos lifted from the shells** (logo.py, /home/claude/helmets1/logo/*.png, transparent with a thin white edge): made, not shipped.
+  About a third carry a stray piece of stripe. Kept as backup material.
+- **Layout:** helmets.css() - no tile, drop shadow, `.tm.b` / `.gteam.r` / `.ghd2 .t.r` helmets mirrored (never LV or SF: lettering).
+  Board header (`.hd.hmh`): helmet above the abbreviation, outside edges, "· away" / "· home" after the nickname (`.ah`, schedule only).
+- **Away left, home right, header only:** build_boards (game_for), build_builder (`sides(g)`, g.home), build_live (`sides(g, s)`,
+  g.info.home - Live's data was already home-first, so its header now turns). A neutral site keeps the data's order. The columns and
+  script bar under a board header are still in a-b order.
