@@ -510,7 +510,7 @@ def page(k, p):
     _th, _tb = _FN.panels("ppTabs", _blocks, None, start="props" if p["legs"] else next((i for i, _, _ in _blocks if i != "props"), "props"))
     body = (head(f'{p["name"]} props, stats & matchup · Week {W} · BetSweep', desc) +
             f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › <a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a> › {E(p["name"])}</p>'
-            f'<header><a class="tb" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
+            f'<header><a class="tb" data-hm="{E(p["team"])}" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
             + _th + _tb + jsonld(p, opp) +
             '</div><div class="ppbar" id="ppbar"><b></b><a href="/build/">Open betslip</a></div><script src="/player/player.js" defer></script>')
     return body, desc

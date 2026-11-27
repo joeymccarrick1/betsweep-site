@@ -41,6 +41,17 @@ def at(g, bold=False):
     w = (lambda t: f"<b>{E(t)}</b>") if bold else E
     if g.get("home") and g.get("away") and not g.get("nt"): return f'{w(g["away"])} @ {w(g["home"])}'
     return f'{w(a)} vs {w(b)}'
+def _at_hm(g):   # the slate row's matchup with a helmet in front of each team (owner 11/26)
+    if g.get("home") and g.get("away") and not g.get("nt"): return f'{HM.hm(g["away"])}<b>{E(g["away"])}</b> @ {HM.hm(g["home"])}<b>{E(g["home"])}</b>'
+    return f'{HM.hm(g.get("a", ""))}<b>{E(g.get("a", ""))}</b> vs {HM.hm(g.get("b", ""))}<b>{E(g.get("b", ""))}</b>'
+def _phm(p):   # a promo card's helmet row: both helmets for each game on the slip, away first (owner 11/26)
+    import re as _r, html as _hh
+    gids = []
+    for l in p["legs"]:
+        if l.get("gid") and l["gid"] not in gids: gids.append(l["gid"])
+    prs = ["".join(HM.hm(t) for t in _r.findall(r"[A-Z]{2,3}", _hh.unescape(at_gid(g)))[:2]) for g in gids[:6]]
+    prs = [x for x in prs if x]
+    return ('<div class="phm">' + "".join(f"<span>{x}</span>" for x in prs) + "</div>") if prs else ""
 def at_gid(gid):
     return AT.get(gid) or E(str(gid or "").replace("-", " vs "))
 
@@ -120,6 +131,7 @@ def top_plays(D, n=8):
         if len(out) >= n: break
     return out
 
+import helmets as HM   # owner 11/26: team helmets
 import booklinks as BL   # DraftKings / Hard Rock links (exact rung or the book's nearest line), owner 10/22
 import sweep as SW      # owner 11/10: the Daily Sweep (a promo row whose Title starts with "Daily Sweep")
 import how_stats as _HOWS   # 11/17: the plus tier's record is counted from the graded legs, not typed (it said Weeks 6-8 for two weeks)
@@ -348,7 +360,7 @@ def slate(D):
     for g in gs:
         fav = g["a"] if g["pa"] > g["pb"] else g["b"]; marg = abs(g["pa"] - g["pb"])
         items.append(f'<a class="game" href="/boards/#g-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-fin="{E(g.get("fin",""))}">'
-                     f'<span class="gk">{E(g.get("kick",""))}</span><span class="gm">{at(g, bold=True)}</span>'
+                     f'<span class="gk">{E(g.get("kick",""))}</span><span class="gm">{_at_hm(g)}</span>'
                      f'<span class="gp">{E(fav)} by {marg:.1f} · O/U {g["tot"]:.1f}</span><span class="gs">{E(g.get("most",""))}</span><span class="gl"></span></a>')
     return '<div class="slate">' + "".join(items) + "</div>"
 
@@ -593,7 +605,7 @@ def promo_card(p, kicker="Promoted", hero=False):
         else: mp = f'<span class="mp">model {l["p"]*100:.0f}%</span>' if l.get("p") is not None else ""
         _gx = f' data-glx="{E(json.dumps(l["glx"]))}"' if l.get("glx") else ""
         # data-at (11/18): the game the way the schedule has it ("IND @ HOU") - the Promo Studio draws it; a game id is alphabetical, not away-at-home
-        legs += f'<li data-g="{E(l.get("gid") or "")}" data-at="{at_gid(l.get("gid")) if l.get("gid") else ""}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
+        legs += f'<li data-g="{E(l.get("gid") or "")}" data-at="{at_gid(l.get("gid")) if l.get("gid") else ""}" data-who="{E(who)}" data-mk="{E(l.get("market") or "")}"{_gx}><b>{HM.hm(l.get("tm") or "")}{E(who)}</b><span class="o">{E(odds_str(l["o"])) if l.get("o") is not None else ""}</span><small>{E(sub)}</small>{mp}</li>'
     res = (p.get("result") or "").upper()
     st = '<span class="st win">Cashed</span>' if res in ("W", "WIN", "HIT") else ('<span class="st loss">Missed</span>' if res in ("L", "LOSS", "MISS") else _pst(p))
     # audit 10/26: a +11825 lotto showing "Model 0.1% to hit · fair +181169" read like the site arguing against its own post -
@@ -646,9 +658,9 @@ def promo_card(p, kicker="Promoted", hero=False):
                 + f'<button type="button" class="swshare" data-url="{E(_su)}" data-title="{E("The Daily Sweep: " + title)}">Share</button>')
         gfx = f'<p class="swgfx">Graphics: <a href="{E(p["img"].get("feed", p["img"]["square"]))}" download>4:5</a> · <a href="{E(p["img"]["square"])}" download>Square</a> · <a href="{E(p["img"]["story"])}" download>Story</a> · <a href="{E(share)}" target="_blank" rel="noopener">Post on X</a></p>'
         return (f'<article class="promo sweep" data-keep="1" data-day="{E(p.get("day") or "")}" data-res="{kres or ""}" data-odds="{int(p["fd"]) if p.get("fd") else ""}" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>{E(kicker)}</small>{st}</div><h3>{E(title)}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs{(" · " + E(gl_)) if gl_ and gl_ != title else ""}</div>'
-                f'<ul class="pl{" many" if many else ""}">{legs}</ul>{_shn}<div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div>{gfx}</article>')
+                f'{_phm(p)}<ul class="pl{" many" if many else ""}">{legs}</ul>{_shn}<div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div>{gfx}</article>')
     return (f'<article class="promo" data-first-ko="{p.get("first_ko") or ""}" data-last-ko="{p.get("last_ko") or ""}"><div class="ph"><small>{E(kicker)}</small>{st}</div><h3>{E(p["title"])}</h3><div class="meta">Week {p["week"]} · {len(p["legs"])} legs</div>'
-            f'<ul class="pl{" many" if many else ""}">{legs}</ul>{_shn}<div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div></article>')
+            f'{_phm(p)}<ul class="pl{" many" if many else ""}">{legs}</ul>{_shn}<div class="pf"><div class="big"><small>FanDuel</small>{E(odds_str(p["fd"])) if p.get("fd") else "—"}</div><div class="md">{model}<br>Snapshot at post time; prices move.</div></div>{cap}<div class="pa">{btns}</div></article>')
 
 
 def promos_block(OUT, sweep_exists=False):

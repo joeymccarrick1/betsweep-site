@@ -137,7 +137,7 @@ def plink(name):
 def tlink(t): return f'<a href="/teams/{t.lower()}/">{E(t)}</a>'
 def badge(t, big=False):
     c1, c2 = colors(t)
-    return f'<span class="tb{" sm" if not big else ""}" style="--p:{c1};--s:{c2}">{E(t)}</span>'
+    return f'<span class="tb{" sm" if not big else ""}" data-hm="{E(t)}" style="--p:{c1};--s:{c2}">{E(t)}</span>'
 
 # ---- per-game player box JSON (fetched on open; one file per game shared by both teams' pages) -----------------------------------------
 os.makedirs(os.path.join(OUT, "teams", "box"), exist_ok=True)

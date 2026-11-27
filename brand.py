@@ -20,4 +20,4 @@ def lum(h):
     h = h.lstrip("#"); r, g, b = [int(h[i:i+2], 16) / 255 for i in (0, 2, 4)]; return 0.2126 * r + 0.7152 * g + 0.0722 * b
 def badge(t):
     p, s = TEAMCOL.get(t, ("#444", "#999")); ink = "#101820" if lum(p) > 0.45 else "#ffffff"
-    return f'<span class="badge" style="--p:{p};--s:{s};--ink:{ink}">{E(t)}</span>'
+    return f'<span class="badge"{(' data-hm="' + t + '"') if t in TEAMCOL else ""} style="--p:{p};--s:{s};--ink:{ink}">{E(t)}</span>'

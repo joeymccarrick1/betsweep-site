@@ -1583,7 +1583,7 @@ BUILDER_JS = r"""
   var openL = {};   // 11/18: game cards whose price grid is open on a phone (the "Game lines" button; wide screens always show the grid)
   var openAlt = {}; // Alt game lines panel open per game
   function lum(h){ h = h.replace('#',''); var r = parseInt(h.substr(0,2),16)/255, g = parseInt(h.substr(2,2),16)/255, b = parseInt(h.substr(4,2),16)/255; return 0.2126*r + 0.7152*g + 0.0722*b; }
-  function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
+  function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" data-hm="' + t + '" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   var $ = function(s, r){ return (r||document).querySelector(s); }, $$ = function(s, r){ return [].slice.call((r||document).querySelectorAll(s)); };
   function am(o){ return o > 0 ? '+' + o : '' + o; }
   // other books: DraftKings / Hard Rock price for the same rung, best price marked (FanDuel stays the reference everywhere else)

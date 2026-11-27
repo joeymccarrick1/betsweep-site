@@ -4104,3 +4104,22 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   segment row wraps, and the chips wrap inside the model column.
 - Tests that open a game now open its folders first (builder_fold, inactive_block, new_markets); builder_fold carries the folder
   checks. Anything new that looks for `li.pc` inside `#games` must open a folder (`.pgb[aria-expanded="false"]`) first.
+
+## 11/26 late: team helmets (owner: "Use this all over the site to represent the NFL teams")
+- **The pictures are the owner's**, 32 phone screenshots sent in chat in alphabetical order (the second batch ran Raiders, Rams, Chargers -
+  read by the art, mapping sent to him). They are cropped to the helmet and resized, nothing else: `assets/hm/<team>.webp` (100 px) and
+  `<team>-l.webp` (220 px), 344 KB for all 64, named by the site's own codes (`la`, `was`). Originals: /home/claude/helmets1/src.
+  They have a dark studio backdrop, so each shows as a dark tile. Never redraw or flip one (LV and SF carry letters).
+- **How it works:** `helmets.py` holds the team list, `hm(t)` (a small labelled helmet, empty for a non-NFL name) and `css()`.
+  build_site.py copies assets/hm to /s/hm/ and adds the rules to the shared stylesheet. Any element with `data-hm="<TEAM>"` gets the
+  helmet as its background, the abbreviation stays in the markup, and its width follows its height at 5:4. So the old colour badges
+  became helmets by gaining one attribute: brand.py `badge()` (boards, receipts, First TD), build_teams, build_dossier, build_players,
+  and the JS `badge()` in build_builder and build_live. NBA / CFB / soccer badges are untouched.
+- **New spots on Today:** a helmet before each team on the slate rows, a row of both helmets per game on a promo card (`_phm`), and a
+  helmet before a leg's player when the leg knows his team. A game that has kicked off has no game id on the card, so its helmets drop.
+- **Not done yet:** helmets beside legs in My BetSweep and Social slip rows, share images and promo posters, promo pages' own header.
+- tests/helmets.py (no browser) is in the prepublish list.
+- **Also 11/26 (not in the book until now):** scheduled tasks cannot clone the private archive (no credentials in task sessions) and
+  stop, by design - the owner has to attach the repo to the 12 tasks. PROMO rows 68 and 70 were set to Missed by hand because
+  home.built_state grades player legs only (moneyline / spread / total legs are not graded at build time); fix offered, not approved.
+  Promos w12-5 (Turkey Day Geemer) and w12-6 (Daily Sweep: Pass the Stuffing, price is our estimate) posted.

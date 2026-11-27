@@ -222,7 +222,7 @@ def heat(team):
 # ---- page ------------------------------------------------------------------------------------------------------------------------------------
 def plink(n):
     s = slugify(n); return f'<a href="/player/{s}/">{E(n)}</a>' if os.path.exists(os.path.join(OUT, "players", s + ".html")) else E(n)
-def badge(t): c1, c2 = TEAMCOL.get(t, ("#2b3442", "#141a24")); return f'<a class="tb sm" href="/teams/{t.lower()}/" style="--p:{c1};--s:{c2}">{E(t)}</a>'
+def badge(t): c1, c2 = TEAMCOL.get(t, ("#2b3442", "#141a24")); return f'<a class="tb sm" data-hm="{E(t)}" href="/teams/{t.lower()}/" style="--p:{c1};--s:{c2}">{E(t)}</a>'
 def similar_block(off, d):
     if d not in PROF: return "<p class=\"none\">Not enough games for a defense profile yet.</p>", {}
     ds, s1, s2 = desc_def(d)
