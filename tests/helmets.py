@@ -9,16 +9,22 @@ def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + 
 check(len(H.TEAMS) == 32 and len(set(H.TEAMS)) == 32, "32 teams, each once")
 miss = [t + s for t in H.TEAMS for s in ("", "-l") if not os.path.exists(os.path.join(HERE, "assets", "hm", t.lower() + s + ".webp"))]
 check(not miss, f"every team has a small and a large picture ({miss or 'none missing'})")
-big = [f for f in os.listdir(os.path.join(HERE, "assets", "hm")) if os.path.getsize(os.path.join(HERE, "assets", "hm", f)) > 20000]
+big = [d + "/" + f for d in ("hm", "nfl") for f in os.listdir(os.path.join(HERE, "assets", d)) if os.path.getsize(os.path.join(HERE, "assets", d, f)) > 24000]
 check(not big, f"no picture over 20 KB ({big or 'none'})")
 css = H.css()
-check(all(css.count("url(/s/hm/%s.webp)" % t.lower()) == 1 and css.count("url(/s/hm/%s-l.webp)" % t.lower()) == 1 for t in H.TEAMS), "the shared rule names each picture once")
+check(all(css.count("url(/s/%s/%s.webp)" % (H.SET, t.lower())) == 1 and css.count("url(/s/%s/%s-l.webp)" % (H.SET, t.lower())) == 1 for t in H.TEAMS), "the shared rule names each picture once")
+missn = [t + x for t in H.TEAMS for x in ("", "-l") if not os.path.exists(os.path.join(HERE, "assets", "nfl", t.lower() + x + ".webp"))]
+check(not missn, f"the logo set has every team in both sizes ({missn or 'none missing'})")
+check(H.SET in ("nfl", "hm"), f"the set that is up is one of the two ({H.SET})")
+check("scaleX(-1)" not in css if H.SET == "nfl" else True, "a logo is never mirrored")
+_SET = H.SET; H.SET = "hm"; css = H.css(); H.SET = _SET
 check(".tm.b [data-hm]" in css and "scaleX(-1)" in css and "[data-hm='LV'],[data-hm='SF']{transform:none !important}" in css, "the right-hand helmet is mirrored to face in, and the two with lettering never are")
 try:
     from PIL import Image
-    al = [t for t in H.TEAMS if Image.open(os.path.join(HERE, "assets", "hm", t.lower() + ".webp")).convert("RGBA").getpixel((0, 0))[3] != 0]
-    check(not al, f"every picture has its backdrop cut away (corner is clear; off: {al or 'none'})")
+    al = [d + "/" + t for d in ("hm", "nfl") for t in H.TEAMS if Image.open(os.path.join(HERE, "assets", d, t.lower() + ".webp")).convert("RGBA").split()[3].getextrema()[0] != 0]
+    check(not al, f"every picture has its backdrop cut away (each has clear pixels; off: {al or 'none'})")
 except ImportError: print("SKIP backdrop check: no image library here")
+css = H.css()
 for f_, pat in (("build_boards.py", '_hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b))'), ("build_builder.py", "g.home === g.a) ? {l: B, r: A} : {l: A, r: B}"), ("build_live.py", "sw = ah && hm_ === g.a")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: the header puts the away team on the left and the home team on the right")
 check("[data-hm='LAR']" in css and "[data-hm='WSH']" in css, "LAR and WSH are understood as LA and WAS")

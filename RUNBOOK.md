@@ -4139,3 +4139,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - **Away left, home right, header only:** build_boards (game_for), build_builder (`sides(g)`, g.home), build_live (`sides(g, s)`,
   g.info.home - Live's data was already home-first, so its header now turns). A neutral site keeps the data's order. The columns and
   script bar under a board header are still in a-b order.
+
+## 11/27 9:45 AM: official team logos up, the helmet set kept as the fallback
+- Owner sent 32 official logo files in chat (alphabetical; second batch ran LV, Chargers, Rams) and asked for the white backgrounds out.
+  **They are his files, used as given:** /home/claude/nfl1/prep.py removes white only where a file was not already transparent (ATL, CHI,
+  CIN - plus the two see-through holes in the Bengals B), trims the empty margin, resizes. Nothing redrawn. The Titans file is a round
+  T-and-stars mark, not the usual one - used as sent. Output `assets/nfl/<team>.webp` (120 px longest side) and `-l` (260), 494 KB.
+- **`helmets.SET`** is the one switch: `"nfl"` (logos, up now) or `"hm"` (his helmet set). build_site ships only the set that is up, to
+  /s/<set>/. Logos are never mirrored and carry a thin light edge so navy marks read on the dark theme; the helmet set mirrors the
+  right-hand side. To go back to helmets: set SET = "hm", full set, publish.
+- I did not source or draw any official logo. If he asks for more official marks (NBA, colleges, the league shield), same rule: his files.

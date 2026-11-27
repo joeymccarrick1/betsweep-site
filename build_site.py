@@ -441,9 +441,9 @@ def _write_shared():
     if os.path.exists(h2c): shutil.copy(h2c, os.path.join(SITE, "s", "html2canvas.min.js"))
     site_css = FONT_CSS + _inner(NAV_CSS, "style") + "\n" + _inner(BRAND_CSS, "style") + "\n" + _FN.TABS_CSS + SCORE_TABS_CSS
     # team helmets (owner 11/26): the owner's 32 pictures, shipped to /s/hm/ and drawn by one shared rule per team
-    if os.path.isdir(os.path.join(_ASSETS, "hm")):
-        import helmets as _HMS
-        shutil.copytree(os.path.join(_ASSETS, "hm"), os.path.join(SITE, "s", "hm"), dirs_exist_ok=True); site_css += _HMS.css()
+    import helmets as _HMS
+    if os.path.isdir(os.path.join(_ASSETS, _HMS.SET)):   # only the set that is up is shipped (helmets.SET)
+        shutil.copytree(os.path.join(_ASSETS, _HMS.SET), os.path.join(SITE, "s", _HMS.SET), dirs_exist_ok=True); site_css += _HMS.css()
     # the section tabs ride in the shared script too (11/17): the pages a reprice keeps as they are - the weekly receipts - get
     # their tabs from foldScore() below and have no inline copy. A page that carries its own copy has already defined it.
     app_js = "if(!window.bsTabs){" + _FN.TABS_JS + "}\n" + _inner(APP_JS, "script")
