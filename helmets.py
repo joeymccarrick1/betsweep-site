@@ -48,7 +48,8 @@ def css():
             "@media (max-width:560px){ .lg2 .ghd2 .t [data-hm]{height:36px !important} }",
             ".bqc .t b i.hm,.pcn b i.hm{height:18px;vertical-align:-4px;margin-right:6px}",
             ".post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}",
-            "i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}"]
+            "i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}",
+            ".sl .legs .ln i.hm{height:16px;vertical-align:-3px;margin-right:6px}"]
     out += ["/* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */",
             ".wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}",
             ".tm.b .wm{background-position:right center;margin-left:auto}",
@@ -61,7 +62,7 @@ def css():
             "@media (max-width:560px){ .hd.hmh .tm .wm{grid-column:1/-1;grid-row:2;width:118px;margin-top:5px;align-self:start} .hd.hmh.ah .tm b::after,.hd.hmh.ah .tm b::before{font-size:9px;margin:0 4px} }",
             ".pp header h1 .wm{height:44px;width:min(320px,100%)} .tdir header h1 .wm{display:inline}",
             ".wmrow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px} .wmrow span{display:flex;align-items:center;gap:8px;min-width:0} .wmrow i{font-style:normal;color:var(--mute);font-weight:700} .wmrow i.hm{height:34px;margin:0} .wmrow .wm{display:block;height:26px;width:120px} .wmrow span:last-child .wm{background-position:right center}"]
-    for t in TEAMS: out.append("[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower()))
+    for t in TEAMS: out.append(".wm[data-wm='%s']{background-image:url(/s/wm/%s.webp)}" % (t, t.lower()))   # must outrank .wm[data-wm], whose background shorthand clears the picture (1:35-2:05 PM 11/27: no wordmarks)
     for t in TEAMS: out.append("[data-wm='%s']{--war:%s}" % (t, WM_AR.get(t, 5)))
     # owner 11/27 1:08 PM: "I don't think I love the light outline. It like neons too much." No outline on any logo, and none on a
     # wordmark that has colour of its own. The black and navy marks would vanish on the dark theme, so those alone keep one faint
