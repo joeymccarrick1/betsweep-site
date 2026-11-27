@@ -552,6 +552,30 @@
    "gap": 3.1,
    "p": 0.4664,
    "seen": "2026-11-26 18:34"
+  },
+  "Nico Collins|Receptions|6": {
+   "pl": "Nico Collins",
+   "m": "Receptions",
+   "ln": 6.0,
+   "g": "BAL-HOU",
+   "fd": 174.0,
+   "dk": 150.0,
+   "hr": 150.0,
+   "gap": 3.5,
+   "p": 0.3811,
+   "seen": "2026-11-27 6:34"
+  },
+  "Nate Boerkircher|Receptions|2": {
+   "pl": "Nate Boerkircher",
+   "m": "Receptions",
+   "ln": 2.0,
+   "g": "JAX-TEN",
+   "fd": 182.0,
+   "dk": 149.0,
+   "hr": 150.0,
+   "gap": 4.5,
+   "p": 0.364,
+   "seen": "2026-11-27 6:34"
   }
  }
 }
