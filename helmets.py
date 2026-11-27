@@ -28,7 +28,7 @@ def css():
            ".hd.hmh .score{align-self:end;padding-bottom:2px}",
            "body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}",
            ".ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}",
-           "@media (max-width:560px){ .hd.hmh .tm [data-hm]{height:56px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.08em} }"]
+           "@media (max-width:560px){ .hd.hmh{padding:10px 16px 8px} .hd.hmh .tm [data-hm]{height:44px;margin:0 0 2px} .hd.hmh .tm b{font-size:36px} .hd.hmh.ah .tm span:not(.badge){letter-spacing:.08em} }"]
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/hm/%s.webp) !important}" % t.lower())
