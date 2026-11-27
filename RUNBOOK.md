@@ -4170,3 +4170,6 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - The away / home tags moved from after the nickname to beside the abbreviation (`b::after` / `b::before`).
 - The Rams file is a logo-and-name lockup and reads small; the two-line marks (Browns, Panthers, Vikings, Colts) are small on a phone.
   He offered to find other files if sizing needs them.
+- 11/27 12:20 PM: the owner sent replacement wordmarks for the Rams (name-only), Browns, Colts (one line), Panthers and Vikings - all
+  already transparent. Swapped into assets/wm (first versions kept in /home/claude/nfl1/wm_src_v1). wm.py no longer drops pieces that
+  touch the picture's edge on an already-clear file: that rule is for stray screenshot bits and it ate letters on these tight crops.
