@@ -334,6 +334,16 @@ i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}
 h2.wmh .wm[data-wm]{display:inline-block;height:20px;width:84px;vertical-align:middle} h2.wmh{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
 a.wma .wm[data-wm]{display:inline-block;height:18px;width:96px;vertical-align:middle}
 .wmrow.l{justify-content:flex-start;margin:8px 16px 0}
+/* 11/27 4:30 PM: team colour wash behind a game header (boards, builder, Live) */
+.hd.wash{background:linear-gradient(90deg,color-mix(in srgb,var(--wa,transparent) 34%,transparent),transparent 44%,transparent 56%,color-mix(in srgb,var(--wb,transparent) 34%,transparent)),var(--plays) center/360px 130px repeat,var(--chalk)}
+.ghd.wash,.ghd2.wash{background-image:linear-gradient(90deg,color-mix(in srgb,var(--wa,transparent) 30%,transparent),transparent 42%,transparent 58%,color-mix(in srgb,var(--wb,transparent) 30%,transparent))}
+/* Today: weather picture on a slate row, and the live scoreboard strip */
+.game .gk i.wxi{font-style:normal;font-size:13px}
+#lstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 0 4px;scrollbar-width:none} #lstrip::-webkit-scrollbar{display:none}
+#lstrip .lsc{flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);text-decoration:none;font-family:var(--display);font-weight:800;font-size:17px}
+#lstrip .lsc i.hm{height:22px;margin:0;vertical-align:0} #lstrip .lsc span{color:var(--mute)} #lstrip .lsc small{font-family:var(--body);font-weight:600;font-size:11px;color:var(--mute);margin-left:4px;display:inline-flex;align-items:center;gap:5px}
+#lstrip .lsc.in{border-color:var(--red)} #lstrip .lsc.in small{color:var(--ink)} #lstrip .lsc.in em{width:7px;height:7px;border-radius:50%;background:var(--red);animation:lsp 1.4s ease-in-out infinite}
+@keyframes lsp{0%,100%{opacity:1}50%{opacity:.25}} @media (prefers-reduced-motion: reduce){ #lstrip .lsc.in em{animation:none} }
 /* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */
 .wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}
 .tm.b .wm{background-position:right center;margin-left:auto}
@@ -378,40 +388,61 @@ a.wma .wm[data-wm]{display:inline-block;height:18px;width:96px;vertical-align:mi
 .wm[data-wm='TB']{background-image:url(/s/wm/tb.webp)}
 .wm[data-wm='TEN']{background-image:url(/s/wm/ten.webp)}
 .wm[data-wm='WAS']{background-image:url(/s/wm/was.webp)}
-[data-wm='ARI']{--war:5.14}
-[data-wm='ATL']{--war:5.22}
-[data-wm='BAL']{--war:5.07}
+[data-wm='ARI']{--war:10.59}
+[data-wm='ATL']{--war:11.25}
+[data-wm='BAL']{--war:7.06}
 [data-wm='BUF']{--war:3.79}
-[data-wm='CAR']{--war:2.59}
+[data-wm='CAR']{--war:4.86}
 [data-wm='CHI']{--war:6.92}
-[data-wm='CIN']{--war:5.71}
-[data-wm='CLE']{--war:2.2}
+[data-wm='CIN']{--war:10.91}
+[data-wm='CLE']{--war:4.09}
 [data-wm='DAL']{--war:5.71}
-[data-wm='DEN']{--war:5.62}
+[data-wm='DEN']{--war:8.57}
 [data-wm='DET']{--war:3.71}
 [data-wm='GB']{--war:3.36}
-[data-wm='HOU']{--war:6.43}
+[data-wm='HOU']{--war:10.0}
 [data-wm='IND']{--war:4.04}
-[data-wm='JAX']{--war:2.92}
+[data-wm='JAX']{--war:4.44}
 [data-wm='KC']{--war:4.39}
-[data-wm='LA']{--war:3.5}
-[data-wm='LAC']{--war:3.67}
+[data-wm='LA']{--war:4.56}
+[data-wm='LAC']{--war:5.22}
 [data-wm='LV']{--war:5.71}
-[data-wm='MIA']{--war:3.64}
+[data-wm='MIA']{--war:5.07}
 [data-wm='MIN']{--war:2.31}
 [data-wm='NE']{--war:4.24}
 [data-wm='NO']{--war:4.29}
-[data-wm='NYG']{--war:2.58}
+[data-wm='NYG']{--war:3.19}
 [data-wm='NYJ']{--war:3.16}
 [data-wm='PHI']{--war:5.9}
 [data-wm='PIT']{--war:3.56}
-[data-wm='SEA']{--war:6.32}
+[data-wm='SEA']{--war:9.23}
 [data-wm='SF']{--war:5.14}
 [data-wm='TB']{--war:3.6}
-[data-wm='TEN']{--war:4.09}
-[data-wm='WAS']{--war:3.19}
-[data-wm='ARI'],[data-wm='ATL'],[data-wm='BAL'],[data-wm='CIN'],[data-wm='DAL'],[data-wm='DEN'],[data-wm='GB'],[data-wm='HOU'],[data-wm='IND'],[data-wm='JAX'],[data-wm='LAC'],[data-wm='LV'],[data-wm='MIN'],[data-wm='NE'],[data-wm='NO'],[data-wm='NYG'],[data-wm='NYJ'],[data-wm='PHI'],[data-wm='PIT'],[data-wm='SEA'],[data-wm='WAS']{filter:drop-shadow(0 0 .5px rgba(255,255,255,.42))}
-:root[data-theme='light'] .wm[data-wm]{filter:none} @media (prefers-color-scheme: light){ :root:not([data-theme='dark']) .wm[data-wm]{filter:none} }
+[data-wm='TEN']{--war:6.32}
+[data-wm='WAS']{--war:6.67}
+.wm[data-wm='ARI']{background-image:none;background-color:#F4EFE3;-webkit-mask:url(/s/wm/ari.webp) left center/contain no-repeat;mask:url(/s/wm/ari.webp) left center/contain no-repeat}
+.wm[data-wm='ATL']{background-image:none;background-color:#E0313E;-webkit-mask:url(/s/wm/atl.webp) left center/contain no-repeat;mask:url(/s/wm/atl.webp) left center/contain no-repeat}
+.wm[data-wm='CIN']{background-image:none;background-color:#FB4F14;-webkit-mask:url(/s/wm/cin.webp) left center/contain no-repeat;mask:url(/s/wm/cin.webp) left center/contain no-repeat}
+.wm[data-wm='DAL']{background-image:none;background-color:#B0B7BC;-webkit-mask:url(/s/wm/dal.webp) left center/contain no-repeat;mask:url(/s/wm/dal.webp) left center/contain no-repeat}
+.wm[data-wm='DEN']{background-image:none;background-color:#FB4F14;-webkit-mask:url(/s/wm/den.webp) left center/contain no-repeat;mask:url(/s/wm/den.webp) left center/contain no-repeat}
+.wm[data-wm='GB']{background-image:none;background-color:#FFB612;-webkit-mask:url(/s/wm/gb.webp) left center/contain no-repeat;mask:url(/s/wm/gb.webp) left center/contain no-repeat}
+.wm[data-wm='HOU']{background-image:none;background-color:#E0313E;-webkit-mask:url(/s/wm/hou.webp) left center/contain no-repeat;mask:url(/s/wm/hou.webp) left center/contain no-repeat}
+.wm[data-wm='IND']{background-image:none;background-color:#F4EFE3;-webkit-mask:url(/s/wm/ind.webp) left center/contain no-repeat;mask:url(/s/wm/ind.webp) left center/contain no-repeat}
+.wm[data-wm='JAX']{background-image:none;background-color:#D7A22A;-webkit-mask:url(/s/wm/jax.webp) left center/contain no-repeat;mask:url(/s/wm/jax.webp) left center/contain no-repeat}
+.wm[data-wm='LAC']{background-image:none;background-color:#FFC20E;-webkit-mask:url(/s/wm/lac.webp) left center/contain no-repeat;mask:url(/s/wm/lac.webp) left center/contain no-repeat}
+.wm[data-wm='LV']{background-image:none;background-color:#A5ACAF;-webkit-mask:url(/s/wm/lv.webp) left center/contain no-repeat;mask:url(/s/wm/lv.webp) left center/contain no-repeat}
+.wm[data-wm='MIN']{background-image:none;background-color:#FFC62F;-webkit-mask:url(/s/wm/min.webp) left center/contain no-repeat;mask:url(/s/wm/min.webp) left center/contain no-repeat}
+.wm[data-wm='NE']{background-image:none;background-color:#E0313E;-webkit-mask:url(/s/wm/ne.webp) left center/contain no-repeat;mask:url(/s/wm/ne.webp) left center/contain no-repeat}
+.wm[data-wm='NO']{background-image:none;background-color:#D3BC8D;-webkit-mask:url(/s/wm/no.webp) left center/contain no-repeat;mask:url(/s/wm/no.webp) left center/contain no-repeat}
+.wm[data-wm='NYG']{background-image:none;background-color:#F4EFE3;-webkit-mask:url(/s/wm/nyg.webp) left center/contain no-repeat;mask:url(/s/wm/nyg.webp) left center/contain no-repeat}
+.wm[data-wm='NYJ']{background-image:none;background-color:#F4EFE3;-webkit-mask:url(/s/wm/nyj.webp) left center/contain no-repeat;mask:url(/s/wm/nyj.webp) left center/contain no-repeat}
+.wm[data-wm='PHI']{background-image:none;background-color:#A5ACAF;-webkit-mask:url(/s/wm/phi.webp) left center/contain no-repeat;mask:url(/s/wm/phi.webp) left center/contain no-repeat}
+.wm[data-wm='PIT']{background-image:none;background-color:#FFB612;-webkit-mask:url(/s/wm/pit.webp) left center/contain no-repeat;mask:url(/s/wm/pit.webp) left center/contain no-repeat}
+.wm[data-wm='SEA']{background-image:none;background-color:#69BE28;-webkit-mask:url(/s/wm/sea.webp) left center/contain no-repeat;mask:url(/s/wm/sea.webp) left center/contain no-repeat}
+.wm[data-wm='WAS']{background-image:none;background-color:#FFB612;-webkit-mask:url(/s/wm/was.webp) left center/contain no-repeat;mask:url(/s/wm/was.webp) left center/contain no-repeat}
+.wmrow span:last-child .wm[data-wm]{-webkit-mask-position:right center;mask-position:right center}
+:root[data-theme='light'] .wm:not(.dk)[data-wm='ARI']{background-image:url(/s/wm/ari.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='ATL']{background-image:url(/s/wm/atl.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='CIN']{background-image:url(/s/wm/cin.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='DAL']{background-image:url(/s/wm/dal.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='DEN']{background-image:url(/s/wm/den.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='GB']{background-image:url(/s/wm/gb.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='HOU']{background-image:url(/s/wm/hou.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='IND']{background-image:url(/s/wm/ind.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='JAX']{background-image:url(/s/wm/jax.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='LAC']{background-image:url(/s/wm/lac.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='LV']{background-image:url(/s/wm/lv.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='MIN']{background-image:url(/s/wm/min.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='NE']{background-image:url(/s/wm/ne.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='NO']{background-image:url(/s/wm/no.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='NYG']{background-image:url(/s/wm/nyg.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='NYJ']{background-image:url(/s/wm/nyj.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='PHI']{background-image:url(/s/wm/phi.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='PIT']{background-image:url(/s/wm/pit.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='SEA']{background-image:url(/s/wm/sea.webp);background-color:transparent;-webkit-mask:none;mask:none} :root[data-theme='light'] .wm:not(.dk)[data-wm='WAS']{background-image:url(/s/wm/was.webp);background-color:transparent;-webkit-mask:none;mask:none}
+@media (prefers-color-scheme: light){ :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='ARI']{background-image:url(/s/wm/ari.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='ATL']{background-image:url(/s/wm/atl.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='CIN']{background-image:url(/s/wm/cin.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='DAL']{background-image:url(/s/wm/dal.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='DEN']{background-image:url(/s/wm/den.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='GB']{background-image:url(/s/wm/gb.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='HOU']{background-image:url(/s/wm/hou.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='IND']{background-image:url(/s/wm/ind.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='JAX']{background-image:url(/s/wm/jax.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='LAC']{background-image:url(/s/wm/lac.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='LV']{background-image:url(/s/wm/lv.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='MIN']{background-image:url(/s/wm/min.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='NE']{background-image:url(/s/wm/ne.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='NO']{background-image:url(/s/wm/no.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='NYG']{background-image:url(/s/wm/nyg.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='NYJ']{background-image:url(/s/wm/nyj.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='PHI']{background-image:url(/s/wm/phi.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='PIT']{background-image:url(/s/wm/pit.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='SEA']{background-image:url(/s/wm/sea.webp);background-color:transparent;-webkit-mask:none;mask:none} :root:not([data-theme='dark']) .wm:not(.dk)[data-wm='WAS']{background-image:url(/s/wm/was.webp);background-color:transparent;-webkit-mask:none;mask:none} }
 .apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}
 [data-hm='ARI']{background-image:url(/s/nfl/ari.webp) !important}
 [data-hm='ATL']{background-image:url(/s/nfl/atl.webp) !important}
