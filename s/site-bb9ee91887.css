@@ -307,8 +307,8 @@ body > .storyframe{zoom:1 !important}
   .card.scorecard .tiles > .tile:last-child:nth-child(odd){grid-column:1 / -1}
 }
 /* team helmets (helmets.py): the owner's pictures with the backdrop cut away */
-[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.38))}
-/* logos are never mirrored */ [data-hm]{filter:drop-shadow(0 0 1px rgba(255,255,255,.75)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+[data-hm]{background:transparent center/contain no-repeat !important;color:transparent !important;font-size:0 !important;box-shadow:none !important;text-shadow:none !important;width:auto !important;aspect-ratio:5/4;flex:none;padding:0 !important;border-radius:0 !important}
+/* logos are never mirrored, and carry no outline or shadow (owner 11/27: the light outline read as neon) */
 [data-hm='LV'],[data-hm='SF']{transform:none !important}
 i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-style:normal}
 .phm{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 16px 0} .phm span{display:inline-flex;gap:2px} .phm i.hm{height:36px;margin:0}
@@ -319,8 +319,14 @@ i.hm{display:inline-block;height:20px;vertical-align:-5px;margin-right:5px;font-
 body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}
 .ghd [data-hm]{height:46px} .dsum [data-hm]{margin-right:4px}
 @media (max-width:560px){ .hd.hmh{padding:10px 14px 8px} .hd.hmh .tm{column-gap:7px} .hd.hmh .tm [data-hm]{height:40px;grid-row:1} .hd.hmh .tm b{font-size:32px;grid-row:1} }
+/* 11/27 sizing pass: bigger logos in the Live header, and small ones beside player names (builder cards, Social legs, Stock Market tiles) */
+.lg2 .ghd2 .t [data-hm]{height:40px !important}
+@media (max-width:560px){ .lg2 .ghd2 .t [data-hm]{height:36px !important} }
+.bqc .t b i.hm,.pcn b i.hm{height:18px;vertical-align:-4px;margin-right:6px}
+.post li .lg i.hm,.hcard li i.hm{height:16px;vertical-align:-3px;margin-right:6px}
+i.sktb[data-hm]{display:inline-block;height:18px;vertical-align:-4px}
 /* team wordmarks (owner's files, white removed): the name stays in the markup, the picture is drawn over it */
-.wm{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.8)) drop-shadow(0 0 1px rgba(255,255,255,.55))}
+.wm[data-wm]{display:block;font-size:0 !important;color:transparent !important;height:22px;width:118px;max-width:100%;background:left center/contain no-repeat}
 .tm.b .wm{background-position:right center;margin-left:auto}
 .hd.hmh .tm .wm{margin-top:4px}
 .hd.hmh.ah .tm.a span:not(.badge)::after,.hd.hmh.ah .tm.b span:not(.badge)::after{content:none}
@@ -395,6 +401,9 @@ body.compact .card:not(.expanded) .hd.hmh .tm [data-hm]{height:50px}
 [data-wm='TB']{--war:3.6}
 [data-wm='TEN']{--war:4.09}
 [data-wm='WAS']{--war:3.19}
+[data-wm='ARI'],[data-wm='ATL'],[data-wm='BAL'],[data-wm='CIN'],[data-wm='DAL'],[data-wm='DEN'],[data-wm='GB'],[data-wm='HOU'],[data-wm='IND'],[data-wm='JAX'],[data-wm='LAC'],[data-wm='LV'],[data-wm='MIN'],[data-wm='NE'],[data-wm='NO'],[data-wm='NYG'],[data-wm='NYJ'],[data-wm='PHI'],[data-wm='PIT'],[data-wm='SEA'],[data-wm='WAS']{filter:drop-shadow(0 0 .5px rgba(255,255,255,.42))}
+:root[data-theme='light'] .wm[data-wm]{filter:none} @media (prefers-color-scheme: light){ :root:not([data-theme='dark']) .wm[data-wm]{filter:none} }
+.apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}
 [data-hm='ARI']{background-image:url(/s/nfl/ari.webp) !important}
 [data-hm='ATL']{background-image:url(/s/nfl/atl.webp) !important}
 [data-hm='BAL']{background-image:url(/s/nfl/bal.webp) !important}
