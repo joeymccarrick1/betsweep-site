@@ -46,6 +46,17 @@ for f_, pat in (("account.py", "data-pl=\"'+esc(q[0])+'\""), ("account.py", "/da
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: wired ({pat[:26]})")
 # 11/27 evening: colour wash, live strip, weather picture, progress bar, the cashed moment
 check(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%" in css, "two wordmarks side by side fill the same box")
+# 11/27 night: jersey numbers - the shirt's two colours are the ones brand.py paints the old badges with, and the tile is drawn only when both the team and the number are known
+import ast as _ast, re as _re2
+_bt = open(os.path.join(HERE, "brand.py"), encoding="utf-8").read(); _tc = _ast.literal_eval(_re2.search(r"TEAMCOL = (\{.*?\})\n", _bt, _re2.S).group(1))
+check(_tc == H.COL and sorted(H.COL) == sorted(H.TEAMS), "helmets.COL is the same 32 pairs of colours as brand.py's TEAMCOL")
+_j = H.jersey("PIT", "13")
+check('class="jn"' in _j and "--j1:#FFB612" in _j and "--j2:#101820" in _j and "--jk:#101820" in _j and ">13<" in _j and 'aria-label="number 13"' in _j, "a jersey tile carries the team's two colours, a number that reads on them, and says the number aloud")
+check(H.jersey("PIT", "") == "" and H.jersey("XYZ", "13") == "" and H.jersey("LAR", 7).count("--j1:#003594") == 1, "no tile without a number or for a name that is not a team; ESPN's LAR is the Rams")
+check("--jk:#ffffff" in H.jersey("LV", "89") and "--j2:#A5ACAF" in H.jersey("LV", "89"), "a black shirt gets a white number and keeps its silver trim")
+check(".jn{" in css and "clip-path:polygon(" in css and ".h5{" in css, "the shirt shape and the five-bar chart are in the site's shared styles")
+_by, _nm = H.numbers(os.path.join(HERE, "in"))
+check(H.num(os.path.join(HERE, "in"), "No Such Player", "ARI") == "" and (not _by or all(v.isdigit() for v in _by.values())), f"numbers come from the season roster as digits ({len(_by)} players read); an unknown player has none")
 # 11/27 night: the Live field - wordmarks in the end zones, the home logo at midfield
 _lv = open(os.path.join(HERE, "build_live.py"), encoding="utf-8").read()
 check("/s/wm/' + k + '.webp" in _lv and "/s/__HMSET__/' + hk + '-l.webp" in _lv and 'JS.replace("__HMSET__"' in _lv and "__HMTEAMS__" in _lv, "the Live field draws the end-zone wordmarks and the home logo from the owner's files")

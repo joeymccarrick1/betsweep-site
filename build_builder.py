@@ -1081,7 +1081,7 @@ BUILDER_CSS = r"""
 .bqc{flex:0 0 min(78vw,290px);scroll-snap-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;gap:3px} .bqc.on{border-color:var(--good)}
 .bqc .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start} .bqc .t b{font-weight:600;font-size:15px;line-height:1.2} .bqc .t b i{font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;color:var(--mute);margin-left:5px} .bqc .t strong{font-family:var(--display);font-weight:700;font-size:22px;line-height:1}
 .bqc small{color:var(--mute);font-size:12.5px;line-height:1.35} .bqc .mu{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;margin-top:4px} .bqc .mu em{font-style:normal;font-size:11.5px;color:var(--mute)}
-.bqc .mup{font-size:11.5px;border:0} .bqc .mup i{padding:3px 6px}
+.bqc .mup{font-size:11.5px;border:0} .bqc .mup i{padding:3px 6px} .bqc .h5{margin:6px 0 2px} .bqc .h5 .plot{--bh:26px} .bqc .h5 p{font-size:12px}
 .bqc button{margin-top:auto;font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;min-height:42px;border-radius:8px;border:1.5px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer} .bqc.on button{background:none;border-color:var(--good);color:var(--good)}
 .bqe{color:var(--mute);font-size:13.5px;padding:10px 2px}
 .sdc{display:block;font-size:10.5px;white-space:nowrap} .sdc.up{color:var(--good)} .sdc.dn{color:var(--bad)}
@@ -1587,6 +1587,20 @@ BUILDER_JS = r"""
   function sides(g){ var A = {t: g.a, c: g.ca, n: g.na, p: g.pa}, B = {t: g.b, c: g.cb, n: g.nb, p: g.pb}; return (g.home && g.away && !g.nt && g.home === g.a) ? {l: B, r: A} : {l: A, r: B}; }
   /* owner 11/27 ("Figure out where else we need to put the logos"): a small team logo in front of a player's name */
   function hmI(t){ return t && /^[A-Z]{2,3}$/.test(t) ? '<i class="hm" data-hm="' + t + '" role="img" aria-label="' + t + '"></i>' : ''; }
+  /* 11/27 night (owner: "Hit chart on every leg"): a leg's last five games as five bars against its line, oldest first - the same log
+     (D.gl) and the same hit rule as histBlock() below, so the strip and the leg's own history always agree. home.leg_h5() draws the
+     same picture on the Today and Model's Best cards. */
+  function h5(l){
+    if(isGL(l) || l.m === 'First TD' || !l.sk) return '';
+    var gs = (D.gl[l.pl] || []).filter(function(g){ return g[l.sk] != null; }).slice(0, 5).reverse(); if(gs.length < 2) return '';
+    var td = isTD(l), need = l.m === '2+ TD' ? 2 : l.m === '3+ TD' ? 3 : td ? 1 : +l.ln, line = l.u ? +l.ln : need;
+    var won = function(v){ return l.u ? v < l.ln : v >= need; };
+    var vals = gs.map(function(g){ return +g[l.sk] || 0; }), top = Math.max(Math.max.apply(null, vals), line) * 1.12 || 1, hits = vals.filter(won).length;
+    var lab = l.u ? 'under ' + l.ln : td ? (need > 1 ? need + '+ TDs' : 'a TD') : Math.round(l.ln) + '+', verb = l.u ? 'stayed' : td ? 'scored' : 'cleared';
+    return '<div class="h5" role="img" aria-label="' + esc(l.pl + ', last ' + vals.length + ' games, oldest first: ' + vals.map(function(v){ return Math.round(v); }).join(', ') + '. ' + verb.charAt(0).toUpperCase() + verb.slice(1) + ' ' + lab + ' in ' + hits + ' of ' + vals.length + '.') + '"><div class="plot"><ol>' +
+      vals.map(function(v, i){ return '<li class="' + (won(v) ? 'ov' : 'un') + '" title="Week ' + gs[i].w + (gs[i].opp ? ' vs ' + esc(gs[i].opp) : '') + ': ' + Math.round(v) + '"><span class="v">' + Math.round(v) + '</span><span class="b" style="height:' + Math.max(7, v / top * 100).toFixed(0) + '%"></span></li>'; }).join('') +
+      '</ol><i class="ln" style="bottom:calc(var(--bh) * ' + (line / top).toFixed(4) + ')"></i></div><p><b>' + hits + ' of ' + vals.length + '</b>' + verb + ' ' + esc(lab) + '</p></div>';
+  }
   function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" data-hm="' + t + '" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   var $ = function(s, r){ return (r||document).querySelector(s); }, $$ = function(s, r){ return [].slice.call((r||document).querySelectorAll(s)); };
   function am(o){ return o > 0 ? '+' + o : '' + o; }
@@ -2302,7 +2316,7 @@ BUILDER_JS = r"""
       ul.innerHTML = S.map(function(s){ var i = KEYIDX[s[0]], l = i == null ? null : legs[i]; if(!l || started(l.g) || out(l) || (!!l.u) !== (side === 'under') || (pos && s[1] !== pos)) return '';
         var g = games[l.g] || {}, on = !!sel[i];
         var mu = s[2].map(function(m){ return '<span class="mup" title="' + esc(l.tm) + ' ' + s[1] + 's rank #' + m[1] + ' in ' + esc(m[0]) + ' produced; ' + esc(l.opp) + ' ranks #' + m[2] + ' allowed to ' + s[1] + 's"><i style="background:' + rankColor(l.u ? 33 - m[1] : m[1]) + '">' + esc(l.tm) + ' ' + s[1] + 's #' + m[1] + '</i><b>vs</b><i style="background:' + rankColor(l.u ? 33 - m[2] : m[2]) + '">' + esc(l.opp) + ' def #' + m[2] + '</i></span><em>' + esc(m[0]) + '</em>'; }).join('');
-        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + hmI(l.tm) + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small><div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }).join('') ||
+        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + hmI(l.tm) + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small>' + h5(l) + '<div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }).join('') ||
         '<p class="bqe">No ' + (side === 'under' ? 'under' : 'over') + (pos ? ' for a ' + pos : '') + ' near -110 clears 50% right now.</p>';
       ul.scrollLeft = x; }
     ul.addEventListener('click', function(e){ var b = e.target.closest('button[data-i]'); if(b) toggle(+b.getAttribute('data-i')); });

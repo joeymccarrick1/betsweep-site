@@ -30,6 +30,52 @@ def matchup(a, b, at=False):
     """logo + wordmark for two teams side by side (a promo page for a one-game slip); `at` only when a is known to be the visitor"""
     if ALIAS.get(a, a) not in TEAMS or ALIAS.get(b, b) not in TEAMS: return ""
     return f'<div class="wmrow"><span>{hm(a)}{wm(a, a)}</span><i>{"@" if at else "·"}</i><span>{wm(b, b)}{hm(b)}</span></div>'
+# ---- jersey numbers (owner 11/27: "Jersey-number badges ... as a stand-in until headshots") ----------------------------------------
+# A plain shirt shape in the team's two colours with the player's number on it. No team's uniform is drawn: the shape is the same for
+# all 32, only the two colours change. COL holds the same two colours per team that brand.py paints the old badges with
+# (tests/helmets.py keeps the two lists equal). Numbers come from the season roster the build already reads (in/roster_2026.csv,
+# nflverse: full_name, team, jersey_number) - a public roster fact, nothing scraped.
+COL = {"ARI": ("#97233F", "#000000"), "ATL": ("#A71930", "#000000"), "BAL": ("#241773", "#9E7C0C"), "BUF": ("#00338D", "#C60C30"), "CAR": ("#0085CA", "#101820"), "CHI": ("#0B162A", "#C83803"),
+       "CIN": ("#FB4F14", "#000000"), "CLE": ("#311D00", "#FF3C00"), "DAL": ("#003594", "#869397"), "DEN": ("#FB4F14", "#002244"), "DET": ("#0076B6", "#B0B7BC"), "GB": ("#203731", "#FFB612"),
+       "HOU": ("#03202F", "#A71930"), "IND": ("#002C5F", "#A2AAAD"), "JAX": ("#006778", "#D7A22A"), "KC": ("#E31837", "#FFB81C"), "LV": ("#000000", "#A5ACAF"), "LAC": ("#0080C6", "#FFC20E"),
+       "LA": ("#003594", "#FFA300"), "MIA": ("#008E97", "#FC4C02"), "MIN": ("#4F2683", "#FFC62F"), "NE": ("#002244", "#C60C30"), "NO": ("#D3BC8D", "#101820"), "NYG": ("#0B2265", "#A71930"),
+       "NYJ": ("#125740", "#000000"), "PHI": ("#004C54", "#A5ACAF"), "PIT": ("#FFB612", "#101820"), "SF": ("#AA0000", "#B3995D"), "SEA": ("#002244", "#69BE28"), "TB": ("#D50A0A", "#34302B"),
+       "TEN": ("#0C2340", "#4B92DB"), "WAS": ("#5A1414", "#FFB612")}
+def lum(h):
+    h = str(h).lstrip("#"); r, g, b = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]; return 0.2126 * r + 0.7152 * g + 0.0722 * b
+_RTEAM = {"LAR": "LA", "JAC": "JAX", "WSH": "WAS", "OAK": "LV", "SD": "LAC", "STL": "LA"}
+def _pkey(n):
+    import re
+    n = re.sub(r"\.", "", str(n or "")).strip(); n = re.sub(r"\s+(jr|sr|ii|iii|iv|v)$", "", n, flags=re.I); return re.sub(r"\s+", " ", n).lower()
+_NUMS = {}
+def numbers(IN):
+    """{(player key, team): number} and {player key: {numbers}} from in/roster_2026.csv; read once per folder, empty when the file is not there"""
+    if IN not in _NUMS:
+        import csv, os
+        by, names = {}, {}
+        try:
+            with open(os.path.join(IN, "roster_2026.csv"), newline="", encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    n = str(r.get("jersey_number") or "").strip().split(".")[0]
+                    if not n.isdigit() or not r.get("full_name"): continue
+                    t = str(r.get("team") or "").strip(); t = _RTEAM.get(t, t); k = _pkey(r["full_name"])
+                    by[(k, t)] = n; names.setdefault(k, set()).add(n)
+        except Exception: by, names = {}, {}
+        _NUMS[IN] = (by, names)
+    return _NUMS[IN]
+def num(IN, name, tm=""):
+    """a player's jersey number as text, or "" - by name and team; by name alone only when every player of that name wears the same number"""
+    by, names = numbers(IN); k = _pkey(name); t = ALIAS.get(tm, tm)
+    if (k, t) in by: return by[(k, t)]
+    ns = names.get(k) or set()
+    return next(iter(ns)) if len(ns) == 1 and not t else ""
+def jersey(t, n, cls=""):
+    """the number tile; "" when the team or the number is not known"""
+    t = ALIAS.get(t, t); n = str(n if n is not None else "").strip()
+    if t not in COL or not n: return ""
+    p, s = COL[t]; ink = "#101820" if lum(p) > 0.45 else "#ffffff"
+    if lum(p) < 0.1 and lum(s) < 0.1: s = "#8a96a3"   # dark trim on a dark shirt would vanish
+    return f'<i class="jn{(" " + cls) if cls else ""}" style="--j1:{p};--j2:{s};--jk:{ink}" role="img" aria-label="number {html.escape(n)}"><span>{html.escape(n)}</span></i>'
 def css():
     big = ".tm > [data-hm='%s'],.pp header > [data-hm='%s'],.ghd [data-hm='%s'],.tdir [data-hm='%s'],.phm [data-hm='%s']"
     flip = ".tm.b [data-hm],.gteam.r [data-hm],.ghd2 .t.r [data-hm],.phm span i.hm:last-child,.game .gm i.hm:last-of-type"
@@ -113,6 +159,22 @@ def css():
     out.append(".pp header h1 .wm[data-wm]{height:42px;width:min(230px,100%)}")
     # the bottom tab bar on its own layer: on an iPhone it came loose from the bottom mid-scroll (owner 1:26 PM, screenshot)
     out.append(".apptabs{transform:translateZ(0);-webkit-transform:translateZ(0)}")
+    out += ["/* 11/27 night: jersey number - one plain shirt shape for all 32 teams, painted in the team's two colours */",
+            ".jn{flex:none;position:relative;display:inline-block;width:38px;height:40px;font-style:normal;font-family:var(--display,'Barlow Condensed',sans-serif);font-weight:700;font-size:18px;line-height:1;color:var(--jk,#fff);font-variant-numeric:tabular-nums}",
+            ".jn::before,.jn::after{content:'';position:absolute;inset:0;background:var(--j2);clip-path:polygon(29% 0,40% 0,50% 12%,60% 0,71% 0,100% 19%,91% 39%,80% 32%,80% 100%,20% 100%,20% 32%,9% 39%,0 19%)}",
+            ".jn::after{inset:1.5px;background:var(--j1)}",
+            ".jn span{position:absolute;left:20%;right:20%;top:36%;bottom:4%;z-index:1;display:grid;place-items:center;letter-spacing:-.02em}"]
+    out += ["/* 11/27 night: a leg's last five games as five bars against its line (leg cards on Today and Model's Best, the builder's best-legs strip) */",
+            '.h5{display:flex;align-items:center;gap:10px;min-width:0}',
+            '.h5 .plot{--bh:30px;flex:none;position:relative;height:calc(var(--bh) + 13px)}',
+            '.h5 ol{list-style:none;margin:0;padding:0;height:100%;display:flex;gap:5px}',
+            '.h5 li{flex:0 0 18px;min-width:0;display:grid;grid-template-rows:13px var(--bh);justify-items:stretch;text-align:center}',
+            '.h5 li .v{font-size:10px;font-weight:600;line-height:13px;color:var(--mute);font-variant-numeric:tabular-nums;margin:0 -3px;white-space:nowrap}',
+            '.h5 li .b{align-self:end;border-radius:3px 3px 0 0;background:color-mix(in srgb,var(--mute) 50%,transparent)}',
+            '.h5 li.ov .b{background:var(--good)} .h5 li.ov .v{color:var(--ink)}',
+            '.h5 .ln{position:absolute;left:-3px;right:-3px;border-top:1.5px dashed var(--ink);opacity:.85;pointer-events:none}',
+            '.h5 p{margin:0;font-size:12px;line-height:1.3;color:var(--mute);min-width:0} .h5 p b{display:block;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.01em;color:var(--ink)}',
+            '.h5 p small{display:block;font-size:11.5px} .h5 p small.good{color:var(--good)} .h5 p small.bad{color:var(--bad,#e07070)}']
     for t in TEAMS:
         keys = [t] + [a for a, v in ALIAS.items() if v == t]
         out.append(",".join(f"[data-hm='{k}']" for k in keys) + "{background-image:url(/s/" + SET + "/%s.webp) !important}" % t.lower())

@@ -4292,3 +4292,35 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   step or for 06adf198 / 98611daf (all three touch only `gamecast()`); it runs with the next change.
 - The five headings above this one said times about an hour late (5:30, 6:30, 7:00, 7:45, 8:15 PM); corrected from the commit times.
 - Still unverified against a real game: the field only exists while a game is in play. First real look is Sunday 11/29.
+
+## 11/27 9:15 PM: leg cards get three pictures; logos on the News desk (owner 8:31 PM: "I love all 8. Let's do it all")
+Pass 1 of three. The shared leg card (`home.play_card`: Today's looks, every tab of /best/) now reads top to bottom: shirt + name,
+the leg and its price, Model vs FanDuel as one bar, his last five games against the line with the slip button, the book buttons.
+- **Jersey number.** `helmets.jersey(team, number)` draws one plain shirt shape (a CSS clip-path, the same for all 32 teams) in the
+  team's two colours; `helmets.COL` holds the colours (the same pairs as brand.py's TEAMCOL - tests/helmets.py fails if they
+  drift). `helmets.num(IN, name, team)` reads the number from in/roster_2026.csv (nflverse season roster, already read by flags.py,
+  build_players.py, build_boards.py), keyed by name AND team, so a traded player or a shared name cannot get the wrong shirt. No
+  number or no team = no shirt. The roster's headshot_url column is NOT used (photos need a licence; owner holds).
+- **Model vs FanDuel.** `home.meter(x)`: `.nums.mtr` keeps the numbers as text (Model, Edge, "FanDuel needs") and draws `.mvb` from
+  `--lo / --hi / --b` (the two rounded percentages and FanDuel's): grey to the lower one, the gap painted green (model higher) or
+  hatched red (price asks for more), a tick at FanDuel's. The pieces are `.mv0 / .mv1 / .mv2` on purpose: I first called them
+  .base / .gap / .tick and the live ticker's own `.tick` rule (live.py, padding and a border) turned the tick into a 30px block.
+  The game-line card uses the same bar.
+- **Last five games.** `home.leg_h5(x, season)` draws up to five bars, oldest first, from builder data `gl[player]` and the leg's
+  stat key `sk` with the same hit rule as the builder's histBlock() (unders stay under, 2+ / 3+ TD need 2 / 3) - one log, one rule,
+  so the card and the builder cannot disagree. Fewer than two games, a first-TD leg or a game line: no bars, the plain pill stays.
+  The "4/9 this season" pill rides under the caption; any other pill (a matchup record) keeps its own place above the buttons.
+  `h5(l)` in build_builder.py draws the same bars on the best-legs strip. The `.jn` and `.h5` rules are in helmets.css() (site-wide).
+- **Logos.** Each card's matchup line, the Model's Best rows on Today, the next-man-up cards, and every News desk note (the logo
+  sits under the status word; `data-team` already carried the team).
+- tests/leg_card.py (new, in the prepublish list, port 8899, 28 checks): every expectation is recomputed from the build's own
+  builder data and the roster file - numbers and bar geometry, bars and counts, shirt numbers, logos, News notes, the builder strip,
+  390x844 in both themes. It taps through every /best/ tab (23 cards this week). tests/helmets.py: 58.
+- Measuring: `main.wk` (the week pages) is zoomed 1.1 on phones, so getBoundingClientRect() reads 10% large there; the test uses
+  offsetWidth / ratios.
+- page_fold still fails on /news/ (5.6 phone screens against 5.0): the page is the same 4,712px with the logos hidden, so it is the
+  31 OUT notes, not this change. Capping that list is on the list for pass 2.
+- Found on the way, fixed in pass 2: "/" (Today) calls `BSLive.start()` but never loads live.py's script, so home.py's kickoff
+  state (`apply()`: hide a started game's plays, mark promos in play) has not run there since the 11/5 merge. Tonight's finished
+  DEN-PIT card still showed three "Add to FanDuel" buttons at 8:20 PM.
+

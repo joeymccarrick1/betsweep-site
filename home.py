@@ -58,12 +58,14 @@ def _phm(p):   # a promo card's helmet row: both helmets for each game on the sl
 def at_gid(gid):
     return AT.get(gid) or E(str(gid or "").replace("-", " vs "))
 
+_CARD = {"IN": None, "gl": {}, "sk": {}}   # for the leg card's pictures: the roster folder, each player's game log and each leg's stat key (builder data)
 def load(IN, OUT):
     global _IN; _IN = IN   # for _wx_icons (the slate rows' weather picture)
     D = {}
     try: D["bd"] = json.load(open(os.path.join(OUT, "builder_data.json")))
     except Exception: D["bd"] = {"games": [], "legs": [], "week": 0}
     AT.clear(); AT.update({g["gid"]: at(g) for g in D["bd"].get("games") or []})
+    _CARD["IN"] = IN; _CARD["gl"] = D["bd"].get("gl") or {}; _CARD["sk"] = {(l["pl"], l["m"]): l["sk"] for l in D["bd"].get("legs") or [] if l.get("sk")}
     try: D["best"] = json.load(open(os.path.join(IN, "bestlegs.json")))["values"]
     except Exception: D["best"] = []
     try: D["bp"] = json.load(open(os.path.join(OUT, "best_parlays.json")))
@@ -159,20 +161,63 @@ def build_href(gid, legs):
     q = "&".join("add=" + quote(leg_key(pl, m, ln), safe="") for pl, m, ln in legs if pl and m)
     return "/build/" + (f"?{q}" if q else "") + (f"#g-{gid}" if gid else "")
 
+# ---------- the leg card's three pictures (owner 11/27 8:31 PM: "I love all 8. Let's do it all") ----------
+# card_top(): a shirt in the team's colours with the player's number (helmets.jersey; numbers from the season roster) beside his name.
+# meter(): Model vs FanDuel as one bar - grey up to the lower of the two, the gap between them painted (green when the model is higher,
+#   hatched red when the price asks for more), a tick at the chance FanDuel's price needs. The numbers stay as text: Model, Edge, and
+#   "FanDuel needs" under the tick. (The three pieces are .mv0 / .mv1 / .mv2: plain names like .tick already belong to the live ticker.)
+# leg_h5(): his last five games against THIS leg's line, oldest first - the same game log and the same hit rule as the builder's leg
+#   history (builder data "gl", stat key "sk": histBlock() in build_builder.py), so the two can never disagree. Fewer than two games,
+#   a first-TD leg or a game line draws nothing and the card keeps the plain this-season pill.
+def card_top(x, sub):
+    j = HM.jersey(x.get("tm") or "", HM.num(_CARD["IN"], x.get("pl") or "", x.get("tm") or "")) if (_CARD["IN"] and x.get("tm")) else ""
+    return f'<div class="ptop">{j}<div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div></div>'
+
+def meter(x):
+    e = x.get("e") or 0; ms = f'{x["p"] * 100:.0f}'; bk = x.get("bk"); bs = f'{(bk or 0) * 100:.0f}'; mi, bi = int(ms), int(bs)
+    if not bk:   # no price to compare with: the model's number alone
+        return f'<div class="nums mtr" style="--lo:{mi};--hi:{mi};--b:0"><span><i>Model</i> {ms}%</span><span></span><div class="mvb nb" aria-hidden="true"><i class="mv0"></i></div></div>'
+    return (f'<div class="nums mtr {"mtr-up" if e > 0 else "mtr-dn" if e < 0 else ""}" style="--lo:{min(mi, bi)};--hi:{max(mi, bi)};--b:{bi}">'
+            f'<span><i>Model</i> {ms}%</span><span class="edge {"pos" if e > 0 else "neg"}"><i>Edge</i> {e * 100:+.0f}</span>'
+            f'<div class="mvb" aria-hidden="true"><i class="mv0"></i><i class="mv1"></i><i class="mv2"></i></div>'
+            f'<span class="fdn" title="win rate the price needs to break even"><i>FanDuel needs</i> {bs}%</span></div>')
+
+def leg_h5(x, hist=None):
+    m = str(x.get("m") or ""); sk = _CARD["sk"].get((x.get("pl"), m))
+    if not sk or m == "First TD" or x.get("gl"): return ""
+    gs = [g for g in (_CARD["gl"].get(x.get("pl")) or []) if g.get(sk) is not None][:5][::-1]   # the log is newest first
+    if len(gs) < 2: return ""
+    try: ln = float(x.get("ln") or 0)
+    except Exception: return ""
+    under = m.startswith("Under "); td = m.endswith("TD"); need = 2 if m == "2+ TD" else 3 if m == "3+ TD" else 1 if td else ln
+    won = (lambda v: v < ln) if under else (lambda v: v >= need)
+    vals = [float(g.get(sk) or 0) for g in gs]; top = max(max(vals), ln if under else need) * 1.12 or 1; hits = sum(1 for v in vals if won(v))
+    fmt = lambda v: str(int(math.floor(v + 0.5)))
+    lab = f"under {ln:g}" if under else (f"{need}+ TDs" if need > 1 else "a TD") if td else f"{int(math.floor(ln + 0.5))}+"
+    verb = "stayed" if under else "scored" if td else "cleared"
+    bars = "".join(f'<li class="{"ov" if won(v) else "un"}" title="Week {E(str(g.get("w", "")))}{(" vs " + E(str(g["opp"]))) if g.get("opp") else ""}: {fmt(v)}"><span class="v">{fmt(v)}</span><span class="b" style="height:{max(7, v / top * 100):.0f}%"></span></li>' for g, v in zip(gs, vals))
+    season = f'<small class="{E(hist[0])}">{E(hist[1])}</small>' if hist else ""
+    return (f'<div class="h5" role="img" aria-label="{E(x["pl"])}, last {len(vals)} games, oldest first: {", ".join(fmt(v) for v in vals)}. {verb.capitalize()} {E(lab)} in {hits} of {len(vals)}.">'
+            f'<div class="plot"><ol>{bars}</ol><i class="ln" style="bottom:calc(var(--bh) * {(ln if under else need) / top:.4f})"></i></div>'
+            f'<p><b>{hits} of {len(vals)}</b>{verb} {E(lab)}{season}</p></div>')
+
 def play_card(x, cls=""):
     hist = next((h for h in x.get("fh", []) if h[0] in ("good", "info", "bad") and "/" in str(h[1])), None)   # the this-season hit pill only
     hist_html = f'<span class="hist {hist[0]}">{E(hist[1])}</span>' if hist else ""
-    sub = " · ".join(s for s in [E(x.get("pos", "")), (E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", "")), E(x.get("kick", ""))] if s)
+    sub = " · ".join(s for s in [E(x.get("pos", "")), (HM.hm(x["tm"]) + E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", "")), E(x.get("kick", ""))] if s)
     bb = BL.best(x); btn = (f'<a class="fdb{" best" if bb == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True)
     if btn: btn = f'<span class="bks">{btn}</span>'   # 11/4 UX: the book buttons wrap as one group (FD · DK · HR), not one per line
     more = f'<a class="more" href="{E(build_href(x.get("gid"), [(x["pl"], x["m"], x["ln"])]))}" title="Open the parlay builder with this leg in your slip">+ Builder</a>' 
-    e = x.get("e"); ecls = "pos" if (e or 0) > 0 else "neg"
     proj_html = f'<small class="proj">proj {float(x["proj"]):g}</small>' if x.get("proj") and cls == "floor" else ""
+    # the season count ("4/9 this season") rides under the bars' caption; any other pill (a matchup record) keeps its own place above the buttons
+    season = hist if (hist and str(hist[1]).endswith("this season")) else None
+    h5 = leg_h5(x, season); pill = hist_html if (h5 and hist and not season) else ""
     return (f'<article class="play {cls}" data-gid="{E(x.get("gid",""))}" data-ko="{x.get("ko") or ""}">'
-            f'<div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div>'
+            f'{card_top(x, sub)}'
             f'<div class="what">{E(leg_line(x["m"], x["ln"]))}{proj_html}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
-            f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{(x["bk"] or 0)*100:.0f}%</span><span class="edge {ecls}"><i>Edge</i>{(e or 0)*100:+.0f}</span></div>'
-            f'<div class="foot">{hist_html}{more}{btn}</div></article>')
+            f'{meter(x)}'
+            f'<div class="hrow">{h5 or hist_html}{more}</div>'
+            + (f'<div class="foot">{pill}{btn}</div>' if (pill or btn) else "") + '</article>')
 
 # ---------- anytime TD plays and game lines from the builder legs ----------
 def td_plays(D, n=4):
@@ -280,7 +325,7 @@ def nextman_block(xs):
     if not xs: return ""
     cards = []
     for x in xs:
-        sub = " · ".join(s for s in [E(x["pos"]), f'{E(x["tm"])} vs {E(x["opp"])}', E(x.get("kick", ""))] if s)
+        sub = " · ".join(s for s in [E(x["pos"]), f'{HM.hm(x["tm"])}{E(x["tm"])} vs {E(x["opp"])}', E(x.get("kick", ""))] if s)
         if x["leg"]:
             l = x["leg"]; what = f'{E(leg_line(l["m"], l["ln"]))} <span class="odds">{E(odds_str(l["o"]))}</span>'
             nums = f'<div class="nums"><span><i>Model</i>{l["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{(l["bk"] or 0)*100:.0f}%</span><span><i>Room math</i>{E(_room_pct(x["txt"]))}</span></div>'
@@ -288,7 +333,7 @@ def nextman_block(xs):
             if btn: btn = f'<span class="bks">{btn}</span>'
         else:
             what = 'No FanDuel line in the pull yet <span class="odds">check the app</span>'; nums = f'<div class="nums"><span><i>Room math</i>{E(_room_pct(x["txt"]))}</span></div>'; btn = ""
-        cards.append(f'<article class="play nm" data-gid="{E(x["gid"])}" data-ko="{x.get("ko") or ""}"><div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div>'
+        cards.append(f'<article class="play nm" data-gid="{E(x["gid"])}" data-ko="{x.get("ko") or ""}">{card_top(x, sub)}'
                      f'<div class="what">{what}</div>{nums}<p class="why">{E(x["txt"])}</p><div class="foot"><a class="more" href="{E(build_href(x["gid"], [(x["pl"], x["leg"]["m"], x["leg"]["ln"])] if x["leg"] else []))}" title="Open the parlay builder with this leg in your slip">{"+ Builder" if x["leg"] else "Builder →"}</a>{btn}</div></article>')
     return "".join(cards)
 
@@ -320,7 +365,7 @@ def gl_card(x):
     return (f'<article class="play gl" data-gid="{E(x["gid"])}" data-ko="{x.get("ko") or ""}">'
             f'<div class="who"><b>{E(x["pl"])}</b><small>{at_gid(x["gid"])} · {E(x.get("kick",""))}</small></div>'
             f'<div class="what">{E(x.get("disp") or x["m"])}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
-            f'<div class="nums"><span><i>Model</i>{x["p"]*100:.0f}%</span><span title="win rate the price needs to break even"><i>Book</i>{x["bk"]*100:.0f}%</span><span class="edge {"pos" if e>0 else "neg"}"><i>Edge</i>{e*100:+.0f}</span></div>'
+            f'{meter(x)}'
             f'<div class="foot"><a class="more" href="/boards/#g-{E(x["gid"])}">Board →</a><span class="bks">' + (f'<a class="fdb{" best" if BL.best(x) == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True) + '</span></div></article>')
 
 # ---------- best same-game parlay ----------
@@ -1082,6 +1127,20 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .play .foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto}
 .play .hist{font-size:11.5px;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:2px 8px} .play .hist.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))} .play .hist.bad{color:#e07070}
 .play .more,.pfoot .more{color:var(--mute);text-decoration:none;font-size:12.5px;font-weight:600} .play .more:hover,.pfoot .more:hover{color:var(--ink)}
+/* 11/27 night: the leg card's pictures - jersey number beside the name, Model vs FanDuel as one bar, his last five games against the line */
+.play .ptop{display:flex;align-items:center;gap:10px;min-width:0} .play .ptop .who{min-width:0} .play .who small i.hm{height:15px;vertical-align:-3px;margin-right:4px}
+.play .nums.mtr{grid-template-columns:1fr auto;gap:0 10px;align-items:baseline;padding:8px 10px 6px}
+.play .nums.mtr span{flex-direction:row;align-items:baseline;gap:6px} .play .nums.mtr .edge{justify-content:flex-end}
+.mvb{grid-column:1/-1;position:relative;height:8px;margin:7px 0 5px;border-radius:99px;background:color-mix(in srgb,var(--mute) 22%,transparent)}
+.mvb i{position:absolute;top:0;bottom:0}
+.mvb .mv0{left:0;width:calc(var(--lo) * 1%);border-radius:99px 0 0 99px;background:color-mix(in srgb,var(--ink) 50%,transparent)} .mvb.nb{margin-bottom:3px} .mvb.nb .mv0{border-radius:99px}
+.mvb .mv1{left:calc(var(--lo) * 1%);width:calc((var(--hi) - var(--lo)) * 1%)}
+.mtr-up .mvb .mv1{border-radius:0 99px 99px 0;background:var(--good)}
+.mtr-dn .mvb .mv1{background:repeating-linear-gradient(135deg,var(--bad,#e07070) 0 3px,transparent 3px 6px)}
+.mvb .mv2{left:calc(var(--b) * 1% - 1px);top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)}
+.play .nums.mtr .fdn{grid-column:1/-1;justify-self:start;position:relative;left:clamp(0px,calc(var(--b) * 1% - 56px),calc(100% - 112px));min-width:112px;justify-content:center;white-space:nowrap;font-family:var(--body);font-weight:600;font-size:11.5px;color:var(--ink)}
+.play .hrow{display:flex;align-items:center;gap:10px;min-width:0} .play .hrow .more{margin-left:auto;flex:none} .play .hrow + .foot{margin-top:2px}
+.mbrow .mb2 small i.hm{height:14px;vertical-align:-3px;margin-right:4px}
 .play .more.slipt,.pfoot .more.slipt{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink);font-weight:700} .play .more.slipt:hover,.pfoot .more.slipt:hover{border-color:var(--red)}
 .fdb{margin-left:auto;text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:#0b0f15;background:#1493ff;border-radius:6px;padding:6px 10px}
 .fdb:hover{filter:brightness(1.08)}
@@ -1237,7 +1296,7 @@ def best_teaser(D, cards, total):
     def row(x):
         e = x.get("e") or 0; nm = E(x["pl"])
         who = f'<a class="mbn" href="/player/{_slug(x["pl"])}/">{nm}</a>' if _slug else f'<b class="mbn">{nm}</b>'
-        ctx = (E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", ""))
+        ctx = (HM.hm(x["tm"]) + E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", ""))
         return (f'<li class="mbrow" data-k="{E(leg_key(x["pl"], x["m"], x["ln"]))}" data-gid="{E(x.get("gid", ""))}" data-ko="{x.get("ko") or ""}">'
                 f'<div class="mb1">{who}<span class="mbw">{E(leg_line(x["m"], x["ln"]))}</span><b class="mbo">{E(odds_str(x["o"]))}</b></div>'
                 f'<div class="mb2"><small>{ctx} · model {x["p"]*100:.0f}%, price needs {(x["bk"] or 0)*100:.0f}% · <i class="{"pos" if e > 0 else "neg"}">{e*100:+.0f}</i></small>'
