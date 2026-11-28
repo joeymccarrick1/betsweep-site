@@ -21,7 +21,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script defer src="/account.js"></script><script defer src="/risk.js"></script>
 <link rel="preload" href="/s/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/s/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><meta charset="utf-8">
 <title>BetSweep Privacy Policy</title>
-<link rel="stylesheet" href="/s/tpl-50747cea42.css">
+<link rel="stylesheet" href="/s/tpl-6b0bd6dd2c.css">
 <style>/*LIVECSS*/
 /*BOOKSCSS*/
 /* 11/4 page weight: off-screen game cards skip layout and paint (the boards page is ~1.5 MB of markup); render mode keeps everything live for screenshots */
@@ -585,19 +585,37 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
   function writeSlips(a){ try{ localStorage.setItem(SLKEY, JSON.stringify(a)); }catch(e){} }
   function priceKeys(ks){ var ls = ks.map(function(k){ return byKey[k]; }).filter(Boolean); if(!ls.length) return null; var bookDec = slipDec(ls).d; return {ls: ls, missing: ks.length - ls.length, bookDec: bookDec, fair: joint(ls), fd: fdUrl(ls)}; }
   function sameSet(a, b){ if(a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
+  // owner 11/27 8:48 PM ("Whenever saved slips bust or win they need to be immediately archived. Muddies up a users betslip"): the Saved
+  // list holds slips that can still be sent. A slip leaves it the moment it is decided (the Live page and My BetSweep mark res on the
+  // saved slip when they grade it won, lost or void) and as soon as its first game has kicked off - from then it is followed on Live
+  // and graded on My BetSweep. Kickoffs come from the legs on this page; a leg that is not on it is placed by its player's team
+  // (/data/pteam.json, read once when there is a saved slip to place). One line under the list says how many moved and where to.
+  var PTM = null, PTMP = null;
+  function teamKos(){ var t = {}; [].forEach.call(document.querySelectorAll('.card[data-ko]'), function(c){ var p = String(c.id).split('-'), ko = +c.dataset.ko; if(p.length === 2 && ko){ t[p[0]] = ko; t[p[1]] = ko; t[c.id] = ko; t[p[1] + '-' + p[0]] = ko; } }); return t; }
+  function slipKo(x){ var t = teamKos(), min = null; (x.keys || []).forEach(function(k){ var l = byKey[k], ko = l && l.ko ? +l.ko : null;
+      if(ko == null){ var q = String(k).split('|'), who = q[0] || '', gm = x.g && x.g[k] && x.g[k][0];
+        if(gm && t[gm]) ko = t[gm];
+        else if(/^(Total|Spread|Moneyline)$/.test(q[1] || '')){ var tm = (who.match(/^([A-Z]{2,3}) /) || [])[1]; if(tm && t[tm]) ko = t[tm]; }
+        else if(PTM) who.split(/\s+or\s+/).forEach(function(nm){ var tk = t[PTM[nm.trim()]]; if(tk && (ko == null || tk < ko)) ko = tk; }); }
+      if(ko != null && (min == null || ko < min)) min = ko; }); return min; }
+  function slipShut(x){ if(x.res) return true; var ko = slipKo(x); return ko != null && Date.now() >= ko; }
   // saved slips: legs fold into a drop-down under each row (owner 10/23: one long line was unreadable on a phone)
   var SLOPEN = {};
   function slLeg(k){ var q = String(k).split('|'), who = q[0], m = String(q[1]||''), ln = q[2];
       var what = (m==='Anytime TD'||m==='First TD'||m==='Either TD') ? m.replace('TD','touchdown').toLowerCase() : (m==='Moneyline'||m==='Spread'||m==='Total') ? m.toLowerCase() : ln + '+ ' + m.toLowerCase();
       return '<li><b>' + esc(who) + '</b><span>' + esc(what) + '</span></li>'; }
-  function renderSaved(){ var box = $('#bsavedList'); if(!box) return; var all = savedSlips();
+  function renderSaved(){ var box = $('#bsavedList'); if(!box) return; var every = savedSlips();
+    if(every.length && !PTMP){ PTMP = fetch('/data/pteam.json').then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(d){ PTM = d || {}; renderSaved(); }); }
+    var all = every.filter(function(x){ return !slipShut(x); }), gone = every.length - all.length;
+    var moved = gone ? '<p class="none moved">' + gone + ' saved slip' + (gone === 1 ? ' has' : 's have') + ' kicked off or settled and left this list: <a href="/live/">follow on Live</a> · <a href="/me/#crec">results on My BetSweep</a></p>' : '';
+    if(!all.length && gone){ box.innerHTML = moved; return; }
     if(!all.length){ box.innerHTML = '<p class="none">Nothing saved yet. Build a slip, tap <b>Save slip</b>, build another - every saved slip lines up here with its FanDuel price, model chance and edge, and sends from this table whenever you are ready. Saved slips also show on <a href="/me/">My BetSweep</a>, graded after the games' + (window.bsAccount && window.bsAccount.user ? '' : ' (sign in and they follow you to every device)') + '.</p>'; return; }
     var rows = all.map(function(x){ return {s: x, pr: priceKeys(x.keys)}; }).sort(function(a,b){ var ea = a.pr ? a.pr.fair - 1/a.pr.bookDec : -9, eb = b.pr ? b.pr.fair - 1/b.pr.bookDec : -9; return eb - ea; });
     box.innerHTML = '<table><thead><tr><th>Slip</th><th class="r">FanDuel</th><th class="r">Model</th><th class="r">Edge</th><th class="r">$10 pays</th><th></th></tr></thead><tbody>' + rows.map(function(r){ var x = r.s, pr = r.pr, isCur = sameSet(x.keys, sel);
       var e = pr ? pr.fair - 1/pr.bookDec : null, full = pr && !pr.missing;
       return '<tr class="' + (isCur ? 'cur' : '') + '"><td class="nm"><b>' + esc(x.name || 'Slip') + (x.promo ? ' <small style="display:inline">· promoted</small>' : '') + '</b><button type="button" class="lgt' + (SLOPEN[x.id] ? ' on' : '') + '" data-tog="' + esc(x.id) + '" aria-expanded="' + (SLOPEN[x.id] ? 'true' : 'false') + '">' + x.keys.length + ' legs <i>▾</i></button>' + (pr && pr.missing ? '<small>' + pr.missing + ' not on the boards (open the builder)' + '</small>' : '') + '</td>'
         + '<td class="r">' + (full ? decToAm(pr.bookDec) : (x.odds ? am(x.odds) : '—')) + '</td><td class="r">' + (full ? pc(pr.fair) : '—') + '</td><td class="r e ' + (e!=null && e>=0 ? 'up' : 'dn') + '">' + (full && e!=null ? (e>=0?'+':'') + (e*100).toFixed(1) : '—') + '</td><td class="r">' + (full ? '$' + (10*pr.bookDec).toFixed(2) : '—') + '</td>'
-        + '<td class="ops">' + (full && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (x.fd ? '<a class="fd" href="' + esc(x.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (full && bookUrl(pr.ls, 'dk') ? '<a class="fd dk" href="' + esc(bookUrl(pr.ls, 'dk')) + '" target="_blank" rel="noopener">DK</a>' : '') + (full && bookUrl(pr.ls, 'hr') ? '<a class="fd hr" href="' + esc(bookUrl(pr.ls, 'hr')) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(x.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(x.id) + '">×</button></td></tr>' + '<tr class="lgrow"' + (SLOPEN[x.id] ? '' : ' hidden') + '><td colspan="6"><ul class="sllegs">' + x.keys.map(slLeg).join('') + '</ul></td></tr>'; }).join('') + '</tbody></table>'; }
+        + '<td class="ops">' + (full && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (x.fd ? '<a class="fd" href="' + esc(x.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (full && bookUrl(pr.ls, 'dk') ? '<a class="fd dk" href="' + esc(bookUrl(pr.ls, 'dk')) + '" target="_blank" rel="noopener">DK</a>' : '') + (full && bookUrl(pr.ls, 'hr') ? '<a class="fd hr" href="' + esc(bookUrl(pr.ls, 'hr')) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(x.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(x.id) + '">×</button></td></tr>' + '<tr class="lgrow"' + (SLOPEN[x.id] ? '' : ' hidden') + '><td colspan="6"><ul class="sllegs">' + x.keys.map(slLeg).join('') + '</ul></td></tr>'; }).join('') + '</tbody></table>' + moved; }
   $('#bslipSave').addEventListener('click', function(){ var ks = sel.slice(); if(!ks.length){ $('#bslipNote').textContent = 'Add a leg or two first.'; return; }
     var all = savedSlips(), dup = all.filter(function(x){ return sameSet(x.keys, ks); })[0]; if(dup){ $('#bslipNote').textContent = 'Already saved as "' + (dup.name||'Slip') + '".'; renderSaved(); return; }
     var box = $('#bsavedList'), pr = priceKeys(ks), dflt = 'Slip ' + (all.length + 1) + (pr && !pr.missing ? ' · ' + decToAm(pr.bookDec) : '');
@@ -612,6 +630,7 @@ body.compact details.bdone>.bdgrid{grid-template-columns:repeat(auto-fill,minmax
     if(b.dataset.del){ writeSlips(savedSlips().filter(function(y){ return y.id !== b.dataset.del; })); renderSaved(); } });
   document.addEventListener('bs-account', renderSaved);
   window.addEventListener('storage', function(e){ if(e.key === SLKEY) renderSaved(); });
+  setInterval(function(){ if(savedSlips().length && !document.querySelector('#bsaved .namebox')) renderSaved(); }, 60000);   // a slip leaves the list at its kickoff without a reload
   $('#bslipbar').addEventListener('click', function(){ var w = $('#bslip'); w.classList.toggle('open'); $('#bslipbar').setAttribute('aria-expanded', String(w.classList.contains('open'))); });
   $('#bslipClear').addEventListener('click', function(){ sel = []; save(); render(); });
   function bslipText(){ var ls = slipLegs(); if(!ls.length) return ''; var SPt = slipDec(ls), bookDec = SPt.d, fair = joint(ls); return 'BetSweep slip · Week ' + D.week + '\n' + ls.map(function(l){ return '• ' + legText(l) + ' (' + am(l.o) + ') — model ' + pc(l.p) + ' vs book ' + pc(l.bk); }).join('\n') + '\nFanDuel ' + (SPt.same ? 'about ' : '') + decToAm(bookDec) + ' · model fair ' + toAm(fair) + ' (' + pc(fair) + ')\nbetsweep.co'; }
