@@ -46,6 +46,18 @@ async def main():
             var txt = h.querySelector('.score'), tr = txt ? txt.getBoundingClientRect() : null, top = tr ? document.elementFromPoint(tr.left + tr.width / 2, tr.top + tr.height / 2) : null;
             return {id: c.id, ko: +c.getAttribute('data-ko') || 0, done: c.classList.contains('done'), kind: w ? w.className.replace('wxfx', '').trim() : '', words: wx ? wx.textContent.replace(/\\s+/g, ' ').trim() : '', roof: wx ? /roof can close/.test(wx.getAttribute('title') || '') : false, z: cs ? cs.zIndex : '', shown: cs ? cs.display !== 'none' : false, pe: cs ? cs.pointerEvents : '', anim: b4 ? b4.animationName : '', op: b4 ? +b4.opacity : 0,
               iso: getComputedStyle(h).isolation, clear: !w || !top || !top.classList.contains('wxfx')}; })"""
+        # 11/28 (owner: "be on a continual loop and never stop"): at five moments of every layer's loop, the four corners of the moving sheet are
+        # worked out from its own box, its transform origin and its transform at that moment; the header has to lie inside it each time.
+        COVER = """() => { var out = [];
+          Array.from(document.querySelectorAll('.wxfx')).forEach(function(w){ if(getComputedStyle(w).display === 'none') return; var W = w.clientWidth, H = w.clientHeight; if(!W || !H) return;
+            document.getAnimations().filter(function(a){ return a.effect && a.effect.target === w && a.effect.pseudoElement; }).forEach(function(a){ var pe = a.effect.pseudoElement, d = +a.effect.getTiming().duration, it = a.effect.getTiming().iterations, cs = getComputedStyle(w, pe); a.pause();
+              var L = parseFloat(cs.left), T = parseFloat(cs.top), bw = parseFloat(cs.width), bh = parseFloat(cs.height), o = cs.transformOrigin.split(' ').map(parseFloat), ox = L + o[0], oy = T + o[1];
+              [0, 0.25, 0.5, 0.75, 0.999].forEach(function(f){ a.currentTime = d * f; var m = new DOMMatrixReadOnly(getComputedStyle(w, pe).transform);
+                var quad = [[L, T], [L + bw, T], [L + bw, T + bh], [L, T + bh]].map(function(p){ var x = p[0] - ox, y = p[1] - oy; return [ox + m.a * x + m.c * y + m.e, oy + m.b * x + m.d * y + m.f]; });
+                var inside = function(px, py){ var s = 0; for(var i = 0; i < 4; i++){ var p1 = quad[i], p2 = quad[(i + 1) % 4], cr = (p2[0] - p1[0]) * (py - p1[1]) - (p2[1] - p1[1]) * (px - p1[0]); if(Math.abs(cr) < 1e-6) continue; var g = cr > 0 ? 1 : -1; if(s === 0) s = g; else if(g !== s) return false; } return true; };
+                out.push({host: (w.closest('[id]') || {}).id || '', kind: w.className.replace('wxfx', '').trim(), pe: pe, f: f, forever: it === Infinity, ok: inside(0.5, 0.5) && inside(W - 0.5, 0.5) && inside(W - 0.5, H - 0.5) && inside(0.5, H - 0.5),   /* half a pixel in: the header's size is read as a whole number */ W: W, H: H, box: [Math.round(bw), Math.round(bh)]}); });
+              a.currentTime = 0; a.play(); }); });
+          return out; }"""
         html_b = open(os.path.join(ROOT, "boards", "index.html"), encoding="utf-8").read(); kos = [int(x) for x in re.findall(r'<section class="card[^"]*" id="[A-Z]{2,3}-[A-Z]{2,3}" data-ko="(\d+)"', html_b)]
         early = (min(kos) - 30 * 3600e3) if kos else None
         for theme in ("dark", "light"):
@@ -57,6 +69,8 @@ async def main():
             if wet:
                 check(all(x["z"] == "-1" and x["iso"] == "isolate" and x["pe"] == "none" and x["clear"] and 0 < x["op"] <= 0.35 and x["anim"].startswith("wx") for x in wet if x["shown"]) and any(x["shown"] for x in wet),
                       f"[{theme}]   it sits behind the header's words, takes no taps, stays faint and moves ({[(x['id'], x['anim'], x['op']) for x in wet][:3]})")
+                cv = await pg.evaluate(COVER); holes = [(c["host"], c["kind"], c["pe"], c["f"], c["W"], c["H"]) for c in cv if not c["ok"]]
+                check(len(cv) >= 10 and not holes and all(c["forever"] for c in cv), f"[{theme}]   the loop never runs out: at the start, the quarters and the end of each pass the moving sheet still covers the whole header, and it repeats without end ({len(cv)} moments on {len(set(c['host'] for c in cv))} headers, sheets {sorted(set(tuple(c['box']) for c in cv))[:3]}; uncovered: {holes[:3]})")
                 if SHOTS:
                     await pg.evaluate("(g) => { var h = document.getElementById(g).querySelector('header.hd'); window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 130); }", wet[0]["id"]); await pg.wait_for_timeout(350); await pg.screenshot(path=os.path.join(SHOTS, f"wx_fx_board_{theme}.png"))
             else: skip(f"[{theme}] no board calls for weather this build, so there is no layer to look at")

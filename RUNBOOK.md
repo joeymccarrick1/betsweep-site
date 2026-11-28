@@ -4530,3 +4530,33 @@ Not published yet when written: built and tested on a scratch build, waiting for
   bars, caption clear of the last bar), and the owner's phone is the real check.
 - **"Make the countdown time a little more subtle" (Today's opener).** Before kickoff the countdown is 19px (17px on a phone),
   weight 600, in the quiet colour; the two teams lead. A live score keeps the full weight (`.thl[data-st="pre"] .thc b`).
+
+## 11/28 2:00 AM: one-size board tops, rain that never runs out, the depth chart rule, Model's Best folded (owner 1:15-1:27 AM)
+- **The top of a board keeps one size on a phone** (owner 1:24 AM, a screen recording: "make it so the headers don't change size when
+  you click one of the projection/game line buttons ... I like the more condensed header"). A shut board had the taller header and a
+  one-line kickoff line; a tap on Game Script or Projections shrank the header and grew the line to two. Now (build_site.py, with
+  the `bstidy` rules the phone script switches on): the header is the condensed one in both states (4px under the score, 44px
+  logos, 32px names), the kickoff line is the short one in both (the stadium's name and a market line that AGREES with the model
+  stay folded on a phone; a line that disagrees still shows; pictures of a card still carry everything), and the button row keeps
+  its padding. tests/board_top.py (new, port 8908): at 360, 390 and 428px the header, the line and the buttons are measured shut,
+  with each view open, and shut again - identical, and the header is the condensed one.
+- **Rain, snow and wind loop without a break** (owner 1:27 AM: "be on a continual loop and never stop"). The moving sheets were
+  turned with rotate() and sized as a share of the header; by the last quarter of every pass the sheet's corner had slid into the
+  header, leaving a strip with no rain that snapped back each loop. Now each sheet is skewed (its top and bottom edges stay level)
+  and oversized in pixels by what one pass needs (wxfx.py). tests/wx_fx.py works the sheet's four corners out at five moments of
+  every layer's loop and requires the header to lie inside it each time; run against the old layers it fails at 75% and 100% of a
+  pass. Also: a board card wearing weather is always drawn (`.card:has(> .hd > .wxfx){content-visibility:visible}`), so the loop is
+  not parked and restarted as the page scrolls. Not seen on an iPhone from here.
+- **The depth chart rule** (owner 1:15 AM: "Yes keep players like Emanuel Wilson off"; his anytime TD at +2000 led Model's Best
+  while ESPN's depth chart listed him third behind two backs who had come back). build_builder.py: a player whose flags include
+  "Depth chart: demoted" (a back ESPN lists behind others while our numbers still treat him as the lead) or "Depth chart: not the
+  starter" (a quarterback) gets no tier and is not in the short-priced pool; a flag the owner's notes overrule does not count. Every
+  pick list reads the tier (Model's Best, Today's looks, the home teaser). His legs stay in the builder, on the boards and on his
+  page with the flag. The receiver note ("Depth chart: lower than our numbers") is NOT part of the rule: ESPN's receiver order is
+  loose, and it stays a reason line. This week: one player, one leg. tests/depth_rule.py (new, no browser).
+- **Model's Best opens on five cards a list** (owner 1:15 AM: "keep trimming where it makes sense site wide"). The why lines had
+  taken the page from 4.5 to 5.3 phone screens. A list of more than six leg cards shows its first five that can still be bet and a
+  "Show all N" button (BEST_TABS_JS `cap()`); the tab's number still counts every card. 3.9 screens; the limit in
+  tests/page_fold.py is back to 4.5. The phone menu was left alone: its groups are folded, so Betting's ten links show only when
+  that group is opened.
+- Next trimming candidates, by the page-length test: First TD 5.1 screens, Teams 4.9, News desk 4.8, Season 4.6.

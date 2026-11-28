@@ -1186,7 +1186,7 @@ html.pshopen{overflow:hidden}
 .pshproj{color:var(--mute);font-size:12.5px}
 .pshrk{margin-left:auto;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--mute);white-space:nowrap}
 .pshrk.hi{border-color:var(--bad,#e07070);color:var(--bad,#e07070)}
-.psh .h5{gap:14px} .psh .h5 .plot{--bh:52px} .psh .h5 ol{gap:7px} .psh .h5 li{flex-basis:26px} .psh .h5 li .v{font-size:11px}
+.psh .h5{gap:14px;--bw:26px} .psh .h5 .plot{--bh:52px} .psh .h5 ol{gap:7px} .psh .h5 li .v{font-size:11px}
 .psh .h5 li .b{transition:height .18s ease} .psh .h5 .ln{transition:bottom .18s ease}
 .psh .h5 p{font-size:12.5px} .psh .h5 p b{display:block;font-size:20px;margin:0 0 1px} .psh .h5 p small[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){ .psh .h5 li .b,.psh .h5 .ln{transition:none} }

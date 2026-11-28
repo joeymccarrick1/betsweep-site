@@ -395,7 +395,16 @@ h2.bsdfh.open::after{transform:rotate(225deg);margin-top:-2px} h2.bsdfh:focus-vi
 /* board cards on a phone, second pass (app script: tidyBoards). The card is the scorecard it always was; only fine print folds.
    A card not yet scrolled to holds about its real height (the template's 900px guess made thirteen cards look like fourteen screens). */
 .card.bstidy:not(.expanded){contain-intrinsic-size:auto 520px}
-.card.bstidy:not(.expanded) > .ginfo .bsx, .card.bstidy:not(.expanded) > .ginfo .wx.r-low small{display:none}
+/* owner 11/28 1:24 AM (screen recording; "make it so the headers don't change size when you click one of the projection/game line buttons
+   ... I like the more condensed header"): the top of a board - header, kickoff line, the two view buttons - is one size whether a view is
+   open or not. The header is the condensed one an open board had (less padding, the 44px logos, the 32px names); the kickoff line stays
+   the short one a shut board had (the stadium's name and a market line that agrees with the model stay folded; a line that DISAGREES
+   still shows); the buttons keep the shorter padding. Only what sits under the buttons changes when one is tapped. */
+.card.bstidy > .ginfo .bsx, .card.bstidy > .ginfo .wx.r-low small{display:none}
+body.compact .card.bstidy:not(.expanded):not(.summary) .hd.hmh{padding-bottom:4px;row-gap:2px}
+body.compact .card.bstidy:not(.expanded):not(.summary) .hd.hmh .tm b{font-size:32px}
+body.compact .card.bstidy:not(.expanded):not(.summary) .hd.hmh .tm [data-hm]{height:44px}
+.card.bstidy.expanded > .ginfo{padding-left:12px;padding-right:12px;border-top:0}
 .card.bstidy > .bestslip > *{order:1} .card.bstidy > .bestslip > .lt, .card.bstidy > .bestslip > .bpodds, .card.bstidy > .bestslip > .fdgo{order:0}
 .card.bstidy > .bestslip > .bpnum{order:2} .card.bstidy > .bestslip > .bpmore{order:3} .card.bstidy > .bestslip > .bpwork{order:4}
 /* the title row is always title, price, "+ Add": the title gives way (it wraps inside its own box) so the button never drops a row */
@@ -405,7 +414,7 @@ h2.bsdfh.open::after{transform:rotate(225deg);margin-top:-2px} h2.bsdfh:focus-vi
 /* shut: the parlay's numbers are one line that ends in "Show the work"; open: the numbers in full, then the reasoning */
 .card.bstidy:not(.bsshoot) > .bestslip.bswk:not(.bsopen) > .bpnum{flex:1 1 calc(100% - 132px);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card.bstidy > .bestslip > .bpmore{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:36px;margin:-6px 0 -6px auto;padding:0 0 0 6px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:none;border:0;cursor:pointer;white-space:nowrap}
-.card.bstidy:not(.expanded) > .vbtns{padding-top:7px !important;padding-bottom:7px !important}
+.card.bstidy > .vbtns{padding:7px 12px !important}
 .bestslip > .bpmore i{font-style:normal;color:var(--mute);transition:transform .15s} .bestslip.bsopen > .bpmore i{transform:rotate(180deg)}
 .bestslip > .bpmore:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .card.bstidy > .bestslip.bsopen > .bpmore{margin-left:0;padding-left:0}
@@ -1165,6 +1174,8 @@ footer .tag i{color:var(--red);font-style:normal}
 # 11/10 evening: the pages made from home-page sections (/best/ /slate/ /news/ /targets/ /all/) share one head: title, one-line
 # introduction, then the sections. Also the home page's doors grid and its footer line.
 WK_CSS = """
+/* Model's Best: a list of leg cards opens on its first five; .bcapx is a card folded behind the "Show all" button (BEST_TABS_JS) */
+article.play.bcapx{display:none} .tdnewsmore.bmore{margin:12px 0 4px} .tdnewsmore.bmore[hidden]{display:none}
 .wk{max-width:1360px;margin:14px auto 0;padding:0}
 .wkh{max-width:1360px;margin:0 auto;padding:0 16px} .wkh h1{margin:0 0 6px;font-family:var(--brand);font-style:italic;font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1} .wkh .lead{margin:0;color:var(--mute);font-size:15px;line-height:1.5;max-width:70ch}
 .wk .sec:first-of-type{margin-top:18px}
@@ -1194,8 +1205,21 @@ BEST_TABS_JS = r"""(function(){
   var h = (location.hash || '').slice(1), start = has(h) ? h : (h === 'best' ? TABS[0].id : null);
   var T = bsTabs.mount(host, TABS, { root: main, key: 'bs_tab_best', start: start, onShow: function(id){ if(best) best.classList.toggle('fxoff', !best.querySelector('[data-tab="' + id + '"]')); } });
   // the number on a tab = cards a visitor can still bet (kicked-off cards and ruled-out players' cards are not counted)
-  function counts(){ TABS.forEach(function(t){ var n = 0;
-    [].forEach.call(main.querySelectorAll('[data-tab="' + t.id + '"]'), function(p){ [].forEach.call(p.querySelectorAll('article.play, .parlay, .pmini'), function(c){ if(!c.hidden && !c.classList.contains('started') && getComputedStyle(c).display !== 'none') n++; }); });
+  /* owner 11/28 1:15 AM ("keep trimming where it makes sense site wide"; the why lines had taken this page from 4.5 to 5.3 phone screens):
+     a list of leg cards opens on its first five that can still be bet, and one button shows the rest. A list of six is left alone -
+     a button to reveal one card is not a saving. The tab's number still counts every card. */
+  var CAP = 5, openL = {};
+  function cap(){ [].forEach.call(main.querySelectorAll('.plays'), function(grid, gi){
+    var cards = [].filter.call(grid.children, function(c){ return c.matches && c.matches('article.play'); }); if(!cards.length) return;
+    cards.forEach(function(c){ c.classList.remove('bcapx'); });
+    var live = cards.filter(function(c){ return !c.hidden && !c.classList.contains('started') && getComputedStyle(c).display !== 'none'; });
+    var more = grid.nextElementSibling && grid.nextElementSibling.classList.contains('bmore') ? grid.nextElementSibling : null;
+    if(live.length > CAP + 1 && !openL[gi]){ live.slice(CAP).forEach(function(c){ c.classList.add('bcapx'); });
+      if(!more){ more = document.createElement('button'); more.type = 'button'; more.className = 'tdnewsmore bmore'; grid.parentNode.insertBefore(more, grid.nextSibling); more.addEventListener('click', function(){ openL[gi] = 1; cap(); }); }
+      more.hidden = false; more.textContent = 'Show all ' + live.length; }
+    else if(more) more.hidden = true; }); }
+  function counts(){ cap(); TABS.forEach(function(t){ var n = 0;
+    [].forEach.call(main.querySelectorAll('[data-tab="' + t.id + '"]'), function(p){ [].forEach.call(p.querySelectorAll('article.play, .parlay, .pmini'), function(c){ if(!c.hidden && !c.classList.contains('started') && (c.classList.contains('bcapx') || getComputedStyle(c).display !== 'none')) n++; }); });
     T.count(t.id, n); var b = host.querySelector('[data-t="' + t.id + '"]'); if(b) b.classList.toggle('zero', !n); }); }
   counts(); setTimeout(counts, 1500); setInterval(counts, 60000); document.addEventListener('bs-risk', function(){ setTimeout(counts, 60); });
   window.addEventListener('hashchange', function(){ var x = (location.hash || '').slice(1); if(has(x)) T.show(x); });

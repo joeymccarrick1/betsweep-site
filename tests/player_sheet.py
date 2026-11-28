@@ -59,7 +59,7 @@ def expected():
 
 READ = """() => { var s = document.querySelector('.psh'); if(!s) return null; var r = s.getBoundingClientRect(), root = s.querySelector('.pshroot'), inn = s.querySelector('.pshin');
   var p = root ? root.querySelector('.pshp:not([hidden])') : null, h5 = p ? p.querySelector('.h5') : null, vis = function(e){ return !!(e && (e.offsetWidth || e.offsetHeight)); };
-  var why = p ? Array.from(p.querySelectorAll('.pshwhy:not([hidden]) .why li')).map(function(li){ var b = li.querySelector('b'), sp = li.querySelector('span'); return [li.className, b.textContent, sp.textContent.replace(b.textContent, '').trim()]; }) : [];
+  var why = p ? Array.from(p.querySelectorAll('.pshwhy:not([hidden]) .legwhy li')).map(function(li){ var b = li.querySelector('b'), sp = li.querySelector('span'); return [li.className, b.textContent, sp.textContent.replace(b.textContent, '').trim()]; }) : [];
   return {rect: [r.left, r.top, r.right, r.bottom], vw: innerWidth, vh: innerHeight, over: inn ? inn.scrollWidth - inn.clientWidth : 0, role: s.getAttribute('role'), label: s.getAttribute('aria-label') || '', loaded: !!root,
     name: root ? root.querySelector('#pshname').textContent : '', sub: root ? root.querySelector('.pshwho p').textContent : '', week: root ? +root.getAttribute('data-week') : 0, ko: root ? root.classList.contains('pshko') : null,
     konote: root ? vis(root.querySelector('.pshkonote')) : null, full: root ? root.querySelector('a.pshfull').getAttribute('href') : '',

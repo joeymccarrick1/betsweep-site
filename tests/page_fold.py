@@ -34,8 +34,8 @@ def skip(what): print("SKIP " + what)
 def has(path): return os.path.isfile(os.path.join(ROOT, path.strip("/"), "index.html"))
 # longest a page may open at on a phone, in screens. Loose on purpose: a busy week adds rows, and the caps are what hold the length.
 # 11/27 late: /best/ 4.5 -> 5.5. Every leg card now carries its reasons (why.py) and the opponents under its bars, about 70px a card;
-# eight cards on the first tab opened at 5.2 screens. /news/ is back under its 5.0: a group opens with 24 notes and a Show all button.
-LIMIT = {"/usage/": 5.0, "/benefits/": 4.5, "/shop/": 4.5, "/news/": 5.0, "/best/": 5.5, "/dfs/": 5.0, "/firsttd/": 6.5}
+# eight cards on the first tab opened at 5.2 screens; since 11/28 a list opens on its first five cards (owner: "keep trimming"), back under 4.5. /news/ is back under its 5.0: a group opens with 24 notes and a Show all button.
+LIMIT = {"/usage/": 5.0, "/benefits/": 4.5, "/shop/": 4.5, "/news/": 5.0, "/best/": 4.5, "/dfs/": 5.0, "/firsttd/": 6.5}
 VIS = "var qa = function(s, r){ return Array.from((r || document).querySelectorAll(s)); }, vis = function(e){ if(e.checkVisibility && !e.checkVisibility()) return false; var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };"   # checkVisibility: a closed <details> keeps its content's box
 LEN = "() => ({scr: document.documentElement.scrollHeight / innerHeight, over: document.documentElement.scrollWidth - document.documentElement.clientWidth})"
 
@@ -151,17 +151,23 @@ async def main():
         # ---------- Model's Best ----------
         if has("/best/"):
             # 11/20: a tab's count is the cards still open to bet; a card whose game has kicked off stays on the page dimmed (.started) and is not counted
-            M = "() => { " + VIS + " var tabs = qa('.wk .fxtabs .tab'); var on = document.querySelector('.wk .fxtabs .tab.on'); return {tabs: tabs.map(function(b){ return b.dataset.t + ':' + b.textContent.trim(); }), on: on ? on.dataset.t : null, cards: qa('article.play, .parlay, .pmini').filter(function(c){ return !c.classList.contains('started'); }).length, shown: qa('article.play, .parlay, .pmini').filter(function(c){ return !c.classList.contains('started'); }).filter(vis).length, secs: qa('.wk [data-tab]').filter(vis).map(function(e){ return e.getAttribute('data-tab'); }), best: vis(document.getElementById('best') || document.body), top: tabs.length ? Math.round(document.querySelector('.wk .fxtabs').getBoundingClientRect().top) : null, nav: Math.round(document.querySelector('.sitenav').getBoundingClientRect().bottom), onIn: on ? (on.getBoundingClientRect().left >= 0 && on.getBoundingClientRect().right <= innerWidth + 1) : null}; }"
+            M = "() => { " + VIS + " var tabs = qa('.wk .fxtabs .tab'); var on = document.querySelector('.wk .fxtabs .tab.on'); return {tabs: tabs.map(function(b){ return b.dataset.t + ':' + b.textContent.trim(); }), on: on ? on.dataset.t : null, cards: qa('article.play, .parlay, .pmini').filter(function(c){ return !c.classList.contains('started'); }).length, shown: qa('article.play, .parlay, .pmini').filter(function(c){ return !c.classList.contains('started'); }).filter(vis).length, folded: qa('article.play.bcapx').filter(function(c){ var sec = c.closest('[data-tab]'); return !c.classList.contains('started') && sec && vis(sec); }).length, more: qa('.tdnewsmore.bmore').filter(vis).map(function(b){ return b.textContent.trim(); }), secs: qa('.wk [data-tab]').filter(vis).map(function(e){ return e.getAttribute('data-tab'); }), best: vis(document.getElementById('best') || document.body), top: tabs.length ? Math.round(document.querySelector('.wk .fxtabs').getBoundingClientRect().top) : null, nav: Math.round(document.querySelector('.sitenav').getBoundingClientRect().bottom), onIn: on ? (on.getBoundingClientRect().left >= 0 && on.getBoundingClientRect().right <= innerWidth + 1) : null}; }"
             pg, ctx, errs = await page("/best/", t=T0); s = await pg.evaluate(M)
             if not s["tabs"]: skip("Model's Best has one section this build, so it has no tabs")
             else:
                 ids = [t.split(":")[0] for t in s["tabs"]]; cnt = {t.split(":")[0]: (int(m.group(1)) if (m := re.search(r"(\d+)$", t)) else 0) for t in s["tabs"]}
-                check(s["on"] == ids[0] and set(s["secs"]) == {ids[0]} and s["shown"] == cnt[ids[0]], f"Model's Best opens on its first tab with that tab's {s['shown']} cards and nothing else ({[t.split(':')[1] for t in s['tabs']]})")
+                # 11/28 (owner: "keep trimming"): a list of more than six leg cards opens on its first five, the rest behind one "Show all N" button
+                c0 = cnt[ids[0]]
+                check(s["on"] == ids[0] and set(s["secs"]) == {ids[0]} and s["shown"] + s["folded"] == c0 and ((s["folded"] == 0 and not s["more"]) or (s["shown"] == 5 and s["more"] == [f"Show all {c0}"])),
+                      f"Model's Best opens on its first tab with that tab's cards and nothing else: {s['shown']} showing, {s['folded']} behind {s['more'] or 'no button'} ({[t.split(':')[1] for t in s['tabs']]})")
+                if s["folded"]:
+                    await pg.click(".tdnewsmore.bmore"); await pg.wait_for_timeout(200); s1 = await pg.evaluate(M)
+                    check(s1["shown"] == c0 and s1["folded"] == 0 and not s1["more"], f"the button shows the rest: {s1['shown']} of {c0} cards, and it steps aside ({s1['more']})")
                 check(sum(cnt.values()) == s["cards"], f"the tab counts add up to every card on the page ({s['cards']})")
                 seen = 0
                 for i in ids:
-                    await pg.click(f'.wk .fxtabs [data-t="{i}"]'); await pg.wait_for_timeout(120); z = await pg.evaluate(M); seen += z["shown"]
-                    if z["on"] != i or set(z["secs"]) != {i} or z["shown"] != cnt[i] or not z["onIn"]: check(False, f"tab {i}: on {z['on']}, sections {z['secs']}, {z['shown']} cards against a count of {cnt[i]}, tab in view {z['onIn']}")
+                    await pg.click(f'.wk .fxtabs [data-t="{i}"]'); await pg.wait_for_timeout(120); z = await pg.evaluate(M); seen += z["shown"] + z["folded"]
+                    if z["on"] != i or set(z["secs"]) != {i} or z["shown"] + z["folded"] != cnt[i] or not z["onIn"]: check(False, f"tab {i}: on {z['on']}, sections {z['secs']}, {z['shown']} cards showing and {z['folded']} folded against a count of {cnt[i]}, tab in view {z['onIn']}")
                 check(seen == s["cards"], f"walking the tabs shows every card once ({seen} of {s['cards']})")
                 await pg.evaluate("window.scrollTo(0, 700)"); await pg.wait_for_timeout(300); y = await pg.evaluate(M)
                 check(abs(y["top"] - y["nav"]) <= 2, f"the tab row stays under the site bar while the page scrolls (row at {y['top']}px, bar ends at {y['nav']}px)")

@@ -778,8 +778,21 @@ for l in LEGS:
         l["tdr"] = td_role(l)
         if not l["tdr"] and l["m"] == "Anytime TD" and l.get("raw_p") is not None and l.get("bk") is not None and l["raw_p"] - l["bk"] >= 0.05: _td_out.append(f"{l['pl']} {l.get('o'):+d}")
 print(f"TD role rule: {sum(1 for l in LEGS if l.get('tdr'))} touchdown legs have snaps / red-zone work / a long-score record; kept out of the tiers for none of them: {', '.join(_td_out[:12]) or 'nobody'}")
+# owner 11/28 1:15 AM ("Yes keep players like Emanuel Wilson off"; his anytime TD at +2000 led Model's Best while ESPN's depth chart listed
+# him third, behind two backs who had come back): a player the depth chart has moved down gets no tier. That is a running back ESPN lists
+# behind others while our numbers still treat him as the lead (depth_check.py, "Depth chart: demoted") or a quarterback who is not the
+# starter ("Depth chart: not the starter"): his recent numbers came from a role he no longer holds. Every pick list reads the tier
+# (Model's Best, Today's looks, the home teaser, the short-priced pool), so he is put forward nowhere; his legs stay in the builder, on
+# the boards and on his page with the flag, for anyone who disagrees with the depth chart.
+_DEPTH_DOWN = ("Depth chart: demoted", "Depth chart: not the starter")
+def _depth_flags(pl, fs):
+    try: return FE.strip_overruled(pl, fs) if FE else fs    # a flag the owner's notes have overruled does not count
+    except Exception: return fs
+_DEPTH_OUT = {pl for pl, fs in PF.items() if any(len(f) > 1 and str(f[1]) in _DEPTH_DOWN for f in (_depth_flags(pl, fs or []) or []))}
+print(f"depth chart rule: no tier for {len(_DEPTH_OUT)} player(s) the depth chart has moved down: {', '.join(sorted(_DEPTH_OUT)[:12]) or 'nobody'}")
 for l in LEGS:
     if l.get("gl") or l.get("raw_p") is None or l.get("bk") is None or l.get("status") in ("OUT", "BYE"): continue
+    if l.get("pl") in _DEPTH_OUT: continue   # 11/28: moved down the depth chart - no tier (see above)
     o = l.get("o")
     if l["m"] == "Rushing Yards" or l.get("ms") == "Rush yds": continue
     if (l.get("z") or [""])[0] == "r": continue   # 11/6 edge map: never a tier pick from a losing zone
@@ -819,7 +832,7 @@ _sp_best = {}
 for l in LEGS:
     if l.get("gl") or l.get("u") or l.get("m") not in ("Receiving Yards", "Receptions", "Passing Yards") or l.get("raw_p") is None or l.get("bk") is None: continue
     _o = l.get("o")
-    if _o is None or not (-199 <= _o <= -130) or l.get("status") in ("OUT", "BYE") or (l.get("z") or [""])[0] == "r": continue
+    if _o is None or not (-199 <= _o <= -130) or l.get("status") in ("OUT", "BYE") or (l.get("z") or [""])[0] == "r" or l.get("pl") in _DEPTH_OUT: continue
     if not (l.get("tier") == "safe" or (l["raw_p"] - l["bk"] >= 0.08 and l["m"] != "Passing Yards")): continue
     if any(f[0] == "bad" for f in (l.get("fh") or [])) or "Cleared this line in only" in (l.get("w") or "") or not _safe_role_ok(l): continue
     _k = (l["pl"], l["m"])
