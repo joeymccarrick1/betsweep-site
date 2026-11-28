@@ -1062,10 +1062,12 @@ JS = r"""
     var all = []; prev.forEach(function(d){ (d.plays || []).forEach(function(p){ all.push(p); }); }); if(cur && (!prev.length || prev[prev.length - 1].id !== cur.id)) (cur.plays || []).forEach(function(p){ all.push(p); });
     var last = all.length ? all[all.length - 1] : null, e = last && last.end || {}, yl = (typeof e.yardLine === 'number') ? e.yardLine : null;
     var possId = e.team && e.team.id || (cur && cur.team && cur.team.id), poss = idAb[possId] || '', homePoss = possId && possId === home.id;
-    var X = function(y){ return 100 + y * 10; }, svg = '<svg class="gc-field" viewBox="0 0 1200 230" role="img" aria-label="Field position">';
+    /* 11/27 night: the field faces the way the header does - away team's end zone on the left, home team's on the right (owner 11/27:
+       "away team on the left with the home team on the right"). The feed's yard line counts from the home goal line, so it runs right to left. */
+    var X = function(y){ return 1100 - y * 10; }, svg = '<svg class="gc-field" viewBox="0 0 1200 230" role="img" aria-label="Field position">';
     svg += '<rect x="0" y="0" width="1200" height="230" fill="#2f6b3a"/>';
     for(var i = 0; i < 10; i++) if(i % 2) svg += '<rect x="' + (100 + i * 100) + '" y="0" width="100" height="230" fill="#2a6234"/>';
-    svg += '<rect x="0" y="0" width="100" height="230" fill="' + col(home, '334') + '"/><rect x="1100" y="0" width="100" height="230" fill="' + col(away, '334') + '"/>';
+    svg += '<rect x="0" y="0" width="100" height="230" fill="' + col(away, '334') + '"/><rect x="1100" y="0" width="100" height="230" fill="' + col(home, '334') + '"/>';
     /* owner 11/27 ("home teams logo in the center and wordmarks in the endzone"): each end zone carries its team's wordmark, turned to
        read along the goal line and laid down in one colour that shows on the team's paint (white on a dark end zone, near-black on a
        light one) - the file's own shape, nothing drawn. A team without a file keeps the plain abbreviation. */
@@ -1075,7 +1077,7 @@ JS = r"""
     var ezone = function(t, fb, cx, rot){ var k = tcode(t.abbreviation);
       if(!k) return '<text x="' + cx + '" y="115" fill="#fff" font-size="34" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + rot + ' ' + cx + ' 115)" font-family="Barlow, sans-serif">' + esc(t.abbreviation || '') + '</text>';
       return '<image href="/s/wm/' + k + '.webp" x="-104" y="-36" width="208" height="72" preserveAspectRatio="xMidYMid meet" transform="translate(' + cx + ' 115) rotate(' + rot + ')" filter="url(#' + fid + (lum(col(t, fb)) > 0.62 ? 'k' : 'w') + ')"><title>' + esc(t.abbreviation || '') + '</title></image>'; };
-    svg += ezone(home, '334', 50, -90) + ezone(away, '334', 1150, 90);
+    svg += ezone(away, '334', 50, -90) + ezone(home, '334', 1150, 90);
     for(var y = 10; y <= 90; y += 10){ var n = y <= 50 ? y : 100 - y; svg += '<line x1="' + X(y) + '" y1="0" x2="' + X(y) + '" y2="230" stroke="rgba(255,255,255,.55)" stroke-width="2"/><text x="' + X(y) + '" y="40" fill="rgba(255,255,255,.75)" font-size="26" font-weight="700" text-anchor="middle" font-family="Barlow, sans-serif">' + n + '</text><text x="' + X(y) + '" y="210" fill="rgba(255,255,255,.75)" font-size="26" font-weight="700" text-anchor="middle" font-family="Barlow, sans-serif">' + n + '</text>'; }
     svg += '<line x1="100" y1="0" x2="100" y2="230" stroke="#fff" stroke-width="3"/><line x1="1100" y1="0" x2="1100" y2="230" stroke="#fff" stroke-width="3"/>';
     var hk = tcode(home.abbreviation); if(hk) svg += '<image href="/s/__HMSET__/' + hk + '-l.webp" x="520" y="47" width="160" height="136" preserveAspectRatio="xMidYMid meet"><title>' + esc(home.abbreviation || '') + '</title></image>';   // the home team's logo at midfield, over the 50, under the ball
@@ -1084,15 +1086,16 @@ JS = r"""
       if(ds != null && cur && cur.team && cur.team.id === possId){ var a0 = Math.min(X(ds), X(yl)), a1 = Math.max(X(ds), X(yl)); svg += '<rect x="' + a0 + '" y="92" width="' + Math.max(4, a1 - a0) + '" height="46" rx="8" fill="rgba(255,255,255,.22)"/>'; }
       var dist = e.distance || 0; if(dist && e.down){ var fd = homePoss ? yl + dist : yl - dist; fd = Math.max(0, Math.min(100, fd)); svg += '<line x1="' + X(fd) + '" y1="0" x2="' + X(fd) + '" y2="230" stroke="#f5d33b" stroke-width="5"/>'; }
       svg += '<line x1="' + X(yl) + '" y1="0" x2="' + X(yl) + '" y2="230" stroke="#4aa3ff" stroke-width="5"/>';
-      var dir = homePoss ? 1 : -1, bx = X(yl);
+      var dir = homePoss ? -1 : 1, bx = X(yl);
       svg += '<ellipse cx="' + bx + '" cy="115" rx="22" ry="14" fill="#8a4b22" stroke="#fff" stroke-width="3"/><path d="M' + (bx + dir * 30) + ' 115 l' + (-dir * 14) + ' -11 v22 z" fill="#fff"/>';
     }
     svg += '</svg>';
     var wpArr = js.winprobability || [], wp = wpArr.length ? wpArr[wpArr.length - 1].homeWinPercentage : null;
+    var wph = wp != null ? Math.round(wp * 100) : 0, wpa = 100 - wph, wpht = esc(home.abbreviation || '') + ' ' + wph + '%', wpat = esc(away.abbreviation || '') + ' ' + wpa + '%';
     var dd = e.downDistanceText || (STATE[gid] && STATE[gid].dd) || '';
     var tick = all.slice(-6).reverse().map(function(p){ var t = p.text || '', to = /intercept|fumble/i.test(t) && /recovered by|intercepted/i.test(t); return '<span class="' + (p.scoringPlay ? 'td' : to ? 'to' : '') + '">' + esc((p.period ? 'Q' + p.period.number + ' ' : '') + (p.clock ? p.clock.displayValue + ' · ' : '') + (p.start && p.start.shortDownDistanceText ? p.start.shortDownDistanceText + ' · ' : '') + t) + '</span>'; }).join('');
     return '<div class="gcw"><div class="gc-top"><div class="gc-dd">' + (poss ? esc(poss) + ' ball' : 'Between plays') + (dd ? '<small>' + esc(dd) + '</small>' : '') + '</div>' +
-      (wp != null ? '<div class="gc-wp">Win chance <b>' + esc(home.abbreviation || '') + ' ' + Math.round(wp * 100) + '%</b> · ' + esc(away.abbreviation || '') + ' ' + Math.round((1 - wp) * 100) + '%<div class="gc-wpbar"><i style="width:' + Math.round(wp * 100) + '%;background:' + col(home, '555') + '"></i><i style="width:' + (100 - Math.round(wp * 100)) + '%;background:' + col(away, '999') + '"></i></div></div>' : '') + '</div>' + svg +
+      (wp != null ? '<div class="gc-wp">Win chance ' + (wpa > wph ? '<b>' + wpat + '</b>' : wpat) + ' · ' + (wph >= wpa ? '<b>' + wpht + '</b>' : wpht) + '<div class="gc-wpbar"><i style="width:' + wpa + '%;background:' + col(away, '999') + '"></i><i style="width:' + wph + '%;background:' + col(home, '555') + '"></i></div></div>' : '') + '</div>' + svg +
       (last ? '<div class="gc-last"><b>Last play</b>' + esc(last.text || '') + '</div>' : '') + (cur && cur.description ? '<div class="gc-last"><b>Drive</b>' + esc((cur.team && cur.team.abbreviation ? cur.team.abbreviation + ' · ' : '') + cur.description) + '</div>' : '') +
       (tick ? '<div class="gc-tick">' + tick + '</div>' : '') + '</div>';
   }

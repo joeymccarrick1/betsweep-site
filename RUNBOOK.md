@@ -4218,7 +4218,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   the team link on a player page (`a.wma`), and a one-game promo card on Today (`.wmrow.l`, home._phm), plus team pages and promo pages.
 - Known weak spot: black / navy / dark-green marks are faint on the dark theme with only the hairline (his choice over the glow).
 
-## 11/27 5:30 PM: five "liven it up" pieces (owner: "Do all of the ones you can do without me")
+## 11/27 4:30 PM: five "liven it up" pieces (owner: "Do all of the ones you can do without me")
 - **Team colour wash** behind game headers: boards (`.hd.wash`, `--wa` / `--wb` from TEAMCOL), Parlay Builder (`.ghd.wash`), Live (`.ghd2.wash`).
 - **Live strip on Today:** `home.strip_js(games)`, included by build_today. Its own ESPN scoreboard read every 30 s inside a game window,
   page visible only; draws `#lstrip` (logos, score, clock, pulsing dot; that day's finals ride along) only after a live score is read.
@@ -4231,7 +4231,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   burst (off for reduced motion). Seen ids in localStorage `bs_cashseen`.
 - Needs the owner: player headshots (a source he has rights to) and stadium line art.
 
-## 11/27 6:30 PM: one-line wordmarks, team colour on the dark theme
+## 11/27 5:10 PM: one-line wordmarks, team colour on the dark theme
 - Owner 4:52 PM: "edit some of the wordmarks so they just fit on one line ... get rid of the Denver and just have the Broncos", and
   on dark mode use the team's bright colour ("instead of Denver's dark blue can it be their orange"). Both are edits to HIS files:
   a crop and a tint, nothing drawn. 16 marks lost their city line (a row-gap split, keep the nickname line: /home/claude/nfl1/wm_one);
@@ -4245,7 +4245,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - 11/27 6:20 PM: side-by-side wordmarks fill one box (promo matchup row, First TD heading) so a pair matches - owner asked to
   "stretch or shrink" them; team page header puts the logo and wordmark on one row (`.pp header:has(h1 .wm[data-wm])`).
 
-## 11/27 7:00 PM: wordmark pairs "meet in the middle"; defensive-TD check (numbers only, nothing changed in the model)
+## 11/27 6:20 PM: wordmark pairs "meet in the middle"; defensive-TD check (numbers only, nothing changed in the model)
 - Paired wordmarks: same width, height from `--wmid` = sqrt(own shape x 4.2) per team (helmets.css), after the owner found the full
   stretch wrong on the Broncos mark.
 - **Defensive TD check** (owner: two defensive TDs in the DEN-PIT rain game, "something we probably could've thought of"; "run check
@@ -4257,7 +4257,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   Per game, either defense: 11.3% overall, 13.3% with a backup starting, 17.3% backup + wind (n=52). No rain in the history file,
   so rain itself is untested. Not done: whether FanDuel's price already carries it (our feed has no D/ST TD market).
 
-## 11/27 7:45 PM: turnover-risk flag (owner: "Build 1 and 2"); wordmark pairs centred
+## 11/27 6:45 PM: turnover-risk flag (owner: "Build 1 and 2"); wordmark pairs centred
 - `flags.Engine.backup_qb(team, struggling=False)` = any stand-in quarterback (same test as the Backup QB rule without the bottom-12
   scoring condition). New 'watch' flag **Turnover risk** on Anytime / First / 2+ TD legs of a team with a stand-in (skipped where
   Backup QB already sits). One watch point: it shows on the leg everywhere and counts toward the risk score; it does not by itself
@@ -4267,7 +4267,7 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   availability tab, the usual starters are OUT. Evidence in the 7:00 PM section and in flags.py.
 - Paired wordmarks are centred on each other (`align-self:center`, picture centred in its box).
 
-## 11/27 8:15 PM: the Live field wears the teams (owner: "home teams logo in the center and wordmarks in the endzone")
+## 11/27 7:30 PM: the Live field wears the teams (owner: "home teams logo in the center and wordmarks in the endzone")
 - build_live.py `gamecast()`: each end zone shows its team's wordmark (assets/wm), turned along the goal line and laid down as a
   one-colour silhouette through an SVG filter - white on a dark end zone, near-black on a light one (the Saints' gold); the home
   team's logo (assets/<SET>, `-l`) sits at midfield over the 50 and under the ball. `tcode()` maps ESPN's WSH / LAR; a team with no
@@ -4276,3 +4276,19 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - He could not find stadium line art; this replaces that idea for now.
 - Full set on c3a85077 (turnover flag): 63 of 66 - page_fold /news/ at 5.3 screens (a news note arrived; the page was at 4.99 of
   5.0 before, no Turnover-risk text on it), the Season card picture, new_markets QB log. stocks_page passes again.
+
+## 11/27 8:00 PM: the Live field faces the way the header does
+- Found while checking the published field: the header has the away team on the left and the home team on the right (owner 11/27,
+  "away team on the left with the home team on the right"), but the field under it still had the home end zone on the left, so the
+  team on the left of the header drove left. With a wordmark in each end zone the mismatch showed.
+- build_live.py `gamecast()`: `X(y) = 1100 - y * 10` (the feed's yard line counts from the home goal line, so it now runs right to
+  left); the left end zone takes the away team's paint and wordmark, the right one the home team's; the ball's arrow is
+  `homePoss ? -1 : 1`; the win-chance line reads away then home with the likelier side in bold, and its bar is split the same way.
+  Nothing else moves: the yard numbers are symmetric and the drive bar and line to gain are worked out in yards.
+- tests/live_field.py (new, in the prepublish list, port 8898, 26 checks): a game from the page's own data with a faked feed -
+  header order, end-zone paint, wordmark files (the feed's LAR / WSH still find la / was), the home logo at midfield, the picture
+  files load, ball / arrow / line to gain / drive bar with the away team and then the home team on offense, win chance, both themes.
+- Published with the Live tests, helmets, header_scroll, me_livebox and the clone-copy gate; the full set was not re-run for this
+  step or for 06adf198 / 98611daf (all three touch only `gamecast()`); it runs with the next change.
+- The five headings above this one said times about an hour late (5:30, 6:30, 7:00, 7:45, 8:15 PM); corrected from the commit times.
+- Still unverified against a real game: the field only exists while a game is in play. First real look is Sunday 11/29.
