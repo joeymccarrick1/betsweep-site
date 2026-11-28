@@ -142,6 +142,11 @@ PCSS = r""".l10 .l10w{display:grid;grid-template-columns:repeat(auto-fit,minmax(
 .pp a{color:var(--ink)}
 .pp .crumb{font-size:13.5px;color:var(--mute);margin:0 0 10px;line-height:28px}.pp .crumb a{color:var(--mute);padding:4px 0}
 .pp header{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;background:var(--chalk) var(--plays) center/360px 130px repeat;border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin-bottom:14px}
+/* 11/28: the player's number, large and faint behind the header, over a wash of his team's colour */
+.pp header.pwash{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(100deg,transparent 46%,color-mix(in srgb,var(--wa,transparent) 34%,transparent)),var(--chalk) var(--plays) center/360px 130px repeat}
+.pp header .pnum{position:absolute;right:10px;bottom:-22px;z-index:-1;font-style:italic;font-family:var(--brand);font-weight:800;font-size:132px;line-height:1;letter-spacing:-.04em;color:color-mix(in srgb,var(--ink) 11%,transparent);pointer-events:none;user-select:none}
+.pp header .sub .jnum{font-family:var(--display);font-weight:700;color:var(--ink)}
+@media (max-width:560px){ .pp header .pnum{font-size:104px;bottom:-16px;right:6px} }
 .pp .tb{grid-row:1/3;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:10px;background:var(--p,#333);box-shadow:inset 0 -6px 0 var(--s,#000);color:#fff;font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.04em}
 .pp h1{margin:0;font-family:var(--brand);font-style:italic;font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1;letter-spacing:-.01em}
 .pp .sub{display:flex;flex-wrap:wrap;gap:4px 0;align-items:center;color:var(--mute);font-size:13.5px} .pp .sub>*:not(:last-child)::after{content:"·";margin:0 8px;color:var(--mute)} .pp .sub .st{margin-left:0} .pp .sub .st::after{content:none}
@@ -496,7 +501,10 @@ def page(k, p):
     opp = (g["b"] if g["a"] == p["team"] else g["a"]) if g else None
     home = g and g.get("b") == p["team"]
     tp = (g["pb"] if home else g["pa"]) if g else None
-    sub = f'<b>{p["pos"]}</b><span><a class="wma" href="/teams/{p["team"].lower()}/">{__import__("helmets").wm(p["team"], p["team"])}</a></span>'
+    # owner 11/27 8:31 PM ("I love all 8": jersey numbers as the stand-in until headshots): his number, said in the line under his name
+    # and drawn large and faint behind the header, over a wash of the team's colour. No number on the roster = neither.
+    _jn = __import__("helmets").num(IN, p["name"], p["team"])
+    sub = f'<b>{p["pos"]}</b>' + (f'<span class="jnum">#{E(_jn)}</span>' if _jn else "") + f'<span><a class="wma" href="/teams/{p["team"].lower()}/">{__import__("helmets").wm(p["team"], p["team"])}</a></span>'
     if g: sub += f'<span>{"vs" if home else "@"} <a href="/teams/{opp.lower()}/">{E(opp)}</a></span><span>{kick_text(g)}</span>' + (f'<span>team total {tp:.1f} (model)</span>' if isinstance(tp, (int, float)) else "")
     nu, nsrc = news_url(p["name"])
     top = sorted([l for l in p["legs"] if l["m"] in MORDER and l.get("e") is not None], key=lambda l: -l["e"])[:1]
@@ -510,7 +518,7 @@ def page(k, p):
     _th, _tb = _FN.panels("ppTabs", _blocks, None, start="props" if p["legs"] else next((i for i, _, _ in _blocks if i != "props"), "props"))
     body = (head(f'{p["name"]} props, stats & matchup · Week {W} · BetSweep', desc) +
             f'<div class="pp" data-week="{W}"><p class="crumb"><a href="/player/">Players</a> › <a href="/teams/{p["team"].lower()}/">{E(p["team"])}</a> › {E(p["name"])}</p>'
-            f'<header><a class="tb" data-hm="{E(p["team"])}" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
+            f'<header class="pwash" style="--wa:{c1}">{f'<i class="pnum" aria-hidden="true">{E(_jn)}</i>' if _jn else ""}<a class="tb" data-hm="{E(p["team"])}" href="/teams/{p["team"].lower()}/" title="{E(p["team"])} team page: stats, results, box scores" style="--p:{c1};--s:{c2}">{E(p["team"])}</a><h1>{E(p["name"])}</h1><div class="sub">{sub} {status_badge(p["status"])}</div><div class="acts">{acts}</div></header>'
             + _th + _tb + jsonld(p, opp) +
             '</div><div class="ppbar" id="ppbar"><b></b><a href="/build/">Open betslip</a></div><script src="/player/player.js" defer></script>')
     return body, desc

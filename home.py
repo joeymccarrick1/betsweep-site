@@ -1254,6 +1254,7 @@ def strip_js(games):
       var st = {}; js.events.forEach(function(ev){ var c = (ev.competitions || [])[0]; if(!c) return; var by = {}; (c.competitors || []).forEach(function(x){ var a = x.team && x.team.abbreviation; by[EA[a] || a] = x.score; });
         GAMES.forEach(function(g){ if(!(g.a in by) || !(g.b in by)) return; var ty = ((ev.status || c.status || {}).type) || {}; st[g.gid] = {st: ty.state || 'pre', sa: by[g.a], sb: by[g.b], det: ty.shortDetail || ''}; }); });
       draw(st); }).catch(function(){ busy = false; }); }
+  if(window.BSLive){ document.addEventListener('bs-live', function(e){ if(e.detail) draw(e.detail); }); return; }   /* 11/28: the page's own feed drives the strip - one reader of ESPN, not two */
   poll(); setInterval(poll, 30e3); document.addEventListener('visibilitychange', function(){ if(!document.hidden) poll(); });
 })();</script>"""
 def home_js(games):
@@ -1286,7 +1287,7 @@ def home_js(games):
     if(ps && ps.querySelector('.parlay,.pmini') && !ps.querySelector('.parlay:not(.started),.pmini:not(.started)')){
       if(document.getElementById('tdtitle')) ps.hidden = true;
       else if(!ps.classList.contains('alldone')){ ps.classList.add('alldone'); var pn = document.createElement('p'); pn.className = 'none pdone'; pn.innerHTML = 'Every game on this week\'s board has kicked off, so none of its parlays can still be bet. Next week\'s post Tuesday. <a href="/receipts/" style="color:var(--ink)">How the week graded</a>'; ps.appendChild(pn); } }
-    try { document.dispatchEvent(new CustomEvent('bs-live')); } catch(e){}   // 11/27: pages that count their open cards (Trend check) re-count the moment the kickoff state lands
+    try { document.dispatchEvent(new CustomEvent('bs-live', {detail: st})); } catch(e){}   // 11/27: pages that count their open cards (Trend check) re-count the moment the kickoff state lands; 11/28: Today reads each game's state from it
   }
   if(window.BSLive) window.BSLive.start(GAMES, apply);
 })();

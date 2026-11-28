@@ -22,6 +22,7 @@ import json, os, re, datetime
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 exec(open(os.path.join(HERE, "brand.py")).read())
 import live as LIVE
+import wxfx as WXFX   # 11/28: rain, snow or wind across a Live header when the kickoff forecast plainly says so
 D = json.load(open(os.path.join(OUT, "builder_data.json")))
 WEEK = D["week"]
 try: BP = {b["gid"]: b for b in json.load(open(os.path.join(OUT, "best_parlays.json")))}
@@ -85,6 +86,8 @@ for g in games:
                      "rest": [_ni(s_.get("home_rest")), _ni(s_.get("away_rest"))], "coach": [s_.get("home_coach") or "", s_.get("away_coach") or ""]})
     if w_:
         info["wx"] = {"roof": w_[5], "t": w_[8], "w": w_[9], "gu": w_[10], "pt": w_[11], "pc": w_[12], "risk": w_[14], "upd": w_[7]}
+        _wk = WXFX.kind(dict(info["wx"], field=(w_[13] if len(w_) > 13 else "")))
+        if _wk: info["wxk"] = _wk
         if not info.get("st"): info["st"] = re.sub(r"\s*\(.*$", "", w_[4] or "")
     g["info"] = info
 # owner 11/1: FanDuel stops pricing a leg at kickoff, so a rebuild during the games drops it from the builder data and a saved slip (or a promo)
@@ -916,7 +919,7 @@ JS = r"""
       var isOpen = (gid in OPEN) ? OPEN[gid] : false;   // owner 11/8: every game starts collapsed, live ones too
       if(isOpen && s.st === 'post' && open.length) NEEDSUM[gid] = 1;   // an open card of a final with legs it cannot grade: ask ESPN for that one box score
       var hx = sides(g, s);
-      var head = '<button type="button" class="ghd2 wash" style="--wa:' + hx.l.c[0] + ';--wb:' + hx.r.c[0] + '" data-g="' + gid + '" aria-expanded="' + isOpen + '"><span class="t">' + badge(hx.l.t, hx.l.c) + hx.l.t + '<small>' + esc(hx.l.n) + '</small></span><span class="mid"><b' + (s.st === 'pre' ? ' class="vs"' : '') + '>' + (s.st === 'pre' ? '<i>' + (hx.sw || hx.ah ? '@' : 'vs') + '</i>' : (hx.l.s != null ? hx.l.s : '–') + '<i>–</i>' + (hx.r.s != null ? hx.r.s : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick)) + '</small></span><span class="t r"><small>' + esc(hx.r.n) + '</small>' + hx.r.t + badge(hx.r.t, hx.r.c) + '</span><span class="mdl">' + modelLine(g, s.st) + '</span>' +
+      var head = '<button type="button" class="ghd2 wash" style="--wa:' + hx.l.c[0] + ';--wb:' + hx.r.c[0] + '" data-g="' + gid + '" aria-expanded="' + isOpen + '">' + (g.info && g.info.wxk && s.st !== 'post' ? '<i class="wxfx ' + g.info.wxk + '" aria-hidden="true"></i>' : '') + '<span class="t">' + badge(hx.l.t, hx.l.c) + hx.l.t + '<small>' + esc(hx.l.n) + '</small></span><span class="mid"><b' + (s.st === 'pre' ? ' class="vs"' : '') + '>' + (s.st === 'pre' ? '<i>' + (hx.sw || hx.ah ? '@' : 'vs') + '</i>' : (hx.l.s != null ? hx.l.s : '–') + '<i>–</i>' + (hx.r.s != null ? hx.r.s : '–')) + '</b><small>' + (s.st === 'in' ? '<span class="lvtag">Live</span> · ' + esc(s.det || '') : s.st === 'post' ? 'Final' : esc(g.kick)) + '</small></span><span class="t r"><small>' + esc(hx.r.n) + '</small>' + hx.r.t + badge(hx.r.t, hx.r.c) + '</span><span class="mdl">' + modelLine(g, s.st) + '</span>' +
         '<span class="tog">' + (s.st === 'in' ? open.length + ' open · ' + hit.length + ' hit' : s.st === 'pre' ? open.length + ' on the watch list' : hit.length + ' hit · ' + dead.length + ' gone' + (open.length ? ' · ' + open.length + ' not graded yet' : '')) + '<i class="car">' + (isOpen ? '▴' : '▾') + '</i></span></button>';
       var sit = s.st === 'in' ? '<div class="sit">' + (s.poss ? '<b>' + esc(s.poss) + ' ball</b>' + (s.dd ? ', ' + esc(s.dd) : '') + ' · ' : '') + Math.round(f*100) + '% of regulation left' + (s.last ? ' · last: ' + esc(s.last) : '') + (BOX && Object.keys(BOX).length ? '' : ' · box score loading…') + '</div>' : '';
       var tr = function(x){ var l = x.l, r = x.r; var d = r.p - l.p; var k = legKey(l), sk = starKey(l), ins = legSlips(l); var cls = (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + (FLASH[k] ? ' flash' : '') + (STARS[sk] ? ' starred' : '');

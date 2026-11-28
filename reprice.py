@@ -53,7 +53,7 @@ BUILD = [
     ("players (first pass: lets the team, dossier and home pages link them)", "build_players.py", "soft"),
     ("live", "build_live.py", "hard"),
     ("trend check", "build_trends.py", "soft"),   # owner 11/27 10:34 PM: /trends/ - before Today, which shows its one-line door
-    ("today", "build_today.py", "hard"),
+    ("today", "build_today.py {clone}", "hard"),
     ("teasers", "build_teasers.py", "soft"),
     ("survivor", "build_survivor.py", "soft"),
     ("sweep my slip", "build_slipcheck.py", "soft"),
@@ -70,7 +70,7 @@ BUILD = [
     ("dossier", "build_dossier.py", "soft"),
     ("teams", "build_teams.py", "soft"),
     ("targets", "build_targets.py", "soft"),
-    ("today (with targets)", "build_today.py", "hard"),
+    ("today (with targets)", "build_today.py {clone}", "hard"),
     ("players", "build_players.py", "soft"),
     ("usage", "build_usage.py", "soft"),
     ("stock market", "build_stocks.py", "soft"),   # owner 11/22: /stocks/ - after the players step (it links the player pages)
@@ -78,7 +78,7 @@ BUILD = [
     ("legal", "build_legal.py", "soft"),
     ("shadow slips", "shadow_slips.py", "soft"),
     ("promos", "build_promo.py {clone}/promo-slips", "hard"),
-    ("today (with promos)", "build_today.py", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
+    ("today (with promos)", "build_today.py {clone}", "hard"),   # 11/12: the Sweep hero reads out/promos.json, which the step above writes - without this pass a new Sweep never reached the home page
     ("cfb boards (preview)", "build_cfb.py {clone}", "soft"),    # owner 11/23 1:10 AM: college football postseason game lines
     ("epl boards (preview)", "build_epl.py {clone}", "soft"),    # owner 11/22 9:32 PM; before the NBA steps, whose sport switch links to it
     ("soccer leagues (preview)", "build_soccer.py {clone}", "soft"),   # owner 11/23 1:10 AM: Bundesliga, La Liga, Serie A, MLS - one page a league

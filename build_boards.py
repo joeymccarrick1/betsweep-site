@@ -366,6 +366,7 @@ def odds_str(o):
 # ---- player flags (flags.py): this-season form, usage, matchup, weather, script, injuries/vacated volume, FD line hit-rate ----
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import flags as FLAGS
+import wxfx as WXFX   # 11/28: rain, snow or wind across a board header when the kickoff forecast plainly says so
 FE = FLAGS.Engine(IN, WEEK)
 # owner 11/15 ("Yes build all of that"): the honest chance - what graded FanDuel legs at this price in this market have actually hit,
 # nudged a little by the model (honest.py). The game-card parlay shows and prices itself on it; the model's own number stays in the tooltip.
@@ -1504,7 +1505,7 @@ for a, b, pl_all in blocks:
     _hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b)); _sl, _sr = ((s[3], s[2]) if _hl == b else (s[2], s[3]))
     _sco = sc_order(a, b); _scl = [f"{a} by 10+", "close, low", "shootout", f"{b} by 10+"]; _scw = [f"{a} wins by 10+", "close game, under 51 total points", "shootout (close, 51+ points)", f"{b} wins by 10+"]
     cards.append(f'''<section class="card{" scf" if _sco[0] == 3 else ""}" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
- <header class="hd hmh wash{" ah" if _ah else ""}" style="--wa:{BRAND_COL(_hl)};--wb:{BRAND_COL(_hr)}">{PLAYS}
+ <header class="hd hmh wash{" ah" if _ah else ""}" style="--wa:{BRAND_COL(_hl)};--wb:{BRAND_COL(_hr)}">{WXFX.tag(WXFX.kind(WX.get(frozenset([a, b]))))}{PLAYS}
   <div class="tm a">{badge(_hl)}<b title="{NAMES.get(_hl, _hl)}">{_hl}</b></div>
   <div class="score"><span class="pt">{_sl:.1f}</span><span class="dash">–</span><span class="pt">{_sr:.1f}</span>
     <small>total {s[4]:.1f} · {fav} by {margin:.1f}</small>{SWOOSH}</div>

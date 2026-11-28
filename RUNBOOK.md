@@ -4417,3 +4417,40 @@ seconds), a player sheet (season stats, last five against the line, game log, hi
   (an either-or pair is not linked). Today's game cards link to their own streak legs (`/trends/?g=<gid>`) when they have any.
 - Not done yet (said to the owner): a player sheet that opens in place (the name opens his page for now); opponent logos on the
   builder's best-legs bars; a betslip bar that shows the slip's chance on every page.
+
+## 11/28 12:00 AM: Today opens with the next game; Final cards; weather across headers; numbers on player pages (owner 11/27 8:31 PM)
+The second pass of "I love all 8. Let's do it all ... I also love the idea of weather in the header."
+- **The opener (`#tdhero`, build_today.py).** Straight under the head: the next game by kickoff - or the first one in play - with
+  both logos, a wash of the two teams' colours, the countdown (or the score and clock), the model's score and FanDuel's line, and a
+  row of the other games at the same kickoff ("Same kickoff" / "Also live"). A tap goes to the board before kickoff and to Live
+  during the game. No game left this week = no opener. It is drawn by the page from `window.__TD.games`, which now also carries
+  each game's model score (`pa`, `pb`), FanDuel's home spread and total (`sp`, `tot`), its weather kind (`wx`) and its frozen copy (`fz`).
+- **A game card's three states.** `bs-live` (home.js fires it with the live feed's state; until the first one the clock and the
+  build's own finals stand in) sets `.live` or `.fin` on each card. In play: the header chip says LIVE with the score, the main
+  button becomes "Follow live", and the looks, the parlay and the builder link are gone (`.started`, `.ko`). Over: a Final card -
+  the score with the winner marked, how the model's call did (winner, its side of the spread, its side of the total), the looks it
+  showed before kickoff, and a button to the box score. On a day with more than five games the cards re-sort: in play, still to
+  come, finished (finished games fall under "Show all").
+- **The frozen copy (`data/looks-w<W>.json`).** After kickoff FanDuel's line and props leave the sheet, so the build keeps the last
+  pre-kickoff copy of each card: model score, home spread, total, the looks shown. `freeze()` takes this build's entry for a game
+  that has not kicked off (keeping the last spread / total / looks when this build has none - FanDuel pulls markets just before
+  kickoff) and never touches a game that has. The three Today steps now get `{clone}`: an earlier pass's out/ file wins, else the
+  copy the site is serving (data/ is a MERGE folder). build_site.py copies the file to site/data/. A game with no frozen copy
+  (anything that kicked off before this shipped) shows its score and nothing about the model: nothing is graded after the fact.
+- **The looks are graded in the browser, on demand.** One ESPN box score per game, read when the reader opens "The model's N looks"
+  (at once on a day with one or two games). Yardage, receptions and passing TDs against the line; anytime / 2+ / 3+ TD from rushing
+  + receiving TDs; a player with no stat line stays "no stat line" (he may not have played). Not read from nflverse: its stat file
+  arrives hours later and the card is only on screen the same day.
+- **Weather (wxfx.py, new).** `kind()` gives rain / snow / wind / nothing from a game's forecast by the SAME thresholds as the
+  board's weather words ("Rain likely" 60%+, the last-look "raining now / moving in", "Snow likely" 60%+, "Windy" 15+ mph or gusts
+  30+ when the chance is under 30%), and nothing for a dome or a roof that can close. `tag()` is one empty element; `css()` (shared
+  sheet) draws each kind as two masked layers of inline marks moved by a transform, faint, behind the header's words, still for
+  reduced motion, gone on a finished board. On: board headers, Live headers (dropped when the game is final), the opener (before
+  kickoff). Not on the builder's game headers yet (its data carries no forecast).
+- **Player pages.** The header says the number ("#20") in the line under the name and draws it large and faint behind the
+  header over a wash of the team's colour (helmets.num; no number on the roster = neither).
+- The scoreboard strip no longer asks ESPN on its own when the page has the live feed (it listens for `bs-live`).
+- Tests: tests/today_states.py (new, port 8904: the freeze rule; the opener before, during and after; the card's three states with
+  ESPN played by the test; every line of the Final card worked out from the frozen copy; looks graded from a fake box score);
+  tests/wx_fx.py (new, port 8905: the rule, each board's layer against its own weather words, behind the words, reduced motion,
+  finished boards, the Live headers, player numbers against the roster).

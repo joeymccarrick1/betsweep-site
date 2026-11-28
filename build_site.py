@@ -447,6 +447,7 @@ def _write_shared():
         shutil.copytree(os.path.join(_ASSETS, _HMS.SET), os.path.join(SITE, "s", _HMS.SET), dirs_exist_ok=True); site_css += _HMS.css()
         if os.path.isdir(os.path.join(_ASSETS, "wm")): shutil.copytree(os.path.join(_ASSETS, "wm"), os.path.join(SITE, "s", "wm"), dirs_exist_ok=True)
     import why as _WHY; site_css += _WHY.css()   # 11/27 late: a leg's reasons, a line each (leg cards on Today and Model's Best, the Trend check page)
+    import wxfx as _WXFX; site_css += _WXFX.css()   # 11/28: rain, snow or wind across a game header when the kickoff forecast plainly says so
     # the section tabs ride in the shared script too (11/17): the pages a reprice keeps as they are - the weekly receipts - get
     # their tabs from foldScore() below and have no inline copy. A page that carries its own copy has already defined it.
     app_js = "if(!window.bsTabs){" + _FN.TABS_JS + "}\n" + _inner(APP_JS, "script")
@@ -1394,6 +1395,12 @@ if os.path.exists(os.path.join(OUT, "today.html")):
         made.append(place_plain(os.path.join(OUT, "today_wrapped.html"), os.path.join(SITE, "today"), "/today/"))
     try: shutil.copy(os.path.join(OUT, "today.json"), os.path.join(SITE, "b", "today.json")); print("wrote /b/today.json (morning briefs per game day)")
     except Exception as _e: print("note: /b/today.json not written:", _e)
+    # 11/27: the frozen pre-kickoff copy of each Today card (build_today.py freeze()); the next build reads it back from the clone's data/
+    try:
+        import glob as _gl2
+        os.makedirs(os.path.join(SITE, "data"), exist_ok=True)
+        for _fz in _gl2.glob(os.path.join(OUT, "looks-w*.json")): shutil.copy(_fz, os.path.join(SITE, "data", os.path.basename(_fz)))
+    except Exception as _e: print("note: frozen Today cards not copied:", _e)
     # ---- owner 11/10 9:39 PM ("compact the home page ... some things can move to different or new pages. Slate probably doesn't need to be
     # on the home page"): the sections that left "/" each get an address. Same HTML home.py / build_today.py always made, same CSS and
     # scripts (kickoff state, "+ Slip" bar), one page each: /best/ /slate/ /news/ /targets/ - and /all/, the directory, from NAV_GROUPS.

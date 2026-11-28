@@ -14,7 +14,7 @@ in/legsnaps.json (record, via home.py). Writes out/today.html (body; build_site 
 import json, os, re, sys, html, datetime as dt
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 sys.path.insert(0, HERE)
-import home as HOME, flags as FLAGS, live as LIVE
+import home as HOME, flags as FLAGS, live as LIVE, wxfx as WXFX
 E = html.escape
 TEAM_OF = {"Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Ravens": "BAL", "Buffalo Bills": "BUF", "Carolina Panthers": "CAR", "Chicago Bears": "CHI", "Cincinnati Bengals": "CIN",
            "Cleveland Browns": "CLE", "Dallas Cowboys": "DAL", "Denver Broncos": "DEN", "Detroit Lions": "DET", "Green Bay Packers": "GB", "Houston Texans": "HOU", "Indianapolis Colts": "IND",
@@ -61,7 +61,23 @@ def game_lines():
         elif mk == "Moneyline" and TEAM_OF.get(side.strip()) == away and o is not None: d["ml_away"] = o
     return out
 
-def sections(IN_, OUT_):
+def freeze(prev, fresh, now_ms):
+    """The pre-kickoff copy of what each game's card said (11/27): the Final card on Today reads it once the game is over, when
+    FanDuel's lines and props have left the sheet. prev = {gid: entry} from the last build, fresh = {gid: (kickoff ms, entry)} from this
+    one. A game that has not kicked off takes this build's entry - keeping the last copy of the spread, the total or the looks when this
+    build has none (FanDuel pulls a game's markets shortly before kickoff). A game that has kicked off keeps what it had: nothing about
+    it is ever written after the fact."""
+    out = dict(prev or {})
+    for gid, (ko, e) in fresh.items():
+        if not ko or now_ms >= ko: continue
+        old = out.get(gid) or {}; e = dict(e)
+        for k in ("sp", "tot"):
+            if e.get(k) is None and old.get(k) is not None: e[k] = old[k]
+        if not e.get("looks") and old.get("looks"): e["looks"] = old["looks"]
+        out[gid] = e
+    return out
+
+def sections(IN_, OUT_, clone=None):
     D = HOME.load(IN_, OUT_); bd = D["bd"]; W = bd.get("week") or 0
     games = sorted(bd["games"], key=lambda g: g.get("ko") or 0); G = {g["gid"]: g for g in games}
     try: FE = FLAGS.Engine(IN_, W)
@@ -162,13 +178,15 @@ def sections(IN_, OUT_):
     except Exception: _TRD = {}
     _trg = {}
     for _x in _TRD.get("legs") or []: _trg[_x.get("g")] = _trg.get(_x.get("g"), 0) + 1
-    cards = []
+    cards = []; fresh = {}
     for g in games:
         L = GL.get(g["gid"]) or {}; away, home = L.get("away", g["a"]), L.get("home", g["b"])
         ch = chips(g); ns = news_for(g); bp = parlay_for(g["gid"]); say = vg.get(g["gid"])
         chip_html = "".join(f'<span class="tdc {E(k)}"><b>{E(t)}</b>{E(x)}</span>' for k, t, x in ch)
         news_html = "".join(f'<li class="{E(n["k"])}"><b>{E(tag_short(n))}</b> <span>{E(n["player"])}</span> <small>{E(n["team"])} {E(n.get("pos", ""))}</small></li>' for n in ns)
         legs = legs_by_g.get(g["gid"], [])[:3]
+        fresh[g["gid"]] = (g.get("ko"), {"at": built.isoformat(timespec="minutes"), "pa": round(float(g["pa"]), 1), "pb": round(float(g["pb"]), 1), "sp": L.get("spread"), "tot": L.get("total"),
+                                         "home": L.get("home"), "looks": [{"pl": l["pl"], "tm": l.get("tm", ""), "m": l["m"], "ln": l["ln"], "o": l["o"]} for l in legs]})
         legs_html = "".join(HOME.play_card(HOME._mb(D, l, G)).replace('<article class="play ', f'<article data-k="{E(HOME.leg_key(l["pl"], l["m"], l["ln"]))}" data-gap="{((l.get("raw_p") or l["p"]) - l["bk"]):.4f}" class="play ', 1) for l in legs)
         bp_html = ""
         if bp:
@@ -181,7 +199,7 @@ def sections(IN_, OUT_):
         hunch_html = (f'<a class="tdhunch" href="/hunches/#h-{E(g["gid"])}"><i>Hunch</i><span>{E(hx[0]["title"])}</span><b class="v{E(hx[0]["verdict"].lower().split()[0])}">{E(hx[0]["verdict"])}</b>'
                       + (f'<em>+{len(HUNCH[g["gid"]]) - 1} more</em>' if len(HUNCH[g["gid"]]) > 1 else "") + '</a>') if hx else ""
         cards.append(f'''<article class="tdgame" id="td-{E(g["gid"])}" data-gid="{E(g["gid"])}" data-ko="{g.get("ko") or ""}" data-date="{E(ct_date(g.get("ko")) or "")}" data-fin="{E(g.get("fin", ""))}">
- <header><div class="tdm"><span class="tm">{E(away)}</span><span class="at">@</span><span class="tm">{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="tdcd" data-ko="{g.get("ko") or ""}"></span><span class="gl"></span></div></header>
+ <header><div class="tdm"><span class="tm">{HOME.HM.hm(away)}{E(away)}</span><span class="at">@</span><span class="tm">{HOME.HM.hm(home)}{E(home)}</span></div><div class="tdk"><b>{E(g.get("kick", ""))}</b><span class="tdcd" data-ko="{g.get("ko") or ""}"></span><span class="gl"></span></div></header>
  {stat_strip(g)}
  {f'<p class="tdl">{script_only(g)}</p>' if script_only(g) else ""}
  {(f'<p class="sweepsays"><i>Sweep says</i>{E(say)}</p>') if say else ""}
@@ -194,6 +212,19 @@ def sections(IN_, OUT_):
  </div>
  <div class="tdlinks"><a class="pri" href="/boards/#g-{E(g["gid"])}">Matchup board</a><a href="/build/#g-{E(g["gid"])}">Build a slip</a>{f'<a href="/trends/?g={E(g["gid"])}">Trend check</a>' if _trg.get(g["gid"]) else ""}<a href="/dossier/{E(g["gid"])}/">Preview</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#lv-{E(g["gid"])}">Live</a></div>
 </article>''')
+    # ---- the frozen pre-kickoff copy of each card (freeze() above): this run's file if an earlier pass wrote one, else the copy the
+    # site is serving (the clone's data/ folder is added to, never emptied). The Final card reads it once the game is over.
+    fz_name = f"looks-w{W}.json"; prev = {}
+    for _src in (os.path.join(OUT_, fz_name), os.path.join(clone, "data", fz_name) if clone else None):
+        if not _src or not os.path.exists(_src): continue
+        try:
+            _d = json.load(open(_src))
+            if int(_d.get("week") or 0) == int(W): prev = _d.get("games") or {}; break
+        except Exception: pass
+    FZ = freeze(prev, fresh, now_ms)
+    json.dump({"week": W, "built": built.isoformat(timespec="minutes"), "games": FZ}, open(os.path.join(OUT_, fz_name), "w"), separators=(",", ":"))
+    def wx_kind(g):
+        return WXFX.kind((FE.WX.get(frozenset([g["a"], g["b"]])) if FE else None) or {})
     # ---- news that moved the model (whole week, newest first) -------------------------------------------------------------------------
     sev = {"bad": 0, "watch": 1, "good": 2, "info": 3}
     news = [n for n in NEWS.get("players", []) if n.get("k") in ("bad", "watch", "good") and n.get("bucket") != "TREND"]
@@ -326,6 +357,7 @@ def sections(IN_, OUT_):
 <script data-early>/* owner 11/10, Short view: a visitor who chose it opens there. Only the bare home address (or the installed app's) moves - a link with a hash or any other query stays on this page. ('simple' is the same choice, stored before the view was renamed.) */
 try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 'simple') && location.pathname === '/' && !location.hash && (!location.search || location.search === '?source=app')) location.replace('/short/'); }}catch(e){{}}</script>
 <section class="tdhead"><div class="tdh1"><h1 id="tdtitle">Today</h1><span class="tdsub" id="tdsub">Week {W}</span></div><div class="tdact"><a class="tdshare" id="tdsimple" href="/short/" title="The short version: picks first, reading optional" onclick="try{{localStorage.setItem('bs_view','short')}}catch(e){{}}">Short view</a><a class="tdlive" href="/live/">Live</a></div></section>
+<section class="tdhero" id="tdhero" aria-label="The next game" hidden></section>
 {sweep_html}
 {winners_html}
 <!--bs:promos-->
@@ -340,11 +372,14 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <section class="sec" id="tdnewsS"><div class="sech"><h2 class="t">News desk</h2><a class="seeall" href="/news/">All {len(news)} notes</a></div>{("<ul class='tdnewsl' id='tdnewsl' data-cap='3'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}</section>
 <section class="sec" id="record"><div class="sech"><h2 class="t">Track record</h2><a class="seeall" href="/receipts/">Every week</a></div>{rec_html}<p class="none" style="margin-top:8px;font-size:12.5px"><a href="/how/" style="color:var(--ink)">How BetSweep picks</a></p></section>
 <div class="hsbar" id="hsbar" data-week="{E(str(W))}"><b></b><a href="/build/">Open betslip</a></div>
-<script>window.__TD = {json.dumps({"week": W, "built": built.isoformat(), "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""), "home": (GL.get(g["gid"]) or {}).get("home", g["b"]), "away": (GL.get(g["gid"]) or {}).get("away", g["a"])} for g in games], "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
+<script>window.__TD = {json.dumps({"week": W, "built": built.isoformat(), "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""), "home": (GL.get(g["gid"]) or {}).get("home", g["b"]), "away": (GL.get(g["gid"]) or {}).get("away", g["a"]),
+                                                                                         "pa": round(float(g["pa"]), 1), "pb": round(float(g["pb"]), 1), "sp": (GL.get(g["gid"]) or {}).get("spread"), "tot": (GL.get(g["gid"]) or {}).get("total"),
+                                                                                         "wx": wx_kind(g), "fz": FZ.get(g["gid"])} for g in games],
+                                                                              "col": {t: HOME.HM.COL[t][0] for g in games for t in (g["a"], g["b"]) if t in HOME.HM.COL}, "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
 {TODAY_JS}
 <script>{LIVE.LIVE_JS}</script>
-{HOME.home_js(games)}
 {HOME.strip_js(games)}
+{HOME.home_js(games)}
 {HOME.HOME_SLIP_JS}
 '''
     if swb and any(vg.get(g["gid"]) and swb.get(g["gid"]) for g in games): body += SWC.get("js", "") + "\n"   # the share-card style + script, once (same one the boards carry)
@@ -419,6 +454,45 @@ TODAY_CSS = r"""
 @media (max-width:480px){ .tdgame.compact:not(.open) .tdtog em{display:none} }
 .tdall{display:flex;gap:8px;margin:10px 0 0} .tdall a{flex:1;text-align:center;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;background:var(--card)} .tdall a:hover{border-color:var(--red)}
 .nwh{margin-top:22px}
+/* 11/28: the page opens with the next game - or the one in play (owner 11/27 8:31 PM, "I love all 8": Today opens with the next game) */
+.tdhero{max-width:1360px;margin:12px auto 0;padding:0 16px} .tdhero[hidden]{display:none}
+.thl{position:relative;display:grid;gap:7px;padding:11px 14px 12px;border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);
+ background:linear-gradient(90deg,color-mix(in srgb,var(--wa,transparent) 40%,transparent),transparent 42%,transparent 58%,color-mix(in srgb,var(--wb,transparent) 40%,transparent)),var(--card)}
+.thk{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.thk .lv{color:var(--redtxt,var(--red))} .thk .lv::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:1px;animation:lsp 1.4s ease-in-out infinite}
+.thm{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.tht{display:flex;align-items:center;gap:8px;font-family:var(--brand);font-style:italic;font-weight:800;font-size:30px;letter-spacing:-.01em;line-height:1;min-width:0} .tht.r{justify-content:flex-end}
+.tht i.hm{height:46px;margin:0;vertical-align:0}
+.thc{text-align:center;font-family:var(--display)} .thc b{display:block;font-weight:800;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap} .thc b i{font-style:normal;color:var(--red);margin:0 6px}
+.thc small{display:block;margin-top:4px;font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute);white-space:nowrap}
+.thf{text-align:center;font-size:12.5px;line-height:1.35;color:var(--mute)} .thf b{color:var(--ink);font-weight:600}
+.thx{display:flex;gap:6px;overflow-x:auto;padding:8px 0 0;scrollbar-width:none} .thx::-webkit-scrollbar{display:none}
+.thx span{flex:none;align-self:center;font-size:12px;color:var(--mute);margin-right:2px}
+.thx a{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);text-decoration:none;font-family:var(--display);font-weight:700;font-size:13px}
+.thx a i.hm{height:16px;margin:0;vertical-align:0}
+@media (max-width:420px){ .tht{font-size:26px;gap:6px} .tht i.hm{height:40px} .thc b{font-size:26px} }
+@media (prefers-reduced-motion: reduce){ .thk .lv::before{animation:none} }
+/* a team logo in front of each side of a game card */
+.tdm .tm{display:inline-flex;align-items:center;gap:6px} .tdm .tm i.hm{height:28px;margin:0;vertical-align:0} .tdm{align-items:center}
+/* 11/28: a game that is over turns into its Final card (owner 11/27 8:31 PM: Final cards on Today) - the score, how the model's call
+   did against it, and the looks it showed before kickoff, graded from the box score when the reader asks */
+.tdgame.fin .tdstats,.tdgame.fin > .tdl,.tdgame.fin > .sweepsays,.tdgame.fin > .tdtog,.tdgame.fin > .tdmore,.tdgame.fin .tdcd{display:none !important}
+.tdgame.fin.compact:not(.open) > .tdlinks{flex:1 1 100%}
+.tdfin{display:grid;gap:10px;min-width:0}
+.fsc{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;background:var(--chalk);border-radius:12px;padding:10px 12px}
+.fsc .ft{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:19px;color:var(--mute);min-width:0} .fsc .ft.r{justify-content:flex-end}
+.fsc .ft i.hm{height:30px;margin:0;vertical-align:0} .fsc .ft em{font-style:normal;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.fsc .ft.w{color:var(--ink)} .fsc .fl{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.fcall,.flk{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.fcall li{display:grid;grid-template-columns:16px 56px minmax(0,1fr);gap:8px;align-items:baseline;font-size:13.5px;line-height:1.35}
+.fcall li > i,.flk li > i{font-style:normal;font-weight:700;text-align:center;color:var(--mute)} .fcall li.hit > i,.flk li.hit > i{color:var(--good)} .fcall li.miss > i,.flk li.miss > i{color:var(--bad)}
+.fcall li > span{font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.fcall li b{font-weight:600} .fcall li small{display:block;color:var(--mute);font-size:12.5px}
+.fnote{margin:0;font-size:12px;line-height:1.4;color:var(--mute)} .fnote a{color:var(--ink)}
+.flt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:40px;padding:0 12px;font:inherit;font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;cursor:pointer}
+.flt small{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--mute)}
+.flk[hidden]{display:none} .flk li{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:13.5px;line-height:1.35}
+.flk li b{font-weight:600} .flk li small{color:var(--mute);font-size:12.5px;margin-left:4px} .flk li em{font-style:normal;font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
 /* 11/27 late: a game that has kicked off no longer offers its parlay or a way into the builder (its looks leave by home.py's kickoff rule) */
 .tdgame.ko .tdbp,.tdgame.ko .tdlinks a[href^="/build/"],.tdgame.ko .tdlinks a[href^="/trends/"]{display:none}
 @media (max-width:560px){ .tdnews{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px} .tdnews li{min-width:0;line-height:1.3} }
@@ -534,6 +608,110 @@ TODAY_JS = r"""<script>
       var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'betsweep-today.png'; a.click();
     }).catch(function(e){ console.warn(e); }).then(function(){ sb.disabled = false; sb.textContent = 'Share'; }); }); }
 })();
+/* 11/28 (owner 11/27 8:31 PM, "I love all 8"): the opener - the next game, or the one in play - and each game card's state:
+   a countdown before kickoff, the score while it is on, and a Final card afterwards. The state comes from the page's live feed
+   (home.py fires "bs-live" with it); until the first one lands the clock and the build's own final scores stand in. */
+(function(){
+  var T = window.__TD || {games: []}, COL = T.col || {}, LIVE = null, TZ = 'America/Chicago';
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+  function hm(t){ return /^[A-Z]{2,3}$/.test(t) ? '<i class="hm" data-hm="' + t + '" role="img" aria-label="' + t + '"></i>' : ''; }
+  function stateOf(g){ var s = LIVE && LIVE[g.gid]; if(s) return s; var now = Date.now();
+    if(g.fin) return {st: 'post', finTxt: g.fin}; if(g.ko && now >= g.ko + 4.5 * 3600e3) return {st: 'post'}; if(g.ko && now >= g.ko) return {st: 'in', nofeed: true}; return {st: 'pre'}; }
+  function scoreOf(g, s){ var a = s && s.sa != null && s.sa !== '' ? +s.sa : null, b = s && s.sb != null && s.sb !== '' ? +s.sb : null;
+    if(a == null || b == null || isNaN(a) || isNaN(b)){ var m = /^([A-Z]{2,3})\s+(\d+)\s*[–-]\s*([A-Z]{2,3})\s+(\d+)$/.exec(String((s && s.finTxt) || g.fin || '').trim()); if(!m) return null;
+      var by = {}; by[m[1]] = +m[2]; by[m[3]] = +m[4]; if(by[g.a] == null || by[g.b] == null) return null; a = by[g.a]; b = by[g.b]; }
+    var o = {}; o[g.a] = a; o[g.b] = b; return o; }
+  function left(ms){ var m = Math.max(0, Math.floor(ms / 60000)), h = Math.floor(m / 60), d = Math.floor(h / 24); return d >= 1 ? d + 'd ' + (h % 24) + 'h' : h >= 1 ? h + 'h ' + (m % 60) + 'm' : m + 'm'; }
+  function sgn(x){ return !x ? 'PK' : (x > 0 ? '+' : '−') + Math.abs(x); }
+  function lineOf(g){ var parts = [], hi = g.pa >= g.pb ? g.a : g.b; if(isFinite(g.pa) && isFinite(g.pb)) parts.push('Model <b>' + esc(hi) + ' ' + Math.max(g.pa, g.pb).toFixed(0) + '–' + Math.min(g.pa, g.pb).toFixed(0) + '</b>');
+    if(g.sp != null && g.home) parts.push(!g.sp ? esc(g.home) + ' PK' : g.sp < 0 ? esc(g.home) + ' −' + Math.abs(g.sp) : esc(g.away || g.home) + ' −' + Math.abs(g.sp));
+    if(g.tot != null) parts.push('O/U ' + g.tot); return parts.join(' · '); }
+  /* ---- the opener ---- */
+  function hero(){ var el = document.getElementById('tdhero'); if(!el) return; var now = Date.now();
+    var live = T.games.filter(function(g){ return stateOf(g).st === 'in'; }), next = T.games.filter(function(g){ return g.ko && stateOf(g).st === 'pre'; }).sort(function(x, y){ return x.ko - y.ko; });
+    var g = live[0] || next[0]; if(!g){ el.hidden = true; el.innerHTML = ''; return; }
+    var s = stateOf(g), on = s.st === 'in', sc = on ? scoreOf(g, s) : null, away = g.away || g.a, home = g.home || g.b;
+    var more = (on ? live : next.filter(function(x){ return x.ko === g.ko; })).filter(function(x){ return x !== g; });
+    var mid = on ? (sc ? '<b>' + sc[away] + '<i>–</i>' + sc[home] + '</b>' : '<b>Live</b>') + '<small>' + esc(s.nofeed || !s.det ? 'In progress' : s.det) + '</small>'
+                 : '<b>' + esc(left(g.ko - now)) + '</b><small>' + esc(g.kick || '') + '</small>';
+    var h = '<a class="thl wxhost" href="' + (on ? '/live/#lv-' : '/boards/#g-') + esc(g.gid) + '" style="--wa:' + esc(COL[away] || 'transparent') + ';--wb:' + esc(COL[home] || 'transparent') + '" data-gid="' + esc(g.gid) + '" data-st="' + (on ? 'in' : 'pre') + '">' +
+      (!on && g.wx ? '<i class="wxfx ' + esc(g.wx) + '" aria-hidden="true"></i>' : '') +
+      '<span class="thk">' + (on ? '<em class="lv" style="font-style:normal">Live now</em>' : '<em style="font-style:normal">Next up</em>') + '<em style="font-style:normal">' + (on ? 'Follow live' : 'Matchup board') + ' →</em></span>' +
+      '<span class="thm"><span class="tht">' + hm(away) + '<b>' + esc(away) + '</b></span><span class="thc">' + mid + '</span><span class="tht r"><b>' + esc(home) + '</b>' + hm(home) + '</span></span>' +
+      (lineOf(g) ? '<span class="thf">' + lineOf(g) + '</span>' : '') + '</a>';
+    if(more.length) h += '<div class="thx"><span>' + (on ? 'Also live' : 'Same kickoff') + '</span>' + more.map(function(x){ var xa = x.away || x.a, xh = x.home || x.b;
+      return '<a href="' + (on ? '/live/#lv-' : '/boards/#g-') + esc(x.gid) + '">' + hm(xa) + esc(xa) + ' @ ' + esc(xh) + hm(xh) + '</a>'; }).join('') + '</div>';
+    if(el.getAttribute('data-h') !== h){ el.setAttribute('data-h', h); el.innerHTML = h; } el.hidden = false; }
+  /* ---- the Final card ---- */
+  function legLine(m, ln){ var n = Math.round(+ln); if(/TD$/.test(m) && m.indexOf('Passing') < 0) return m; if(m === 'Passing TDs') return n + '+ passing TDs'; if(m === 'Receptions') return n + '+ receptions';
+    if(m === 'Rush + Rec Yards') return n + '+ rush + rec yards'; return n + '+ ' + String(m).toLowerCase(); }
+  function odds(o){ o = Math.round(+o); return isNaN(o) ? '' : (o > 0 ? '+' + o : String(o).replace('-', '−')); }
+  function calls(g, fz, A, H, away, home){ if(!fz || !isFinite(fz.pa) || !isFinite(fz.pb)) return ''; var rows = [], mA = away === g.a ? fz.pa : fz.pb, mH = home === g.b ? fz.pb : fz.pa, mm = mH - mA, am = H - A;
+    var win = A === H ? 'It ended level' : (H > A ? home : away) + ' won by ' + Math.abs(am);
+    if(Math.abs(mm) < 0.5) rows.push(['', 'Winner', 'Model had it a toss-up', win]);
+    else rows.push([A === H ? 'push' : ((am > 0) === (mm > 0)) ? 'hit' : 'miss', 'Winner', 'Model had ' + (mm > 0 ? home : away) + ' by ' + Math.abs(mm).toFixed(1), win]);
+    if(fz.sp != null && fz.home === home && Math.abs(mm + fz.sp) >= 0.05){ var sp = +fz.sp, side = (mm + sp) > 0 ? home : away, cov = am + sp;
+      rows.push([cov === 0 ? 'push' : ((cov > 0) === (side === home)) ? 'hit' : 'miss', 'Spread', 'Model leaned ' + (side === home ? home + ' ' + sgn(sp) : away + ' ' + sgn(-sp)), cov === 0 ? 'It landed on the number' : (cov > 0 ? home : away) + ' covered by ' + Math.abs(cov)]); }
+    if(fz.tot != null && Math.abs(mA + mH - fz.tot) >= 0.05){ var tot = +fz.tot, over = (mA + mH) > tot, pts = A + H;
+      rows.push([pts === tot ? 'push' : ((pts > tot) === over) ? 'hit' : 'miss', 'Total', 'Model leaned ' + (over ? 'over ' : 'under ') + tot, pts + ' points']); }
+    var mark = {hit: '✓', miss: '✗', push: '='};
+    return '<ul class="fcall">' + rows.map(function(r){ return '<li class="' + r[0] + '"><i aria-hidden="true">' + (mark[r[0]] || '·') + '</i><span>' + r[1] + '</span><div><b>' + esc(r[2]) + '</b><small>' + esc(r[3]) + '</small></div></li>'; }).join('') + '</ul>'; }
+  function when(iso){ try { return new Date(iso).toLocaleString('en-US', {weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: TZ}); } catch(e){ return ''; } }
+  function finalCard(card, g, s){ var sc = scoreOf(g, s), key = sc ? sc[g.a] + '-' + sc[g.b] : 'none'; if(card.getAttribute('data-fin-shown') === key) return; card.setAttribute('data-fin-shown', key);
+    var box = card.querySelector('.tdfin'); if(!box){ box = document.createElement('div'); box.className = 'tdfin'; var hd = card.querySelector('header'); hd.parentNode.insertBefore(box, hd.nextSibling); }
+    if(!sc){ box.innerHTML = '<p class="fnote">Final. The score has not reached this page yet: <a href="/live/#box-' + esc(g.gid) + '">box score on Live</a>.</p>'; return; }
+    var away = g.away || g.a, home = g.home || g.b, A = sc[away], H = sc[home], fz = g.fz || null, lk = (fz && fz.looks) || [];
+    var h = '<div class="fsc" aria-label="Final: ' + esc(away) + ' ' + A + ', ' + esc(home) + ' ' + H + '"><span class="ft' + (A > H ? ' w' : '') + '">' + hm(away) + '<b>' + esc(away) + '</b><em>' + A + '</em></span><span class="fl">Final</span>' +
+      '<span class="ft r' + (H > A ? ' w' : '') + '"><em>' + H + '</em><b>' + esc(home) + '</b>' + hm(home) + '</span></div>' + calls(g, fz, A, H, away, home);
+    if(lk.length) h += '<button type="button" class="flt" aria-expanded="false" data-g="' + esc(g.gid) + '"><span>The model’s ' + (lk.length === 1 ? 'look' : lk.length + ' looks') + ' <small class="flr"></small></span><i aria-hidden="true">▾</i></button>' +
+      '<ul class="flk" hidden>' + lk.map(function(l, i){ return '<li data-i="' + i + '"><i aria-hidden="true">·</i><div><b>' + esc(l.pl) + '</b><small>' + esc(legLine(l.m, l.ln)) + ' · ' + esc(odds(l.o)) + '</small></div><em></em></li>'; }).join('') + '</ul>';
+    if(fz && fz.at) h += '<p class="fnote">The model’s score, FanDuel’s line' + (lk.length ? ' and the looks' : '') + ' are the last copy before kickoff (' + esc(when(fz.at)) + ' CT).</p>';
+    box.innerHTML = h; }
+  /* the looks are graded from ESPN's box score, and only when the reader opens them: one request per game */
+  var EA = {WSH: 'WAS', LAR: 'LA', JAC: 'JAX'}, BOXP = {};
+  function nrm(n){ return String(n || '').toLowerCase().replace(/[.'’]/g, '').replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').replace(/\s+/g, ' ').trim(); }
+  function ymd(t){ var d = new Date(t); return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
+  function boxOf(g){ if(BOXP[g.gid]) return BOXP[g.gid]; var S = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl', num = function(v){ var x = parseFloat(String(v).split('/')[0]); return isFinite(x) ? x : 0; };
+    var s = LIVE && LIVE[g.gid], eid = s && s.eid ? Promise.resolve(s.eid) : fetch(S + '/scoreboard?dates=' + ymd(g.ko - 864e5) + '-' + ymd(g.ko + 864e5), {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(sb){
+      var id = null; ((sb && sb.events) || []).forEach(function(ev){ var c = (ev.competitions || [])[0] || {}, ts = (c.competitors || []).map(function(x){ var a = x.team && x.team.abbreviation; return EA[a] || a; }); if(ts.indexOf(g.a) >= 0 && ts.indexOf(g.b) >= 0) id = ev.id; }); return id; });
+    return BOXP[g.gid] = eid.then(function(id){ if(!id) return null; return fetch(S + '/summary?event=' + id, {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : null; }); }).then(function(sm){ if(!sm) return null; var box = {}, tds = {};
+      (((sm.boxscore || {}).players) || []).forEach(function(tm){ (tm.statistics || []).forEach(function(cat){ var keys = cat.keys || [];
+        (cat.athletes || []).forEach(function(at){ var nm = at.athlete && at.athlete.displayName; if(!nm) return; var st = {}; keys.forEach(function(k, i){ st[k] = (at.stats || [])[i]; }); var row = box[nrm(nm)] = box[nrm(nm)] || [0, 0, 0, 0, 0, 0, 0, 0, 0];
+          if(cat.name === 'passing'){ row[0] = num(st.passingYards); row[1] = num(st.passingTouchdowns); row[2] = num(st.interceptions); }
+          if(cat.name === 'rushing'){ row[3] = num(st.rushingYards); row[4] = num(st.rushingTouchdowns); }
+          if(cat.name === 'receiving'){ row[5] = num(st.receptions); row[6] = num(st.receivingYards); row[7] = num(st.receivingTouchdowns); row[8] = num(st.longReception); } }); }); });
+      return Object.keys(box).length >= 10 ? {box: box} : null; }).catch(function(){ return null; }); }
+  var SK = {'Passing Yards': 0, 'Passing TDs': 1, 'Rushing Yards': 3, 'Receptions': 5, 'Receiving Yards': 6, 'Longest Reception': 8};
+  function grade(l, d){ var row = d.box[nrm(l.pl)], m = l.m; if(!row) return null;
+    if(/TD$/.test(m) && m.indexOf('Passing') < 0 && m !== 'First TD'){ var n = row[4] + row[7], need = m === '2+ TD' ? 2 : m === '3+ TD' ? 3 : 1; return {hit: n >= need, val: n + (n === 1 ? ' TD' : ' TDs')}; }
+    var v = m === 'Rush + Rec Yards' ? row[3] + row[6] : SK[m] != null ? row[SK[m]] : null; if(v == null) return null; return {hit: v >= Math.round(+l.ln), val: String(v)}; }
+  function openLooks(btn){ var card = btn.closest('.tdgame'), ul = card.querySelector('.flk'), g = T.games.filter(function(x){ return x.gid === btn.getAttribute('data-g'); })[0]; if(!ul || !g) return;
+    var on = ul.hidden; ul.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(!on || btn.getAttribute('data-done')) return; btn.setAttribute('data-done', '1');
+    var note = btn.querySelector('.flr'); note.textContent = 'reading the box score…';
+    boxOf(g).then(function(d){ if(!d){ note.textContent = 'box score not available here'; btn.removeAttribute('data-done'); delete BOXP[g.gid]; return; } var hit = 0, n = 0, open = 0;
+      [].forEach.call(ul.children, function(li){ var l = g.fz.looks[+li.getAttribute('data-i')], r = grade(l, d); if(!r){ open++; li.querySelector('em').textContent = 'no stat line'; return; }
+        n++; if(r.hit) hit++; li.className = r.hit ? 'hit' : 'miss'; li.querySelector('i').textContent = r.hit ? '✓' : '✗'; li.querySelector('em').textContent = r.val; });
+      note.textContent = n ? hit + ' of ' + n + ' hit' + (open ? ' · ' + open + ' not graded' : '') : 'not graded'; }); }
+  document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.flt'); if(b) openLooks(b); });
+  /* ---- each card's state, and the order: in play, then still to come, then finished ---- */
+  function cards(){ var shown = 0; T.games.forEach(function(g){ var card = document.getElementById('td-' + g.gid); if(!card) return; var s = stateOf(g), st = s.st, sc = scoreOf(g, s), away = g.away || g.a, home = g.home || g.b;
+      card.classList.toggle('live', st === 'in'); card.classList.toggle('fin', st === 'post'); if(card.classList.contains('show')) shown++;
+      var chip = card.querySelector('.tdk .gl'); if(chip){ var c = st === 'in' ? '<i>LIVE</i>' + (sc ? sc[away] + '–' + sc[home] : '') + (s.det && !s.nofeed ? ' <small>' + esc(s.det) + '</small>' : '') : st === 'post' ? '<i>FINAL</i>' : ''; if(chip.innerHTML !== c) chip.innerHTML = c; }
+      var pri = card.querySelector('.tdlinks a.pri'); if(pri){ if(!pri.getAttribute('data-h0')){ pri.setAttribute('data-h0', pri.getAttribute('href')); pri.setAttribute('data-t0', pri.textContent); }
+        var want = st === 'in' ? ['/live/#lv-' + g.gid, 'Follow live'] : st === 'post' ? ['/live/#box-' + g.gid, 'Box score and plays'] : [pri.getAttribute('data-h0'), pri.getAttribute('data-t0')];
+        if(pri.getAttribute('href') !== want[0]){ pri.setAttribute('href', want[0]); pri.textContent = want[1]; } }
+      if(st === 'post') finalCard(card, g, s); });
+    var wrap = document.getElementById('tdgames'), cs = wrap ? [].slice.call(wrap.querySelectorAll('.tdgame.show')) : []; if(cs.length > 1){
+      var rank = function(el){ return el.classList.contains('live') ? 0 : el.classList.contains('fin') ? 2 : 1; };
+      var want = cs.slice().sort(function(x, y){ return rank(x) - rank(y) || (+x.getAttribute('data-ko') - +y.getAttribute('data-ko')); });
+      if(!want.every(function(el, i){ return el === cs[i]; })) want.forEach(function(el){ wrap.appendChild(el); });
+      if(document.getElementById('tdallb')) want.forEach(function(el, i){ el.classList.toggle('tdx', i >= 3); }); }
+    /* on a day with one or two games the cards are open, so their looks are read at once */
+    if(shown && shown <= 2) [].forEach.call(document.querySelectorAll('.tdgame.show.fin .flt:not([data-done])'), function(b){ if(b.getAttribute('aria-expanded') !== 'true') openLooks(b); }); }
+  function paint(){ try { cards(); hero(); } catch(e){ if(window.console) console.warn('today state', e); } }
+  document.addEventListener('bs-live', function(e){ if(e.detail) LIVE = e.detail; paint(); });
+  paint(); setInterval(paint, 30000);
+})();
 </script>"""
 if __name__ == "__main__":
-    sections(IN, OUT)
+    sections(IN, OUT, sys.argv[1] if len(sys.argv) > 1 else None)   # the site clone: the frozen pre-kickoff copy the site is serving lives in its data/ folder
