@@ -330,6 +330,12 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .setlh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:8px 12px;font:inherit;text-align:left;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 .setlh span{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase} .setlh small{font-family:var(--body);font-weight:500;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--mute);margin-left:8px} .setlh .car{font-style:normal;color:var(--mute)} .setlh small b.w{color:var(--good);font-weight:700}
 .setln{margin:0;font-size:13px;color:var(--mute)}
+.winstrip{display:grid;gap:8px;margin:0 0 8px}
+.winline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--good) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--good) 9%,var(--card))}
+.winline span{min-width:0} .winline b{display:block;font-family:var(--display);font-weight:800;font-size:20px;line-height:1.1;letter-spacing:.01em;color:var(--good)}
+.winline small{display:block;margin-top:2px;font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.winstrip .winline button.winshare{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;min-height:40px;padding:0 14px;border-radius:99px;border:1.5px solid var(--good);background:transparent;color:var(--good);cursor:pointer;white-space:nowrap}
+.winstrip .winline button.winshare:disabled{opacity:.6}
 .tmsel{display:flex;gap:8px;padding:10px 0 6px;margin-top:-10px;position:sticky;top:-10px;background:var(--card);z-index:2} .tmb{flex:1;font:inherit;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);cursor:pointer} .tmb.on{background:var(--red);border-color:var(--red);color:#fff}
 .tfbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .tfb{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font:inherit;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;text-align:left}
@@ -505,9 +511,16 @@ JS = r"""
       x.textBaseline = 'alphabetic'; x.font = "800 150px " + disp; x.fillText(am(price), W / 2, 590);
       var nm = String(sl.name || '').trim(); if(nm && !/^(slip|my slip|builder slip)\b/i.test(nm)){ var ns = fit(nm, "italic 800 SZpx " + brand, 54, W - 2 * pad, 34); x.font = "italic 800 " + ns + "px " + brand; x.fillStyle = '#97a5b3'; x.fillText(nm, W / 2, 664); }
       var n = Math.min(ls.length, 9), top = 742, room = 1120 - top, step = Math.min(104, room / n), fs = Math.max(30, Math.min(58, step * 0.56)); x.textAlign = 'left';
+      /* one column for the logos, as wide as the widest allowed, so every leg's words start on the same line (a total has no logo and leaves its place empty) */
+      var lcol = ls.slice(0, n).some(function(l){ var g = LG[wteam(l)]; return g && g.naturalWidth; }) ? fs * 0.92 * 1.5 + 18 : 0;
       ls.slice(0, n).forEach(function(l, i){ var y = top + i * step + step * 0.62, t = legText(l);
         x.fillStyle = '#5fcf93'; x.font = "800 " + fs + "px " + disp; x.fillText('✓', pad, y);
-        var sz = fit(t, "600 SZpx " + body, fs, W - 2 * pad - 70, 24); x.font = "600 " + sz + "px " + body; x.fillStyle = '#efe9da'; x.fillText(t, pad + 62, y); });
+        /* 11/28: the leg's team logo after the tick (the owner's logo files, the dark-background set): a player's team, or the side of a
+           moneyline or spread. A total has no side, so it gets none. */
+        var lg = LG[wteam(l)], lx = pad + 62;
+        if(lg && lg.naturalWidth){ var lh2 = fs * 0.92, lw2 = Math.min(lh2 * lg.naturalWidth / lg.naturalHeight, lh2 * 1.5); x.drawImage(lg, lx + (lcol - 18 - lw2) / 2, y - lh2 * 0.82, lw2, lh2); }
+        lx += lcol;
+        var sz = fit(t, "600 SZpx " + body, fs, W - pad - lx - 8, 24); x.font = "600 " + sz + "px " + body; x.fillStyle = '#efe9da'; x.fillText(t, lx, y); });
       if(ls.length > n){ x.fillStyle = '#97a5b3'; x.font = "500 30px " + body; x.fillText('+ ' + (ls.length - n) + ' more', pad + 62, top + n * step + 30); }
       x.strokeStyle = '#2a3b4b'; x.lineWidth = 2; x.beginPath(); x.moveTo(pad, 1168); x.lineTo(W - pad, 1168); x.stroke();
       if(logo && logo.naturalWidth){ var lw = 400, lh = lw * logo.naturalHeight / logo.naturalWidth; x.drawImage(logo, pad, 1262 - lh / 2, lw, lh); }
@@ -515,12 +528,19 @@ JS = r"""
       x.textAlign = 'right'; x.fillStyle = '#97a5b3'; x.font = "600 30px " + body;
       var st = +sl.stake > 0 ? '$' + (+sl.stake).toFixed(2) + ' → $' + ((+sl.stake) * dec(price)).toFixed(2) : 'Week ' + D.week;
       x.fillText(st, W - pad, 1250); x.fillText('betsweep.co', W - pad, 1294);
+      c.__logos = Object.keys(LG).filter(function(k){ return LG[k] && LG[k].naturalWidth; });   /* which team logos made it onto the picture (tests/live_finals.py) */
       c.toBlob(function(blob){ btn.disabled = false; if(!blob) return;
         var f = new File([blob], 'betsweep-cashed-w' + D.week + '.png', {type: 'image/png'});
         try { if(navigator.canShare && navigator.canShare({files: [f]})){ navigator.share({files: [f], title: 'Cashed on BetSweep', text: 'Cashed ' + am(price) + ' - betsweep.co'}).catch(function(){}); return; } } catch(e){}
         var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, 'image/png'); }
     var go = function(img){ try { if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ draw(img); }); return; } } catch(e){} draw(img); };
-    var im = new Image(); im.onload = function(){ go(im); }; im.onerror = function(){ go(null); }; im.src = '/wordmark.png';
+    /* the wordmark and the legs' team logos load first (a logo that will not load is simply left out); then the picture is drawn once */
+    function wteam(l){ return (!l.gl || l.gl.side === l.tm) ? tcode(l.tm || '') : ''; }
+    var LG = {}, wm = null, waiting = 1, fired = false, fire = function(){ if(fired || --waiting > 0) return; fired = true; go(wm); };
+    ls.slice(0, 9).forEach(function(l){ var k = wteam(l); if(!k || k in LG) return; LG[k] = null; waiting++;
+      var ti = new Image(); ti.onload = function(){ LG[k] = ti; fire(); }; ti.onerror = fire; ti.src = '/s/nfl/' + k.toLowerCase() + '.webp'; });
+    var im = new Image(); im.onload = function(){ wm = im; fire(); }; im.onerror = fire; im.src = '/wordmark.png';
+    setTimeout(function(){ if(!fired){ fired = true; go(wm); } }, 2500);   /* a picture that never answers does not hold the card up */
     window.__bsWinCard = c;
   }
   window.__bsWin = function(keys, name, odds, stake){ winCard({id: 'demo', name: name, keys: keys, odds: odds, stake: stake}, document.createElement('button')); return window.__bsWinCard; };   // tests/deepdive_pages.py
@@ -738,6 +758,11 @@ JS = r"""
   // ---- DOM diff: replace only the cards whose HTML changed, keep the rest (and the scroll position) in place ----
   var LASTSCROLL = 0, RENDER_WAIT = null, LASTHTML = {};
   ['scroll', 'touchmove', 'touchstart', 'wheel'].forEach(function(ev){ window.addEventListener(ev, function(){ LASTSCROLL = Date.now(); }, {passive: true}); });
+  /* 11/28: a tap is a request, not a scroll. The touch that makes a tap had just set LASTSCROLL, so on a phone every tap that redraws
+     without force (open a game, Settled, a slip, a star, a quarter filter) waited out the "never re-render under a finger" second
+     before it showed - a mouse click showed at once, and so did every test, which clicked. A click only arrives once the finger is
+     up, so it lifts the hold, first, before any tap handler runs. An update that lands while a finger is really moving is still held. */
+  window.addEventListener('click', function(){ LASTSCROLL = 0; }, true);
   function applyParts(wrap, parts){
     var want = {}; parts.forEach(function(p){ want[p[0]] = true; });
     wrap.style.minHeight = wrap.offsetHeight + 'px';   // no height collapse mid-swap
@@ -827,11 +852,17 @@ JS = r"""
       if(SLDIRTY){ SLDIRTY = false; saveSlips(); }
       var cOpen = [], cSet = [], sW = 0, sL = 0, sV = 0; ALLS.forEach(function(sl, i){ if(sl.res && !sl.builder){ cSet.push(cards[i]); if(sl.res === 'W') sW++; else if(sl.res === 'L') sL++; else sV++; } else cOpen.push(cards[i]); });
       var so2 = OPEN.__setl === true, setl = cSet.length ? '<button type="button" class="setlh" data-setl="1" aria-expanded="' + so2 + '"><span>Settled<small>' + [sW ? '<b class="w">' + sW + ' cashed</b>' : '', sL ? sL + ' dead' : '', sV ? sV + ' void' : ''].filter(Boolean).join(' · ') + '</small></span><i class="car">' + (so2 ? '▴' : '▾') + '</i></button>' + (so2 ? cSet.join('') : '') : '';
+      /* owner 11/27 8:31 PM ("I love all 8": share your winner) and 11/28 1:29 AM ("make sure all 8 ... are finished"): since decided slips fold
+         away under Settled the moment they are graded, a cashed slip's "Share the win" button was out of sight. The newest two winners
+         now have a line of their own above the fold - the price it cashed at and the button - whenever the fold is shut. */
+      var winLines = (!so2 && sW) ? ALLS.filter(function(sl){ return sl.res === 'W' && !sl.builder && slipLegs(sl).length; }).sort(function(a, b){ return (+b.resAt || 0) - (+a.resAt || 0); }).slice(0, 2).map(function(sl){
+        var wl = slipLegs(sl), pr = sl.odds || amer(wl.reduce(function(a, l){ return a * dec(l.o); }, 1)), nm = String(sl.name || '').trim();
+        return '<div class="winline"><span><b>Cashed ' + esc(am(pr)) + '</b><small>' + esc((nm ? nm + ' \u00b7 ' : '') + wl.length + (wl.length === 1 ? ' leg' : ' legs')) + '</small></span><button type="button" class="rfr winshare" data-sid="' + esc(sl.id) + '">Share the win</button></div>'; }).join('') : '', winStrip = winLines ? '<div class="winstrip">' + winLines + '</div>' : '';   /* no empty box when a winner's legs are not in this week's data */
       var noOpen = (!cOpen.length && cSet.length) ? '<p class="setln">No open slips. ' + (cSet.length === 1 ? 'Your saved slip is' : 'All ' + cSet.length + ' saved slips are') + ' settled.</p>' : '';
       var ngr = 0; cards.forEach(function(h){ if(/class="scp cashed"/.test(h)) nc++; else if(/class="scp dead"/.test(h)) nd2++; else if(/class="scp wait"/.test(h)) ngr++; else { var m = h.match(/class="scp "><b>(\d+)%/); if(m) chances.push(+m[1]); } });
       var yo = ('__slips' in OPEN) ? OPEN.__slips : !!FOCUS;
       var sum = ALLS.length + ' slip' + (ALLS.length === 1 ? '' : 's') + (nc ? ' · ' + nc + ' cashed' : '') + (nd2 ? ' · ' + nd2 + ' dead' : '') + (ngr ? ' · ' + ngr + ' being graded' : '') + (chances.length ? ' · ' + chances.length + ' alive' : '');
-      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + overlapNote(ALLS.filter(function(sl){ return !sl.res || sl.builder; })) + noOpen + cOpen.join('') + setl + '</div>' : '') + '</section>']);
+      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + overlapNote(ALLS.filter(function(sl){ return !sl.res || sl.builder; })) + noOpen + cOpen.join('') + winStrip + setl + '</div>' : '') + '</section>']);
     }
     // week log: the legs you pinned or carried in your slip, as they resolve - copy or download it after the games
     var mine = legs.concat(D.extra || []).filter(function(l){ return isStar(l) || legSlips(l); });

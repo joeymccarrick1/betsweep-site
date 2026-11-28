@@ -34,8 +34,8 @@ def skip(what): print("SKIP " + what)
 def has(path): return os.path.isfile(os.path.join(ROOT, path.strip("/"), "index.html"))
 # longest a page may open at on a phone, in screens. Loose on purpose: a busy week adds rows, and the caps are what hold the length.
 # 11/27 late: /best/ 4.5 -> 5.5. Every leg card now carries its reasons (why.py) and the opponents under its bars, about 70px a card;
-# eight cards on the first tab opened at 5.2 screens; since 11/28 a list opens on its first five cards (owner: "keep trimming"), back under 4.5. /news/ is back under its 5.0: a group opens with 24 notes and a Show all button.
-LIMIT = {"/usage/": 5.0, "/benefits/": 4.5, "/shop/": 4.5, "/news/": 5.0, "/best/": 4.5, "/dfs/": 5.0, "/firsttd/": 6.5}
+# eight cards on the first tab opened at 5.2 screens; since 11/28 a list opens on its first five cards (owner: "keep trimming"), back under 4.5. /news/ opens a group on 12 notes with a Show all button (24 from 11/27 to 11/28): about 3.4 screens, limit 4.0.
+LIMIT = {"/usage/": 5.0, "/benefits/": 4.5, "/shop/": 4.5, "/news/": 4.0, "/best/": 4.5, "/dfs/": 5.0, "/firsttd/": 6.5}
 VIS = "var qa = function(s, r){ return Array.from((r || document).querySelectorAll(s)); }, vis = function(e){ if(e.checkVisibility && !e.checkVisibility()) return false; var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };"   # checkVisibility: a closed <details> keeps its content's box
 LEN = "() => ({scr: document.documentElement.scrollHeight / innerHeight, over: document.documentElement.scrollWidth - document.documentElement.clientWidth})"
 
@@ -130,6 +130,12 @@ async def main():
                 g0 = s["grps"][0]
                 check(len(s["tabs"]) == len(s["grps"]) and [g["vis"] for g in s["grps"]] == [True] + [False] * (len(s["grps"]) - 1), f"News: {len(s['tabs'])} tabs, the first group on screen ({s['tabs']})")
                 check(all(re.search(r"(\d+)$", t) and int(re.search(r"(\d+)$", t).group(1)) == g["n"] for t, g in zip(s["tabs"], s["grps"])) and sum(g["n"] for g in s["grps"]) == s["total"], f"each tab counts its notes and every note is under a tab ({s['total']} notes)")
+                # 11/28 (owner: "keep trimming where it makes sense site wide"): a group opens on its first 12 notes, the count Usage and Trend check open on
+                nb = await pg.evaluate("() => { var g = document.querySelector('#news .nwgrp:not(.fxoff)'), b = g && g.querySelector('.nwmore'); return b ? {hidden: b.hidden, txt: b.textContent.trim()} : null; }")
+                check(g0["shown"] == min(12, g0["n"]) and (g0["n"] <= 12 or (nb and not nb["hidden"] and nb["txt"] == f"Show all {g0['n']} notes")), f"News: the first group opens on its first 12 notes of {g0['n']}, and a button says how many there are ({g0['shown']} on screen, {nb})")
+                if g0["n"] > 12 and nb:
+                    await pg.click("#news .nwgrp:not(.fxoff) .nwmore"); await pg.wait_for_timeout(150); s_all = await pg.evaluate(N)
+                    check(s_all["grps"][0]["shown"] == g0["n"], f"Show all opens every one of the {g0['n']} ({s_all['grps'][0]['shown']} on screen)")
                 check(s["clamp"] and max(s["clamp"]) <= 52, f"a note is two lines until it is tapped (tallest {max(s['clamp']):.0f}px)")
                 long = await pg.evaluate("() => { var ls = [...document.querySelectorAll('#news .nwgrp:not(.fxoff) li')].filter(function(li){ var p = li.querySelector('p'); return p && p.scrollHeight > p.clientHeight + 4; }); if(!ls.length) return null; var p = ls[0].querySelector('p'), h0 = p.getBoundingClientRect().height; ls[0].click(); return [h0, p.getBoundingClientRect().height, ls[0].getAttribute('aria-expanded')]; }")
                 if long: check(long[1] > long[0] + 10 and long[2] == "true", f"a tap opens the whole note ({long[0]:.0f}px -> {long[1]:.0f}px)")

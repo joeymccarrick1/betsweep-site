@@ -1180,7 +1180,10 @@ html.pshopen{overflow:hidden}
 .pshchips{display:flex;gap:6px;overflow-x:auto;margin:0 -14px 10px;padding:0 14px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch} .pshchips::-webkit-scrollbar{display:none}
 .pshchips button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:36px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 .pshchips button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
-.pshp[hidden],.pshwhy[hidden],.pshrk[hidden],.pshkonote[hidden]{display:none}
+.pshp[hidden],.pshwhy[hidden],.pshrk[hidden],.pshkonote[hidden],.pshbks[hidden]{display:none}
+/* the rung on the chart, at each book: the leg cards' own buttons (FanDuel, DK, HR) with each book's price, the best one marked */
+.pshbks .bks{display:flex;gap:8px;margin:2px 0 0} .pshbks .bks a{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin:0;padding:0 6px;text-align:center;white-space:nowrap}
+.pshbks .bks a.fdb{flex-grow:1.4} .pshko .pshbks{display:none}
 .pshsel{display:grid;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
 .pshmk{margin:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;line-height:1.25} .pshmk b{font-weight:600;font-size:16px;color:var(--ink)}
 .pshproj{color:var(--mute);font-size:12.5px}
@@ -1473,6 +1476,7 @@ HOME_SLIP_JS = r"""<script>(function(){
   function rung(panel, row){
     $$('.pshr', panel).forEach(function(r){ var on = r === row, b = $('.pshln', r); r.classList.toggle('on', on); if(b) b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     var w = row.getAttribute('data-w'); $$('.pshwhy', panel).forEach(function(d){ d.hidden = d.getAttribute('data-w') !== w; });
+    var bk = row.getAttribute('data-k'); $$('.pshbks', panel).forEach(function(d){ d.hidden = d.getAttribute('data-k') !== bk; });   /* the book buttons follow the rung */
     var t = $('.pshmk b', panel); if(t) t.textContent = row.getAttribute('data-full') || '';
     var rk = $('.pshrk', panel), rv = row.getAttribute('data-rk') || ''; if(rk){ rk.textContent = rv; rk.hidden = !rv; rk.classList.toggle('hi', rv === 'High risk'); }
     var h5 = $('.h5', panel), need = parseFloat(row.getAttribute('data-need')); if(!h5 || !isFinite(need)) return;

@@ -136,8 +136,30 @@ async def main():
             print(f"   [{theme}] a cashed slip, fold as a reader finds it:", json.dumps({k: s[k] for k in ("slip", "res", "setl", "setln", "ncards")})[:400])
             check(s["res"] == ["W"], f"[{theme}] the moment the page grades the saved slip won it is marked on the slip itself, for the betslip and My BetSweep to read ({s['res']})")
             check(s["slip"] is None and s["ncards"] == 0 and s["setl"] and s["setl"]["open"] == "false" and "1 cashed" in s["setl"]["txt"] and "settled" in s["setln"], f"[{theme}] it is out of the open list: one Settled line (1 cashed), shut, and a note that nothing is open ({s['setl']}, {s['setln']!r})")
+            # ---- owner 11/27 8:31 PM ("I love all 8": share your winner), 11/28 1:29 AM ("make sure all 8 ... are finished"): with the fold shut
+            # the winner still has a line of its own - the price it cashed at and a Share the win button - and the picture carries team logos ----
+            WL = """() => { var vis = function(e){ return !!(e && (e.offsetWidth || e.offsetHeight)); }; return Array.from(document.querySelectorAll('.winstrip .winline')).map(function(w){ var b = w.querySelector('.winshare'), r = b.getBoundingClientRect();
+                var cs = getComputedStyle(b); return {big: w.querySelector('b').textContent, small: w.querySelector('small').textContent, sid: b.getAttribute('data-sid'), shown: vis(b), h: Math.round(r.height), fits: r.right <= innerWidth + 0.5 && w.getBoundingClientRect().left >= 0,
+                        ink: cs.color, edge: cs.borderTopColor, good: getComputedStyle(w.querySelector('b')).color}; }); }"""
+            wl = await pg.evaluate(WL)
+            check(len(wl) == 1 and wl[0]["big"] == "Cashed +600" and "Test slip" in wl[0]["small"] and f"{len(WIN)} leg" in wl[0]["small"] and wl[0]["sid"] == "s1" and wl[0]["shown"] and wl[0]["h"] >= 40 and wl[0]["fits"] and wl[0]["ink"] == wl[0]["good"] == wl[0]["edge"],
+                  f"[{theme}] the winner has a line of its own above the shut fold: the price it cashed at, its name and legs, a thumb-sized Share the win button in the winner's green, outline and words ({wl})")
+            await pg.evaluate("() => { navigator.canShare = function(){ return true; }; navigator.share = function(d){ var f = d && d.files && d.files[0]; window.__shared = {text: d.text || '', n: (d.files || []).length, name: f ? f.name : '', size: f ? f.size : 0}; return Promise.resolve(); }; }")
+            if wl:
+                await pg.tap(".winstrip .winshare")
+                for _ in range(40):
+                    await pg.wait_for_timeout(150)
+                    if await pg.evaluate("!!window.__shared"): break
+                sh = await pg.evaluate("window.__shared || null"); cv = await pg.evaluate("window.__bsWinCard ? {w: window.__bsWinCard.width, h: window.__bsWinCard.height, logos: window.__bsWinCard.__logos || []} : null")
+                tms = sorted({{"WSH": "WAS", "LAR": "LA"}.get(L["tm"], L["tm"]).lower() for L in WIN if L.get("tm") and (not L.get("gl") or L["gl"].get("side") == L["tm"])} & {f[:-5] for f in os.listdir(os.path.join(ROOT, "s", "nfl")) if f.endswith(".webp")})
+                check(bool(sh) and sh["n"] == 1 and sh["name"] == f"betsweep-cashed-w{WEEK}.png" and sh["size"] > 20000 and "+600" in sh["text"] and bool(cv) and cv["w"] == 1080 and cv["h"] == 1350,
+                      f"[{theme}]   the button hands the share sheet one picture, 1080 x 1350, named for the week, with the price in the words ({sh})")
+                check(bool(cv) and sorted(cv["logos"]) == tms and len(tms) >= 1, f"[{theme}]   and the logo of each leg's team is on the picture - the players' and the moneyline's, none for the total ({(cv or {}).get('logos')} for {tms})")
+                if SHOTS and cv:
+                    d64 = await pg.evaluate("window.__bsWinCard.toDataURL('image/png')"); open(f"{SHOTS}/live-win-card-{theme}.png", "wb").write(__import__("base64").b64decode(d64.split(",", 1)[1])); await pg.screenshot(path=f"{SHOTS}/live-win-line-{theme}.png")
             await pg.evaluate("() => document.querySelector('.setlh').click()"); await pg.wait_for_timeout(500); s2 = await pg.evaluate(READ, GID)
             check(s2["slip"] == "CASHED" and s2["setl"]["open"] == "true" and s2["over"] <= 0 and not errs, f"[{theme}] a tap on Settled shows the slip with its result; no sideways scroll, no page errors ({s2['slip']}, {errs[:1]})")
+            check(s2["share"] and not await pg.evaluate(WL), f"[{theme}]   with the fold open the winner's own card carries the button and the line above steps aside")
             await ctx.close()
         # a slip with one losing leg: marked lost, and under Settled as a dead one
         s, asked, errs, pg, ctx = await run("settled-dead", setl=False, lose=(Y1,))

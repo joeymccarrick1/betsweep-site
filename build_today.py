@@ -375,7 +375,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <script>window.__TD = {json.dumps({"week": W, "built": built.isoformat(), "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""), "home": (GL.get(g["gid"]) or {}).get("home", g["b"]), "away": (GL.get(g["gid"]) or {}).get("away", g["a"]),
                                                                                          "pa": round(float(g["pa"]), 1), "pb": round(float(g["pb"]), 1), "sp": (GL.get(g["gid"]) or {}).get("spread"), "tot": (GL.get(g["gid"]) or {}).get("total"),
                                                                                          "wx": wx_kind(g), "fz": FZ.get(g["gid"])} for g in games],
-                                                                              "col": {t: HOME.HM.COL[t][0] for g in games for t in (g["a"], g["b"]) if t in HOME.HM.COL}, "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
+                                                                              "col": {t: HOME.HM.COL[t][0] for g in games for t in (g["a"], g["b"]) if t in HOME.HM.COL}, "teams": [[c, n] for c, n in __import__("account").TEAMS32], "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
 {TODAY_JS}
 <script>{LIVE.LIVE_JS}</script>
 {HOME.strip_js(games)}
@@ -473,6 +473,16 @@ TODAY_CSS = r"""
 .thx span{flex:none;align-self:center;font-size:12px;color:var(--mute);margin-right:2px}
 .thx a{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);text-decoration:none;font-family:var(--display);font-weight:700;font-size:13px}
 .thx a i.hm{height:16px;margin:0;vertical-align:0}
+/* favorite team: its game under the opener, the choice as a chip (a native list sits over it), its card marked */
+.thx a.thmine{border-color:var(--ink)} .thx a.thmine small{font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--mute);margin-left:3px}
+.thfav{position:relative;flex:none;display:inline-flex;align-items:center;min-height:38px;margin-left:auto;padding:0 12px;border:1px dashed var(--line);border-radius:999px;color:var(--mute);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.03em;cursor:pointer}
+.thfav span{display:inline-flex;align-items:center;gap:5px;margin:0;font-size:inherit;color:inherit} .thfav span i.hm{height:16px;margin:0;vertical-align:0} .thfav span i:not(.hm){font-style:normal;font-size:10px;color:var(--mute)}
+.thfav.set{border-style:solid;background:var(--card);color:var(--ink)}
+.thfav select{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;font-size:16px;cursor:pointer}
+.thfav:focus-within{outline:2px solid var(--red);outline-offset:2px}
+.thx em.thoff{flex:none;align-self:center;font-style:normal;font-size:12px;color:var(--mute);margin-right:2px}
+.tdgame.fav{box-shadow:inset 4px 0 0 var(--favc,var(--red))}
+.tdfavt{display:inline-block;margin:0 0 3px;padding:1px 7px;border:1px solid var(--line);border-radius:999px;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 @media (max-width:420px){ .tht{font-size:26px;gap:6px} .tht i.hm{height:40px} .thc b{font-size:26px} .thl[data-st="pre"] .thc b{font-size:17px} }
 @media (prefers-reduced-motion: reduce){ .thk .lv::before{animation:none} }
 /* a team logo in front of each side of a game card */
@@ -634,17 +644,44 @@ TODAY_JS = r"""<script>
     var live = T.games.filter(function(g){ return stateOf(g).st === 'in'; }), next = T.games.filter(function(g){ return g.ko && stateOf(g).st === 'pre'; }).sort(function(x, y){ return x.ko - y.ko; });
     var g = live[0] || next[0]; if(!g){ el.hidden = true; el.innerHTML = ''; return; }
     var s = stateOf(g), on = s.st === 'in', sc = on ? scoreOf(g, s) : null, away = g.away || g.a, home = g.home || g.b;
-    var more = (on ? live : next.filter(function(x){ return x.ko === g.ko; })).filter(function(x){ return x !== g; });
+    var more = (on ? live : next.filter(function(x){ return x.ko === g.ko; })).filter(function(x){ return x !== g; }), mineG = favGame(fav()) === g;
     var mid = on ? (sc ? '<b>' + sc[away] + '<i>–</i>' + sc[home] + '</b>' : '<b>Live</b>') + '<small>' + esc(s.nofeed || !s.det ? 'In progress' : s.det) + '</small>'
                  : '<b>' + esc(left(g.ko - now)) + '</b><small>' + esc(g.kick || '') + '</small>';
     var h = '<a class="thl wxhost" href="' + (on ? '/live/#lv-' : '/boards/#g-') + esc(g.gid) + '" style="--wa:' + esc(COL[away] || 'transparent') + ';--wb:' + esc(COL[home] || 'transparent') + '" data-gid="' + esc(g.gid) + '" data-st="' + (on ? 'in' : 'pre') + '">' +
       (!on && g.wx ? '<i class="wxfx ' + esc(g.wx) + '" aria-hidden="true"></i>' : '') +
-      '<span class="thk">' + (on ? '<em class="lv" style="font-style:normal">Live now</em>' : '<em style="font-style:normal">Next up</em>') + '<em style="font-style:normal">' + (on ? 'Follow live' : 'Matchup board') + ' →</em></span>' +
+      '<span class="thk">' + (on ? '<em class="lv" style="font-style:normal">Live now' + (mineG ? ' \u00b7 your team' : '') + '</em>' : '<em style="font-style:normal">Next up' + (mineG ? ' \u00b7 your team' : '') + '</em>') + '<em style="font-style:normal">' + (on ? 'Follow live' : 'Matchup board') + ' →</em></span>' +
       '<span class="thm"><span class="tht">' + hm(away) + '<b>' + esc(away) + '</b></span><span class="thc">' + mid + '</span><span class="tht r"><b>' + esc(home) + '</b>' + hm(home) + '</span></span>' +
       (lineOf(g) ? '<span class="thf">' + lineOf(g) + '</span>' : '') + '</a>';
+    var f = fav(), fg = favGame(f), fc = favChip(f, g);
+    if(fc){ h += '<div class="thx thxf"><span>Your team</span>' + fc + '</div>'; more = more.filter(function(x){ return x !== fg; }); }
     if(more.length) h += '<div class="thx"><span>' + (on ? 'Also live' : 'Same kickoff') + '</span>' + more.map(function(x){ var xa = x.away || x.a, xh = x.home || x.b;
       return '<a href="' + (on ? '/live/#lv-' : '/boards/#g-') + esc(x.gid) + '">' + hm(xa) + esc(xa) + ' @ ' + esc(xh) + hm(xh) + '</a>'; }).join('') + '</div>';
     if(el.getAttribute('data-h') !== h){ el.setAttribute('data-h', h); el.innerHTML = h; } el.hidden = false; }
+  /* ---- favorite team (the seventh of the eight ideas, owner 11/27 8:31 PM "I love all 8"; 11/28 1:29 AM "make sure all 8 ... are
+     finished"). One team a device, kept in this browser (bs_fav) and never sent anywhere; the alerts' "Favorite team" box on My
+     BetSweep sets the same choice. With a team chosen, Today names its game under the opener (kickoff, the live score or the final),
+     puts its card first among the games in the same state and marks it. The choice itself is one chip beside Short view and Live
+     (a native list sits over it): "+ Your team" until a team is chosen, then that team's logo and letters. ---- */
+  var TEAMS = T.teams || [];
+  function fav(){ try { var v = localStorage.getItem('bs_fav') || ''; return TEAMS.some(function(t){ return t[0] === v; }) ? v : ''; } catch(e){ return ''; } }
+  function favGame(f){ return f ? T.games.filter(function(g){ return g.a === f || g.b === f; })[0] || null : null; }
+  function favPick(){ var host = document.querySelector('.tdhead .tdact'); if(!host || !TEAMS.length) return; var f = fav(), lab = document.getElementById('tdfavp');
+    if(!lab){ lab = document.createElement('label'); lab.className = 'thfav'; lab.id = 'tdfavp';
+      lab.innerHTML = '<span></span><select id="tdfavsel" aria-label="Your favorite team"><option value="">No team</option>' + TEAMS.map(function(t){ return '<option value="' + esc(t[0]) + '">' + esc(t[1]) + '</option>'; }).join('') + '</select>';
+      host.appendChild(lab); }
+    var want = f ? hm(f) + esc(f) + ' <i aria-hidden="true">\u25be</i>' : '+ Your team', sp = lab.firstChild, sel = lab.querySelector('select');
+    if(lab.getAttribute('data-f') !== f){ lab.setAttribute('data-f', f); sp.innerHTML = want; lab.classList.toggle('set', !!f); }
+    if(sel && sel.value !== f && document.activeElement !== sel) sel.value = f; }
+  function favChip(f, g0){
+    if(!f) return '';
+    var g = favGame(f); if(!g) return '<em class="thoff">' + esc(f) + ' is off this week</em>';
+    if(g === g0) return '';   /* its game is the one the opener already shows */
+    var s = stateOf(g), sc = scoreOf(g, s), a = g.away || g.a, hh = g.home || g.b;
+    var tail = s.st === 'in' ? (sc ? sc[a] + '\u2013' + sc[hh] + ' live' : 'Live') : s.st === 'post' ? (sc ? 'Final ' + sc[a] + '\u2013' + sc[hh] : 'Final') : (g.kick || '');
+    return '<a class="thmine" href="' + (s.st === 'in' ? '/live/#lv-' : s.st === 'post' ? '/live/#box-' : '/boards/#g-') + esc(g.gid) + '">' + hm(a) + esc(a) + ' @ ' + esc(hh) + hm(hh) + (tail ? '<small>' + esc(tail) + '</small>' : '') + '</a>'; }
+  document.addEventListener('change', function(e){ if(!e.target || e.target.id !== 'tdfavsel') return; var v = e.target.value;
+    try { if(v) localStorage.setItem('bs_fav', v); else localStorage.removeItem('bs_fav'); } catch(x){}
+    e.target.blur(); var el = document.getElementById('tdhero'); if(el) el.removeAttribute('data-h'); paint(); });
   /* ---- the Final card ---- */
   function legLine(m, ln){ var n = Math.round(+ln); if(/TD$/.test(m) && m.indexOf('Passing') < 0) return m; if(m === 'Passing TDs') return n + '+ passing TDs'; if(m === 'Receptions') return n + '+ receptions';
     if(m === 'Rush + Rec Yards') return n + '+ rush + rec yards'; return n + '+ ' + String(m).toLowerCase(); }
@@ -697,8 +734,11 @@ TODAY_JS = r"""<script>
       note.textContent = n ? hit + ' of ' + n + ' hit' + (open ? ' · ' + open + ' not graded' : '') : 'not graded'; }); }
   document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('.flt'); if(b) openLooks(b); });
   /* ---- each card's state, and the order: in play, then still to come, then finished ---- */
-  function cards(){ var shown = 0; T.games.forEach(function(g){ var card = document.getElementById('td-' + g.gid); if(!card) return; var s = stateOf(g), st = s.st, sc = scoreOf(g, s), away = g.away || g.a, home = g.home || g.b;
+  function cards(){ var shown = 0, FV = fav(); T.games.forEach(function(g){ var card = document.getElementById('td-' + g.gid); if(!card) return; var s = stateOf(g), st = s.st, sc = scoreOf(g, s), away = g.away || g.a, home = g.home || g.b;
       card.classList.toggle('live', st === 'in'); card.classList.toggle('fin', st === 'post'); if(card.classList.contains('show')) shown++;
+      var mine = !!FV && (g.a === FV || g.b === FV), ft = card.querySelector('.tdfavt'); card.classList.toggle('fav', mine);
+      if(mine){ card.style.setProperty('--favc', COL[FV] || 'var(--red)'); if(!ft){ var tk = card.querySelector('.tdk'); if(tk){ ft = document.createElement('span'); ft.className = 'tdfavt'; ft.textContent = 'Your team'; tk.insertBefore(ft, tk.firstChild); } } }
+      else if(ft) ft.remove();
       var chip = card.querySelector('.tdk .gl'); if(chip){ var c = st === 'in' ? '<i>LIVE</i>' + (sc ? sc[away] + '–' + sc[home] : '') + (s.det && !s.nofeed ? ' <small>' + esc(s.det) + '</small>' : '') : st === 'post' ? '<i>FINAL</i>' : ''; if(chip.innerHTML !== c) chip.innerHTML = c; }
       var pri = card.querySelector('.tdlinks a.pri'); if(pri){ if(!pri.getAttribute('data-h0')){ pri.setAttribute('data-h0', pri.getAttribute('href')); pri.setAttribute('data-t0', pri.textContent); }
         var want = st === 'in' ? ['/live/#lv-' + g.gid, 'Follow live'] : st === 'post' ? ['/live/#box-' + g.gid, 'Box score and plays'] : [pri.getAttribute('data-h0'), pri.getAttribute('data-t0')];
@@ -706,12 +746,13 @@ TODAY_JS = r"""<script>
       if(st === 'post') finalCard(card, g, s); });
     var wrap = document.getElementById('tdgames'), cs = wrap ? [].slice.call(wrap.querySelectorAll('.tdgame.show')) : []; if(cs.length > 1){
       var rank = function(el){ return el.classList.contains('live') ? 0 : el.classList.contains('fin') ? 2 : 1; };
-      var want = cs.slice().sort(function(x, y){ return rank(x) - rank(y) || (+x.getAttribute('data-ko') - +y.getAttribute('data-ko')); });
+      var isF = function(el){ return el.classList.contains('fav') ? 0 : 1; };
+      var want = cs.slice().sort(function(x, y){ return rank(x) - rank(y) || isF(x) - isF(y) || (+x.getAttribute('data-ko') - +y.getAttribute('data-ko')); });
       if(!want.every(function(el, i){ return el === cs[i]; })) want.forEach(function(el){ wrap.appendChild(el); });
       if(document.getElementById('tdallb')) want.forEach(function(el, i){ el.classList.toggle('tdx', i >= 3); }); }
     /* on a day with one or two games the cards are open, so their looks are read at once */
     if(shown && shown <= 2) [].forEach.call(document.querySelectorAll('.tdgame.show.fin .flt:not([data-done])'), function(b){ if(b.getAttribute('aria-expanded') !== 'true') openLooks(b); }); }
-  function paint(){ try { cards(); hero(); } catch(e){ if(window.console) console.warn('today state', e); } }
+  function paint(){ try { favPick(); cards(); hero(); } catch(e){ if(window.console) console.warn('today state', e); } }
   document.addEventListener('bs-live', function(e){ if(e.detail) LIVE = e.detail; paint(); });
   paint(); setInterval(paint, 30000);
 })();

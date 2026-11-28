@@ -8,7 +8,7 @@ Everything expected is worked out here from the build's own files, by this file'
                                        last five cleared each rung, the season count, the risk tag (sweep.py) and the reasons (why.py)
 The pages are opened at 390x844 in both themes, the outside world cut off, the clock set a moment after the pages were built.
   python3 tests/player_sheet.py [shots_dir]        (SITE=/path/to/a/published/copy to check that instead of ./site)"""
-import asyncio, functools, html, http.server, json, math, os, re, sys, threading
+import asyncio, functools, html, http.server, json, math, os, re, sys, threading, urllib.parse
 from playwright.async_api import async_playwright
 HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."); sys.path.insert(0, HERE)
 import sweep as SW, why as WHY
@@ -29,6 +29,30 @@ STAT_OF = {m: s for s, ms in STATS for m in ms}; MS = dict(STATS)
 ORDER = {"QB": ["pass", "ptd", "rush", "td"], "RB": ["rush", "rr", "recy", "rec", "td", "long"]}; REST = ["recy", "rec", "td", "long", "rush", "rr"]
 def need_of(l): m = l["m"]; return None if m == "First TD" else 2 if m == "2+ TD" else 3 if m == "3+ TD" else 1 if m.endswith("TD") else float(l["ln"])
 
+def am(o): o = int(math.floor(float(o) + 0.5)); return f"+{o}" if o > 0 else f"\u2212{-o}"
+def dec(o): o = float(o); return 1 + o / 100 if o > 0 else 1 + 100 / -o
+def books_of(l):
+    """the buttons the rung on the chart should carry, read off the builder's own leg: [book, words, id the link must carry, best?] -
+    FanDuel with its price; DraftKings and Hard Rock with theirs at the same rung, or marked as a nearest line when they do not post it"""
+    out = []; bks = l.get("bks") or {}; ba = l.get("ba") or {}
+    ex = {b: bks[b] for b in ("dk", "hr") if (bks.get(b) or {}).get("s")}
+    top = max([("fd", dec(l["o"]))] + [(b, dec(v["o"])) for b, v in ex.items() if v.get("o")], key=lambda t: (t[1], t[0] == "fd"))[0]
+    if (l.get("fd") or {}).get("u"): out.append(["fdb", "FanDuel " + am(l["o"]), l["fd"]["u"], top == "fd" and bool(bks)])
+    for b, lab in (("dk", "DK"), ("hr", "HR")):
+        if b in ex: out.append([b + "b", lab + (" " + am(ex[b]["o"]) if ex[b].get("o") is not None else ""), str(ex[b]["s"]), top == b])
+        elif (ba.get(b) or {}).get("s"): out.append([b + "b", lab + "\u2248", str(ba[b]["s"]), False])
+    return out
+def books_ok(s, row):
+    """the sheet shows one group of book buttons, the chosen rung's, and it is the builder's"""
+    want = row["books"] or []; got = s["books"]
+    if not want: return not got
+    if len(got) != 1 or got[0]["k"] != row["k"] or len(got[0]["a"]) != len(want): return False
+    for a, w in zip(got[0]["a"], want):
+        cl = a["cls"].split(); href = urllib.parse.unquote(a["href"] or "")
+        if w[0] not in cl or a["t"] != w[1] or ("best" in cl) != w[3] or not a["shown"] or a["h"] < 38 or not a["fits"] or not a["blank"]: return False
+        if (href != w[2]) if w[0] == "fdb" else (w[2] not in href): return False
+    return True
+
 def expected():
     """{player: {"chips": [stat ids], "rows": {stat: [row...]}, "open": {stat: key of the rung the panel opens on}}} - this file's own reading
     of the rule in psheet.py's header: overs and touchdowns of single players with a game log, a chip a stat in the position's order"""
@@ -48,7 +72,7 @@ def expected():
                 need = need_of(l); games = [g for g in GL[pl] if g.get(l.get("sk")) is not None][:5] if l.get("sk") else []
                 ed = l.get("e") or 0; er = int(math.floor(abs(ed) * 100 + 0.5)) * (1 if ed >= 0 else -1)
                 sn = next((h[1] for h in (l.get("fh") or []) if h[0] in ("good", "info", "bad") and "/" in str(h[1]) and str(h[1]).endswith("this season")), "")
-                rows.append({"k": key(l), "l": l, "need": need, "m": f'{l["p"] * 100:.0f}%', "n": f'{l["bk"] * 100:.0f}%' if l.get("bk") else "—", "e": ((f"{er:+d}" if er else "0") if l.get("bk") else "—"),
+                rows.append({"k": key(l), "l": l, "need": need, "books": books_of(l) if need is not None else None, "m": f'{l["p"] * 100:.0f}%', "n": f'{l["bk"] * 100:.0f}%' if l.get("bk") else "—", "e": ((f"{er:+d}" if er else "0") if l.get("bk") else "—"),
                              "px": (f'+{int(l["o"])}' if l["o"] > 0 else f'{int(l["o"])}'), "hits": (sum(1 for g in games if float(g[l["sk"]] or 0) >= need), len(games)) if need is not None else None,
                              "vals": [float(g[l["sk"]] or 0) for g in games][::-1], "sn": sn, "risk": SW.risk_tag(SW.risk_score(l, BS)) if need is not None else "", "why": [tuple(r) for r in WHY.reasons(l, BS.get("pf"))] if need is not None else []})
             e["rows"][s] = rows
@@ -73,6 +97,8 @@ READ = """() => { var s = document.querySelector('.psh'); if(!s) return null; va
       sn: (function(){ var x = h5.querySelector('p small:not(.vs)'); return x && vis(x) ? x.textContent : ''; })(),
       vals: Array.from(h5.querySelectorAll('li .v')).map(function(x){ return x.textContent; }), bars: Array.from(h5.querySelectorAll('li .b')).map(function(x){ return parseFloat(x.style.height); }),
       frac: (function(){ var l = h5.querySelector('.ln'), m = l ? /\\*\\s*([0-9.]+)\\)/.exec(l.style.bottom || '') : null; return m ? +m[1] : null; })(), lnVis: vis(h5.querySelector('.ln'))} : null,
+    books: p ? Array.from(p.querySelectorAll('.pshbks')).filter(function(d){ return vis(d); }).map(function(d){ return {k: d.getAttribute('data-k'), a: Array.from(d.querySelectorAll('a')).map(function(a){ var q = a.getBoundingClientRect();
+      return {cls: a.className, t: a.textContent, href: a.getAttribute('href'), shown: vis(a), h: Math.round(q.height), fits: q.right <= r.right + 0.5 && q.left >= r.left - 0.5, blank: a.target === '_blank'}; })}; }) : [],
     lock: document.documentElement.classList.contains('pshopen'), state: !!(history.state && history.state.bsPsh)}; }"""
 
 async def main():
@@ -168,6 +194,8 @@ async def main():
                 sel = next(r for r in rows if r["k"] == c["k"])
                 check(chart_ok(s, sel) and s["risk"] == sel["risk"] and [tuple(w) for w in s["why"]] == sel["why"],
                       f"[{theme}] for that rung: his last five counted against it ({(s['h5'] or {}).get('big')} vs {sel['hits']}), the season count, the builder's risk tag ({s['risk']!r} vs {sel['risk']!r}) and why.py's reasons ({len(s['why'])} vs {len(sel['why'])})")
+                # ---- owner 11/28 1:38 AM ("other ways we can beat fanduel"): the rung on the chart can go straight to a book, each with its own price ----
+                check(books_ok(s, sel), f"[{theme}] under the chart, that rung at each book: FanDuel's price and link, DraftKings' and Hard Rock's own, the best one marked, thumb-sized ({[(a['t'], a['cls']) for g in s['books'] for a in g['a']]} vs {[(w[1], w[3]) for w in sel['books'] or []]})")
                 # ---- another rung: the one with a different count if there is one, else the last ----
                 oth = next((r for r in rows if r["need"] is not None and r["k"] != c["k"] and r["hits"] != sel["hits"]), next((r for r in reversed(rows) if r["need"] is not None and r["k"] != c["k"]), None))
                 if oth:
@@ -176,6 +204,7 @@ async def main():
                     check([r["k"] for r in s2["rows"] if r["on"]] == [oth["k"]] and chart_ok(s2, oth) and s2["risk"] == oth["risk"] and [tuple(w) for w in s2["why"]] == oth["why"],
                           f"[{theme}] a tap on another rung ({oth['k'].split('|')[-1]}) moves the chart to it - bars rescaled, line moved, {(s2['h5'] or {}).get('big')} (expected {oth['hits']}), tag {s2['risk']!r}, its own reasons")
                     check(s2["title"] != s["title"] or oth["k"] == c["k"], f"[{theme}] and the heading names the rung on the chart ({s2['title']!r})")
+                    check(books_ok(s2, oth), f"[{theme}] and the book buttons are that rung's now ({[(a['t'], a['cls']) for g in s2['books'] for a in g['a']]} vs {[(w[1], w[3]) for w in oth['books'] or []]})")
                 # ---- the price is the add button, for the sheet and for the card behind it ----
                 await pg.evaluate("(k) => { Array.from(document.querySelectorAll('.pshp:not([hidden]) .pshr')).filter(function(r){ return r.getAttribute('data-k') === k; })[0].querySelector('a.more').click(); }", c["k"]); await pg.wait_for_timeout(300)
                 s3 = await pg.evaluate(READ); slip = await pg.evaluate("(w) => { try { return JSON.parse(localStorage.getItem('bs_slipk_w' + w) || '[]'); } catch(e){ return null; } }", W)
@@ -214,7 +243,7 @@ async def main():
                 if cards2:
                     await pg.evaluate("(t) => window.__setT(t)", KO[e["g"]] + 60e3)
                     await pg.evaluate("(i) => document.querySelector('article.play[data-pst=\"' + i + '\"] .who a').click()", cards2[0]["i"]); await pg.wait_for_timeout(700); s5 = await pg.evaluate(READ)
-                    check(bool(s5) and s5["loaded"] and s5["ko"] and s5["konote"] and not any(r["shown"] for r in s5["rows"]) and not errs, f"[{theme}] a minute after his game kicks off the sheet offers no price and says the game has started ({errs[:1]})")
+                    check(bool(s5) and s5["loaded"] and s5["ko"] and s5["konote"] and not any(r["shown"] for r in s5["rows"]) and not s5["books"] and not errs, f"[{theme}] a minute after his game kicks off the sheet offers no price and says the game has started ({errs[:1]})")
                 await ctx.close()
                 # ---- no sheet to load: his page opens, and Back does not land on a dead step ----
                 pg, ctx, errs = await open_("/trends/", theme, T0, block_sheet=True); cards3 = [x for x in await pick_tab(pg, c["k"]) if x["k"] == c["k"]]

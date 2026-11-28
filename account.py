@@ -795,14 +795,15 @@ PUSH_JS = r"""
   var pn = document.getElementById('ppnews'), pnl = document.getElementById('ppnewslab');
   if(pn) pn.addEventListener('change', function(){ if(!curEp) return; K.save(curEp, {news: pn.checked}).then(function(r){ if(r && r.error){ pn.checked = !pn.checked; say('Could not save that: ' + r.error.message, 'err'); } else say(pn.checked ? 'On - you will hear when a big name is out, released or traded.' : 'Saved.', 'ok'); }); });
   var pt = document.getElementById('ppteam'), ptl = document.getElementById('ppteamlab'), ptWas = '';
-  if(pt) pt.addEventListener('change', function(){ if(!curEp) return; var v = pt.value || null; K.save(curEp, {team: v}).then(function(r){ if(r && r.error){ pt.value = ptWas; say('Could not save that: ' + r.error.message, 'err'); } else { ptWas = pt.value; say(v ? 'On - you will get ' + pt.options[pt.selectedIndex].text + ' news.' : 'Saved.', 'ok'); } }); });
+  if(pt) pt.addEventListener('change', function(){ if(!curEp) return; var v = pt.value || null; K.save(curEp, {team: v}).then(function(r){ if(r && r.error){ pt.value = ptWas; say('Could not save that: ' + r.error.message, 'err'); } else { ptWas = pt.value; try { if(v) localStorage.setItem('bs_fav', v); else localStorage.removeItem('bs_fav'); } catch(e){}   /* 11/28: the same choice Today reads - its game first, its card marked */
+      say(v ? 'On - you will get ' + pt.options[pt.selectedIndex].text + ' news.' : 'Saved.', 'ok'); } }); });
   function savePref(){ if(!curEp) return; K.save(curEp, {live: pl.checked, weekly: pw.checked}).then(function(r){ if(r && r.error) say(/column/i.test(r.error.message) ? 'Saved alerts work; these two settings switch on after the next server update.' : r.error.message, 'err'); else say('Saved.', 'ok'); }); }
   if(pl) pl.addEventListener('change', savePref); if(pw) pw.addEventListener('change', savePref);
   /* the boxes come from the device's own row; a setting the database does not have yet stays hidden */
   function fill(row){
     if(pp){ if(row && 'promo' in row){ ppl.hidden = false; pp.checked = !!row.promo; } else ppl.hidden = true; }
     if(pn){ if(row && 'news' in row){ pnl.hidden = false; pn.checked = !!row.news; } else pnl.hidden = true; }
-    if(pt){ if(row && 'team' in row){ ptl.hidden = false; pt.value = row.team || ''; ptWas = pt.value; } else ptl.hidden = true; }
+    if(pt){ if(row && 'team' in row){ ptl.hidden = false; pt.value = row.team || ''; ptWas = pt.value; try { if(row.team && !localStorage.getItem('bs_fav')) localStorage.setItem('bs_fav', row.team); } catch(e){} } else ptl.hidden = true; }
     if(row){ pl.checked = row.live !== false; pw.checked = row.weekly !== false; }
   }
   /* says so when the device had lost its sign-up and it was put back: the reader should know it happened, and it is the only count of how often it does */

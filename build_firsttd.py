@@ -272,6 +272,10 @@ CSS = """
 @media(max-width:760px){ .ftdwrap .fsw{display:flex;gap:6px;margin:12px 0 0} .ftdwrap .fsw .tab{flex:1 0 0;min-height:40px} .ftdwrap .strips{margin-top:10px}
   .ftdwrap .strips[data-s="0"] > div:nth-child(2),.ftdwrap .strips[data-s="1"] > div:nth-child(1){display:none} }
 @media (prefers-reduced-motion:reduce){ .ftd .fgd > summary::after{transition:none} }
+/* 11/28 (owner: "keep trimming where it makes sense site wide"): games that have kicked off wait at the foot of the page under one row */
+.ftdwrap .ftdmore{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:46px;margin:14px 0 0;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:700 14px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.05em;text-transform:uppercase;text-align:left;cursor:pointer}
+.ftdwrap .ftdmore::after{content:"▾";color:var(--mute);font-size:14px} .ftdwrap .ftdmore[aria-expanded="true"]::after{content:"▴"}
+.ftdwrap .ftdmore:hover{border-color:var(--red)} .ftdwrap .ftdmore[hidden],.ftdwrap .ftddone[hidden]{display:none}
 /* 11/17: a game that has kicked off says so and loses its FanDuel buttons (the page offered "add to slip" on finished games) */
 .ftd.started .fhd h2::after{content:"Kicked off";margin-left:10px;font:700 11px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:4px 9px;vertical-align:middle;white-space:nowrap}
 .ftd.started td.go a,.ftd.started .fdgo{display:none} .ftdwrap .strips li[hidden]{display:none}
@@ -283,8 +287,19 @@ FTD_JS = r"""<script>
   // marked and loses its FanDuel buttons, its chip is dimmed. When nothing is left the lists say so.
   var TOPN = __TOPN__;
   function on(el){ var k = +el.getAttribute('data-ko'); return !!k && Date.now() >= k; }
+  /* 11/28 (owner: "keep trimming where it makes sense site wide"): a game that has kicked off has had its first touchdown, yet on a
+     Saturday five finished games stood between the reader and Sunday's. They move to the foot of the page, in kickoff order, under one
+     row that says how many; a tap on the row, on a finished game's chip or a link to it shows them. Nothing is removed. */
+  function showDone(open){ var more = document.getElementById('ftdmore'), done = document.getElementById('ftddone'); if(!more || !done) return; done.hidden = !open; more.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  function fold(){ var more = document.getElementById('ftdmore'), done = document.getElementById('ftddone'); if(!more || !done) return;
+    var all = [].slice.call(document.querySelectorAll('.ftd[data-ko]')), st = all.filter(function(s){ return s.classList.contains('started'); });
+    st.forEach(function(s){ if(s.parentNode !== done) done.appendChild(s); });
+    all.forEach(function(s){ if(s.parentNode === done && !s.classList.contains('started')) more.parentNode.insertBefore(s, more); });   /* a clock set back: the game returns to the list */
+    more.hidden = !st.length; if(!st.length){ done.hidden = true; return; }
+    more.textContent = (st.length === all.length ? (all.length === 1 ? 'The game has' : 'All ' + all.length + ' games have') : st.length + (st.length === 1 ? ' game has' : ' games have')) + ' kicked off'; }
   function run(){
     [].forEach.call(document.querySelectorAll('.ftd[data-ko]'), function(s){ s.classList.toggle('started', on(s)); });
+    fold();
     [].forEach.call(document.querySelectorAll('.ftdwrap .strips ul'), function(ul){ var n = 0, rows = ul.querySelectorAll('li[data-ko]');
       [].forEach.call(rows, function(li){ var show = !on(li) && !li.classList.contains('bsr-out') && n < TOPN; li.hidden = !show; if(show) n++; });   // bsr-out: ruled out (risk.js)
       var note = ul.querySelector('li.alldone');
@@ -295,8 +310,10 @@ FTD_JS = r"""<script>
   run(); setInterval(run, 60000);
   document.addEventListener('bs-risk', run);   // the live injury list arrived or changed: a ruled-out player leaves the two lists
   // 11/17 (page pass): games are folded - a chip, a name in the two lists or a shared link to #ftd-<game> opens that game
-  function openHash(h){ if(!h || h.indexOf('#ftd-') !== 0) return; var s = document.getElementById(h.slice(1)), d = s && s.querySelector('details.fgd'); if(d) d.open = true; }
-  document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('a[href^="#ftd-"]'); if(a) openHash(a.getAttribute('href')); });
+  function openHash(h){ if(!h || h.indexOf('#ftd-') !== 0) return; var s = document.getElementById(h.slice(1)), d = s && s.querySelector('details.fgd'); if(d) d.open = true;
+    if(s && s.parentNode && s.parentNode.id === 'ftddone'){ showDone(true); try { s.scrollIntoView(); } catch(e){} } }   /* a finished game asked for by name: its group opens and the page goes to it */
+  document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('a[href^="#ftd-"]'); if(a) openHash(a.getAttribute('href'));
+    var m = e.target.closest && e.target.closest('#ftdmore'); if(m) showDone(m.getAttribute('aria-expanded') !== 'true'); });
   window.addEventListener('hashchange', function(){ openHash(location.hash); }); openHash(location.hash);
   // phones: one of the two lists at a time
   var sw = document.getElementById('fsw'), st = document.getElementById('fstrips');
@@ -316,6 +333,8 @@ body = f'''<div class="ftdwrap">
   <p style="margin-top:8px;color:var(--mute);font-size:13px">First TD is a high-variance market by nature: the best number on the slate is usually under 20%. Treat these as single legs or small plays, and shop the price. Built {stamp} CT from the live sheet. Information only, not a guarantee; 21+, please bet responsibly.</p>
  </details>
  {"".join(cards)}
+ <button type="button" class="ftdmore" id="ftdmore" aria-expanded="false" aria-controls="ftddone" hidden></button>
+ <div class="ftddone" id="ftddone" hidden></div>
 </div>
 {FTD_JS}'''
 

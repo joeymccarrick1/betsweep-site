@@ -19,7 +19,11 @@ FTREAD = """() => { var qa = function(s, r){ return Array.from((r || document).q
   var lists = qa('.ftdwrap .strips ul').map(function(ul){ return {rows: qa('li[data-ko]', ul).filter(vis).length, started: qa('li[data-ko]', ul).filter(vis).filter(function(li){ return Date.now() >= +li.getAttribute('data-ko'); }).length, note: (ul.querySelector('li.alldone') || {textContent: ''}).textContent, fd: qa('a.fdgo', ul).filter(vis).length}; });
   var secs = qa('section.ftd'), st = secs.filter(function(s){ return s.classList.contains('started'); });
   return {lists: lists, games: secs.length, started: st.length, fdStarted: st.reduce(function(a, s){ return a + qa('a.fdgo', s).filter(vis).length; }, 0), fdOpen: secs.filter(function(s){ return !s.classList.contains('started'); }).reduce(function(a, s){ return a + qa('a.fdgo', s).filter(vis).length; }, 0),
-          chips: qa('nav.nav a[href^="#ftd-"]').filter(function(a){ return a.classList.contains('played'); }).length, over: document.documentElement.scrollWidth - document.documentElement.clientWidth}; }"""
+          chips: qa('nav.nav a[href^="#ftd-"]').filter(function(a){ return a.classList.contains('played'); }).length, over: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          /* 11/28: the kicked-off games wait at the foot under one row */
+          more: (function(){ var m = document.getElementById('ftdmore'); return m ? {shown: vis(m), txt: m.textContent.trim(), exp: m.getAttribute('aria-expanded'), bottom: m.getBoundingClientRect().bottom + scrollY, h: Math.round(m.getBoundingClientRect().height)} : null; })(),
+          stVis: st.filter(vis).length, stBelow: st.filter(vis).every(function(x){ var m = document.getElementById('ftdmore'); return m && x.getBoundingClientRect().top >= m.getBoundingClientRect().bottom - 0.5; }),
+          firstOpen: (function(){ var v = secs.filter(vis)[0]; return v ? !v.classList.contains('started') : null; })(), screens: Math.round(document.documentElement.scrollHeight / innerHeight * 10) / 10}; }"""
 
 async def main():
     if len(KOS) < 1: check(False, "the First TD page carries each game's kickoff time (data-ko on its game sections)"); print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1)
@@ -46,18 +50,33 @@ async def main():
             pg, ctx, errs = await page("/firsttd/", first - 26 * 3600e3, theme); s = await pg.evaluate(FTREAD); await ctx.close()
             print(f"   [{theme}] First TD before the week:", json.dumps(s)[:330])
             check(s["started"] == 0 and s["chips"] == 0 and s["lists"][0]["rows"] == 12 and not s["lists"][0]["note"] and s["over"] == 0 and not errs, f"[{theme}] before the first kickoff nothing is marked, the first list shows 12 players, no sideways scroll, no errors")
+            check(bool(s["more"]) and not s["more"]["shown"] and s["stVis"] == 0, f"[{theme}]   and there is no \"kicked off\" row yet ({s['more']})"); len0 = s["screens"]
             if len(KOS) > 1:
                 pg, ctx, errs = await page("/firsttd/", first + 60 * 60e3, theme); s = await pg.evaluate(FTREAD)
                 n1 = len([k for k in re.findall(r'<section class="ftd" id="ftd-[A-Z-]+" data-ko="(\d+)"', FT) if int(k) <= first + 3600e3])
                 print(f"   [{theme}] First TD an hour into the first game:", json.dumps(s)[:330])
                 check(s["started"] == n1 and s["chips"] == n1 and s["fdStarted"] == 0, f"[{theme}] the game that has kicked off is marked, its chip is dimmed, and it shows no FanDuel button ({s['started']} of {s['games']} games)")
                 check(all(l["started"] == 0 for l in s["lists"]) and s["lists"][0]["rows"] == 12, f"[{theme}] its players have left both lists and the next ones moved up ({[l['rows'] for l in s['lists']]} rows shown, none from a game in play)")
+                # ---- 11/28 (owner: "keep trimming where it makes sense site wide"): the kicked-off games wait at the foot under one row ----
+                want = f"{n1} game{' has' if n1 == 1 else 's have'} kicked off" if n1 < ngames else (f"All {ngames} games have kicked off" if ngames > 1 else "The game has kicked off")
+                check(bool(s["more"]) and s["more"]["shown"] and s["more"]["txt"] == want and s["more"]["exp"] == "false" and s["more"]["h"] >= 44 and s["stVis"] == 0 and (s["firstOpen"] or n1 == ngames) and s["screens"] < len0,
+                      f"[{theme}] the game that has kicked off is out of the list: one row at the foot says {want!r}, the first game on the page is one still to come, and the page is shorter ({len0} -> {s['screens']} screens; {s['more']})")
+                await pg.tap("#ftdmore"); await pg.wait_for_timeout(250); s2 = await pg.evaluate(FTREAD)
+                check(s2["more"]["exp"] == "true" and s2["stVis"] == n1 and s2["stBelow"] and s2["fdStarted"] == 0, f"[{theme}]   a tap on the row shows {n1} under it, still with no FanDuel button; a second tap puts them away ({s2['stVis']} shown)")
+                await pg.tap("#ftdmore"); await pg.wait_for_timeout(250); s3 = await pg.evaluate(FTREAD)
+                check(s3["more"]["exp"] == "false" and s3["stVis"] == 0, f"[{theme}]   ({s3['stVis']} shown after the second tap)")
+                # a finished game asked for by its chip: its group opens and the game opens with it
+                gid = await pg.evaluate("() => { var a = document.querySelector('nav.nav a.played[href^=\"#ftd-\"]'); if(!a) return null; a.click(); return a.getAttribute('href').slice(1); }"); await pg.wait_for_timeout(500)
+                if gid:
+                    z = await pg.evaluate("(id) => { var x = document.getElementById(id), r = x.getBoundingClientRect(); return {vis: r.height > 0, open: !!x.querySelector('details.fgd[open]'), top: r.top, vh: innerHeight, exp: document.getElementById('ftdmore').getAttribute('aria-expanded')}; }", gid)
+                    check(z["vis"] and z["open"] and z["exp"] == "true" and -5 <= z["top"] < z["vh"] * 0.8, f"[{theme}]   a tap on a finished game's chip opens the row and that game, on screen ({gid}: {z})")
                 if SHOTS: await pg.screenshot(path=f"{SHOTS}/firsttd-mid-{theme}.png")
                 await ctx.close()
             pg, ctx, errs = await page("/firsttd/", last + 6 * 3600e3, theme); s = await pg.evaluate(FTREAD)
             print(f"   [{theme}] First TD after the last game:", json.dumps(s)[:330])
             check(s["started"] == s["games"] == ngames and s["fdStarted"] == 0 and s["fdOpen"] == 0 and all(l["fd"] == 0 and l["rows"] == 0 for l in s["lists"]), f"[{theme}] after the last kickoff no FanDuel button is left anywhere on the page (was 31 on 11/17)")
             check(all("kicked off" in l["note"] for l in s["lists"] if True) and s["over"] == 0 and not errs, f"[{theme}] both lists say every game has kicked off ({s['lists'][0]['note'][:44]!r})")
+            check(bool(s["more"]) and s["more"]["shown"] and s["more"]["txt"] == (f"All {ngames} games have kicked off" if ngames > 1 else "The game has kicked off") and s["stVis"] == 0, f"[{theme}]   and every game waits under one row ({s['more']['txt'] if s['more'] else None!r}; the page is {s['screens']} screens)")
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/firsttd-done-{theme}.png")
             await ctx.close()
         # ---- Best parlay on Today and on Model's Best ----

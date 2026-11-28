@@ -1227,8 +1227,9 @@ BEST_TABS_JS = r"""(function(){
 NEWS_JS = r"""(function(){
   var f = document.getElementById('nwf'), sec = document.getElementById('news'); if(!f || !sec) return;
   var grps = [].slice.call(sec.querySelectorAll('.nwgrp')), host = document.getElementById('wktabs'), none = document.getElementById('nwnone'), team = '', T = null;
-  // 11/27 late: a group opens with its first 24 notes (31 "Out" notes ran the page to 5.6 phone screens); one button shows the rest
-  var CAP = 24, openG = {};
+  // 11/27 late: a group opens with its first 24 notes (31 "Out" notes ran the page to 5.6 phone screens); one button shows the rest.
+  // 11/28 (owner: "keep trimming where it makes sense site wide"): 12, the count Usage and Trend check open on - the page was still 4.8 screens.
+  var CAP = 12, openG = {};
   if(host && window.bsTabs && grps.length > 1) T = bsTabs.mount(host, grps.map(function(g){ return { id: g.getAttribute('data-tab'), label: g.getAttribute('data-label') }; }), { root: sec, key: 'bs_tab_news' });
   function apply(){ var total = 0, first = null, cur = T ? T.cur() : null, curN = 0;
     if(!grps.length){   // one group only: the plain list

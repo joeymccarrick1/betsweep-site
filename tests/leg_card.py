@@ -170,7 +170,12 @@ async def main():
             # ---- the builder's best-legs strip ----
             pg, ctx, errs = await open_("/build/", theme, early); await pg.wait_for_timeout(1500)
             bq = await pg.evaluate("""() => Array.from(document.querySelectorAll('#bql .bqc')).map(function(c){ var h = c.querySelector('.h5'), b = c.querySelector('button[data-i]'), r = c.getBoundingClientRect(), hr = h ? h.getBoundingClientRect() : null;
-                return {i: b ? +b.getAttribute('data-i') : null, v: h ? Array.from(h.querySelectorAll('li .v')).map(function(e){ return e.textContent; }) : null, ov: h ? h.querySelectorAll('li.ov').length : null, big: h ? h.querySelector('p b').textContent : null, fits: hr ? (hr.left >= r.left - 0.5 && hr.right <= r.right + 0.5) : true, h: Math.round(r.height)}; })""")
+                var lis = h ? Array.from(h.querySelectorAll('li')) : [], ln = h ? h.querySelector('.ln') : null, lnr = ln ? ln.getBoundingClientRect() : null;
+                return {i: b ? +b.getAttribute('data-i') : null, v: h ? Array.from(h.querySelectorAll('li .v')).map(function(e){ return e.textContent; }) : null, ov: h ? h.querySelectorAll('li.ov').length : null, big: h ? h.querySelector('p b').textContent : null, fits: hr ? (hr.left >= r.left - 0.5 && hr.right <= r.right + 0.5) : true, h: Math.round(r.height),
+                        op: h ? h.classList.contains('op') : null, lg: lis.map(function(li){ var i = li.querySelector('i.hm'); return i ? i.getAttribute('data-hm') : ''; }), same: lis.map(function(li){ return li.classList.contains('same'); }),
+                        /* each logo is drawn (a picture, a size), sits under its own bar, inside the chart, and the dashed line stays up on the bars */
+                        lgOk: lis.every(function(li){ var i = li.querySelector('i.hm'); if(!i) return true; var q = i.getBoundingClientRect(), bb = li.querySelector('.b').getBoundingClientRect(), lr = li.getBoundingClientRect();
+                          return q.width >= 8 && q.height >= 8 && getComputedStyle(i).backgroundImage.indexOf('url(') === 0 && q.top >= bb.bottom - 0.5 && q.bottom <= hr.bottom + 0.5 && Math.abs((q.left + q.right) / 2 - (lr.left + lr.right) / 2) <= 2 && (!lnr || lnr.bottom <= q.top + 0.5); })}; })""")
             bad = []
             for c in bq:
                 l = BS["legs"][c["i"]] if c["i"] is not None and c["i"] < len(BS["legs"]) else None; ex = expect_h5(l) if l else None
@@ -178,6 +183,16 @@ async def main():
                     if c["v"] is not None: bad.append((c["i"], "bars with no log"))
                 elif c["v"] != ex[0] or c["ov"] != ex[1] or c["big"] != f"{ex[1]} of {len(ex[0])}" or not c["fits"]: bad.append((l["pl"], l["m"], c, ex))
             check(not bad and not errs, f"[{theme}] the builder's best-legs cards draw the same five bars from the same log ({len(bq)} cards, {sum(1 for c in bq if c['v'])} with bars; first wrong: {bad[:1]}; {errs[:1]})")
+            # ---- 11/28 (said to the owner 11/27 as not done yet): the builder's bars carry each game's opponent logo too, and this week's opponent is ringed ----
+            al2 = lambda t: HM.ALIAS.get(str(t or ""), str(t or "")); badl, nlg, nring = [], 0, 0
+            for c in bq:
+                l = BS["legs"][c["i"]] if c["i"] is not None and c["i"] < len(BS["legs"]) else None
+                if not l or c["v"] is None: continue
+                ops = [al2(g.get("opp")) for g in [g for g in BS["gl"][l["pl"]] if g.get(l["sk"]) is not None][:5][::-1]]; logos = all(o in HM.TEAMS for o in ops)
+                want_lg = ops if logos else [""] * len(ops); want_same = [logos and o == al2(l.get("opp")) for o in ops]
+                nlg += 1 if logos else 0; nring += sum(want_same)
+                if c["op"] != logos or c["lg"] != want_lg or c["same"] != want_same or not c["lgOk"] or not c["fits"]: badl.append((l["pl"], l["m"], c["op"], c["lg"], c["same"], c["lgOk"], want_lg, want_same))
+            check(not badl, f"[{theme}] each bar on the builder's best-legs cards has that game's opponent logo under it, drawn inside the card with the line clear of it; a game against this week's opponent is ringed ({nlg} charts with logos, {nring} ringed bars; first wrong: {badl[:1]})")
             # ---- 11/28 (owner's iPhone: the caption sat on top of the last two bars): the bars are a grid of fixed columns, so the plot is as wide
             # as its bars in every browser (Safari sized the old flex row from the little numbers), and the caption starts clear of the last bar ----
             geo = await pg.evaluate("""() => Array.from(document.querySelectorAll('#bql .bqc .h5')).slice(0, 16).map(function(h){ var pl = h.querySelector('.plot').getBoundingClientRect(), ol = h.querySelector('ol'), lis = h.querySelectorAll('li'), last = lis[lis.length - 1].getBoundingClientRect(),

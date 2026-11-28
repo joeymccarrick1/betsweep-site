@@ -92,7 +92,7 @@ def sheet(name, legs, D, G, HOME, HM, WHY, SW, IN_, slug, status=""):
     for sid in order:
         lab, ms = STAT[sid]; ls = sorted([l for l in legs if l["m"] in ms], key=lambda l: (ms.index(l["m"]), float(l.get("ln") or 0)))
         if not ls: continue
-        d = default_rung(ls); whys = []; rows = []
+        d = default_rung(ls); whys = []; rows = []; books = []
         for l in ls:
             x = HOME._mb(D, l, G); need = need_of(l["m"], l["ln"]); sn = season_of(x); risk = SW.risk_tag(SW.risk_score(l, bd)) if need is not None else ""
             w = WHY.html(x, pf) if need is not None else ""
@@ -100,6 +100,15 @@ def sheet(name, legs, D, G, HOME, HM, WHY, SW, IN_, slug, status=""):
             e = x.get("e") or 0; bk = x.get("bk"); er = int(math.floor(abs(e) * 100 + 0.5)) * (1 if e >= 0 else -1)   # the edge in whole points; a rounded zero is no edge either way
             price = (f'<a class="more px" href="{E(HOME.build_href(gid, [(l["pl"], l["m"], l["ln"])]))}" data-px="{E(HOME.odds_str(l["o"]))}" '
                      f'title="Open the parlay builder with this leg in your slip">{E(HOME.odds_str(l["o"]))}</a>')
+            if need is not None:
+                # 11/28 (owner 1:38 AM: "other ways we can beat fanduel"): the rung on the chart can be sent straight to a book, with each
+                # book's own price on its button and the best one marked - the same buttons and the same rule as a leg card's foot
+                # (booklinks.best: exact rungs only, ties to FanDuel). FanDuel's own sheet shows one price.
+                bb = HOME.BL.best(x)
+                fdb = (f'<a class="fdb{" best" if bb == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener" '
+                       f'title="{"Best price for this leg. " if bb == "fd" and (x.get("bks") or {}) else ""}Opens FanDuel with this leg on the betslip">FanDuel {E(HOME.BL._am(l["o"]))}</a>') if x.get("fd") else ""
+                bh = fdb + HOME.BL.buttons([x], price=True)
+                if bh: books.append((HOME.leg_key(l["pl"], l["m"], l["ln"]), bh))
             name_cell = (f'<button type="button" class="pshln" aria-label="Show {E(HOME.leg_line(l["m"], l["ln"]))} on the chart">{E(short(l["m"], l["ln"]))}</button>' if need is not None
                          else f'<span class="pshln0">{E(short(l["m"], l["ln"]))}</span>')
             rows.append(
@@ -114,7 +123,8 @@ def sheet(name, legs, D, G, HOME, HM, WHY, SW, IN_, slug, status=""):
             proj = f'<span class="pshproj">proj {float(d["proj"]):.1f}</span>' if (isinstance(d.get("proj"), (int, float)) and not d["m"].endswith("TD")) else ""
             head = (f'<div class="pshsel"><p class="pshmk"><b>{E(HOME.leg_line(d["m"], d["ln"]))}</b>{proj}<span class="pshrk{" hi" if rk == "High risk" else ""}"{"" if rk else " hidden"}>{E(rk)}</span></p>'
                     + HOME.leg_h5(xd, season_of(xd))
-                    + "".join(f'<div class="pshwhy" data-w="{i}"{"" if w == wd else " hidden"}>{w}</div>' for i, w in enumerate(whys)) + '</div>')
+                    + "".join(f'<div class="pshwhy" data-w="{i}"{"" if w == wd else " hidden"}>{w}</div>' for i, w in enumerate(whys))
+                    + "".join(f'<div class="pshbks" data-k="{E(k)}"{"" if k == HOME.leg_key(d["pl"], d["m"], d["ln"]) else " hidden"}><span class="bks">{h}</span></div>' for k, h in books) + '</div>')
         chips.append((sid, lab))
         panels.append(f'<section class="pshp" data-st="{sid}" data-mks="{E("|".join(sorted({l["m"] for l in ls})))}"{"" if not panels else " hidden"}>{head}'
                       f'<table class="pshlad"><thead><tr><th scope="col">Line</th><th scope="col">Model</th><th scope="col">Needs</th><th scope="col">Edge</th><th scope="col">FanDuel</th></tr></thead>'

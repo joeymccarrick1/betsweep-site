@@ -1600,6 +1600,7 @@ BUILDER_JS = r"""
   function sides(g){ var A = {t: g.a, c: g.ca, n: g.na, p: g.pa}, B = {t: g.b, c: g.cb, n: g.nb, p: g.pb}; return (g.home && g.away && !g.nt && g.home === g.a) ? {l: B, r: A} : {l: A, r: B}; }
   /* owner 11/27 ("Figure out where else we need to put the logos"): a small team logo in front of a player's name */
   function hmI(t){ return t && /^[A-Z]{2,3}$/.test(t) ? '<i class="hm" data-hm="' + t + '" role="img" aria-label="' + t + '"></i>' : ''; }
+  var HMT = '__HM_TEAMS__'.split(' ');   /* the 32 team codes that have a logo (helmets.TEAMS) */
   /* 11/27 night (owner: "Hit chart on every leg"): a leg's last five games as five bars against its line, oldest first - the same log
      (D.gl) and the same hit rule as histBlock() below, so the strip and the leg's own history always agree. home.leg_h5() draws the
      same picture on the Today and Model's Best cards. */
@@ -1610,9 +1611,12 @@ BUILDER_JS = r"""
     var won = function(v){ return l.u ? v < l.ln : v >= need; };
     var vals = gs.map(function(g){ return +g[l.sk] || 0; }), top = Math.max(Math.max.apply(null, vals), line) * 1.12 || 1, hits = vals.filter(won).length;
     var lab = l.u ? 'under ' + l.ln : td ? (need > 1 ? need + '+ TDs' : 'a TD') : Math.round(l.ln) + '+', verb = l.u ? 'stayed' : td ? 'scored' : 'cleared';
-    return '<div class="h5" role="img" aria-label="' + esc(l.pl + ', last ' + vals.length + ' games, oldest first: ' + vals.map(function(v){ return Math.round(v); }).join(', ') + '. ' + verb.charAt(0).toUpperCase() + verb.slice(1) + ' ' + lab + ' in ' + hits + ' of ' + vals.length + '.') + '"><div class="plot"><ol>' +
-      vals.map(function(v, i){ return '<li class="' + (won(v) ? 'ov' : 'un') + '" title="Week ' + gs[i].w + (gs[i].opp ? ' vs ' + esc(gs[i].opp) : '') + ': ' + Math.round(v) + '"><span class="v">' + Math.round(v) + '</span><span class="b" style="height:' + Math.max(7, v / top * 100).toFixed(0) + '%"></span></li>'; }).join('') +
-      '</ol><i class="ln" style="bottom:calc(var(--bh) * ' + (line / top).toFixed(4) + ')"></i></div><p><b>' + hits + ' of ' + vals.length + '</b>' + verb + ' ' + esc(lab) + '</p></div>';
+    /* 11/28 (said to the owner 11/27 as not done yet): each bar carries that game's opponent logo and a game against THIS week's opponent
+       is ringed, as on the leg cards (home.leg_h5). No logo row when any of the five opponents is not one of the 32 codes. */
+    var al = function(t){ return ({LAR: 'LA', WSH: 'WAS'})[t] || t || ''; }, opp = al(l.opp), ops = gs.map(function(g){ return al(g.opp); }), logos = ops.every(function(o){ return HMT.indexOf(o) >= 0; });
+    return '<div class="h5' + (logos ? ' op' : '') + '" role="img" aria-label="' + esc(l.pl + ', last ' + vals.length + ' games, oldest first: ' + vals.map(function(v, i){ return Math.round(v) + (ops[i] ? ' vs ' + ops[i] : ''); }).join(', ') + '. ' + verb.charAt(0).toUpperCase() + verb.slice(1) + ' ' + lab + ' in ' + hits + ' of ' + vals.length + '.') + '"><div class="plot"><ol>' +
+      vals.map(function(v, i){ return '<li class="' + (won(v) ? 'ov' : 'un') + (logos && ops[i] === opp ? ' same' : '') + '" title="Week ' + gs[i].w + (ops[i] ? ' vs ' + esc(ops[i]) : '') + ': ' + Math.round(v) + '"><span class="v">' + Math.round(v) + '</span><span class="b" style="height:' + Math.max(7, v / top * 100).toFixed(0) + '%"></span>' + (logos ? hmI(ops[i]) : '') + '</li>'; }).join('') +
+      '</ol><i class="ln" style="bottom:calc(var(--lg, 0px) + var(--bh) * ' + (line / top).toFixed(4) + ')"></i></div><p><b>' + hits + ' of ' + vals.length + '</b>' + verb + ' ' + esc(lab) + '</p></div>';
   }
   function badge(t, col){ var p = col[0], s2 = col[1]; return '<span class="badge" data-hm="' + t + '" style="--p:' + p + ';--s:' + s2 + ';--ink:' + (lum(p) > 0.45 ? '#101820' : '#ffffff') + '">' + t + '</span>'; }
   var $ = function(s, r){ return (r||document).querySelector(s); }, $$ = function(s, r){ return [].slice.call((r||document).querySelectorAll(s)); };
@@ -2785,7 +2789,7 @@ body = f'''<div class="bld">
 <script>window.__BS = {json.dumps(DATA, separators=(",", ":"))};</script>
 <script>{LIVE.LIVE_JS}</script>
 <script>{BOOKS.BOOKS_JS}</script>
-<script>{BUILDER_JS.replace('__PLUS_TXT__', _PLUS_TXT).replace('__EVEN_TXT__', _TIER_TXT['even']).replace('__TD_TXT__', _TIER_TXT['td']).replace('__SAFE_TXT__', _TIER_TXT['safe']).replace('__FAV_TXT__', _FS['fav'])}</script>'''
+<script>{BUILDER_JS.replace('__HM_TEAMS__', ' '.join(__import__('helmets').TEAMS)).replace('__PLUS_TXT__', _PLUS_TXT).replace('__EVEN_TXT__', _TIER_TXT['even']).replace('__TD_TXT__', _TIER_TXT['td']).replace('__SAFE_TXT__', _TIER_TXT['safe']).replace('__FAV_TXT__', _FS['fav'])}</script>'''
 
 _NOW_MS = __import__("time").time() * 1000   # 11/16: games still to be played lead the chip row; a played game's chip is dimmed (template: nav a.played)
 page = (open(os.path.join(HERE, "template.html")).read()

@@ -49,8 +49,13 @@ async def main():
             check(await pg.evaluate(VIS, f"#{first} > .bestslip > .bpwork") and await pg.evaluate(f"document.querySelector('#{first} > .bestslip > .bpmore').getAttribute('aria-expanded')") == "true" and "Hide the work" in await pg.evaluate(f"document.querySelector('#{first} > .bestslip > .bpmore').textContent")
                   and not await pg.evaluate(f"document.querySelector('#{first}').classList.contains('expanded')"), f"boards, {theme}: \"Show the work\" opens the reasoning in place (the board itself stays shut)")
             await pg.click(f"#{first} > .bestslip > .bpmore"); await pg.wait_for_timeout(150); shut = not await pg.evaluate(VIS, f"#{first} > .bestslip > .bpwork")
-            hid = await pg.evaluate(f"[...document.querySelectorAll('#{first} > .ginfo .bsx')].length"); await pg.click(f"#{first} > .vbtns .vbtn[data-view=script]"); await pg.wait_for_timeout(300)
-            check(shut and await pg.evaluate(f"document.querySelector('#{first}').classList.contains('expanded')") and (hid == 0 or await pg.evaluate(VIS, f"#{first} > .ginfo .bsx")) and not errs, f"boards, {theme}: it closes again, and Game Script opens the full board with the stadium and the rest back on the kickoff line ({errs[:1]})")
+            # owner 11/28 1:24 AM (a screen recording): "make it so the headers don't change size when you click one of the projection/game line
+            # buttons" - until then an open board brought the stadium and the rest back onto the kickoff line, which grew it to two lines.
+            # Now the line keeps its short form on a phone whether the board is shut or open (tests/board_top.py measures the whole top).
+            GI = f"Math.round(document.querySelector('#{first} > .ginfo').getBoundingClientRect().height)"
+            hid = await pg.evaluate(f"[...document.querySelectorAll('#{first} > .ginfo .bsx')].length"); gi0 = await pg.evaluate(GI); await pg.click(f"#{first} > .vbtns .vbtn[data-view=script]"); await pg.wait_for_timeout(300); gi1 = await pg.evaluate(GI)
+            check(shut and await pg.evaluate(f"document.querySelector('#{first}').classList.contains('expanded')") and (hid == 0 or not await pg.evaluate(VIS, f"#{first} > .ginfo .bsx")) and abs(gi1 - gi0) <= 1 and not errs,
+                  f"boards, {theme}: it closes again, and Game Script opens the full board while the kickoff line keeps its short form - the stadium and the rest stay folded, the line is as tall as it was ({gi0}px -> {gi1}px; {errs[:1]})")
             await ctx.close()
             # ---- builder ----
             ctx, pg, errs = await page(b, "/build/", theme=theme)

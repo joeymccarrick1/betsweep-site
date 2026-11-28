@@ -4560,3 +4560,44 @@ Not published yet when written: built and tested on a scratch build, waiting for
   tests/page_fold.py is back to 4.5. The phone menu was left alone: its groups are folded, so Betting's ten links show only when
   that group is opened.
 - Next trimming candidates, by the page-length test: First TD 5.1 screens, Teams 4.9, News desk 4.8, Season 4.6.
+
+## 11/28 3:00 AM: a tap on Live shows at once; favorite team; share your winner; books on the player sheet; two trims (owner 1:29 and 1:38 AM)
+- **A tap on the Live page waited a full second on every phone.** build_live.py holds a redraw back for 900 ms after any scroll or
+  touch ("never re-render under a finger: iOS kills the scroll"), and `touchstart` counts - so the touch that makes a TAP set the
+  hold, and every tap whose handler calls `render()` without force (open a game, the Settled fold, a slip's row, a star, a quarter
+  filter) showed a second late. A mouse click showed at once, and every Live test clicked (`element.click()`), so none saw it. Found
+  while testing "share your winner" with a real touch tap. Fix: a capture-phase `click` listener on the window sets `LASTSCROLL = 0`
+  before any tap handler runs (a click only arrives once the finger is up); an update that lands while a finger is really moving
+  is still held. tests/live_tap.py (new, port 8911) taps the way a phone does and times click-to-change inside the page: on the
+  copy published before this, 1,010 to 1,030 ms; after, about 20 ms; and it checks the hold still holds. **Rule: a test of a
+  tap-driven control taps (`page.tap`) at least once - a click skips the touch events.**
+- **Favorite team** (the seventh of the eight ideas, owner 11/27 8:31 PM "I love all 8"). Today: a chip beside Short view and Live
+  ("+ Your team", then the logo and code) opens the list of 32; the choice is kept on the device only (`localStorage.bs_fav` - no
+  new data leaves the device, so the Privacy Policy, the owner's document, is untouched). With a team chosen: a "Your team" row
+  under the opener (kickoff, live score or final; it links to the board, Live or the box score; "X is off this week" on a bye; no
+  row when the opener IS its game - the kicker says so instead), and its game card comes first within its state and is marked.
+  The alerts card's team list (account.py) writes the same key, and a signed-in profile's team seeds it when the device has none.
+  tests/fav_team.py (new, port 8909). Not done: the same on Boards, Live and the News desk.
+- **Share your winner** (the eighth). Since a decided slip folds away under Settled the moment it is graded (11/27), a cashed
+  slip's "Share the win" button was out of sight. Live now gives the newest two winners a line of their own above the shut fold:
+  "Cashed +600", the slip's name and legs, and the button. The picture (`winCard`) carries each leg's team logo after its tick - a
+  player's team, the side of a moneyline or spread, none for a total - in one column so the words line up. Checked in
+  tests/live_finals.py's "settled-fold" case (the line, the share sheet's one 1080 x 1350 file, the logos, the fold open).
+- **The player sheet sends the rung on the chart straight to a book** (owner 1:38 AM: "other ways we can beat fanduel"). Under the
+  reasons: FanDuel, DK and HR buttons, each with that book's own price for THAT rung, the best one marked - the leg cards' own
+  buttons and rule (booklinks.best: exact rungs only, ties to FanDuel; a nearest-line substitute shows the approximate mark and no price).
+  FanDuel's sheet shows one price; this week another book pays more on 830 of 1,419 priced over legs. psheet.py `.pshbks` (one
+  hidden group a rung, the script shows the chosen rung's); gone after kickoff. A sheet is about 3 KB compressed.
+- **Opponent logos under the Parlay Builder's best-legs bars** (said to the owner 11/27 as not done yet). build_builder.py `h5()`
+  mirrors home.leg_h5: a logo under each bar, a ring on a game against this week's opponent, no logo row unless all five
+  opponents are among the 32 codes (`HMT`, filled from helmets.TEAMS at build). tests/leg_card.py checks them against the log.
+- **Two trims** (owner 1:15 AM: "keep trimming where it makes sense site wide"). First TD: a game that has kicked off moves to
+  the foot of the page under one row ("5 games have kicked off"); a tap on the row, on its chip or a link to it shows it. On a
+  Saturday the page opened with five finished games; now Sunday's come first (5.3 -> 4.2 screens; 1.4 once every game has
+  started). tests/week_end.py. News desk: a group opens on 12 notes, the count Usage and Trend check open on (24 since 11/27;
+  4.8 -> 3.4 screens; tests/page_fold.py limit 5.0 -> 4.0).
+- **tests/page_tight.py** still expected an open board to bring the stadium back onto its kickoff line, which the 1:24 AM rule
+  ended; the first full set of the 2:00 AM batch failed on it and that batch went out with this one. **Before a full set, grep
+  the tests for the selector whose behaviour changed (here `.bsx`).**
+- Not built, said to the owner: the slip's chance on the home pages' betslip bar (it must be the builder's own same-game
+  estimate, not a second one); the player sheet from the site search; favorite team beyond Today.
