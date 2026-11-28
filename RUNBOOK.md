@@ -4244,3 +4244,15 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   /home/claude/nfl1/wm_src_v2. PROMO rows 73 and 74 set to Missed on the owner's word ("They both lost").
 - 11/27 6:20 PM: side-by-side wordmarks fill one box (promo matchup row, First TD heading) so a pair matches - owner asked to
   "stretch or shrink" them; team page header puts the logo and wordmark on one row (`.pp header:has(h1 .wm[data-wm])`).
+
+## 11/27 7:00 PM: wordmark pairs "meet in the middle"; defensive-TD check (numbers only, nothing changed in the model)
+- Paired wordmarks: same width, height from `--wmid` = sqrt(own shape x 4.2) per team (helmets.css), after the owner found the full
+  stretch wrong on the Broncos mark.
+- **Defensive TD check** (owner: two defensive TDs in the DEN-PIT rain game, "something we probably could've thought of"; "run check
+  and bring numbers then we can change slips"). Data: nflverse weekly team stats 2022-2026 (github.com/nflverse/nflverse-data release
+  `stats_team`, files in /home/claude/dtd1, NOT in the repo) joined to in/games.csv (roof, wind, temp, starting QBs). 2,508 team-games.
+  "Backup" = the opposing starter is not that team's most frequent starter that season (hindsight; it includes late-season changes).
+  A defense scores a TD in 5.9% of games. Against the usual starter 5.2%; against a backup 8.9% (higher in each of the five seasons:
+  7.5/6.7, 10.2/7.6, 8.0/4.1, 8.7/4.3, 11.4/2.4). Wind 12+ mph alone 6.1% (no real lift). Backup + wind 12+: 11.7% (n=60, thin).
+  Per game, either defense: 11.3% overall, 13.3% with a backup starting, 17.3% backup + wind (n=52). No rain in the history file,
+  so rain itself is untested. Not done: whether FanDuel's price already carries it (our feed has no D/ST TD market).

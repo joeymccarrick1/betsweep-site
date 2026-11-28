@@ -100,8 +100,11 @@ def css():
     # owner 11/27 5:44 PM, on a promo card: "Can you stretch or shrink the team watermarks so that they match in size?" Where two
     # wordmarks sit side by side (a promo's matchup row, a First TD heading) each fills the same box exactly, so the pair matches.
     # A long thin mark gets taller and a short tall one gets wider; a lone wordmark elsewhere keeps its own shape.
-    out.append(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%;-webkit-mask-size:100% 100%;mask-size:100% 100%}")
-    out.append(".wmrow .wm[data-wm]{width:118px;height:28px}")
+    # owner 6:18 PM: "the broncos word mark stretch doesn't look right. Meet it in the middle somewhere." Same width for the pair, and each
+    # mark's height sits halfway (geometric mean) between its own shape and the shared box, so no mark is pulled more than about 1.6x.
+    out.append(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%;-webkit-mask-size:100% 100%;mask-size:100% 100%;height:auto;aspect-ratio:var(--wmid, 4.2)}")
+    out.append(".wmrow .wm[data-wm]{width:118px}")
+    for t in TEAMS: out.append("[data-wm='%s']{--wmid:%.2f}" % (t, (WM_AR.get(t, 4.2) * 4.2) ** 0.5))
     # owner 11/27 5:47 PM, on a team page: "Maybe the logo and the watermark on the same line?" The logo sits beside the wordmark on
     # one row, at the same height; the record line and the buttons run full width under them.
     out.append(".pp header:has(h1 .wm[data-wm]){row-gap:8px} .pp header:has(h1 .wm[data-wm]) > [data-hm]{grid-row:1;grid-column:1;height:46px !important;align-self:center} .pp header:has(h1 .wm[data-wm]) > h1{grid-row:1;grid-column:2;margin:0;align-self:center} .pp header:has(h1 .wm[data-wm]) > .sub,.pp header:has(h1 .wm[data-wm]) > .acts{grid-column:1/-1}")
