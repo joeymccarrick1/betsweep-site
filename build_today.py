@@ -465,12 +465,15 @@ TODAY_CSS = r"""
 .tht i.hm{height:46px;margin:0;vertical-align:0}
 .thc{text-align:center;font-family:var(--display)} .thc b{display:block;font-weight:800;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap} .thc b i{font-style:normal;color:var(--red);margin:0 6px}
 .thc small{display:block;margin-top:4px;font-family:var(--body);font-weight:500;font-size:12px;color:var(--mute);white-space:nowrap}
+/* owner 11/28 1:21 AM ("make the countdown time a little more subtle"): before kickoff the two teams lead and the countdown sits back -
+   smaller, lighter, in the quiet colour. A live score keeps the full weight. */
+.thl[data-st="pre"] .thc b{font-weight:600;font-size:19px;color:var(--mute);letter-spacing:.01em}
 .thf{text-align:center;font-size:12.5px;line-height:1.35;color:var(--mute)} .thf b{color:var(--ink);font-weight:600}
 .thx{display:flex;gap:6px;overflow-x:auto;padding:8px 0 0;scrollbar-width:none} .thx::-webkit-scrollbar{display:none}
 .thx span{flex:none;align-self:center;font-size:12px;color:var(--mute);margin-right:2px}
 .thx a{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);text-decoration:none;font-family:var(--display);font-weight:700;font-size:13px}
 .thx a i.hm{height:16px;margin:0;vertical-align:0}
-@media (max-width:420px){ .tht{font-size:26px;gap:6px} .tht i.hm{height:40px} .thc b{font-size:26px} }
+@media (max-width:420px){ .tht{font-size:26px;gap:6px} .tht i.hm{height:40px} .thc b{font-size:26px} .thl[data-st="pre"] .thc b{font-size:17px} }
 @media (prefers-reduced-motion: reduce){ .thk .lv::before{animation:none} }
 /* a team logo in front of each side of a game card */
 .tdm .tm{display:inline-flex;align-items:center;gap:6px} .tdm .tm i.hm{height:28px;margin:0;vertical-align:0} .tdm{align-items:center}

@@ -167,8 +167,12 @@ def css():
     out += ["/* 11/27 night: a leg's last five games as five bars against its line (leg cards on Today and Model's Best, the builder's best-legs strip) */",
             '.h5{display:flex;align-items:center;gap:10px;min-width:0}',
             '.h5 .plot{--bh:30px;flex:none;position:relative;height:calc(var(--bh) + 13px)}',
-            '.h5 ol{list-style:none;margin:0;padding:0;height:100%;display:flex;gap:5px}',
-            '.h5 li{flex:0 0 18px;min-width:0;display:grid;grid-template-rows:13px var(--bh);justify-items:stretch;text-align:center}',
+            # 11/28 (owner's iPhone, 1:19 AM: the caption sat on top of the last two bars): the bars were flex items sized by flex-basis alone, and
+            # Safari sizes a shrink-to-fit box from its flex items' CONTENT (the little numbers), not their flex-basis - so the plot came out
+            # three bars wide with five bars in it. The row is a grid of fixed columns now (--bw, default 18px), which every engine adds up
+            # the same way, and each bar carries the width itself as well.
+            '.h5 ol{list-style:none;margin:0;padding:0;height:100%;display:grid;grid-auto-flow:column;grid-auto-columns:var(--bw,18px);justify-content:start;gap:5px}',
+            '.h5 li{width:var(--bw,18px);min-width:0;display:grid;grid-template-rows:13px var(--bh);justify-items:stretch;text-align:center}',
             '.h5 li .v{font-size:10px;font-weight:600;line-height:13px;color:var(--mute);font-variant-numeric:tabular-nums;margin:0 -3px;white-space:nowrap}',
             '.h5 li .b{align-self:end;border-radius:3px 3px 0 0;background:color-mix(in srgb,var(--mute) 50%,transparent)}',
             '.h5 li.ov .b{background:var(--good)} .h5 li.ov .v{color:var(--ink)}',

@@ -16,7 +16,7 @@ Rules, so a line is never off the point:
 
   reasons(leg, pf)  ->  [(side, label, line), ...]   side is "good" or "bad"; at most one of each; the against line leads when the
                                                       model's chance is under the price's, else the for line leads
-  html(leg, pf)     ->  the <ul class="why"> block, or "" when the model has nothing to say either way
+  html(leg, pf)     ->  the <ul class="legwhy"> block, or "" when the model has nothing to say either way
   css()             ->  the block's styles (build_site.py adds them to the shared sheet)
 """
 import html as _html, re
@@ -187,16 +187,16 @@ def reasons(leg, pf=None):
 def html(leg, pf=None, cls=""):
     rs = reasons(leg, pf)
     if not rs: return ""
-    return (f'<ul class="why{(" " + cls) if cls else ""}">' + "".join(f'<li class="{k}"><i aria-hidden="true">{"✓" if k == "good" else "✗"}</i><span><b>{E(tag)}</b> {E(line)}</span></li>' for k, tag, line in rs) + '</ul>')
+    return (f'<ul class="legwhy{(" " + cls) if cls else ""}">' + "".join(f'<li class="{k}"><i aria-hidden="true">{"✓" if k == "good" else "✗"}</i><span><b>{E(tag)}</b> {E(line)}</span></li>' for k, tag, line in rs) + '</ul>')
 
 
 def css():
     return "\n".join([
         "/* a leg's reasons in two lines (why.py): the strongest for, the strongest against */",
-        ".why{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:12.5px;line-height:1.35;color:var(--mute)}",
-        ".why li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:6px;align-items:start}",
-        ".why li i{font-style:normal;font-weight:700;font-size:12px;line-height:1.35;text-align:center}",
-        ".why li.good i{color:var(--good)} .why li.bad i{color:var(--bad,#e07070)}",
-        ".why li span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}",
-        ".why li b{font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.02em;color:var(--ink);margin-right:2px}",
+        ".legwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:12.5px;line-height:1.35;color:var(--mute)}",
+        ".legwhy li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:6px;align-items:start}",
+        ".legwhy li i{font-style:normal;font-weight:700;font-size:12px;line-height:1.35;text-align:center}",
+        ".legwhy li.good i{color:var(--good)} .legwhy li.bad i{color:var(--bad,#e07070)}",
+        ".legwhy li span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}",
+        ".legwhy li b{font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.02em;color:var(--ink);margin-right:2px}",
     ]) + "\n"

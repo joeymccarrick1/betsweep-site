@@ -52,9 +52,9 @@ READ = """() => { var vis = function(e){ return !!(e && (e.offsetWidth || e.offs
       h5: h5 ? {v: Array.from(h5.querySelectorAll('li .v')).map(function(e){ return e.textContent; }), ov: h5.querySelectorAll('li.ov').length, cap: h5.querySelector('p').textContent.replace(/\\s+/g, ' ').trim(), big: h5.querySelector('p b').textContent,
                  ops: Array.from(h5.querySelectorAll('li i.hm')).map(function(i){ return i.getAttribute('data-hm'); }), same: h5.querySelectorAll('li.same').length, vs: (h5.querySelector('p small.vs') || {}).textContent || '', lnY: (function(){ var l = h5.querySelector('.ln'), bs = Array.from(h5.querySelectorAll('li .b')); if(!l || !bs.length) return null; var base = Math.max.apply(null, bs.map(function(e){ return e.getBoundingClientRect().bottom; })); return Math.round(base - l.getBoundingClientRect().top); })(),
                  hBar: Array.from(h5.querySelectorAll('li .b')).map(function(e){ return Math.round(e.getBoundingClientRect().height); }), lnVis: vis(h5.querySelector('.ln')), w: Math.round(h5.getBoundingClientRect().width), fits: h5.getBoundingClientRect().right <= ar.right + 0.5, aria: h5.getAttribute('aria-label') || ''} : null,
-      why: Array.from(a.querySelectorAll('.why li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }), pill: !!q('.foot .hist'),
+      why: Array.from(a.querySelectorAll('.legwhy li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }), pill: !!q('.foot .hist'),
       hist: (q('.hrow > .hist') || {}).textContent || '', slip: !!q('.what a.more.px'), px: (function(){ var b = q('.what a.more.px'); return b ? {txt: (b.querySelector('b') || b).textContent, d: b.getAttribute('data-px'), h: b.offsetHeight, role: b.getAttribute('role'), pressed: b.getAttribute('aria-pressed')} : null; })(),
-      link: (function(){ var l = q('.who b a'); return l ? l.getAttribute('href') : ''; })(), line: (q('.what .wl') || {}).textContent || '', fd: Array.from(a.querySelectorAll('.foot a.fdb')).filter(vis).length, h: Math.round(ar.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .foot')).concat(Array.from(a.querySelectorAll('.why'))).every(function(e){ var r = e.getBoundingClientRect(); return r.left >= ar.left - 0.5 && r.right <= ar.right + 0.5; })}; })}; }"""
+      link: (function(){ var l = q('.who b a'); return l ? l.getAttribute('href') : ''; })(), line: (q('.what .wl') || {}).textContent || '', fd: Array.from(a.querySelectorAll('.foot a.fdb')).filter(vis).length, h: Math.round(ar.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .foot')).concat(Array.from(a.querySelectorAll('.legwhy'))).every(function(e){ var r = e.getBoundingClientRect(); return r.left >= ar.left - 0.5 && r.right <= ar.right + 0.5; })}; })}; }"""
 
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
@@ -178,8 +178,28 @@ async def main():
                     if c["v"] is not None: bad.append((c["i"], "bars with no log"))
                 elif c["v"] != ex[0] or c["ov"] != ex[1] or c["big"] != f"{ex[1]} of {len(ex[0])}" or not c["fits"]: bad.append((l["pl"], l["m"], c, ex))
             check(not bad and not errs, f"[{theme}] the builder's best-legs cards draw the same five bars from the same log ({len(bq)} cards, {sum(1 for c in bq if c['v'])} with bars; first wrong: {bad[:1]}; {errs[:1]})")
+            # ---- 11/28 (owner's iPhone: the caption sat on top of the last two bars): the bars are a grid of fixed columns, so the plot is as wide
+            # as its bars in every browser (Safari sized the old flex row from the little numbers), and the caption starts clear of the last bar ----
+            geo = await pg.evaluate("""() => Array.from(document.querySelectorAll('#bql .bqc .h5')).slice(0, 16).map(function(h){ var pl = h.querySelector('.plot').getBoundingClientRect(), ol = h.querySelector('ol'), lis = h.querySelectorAll('li'), last = lis[lis.length - 1].getBoundingClientRect(),
+                p = h.querySelector('p').getBoundingClientRect(), cs = getComputedStyle(ol), ls = getComputedStyle(lis[0]);
+                return {disp: cs.display, cols: cs.gridAutoColumns, liw: ls.width, same: Math.abs(parseFloat(ls.width) - parseFloat(cs.gridAutoColumns)) < 0.6, inPlot: last.right <= pl.right + 0.6, clear: p.left >= last.right - 0.5}; })""")
+            check(bool(geo) and all(g["disp"] == "grid" and str(g["cols"]).endswith("px") and g["same"] and g["inPlot"] and g["clear"] for g in geo),
+                  f"[{theme}] each chart's bars are fixed-width grid columns, the plot is as wide as its bars and the caption starts clear of the last one ({len(geo)} charts; first wrong: {next((g for g in geo if not (g['disp'] == 'grid' and g['same'] and g['inPlot'] and g['clear'])), None)})")
             if SHOTS and bq:
                 el = await pg.query_selector("#bq"); await el.scroll_into_view_if_needed(); await pg.wait_for_timeout(300); await el.screenshot(path=os.path.join(SHOTS, f"leg_card_builder_{theme}.png"))
+            # ---- 11/28 (owner's iPhone: "Spacing is messed up here"): the builder's own "Flags on this leg" list keeps its own layout. The cards'
+            # reasons list was called .why too and turned every flag into a two-column grid with a 16px column for its label. ----
+            await pg.evaluate("() => { var g = document.querySelector('button.ghd:not([disabled])'); if(g) g.click(); }"); await pg.wait_for_timeout(500)
+            nf = await pg.evaluate("() => { var n = 0; Array.from(document.querySelectorAll('button.pgb[data-pg]')).slice(0, 2).forEach(function(f){ f.click(); n++; }); return n; }"); await pg.wait_for_timeout(500)
+            fl = await pg.evaluate("""() => { var out = []; Array.from(document.querySelectorAll('.pc .why')).slice(0, 6).forEach(function(w){ var t = w.closest('li').querySelector('.wf'); if(w.hidden){ if(t) t.click(); else w.hidden = false; }
+                var cs = getComputedStyle(w); Array.from(w.querySelectorAll('li')).forEach(function(li){ var b = li.querySelector('b'), r = li.getBoundingClientRect(), br = b.getBoundingClientRect();
+                  out.push({lab: b.textContent, disp: getComputedStyle(li).display, cut: b.scrollWidth > b.clientWidth + 1, lines: b.getClientRects().length, wide: Math.round(br.width), liw: Math.round(r.width), padL: parseFloat(cs.paddingLeft), wdisp: cs.display, shown: w.offsetParent !== null}); }); });
+                return out; }""")
+            if not fl: check(True, f"[{theme}] no player card with flags is open in the builder right now ({nf} folders opened): the flags list is not checked")
+            else:
+                bad = [f for f in fl if f["disp"] == "grid" or f["cut"] or f["wdisp"] == "grid" or f["padL"] < 6 or not f["shown"] or (f["lines"] > 1 and f["wide"] < f["liw"] * 0.5)]
+                check(not bad, f"[{theme}] the builder's Flags on this leg list keeps its own layout: each label runs into its sentence on one line, nothing squeezed into a narrow column ({len(fl)} flags; first wrong: {bad[:1]})")
+                if SHOTS: await pg.evaluate("() => { var w = document.querySelector('.pc .why'); if(w) w.scrollIntoView({block: 'center'}); }"); await pg.wait_for_timeout(250); await pg.screenshot(path=os.path.join(SHOTS, f"leg_card_flags_{theme}.png"))
             await ctx.close()
         await b.close()
     srv.shutdown()

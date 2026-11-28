@@ -4471,3 +4471,22 @@ Under the field of a game in play (build_live.py `gamecast()`), from the summary
 - Not verified against a real game: the feed's field names (`shortDisplayResult`, `isScore`, `description`, `playId`) are as
   ESPN's summary has had them; the first live game is the check. A missing field shows less (a chip without plays and yards, a
   line without quarter rules), never a wrong word.
+
+## 11/28 1:30 AM: three fixes from the owner's phone (1:17, 1:19 and 1:21 AM)
+- **"Spacing is messed up here" (Parlay Builder, Flags on this leg).** Mine, shipped 12:13 AM: the leg cards' reasons list was
+  `<ul class="why">` with site-wide rules (`why.css()`), and the builder's flags block, the boards' slip flags and two captions on
+  Today are `.why` too. Every flag became a two-column grid with a 16px column for its label. The list is `<ul class="legwhy">`
+  now (why.py; tests read `.legwhy`). **Rule: a site-wide rule never starts with a plain, short class name.**
+  - tests/css_clash.py (new, no browser, first in the prepublish list): fails when a rule in helmets.css(), why.css() or
+    wxfx.css() starts with a class name another generator also uses, unless the name is on its written list of shared names.
+    Run against the old name it fails, naming build_builder.py, home.py and template.html.
+  - tests/leg_card.py opens a game and two position folders in the builder, opens the flags, and checks no flag is a grid and no
+    label is cut.
+- **"On the chart spacing is wrong too" (the five bars; iPhone only).** The bars were flex items sized by `flex-basis` alone inside
+  a shrink-to-fit plot. Chrome adds up the flex-basis; Safari adds up the items' content (the little numbers), so on an iPhone the
+  plot came out about three bars wide with five bars in it and the caption sat on the last two. The row is a grid of fixed columns
+  now (`grid-auto-columns: var(--bw, 18px)`), and each bar carries the width too. A bigger chart sets `--bw`, never a flex-basis.
+  There is no Safari engine on the build machine: tests/leg_card.py checks the structure (grid, fixed columns, plot as wide as its
+  bars, caption clear of the last bar), and the owner's phone is the real check.
+- **"Make the countdown time a little more subtle" (Today's opener).** Before kickoff the countdown is 19px (17px on a phone),
+  weight 600, in the quiet colour; the two teams lead. A live score keeps the full weight (`.thl[data-st="pre"] .thc b`).

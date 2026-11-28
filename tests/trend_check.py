@@ -79,8 +79,8 @@ READ = """() => { var vis = function(e){ return !!(e && (e.offsetWidth || e.offs
         cards: cards.map(function(a){ var h5 = a.querySelector('.h5'), k = a.querySelector('.trk'), r = a.getBoundingClientRect();
           return {k: a.getAttribute('data-k'), st: a.getAttribute('data-st'), g: a.getAttribute('data-gid'), h: +a.getAttribute('data-h'), shown: vis(a), big: h5 ? h5.querySelector('p b').textContent : '', risk: k ? k.textContent : '',
             ops: h5 ? Array.from(h5.querySelectorAll('li i.hm')).map(function(i){ return i.getAttribute('data-hm'); }) : [], same: h5 ? h5.querySelectorAll('li.same').length : 0,
-            why: Array.from(a.querySelectorAll('.why li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }),
-            slip: !!a.querySelector('.what a.more.px'), fd: !!a.querySelector('.foot a.fdb'), ht: Math.round(r.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .why, .foot')).every(function(e){ var q = e.getBoundingClientRect(); return !vis(e) || (q.left >= r.left - 0.5 && q.right <= r.right + 0.5); })}; })}; })}; }"""
+            why: Array.from(a.querySelectorAll('.legwhy li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }),
+            slip: !!a.querySelector('.what a.more.px'), fd: !!a.querySelector('.foot a.fdb'), ht: Math.round(r.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .legwhy, .foot')).every(function(e){ var q = e.getBoundingClientRect(); return !vis(e) || (q.left >= r.left - 0.5 && q.right <= r.right + 0.5); })}; })}; })}; }"""
 
 async def main():
     EXP = expected(); n_exp = len(EXP)
