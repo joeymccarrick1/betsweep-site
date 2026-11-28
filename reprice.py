@@ -72,6 +72,7 @@ BUILD = [
     ("targets", "build_targets.py", "soft"),
     ("today (with targets)", "build_today.py {clone}", "hard"),
     ("players", "build_players.py", "soft"),
+    ("player sheets", "psheet.py", "soft"),   # owner 11/27 10:34 PM: a tap on a name on a leg card opens his lines in place (/player/<slug>/sheet.json)
     ("usage", "build_usage.py", "soft"),
     ("stock market", "build_stocks.py", "soft"),   # owner 11/22: /stocks/ - after the players step (it links the player pages)
     ("guide", "build_guide.py", "soft"),

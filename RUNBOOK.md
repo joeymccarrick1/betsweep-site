@@ -4472,6 +4472,46 @@ Under the field of a game in play (build_live.py `gamecast()`), from the summary
   ESPN's summary has had them; the first live game is the check. A missing field shows less (a chip without plays and yards, a
   line without quarter rules), never a wrong word.
 
+## 11/28 1:15 AM: the player sheet; the Live strip reads the feed's own counts; a consensus note stays on its own stat (owner 11/27 10:34 PM, FanDuel's "Player Props")
+Not published yet when written: built and tested on a scratch build, waiting for the next publish.
+- **The player sheet (psheet.py, new; step "player sheets", soft, after the last "players" step).** FanDuel opens a sheet on a tap
+  of a name: last five against the line, prices under the chart. Ours opens from the name on any leg card (Today, Model's Best,
+  Trend check) and adds what a price list leaves out. One file a player, `out/psheet/<slug>.json` = `{v, week, name, slug, ko,
+  html}`, copied by build_site.py to `/player/<slug>/sheet.json` (only beside an existing player page; the `player/` folder is
+  replaced whole at publish, so an old sheet cannot linger). A player gets one when the cards link his name: single player, game
+  log in the builder's data, at least one over or touchdown leg. Unders are left to his full page (why.py gives them no reasons).
+  - A chip a stat he is priced in (`STATS`; order by position in `ORDER`), a panel a chip. The panel: the heading names the rung
+    on the chart, with the projection and the builder's risk tag; `home.leg_h5` draws his last five (the card's own chart, so the
+    two agree); `why.html` gives the reasons; then the ladder - every rung with the model's chance, the win rate the price needs,
+    the edge in whole points (a rounded zero reads "0", uncoloured), and the price as the add button (the cards' own
+    `a.more.px` link, so the slip script handles it).
+  - A panel opens on the rung priced nearest even money (`default_rung`); opened from a card, on that card's stat and rung.
+  - First TD is listed with its price but is not a rung for the chart (no game log grades it).
+- **The script and styles are in home.py** (`HOME_SLIP_JS`, second block; `HOME_CSS`, the `psh...` rules), which every page with
+  leg cards loads. The name stays a plain link: a click with a key held, a missing sheet or a failed load lands on his page
+  (`location.replace`, so Back does not stop on a dead step). Opening adds one history entry, so the phone's back gesture shuts
+  the sheet; the X, Escape and a tap on the page behind do the same; focus returns to the name. A tap on a rung (`rung()`)
+  re-scales the bars, moves the line, recounts the five games, and swaps in that rung's reasons, risk tag and season count - all
+  from attributes on the row, no second request. After kickoff (`data-ko`) the price buttons go and one line says why.
+  The slip script now looks its links up at every paint (`links()`), because the sheet adds price buttons after load, and
+  exposes `window.bsSlipPaint`.
+- **Sizes.** 207 sheets this week, 3.3 MB in all, median 17 KB (about 3 KB over the wire).
+- **tests/player_sheet.py** (new, port 8907, in the prepublish list): which players have a sheet and that each lists exactly his
+  rungs; from Trend check, a card with a real ladder - the sheet opens in place (page not moved, address unchanged), chips,
+  the card's own rung, every ladder row against the builder's data, the chart's bars and line by this file's own arithmetic,
+  the risk tag and the reasons; another rung; the price adds and removes, and the card behind agrees; another chip; shut four
+  ways; the full-page link and Back; after kickoff; no sheet to load; the same tap on Today (at a game-day clock) and on Model's
+  Best; a wide screen; a click with Ctrl held.
+- **Live drive strip (build_live.py).** Plays and yards now come from the feed's own two numbers (`offensivePlays`, `yards`), the
+  drive's sentence only when they are missing. A drive that ended in a giveaway is marked as one even when points came of it (a
+  pick-six is the defense's score); a feed with no `isScore` is read from the result's words. The drive fields were checked
+  against an open-source ESPN parser's field list (espnscrapeR: `drives.previous[]` with `yards`, `isScore`, `offensivePlays`,
+  `result`, `shortDisplayResult`, `displayResult`), still not against a real game. tests/live_flow.py plays that second shape.
+- **why.py: a consensus note stays on its own stat.** "Model disagrees with consensus" names one stat ("...Sleeper + ESPN: pass TD
+  1.3 vs 1.9 consensus"). It was showing on any of the player's legs (a pass-TD note against a passing-yards leg, a rush-TD note
+  against catches: 15 legs this week). `CONS` maps the named stat to the markets it bears on; his yards and catches still speak
+  to his touchdown legs, his passing numbers do not.
+
 ## 11/28 1:30 AM: three fixes from the owner's phone (1:17, 1:19 and 1:21 AM)
 - **"Spacing is messed up here" (Parlay Builder, Flags on this leg).** Mine, shipped 12:13 AM: the leg cards' reasons list was
   `<ul class="why">` with site-wide rules (`why.css()`), and the builder's flags block, the boards' slip flags and two captions on

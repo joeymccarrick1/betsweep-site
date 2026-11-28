@@ -894,6 +894,16 @@ if os.path.isdir(_PD) and os.path.exists(os.path.join(_PD, "index.html")):
         _slug = _f[:-5]; place_plain(os.path.join(_PD, _f), os.path.join(SITE, "player", _slug), f"/player/{_slug}/"); _np += 1
     made.append(place_plain(os.path.join(_PD, "index.html"), os.path.join(SITE, "player"), "/player/"))
     for _f in ("player.css", "player.js"): shutil.copy(os.path.join(_PD, _f), os.path.join(SITE, "player", _f))
+    # owner 11/27 10:34 PM (FanDuel opens a player sheet on a tap of a name): psheet.py writes one small file a player with lines this
+    # week; it sits beside his page as /player/<slug>/sheet.json, where the leg cards' script (home.HOME_SLIP_JS) fetches it on a tap.
+    # No page, no sheet: the name on the card is then a plain link.
+    _PS = os.path.join(OUT, "psheet"); _nps = 0
+    if os.path.isdir(_PS):
+        for _f in sorted(os.listdir(_PS)):
+            _d = os.path.join(SITE, "player", _f[:-5])
+            if _f.endswith(".json") and re.fullmatch(r"[a-z0-9\-]+", _f[:-5]) and os.path.exists(os.path.join(_d, "index.html")):
+                shutil.copy(os.path.join(_PS, _f), os.path.join(_d, "sheet.json")); _nps += 1
+    print(f"player sheets: {_nps}")
     # audit 11/10: a traded player had two team-suffixed pages (/player/marvin-harrison-ari/ and -hou/); plydata keeps one entry now, and the
     # old addresses forward to it (out/players/redirects.json) so shared links and search results still land.
     try:

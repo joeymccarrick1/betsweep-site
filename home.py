@@ -1164,6 +1164,47 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .play .what .more.px{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 5px 0 12px;border:1.5px solid var(--line);border-radius:10px;font-family:var(--display);font-weight:700;font-size:19px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;text-decoration:none}
 .play .what .more.px b{font-weight:700} .play .what .more.px i{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--chalk);font-style:normal;font-family:var(--body);font-weight:600;font-size:17px;line-height:1;color:var(--ink)}
 .play .what .more.px:hover{border-color:var(--red)} .play .what .more.px.inslip{background:var(--red);border-color:var(--red);color:#fff} .play .what .more.px.inslip i{background:rgba(255,255,255,.22);color:#fff}
+/* the player sheet (psheet.py): his lines open in place over the page. Own class names throughout (psh...); the chart, the reasons, the
+   shirt and the logos are the cards' own pieces, a size up where the sheet has the room */
+html.pshopen{overflow:hidden}
+.pshov{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
+.psh{position:relative;width:100%;max-width:560px;max-height:90%;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;outline:none}
+@media (min-width:700px){ .pshov{align-items:center} .psh{border-bottom:1px solid var(--line);border-radius:16px;max-height:84%} }
+.pshx{position:absolute;top:10px;right:10px;z-index:2;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:16px;line-height:1;cursor:pointer}
+.pshin{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px))}
+.pshwait{margin:0;padding:18px 48px 26px 2px;color:var(--mute);font-size:14px}
+.pshhd{display:flex;align-items:center;gap:12px;padding-right:48px;margin-bottom:12px}
+.pshwho{min-width:0} .pshwho h2{margin:0;font-family:var(--display);font-weight:700;font-size:24px;line-height:1.05;letter-spacing:.01em;color:var(--ink)}
+.pshwho p{margin:3px 0 0;color:var(--mute);font-size:13px;line-height:1.3} .pshwho p i.hm{height:14px;margin:0 4px 0 0;vertical-align:-2px}
+.pshst{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:600;line-height:1.5;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:0 7px}
+.pshchips{display:flex;gap:6px;overflow-x:auto;margin:0 -14px 10px;padding:0 14px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch} .pshchips::-webkit-scrollbar{display:none}
+.pshchips button{flex:none;font:inherit;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;min-height:36px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.pshchips button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.pshp[hidden],.pshwhy[hidden],.pshrk[hidden],.pshkonote[hidden]{display:none}
+.pshsel{display:grid;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.pshmk{margin:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;line-height:1.25} .pshmk b{font-weight:600;font-size:16px;color:var(--ink)}
+.pshproj{color:var(--mute);font-size:12.5px}
+.pshrk{margin-left:auto;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--mute);white-space:nowrap}
+.pshrk.hi{border-color:var(--bad,#e07070);color:var(--bad,#e07070)}
+.psh .h5{gap:14px} .psh .h5 .plot{--bh:52px} .psh .h5 ol{gap:7px} .psh .h5 li{flex-basis:26px} .psh .h5 li .v{font-size:11px}
+.psh .h5 li .b{transition:height .18s ease} .psh .h5 .ln{transition:bottom .18s ease}
+.psh .h5 p{font-size:12.5px} .psh .h5 p b{display:block;font-size:20px;margin:0 0 1px} .psh .h5 p small[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){ .psh .h5 li .b,.psh .h5 .ln{transition:none} }
+.pshlad{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pshlad th,.pshlad td{padding:4px 0 4px 8px;text-align:right;font-size:14px;font-weight:400;border-top:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.pshlad thead th{border-top:0;padding-bottom:4px;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
+.pshlad th:first-child{text-align:left;padding-left:0;width:99%} .pshlad td.pshb{padding-left:12px}
+.pshln{font:inherit;font-family:var(--display);font-weight:700;font-size:18px;line-height:1;color:var(--ink);background:none;border:0;border-left:3px solid transparent;margin:0;padding:0 8px;min-height:40px;min-width:64px;text-align:left;cursor:pointer}
+.pshln0{display:inline-block;font-family:var(--display);font-weight:700;font-size:18px;line-height:1;padding:0 8px 0 11px}
+.pshr.on .pshln{border-left-color:var(--red)} .pshr.on th,.pshr.on td{background:color-mix(in srgb,var(--chalk) 60%,transparent)}
+.pshlad td.pshm{font-weight:600} .pshlad td.pshn{color:var(--mute)} .pshlad td.pshe.pos{color:var(--good);font-weight:600} .pshlad td.pshe.neg{color:var(--bad,#e07070)}
+.pshlad .more.px{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;min-width:92px;min-height:36px;padding:0 4px 0 10px;border:1.5px solid var(--line);border-radius:10px;font-family:var(--display);font-weight:700;font-size:17px;line-height:1;color:var(--ink);text-decoration:none}
+.pshlad .more.px b{font-weight:700} .pshlad .more.px i{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--chalk);font-style:normal;font-family:var(--body);font-weight:600;font-size:16px;line-height:1;color:var(--ink)}
+.pshlad .more.px:hover{border-color:var(--red)} .pshlad .more.px.inslip{background:var(--red);border-color:var(--red);color:#fff} .pshlad .more.px.inslip i{background:rgba(255,255,255,.22);color:#fff}
+.pshko .pshlad .more.px{display:none} .pshko .pshlad thead th:last-child{visibility:hidden}
+.pshkonote{margin:10px 0 0;color:var(--mute);font-size:13px}
+.pshfull{display:block;margin-top:12px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;color:var(--ink);font-weight:600;font-size:13.5px;line-height:1.3;text-decoration:none;text-align:center}
+.pshfull:hover{border-color:var(--red)}
 .play .who b a{color:inherit;text-decoration:none} .play .who b a:hover{text-decoration:underline}
 .play .h5 p b{display:inline;margin-right:5px}   /* "4 of 5 cleared 60+" on one line now that the caption has the row to itself */
 .mbrow .mb2 small i.hm{height:14px;vertical-align:-3px;margin-right:4px}
@@ -1400,10 +1441,10 @@ HOME_SLIP_JS = r"""<script>(function(){
   function get(){ try { var a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch(e){ return []; } }
   function put(a){ try { localStorage.setItem(KEY, JSON.stringify(a)); } catch(e){} }
   function keysOf(a){ try { return new URL(a.getAttribute('href'), location.origin).searchParams.getAll('add'); } catch(e){ return []; } }
-  var links = [].slice.call(document.querySelectorAll('a.more[href^="/build/?add="]'));
-  links.forEach(function(a){ if(!a.dataset.lab) a.dataset.lab = a.textContent; a.classList.add('slipt'); });
+  /* looked up at every paint: the player sheet (below) adds price buttons after the page has loaded */
+  function links(){ var ls = [].slice.call(document.querySelectorAll('a.more[href^="/build/?add="]')); ls.forEach(function(a){ if(!a.dataset.lab) a.dataset.lab = a.textContent; a.classList.add('slipt'); }); return ls; }
   function paint(){ var s = get(), m = {}; s.forEach(function(k){ m[k] = 1; });
-    links.forEach(function(a){ var ks = keysOf(a), all = ks.length && ks.every(function(k){ return m[k]; });
+    links().forEach(function(a){ var ks = keysOf(a), all = ks.length && ks.every(function(k){ return m[k]; });
       a.classList.toggle('inslip', !!all);
       var px = a.getAttribute('data-px');
       if(px){ a.innerHTML = '<b></b><i aria-hidden="true">' + (all ? '\u2713' : '+') + '</i>'; a.firstChild.textContent = px; a.setAttribute('role', 'button'); a.setAttribute('aria-pressed', all ? 'true' : 'false'); a.setAttribute('aria-label', (all ? 'In your slip at ' : 'Add to slip at ') + px); }
@@ -1416,7 +1457,79 @@ HOME_SLIP_JS = r"""<script>(function(){
     var all = ks.every(function(k){ return m[k]; });
     if(all) s = s.filter(function(k){ return ks.indexOf(k) < 0; }); else ks.forEach(function(k){ if(!m[k]) s.push(k); });
     put(s); paint(); bar.animate && bar.animate([{transform: 'translateX(-50%) scale(1.06)'}, {transform: 'translateX(-50%) scale(1)'}], {duration: 220}); });
-  window.addEventListener('storage', paint); paint();
+  window.addEventListener('storage', paint); paint(); window.bsSlipPaint = paint;
+})();
+/* the player sheet (psheet.py; owner 11/27 10:34 PM, FanDuel opens a sheet on a tap of a name): a tap on a name on a leg card opens his
+   lines in place - chart, reasons and every rung with the model's chance beside its price. The page behind keeps its place, its filters
+   and its slip. The name stays a plain link: a new-tab click, a missing sheet or a failed load still lands on his page. */
+(function(){
+  var ov = null, from = null, seq = 0;
+  function $(q, r){ return (r || document).querySelector(q); }
+  function $$(q, r){ return [].slice.call((r || document).querySelectorAll(q)); }
+  function closeDom(){ if(!ov) return; ov.remove(); ov = null; seq++; document.documentElement.classList.remove('pshopen'); if(from && from.focus){ try { from.focus({preventScroll: true}); } catch(e){} } }
+  /* the phone's back gesture closes the sheet (open() adds a history entry), so closing by hand steps back over that entry */
+  function close(){ if(!ov) return; var mine = false; try { mine = !!(history.state && history.state.bsPsh); } catch(e){} if(mine) history.back(); else closeDom(); }
+  /* a rung: the chart's line moves to it and the five games are recounted against it; its reasons and its risk tag replace the last rung's */
+  function rung(panel, row){
+    $$('.pshr', panel).forEach(function(r){ var on = r === row, b = $('.pshln', r); r.classList.toggle('on', on); if(b) b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    var w = row.getAttribute('data-w'); $$('.pshwhy', panel).forEach(function(d){ d.hidden = d.getAttribute('data-w') !== w; });
+    var t = $('.pshmk b', panel); if(t) t.textContent = row.getAttribute('data-full') || '';
+    var rk = $('.pshrk', panel), rv = row.getAttribute('data-rk') || ''; if(rk){ rk.textContent = rv; rk.hidden = !rv; rk.classList.toggle('hi', rv === 'High risk'); }
+    var h5 = $('.h5', panel), need = parseFloat(row.getAttribute('data-need')); if(!h5 || !isFinite(need)) return;
+    var lis = $$('ol li', h5), vals = lis.map(function(li){ return parseFloat(($('.v', li) || {}).textContent) || 0; }), top = (Math.max(Math.max.apply(null, vals), need) * 1.12) || 1, hits = 0;
+    lis.forEach(function(li, i){ var ok = vals[i] >= need, b = $('.b', li); if(ok) hits++; li.classList.toggle('ov', ok); li.classList.toggle('un', !ok); if(b) b.style.height = Math.max(7, vals[i] / top * 100).toFixed(0) + '%'; });
+    var ln = $('.ln', h5); if(ln) ln.style.bottom = 'calc(var(--lg, 0px) + var(--bh) * ' + (need / top).toFixed(4) + ')';
+    var p = $('p', h5), b = p && $('b', p), verb = row.getAttribute('data-verb') || 'cleared', lab = row.getAttribute('data-lab') || '';
+    if(b){ b.textContent = hits + ' of ' + lis.length; if(b.nextSibling && b.nextSibling.nodeType === 3) b.nextSibling.nodeValue = verb + ' ' + lab;
+      var sn = $('small:not(.vs)', p), st = row.getAttribute('data-sn') || ''; if(sn){ sn.textContent = st; sn.hidden = !st; sn.className = row.getAttribute('data-snc') || ''; } }
+    h5.setAttribute('aria-label', (h5.getAttribute('aria-label') || '').replace(/\.\s[^.]*\.$/, '. ' + verb.charAt(0).toUpperCase() + verb.slice(1) + ' ' + lab + ' in ' + hits + ' of ' + lis.length + '.'));
+  }
+  function chip(root, sid){
+    $$('.pshchips button', root).forEach(function(b){ var on = b.getAttribute('data-st') === sid; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); if(on && b.scrollIntoView){ try { b.scrollIntoView({block: 'nearest', inline: 'nearest'}); } catch(e){} } });
+    $$('.pshp', root).forEach(function(p){ p.hidden = p.getAttribute('data-st') !== sid; }); }
+  /* a game that has kicked off sells nothing: the price buttons go and one line says why */
+  function closed(root){ var ko = +root.getAttribute('data-ko'), off = !!(ko && Date.now() >= ko), n = $('.pshkonote', root); root.classList.toggle('pshko', off); if(n) n.hidden = !off; }
+  function fill(box, js, want){
+    box.innerHTML = js.html; var root = $('.pshroot', box); if(!root) return false;
+    var row = want ? $$('.pshr', root).filter(function(r){ return r.getAttribute('data-k') === want; })[0] : null;   /* the leg on the card that was tapped */
+    if(row){ var panel = row.closest('.pshp'); chip(root, panel.getAttribute('data-st')); if(row.hasAttribute('data-need')) rung(panel, row); }
+    closed(root); if(window.bsSlipPaint) window.bsSlipPaint();
+    return true; }
+  function open(a, slug, want){
+    if(ov) closeDom(); from = a; var my = ++seq, name = (a.textContent || '').replace(/\s+/g, ' ').trim();
+    ov = document.createElement('div'); ov.className = 'pshov';
+    ov.innerHTML = '<div class="psh" role="dialog" aria-modal="true" tabindex="-1"><button type="button" class="pshx" aria-label="Close">\u2715</button><div class="pshin"><p class="pshwait"></p></div></div>';
+    $('.psh', ov).setAttribute('aria-label', name + ': lines and prices'); $('.pshwait', ov).textContent = 'Loading ' + name + '\u2026';
+    document.body.appendChild(ov); document.documentElement.classList.add('pshopen');
+    try { history.pushState({bsPsh: slug}, ''); } catch(e){}
+    try { $('.psh', ov).focus({preventScroll: true}); } catch(e){}
+    /* no sheet for him, or the load failed: his page, in place of the history entry the sheet took */
+    var bail = function(){ if(my !== seq || !ov) return; var mine = false; try { mine = !!(history.state && history.state.bsPsh); } catch(e){} closeDom(); if(mine) location.replace(a.href); else location.href = a.href; };
+    fetch('/player/' + slug + '/sheet.json', {cache: 'no-cache'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(js){
+      if(my !== seq || !ov) return; if(!js || !js.html || !fill($('.pshin', ov), js, want)) bail(); }).catch(bail);
+  }
+  document.addEventListener('click', function(ev){
+    var t = ev.target; if(!t || !t.closest) return;
+    if(ov){
+      if(t === ov || t.closest('.pshx')){ ev.preventDefault(); close(); return; }
+      var cb = t.closest('.pshchips button'); if(cb){ chip(cb.closest('.pshroot'), cb.getAttribute('data-st')); return; }
+      var rb = t.closest('.pshln'); if(rb){ var r = rb.closest('.pshr'); rung(r.closest('.pshp'), r); return; }
+      var fl = t.closest('a.pshfull'); if(fl && !(ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey)){   /* his page takes the sheet's history entry, so Back returns to this page with the sheet shut */
+        var mine = false; try { mine = !!(history.state && history.state.bsPsh); } catch(e){} if(mine){ ev.preventDefault(); closeDom(); location.replace(fl.href); } return; }
+    }
+    var a = t.closest('.play .who a[href^="/player/"]'); if(!a || ev.defaultPrevented || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    var m = /^\/player\/([a-z0-9\-]+)\/$/.exec(a.getAttribute('href') || ''); if(!m) return;
+    var card = a.closest('.play'), px = card && card.querySelector('a.more[href^="/build/?add="]'), want = null;
+    try { want = px ? new URL(px.getAttribute('href'), location.origin).searchParams.get('add') : null; } catch(e){}
+    ev.preventDefault(); open(a, m[1], want);
+  });
+  document.addEventListener('keydown', function(e){
+    if(!ov) return;
+    if(e.key === 'Escape'){ e.preventDefault(); close(); return; }
+    if(e.key === 'Tab'){ var f = $$('button, a[href]', ov).filter(function(x){ return x.offsetParent !== null; }); if(!f.length) return; var i = f.indexOf(document.activeElement);   /* focus stays inside the sheet */
+      if(e.shiftKey && i <= 0){ e.preventDefault(); f[f.length - 1].focus(); } else if(!e.shiftKey && (i < 0 || i === f.length - 1)){ e.preventDefault(); f[0].focus(); } }
+  });
+  window.addEventListener('popstate', function(){ if(ov) closeDom(); });
 })();
 /* home page, Model's Best teaser: the first three candidates that are not already on screen in today's game card and have not kicked off */
 (function(){ var t = document.querySelector('.mbl.teaser'); if(!t) return; var cap = +t.getAttribute('data-cap') || 3, sec = t.closest('section'), note = sec && sec.querySelector('.tznote');
