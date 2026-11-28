@@ -4454,3 +4454,20 @@ The second pass of "I love all 8. Let's do it all ... I also love the idea of we
   ESPN played by the test; every line of the Final card worked out from the frozen copy; looks graded from a fake box score);
   tests/wx_fx.py (new, port 8905: the rule, each board's layer against its own weather words, behind the words, reduced motion,
   finished boards, the Live headers, player numbers against the roster).
+
+## 11/28 12:15 AM: Live gets a drive strip and a win-chance line (owner 11/27 8:31 PM, "I love all 8")
+Under the field of a game in play (build_live.py `gamecast()`), from the summary the page already reads every 30 seconds:
+- **Drive strip (`.gc-drv`).** Every drive as a chip, newest first (the block is redrawn, so the newest has to sit where the eye
+  lands): the team's logo, how it ended (the feed's short word: TD, FG, PUNT, INT ...), plays and yards from the drive's own
+  description. A scoring drive is `.dvs`, a giveaway / missed kick / downs is `.dvt`, the drive on the field is `.dvc` and reads
+  "On the field". Own class names on purpose: plain ones (.sc, .to, .cur) are styled elsewhere on the site and bled in.
+- **Win-chance line (`.gc-wpl`).** The feed's home win chance after every play as one line, home at the top; the area above the
+  50% rule in the home colour and below it in the away colour (each mixed toward the page's ink so a black or navy team still
+  shows on the dark theme), a faint rule where a new quarter's first play falls, a dot at now. Fewer than eight readings: no line.
+- Neither shows in the drill-down view (`#lvdrill`), which stays the height it was.
+- tests/live_flow.py (new, port 8906; ESPN played by the test): the five chips in order with their marks, logos by the site's own
+  team codes, the line's point count, end point, labels, quarter rule and its agreement with the figures above it; five readings
+  = no line; no drives = no strip.
+- Not verified against a real game: the feed's field names (`shortDisplayResult`, `isScore`, `description`, `playId`) are as
+  ESPN's summary has had them; the first live game is the check. A missing field shows less (a chip without plays and yards, a
+  line without quarter rules), never a wrong word.

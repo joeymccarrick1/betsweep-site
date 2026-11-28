@@ -300,6 +300,18 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 .gc-field{display:block;width:100%;height:auto;border-radius:8px;overflow:hidden}
 .gc-last{margin-top:8px;font-size:13px;line-height:1.4} .gc-last b{font-family:var(--display);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px;color:var(--mute);margin-right:6px}
 .gc-tick{display:flex;gap:8px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none} .gc-tick::-webkit-scrollbar{display:none}
+/* 11/28: every drive as a chip under the field, and the win chance through the game as one line */
+.gc-drv{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none} .gc-drv::-webkit-scrollbar{display:none}
+.gc-drv .dv{flex:none;display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:6px;align-items:center;padding:5px 9px 5px 7px;border:1px solid var(--line);border-radius:9px;background:var(--chalk);font-size:11.5px;line-height:1.2}
+.gc-drv .dv i.hm{grid-row:1 / span 2;height:20px;margin:0;vertical-align:0} .gc-drv .dv em{grid-row:1 / span 2;font-style:normal;font-family:var(--display);font-weight:700;font-size:12px;color:var(--mute)}
+.gc-drv .dv b{font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap} .gc-drv .dv small{color:var(--mute);white-space:nowrap;font-size:11px}
+.gc-drv .dv.dvs{border-color:var(--good)} .gc-drv .dv.dvs b{color:var(--good)} .gc-drv .dv.dvt{border-color:var(--bad,#e07070)} .gc-drv .dv.dvt b{color:var(--bad,#e07070)} .gc-drv .dv.dvc{border-color:var(--ink);background:var(--card)}
+.gc-drv .dv small{text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:400}
+.gc-wpl{position:relative;margin-top:8px;height:60px;border:1px solid var(--line);border-radius:9px;background:var(--chalk);overflow:hidden}
+.gc-wpl svg{display:block;width:100%;height:100%} .gc-wpl .wln{fill:none;stroke:var(--ink);stroke-width:1.75;stroke-linejoin:round} .gc-wpl .wm{stroke:var(--mute);stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke;opacity:.7} .gc-wpl .wq{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.gc-wpl .wl{position:absolute;left:7px;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;color:var(--mute);pointer-events:none} .gc-wpl .wl.t{top:4px} .gc-wpl .wl.b{bottom:4px}
+.gc-wpl .wdot{position:absolute;width:8px;height:8px;margin:-4px 0 0 -10px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2px var(--chalk)}
+#lvdrill .gc-drv,#lvdrill .gc-wpl{display:none}
 .gc-tick span{flex:none;max-width:250px;font-size:11.5px;line-height:1.35;color:var(--mute);background:var(--chalk);border-radius:8px;padding:6px 8px;white-space:normal}
 .gc-tick span.td{color:#fff;background:var(--good)} .gc-tick span.to{color:#fff;background:var(--bad)}
 .sc2 .sch{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 14px 10px}
@@ -1110,10 +1122,31 @@ JS = r"""
     svg += '</svg>';
     var wpArr = js.winprobability || [], wp = wpArr.length ? wpArr[wpArr.length - 1].homeWinPercentage : null;
     var wph = wp != null ? Math.round(wp * 100) : 0, wpa = 100 - wph, wpht = esc(home.abbreviation || '') + ' ' + wph + '%', wpat = esc(away.abbreviation || '') + ' ' + wpa + '%';
+    /* 11/28 (owner 11/27 8:31 PM, "I love all 8": a live win-chance line and a drive strip). Both read what the summary already holds.
+       The line: the home team's win chance after every play, the middle rule at 50%, the area above it in the home colour and below
+       it in the away colour, a faint rule where each quarter begins. Fewer than eight points draws nothing.
+       The strip: every drive, newest first (the page redraws this block, so the newest has to be where the eye lands) - whose it
+       was, how it ended, plays and yards. A score is marked, a giveaway is marked, the drive on the field says so. */
+    var mixc = function(c){ return 'color-mix(in srgb,' + c + ' 72%,var(--ink) 28%)'; }, wpl = '';
+    if(wpArr.length >= 8){ var Wd = 600, Hd = 60, nW = wpArr.length, per = {}; all.forEach(function(p){ if(p.id != null && p.period) per[p.id] = p.period.number; });
+      var pts = wpArr.map(function(p, i){ var v = Math.max(0, Math.min(1, +p.homeWinPercentage || 0)); return [i / (nW - 1) * Wd, Hd - v * Hd]; });
+      var dln = pts.map(function(p, i){ return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(''), area = dln + 'L' + Wd + ' ' + (Hd / 2) + 'L0 ' + (Hd / 2) + 'Z', qs = '', lastQ = null;
+      wpArr.forEach(function(p, i){ var q = per[p.playId]; if(q && lastQ != null && q !== lastQ) qs += '<line x1="' + pts[i][0].toFixed(1) + '" y1="0" x2="' + pts[i][0].toFixed(1) + '" y2="' + Hd + '" class="wq"/>'; if(q) lastQ = q; });
+      var lp = pts[nW - 1], cid = 'gcl-' + String(gid).replace(/[^A-Za-z0-9]/g, '');
+      wpl = '<div class="gc-wpl"><span class="wl t">' + esc(home.abbreviation || '') + '</span><span class="wl b">' + esc(away.abbreviation || '') + '</span>' +
+        '<svg viewBox="0 0 ' + Wd + ' ' + Hd + '" preserveAspectRatio="none" role="img" aria-label="Win chance through the game: ' + wpat + ', ' + wpht + ' now"><defs><clipPath id="' + cid + 't"><rect x="0" y="0" width="' + Wd + '" height="' + (Hd / 2) + '"/></clipPath><clipPath id="' + cid + 'b"><rect x="0" y="' + (Hd / 2) + '" width="' + Wd + '" height="' + (Hd / 2) + '"/></clipPath></defs>' +
+        '<path d="' + area + '" clip-path="url(#' + cid + 't)" style="fill:' + mixc(col(home, '555')) + '" fill-opacity=".5"/><path d="' + area + '" clip-path="url(#' + cid + 'b)" style="fill:' + mixc(col(away, '999')) + '" fill-opacity=".5"/>' +
+        qs + '<line x1="0" y1="' + (Hd / 2) + '" x2="' + Wd + '" y2="' + (Hd / 2) + '" class="wm"/><path d="' + dln + '" class="wln" vector-effect="non-scaling-stroke"/></svg>' +
+        '<i class="wdot" style="left:' + (lp[0] / Wd * 100).toFixed(2) + '%;top:' + (lp[1] / Hd * 100).toFixed(2) + '%"></i></div>'; }
+    var dlist = prev.slice(); if(cur && (!dlist.length || dlist[dlist.length - 1].id !== cur.id)) dlist.push(cur);
+    var drv = dlist.length ? '<div class="gc-drv" aria-label="Drives, newest first">' + dlist.slice().reverse().map(function(d){ var ab = d.team && d.team.abbreviation || idAb[d.team && d.team.id] || '', k = tcode(ab), isCur = !!(cur && d.id === cur.id);
+        var res = String(d.shortDisplayResult || d.displayResult || d.result || '').trim(), live = isCur && !res, m = /(\d+)\s+plays?,\s*(-?\d+)\s+yards?/i.exec(d.description || '');
+        var kind = d.isScore ? 'dvs' : /INT|FUM|DOWNS|SAFETY|MISS|BLOCK/i.test(res) ? 'dvt' : '';   /* own names: plain ones (.sc, .to, .cur) are styled elsewhere on the site */
+        return '<span class="dv ' + kind + (live ? ' dvc' : '') + '">' + (k ? '<i class="hm" data-hm="' + k.toUpperCase() + '" role="img" aria-label="' + esc(ab) + '"></i>' : '<em>' + esc(ab) + '</em>') + '<b>' + esc(live ? 'On the field' : res || 'Drive') + '</b>' + (m ? '<small>' + m[1] + (m[1] === '1' ? ' play' : ' plays') + ' \u00b7 ' + m[2] + ' yds</small>' : '') + '</span>'; }).join('') + '</div>' : '';
     var dd = e.downDistanceText || (STATE[gid] && STATE[gid].dd) || '';
     var tick = all.slice(-6).reverse().map(function(p){ var t = p.text || '', to = /intercept|fumble/i.test(t) && /recovered by|intercepted/i.test(t); return '<span class="' + (p.scoringPlay ? 'td' : to ? 'to' : '') + '">' + esc((p.period ? 'Q' + p.period.number + ' ' : '') + (p.clock ? p.clock.displayValue + ' · ' : '') + (p.start && p.start.shortDownDistanceText ? p.start.shortDownDistanceText + ' · ' : '') + t) + '</span>'; }).join('');
     return '<div class="gcw"><div class="gc-top"><div class="gc-dd">' + (poss ? esc(poss) + ' ball' : 'Between plays') + (dd ? '<small>' + esc(dd) + '</small>' : '') + '</div>' +
-      (wp != null ? '<div class="gc-wp">Win chance ' + (wpa > wph ? '<b>' + wpat + '</b>' : wpat) + ' · ' + (wph >= wpa ? '<b>' + wpht + '</b>' : wpht) + '<div class="gc-wpbar"><i style="width:' + wpa + '%;background:' + col(away, '999') + '"></i><i style="width:' + wph + '%;background:' + col(home, '555') + '"></i></div></div>' : '') + '</div>' + svg +
+      (wp != null ? '<div class="gc-wp">Win chance ' + (wpa > wph ? '<b>' + wpat + '</b>' : wpat) + ' · ' + (wph >= wpa ? '<b>' + wpht + '</b>' : wpht) + '<div class="gc-wpbar"><i style="width:' + wpa + '%;background:' + col(away, '999') + '"></i><i style="width:' + wph + '%;background:' + col(home, '555') + '"></i></div></div>' : '') + '</div>' + svg + drv + wpl +
       (last ? '<div class="gc-last"><b>Last play</b>' + esc(last.text || '') + '</div>' : '') + (cur && cur.description ? '<div class="gc-last"><b>Drive</b>' + esc((cur.team && cur.team.abbreviation ? cur.team.abbreviation + ' · ' : '') + cur.description) + '</div>' : '') +
       (tick ? '<div class="gc-tick">' + tick + '</div>' : '') + '</div>';
   }
