@@ -4266,3 +4266,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
 - Week 12 as built: ten teams carry it (BAL, NE, LAC, SF, MIN, IND, MIA, LV, ARI, PIT; PHI on the board line) - checked against the
   availability tab, the usual starters are OUT. Evidence in the 7:00 PM section and in flags.py.
 - Paired wordmarks are centred on each other (`align-self:center`, picture centred in its box).
+
+## 11/27 8:15 PM: the Live field wears the teams (owner: "home teams logo in the center and wordmarks in the endzone")
+- build_live.py `gamecast()`: each end zone shows its team's wordmark (assets/wm), turned along the goal line and laid down as a
+  one-colour silhouette through an SVG filter - white on a dark end zone, near-black on a light one (the Saints' gold); the home
+  team's logo (assets/<SET>, `-l`) sits at midfield over the 50 and under the ball. `tcode()` maps ESPN's WSH / LAR; a team with no
+  file keeps the rotated abbreviation. `__HMSET__` / `__HMTEAMS__` are filled from helmets.py where the page writes the script.
+- The field only exists while a game is in play, so it was checked with a faked ESPN feed (/home/claude/helmets1/field.py), not live.
+- He could not find stadium line art; this replaces that idea for now.
+- Full set on c3a85077 (turnover flag): 63 of 66 - page_fold /news/ at 5.3 screens (a news note arrived; the page was at 4.99 of
+  5.0 before, no Turnover-risk text on it), the Season card picture, new_markets QB log. stocks_page passes again.

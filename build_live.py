@@ -1051,6 +1051,8 @@ JS = r"""
   }
   // ---- Gamecast (owner 11/5: "a ticker with a football field that showed like a Gamecast") ----
   // ESPN yardLine = yards from the HOME team's goal line; the home end zone is drawn on the left.
+  var HMT = '__HMTEAMS__'.split(',');
+  function tcode(t){ var k = ({WSH: 'WAS', LAR: 'LA'})[t] || t; return k && HMT.indexOf(k) >= 0 ? k.toLowerCase() : ''; }
   function gamecast(gid){
     var js = SUMM[gid]; if(!js) return '';
     var comp = (js.header && js.header.competitions && js.header.competitions[0]) || {}, cs = {}; (comp.competitors || []).forEach(function(c){ cs[c.homeAway] = c; });
@@ -1064,10 +1066,19 @@ JS = r"""
     svg += '<rect x="0" y="0" width="1200" height="230" fill="#2f6b3a"/>';
     for(var i = 0; i < 10; i++) if(i % 2) svg += '<rect x="' + (100 + i * 100) + '" y="0" width="100" height="230" fill="#2a6234"/>';
     svg += '<rect x="0" y="0" width="100" height="230" fill="' + col(home, '334') + '"/><rect x="1100" y="0" width="100" height="230" fill="' + col(away, '334') + '"/>';
-    svg += '<text x="50" y="115" fill="#fff" font-size="34" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 50 115)" font-family="Barlow, sans-serif">' + esc(home.abbreviation || '') + '</text>';
-    svg += '<text x="1150" y="115" fill="#fff" font-size="34" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(90 1150 115)" font-family="Barlow, sans-serif">' + esc(away.abbreviation || '') + '</text>';
+    /* owner 11/27 ("home teams logo in the center and wordmarks in the endzone"): each end zone carries its team's wordmark, turned to
+       read along the goal line and laid down in one colour that shows on the team's paint (white on a dark end zone, near-black on a
+       light one) - the file's own shape, nothing drawn. A team without a file keeps the plain abbreviation. */
+    var lum = function(hex){ var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || ''); return m ? (0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16)) / 255 : 0; };
+    var fid = 'gcf-' + String(gid).replace(/[^A-Za-z0-9]/g, '');
+    svg += '<defs><filter id="' + fid + 'w" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/></filter><filter id="' + fid + 'k" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 .07  0 0 0 0 .09  0 0 0 0 .12  0 0 0 1 0"/></filter></defs>';
+    var ezone = function(t, fb, cx, rot){ var k = tcode(t.abbreviation);
+      if(!k) return '<text x="' + cx + '" y="115" fill="#fff" font-size="34" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + rot + ' ' + cx + ' 115)" font-family="Barlow, sans-serif">' + esc(t.abbreviation || '') + '</text>';
+      return '<image href="/s/wm/' + k + '.webp" x="-104" y="-36" width="208" height="72" preserveAspectRatio="xMidYMid meet" transform="translate(' + cx + ' 115) rotate(' + rot + ')" filter="url(#' + fid + (lum(col(t, fb)) > 0.62 ? 'k' : 'w') + ')"><title>' + esc(t.abbreviation || '') + '</title></image>'; };
+    svg += ezone(home, '334', 50, -90) + ezone(away, '334', 1150, 90);
     for(var y = 10; y <= 90; y += 10){ var n = y <= 50 ? y : 100 - y; svg += '<line x1="' + X(y) + '" y1="0" x2="' + X(y) + '" y2="230" stroke="rgba(255,255,255,.55)" stroke-width="2"/><text x="' + X(y) + '" y="40" fill="rgba(255,255,255,.75)" font-size="26" font-weight="700" text-anchor="middle" font-family="Barlow, sans-serif">' + n + '</text><text x="' + X(y) + '" y="210" fill="rgba(255,255,255,.75)" font-size="26" font-weight="700" text-anchor="middle" font-family="Barlow, sans-serif">' + n + '</text>'; }
     svg += '<line x1="100" y1="0" x2="100" y2="230" stroke="#fff" stroke-width="3"/><line x1="1100" y1="0" x2="1100" y2="230" stroke="#fff" stroke-width="3"/>';
+    var hk = tcode(home.abbreviation); if(hk) svg += '<image href="/s/__HMSET__/' + hk + '-l.webp" x="520" y="47" width="160" height="136" preserveAspectRatio="xMidYMid meet"><title>' + esc(home.abbreviation || '') + '</title></image>';   // the home team's logo at midfield, over the 50, under the ball
     if(yl != null && poss){
       var ds = cur && cur.start && typeof cur.start.yardLine === 'number' ? cur.start.yardLine : null;
       if(ds != null && cur && cur.team && cur.team.id === possId){ var a0 = Math.min(X(ds), X(yl)), a1 = Math.max(X(ds), X(yl)); svg += '<rect x="' + a0 + '" y="92" width="' + Math.max(4, a1 - a0) + '" height="46" rx="8" fill="rgba(255,255,255,.22)"/>'; }
@@ -1355,7 +1366,7 @@ body = f'''<div class="lv">
 </div>
 <script>window.__LV = {json.dumps(LD, separators=(",", ":"))};</script>
 <script>{LIVE.LIVE_JS}</script>
-<script>{JS}</script>'''
+<script>{JS.replace("__HMSET__", __import__("helmets").SET).replace("__HMTEAMS__", ",".join(__import__("helmets").TEAMS))}</script>'''
 page = (open(os.path.join(HERE, "template.html")).read()
         .replace("<title>BetSweep Matchup Boards</title>", "<title>BetSweep Live</title>")
         .replace("<h1>Week {{WEEK}} · <b>Matchup Boards</b></h1>", "<h1>Week {{WEEK}} · <b>Live</b></h1>")

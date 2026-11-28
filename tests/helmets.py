@@ -46,6 +46,10 @@ for f_, pat in (("account.py", "data-pl=\"'+esc(q[0])+'\""), ("account.py", "/da
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: wired ({pat[:26]})")
 # 11/27 evening: colour wash, live strip, weather picture, progress bar, the cashed moment
 check(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%" in css, "two wordmarks side by side fill the same box")
+# 11/27 night: the Live field - wordmarks in the end zones, the home logo at midfield
+_lv = open(os.path.join(HERE, "build_live.py"), encoding="utf-8").read()
+check("'/s/wm/' + k + '.webp'" in _lv and "'/s/__HMSET__/' + hk + '-l.webp'" in _lv and 'JS.replace("__HMSET__"' in _lv and "__HMTEAMS__" in _lv, "the Live field draws the end-zone wordmarks and the home logo from the owner's files")
+check("if(!k) return '<text" in _lv, "a team without a file keeps its abbreviation in the end zone")
 for f_, pat in (("build_boards.py", 'class="hd hmh wash'), ("build_builder.py", 'class="ghd wash"'), ("build_live.py", 'class="ghd2 wash"'), ("home.py", "def strip_js(games)"), ("build_today.py", "HOME.strip_js(games)"), ("home.py", "def _wx_icons()"), ("social.py", "function legPct(l, C)"), ("social.py", "function cashPop()")):
     check(pat in open(os.path.join(HERE, f_), encoding="utf-8").read(), f"{f_}: wired ({pat[:26]})")
 check(".hd.wash{background:linear-gradient" in css and "#lstrip{" in css and "prefers-reduced-motion" in css, "the wash and the live strip have their rules, and the pulse stops for reduced motion")
