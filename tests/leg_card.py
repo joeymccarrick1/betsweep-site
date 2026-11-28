@@ -53,7 +53,8 @@ READ = """() => { var vis = function(e){ return !!(e && (e.offsetWidth || e.offs
                  ops: Array.from(h5.querySelectorAll('li i.hm')).map(function(i){ return i.getAttribute('data-hm'); }), same: h5.querySelectorAll('li.same').length, vs: (h5.querySelector('p small.vs') || {}).textContent || '', lnY: (function(){ var l = h5.querySelector('.ln'), bs = Array.from(h5.querySelectorAll('li .b')); if(!l || !bs.length) return null; var base = Math.max.apply(null, bs.map(function(e){ return e.getBoundingClientRect().bottom; })); return Math.round(base - l.getBoundingClientRect().top); })(),
                  hBar: Array.from(h5.querySelectorAll('li .b')).map(function(e){ return Math.round(e.getBoundingClientRect().height); }), lnVis: vis(h5.querySelector('.ln')), w: Math.round(h5.getBoundingClientRect().width), fits: h5.getBoundingClientRect().right <= ar.right + 0.5, aria: h5.getAttribute('aria-label') || ''} : null,
       why: Array.from(a.querySelectorAll('.why li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }), pill: !!q('.foot .hist'),
-      hist: (q('.hrow > .hist') || {}).textContent || '', slip: !!q('.hrow a.more'), fd: Array.from(a.querySelectorAll('.foot a.fdb')).filter(vis).length, h: Math.round(ar.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .foot')).concat(Array.from(a.querySelectorAll('.why'))).every(function(e){ var r = e.getBoundingClientRect(); return r.left >= ar.left - 0.5 && r.right <= ar.right + 0.5; })}; })}; }"""
+      hist: (q('.hrow > .hist') || {}).textContent || '', slip: !!q('.what a.more.px'), px: (function(){ var b = q('.what a.more.px'); return b ? {txt: (b.querySelector('b') || b).textContent, d: b.getAttribute('data-px'), h: b.offsetHeight, role: b.getAttribute('role'), pressed: b.getAttribute('aria-pressed')} : null; })(),
+      link: (function(){ var l = q('.who b a'); return l ? l.getAttribute('href') : ''; })(), line: (q('.what .wl') || {}).textContent || '', fd: Array.from(a.querySelectorAll('.foot a.fdb')).filter(vis).length, h: Math.round(ar.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .foot')).concat(Array.from(a.querySelectorAll('.why'))).every(function(e){ var r = e.getBoundingClientRect(); return r.left >= ar.left - 0.5 && r.right <= ar.right + 0.5; })}; })}; }"""
 
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
@@ -109,6 +110,18 @@ async def main():
                     bad.append((c["name"], c["key"], c["h5"], vals, hits))
             check(not bad, f"[{theme}] the bars are his last games from the builder's own log, oldest first, green where the leg would have won, and the caption counts them ({drawn} cards with bars, {plain} without a log; first wrong: {bad[:1]})")
             check(all((c["hist"] == "") for c in cards if c["h5"]) and all(c["slip"] for c in cards), f"[{theme}] the season count rides under the caption when there are bars, and every card keeps its slip button")
+            # ---- 11/27 late: the price is the add button; the name opens the player's page ----
+            def odds(o): o = int(round(float(o))); return f"+{o}" if o > 0 else str(o)
+            bad = [(c["name"], c["px"], odds(LEGS[c["key"]]["o"])) for c in cards if not c["px"] or c["px"]["txt"] != odds(LEGS[c["key"]]["o"]) or c["px"]["d"] != c["px"]["txt"] or c["px"]["h"] < 36 or c["px"]["role"] != "button" or c["px"]["pressed"] != "false"]
+            check(not bad, f"[{theme}] the price on each card is its add button: FanDuel's price for that leg, a finger tall, not yet pressed ({len(cards)} cards; first wrong: {bad[:1]})")
+            import plydata as PD
+            bad = [(c["name"], c["link"]) for c in cards if (c["name"] in BS["gl"]) != bool(c["link"]) or (c["link"] and (c["link"] != f"/player/{PD.slugify(c['name'])}/" or not os.path.isfile(os.path.join(ROOT, c["link"].strip("/"), "index.html"))))]
+            check(not bad, f"[{theme}] a single player's name opens his page, and that page is built ({sum(1 for c in cards if c['link'])} of {len(cards)} linked; first wrong: {bad[:1]})")
+            if ntabs: await pg.evaluate("document.querySelectorAll('#wktabs .tab')[0].click()"); await pg.wait_for_timeout(350)
+            r = await pg.evaluate("""(W) => { var k = 'bs_slipk_w' + W; localStorage.removeItem(k); var a = Array.from(document.querySelectorAll('article.play')).filter(function(e){ return e.offsetWidth && e.querySelector('.what a.more.px'); })[0], b = a.querySelector('.what a.more.px'), want = decodeURIComponent((/[?&]add=([^&#]+)/.exec(b.getAttribute('href')) || [])[1] || '');
+                b.click(); var one = JSON.parse(localStorage.getItem(k) || '[]'), st = {pressed: b.getAttribute('aria-pressed'), on: b.classList.contains('inslip'), txt: b.querySelector('b').textContent, mark: b.querySelector('i').textContent}; b.click();
+                return {want: want, one: one, st: st, two: JSON.parse(localStorage.getItem(k) || '[]').length, after: b.getAttribute('aria-pressed'), path: location.pathname}; }""", BS["week"])
+            check(r["one"] == [r["want"]] and r["st"]["pressed"] == "true" and r["st"]["on"] and r["st"]["mark"] == "✓" and r["two"] == 0 and r["after"] == "false" and r["path"] == "/best/", f"[{theme}] one tap on the price puts the leg in the betslip and marks the button, a second takes it back, and the page stays put ({r})")
             # ---- 11/27 late: the opponents under the bars, and the reasons ----
             al = lambda t: HM.ALIAS.get(str(t or ""), str(t or "")); bad, ringed, logod = [], 0, 0
             for c in cards:
@@ -134,7 +147,7 @@ async def main():
             check(all(c["logo"] == (LEGS[c["key"]].get("tm") or "") for c in cards if (LEGS[c["key"]].get("tm") or "") in HM.TEAMS), f"[{theme}] each card has its team's logo beside the matchup ({[(c['name'], c['logo']) for c in cards if c['logo'] != (LEGS[c['key']].get('tm') or '')][:2]})")
             check(s["over"] <= 0 and all(c["inside"] for c in cards) and not errs, f"[{theme}] nothing runs off the card or the page, no page errors ({s['over']}px; {[c['name'] for c in cards if not c['inside']][:2]}; {errs[:1]})")
             tall = max(c["h"] for c in cards)
-            check(tall <= 460, f"[{theme}] a card is at most {tall}px tall on a phone (limit 460: jersey row, bar, five bars with logos, two reasons and the book buttons)")
+            check(tall <= 430, f"[{theme}] a card is at most {tall}px tall on a phone (limit 430: jersey row, the line and its price button, bar, five bars with logos, two reasons and the book buttons)")
             if SHOTS:
                 if ntabs: await pg.evaluate("document.querySelectorAll('#wktabs .tab')[0].click()"); await pg.wait_for_timeout(350)
                 await pg.evaluate("() => { var a = Array.from(document.querySelectorAll('article.play')).filter(function(e){ return e.offsetWidth; })[0]; if(a){ a.scrollIntoView(); window.scrollBy(0, -110); } }"); await pg.wait_for_timeout(300)

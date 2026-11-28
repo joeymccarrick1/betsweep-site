@@ -4409,6 +4409,11 @@ seconds), a player sheet (season stats, last five against the line, game log, hi
 - home_js fires a `bs-live` event after each kickoff-state pass; the Trend check tabs re-count on it.
 - Tests: tests/trend_check.py (new, port 8903: the legs and groups worked out again from the builder data, tab counts, order,
   reasons and logos against why.py and the game log, twelve-at-a-time, both filters, + Slip, a kickoff, the banner re-counted from
-  the two files, Today's door, the menu); tests/leg_card.py (opponent logos, ringed game, reasons; card limit 352 -> 460).
-- Not done yet (said to the owner): a tap-a-name player sheet; opponent logos on the builder's best-legs bars; a betslip bar that
-  shows the slip's chance on every page.
+  the two files, Today's door, the menu); tests/leg_card.py (opponent logos, ringed game, reasons, the price button and its tap, the name's link; card limit 352 -> 430).
+- **The price is the add button (11:25 PM).** On FanDuel a tap on a price adds the leg; ours needed a separate "+ Slip" link. The
+  card's price is now `a.more.px` in the `.what` row (`data-px` = the price): HOME_SLIP_JS keeps the price on it and shows + or a
+  tick, `aria-pressed` says which, and with no script it is still a link into the builder with the leg added. The caption beside
+  the bars has the row to itself ("4 of 5 cleared 60+" on one line). A single player's name on a leg card opens his player page
+  (an either-or pair is not linked). Today's game cards link to their own streak legs (`/trends/?g=<gid>`) when they have any.
+- Not done yet (said to the owner): a player sheet that opens in place (the name opens his page for now); opponent logos on the
+  builder's best-legs bars; a betslip bar that shows the slip's chance on every page.

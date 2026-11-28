@@ -139,6 +139,8 @@ def top_plays(D, n=8):
 
 import helmets as HM   # owner 11/26: team helmets
 import why as WHY      # owner 11/27 10:34 PM: a leg's strongest reason for and against, in a line each
+try: from plydata import slugify as _SLUG
+except Exception: _SLUG = None
 import booklinks as BL   # DraftKings / Hard Rock links (exact rung or the book's nearest line), owner 10/22
 import sweep as SW      # owner 11/10: the Daily Sweep (a promo row whose Title starts with "Daily Sweep")
 import how_stats as _HOWS   # 11/17: the plus tier's record is counted from the graded legs, not typed (it said Weeks 6-8 for two weeks)
@@ -172,7 +174,11 @@ def build_href(gid, legs):
 #   a first-TD leg or a game line draws nothing and the card keeps the plain this-season pill.
 def card_top(x, sub, badge=""):
     j = HM.jersey(x.get("tm") or "", HM.num(_CARD["IN"], x.get("pl") or "", x.get("tm") or "")) if (_CARD["IN"] and x.get("tm")) else ""
-    return f'<div class="ptop">{j}<div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div>{badge}</div>'
+    # 11/27 late (FanDuel opens a player sheet on a tap): the name opens his page - every line at every book, hit rates, the game log.
+    # Only a single player with a game log is linked (an either-or pair has no page of its own).
+    nm = E(x["pl"])
+    if _SLUG and x.get("pl") in _CARD["gl"]: nm = f'<a href="/player/{_SLUG(x["pl"])}/" title="{nm}: every line, hit rates and game log">{nm}</a>'
+    return f'<div class="ptop">{j}<div class="who"><b>{nm}</b><small>{sub}</small></div>{badge}</div>'
 
 def meter(x):
     e = x.get("e") or 0; ms = f'{x["p"] * 100:.0f}'; bk = x.get("bk"); bs = f'{(bk or 0) * 100:.0f}'; mi, bi = int(ms), int(bs)
@@ -214,7 +220,9 @@ def play_card(x, cls="", badge=""):
     sub = " · ".join(s for s in [E(x.get("pos", "")), (HM.hm(x["tm"]) + E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", "")), E(x.get("kick", ""))] if s)
     bb = BL.best(x); btn = (f'<a class="fdb{" best" if bb == "fd" and (x.get("bks") or {}) else ""}" href="{E(x["fd"])}" target="_blank" rel="noopener">Add to FanDuel</a>' if x.get("fd") else "") + BL.buttons([x], price=True)
     if btn: btn = f'<span class="bks">{btn}</span>'   # 11/4 UX: the book buttons wrap as one group (FD · DK · HR), not one per line
-    more = f'<a class="more" href="{E(build_href(x.get("gid"), [(x["pl"], x["m"], x["ln"])]))}" title="Open the parlay builder with this leg in your slip">+ Builder</a>' 
+    # 11/27 late (owner 10:34 PM, FanDuel adds a leg on a tap of its price): the price IS the add button. The page script (HOME_SLIP_JS)
+    # turns it into a toggle for the betslip; with no script it is still a link that opens the builder with this leg in the slip.
+    more = f'<a class="more px" href="{E(build_href(x.get("gid"), [(x["pl"], x["m"], x["ln"])]))}" data-px="{E(odds_str(x["o"]))}" title="Open the parlay builder with this leg in your slip">{E(odds_str(x["o"]))}</a>' 
     proj_html = f'<small class="proj">proj {float(x["proj"]):g}</small>' if x.get("proj") and cls == "floor" else ""
     # the season count ("4/9 this season") rides under the bars' caption; any other pill (a matchup record) keeps its own place above the buttons
     season = hist if (hist and str(hist[1]).endswith("this season")) else None
@@ -225,9 +233,9 @@ def play_card(x, cls="", badge=""):
     pill = hist_html if (h5 and hist and not season and not why) else ""
     return (f'<article class="play {cls}" data-gid="{E(x.get("gid",""))}" data-ko="{x.get("ko") or ""}">'
             f'{card_top(x, sub, badge)}'
-            f'<div class="what">{E(leg_line(x["m"], x["ln"]))}{proj_html}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
+            f'<div class="what"><span class="wl">{E(leg_line(x["m"], x["ln"]))}{proj_html}</span>{more}</div>'
             f'{meter(x)}'
-            f'<div class="hrow">{h5 or hist_html}{more}</div>{why}'
+            f'<div class="hrow">{h5 or hist_html}</div>{why}'
             + (f'<div class="foot">{pill}{btn}</div>' if (pill or btn) else "") + '</article>')
 
 # ---------- anytime TD plays and game lines from the builder legs ----------
@@ -1151,6 +1159,13 @@ a.more.inslip{background:var(--red);border-color:var(--red);color:#fff}
 .mvb .mv2{left:calc(var(--b) * 1% - 1px);top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)}
 .play .nums.mtr .fdn{grid-column:1/-1;justify-self:start;position:relative;left:clamp(0px,calc(var(--b) * 1% - 56px),calc(100% - 112px));min-width:112px;justify-content:center;white-space:nowrap;font-family:var(--body);font-weight:600;font-size:11.5px;color:var(--ink)}
 .play .hrow{display:flex;align-items:center;gap:10px;min-width:0} .play .hrow .more{margin-left:auto;flex:none} .play .hrow + .foot{margin-top:2px}
+/* 11/27 late: the price is the add button (one tap, like a sportsbook's price), and the name opens the player's page */
+.play .what{align-items:center} .play .what .wl{min-width:0}
+.play .what .more.px{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 5px 0 12px;border:1.5px solid var(--line);border-radius:10px;font-family:var(--display);font-weight:700;font-size:19px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;text-decoration:none}
+.play .what .more.px b{font-weight:700} .play .what .more.px i{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--chalk);font-style:normal;font-family:var(--body);font-weight:600;font-size:17px;line-height:1;color:var(--ink)}
+.play .what .more.px:hover{border-color:var(--red)} .play .what .more.px.inslip{background:var(--red);border-color:var(--red);color:#fff} .play .what .more.px.inslip i{background:rgba(255,255,255,.22);color:#fff}
+.play .who b a{color:inherit;text-decoration:none} .play .who b a:hover{text-decoration:underline}
+.play .h5 p b{display:inline;margin-right:5px}   /* "4 of 5 cleared 60+" on one line now that the caption has the row to itself */
 .mbrow .mb2 small i.hm{height:14px;vertical-align:-3px;margin-right:4px}
 .play .more.slipt,.pfoot .more.slipt{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink);font-weight:700} .play .more.slipt:hover,.pfoot .more.slipt:hover{border-color:var(--red)}
 .fdb{margin-left:auto;text-decoration:none;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:#0b0f15;background:#1493ff;border-radius:6px;padding:6px 10px}
@@ -1388,7 +1403,10 @@ HOME_SLIP_JS = r"""<script>(function(){
   links.forEach(function(a){ if(!a.dataset.lab) a.dataset.lab = a.textContent; a.classList.add('slipt'); });
   function paint(){ var s = get(), m = {}; s.forEach(function(k){ m[k] = 1; });
     links.forEach(function(a){ var ks = keysOf(a), all = ks.length && ks.every(function(k){ return m[k]; });
-      a.classList.toggle('inslip', !!all); a.textContent = all ? (ks.length > 1 ? '\u2713 All in slip' : '\u2713 In slip') : (ks.length > 1 ? '+ Add all to slip' : '+ Slip');
+      a.classList.toggle('inslip', !!all);
+      var px = a.getAttribute('data-px');
+      if(px){ a.innerHTML = '<b></b><i aria-hidden="true">' + (all ? '\u2713' : '+') + '</i>'; a.firstChild.textContent = px; a.setAttribute('role', 'button'); a.setAttribute('aria-pressed', all ? 'true' : 'false'); a.setAttribute('aria-label', (all ? 'In your slip at ' : 'Add to slip at ') + px); }
+      else a.textContent = all ? (ks.length > 1 ? '\u2713 All in slip' : '\u2713 In slip') : (ks.length > 1 ? '+ Add all to slip' : '+ Slip');
       a.title = all ? 'In your betslip - tap to remove' : 'Add to your betslip (stays on this page)'; });
     bar.classList.toggle('on', s.length > 0); bar.querySelector('b').textContent = s.length + (s.length === 1 ? ' leg' : ' legs') + ' in your slip'; }
   document.addEventListener('click', function(ev){ var a = ev.target.closest && ev.target.closest('a.more[href^="/build/?add="]'); if(!a) return;

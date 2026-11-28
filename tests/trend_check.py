@@ -80,7 +80,7 @@ READ = """() => { var vis = function(e){ return !!(e && (e.offsetWidth || e.offs
           return {k: a.getAttribute('data-k'), st: a.getAttribute('data-st'), g: a.getAttribute('data-gid'), h: +a.getAttribute('data-h'), shown: vis(a), big: h5 ? h5.querySelector('p b').textContent : '', risk: k ? k.textContent : '',
             ops: h5 ? Array.from(h5.querySelectorAll('li i.hm')).map(function(i){ return i.getAttribute('data-hm'); }) : [], same: h5 ? h5.querySelectorAll('li.same').length : 0,
             why: Array.from(a.querySelectorAll('.why li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }),
-            slip: !!a.querySelector('.hrow a.more'), fd: !!a.querySelector('.foot a.fdb'), ht: Math.round(r.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .why, .foot')).every(function(e){ var q = e.getBoundingClientRect(); return !vis(e) || (q.left >= r.left - 0.5 && q.right <= r.right + 0.5); })}; })}; })}; }"""
+            slip: !!a.querySelector('.what a.more.px'), fd: !!a.querySelector('.foot a.fdb'), ht: Math.round(r.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .why, .foot')).every(function(e){ var q = e.getBoundingClientRect(); return !vis(e) || (q.left >= r.left - 0.5 && q.right <= r.right + 0.5); })}; })}; })}; }"""
 
 async def main():
     EXP = expected(); n_exp = len(EXP)
@@ -130,12 +130,12 @@ async def main():
                 if c["ops"] and (c["ops"] != [al(g.get("opp")) for g in gs] or c["same"] != sum(1 for g in gs if al(g.get("opp")) == al(l.get("opp")))): bad.append((k, c["ops"], c["same"]))
             check(not bad, f"[{theme}] every card's reason lines are the model's own flags for that leg (why.py), and the logos under the bars are those five opponents with this week's ringed ({len(cards)} cards; first wrong: {bad[:1]})")
             withwhy = sum(1 for c in cards.values() if c["why"]); nolog = sum(1 for c in cards.values() if not c["ops"])
-            check(withwhy >= 0.9 * len(cards) and all(c["slip"] for c in cards.values()), f"[{theme}] {withwhy} of {len(cards)} cards say why, and every card has its + Slip button ({nolog} without opponent logos)")
+            check(withwhy >= 0.9 * len(cards) and all(c["slip"] for c in cards.values()), f"[{theme}] {withwhy} of {len(cards)} cards say why, and every card's price is its add button ({nolog} without opponent logos)")
             # ---- on screen: twelve at a time, nothing off the card or the page ----
             og = next(g for g in s["groups"] if g["open"]); shown = [c for c in og["cards"] if c["shown"]]
             check(len(shown) == min(12, want[og["id"]]) and (bool(og["more"]) == (want[og["id"]] > 12)) and s["over"] <= 0 and all(c["inside"] for c in shown), f"[{theme}] the open group shows {len(shown)} cards ({'with' if og['more'] else 'no'} 'Show all' button), nothing runs off the card or the page ({s['over']}px)")
             tall = max([c["ht"] for c in shown] or [0])
-            check(0 < tall <= 460, f"[{theme}] a card is at most {tall}px tall on a phone (limit 460)")
+            check(0 < tall <= 430, f"[{theme}] a card is at most {tall}px tall on a phone (limit 430)")
             # ---- the record in the banner ----
             if os.environ.get("SITE"): print("   (published copy: the banner's numbers are not re-counted, the sheet may have moved on)")
             elif os.path.exists(os.path.join(IN, "legsnaps.json")) and os.path.exists(os.path.join(IN, "stats_player_week_2026.csv")):
@@ -169,10 +169,10 @@ async def main():
                         await pg.screenshot(path=os.path.join(SHOTS, f"trend_check_game_{theme}.png"))
                     await pg.evaluate("document.querySelector('#trg button[data-g=\"\"]').click()"); await pg.wait_for_timeout(200)
             # ---- + Slip is one tap, and a second tap takes it back ----
-            r = await pg.evaluate("""(W) => { var k = 'bs_slipk_w' + W; localStorage.removeItem(k); var a = Array.from(document.querySelectorAll('.trgrp:not(.fxoff) .play')).filter(function(e){ return e.offsetWidth; })[0], m = a.querySelector('.hrow a.more');
-                m.click(); var one = JSON.parse(localStorage.getItem(k) || '[]'), lab = m.textContent, bar = document.getElementById('hsbar'), on = bar && bar.classList.contains('on'), txt = bar ? bar.querySelector('b').textContent : ''; m.click();
+            r = await pg.evaluate("""(W) => { var k = 'bs_slipk_w' + W; localStorage.removeItem(k); var a = Array.from(document.querySelectorAll('.trgrp:not(.fxoff) .play')).filter(function(e){ return e.offsetWidth; })[0], m = a.querySelector('.what a.more.px');
+                m.click(); var one = JSON.parse(localStorage.getItem(k) || '[]'), lab = m.getAttribute('aria-pressed') + ' ' + m.querySelector('i').textContent, bar = document.getElementById('hsbar'), on = bar && bar.classList.contains('on'), txt = bar ? bar.querySelector('b').textContent : ''; m.click();
                 return {want: a.getAttribute('data-k'), one: one, lab: lab, on: on, txt: txt, two: JSON.parse(localStorage.getItem(k) || '[]').length, href: location.pathname}; }""", W)
-            check(r["one"] == [r["want"]] and "In slip" in r["lab"] and r["on"] and r["txt"].startswith("1 leg") and r["two"] == 0 and r["href"] == "/trends/", f"[{theme}] + Slip adds that leg to the betslip without leaving the page, the bar counts it, a second tap removes it ({r})")
+            check(r["one"] == [r["want"]] and r["lab"] == "true ✓" and r["on"] and r["txt"].startswith("1 leg") and r["two"] == 0 and r["href"] == "/trends/", f"[{theme}] a tap on the price adds that leg to the betslip without leaving the page, the bar counts it, a second tap removes it ({r})")
             await ctx.close()
             # ---- after a kickoff that game's cards are gone and the tabs count what is left ----
             gk = min((e["g"] for e in EXP.values()), key=lambda g: KO[g]); t_after = KO[gk] + 60e3; left = {g: sum(1 for e in EXP.values() if e["grp"] == g and KO[e["g"]] > t_after) for g in want}

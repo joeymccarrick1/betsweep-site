@@ -155,6 +155,13 @@ def sections(IN_, OUT_):
         if l.get("tier") in ("plus", "td") and not l.get("alt"): legs_by_g.setdefault(l["g"], []).append(l)
     for gid in legs_by_g:
         legs_by_g[gid].sort(key=lambda l: -((l.get("raw_p") or l["p"]) - l["bk"]))
+    # owner 11/27 10:34 PM: the Trend check page (build_trends.py -> out/trends.json); a game card links to its own streak legs
+    try:
+        _TRD = json.load(open(os.path.join(OUT_, "trends.json")))
+        if int(_TRD.get("week") or 0) != int(W): _TRD = {}
+    except Exception: _TRD = {}
+    _trg = {}
+    for _x in _TRD.get("legs") or []: _trg[_x.get("g")] = _trg.get(_x.get("g"), 0) + 1
     cards = []
     for g in games:
         L = GL.get(g["gid"]) or {}; away, home = L.get("away", g["a"]), L.get("home", g["b"])
@@ -185,7 +192,7 @@ def sections(IN_, OUT_):
  {f'<ul class="tdnews">{news_html}</ul>' if news_html else ""}
  {f'<div class="plays tdplays">{legs_html}</div>{bp_html}' if (legs_html or bp_html) else ""}
  </div>
- <div class="tdlinks"><a class="pri" href="/boards/#g-{E(g["gid"])}">Matchup board</a><a href="/build/#g-{E(g["gid"])}">Build a slip</a><a href="/dossier/{E(g["gid"])}/">Preview</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#lv-{E(g["gid"])}">Live</a></div>
+ <div class="tdlinks"><a class="pri" href="/boards/#g-{E(g["gid"])}">Matchup board</a><a href="/build/#g-{E(g["gid"])}">Build a slip</a>{f'<a href="/trends/?g={E(g["gid"])}">Trend check</a>' if _trg.get(g["gid"]) else ""}<a href="/dossier/{E(g["gid"])}/">Preview</a><a href="/lab/merged/?g={E(g["gid"])}">Game Desk</a><a href="/live/#lv-{E(g["gid"])}">Live</a></div>
 </article>''')
     # ---- news that moved the model (whole week, newest first) -------------------------------------------------------------------------
     sev = {"bad": 0, "watch": 1, "good": 2, "info": 3}
@@ -307,11 +314,7 @@ def sections(IN_, OUT_):
         import social as _SOC; social_strip = _SOC.strip_html(W)
     except Exception as _e: print("note: Social strip skipped:", _e); social_strip = ""
     # owner 11/27 10:34 PM: one line to the Trend check page (build_trends.py -> out/trends.json), under today's games
-    trend_door = ""
-    try:
-        _TRD = json.load(open(os.path.join(OUT_, "trends.json")))
-        if int(_TRD.get("week") or 0) == int(W) and _TRD.get("door"): trend_door = "<style>" + _TRD.get("door_css", "") + "</style>" + _TRD["door"]
-    except Exception: pass
+    trend_door = ("<style>" + _TRD.get("door_css", "") + "</style>" + _TRD["door"]) if _TRD.get("door") else ""
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     try:
@@ -417,7 +420,7 @@ TODAY_CSS = r"""
 .tdall{display:flex;gap:8px;margin:10px 0 0} .tdall a{flex:1;text-align:center;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;background:var(--card)} .tdall a:hover{border-color:var(--red)}
 .nwh{margin-top:22px}
 /* 11/27 late: a game that has kicked off no longer offers its parlay or a way into the builder (its looks leave by home.py's kickoff rule) */
-.tdgame.ko .tdbp,.tdgame.ko .tdlinks a[href^="/build/"]{display:none}
+.tdgame.ko .tdbp,.tdgame.ko .tdlinks a[href^="/build/"],.tdgame.ko .tdlinks a[href^="/trends/"]{display:none}
 @media (max-width:560px){ .tdnews{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px} .tdnews li{min-width:0;line-height:1.3} }
 """
 
@@ -427,7 +430,7 @@ TODAY_JS = r"""<script>
   function text(){ var parts = []; var h = document.getElementById('tdtitle'); if (h) parts.push(h.textContent.trim() + '.');
     document.querySelectorAll('.tdgame.show').forEach(function(g){ var m = g.querySelector('.tdm'); var say = g.querySelector('.sweepsays'); var l = g.querySelector('.tdl');
       if (m) parts.push(m.textContent.replace(/\s+/g, ' ').replace('@', ' at ') + '.'); if (l) parts.push(l.textContent.replace(/\s+/g, ' ') + '.'); if (say) parts.push(say.textContent.replace(/^Sweep says/i, 'Sweep says:').replace(/\s+/g, ' ') + '.'); });
-    var looks = document.querySelectorAll('#tdlooksgrid .play'); if (looks.length){ parts.push("Today's looks."); looks.forEach(function(p, i){ if (i > 3) return; var who = p.querySelector('.who b'), what = p.querySelector('.what'); if (who && what) parts.push(who.textContent + ', ' + what.textContent.replace(/\s+/g, ' ') + '.'); }); }
+    var looks = document.querySelectorAll('#tdlooksgrid .play'); if (looks.length){ parts.push("Today's looks."); looks.forEach(function(p, i){ if (i > 3) return; var who = p.querySelector('.who b'), what = p.querySelector('.what .wl') || p.querySelector('.what'); if (who && what) parts.push(who.textContent + ', ' + what.textContent.replace(/\s+/g, ' ') + '.'); }); }
     return parts.join(' '); }
   b.hidden = false; var on = false;
   b.addEventListener('click', function(){ if (on){ speechSynthesis.cancel(); on = false; b.classList.remove('on'); b.textContent = '▶ Listen'; return; }
