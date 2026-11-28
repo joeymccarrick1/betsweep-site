@@ -39,6 +39,8 @@ async def run(b, have_file):
     pg = await ctx.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)[:200]))
     await pg.goto(f"http://127.0.0.1:{PORT}/me/", wait_until="domcontentloaded"); await pg.wait_for_timeout(2500)
     rows = await pg.evaluate("[...document.querySelectorAll('li.sl')].map(function(li){ return [li.querySelector('b').textContent, li.querySelector('.res').textContent]; })")
+    # 11/27: this week's decided slips sit under a Settled fold; open it, the checks below read every slip's legs
+    await pg.evaluate("() => { var s = document.querySelector('#slips .setlt'); if(s && s.getAttribute('aria-expanded') !== 'true') s.click(); }"); await pg.wait_for_timeout(200)
     # 11/25 (owner screenshot, "Make this look better"): the legs open one per row with the result on the right, and a leg whose game has
     # not been played says so instead of "no box score (did not play?)".
     LEGS[0] = await pg.evaluate("""() => { var out = {}; Array.from(document.querySelectorAll('li.sl')).forEach(function(li){ var t = li.querySelector('.lgt'); t.click();

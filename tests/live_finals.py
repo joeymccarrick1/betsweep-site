@@ -88,7 +88,8 @@ READ = """(gid) => { var q = function(s, r){ return (r || document).querySelecto
   var gsec = document.getElementById('lv-' + gid), o = document.documentElement, log = null; try { log = JSON.parse(localStorage.getItem('bs_log_w' + window.__LV.week)); } catch(e){}
   return {slip: card ? q('.scp b', card).textContent : null, slipSub: card ? q('.scp small', card).textContent : null, facts: card ? q('.scn small', card).textContent : null, money: card ? qa('.scm span', card).map(function(x){ return x.textContent; }) : [],
           share: !!(card && q('.winshare', card)), rows: card ? qa('table.lvt tr', card).map(function(tr){ return tr.textContent.replace(/\\s+/g, ' ').trim(); }) : [],
-          week: tab('__log'), season: tab('__season'), log: log,
+          week: tab('__log'), season: tab('__season'), log: log, res: (function(){ try { return (JSON.parse(localStorage.getItem('bs_slips_w' + window.__LV.week)) || []).map(function(x){ return x.res || ''; }); } catch(e){ return null; } })(),
+          setl: (function(){ var b = q('.setlh'); return b ? {txt: b.textContent.replace(/\\s+/g, ' ').trim(), open: b.getAttribute('aria-expanded')} : null; })(), setln: (q('.setln') || {textContent: ''}).textContent, ncards: qa('.slipcard').length,
           score: gsec ? q('.mid b', gsec).textContent : null, tog: gsec ? q('.ghd2 .tog', gsec).textContent : null, subs: gsec ? qa('h4.subtog', gsec).map(function(h){ return h.textContent; }) : [], gopen: !!(gsec && gsec.classList.contains('open')),
           bar: (q('#lv .lvbar') || {textContent: ''}).textContent, dead: qa('#lv .chip').filter(function(c){ return c.textContent === 'Dead'; }).length + qa('#lv .scp.dead').length,
           over: o.scrollWidth - o.clientWidth}; }"""
@@ -103,12 +104,13 @@ async def main():
     print(f"   game {GID} (home {A}), made-up final {A} {SA} - {B} {SB}; legs: " + "; ".join(f"{l['pl']} {l['m']} {l['ln']}" for l in WIN) + f"; no stat line: {ABS['pl']}; did not play: {DNP['pl']}")
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        async def run(name, theme="dark", t=None, espn="off", sb=None, sm=None, keys=None, oldlog=None, hash_=None, wait=2600, events=(), **dk):
+        async def run(name, theme="dark", t=None, espn="off", sb=None, sm=None, keys=None, oldlog=None, hash_=None, wait=2600, events=(), setl=True, **dk):
             """one visit: returns (what the page shows, the ESPN addresses it asked for, page errors, the page)"""
             ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True, service_workers="block")
             ls = {"bs_theme": theme, "t_now": str(int(t if t is not None else KO + 6 * 3600e3)), "bs_live_hub": "__slips", "bs_live_slipsopen": "1", "bs_live_open": json.dumps(["slip|s1"]),
                   f"bs_slips_w{WEEK}": json.dumps([{"id": "s1", "name": "Test slip", "keys": [key(l) for l in (keys or WIN)], "odds": 600, "stake": 10}])}
             if oldlog is not None: ls[f"bs_log_w{WEEK}"] = json.dumps(oldlog)
+            if setl: ls["bs_live_setlopen"] = "1"    # 11/27: a decided slip sits under the Settled fold; these cases read its card, so the fold starts open
             await ctx.add_init_script("try{" + "".join(f"if(localStorage.getItem({json.dumps(k)})===null)localStorage.setItem({json.dumps(k)},{json.dumps(v)});" for k, v in ls.items()) + "}catch(e){}" + CLOCK)
             asked = []
             async def on_espn(route, request):
@@ -127,6 +129,24 @@ async def main():
             if SHOTS: await pg.screenshot(path=f"{SHOTS}/live-{name}-{theme}.png", full_page=True)
             return s, asked, errs, pg, ctx
         wins = lambda s: [r for r in (s["log"] or []) if r[4] == 1]; losses = lambda s: [r for r in (s["log"] or []) if r[4] == 0]
+
+        # ---- 0. owner 11/27 8:48 PM: "Whenever saved slips bust or win they need to be immediately archived" ----
+        for theme in ("dark", "light"):
+            s, asked, errs, pg, ctx = await run("settled-fold", theme=theme, setl=False)
+            print(f"   [{theme}] a cashed slip, fold as a reader finds it:", json.dumps({k: s[k] for k in ("slip", "res", "setl", "setln", "ncards")})[:400])
+            check(s["res"] == ["W"], f"[{theme}] the moment the page grades the saved slip won it is marked on the slip itself, for the betslip and My BetSweep to read ({s['res']})")
+            check(s["slip"] is None and s["ncards"] == 0 and s["setl"] and s["setl"]["open"] == "false" and "1 cashed" in s["setl"]["txt"] and "settled" in s["setln"], f"[{theme}] it is out of the open list: one Settled line (1 cashed), shut, and a note that nothing is open ({s['setl']}, {s['setln']!r})")
+            await pg.evaluate("() => document.querySelector('.setlh').click()"); await pg.wait_for_timeout(500); s2 = await pg.evaluate(READ, GID)
+            check(s2["slip"] == "CASHED" and s2["setl"]["open"] == "true" and s2["over"] <= 0 and not errs, f"[{theme}] a tap on Settled shows the slip with its result; no sideways scroll, no page errors ({s2['slip']}, {errs[:1]})")
+            await ctx.close()
+        # a slip with one losing leg: marked lost, and under Settled as a dead one
+        s, asked, errs, pg, ctx = await run("settled-dead", setl=False, lose=(Y1,))
+        check(s["res"] == ["L"] and s["slip"] is None and s["setl"] and "1 dead" in s["setl"]["txt"] and not errs, f"a slip with a dead leg is marked lost the same way and sits under Settled as dead ({s['res']}, {s['setl']}, {errs[:1]})")
+        await ctx.close()
+        # a slip whose game has not kicked off is not graded, not marked, and stays in the open list
+        s, asked, errs, pg, ctx = await run("settled-open", setl=False, t=KO - 3 * 3600e3, fb=None, fin=False)
+        check(s["res"] == [""] and s["slip"] is not None and s["setl"] is None and s["ncards"] == 1, f"before kickoff the slip is open: no mark, its card in the list, no Settled line ({s['res']}, {s['slip']}, {s['setl']})")
+        await ctx.close()
 
         # ---- 1. the week is finished, the build holds the finals, ESPN cannot be reached ----
         for theme in ("dark", "light"):

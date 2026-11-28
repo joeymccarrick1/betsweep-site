@@ -983,7 +983,16 @@ for _lk in ("bundesliga", "laliga", "seriea", "mls"):
 if os.path.isdir(os.path.join(OUT, "data")):    # per-week box scores for /me/ slip grading (build_mydata.py)
     shutil.copytree(os.path.join(OUT, "data"), os.path.join(SITE, "data"), dirs_exist_ok=True)
 try:   # owner 11/27: player -> team for the small logos beside saved legs on My BetSweep (a saved leg is "player|market|line", no team)
-    _pt = {l["pl"]: l["tm"] for l in json.load(open(os.path.join(OUT, "builder_data.json"))).get("legs", []) if l.get("tm") and not l.get("gl") and " or " not in l.get("pl", "")}
+    # 11/27 night: every player with a projection this week comes first (in/proj_*.json: Player, Team), so a player whose game is already
+    # over - his props have left the board - still has a team. The betslip uses it to tell that a saved slip's first game has kicked off.
+    _pt = {}
+    for _pf in ("proj_qb.json", "proj_rb.json", "proj_wr.json", "proj_te.json", "proj_k.json"):
+        try:
+            _pv = json.load(open(os.path.join(IN, _pf)))["values"]; _ph = {c: i for i, c in enumerate(_pv[0])}
+            for _r in _pv[1:]:
+                if len(_r) > max(_ph["Player"], _ph["Team"]) and _r[_ph["Player"]] and re.fullmatch(r"[A-Z]{2,3}", str(_r[_ph["Team"]]).strip() or ""): _pt.setdefault(str(_r[_ph["Player"]]).strip(), str(_r[_ph["Team"]]).strip())
+        except Exception: pass
+    _pt.update({l["pl"]: l["tm"] for l in json.load(open(os.path.join(OUT, "builder_data.json"))).get("legs", []) if l.get("tm") and not l.get("gl") and " or " not in l.get("pl", "")})
     os.makedirs(os.path.join(SITE, "data"), exist_ok=True); json.dump(_pt, open(os.path.join(SITE, "data", "pteam.json"), "w"), separators=(",", ":"))
 except Exception as _e: print("pteam.json not written:", _e)
 if os.path.isdir(os.path.join(OUT, "promo")):   # promoted-bet cards for X / IG (and the home page's download buttons)

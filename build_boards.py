@@ -821,6 +821,14 @@ def roles_for(players):
             for k, p in enumerate(ps, 1): roles[p[0]] = f"{pos}{k}"
     return roles
 SC_LABEL = lambda a, b: [f"{a} by 10+", "close, low", "shootout", f"{b} by 10+"]
+def sc_order(a, b):
+    """owner 11/27 10:19 PM ("we need to swap the side that the Script Strip is reading. Titans on the left should read like their 4% chance
+    to win by 10 first. Close game under next. Shootout and then jags by 10+"): the four endings are shown the way the header reads -
+    the team on the left of the header first, the team on the right last. Returns the script indexes in display order; the scripts
+    tab's own order (a, close-low, shootout, b) is untouched everywhere else. Same rule as the header: the schedule's home team is on
+    the right; a neutral site or a game the schedule does not have keeps a-b."""
+    g = game_for(a, b); ah = bool(g) and str(g.get("location") or "").strip().lower() != "neutral"
+    return [3, 1, 2, 0] if (ah and g["home_team"] == a) else [0, 1, 2, 3]
 def script_plays(a, b, players, s, k=None):
     """Top legs if script k happens (default: the most-likely script). s = SCRIPTS tuple for team a."""
     probs = s[5:9]; kk = max(range(4), key=lambda i: probs[i] or 0)
@@ -1398,12 +1406,12 @@ def conf_block(a, b, s, cf, ew, lr=None):
     if fo["used"]:
         pr = fo["probs"]; kk = max(range(4), key=lambda i: pr[i]); lab = SC_LABEL(a, b)
         mk = (f'<div class="mread"><span class="lt">Our formula\'s read <small>season averages only: {a} {fo["pa"]:.1f}, {b} {fo["pb"]:.1f} (the score above is FanDuel\'s line)</small></span>'
-              f'<div class="mscripts">' + "".join(f'<i class="s{k+1}{" on" if k == kk else ""}" style="--p:{pr[k]:.0f}%"><em>{E(lab[k])}</em><b>{pr[k]:.0f}%</b></i>' for k in range(4)) +
+              f'<div class="mscripts">' + "".join(f'<i class="s{i+1}{" on" if k == kk else ""}" style="--p:{pr[k]:.0f}%"><em>{E(lab[k])}</em><b>{pr[k]:.0f}%</b></i>' for i, k in enumerate(sc_order(a, b))) +
               f'</div><small class="mnote">Game scripts use FanDuel\'s spread and total once posted: from 2019-26 the line\'s endings beat this formula\'s (avg miss 9.5 vs 10.3 pts). Player projections are still ours.</small></div>')
     elif m:
         pr = m["probs"]; kk = max(range(4), key=lambda i: pr[i]); lab = SC_LABEL(a, b)
         mk = (f'<div class="mread"><span class="lt">Market\'s read <small>FanDuel {a} {m["spread_a"]:+g} · O/U {m["total"]:g} → {a} {m["pa"]:.1f}, {b} {m["pb"]:.1f}</small></span>'
-              f'<div class="mscripts">' + "".join(f'<i class="s{k+1}{" on" if k == kk else ""}" style="--p:{pr[k]:.0f}%"><em>{E(lab[k])}</em><b>{pr[k]:.0f}%</b></i>' for k in range(4)) +
+              f'<div class="mscripts">' + "".join(f'<i class="s{i+1}{" on" if k == kk else ""}" style="--p:{pr[k]:.0f}%"><em>{E(lab[k])}</em><b>{pr[k]:.0f}%</b></i>' for i, k in enumerate(sc_order(a, b))) +
               f'</div><small class="mnote">Most likely per the market: <b>{E(lab[kk])}</b> ({pr[kk]:.0f}%). The best parlay below is weighted by these odds - in 2019-26 tests the market\'s endings beat our formula\'s.</small></div>')
     ewh = ""
     if ew:
@@ -1494,7 +1502,8 @@ for a, b, pl_all in blocks:
     # owner 11/27 2:15 PM: no wordmark in a board header ("It just makes everything a little long") - the nickname is plain text again
     _hg = game_for(a, b); _ah = bool(_hg) and str(_hg.get("location") or "").strip().lower() != "neutral"
     _hl, _hr = ((b, a) if (_ah and _hg["home_team"] == a) else (a, b)); _sl, _sr = ((s[3], s[2]) if _hl == b else (s[2], s[3]))
-    cards.append(f'''<section class="card" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
+    _sco = sc_order(a, b); _scl = [f"{a} by 10+", "close, low", "shootout", f"{b} by 10+"]; _scw = [f"{a} wins by 10+", "close game, under 51 total points", "shootout (close, 51+ points)", f"{b} wins by 10+"]
+    cards.append(f'''<section class="card{" scf" if _sco[0] == 3 else ""}" id="{gid}"{f' data-ko="{_ko}"' if _ko else ""}{f' data-final="{E(_fin)}"' if _fin else ""}>
  <header class="hd hmh wash{" ah" if _ah else ""}" style="--wa:{BRAND_COL(_hl)};--wb:{BRAND_COL(_hr)}">{PLAYS}
   <div class="tm a">{badge(_hl)}<b title="{NAMES.get(_hl, _hl)}">{_hl}</b></div>
   <div class="score"><span class="pt">{_sl:.1f}</span><span class="dash">–</span><span class="pt">{_sr:.1f}</span>
@@ -1505,15 +1514,11 @@ for a, b, pl_all in blocks:
  {conf_html}
  {bp_html}
  <div class="scripts" aria-label="game script odds · tap a script to see its plays" data-on="{kk}">
-  <i class="s1{" on" if kk==0 else ""}" data-sc="0" role="button" tabindex="0" style="--p:{s[5]:.0f}%"><em>{a} by 10+</em><b>{s[5]:.0f}%</b></i>
-  <i class="s2{" on" if kk==1 else ""}" data-sc="1" role="button" tabindex="0" style="--p:{s[6]:.0f}%"><em>close, low</em><b>{s[6]:.0f}%</b></i>
-  <i class="s3{" on" if kk==2 else ""}" data-sc="2" role="button" tabindex="0" style="--p:{s[7]:.0f}%"><em>shootout</em><b>{s[7]:.0f}%</b></i>
-  <i class="s4{" on" if kk==3 else ""}" data-sc="3" role="button" tabindex="0" style="--p:{s[8]:.0f}%"><em>{b} by 10+</em><b>{s[8]:.0f}%</b></i>
+  {"".join(f'<i class="s{_i+1}{" on" if kk == _k else ""}" data-sc="{_k}" role="button" tabindex="0" style="--p:{s[5+_k]:.0f}%"><em>{_scl[_k]}</em><b>{s[5+_k]:.0f}%</b></i>' for _i, _k in enumerate(_sco))}
  </div>
  <p class="schint">Tap a slice of the bar to see the plays and slip for that game script.</p>
  <p class="legend"><b>{"How the game should end, from FanDuel's spread and total" if cf["form"]["used"] else ("How the model sees the game ending" + ((" · model total " + format(s[4], ".1f") + (" vs market " + format(tot, "g") if gi and tot else "")) if s[4] else ""))}:</b>
-  <span><i class="d s1"></i>{s[5]:.0f}% {a} wins by 10+</span><span><i class="d s2"></i>{s[6]:.0f}% close game, under 51 total points</span>
-  <span><i class="d s3"></i>{s[7]:.0f}% shootout (close, 51+ points)</span><span><i class="d s4"></i>{s[8]:.0f}% {b} wins by 10+</span></p>
+  {"".join(f'<span><i class="d s{_i+1}"></i>{s[5+_k]:.0f}% {_scw[_k]}</span>' for _i, _k in enumerate(_sco))}</p>
  {sc_blocks}
  {ftd_strip(a, b)}
  {cov_strip(a, b)}

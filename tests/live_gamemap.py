@@ -60,7 +60,7 @@ async def main():
         b = await p.chromium.launch()
         async def visit(slips=None, bk=None, bg=None, theme="dark", hash_=""):
             ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True, service_workers="block")
-            ls = {"bs_theme": theme, "t_now": str(int(KO + 6 * 3600e3)), "bs_live_hub": "__slips", "bs_live_slipsopen": "1", "bs_live_open": json.dumps(["slip|" + s["id"] for s in (slips or [])] + ["slip|builder"])}
+            ls = {"bs_theme": theme, "t_now": str(int(KO + 6 * 3600e3)), "bs_live_hub": "__slips", "bs_live_slipsopen": "1", "bs_live_setlopen": "1", "bs_live_open": json.dumps(["slip|" + s["id"] for s in (slips or [])] + ["slip|builder"])}
             if slips is not None: ls[f"bs_slips_w{WEEK}"] = json.dumps(slips)
             if bk is not None: ls[f"bs_slipk_w{WEEK}"] = json.dumps(bk)
             if bg is not None: ls[f"bs_slipg_w{WEEK}"] = json.dumps(bg)

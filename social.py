@@ -259,7 +259,7 @@ SAVED_JS = r"""<script>(function(){
   function read(w){ try{ var a = JSON.parse(localStorage.getItem('bs_slips_w' + w) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
   function legText(k){ var q = String(k).split('|'); return q[1] === 'Anytime TD' || q[1] === 'First TD' || q[1] === 'Either TD' ? q[0] + ' ' + q[1].toLowerCase() : q[1] === 'Moneyline' || q[1] === 'Spread' || q[1] === 'Total' ? q[0] : q[0] + ' ' + q[2] + '+ ' + String(q[1] || '').toLowerCase(); }
   // someone else's slip (saved from Social, or a tailed BetSweep promo) is not yours to post
-  function mine(s){ return !!(s && !s.promo && !s.post && s.keys && s.keys.length); }
+  function mine(s){ return !!(s && !s.promo && !s.post && !s.res && s.keys && s.keys.length); }   // 11/27: a slip already marked won, lost or void (res) is settled, not one to post
   // A saved slip's keys -> this week's board legs, the way the builder does it (first leg per key and game). A key that sits in more
   // than one game (a total, a spread) goes to the game the slip has on record for it and to no other: the wrong game's line under
   // someone's name is worse than a leg left out.

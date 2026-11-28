@@ -312,6 +312,9 @@ body.drillopen{overflow:hidden;position:fixed;left:0;right:0;width:100%}
   .sc2 .slipbar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center} .sc2 .slipbar .fd{grid-column:1/-1;text-align:center}
   .sc2 .slipbar label{display:flex;align-items:center;gap:6px;min-width:0} .sc2 .slipbar label input{width:100%;min-width:0} }
 .slipsgrp .finin{padding:8px 10px 10px;display:grid;gap:10px} .slipsgrp .finin .lg2{margin:0}
+.setlh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:8px 12px;font:inherit;text-align:left;color:var(--ink);background:var(--chalk);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.setlh span{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.05em;text-transform:uppercase} .setlh small{font-family:var(--body);font-weight:500;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--mute);margin-left:8px} .setlh .car{font-style:normal;color:var(--mute)} .setlh small b.w{color:var(--good);font-weight:700}
+.setln{margin:0;font-size:13px;color:var(--mute)}
 .tmsel{display:flex;gap:8px;padding:10px 0 6px;margin-top:-10px;position:sticky;top:-10px;background:var(--card);z-index:2} .tmb{flex:1;font:inherit;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);cursor:pointer} .tmb.on{background:var(--red);border-color:var(--red);color:#fff}
 .tfbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .tfb{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--chalk);color:var(--ink);font:inherit;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;text-align:left}
@@ -465,6 +468,7 @@ JS = r"""
     INSLIP = {}; INLEG = {};
     allSlips().forEach(function(sl){ var ls = resolveSlip(sl); sl.keys.forEach(function(k, i){ if((INSLIP[k] = INSLIP[k] || []).indexOf(sl.id) < 0) INSLIP[k].push(sl.id); if(ls[i]){ var a = k + '@' + ls[i].g; (INLEG[a] = INLEG[a] || []).push(sl.id); } }); }); }
   function saveSlips(){ try { localStorage.setItem(SLKEY, JSON.stringify(SLIPS)); } catch(e){} }
+  var SLDIRTY = false;   // a slip's won / lost mark changed while the cards were drawn: saved once after the draw
   var BMETA = {}; try { BMETA = JSON.parse(localStorage.getItem('bs_slipmeta_w' + D.week) || '{}') || {}; } catch(e){}
   function saveBMeta(){ try { localStorage.setItem('bs_slipmeta_w' + D.week, JSON.stringify(BMETA)); } catch(e){} }
   function allSlips(){ var out = []; var bk = BKEYS.slice(); if(bk.length) out.push({id: 'builder', name: BMETA.name || 'Builder slip', keys: bk, odds: BMETA.odds, stake: BMETA.stake, co: BMETA.co, cot: BMETA.cot, ho: BMETA.ho, builder: true}); return out.concat(SLIPS); }
@@ -590,6 +594,12 @@ JS = r"""
     var fdOk = ls.filter(function(l){ return l.fd && l.fd.m; });
     var fdUrl = fdOk.length ? 'https://sportsbook.fanduel.com/addToBetslip?' + fdOk.map(function(l, i){ return 'marketId[' + i + ']=' + encodeURIComponent(l.fd.m) + '&selectionId[' + i + ']=' + encodeURIComponent(l.fd.s); }).join('&') : '';
     var done = nd ? 'DEAD' : (no === 0 && nh ? 'CASHED' : no === 0 && nv ? 'VOID' : nw ? 'Grading' : pc(pj));
+    /* owner 11/27 8:48 PM ("Whenever saved slips bust or win they need to be immediately archived. Muddies up a users betslip"): the moment a
+       saved slip is decided it is marked on the slip itself - res 'L' (a leg is dead), 'W' (every leg hit), 'V' (every leg void) - so the
+       betslip's Saved list, My BetSweep and this page all put it away at once. A slip with a leg this page cannot follow is never marked
+       won; one that comes back to life (its dead leg taken out) loses the mark. The builder's working slip is not a saved slip. */
+    var rz = nd ? 'L' : (no === 0 && !missing && sr.length ? (nh ? 'W' : nv ? 'V' : '') : '');
+    if(!sl.builder && (sl.res || '') !== rz){ if(rz){ sl.res = rz; sl.resAt = Date.now(); } else { delete sl.res; delete sl.resAt; } SLDIRTY = true; }
     var sub = nd ? nh + ' hit · ' + nd + ' dead' : (no === 0 && nh ? 'all ' + nh + ' hit' : nh + ' hit · ' + no + ' open · chance from here' + (ls.length ? ' (pregame ' + pc(pre) + ')' : ''));
     var rows = sr.map(function(x){ var l = x.l, r = x.r, st = x.s; return '<tr class="' + (r.status === 'hit' ? 'hit' : r.status === 'dead' ? 'dead' : '') + '"><td class="st"><button type="button" class="rm" data-sid="' + esc(sl.id) + '" data-k="' + esc(legKey(l)) + '" data-gm="' + esc(l.g) + '" title="Remove from this slip">×</button></td><td class="who"><b>' + esc(legText(l)) + (r.status === 'hit' ? '<span class="chip hit">Hit</span>' : r.status === 'dead' ? '<span class="chip">Dead</span>' : r.status === 'void' ? '<span class="chip">Void</span>' : r.wait ? '<span class="chip wt">Not graded yet</span>' : '') + '</b><small>' + esc(l.tm) + ' vs ' + esc(l.opp) + ' · FD ' + am(l.o) + ' · ' + (st.st === 'in' ? esc(st.det || 'live') : st.st === 'post' ? 'final' : esc(games[l.g].kick)) + '</small></td><td class="now"><b>' + esc(r.now || '') + '</b></td><td class="pr">' + (r.status === 'void' || r.wait ? '<b>–</b><small>' + (r.status === 'void' ? 'void' : 'final') + '</small>' : '<b class="' + (r.status === 'hit' ? 'up' : r.status === 'dead' ? 'dn' : '') + '">' + pc(r.p) + '</b><small>' + (st.st === 'pre' ? 'pregame' : 'from here') + '</small>') + '</td></tr>'; }).join('');
     if(nv) rows += '<tr><td class="st"></td><td class="who" colspan="3"><small>' + (nv > 1 ? nv + ' legs are' : '1 leg is') + ' on a player who is inactive or did not play. FanDuel voids a leg like that and pays the rest of the slip at a shorter price.</small></td></tr>';
@@ -618,6 +628,7 @@ JS = r"""
       '<button type="button" class="rfr slipdel" data-sid="' + esc(sl.id) + '">' + (sl.builder ? 'Clear' : 'Delete') + '</button></div></section>'; }
   try { (JSON.parse(localStorage.getItem('bs_live_open') || '[]') || []).forEach(function(k){ OPEN[k] = true; }); } catch(e){}
   try { var so0 = localStorage.getItem('bs_live_slipsopen'); if(so0 === '1') OPEN.__slips = true; else if(so0 === '0') OPEN.__slips = false; } catch(e){}
+  try { if(localStorage.getItem('bs_live_setlopen') === '1') OPEN.__setl = true; } catch(e){}   // the Settled fold inside Your slips: shut unless the reader opened it
   // owner 11/8: What changed / Your slips / My week / My season share one box with a sliding tab row - one panel open at a time, remembered
   var HUB = ''; try { HUB = localStorage.getItem('bs_live_hub') || ''; } catch(e){}
   var HUBK = ['__chg', '__slips', 'log', 'season'], HUBO = {__chg: '__chg', __slips: '__slips', log: '__log', season: '__season'}, HUBN = {__chg: 'What changed', __slips: 'Your slips', log: 'My week', season: 'My season'};
@@ -798,10 +809,14 @@ JS = r"""
     } catch(e){}
     if(ALLS.length){
       var cards = ALLS.map(function(sl){ return slipCard(sl); }), nc = 0, nd2 = 0, chances = [];
+      if(SLDIRTY){ SLDIRTY = false; saveSlips(); }
+      var cOpen = [], cSet = [], sW = 0, sL = 0, sV = 0; ALLS.forEach(function(sl, i){ if(sl.res && !sl.builder){ cSet.push(cards[i]); if(sl.res === 'W') sW++; else if(sl.res === 'L') sL++; else sV++; } else cOpen.push(cards[i]); });
+      var so2 = OPEN.__setl === true, setl = cSet.length ? '<button type="button" class="setlh" data-setl="1" aria-expanded="' + so2 + '"><span>Settled<small>' + [sW ? '<b class="w">' + sW + ' cashed</b>' : '', sL ? sL + ' dead' : '', sV ? sV + ' void' : ''].filter(Boolean).join(' · ') + '</small></span><i class="car">' + (so2 ? '▴' : '▾') + '</i></button>' + (so2 ? cSet.join('') : '') : '';
+      var noOpen = (!cOpen.length && cSet.length) ? '<p class="setln">No open slips. ' + (cSet.length === 1 ? 'Your saved slip is' : 'All ' + cSet.length + ' saved slips are') + ' settled.</p>' : '';
       var ngr = 0; cards.forEach(function(h){ if(/class="scp cashed"/.test(h)) nc++; else if(/class="scp dead"/.test(h)) nd2++; else if(/class="scp wait"/.test(h)) ngr++; else { var m = h.match(/class="scp "><b>(\d+)%/); if(m) chances.push(+m[1]); } });
       var yo = ('__slips' in OPEN) ? OPEN.__slips : !!FOCUS;
       var sum = ALLS.length + ' slip' + (ALLS.length === 1 ? '' : 's') + (nc ? ' · ' + nc + ' cashed' : '') + (nd2 ? ' · ' + nd2 + ' dead' : '') + (ngr ? ' · ' + ngr + ' being graded' : '') + (chances.length ? ' · ' + chances.length + ' alive' : '');
-      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + overlapNote(ALLS) + cards.join('') + '</div>' : '') + '</section>']);
+      parts.push(['__slips', '<section class="lg2 fingrp slipsgrp' + (yo ? ' open' : '') + '"><button type="button" class="ghd2 fin" data-g="__slips" aria-expanded="' + yo + '"><span class="t">Your slips<small>' + sum + '</small></span><span class="tog">' + (chances.length ? 'best ' + Math.max.apply(null, chances) + '% to cash' : '') + '<i class="car">' + (yo ? '▴' : '▾') + '</i></span></button>' + (yo ? '<div class="finin">' + overlapNote(ALLS.filter(function(sl){ return !sl.res || sl.builder; })) + noOpen + cOpen.join('') + setl + '</div>' : '') + '</section>']);
     }
     // week log: the legs you pinned or carried in your slip, as they resolve - copy or download it after the games
     var mine = legs.concat(D.extra || []).filter(function(l){ return isStar(l) || legSlips(l); });
@@ -1185,7 +1200,8 @@ JS = r"""
     var pr = g.probs; try { if(typeof pr === 'string') pr = JSON.parse(pr); } catch(e){ pr = null; }
     var pct = Array.isArray(pr) && pr.length === 4 ? Math.round(Math.max.apply(null, pr)) : null;
     var f = fdLine(g), one = function(x){ return (Math.round(x * 2) / 2).toFixed(1); };
-    var row = function(lab, a, b, tail){ return '<span class="pj"><b>' + lab + '</b><em>' + esc(g.a) + ' ' + one(a) + ' – ' + one(b) + ' ' + esc(g.b) + '</em>' + (tail ? '<i>' + tail + '</i>' : '') + '</span>'; };
+    var swp = sides(g, st || {}).sw;   /* owner 11/27: away on the left, home on the right - these two score lines read the way the header above them does */
+    var row = function(lab, a, b, tail){ return '<span class="pj"><b>' + lab + '</b><em>' + (swp ? esc(g.b) + ' ' + one(b) + ' – ' + one(a) + ' ' + esc(g.a) : esc(g.a) + ' ' + one(a) + ' – ' + one(b) + ' ' + esc(g.b)) + '</em>' + (tail ? '<i>' + tail + '</i>' : '') + '</span>'; };
     var fdTail = f ? esc((f.sp < 0 ? g.b + ' ' + f.sp : g.a + ' ' + (-f.sp)) + ' · o/u ' + f.tot) : '';
     var out = row('Model', ma, mb, esc(pick + ' · o/u ' + one(ma + mb))) + (f ? row('FanDuel', f.pa, f.pb, fdTail) : '');
     var injs = [[g.a, g.ia], [g.b, g.ib]].filter(function(x){ return x[1] && Math.abs(x[1].pts) >= 0.5; });   // 11/5: injury-adjusted model score (every adjustment is in the score; only 0.5+ pt ones get a note)
@@ -1265,6 +1281,7 @@ JS = r"""
     var tfb = ev.target.closest('.tfb'); if(tfb){ var tg = tfb.dataset.g, tt = tfb.dataset.t; TF[tg] = TF[tg] === tt ? null : tt; render(); return; }
     var hb = ev.target.closest('.hubb'); if(hb){ var nk = hb.dataset.hub; if(HUB === '__chg'){ CHG_SEEN = new Date().toISOString(); try { localStorage.setItem('bs_chg_seen', CHG_SEEN); } catch(e){} } HUB = HUB === nk ? '' : nk; try { localStorage.setItem('bs_live_hub', HUB); } catch(e){} render(true); return; }
     var sh = ev.target.closest('.subtog'); if(sh){ var sk = sh.dataset.g; OPEN[sk] = sh.getAttribute('aria-expanded') !== 'true'; render(); return; }
+    var sth = ev.target.closest('.setlh'); if(sth){ OPEN.__setl = sth.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_setlopen', OPEN.__setl ? '1' : '0'); } catch(e){} render(); return; }
     var h = ev.target.closest('.ghd2'); if(!h || h.classList.contains('static')) return; if(h.dataset.g === '__slips'){ OPEN.__slips = h.getAttribute('aria-expanded') !== 'true'; try { localStorage.setItem('bs_live_slipsopen', OPEN.__slips ? '1' : '0'); } catch(e){} render(); return; } var gid = h.dataset.g; if(gid === '__log'){ OPEN.__log = OPEN.__log !== true; render(); return; } if(gid === '__season'){ OPEN.__season = OPEN.__season !== true; render(); return; } if(gid === '__chg'){ OPEN.__chg = OPEN.__chg !== true; if(!OPEN.__chg){ CHG_SEEN = new Date().toISOString(); try { localStorage.setItem('bs_chg_seen', CHG_SEEN); } catch(e){} } render(); return; } var cur = h.getAttribute('aria-expanded') === 'true'; OPEN[gid] = !cur; render(); });   // owner 11/1 cleanup: the header knows its own state (empty live games and the Final group start folded)
   // slip name / ticket price / stake edits (change event: typing must not re-render under the cursor)
   $('#lv').addEventListener('change', function(ev){

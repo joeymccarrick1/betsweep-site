@@ -1348,7 +1348,7 @@ details.gdone>.gcard{margin:0 10px 10px}
 .price .books3{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px 14px;align-items:baseline} .price .books3 small{flex-basis:100%} .price .books3 span{font-size:13px} .price .books3 span b{font-size:15px} .price .books3 span.best b{color:var(--good)} .price .books3 i{font-style:normal;font-size:11px;color:var(--mute);flex-basis:100%}
 .saved{padding:10px 14px;border-top:1px solid var(--line)}
 .saved h3{margin:0 0 6px;font-family:var(--display);font-size:15px;letter-spacing:.04em;text-transform:uppercase}.saved h3 small{font-family:var(--body);font-weight:500;letter-spacing:0;text-transform:none;color:var(--mute);font-size:12px;margin-left:6px}
-.saved .none{font-size:12.5px;color:var(--mute)}
+.saved .none{font-size:12.5px;color:var(--mute)} .saved .none.moved{margin:8px 0 0;line-height:1.5} .saved .none.moved a{color:var(--ink)}
 .saved table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
 .saved th{text-align:left;font-family:var(--display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:4px 6px;border-bottom:1px solid var(--line)}
 .saved td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -2576,19 +2576,38 @@ BUILDER_JS = r"""
   function priceKeys(ks, g){ var ls = legsForKeys(ks, g).filter(Boolean); if (!ls.length) return null; var sp = slipPrice(ls); return {ls: ls, n: ks.length, missing: ks.length - ls.length, bookDec: sp.d, same: sp.same, fair: joint(ls), fd: fdUrl(ls)}; }
   function curKeys(){ return Object.keys(sel).map(function(i){ return legKey(legs[+i]); }).concat(extraKeys); }
   function sameSet(a, b){ if (a.length !== b.length) return false; var m = {}; a.forEach(function(k){ m[k] = 1; }); return b.every(function(k){ return m[k]; }); }
+  // owner 11/27 8:48 PM ("Whenever saved slips bust or win they need to be immediately archived. Muddies up a users betslip"): the Saved
+  // list holds slips that can still be sent. A slip leaves it the moment it is decided (the Live page and My BetSweep mark res on the
+  // saved slip when they grade it won, lost or void) and as soon as its first game has kicked off - from then it is followed on Live
+  // and graded on My BetSweep. Kickoffs come from the slip's legs on this board; a leg that has left the board (its game is over) is
+  // placed by its player's team (/data/pteam.json, read once when there is a saved slip to place).
+  var PTM = null, PTMP = null;
+  function slipKo(s){ var t = {}, min = null; Object.keys(games).forEach(function(g){ var x = games[g]; if(x && x.ko){ t[x.a] = +x.ko; t[x.b] = +x.ko; } });
+    var ls = legsForKeys(s.keys || [], s.g);
+    (s.keys || []).forEach(function(k, n){ var l = ls[n], ko = l && games[l.g] && games[l.g].ko ? +games[l.g].ko : null;
+      if(ko == null){ var q = String(k).split('|'), who = q[0] || '', gm = s.g && s.g[k] && s.g[k][0];
+        if(gm && games[gm] && games[gm].ko) ko = +games[gm].ko;
+        else if(/^(Total|Spread|Moneyline)$/.test(q[1] || '')){ var tm = (who.match(/^([A-Z]{2,3}) /) || [])[1]; if(tm && t[tm]) ko = t[tm]; }
+        else if(PTM) who.split(/\s+or\s+/).forEach(function(nm){ var tk = t[PTM[nm.trim()]]; if(tk && (ko == null || tk < ko)) ko = tk; }); }
+      if(ko != null && (min == null || ko < min)) min = ko; }); return min; }
+  function slipShut(s){ if(s.res) return true; var ko = slipKo(s); return ko != null && Date.now() >= ko; }
   // saved slips: legs fold into a drop-down under each row (owner 10/23: one long line was unreadable on a phone)
   var SLOPEN = {};
   function slLeg(k){ var q = String(k).split('|'), who = q[0], m = String(q[1]||''), ln = q[2];
       var what = (m==='Anytime TD'||m==='First TD'||m==='Either TD') ? m.replace('TD','touchdown').toLowerCase() : (m==='Moneyline'||m==='Spread'||m==='Total') ? m.toLowerCase() : ln + '+ ' + m.toLowerCase();
       return '<li><b>' + esc(who) + '</b><span>' + esc(what) + '</span></li>'; }
-  function renderSaved(){ var box = $('#savedList'); if(!box) return; var all = savedSlips(), cur = curKeys();
+  function renderSaved(){ var box = $('#savedList'); if(!box) return; var every = savedSlips(), cur = curKeys();
+    if(every.length && !PTMP){ PTMP = fetch('/data/pteam.json').then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(d){ PTM = d || {}; renderSaved(); }); }
+    var all = every.filter(function(s){ return !slipShut(s); }), gone = every.length - all.length;
+    var moved = gone ? '<p class="none moved">' + gone + ' saved slip' + (gone === 1 ? ' has' : 's have') + ' kicked off or settled and left this list: <a href="/live/">follow on Live</a> · <a href="/me/#crec">results on My BetSweep</a></p>' : '';
+    if(!all.length && gone){ box.innerHTML = moved; return; }
     if(!all.length){ box.innerHTML = '<p class="none">Nothing saved yet. Build a slip, tap <b>Save slip</b>, build another - every saved slip lines up here with its FanDuel price, model chance and edge, and sends to FanDuel from this table whenever you are ready. Saved slips also show on <a href="/me/">My BetSweep</a>, graded after the games' + (window.bsAccount && window.bsAccount.user ? '' : ' (sign in and they follow you to every device)') + '.</p>'; return; }
     var rows = all.map(function(s){ var pr = priceKeys(s.keys, s.g); return {s: s, pr: pr}; }).sort(function(a,b){ var ea = a.pr ? a.pr.fair - 1/a.pr.bookDec : -9, eb = b.pr ? b.pr.fair - 1/b.pr.bookDec : -9; return eb - ea; });
     box.innerHTML = '<table><thead><tr><th>Slip</th><th class="r">FanDuel</th><th class="r">Model</th><th class="r">Edge</th><th class="r">$10 pays</th><th></th></tr></thead><tbody>' + rows.map(function(r){ var s = r.s, pr = r.pr, isCur = sameSet(s.keys, cur);
       var e = pr ? pr.fair - 1/pr.bookDec : null;
       return '<tr class="' + (isCur ? 'cur' : '') + '"><td class="nm"><b>' + esc(s.name || 'Slip') + (s.promo ? ' <small style="display:inline">· promoted</small>' : '') + '</b><button type="button" class="lgt' + (SLOPEN[s.id] ? ' on' : '') + '" data-tog="' + esc(s.id) + '" aria-expanded="' + (SLOPEN[s.id] ? 'true' : 'false') + '">' + s.keys.length + ' legs <i>▾</i></button>' + (pr && pr.missing ? '<small>' + pr.missing + ' no longer priced' + '</small>' : '') + '</td>'
         + '<td class="r">' + (pr ? decToAm(pr.bookDec) : (s.odds ? am(s.odds) : '—')) + '</td><td class="r">' + (pr ? pc(pr.fair) : '—') + '</td><td class="r e ' + (e!=null && e>=0 ? 'up' : 'dn') + '">' + (e!=null ? (e>=0?'+':'') + (e*100).toFixed(1) : '—') + '</td><td class="r">' + (pr ? '$' + (10*pr.bookDec).toFixed(2) : '—') + '</td>'
-        + '<td class="ops">' + (pr && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (s.fd ? '<a class="fd" href="' + esc(s.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (pr && pr.ls.length === s.keys.length && dkUrl(pr.ls) ? '<a class="fd dk" href="' + esc(dkUrl(pr.ls)) + '" target="_blank" rel="noopener">DK</a>' : '') + (pr && pr.ls.length === s.keys.length && hrUrl(pr.ls) ? '<a class="fd hr" href="' + esc(hrUrl(pr.ls)) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(s.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(s.id) + '">×</button></td></tr>' + '<tr class="lgrow"' + (SLOPEN[s.id] ? '' : ' hidden') + '><td colspan="6"><ul class="sllegs">' + s.keys.map(slLeg).join('') + '</ul></td></tr>'; }).join('') + '</tbody></table>'; }
+        + '<td class="ops">' + (pr && pr.fd ? '<a class="fd" href="' + esc(pr.fd) + '" target="_blank" rel="noopener">FD</a>' : (s.fd ? '<a class="fd" href="' + esc(s.fd) + '" target="_blank" rel="noopener">FD</a>' : '')) + (pr && pr.ls.length === s.keys.length && dkUrl(pr.ls) ? '<a class="fd dk" href="' + esc(dkUrl(pr.ls)) + '" target="_blank" rel="noopener">DK</a>' : '') + (pr && pr.ls.length === s.keys.length && hrUrl(pr.ls) ? '<a class="fd hr" href="' + esc(hrUrl(pr.ls)) + '" target="_blank" rel="noopener">HR</a>' : '') + '<button type="button" data-load="' + esc(s.id) + '">' + (isCur ? 'Loaded' : 'Load') + '</button><button type="button" class="del" data-del="' + esc(s.id) + '">×</button></td></tr>' + '<tr class="lgrow"' + (SLOPEN[s.id] ? '' : ' hidden') + '><td colspan="6"><ul class="sllegs">' + s.keys.map(slLeg).join('') + '</ul></td></tr>'; }).join('') + '</tbody></table>' + moved; }
   // 11/21 (owner: "when you save a betslip when the betslip is open there's a popup or something more obvious instead of having to scroll
   // down and save"): Save used to drop a small name box above the Saved list, below the fold of the open slip, and confirm with one line
   // of grey text. It now opens a box in the middle of the screen - name, Save, then a plain "Saved" with where to find it - and the open
@@ -2617,6 +2636,8 @@ BUILDER_JS = r"""
     if (b.dataset.load){ var s = savedSlips().filter(function(x){ return x.id === b.dataset.load; })[0]; if(!s) return; sel = {}; extraKeys = []; var ixs = resolveKeys(s.keys, s.g); s.keys.forEach(function(k, n){ if (ixs[n] != null) sel[ixs[n]] = true; else extraKeys.push(k); }); save(); renderList(); renderSlip(); window.scrollTo({top: $('#slipLegs').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth'}); }
     if (b.dataset.del){ writeSlips(savedSlips().filter(function(x){ return x.id !== b.dataset.del; })); renderSaved(); } });
   document.addEventListener('bs-account', renderSaved);
+  window.addEventListener('storage', function(e){ if(e.key === SLKEY) renderSaved(); });   // the Live page or My BetSweep marked a slip decided in another tab
+  setInterval(function(){ if(savedSlips().length && !document.querySelector('.svpop')) renderSaved(); }, 60000);   // a slip leaves the list at its kickoff without a reload
   function slipText(){
     var ls = slipLegs(); if(!ls.length) return '';
     var sp = slipPrice(ls), bookDec = sp.d, fair = joint(ls);

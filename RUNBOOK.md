@@ -4324,3 +4324,49 @@ the leg and its price, Model vs FanDuel as one bar, his last five games against 
   state (`apply()`: hide a started game's plays, mark promos in play) has not run there since the 11/5 merge. Tonight's finished
   DEN-PIT card still showed three "Add to FanDuel" buttons at 8:20 PM.
 
+## 11/27 10:15 PM: a saved slip is put away the moment it is decided (owner 8:48 PM)
+Owner: "Whenever saved slips bust or win they need to be immediately archived. Muddies up a users betslip". Before, the betslip's
+Saved list (Boards and Builder) kept every slip of the week - won, lost, in play - with dead prices and Load / FanDuel buttons, and
+My BetSweep listed open and settled slips mixed together.
+- **The mark.** A decided slip carries `res` on the saved slip itself in `bs_slips_w<W>` (`'W'` every leg hit, `'L'` a leg is dead,
+  `'V'` every leg void) plus `resAt`. It syncs with the rest of the slip. Two pages write it, because only they can grade:
+  the Live page the moment its grader says so, in play (`slipCard()`: `rz`; a slip that comes back to life - its dead leg taken
+  out - loses the mark; a slip with a leg the page cannot follow is never marked won; the builder's working slip is never marked),
+  and My BetSweep when the box scores decide a slip (`render()`: it only adds or corrects a mark, it never clears one the Live page
+  set while a game was still on - that slip reads "Busted" there until the final confirms it).
+- **The betslip (template.html, build_builder.py).** `slipShut(s)`: marked, OR its first game has kicked off (`slipKo`: the kickoff of
+  each leg on the page; a leg that has left the board is placed by its player's team from /data/pteam.json; a total by the game on
+  record in `s.g`). Shut slips leave the Saved list; one line under it says how many moved, with links to Live and My BetSweep.
+  The list re-reads every minute and on a storage event, so a slip leaves at its kickoff without a reload. A leg nobody can place
+  never shuts a slip (no guessing). Nothing is deleted: the slips stay in storage, on Live and on My BetSweep.
+- **/data/pteam.json** now starts from every player with a projection this week (in/proj_*.json), so a player whose game is over
+  and whose props have left the board still has a team; the builder's legs still win where both have him.
+- **My BetSweep.** This week: open slips first, then one "Settled" line (count, cashed, missed) with the decided slips folded under
+  it; earlier weeks are their own folds as before and show everything. The top counters (open slips, record, units) are unchanged;
+  a slip marked busted in play no longer counts as open and loses its Bet / Load / Post buttons.
+- **Live.** Inside "Your slips": open slips, then a "Settled" button (cashed / dead / void counts) that opens the decided ones;
+  `bs_live_setlopen` remembers it. The overlap note looks at open slips only.
+- Social's "Post a saved slip" list and Today's "your legs today" count skip marked slips.
+- Tests: tests/slip_archive.py (new, port 8900: the two betslips, the empty list, before any kickoff, no team list, My BetSweep's
+  fold, marks and counters); live_finals.py case 0 (mark W / L, the fold, an open slip untouched); live_finals / live_gamemap open
+  the fold (`bs_live_setlopen`) for the cases that read a decided slip's card.
+- Not covered: a slip made only of game-line legs for a game that is over, opened on the Boards page before any grading page -
+  Boards does not carry those legs, so it stays listed there until Live or My BetSweep has graded it (the Builder does carry them).
+
+## 11/27 10:30 PM: the script strip reads the way the header does (owner 10:19 PM)
+Owner, on TEN @ JAX: "we need to swap the side that the Script Strip is reading. Titans on the left should read like their 4% chance
+to win by 10 first. Close game under next. Shootout and then jags by 10+". Since the 11/27 header change (away left, home right) the
+strip under it still ran in the scripts tab's own a-b order, so on every card whose home team is the tab's first team the right-hand
+team's blowout came first.
+- build_boards.py `sc_order(a, b)` returns the script indexes in display order - `[3, 1, 2, 0]` when the header is turned, else
+  `[0, 1, 2, 3]` - by the header's own rule (schedule's home team on the right; neutral site or unknown game keeps a-b). The strip,
+  the legend line under it and both small strips in the confidence block (`.mscripts`) are drawn in that order.
+- A slice is coloured by its place (`s1..s4` left to right) and still carries its own script in `data-sc`, so a tap opens the same
+  plays and slip as before. On a turned card (`section.card.scf`) template.html swaps the edge colour of the two blowout endings'
+  play / slip blocks so a block always matches its slice.
+- Nothing else is reordered: the scripts tab, the frozen scripts file, the builder's scenario rows and every number are a-b as before.
+- Live header (build_live.py `modelLine`): the Model and FanDuel score lines read away first too ("ATL 18.0 – 21.0 MIN" under an
+  ATL @ MIN header); they were home first.
+- tests/board_strip.py (new, port 8901): every board - strip order against the header's two teams, colours by place, each slice's
+  script, the legend's order and numbers, the small strips, and a tap on the left slice of a turned card.
+

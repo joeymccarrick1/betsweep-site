@@ -482,7 +482,8 @@ TODAY_JS = r"""<script>
   try {
     var slip = JSON.parse(localStorage.getItem('bs_slipk_w' + T.week) || '[]'); if(!Array.isArray(slip)) slip = [];
     var saved = JSON.parse(localStorage.getItem('bs_slips_w' + T.week) || '[]'); var allKeys = slip.slice();
-    (Array.isArray(saved) ? saved : []).forEach(function(s){ (s.keys || s.legs || []).forEach(function(k){ allKeys.push(typeof k === 'string' ? k : (k.key || '')); }); });
+    (Array.isArray(saved) ? saved : []).forEach(function(s){ if(s && s.res) return;   // 11/27: a settled slip (marked won, lost or void) is no longer one of "your legs today"
+      (s.keys || s.legs || []).forEach(function(k){ allKeys.push(typeof k === 'string' ? k : (k.key || '')); }); });
     var kset = {}; allKeys.forEach(function(k){ if(k) kset[k] = 1; });
     var n = 0, games = {};
     shown.forEach(function(g){ (T.keys[g.gid] || []).forEach(function(k){ if(kset[k]){ n++; games[g.gid] = (games[g.gid] || 0) + 1; } }); });
