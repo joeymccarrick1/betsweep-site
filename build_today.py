@@ -14,7 +14,7 @@ in/legsnaps.json (record, via home.py). Writes out/today.html (body; build_site 
 import json, os, re, sys, html, datetime as dt
 HERE = os.path.dirname(os.path.abspath(__file__)); IN = os.path.join(HERE, "in"); OUT = os.path.join(HERE, "out")
 sys.path.insert(0, HERE)
-import home as HOME, flags as FLAGS
+import home as HOME, flags as FLAGS, live as LIVE
 E = html.escape
 TEAM_OF = {"Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Ravens": "BAL", "Buffalo Bills": "BUF", "Carolina Panthers": "CAR", "Chicago Bears": "CHI", "Cincinnati Bengals": "CIN",
            "Cleveland Browns": "CLE", "Dallas Cowboys": "DAL", "Denver Broncos": "DEN", "Detroit Lions": "DET", "Green Bay Packers": "GB", "Houston Texans": "HOU", "Indianapolis Colts": "IND",
@@ -306,6 +306,12 @@ def sections(IN_, OUT_):
         # below today's game, never above it (owner's 11/11 rule for this page: the head, then the game; only the day's own callouts between)
         import social as _SOC; social_strip = _SOC.strip_html(W)
     except Exception as _e: print("note: Social strip skipped:", _e); social_strip = ""
+    # owner 11/27 10:34 PM: one line to the Trend check page (build_trends.py -> out/trends.json), under today's games
+    trend_door = ""
+    try:
+        _TRD = json.load(open(os.path.join(OUT_, "trends.json")))
+        if int(_TRD.get("week") or 0) == int(W) and _TRD.get("door"): trend_door = "<style>" + _TRD.get("door_css", "") + "</style>" + _TRD["door"]
+    except Exception: pass
     # ---- page ------------------------------------------------------------------------------------------------------------------------
     stamp = built.strftime("%a %-m/%-d %-I:%M %p")
     try:
@@ -325,6 +331,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <section class="sec" id="tdlooks" hidden><h2 class="t">Today's looks <small class="tsub">plus-money edges</small></h2><div class="plays" id="tdlooksgrid"></div><p class="none" style="margin-top:8px;font-size:12.5px">The model's chance vs what FanDuel's price needs, +150 or longer, 5+ points of edge. {_PLUS_TXT}. Tap + Slip to collect them, then open the betslip.</p></section>
 <section class="sec tdday" id="tdday"><div class="tdgames" id="tdgames">{"".join(cards)}</div><p class="none" id="tdnone" hidden></p>
  <p class="tdall"><a href="/boards/">All {len(games)} games this week</a></p></section>
+{trend_door}
 {social_strip}
 <section class="sec" id="tdyou" hidden><h2 class="t">You today</h2><div class="tdyou" id="tdyoubox"></div></section>
 <section class="sec" id="tdnewsS"><div class="sech"><h2 class="t">News desk</h2><a class="seeall" href="/news/">All {len(news)} notes</a></div>{("<ul class='tdnewsl' id='tdnewsl' data-cap='3'>" + news_items + "</ul>") if news_items else "<p class='none'>Quiet so far. The news desk refreshes with every rebuild.</p>"}</section>
@@ -332,6 +339,7 @@ try{{ var bsv = localStorage.getItem('bs_view'); if((bsv === 'short' || bsv === 
 <div class="hsbar" id="hsbar" data-week="{E(str(W))}"><b></b><a href="/build/">Open betslip</a></div>
 <script>window.__TD = {json.dumps({"week": W, "built": built.isoformat(), "games": [{"gid": g["gid"], "a": g["a"], "b": g["b"], "ko": g.get("ko"), "kick": g.get("kick", ""), "fin": g.get("fin", ""), "home": (GL.get(g["gid"]) or {}).get("home", g["b"]), "away": (GL.get(g["gid"]) or {}).get("away", g["a"])} for g in games], "keys": keys_by_g, "news": [{"player": n["player"], "team": n.get("team", ""), "k": n["k"], "tag": tag_short(n)} for n in news]}, separators=(",", ":"))};</script>
 {TODAY_JS}
+<script>{LIVE.LIVE_JS}</script>
 {HOME.home_js(games)}
 {HOME.strip_js(games)}
 {HOME.HOME_SLIP_JS}
@@ -408,6 +416,8 @@ TODAY_CSS = r"""
 @media (max-width:480px){ .tdgame.compact:not(.open) .tdtog em{display:none} }
 .tdall{display:flex;gap:8px;margin:10px 0 0} .tdall a{flex:1;text-align:center;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;background:var(--card)} .tdall a:hover{border-color:var(--red)}
 .nwh{margin-top:22px}
+/* 11/27 late: a game that has kicked off no longer offers its parlay or a way into the builder (its looks leave by home.py's kickoff rule) */
+.tdgame.ko .tdbp,.tdgame.ko .tdlinks a[href^="/build/"]{display:none}
 @media (max-width:560px){ .tdnews{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px} .tdnews li{min-width:0;line-height:1.3} }
 """
 
@@ -447,7 +457,7 @@ TODAY_JS = r"""<script>
   // 11/10 evening: on a day with three or more games every card folds to its head, the three numbers and the take ("More on this
   // game" opens the share button, weather, injuries, looks and parlay), and Today's looks shows three cards, not six
   if(shown.length > 2){ document.querySelectorAll('.tdgame.show').forEach(function(el){ if(el.querySelector('.tdmore')) el.classList.add('compact'); });
-    var plays = [].slice.call(document.querySelectorAll('.tdgame.show .play[data-gap]')).sort(function(a, b){ return (+b.getAttribute('data-gap')) - (+a.getAttribute('data-gap')); }).slice(0, 3);
+    var plays = [].slice.call(document.querySelectorAll('.tdgame.show .play[data-gap]')).filter(function(p){ var k = +p.getAttribute('data-ko'); return !k || k > now; }).sort(function(a, b){ return (+b.getAttribute('data-gap')) - (+a.getAttribute('data-gap')); }).slice(0, 3);
     if(plays.length){ var grid = document.getElementById('tdlooksgrid'); plays.forEach(function(p, i){ var c = p.cloneNode(true); c.classList.toggle('lead', i === 0); grid.appendChild(c); }); document.getElementById('tdlooks').hidden = false; } }
   if(shown.length > 5){ var day = document.getElementById('tdday'), cs = [].slice.call(document.querySelectorAll('.tdgame.show'));
     cs.slice(3).forEach(function(el){ el.classList.add('tdx'); });
@@ -465,6 +475,7 @@ TODAY_JS = r"""<script>
   function cd(){ var t = Date.now();
     // 11/17: the lead parlay of a game that has kicked off can no longer be bet as built - it leaves Today (it sat here with its "Add all to FanDuel" button after the week was over)
     var psx = document.getElementById('parlay'), plx = psx && psx.querySelector('.parlay[data-ko]'); if(plx && +plx.getAttribute('data-ko') && t >= +plx.getAttribute('data-ko')) psx.hidden = true;
+    document.querySelectorAll('.tdgame[data-ko]').forEach(function(el){ var k = +el.getAttribute('data-ko'); if(k) el.classList.toggle('ko', t >= k); });
     document.querySelectorAll('.tdcd[data-ko]').forEach(function(el){ var d = (+el.getAttribute('data-ko')) - t; if(!(d > 0)){ el.textContent = ''; return; }
     var m = Math.floor(d / 60000), h = Math.floor(m / 60), dd = Math.floor(h / 24);
     el.textContent = dd >= 1 ? 'in ' + dd + 'd ' + (h % 24) + 'h' : h >= 1 ? 'in ' + h + 'h ' + (m % 60) + 'm' : 'in ' + m + 'm'; }); }

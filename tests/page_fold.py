@@ -33,7 +33,9 @@ def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + 
 def skip(what): print("SKIP " + what)
 def has(path): return os.path.isfile(os.path.join(ROOT, path.strip("/"), "index.html"))
 # longest a page may open at on a phone, in screens. Loose on purpose: a busy week adds rows, and the caps are what hold the length.
-LIMIT = {"/usage/": 5.0, "/benefits/": 4.5, "/shop/": 4.5, "/news/": 5.0, "/best/": 4.5, "/dfs/": 5.0, "/firsttd/": 6.5}
+# 11/27 late: /best/ 4.5 -> 5.5. Every leg card now carries its reasons (why.py) and the opponents under its bars, about 70px a card;
+# eight cards on the first tab opened at 5.2 screens. /news/ is back under its 5.0: a group opens with 24 notes and a Show all button.
+LIMIT = {"/usage/": 5.0, "/benefits/": 4.5, "/shop/": 4.5, "/news/": 5.0, "/best/": 5.5, "/dfs/": 5.0, "/firsttd/": 6.5}
 VIS = "var qa = function(s, r){ return Array.from((r || document).querySelectorAll(s)); }, vis = function(e){ if(e.checkVisibility && !e.checkVisibility()) return false; var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };"   # checkVisibility: a closed <details> keeps its content's box
 LEN = "() => ({scr: document.documentElement.scrollHeight / innerHeight, over: document.documentElement.scrollWidth - document.documentElement.clientWidth})"
 

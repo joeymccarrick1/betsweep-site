@@ -149,7 +149,7 @@ NAV_ITEMS = [("/", "Home"), ("/boards/", "Matchup Boards"), ("/build/", "Parlay 
 # (build_today.py #tdsimple) and from nowhere else: no line here, no door in NEXT, no entry on /all/.
 NAV_GROUPS = [("/", "Today", None),
               (None, "Games", [("/boards/", "Matchup Boards", "One board per game"), ("/dossier/", "Game previews", "The read before the bet"), ("/news/", "News desk", "Who is out, limited or back"), ("/firsttd/", "First TD", "Who scores first"), ("/live/", "Live", "Your legs vs the box score")]),
-              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/hunches/", "Hunches", "Matchups, streaks, weather"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/me/#import", "Import FanDuel slips", "From screenshots, 12 at a time"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
+              (None, "Betting", [("/best/", "Model's Best", "The week's edges in one list"), ("/trends/", "Trend check", "Hot streaks against the price"), ("/hunches/", "Hunches", "Matchups, streaks, weather"), ("/build/", "Parlay Builder", "Every prop, priced"), ("/sweep/", "Sweep my slip", "A verdict from a screenshot"), ("/me/#import", "Import FanDuel slips", "From screenshots, 12 at a time"), ("/pairs/", "Either-or TDs", "Two names, one leg"), ("/shop/", "Line shop", "Same leg, better price"), ("/boost/", "Boost finder", "The best slip for a boost"), ("/teasers/", "Teaser finder", "6, 6.5 and 7 points, priced")]),
               (None, "Play", [("/beat/", "Beat the model", "Your five vs its five"), ("/survivor/", "Survivor planner", "Your pick, and who to save"), ("/social/", "Social", "Slips people posted this week")]),
               (None, "Players", [("/player/", "All players", "Lines, hit rates, game logs"), ("/stocks/", "Stock Market", "Who is rising, in graphs"), ("/teams/", "Teams", "Stats, results, box scores"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/benefits/", "Who benefits", "When a starter is out")]),
               (None, "Fantasy", [("/team/", "My team", "Start / sit, Sleeper import"), ("/team/compare/", "Who should I start?", "Compare players for your flex"), ("/trade/", "Trade calculator", "Rest-of-season values"), ("/targets/", "Trade desk", "Buy low, sell high"), ("/dfs/", "DFS", "Lineup builder")]),
@@ -164,6 +164,7 @@ NEXT = {
  "/dossier/": [("/boards/", "Matchup Boards", "Every player's lines for the game"), ("/build/", "Parlay Builder", "Build the slip"), ("/news/", "News desk", "What moved the numbers")],
  "/news/": [("/benefits/", "Who benefits", "Where the work goes when a starter sits"), ("/usage/", "Usage trends", "Rising and falling roles"), ("/boards/", "Matchup Boards", "See it in the lines")],
  "/best/": [("/build/?best=1", "Open them in the builder", "Every Model's Best leg, ready to add"), ("/boards/", "Matchup Boards", "The full read on each game"), ("/season/", "How it has graded", "Every week, in public")],
+ "/trends/": [("/build/", "Parlay Builder", "Price the ones you kept"), ("/best/", "Model's Best", "The week's edges in one list"), ("/news/", "News desk", "Who is out, limited or back")],
  "/short/": [("/best/", "Model's Best", "More picks, with the numbers"), ("/boards/", "Matchup Boards", "The full read on each game"), ("/live/", "Live", "Track it once it kicks off")],
  "/build/": [("/sweep/", "Sweep my slip", "A verdict before you place it"), ("/shop/", "Line shop", "The same leg at a better price"), ("/live/", "Live", "Track it once it kicks off")],
  "/sweep/": [("/build/", "Parlay Builder", "Fix it or build another"), ("/shop/", "Line shop", "The same leg at a better price"), ("/live/", "Live", "Track it once it kicks off")],
@@ -445,6 +446,7 @@ def _write_shared():
     if os.path.isdir(os.path.join(_ASSETS, _HMS.SET)):   # only the set that is up is shipped (helmets.SET)
         shutil.copytree(os.path.join(_ASSETS, _HMS.SET), os.path.join(SITE, "s", _HMS.SET), dirs_exist_ok=True); site_css += _HMS.css()
         if os.path.isdir(os.path.join(_ASSETS, "wm")): shutil.copytree(os.path.join(_ASSETS, "wm"), os.path.join(SITE, "s", "wm"), dirs_exist_ok=True)
+    import why as _WHY; site_css += _WHY.css()   # 11/27 late: a leg's reasons, a line each (leg cards on Today and Model's Best, the Trend check page)
     # the section tabs ride in the shared script too (11/17): the pages a reprice keeps as they are - the weekly receipts - get
     # their tabs from foldScore() below and have no inline copy. A page that carries its own copy has already defined it.
     app_js = "if(!window.bsTabs){" + _FN.TABS_JS + "}\n" + _inner(APP_JS, "script")
@@ -1171,6 +1173,7 @@ WK_TABS_CSS = """
 .nwgrp .tdnewsl li.open p{display:block;overflow:visible}
 .nwgrp .tdnewsl li:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .nwgrp .nwe[hidden]{display:none}
+.nwgrp .nwmore[hidden]{display:none}
 """
 # /best/: tabs from the page's own blocks. A link to /best/#parlay (Today's "Every game") opens on that tab.
 BEST_TABS_JS = r"""(function(){
@@ -1189,20 +1192,24 @@ BEST_TABS_JS = r"""(function(){
 NEWS_JS = r"""(function(){
   var f = document.getElementById('nwf'), sec = document.getElementById('news'); if(!f || !sec) return;
   var grps = [].slice.call(sec.querySelectorAll('.nwgrp')), host = document.getElementById('wktabs'), none = document.getElementById('nwnone'), team = '', T = null;
+  // 11/27 late: a group opens with its first 24 notes (31 "Out" notes ran the page to 5.6 phone screens); one button shows the rest
+  var CAP = 24, openG = {};
   if(host && window.bsTabs && grps.length > 1) T = bsTabs.mount(host, grps.map(function(g){ return { id: g.getAttribute('data-tab'), label: g.getAttribute('data-label') }; }), { root: sec, key: 'bs_tab_news' });
   function apply(){ var total = 0, first = null, cur = T ? T.cur() : null, curN = 0;
     if(!grps.length){   // one group only: the plain list
       [].forEach.call(sec.querySelectorAll('.tdnewsl li'), function(li){ var on = !team || li.getAttribute('data-team') === team; li.hidden = !on; if(on) total++; });
       [].forEach.call(sec.querySelectorAll('.tdnewsl'), function(ul){ var any = ul.querySelector('li:not([hidden])'); ul.hidden = !any; if(ul.previousElementSibling) ul.previousElementSibling.hidden = !any; }); }
-    grps.forEach(function(g){ var n = 0, id = g.getAttribute('data-tab');
-      [].forEach.call(g.querySelectorAll('.tdnewsl li'), function(li){ var on = !team || li.getAttribute('data-team') === team; li.hidden = !on; if(on) n++; });
+    grps.forEach(function(g){ var n = 0, id = g.getAttribute('data-tab'), cap = openG[id] ? 1e9 : CAP;
+      [].forEach.call(g.querySelectorAll('.tdnewsl li'), function(li){ var on = !team || li.getAttribute('data-team') === team; if(on) n++; li.hidden = !(on && n <= cap); });
+      var mb = g.querySelector('.nwmore'); if(mb){ mb.hidden = n <= cap; mb.textContent = 'Show all ' + n + ' notes'; }
       var e = g.querySelector('.nwe'); if(e) e.hidden = n > 0;
       if(T){ T.count(id, n); var b = host.querySelector('[data-t="' + id + '"]'); if(b) b.classList.toggle('zero', !n); }
       total += n; if(n && !first) first = id; if(id === cur) curN = n; });
     if(none) none.hidden = total > 0;
     if(T && !curN && first) T.show(first, true); }   // the team has nothing in the group on screen: go to the first one that does
-  f.addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; team = b.getAttribute('data-t') || '';
+  f.addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; team = b.getAttribute('data-t') || ''; openG = {};
     [].forEach.call(f.children, function(x){ x.classList.toggle('on', x === b); }); apply(); });
+  sec.addEventListener('click', function(e){ var b = e.target.closest('.nwmore'); if(!b) return; openG[b.parentNode.getAttribute('data-tab')] = 1; apply(); });
   // a note is two lines until it is tapped
   function tog(li){ var open = li.classList.toggle('open'); li.setAttribute('aria-expanded', open ? 'true' : 'false'); }
   [].forEach.call(sec.querySelectorAll('.nwgrp .tdnewsl li'), function(li){ li.setAttribute('tabindex', '0'); li.setAttribute('role', 'button'); li.setAttribute('aria-expanded', 'false'); });
@@ -1420,6 +1427,18 @@ if os.path.exists(os.path.join(OUT, "today.html")):
             _wk_made.append(_week_page("/best/", "Model's Best", f"Week {_wkw}. Where the model and FanDuel's price disagree most.",
                                        _best, "Model's Best on BetSweep: the week's plus-money edges, near-even looks, next man up, touchdown and game-line radar, and the best parlay for every game.",
                                        _slipjs + "\n<script>" + BEST_TABS_JS.replace("__TABS__", json.dumps(_bt, separators=(",", ":"))) + "</script>\n", tabs=len(_bt) > 1))
+        # owner 11/27 10:34 PM (FanDuel's "Trends" cards): /trends/ - Trend check, streak legs with the model's chance, the price and the reason
+        # beside each (build_trends.py writes the page's inner HTML, its script and its styles to out/trends.json; no file, no page)
+        try:
+            _TR = json.load(open(os.path.join(OUT, "trends.json")))
+            if int(_TR.get("week") or 0) == int(_wkw or 0) and _TR.get("n"):
+                _rc = _TR.get("record") or {}
+                _wk_made.append(_week_page("/trends/", "Trend check", f"Week {_wkw}. {_TR['n']} legs on a 4-of-5 run, each with the model's chance, the price it needs and the reason.",
+                                           "<style>" + _TR.get("css", "") + "</style>" + _TR["html"],
+                                           "Trend check on BetSweep: this week's NFL prop streaks (cleared in 4 or 5 of the last 5), with the model's chance, what FanDuel's price needs and the reason for and against each.",
+                                           _slipjs + "\n<script>" + _TR.get("js", "") + "</script>\n", tabs=True))
+        except FileNotFoundError: pass
+        except Exception as _e: print("note: trend check page skipped:", _e)
         # owner 11/13: "I don't think we need the 'this weeks games' page. We already have all that info on other pages" - /slate/ is no
         # longer built or linked; the old address forwards to the Matchup Boards (one board per game, same lines and scripts).
         os.makedirs(os.path.join(SITE, "slate"), exist_ok=True)
@@ -1432,7 +1451,7 @@ if os.path.exists(os.path.join(OUT, "today.html")):
             _ng = _TP.get("groups") or []
             if len(_ng) > 1:
                 _nbody = ('<div id="wktabs"></div>' + f'<div class="nwf" id="nwf"><button type="button" data-t="" class="on">All teams</button>{_teams}</div>'
-                          + "".join(f'<div class="nwgrp" data-tab="{html.escape(g["k"])}" data-label="{html.escape(g["label"])}"><p class="nwcap">{html.escape(g["title"])}</p>{g["html"]}<p class="none nwe" hidden>Nothing in this group for that team.</p></div>' for g in _ng))
+                          + "".join(f'<div class="nwgrp" data-tab="{html.escape(g["k"])}" data-label="{html.escape(g["label"])}"><p class="nwcap">{html.escape(g["title"])}</p>{g["html"]}<button type="button" class="tdnewsmore nwmore" hidden></button><p class="none nwe" hidden>Nothing in this group for that team.</p></div>' for g in _ng))
             else:
                 _nbody = f'<div class="nwf" id="nwf"><button type="button" data-t="" class="on">All teams</button>{_teams}</div>' + _TP["news"]
             _wk_made.append(_week_page("/news/", "News desk", f"Week {_wkw}, as of {html.escape(str(_TP.get('stamp', '')))} CT. {_TP.get('n', '')} notes that moved the model's numbers, read from ESPN, RotoWire, CBS, Yahoo and the team injury pages at every rebuild. The chips on player names across the site update every 10 minutes.",

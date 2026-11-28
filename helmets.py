@@ -173,6 +173,11 @@ def css():
             '.h5 li .b{align-self:end;border-radius:3px 3px 0 0;background:color-mix(in srgb,var(--mute) 50%,transparent)}',
             '.h5 li.ov .b{background:var(--good)} .h5 li.ov .v{color:var(--ink)}',
             '.h5 .ln{position:absolute;left:-3px;right:-3px;border-top:1.5px dashed var(--ink);opacity:.85;pointer-events:none}',
+            "/* 11/27 late: the opponent's logo under each bar; a game against this week's opponent is ringed */",
+            '.h5.op{--lg:17px} .h5.op .plot{height:calc(var(--bh) + 13px + var(--lg))} .h5.op li{grid-template-rows:13px var(--bh) var(--lg)}',
+            '.h5 li i.hm{height:12px;margin:4px 0 0;vertical-align:0;justify-self:center;align-self:start}',
+            '.h5 li.same i.hm{outline:1.5px solid var(--ink);outline-offset:2px;border-radius:2px}',
+            '.h5 p small.vs{color:var(--ink);font-weight:600}',
             '.h5 p{margin:0;font-size:12px;line-height:1.3;color:var(--mute);min-width:0} .h5 p b{display:block;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.01em;color:var(--ink)}',
             '.h5 p small{display:block;font-size:11.5px} .h5 p small.good{color:var(--good)} .h5 p small.bad{color:var(--bad,#e07070)}']
     for t in TEAMS:

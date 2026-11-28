@@ -4370,3 +4370,45 @@ team's blowout came first.
 - tests/board_strip.py (new, port 8901): every board - strip order against the header's two teams, colours by place, each slice's
   script, the legend's order and numbers, the small strips, and a tap on the left slice of a turned card.
 
+
+## 11/27 11:00 PM: Trend check, a why line on every leg card, opponents under the bars (owner 10:34 PM, FanDuel's "Trends")
+Owner, with two screen recordings of FanDuel's app: "Fanduel updated a lot just recently. They've started adding a lot of what we're
+doing ... I want to make sure we're beating fanduels user experience as much as possible. The goal is always to make the best most
+efficient legs and show them why as quickly and as best as it can." What the recordings show: a "Trends" sheet per game (per stat, a
+card per player: "L5 hit rate 80%", five bars against an alt line with the opponents' logos, one tap to add - seven legs in about 40
+seconds), a player sheet (season stats, last five against the line, game log, his prices under the chart), popular parlays with a
+"bets placed" count, and a betslip that re-prices as legs are tapped. The streak is their whole argument.
+- **The check that sets the tone (research, 11/27).** Their rule run over our graded pre-kickoff snapshots, Weeks 6-11: 938 legs
+  whose player had cleared the line in 4 or 5 of his last 5 (one per player, market and week: the highest such line) hit 56.3%.
+  The streak said 83.6%; FanDuel's prices needed 62.7%; a unit on each returned -10.5%; 5-of-5 streaks hit 54.7% (170 legs).
+  The sheet model's average on them was 57.8%. The model does NOT turn them into winners: where it was 3+ points over the price
+  they hit 52.0% against 55.6% needed (-5.7%, 177 legs), where it was 3+ under, 58.1% against 65.6% (-12.4%, 587 legs); it ran hot
+  at the top (said 74%, got 65%). So nothing on the site may call a streak leg safe. Scripts: fdvideo1/research (not in the repo).
+- **why.py (new).** `reasons(leg, pf)` picks the model's strongest flag FOR a leg and the strongest AGAINST it (leg flags "fh" +
+  player flags "pf") and says each in a line - a shortening of the model's own sentence, never new text. Order of importance is the
+  two lists at the top of the file. Not used as reasons: tags the graded record demoted (sweep.TAG_W weight 0), "News: ..." tags
+  (their text is a headline), bare role signals, "Reliable" (its own sentence says it has not carried over). A player-level sentence
+  about one stat (a rushing trend, a script note about carries, rain for the passing game) is only used on a leg priced on that stat.
+  `html()` is the `<ul class="why">` block; `css()` rides in the shared sheet (build_site.py).
+- **Leg card (home.play_card).** The why block sits under the bars; the loose matchup pill is only kept on a card with no reason.
+  `leg_h5()` puts each game's opponent logo under its bar; a game against THIS week's opponent is ringed (`li.same`) and said in
+  the caption ("vs JAX in Week 10: 33"). No logo row when any of the five opponents is not one of the 32 codes. The dashed line's
+  position now adds the logo row's height (`--lg`). `play_card(x, cls, badge)` takes an optional badge for the top row.
+- **build_trends.py (new step "trend check", soft, before the first Today pass) -> /trends/.** Streak leg = a FanDuel over or TD
+  leg priced now whose player has five logged games and cleared this line in 4+ of the last 5; one per player and market (highest
+  line still on the run); games not kicked off. Groups: Clears (no builder risk tag and edge >= 0), Priced in (no tag, edge < 0),
+  Flagged (sweep.risk_tag gives Some risk / High risk; the badge says which). Cards are home.play_card. Filters: stat chips, game
+  chips (`?g=<gid>&s=<stat>` in the address pre-sets them); twelve cards per group until "Show all N". The banner's three numbers
+  come from `record()` at every build (legsnaps + nflverse weekly stats; under 100 legs or a missing file = no banner).
+  Writes out/trends.json (inner HTML, script, styles, counts, record, Today's door). build_site.py wraps it as a week page with
+  the same tail as /best/ (betslip bar, kickoff state); no file or another week = no page. Menu: Betting > Trend check.
+- **Today.** One line to the page under today's games (`#trdoor`). And the kickoff state script was never on "/": home_js waits
+  for `window.BSLive`, which only the week pages loaded, so a look for a game that was over still showed "Add to FanDuel" (seen
+  on DEN-PIT Friday night). build_today.py now loads live.LIVE_JS before home_js; a card whose kickoff has passed gets `.ko`
+  (its parlay block and "Build a slip" link go), and Today's looks skip games that have kicked off.
+- home_js fires a `bs-live` event after each kickoff-state pass; the Trend check tabs re-count on it.
+- Tests: tests/trend_check.py (new, port 8903: the legs and groups worked out again from the builder data, tab counts, order,
+  reasons and logos against why.py and the game log, twelve-at-a-time, both filters, + Slip, a kickoff, the banner re-counted from
+  the two files, Today's door, the menu); tests/leg_card.py (opponent logos, ringed game, reasons; card limit 352 -> 460).
+- Not done yet (said to the owner): a tap-a-name player sheet; opponent logos on the builder's best-legs bars; a betslip bar that
+  shows the slip's chance on every page.

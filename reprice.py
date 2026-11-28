@@ -52,6 +52,7 @@ BUILD = [
     ("builder", "build_builder.py", "hard"),
     ("players (first pass: lets the team, dossier and home pages link them)", "build_players.py", "soft"),
     ("live", "build_live.py", "hard"),
+    ("trend check", "build_trends.py", "soft"),   # owner 11/27 10:34 PM: /trends/ - before Today, which shows its one-line door
     ("today", "build_today.py", "hard"),
     ("teasers", "build_teasers.py", "soft"),
     ("survivor", "build_survivor.py", "soft"),

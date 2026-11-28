@@ -58,14 +58,14 @@ def _phm(p):   # a promo card's helmet row: both helmets for each game on the sl
 def at_gid(gid):
     return AT.get(gid) or E(str(gid or "").replace("-", " vs "))
 
-_CARD = {"IN": None, "gl": {}, "sk": {}}   # for the leg card's pictures: the roster folder, each player's game log and each leg's stat key (builder data)
+_CARD = {"IN": None, "gl": {}, "sk": {}, "pf": {}}   # for the leg card's pictures and reasons: the roster folder, each player's game log, each leg's stat key and the player-level flags (builder data)
 def load(IN, OUT):
     global _IN; _IN = IN   # for _wx_icons (the slate rows' weather picture)
     D = {}
     try: D["bd"] = json.load(open(os.path.join(OUT, "builder_data.json")))
     except Exception: D["bd"] = {"games": [], "legs": [], "week": 0}
     AT.clear(); AT.update({g["gid"]: at(g) for g in D["bd"].get("games") or []})
-    _CARD["IN"] = IN; _CARD["gl"] = D["bd"].get("gl") or {}; _CARD["sk"] = {(l["pl"], l["m"]): l["sk"] for l in D["bd"].get("legs") or [] if l.get("sk")}
+    _CARD["IN"] = IN; _CARD["gl"] = D["bd"].get("gl") or {}; _CARD["sk"] = {(l["pl"], l["m"]): l["sk"] for l in D["bd"].get("legs") or [] if l.get("sk")}; _CARD["pf"] = D["bd"].get("pf") or {}
     try: D["best"] = json.load(open(os.path.join(IN, "bestlegs.json")))["values"]
     except Exception: D["best"] = []
     try: D["bp"] = json.load(open(os.path.join(OUT, "best_parlays.json")))
@@ -138,6 +138,7 @@ def top_plays(D, n=8):
     return out
 
 import helmets as HM   # owner 11/26: team helmets
+import why as WHY      # owner 11/27 10:34 PM: a leg's strongest reason for and against, in a line each
 import booklinks as BL   # DraftKings / Hard Rock links (exact rung or the book's nearest line), owner 10/22
 import sweep as SW      # owner 11/10: the Daily Sweep (a promo row whose Title starts with "Daily Sweep")
 import how_stats as _HOWS   # 11/17: the plus tier's record is counted from the graded legs, not typed (it said Weeks 6-8 for two weeks)
@@ -169,9 +170,9 @@ def build_href(gid, legs):
 # leg_h5(): his last five games against THIS leg's line, oldest first - the same game log and the same hit rule as the builder's leg
 #   history (builder data "gl", stat key "sk": histBlock() in build_builder.py), so the two can never disagree. Fewer than two games,
 #   a first-TD leg or a game line draws nothing and the card keeps the plain this-season pill.
-def card_top(x, sub):
+def card_top(x, sub, badge=""):
     j = HM.jersey(x.get("tm") or "", HM.num(_CARD["IN"], x.get("pl") or "", x.get("tm") or "")) if (_CARD["IN"] and x.get("tm")) else ""
-    return f'<div class="ptop">{j}<div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div></div>'
+    return f'<div class="ptop">{j}<div class="who"><b>{E(x["pl"])}</b><small>{sub}</small></div>{badge}</div>'
 
 def meter(x):
     e = x.get("e") or 0; ms = f'{x["p"] * 100:.0f}'; bk = x.get("bk"); bs = f'{(bk or 0) * 100:.0f}'; mi, bi = int(ms), int(bs)
@@ -195,13 +196,19 @@ def leg_h5(x, hist=None):
     fmt = lambda v: str(int(math.floor(v + 0.5)))
     lab = f"under {ln:g}" if under else (f"{need}+ TDs" if need > 1 else "a TD") if td else f"{int(math.floor(ln + 0.5))}+"
     verb = "stayed" if under else "scored" if td else "cleared"
-    bars = "".join(f'<li class="{"ov" if won(v) else "un"}" title="Week {E(str(g.get("w", "")))}{(" vs " + E(str(g["opp"]))) if g.get("opp") else ""}: {fmt(v)}"><span class="v">{fmt(v)}</span><span class="b" style="height:{max(7, v / top * 100):.0f}%"></span></li>' for g, v in zip(gs, vals))
+    # owner 11/27 10:34 PM (FanDuel's new cards put the opponent under each bar): each bar carries that game's opponent logo, and a game
+    # against THIS week's opponent is ringed and said in words - the one thing a bare streak count hides.
+    opp = HM.ALIAS.get(str(x.get("opp") or ""), str(x.get("opp") or "")); ops = [HM.ALIAS.get(str(g.get("opp") or ""), str(g.get("opp") or "")) for g in gs]
+    logos = all(o in HM.TEAMS for o in ops)
+    bars = "".join(f'<li class="{"ov" if won(v) else "un"}{" same" if (logos and o == opp) else ""}" title="Week {E(str(g.get("w", "")))}{(" vs " + E(o)) if o else ""}: {fmt(v)}"><span class="v">{fmt(v)}</span><span class="b" style="height:{max(7, v / top * 100):.0f}%"></span>{HM.hm(o) if logos else ""}</li>' for g, v, o in zip(gs, vals, ops))
     season = f'<small class="{E(hist[0])}">{E(hist[1])}</small>' if hist else ""
-    return (f'<div class="h5" role="img" aria-label="{E(x["pl"])}, last {len(vals)} games, oldest first: {", ".join(fmt(v) for v in vals)}. {verb.capitalize()} {E(lab)} in {hits} of {len(vals)}.">'
-            f'<div class="plot"><ol>{bars}</ol><i class="ln" style="bottom:calc(var(--bh) * {(ln if under else need) / top:.4f})"></i></div>'
-            f'<p><b>{hits} of {len(vals)}</b>{verb} {E(lab)}{season}</p></div>')
+    met = [(g, v) for g, v, o in zip(gs, vals, ops) if logos and o == opp]
+    same = f'<small class="vs">vs {E(opp)} in Week {E(str(met[-1][0].get("w", "")))}: {fmt(met[-1][1])}</small>' if met else ""
+    return (f'<div class="h5{" op" if logos else ""}" role="img" aria-label="{E(x["pl"])}, last {len(vals)} games, oldest first: {", ".join(fmt(v) + ((" vs " + o) if o else "") for v, o in zip(vals, ops))}. {verb.capitalize()} {E(lab)} in {hits} of {len(vals)}.">'
+            f'<div class="plot"><ol>{bars}</ol><i class="ln" style="bottom:calc(var(--lg, 0px) + var(--bh) * {(ln if under else need) / top:.4f})"></i></div>'
+            f'<p><b>{hits} of {len(vals)}</b>{verb} {E(lab)}{season}{same}</p></div>')
 
-def play_card(x, cls=""):
+def play_card(x, cls="", badge=""):
     hist = next((h for h in x.get("fh", []) if h[0] in ("good", "info", "bad") and "/" in str(h[1])), None)   # the this-season hit pill only
     hist_html = f'<span class="hist {hist[0]}">{E(hist[1])}</span>' if hist else ""
     sub = " · ".join(s for s in [E(x.get("pos", "")), (HM.hm(x["tm"]) + E(x["tm"]) + " vs " + E(x["opp"])) if x.get("tm") and x.get("opp") else at_gid(x.get("gid", "")), E(x.get("kick", ""))] if s)
@@ -211,12 +218,16 @@ def play_card(x, cls=""):
     proj_html = f'<small class="proj">proj {float(x["proj"]):g}</small>' if x.get("proj") and cls == "floor" else ""
     # the season count ("4/9 this season") rides under the bars' caption; any other pill (a matchup record) keeps its own place above the buttons
     season = hist if (hist and str(hist[1]).endswith("this season")) else None
-    h5 = leg_h5(x, season); pill = hist_html if (h5 and hist and not season) else ""
+    h5 = leg_h5(x, season)
+    # owner 11/27 10:34 PM ("show them why as quickly and as best as it can"): the strongest reason for the leg and the strongest against
+    # it, a line each (why.py), where a lone matchup pill used to sit. A card with no reason either way keeps that pill.
+    why = WHY.html(x, _CARD.get("pf")) if not x.get("gl") else ""
+    pill = hist_html if (h5 and hist and not season and not why) else ""
     return (f'<article class="play {cls}" data-gid="{E(x.get("gid",""))}" data-ko="{x.get("ko") or ""}">'
-            f'{card_top(x, sub)}'
+            f'{card_top(x, sub, badge)}'
             f'<div class="what">{E(leg_line(x["m"], x["ln"]))}{proj_html}<span class="odds">{E(odds_str(x["o"]))}</span></div>'
             f'{meter(x)}'
-            f'<div class="hrow">{h5 or hist_html}{more}</div>'
+            f'<div class="hrow">{h5 or hist_html}{more}</div>{why}'
             + (f'<div class="foot">{pill}{btn}</div>' if (pill or btn) else "") + '</article>')
 
 # ---------- anytime TD plays and game lines from the builder legs ----------
@@ -1260,6 +1271,7 @@ def home_js(games):
     if(ps && ps.querySelector('.parlay,.pmini') && !ps.querySelector('.parlay:not(.started),.pmini:not(.started)')){
       if(document.getElementById('tdtitle')) ps.hidden = true;
       else if(!ps.classList.contains('alldone')){ ps.classList.add('alldone'); var pn = document.createElement('p'); pn.className = 'none pdone'; pn.innerHTML = 'Every game on this week\'s board has kicked off, so none of its parlays can still be bet. Next week\'s post Tuesday. <a href="/receipts/" style="color:var(--ink)">How the week graded</a>'; ps.appendChild(pn); } }
+    try { document.dispatchEvent(new CustomEvent('bs-live')); } catch(e){}   // 11/27: pages that count their open cards (Trend check) re-count the moment the kickoff state lands
   }
   if(window.BSLive) window.BSLive.start(GAMES, apply);
 })();

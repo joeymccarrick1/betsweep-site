@@ -1,6 +1,8 @@
 """The leg card's three pictures (11/27 night; owner: "I love all 8. Let's do it all"): a jersey number beside the player, Model vs FanDuel
 as one bar, and his last five games against the leg's line. Also team logos on News desk notes and five bars on the builder's best-legs
 cards.
+11/27 late (owner 10:34 PM, after FanDuel's "Trends" cards: "show them why as quickly and as best as it can"): the opponent's logo under
+each bar with this week's opponent ringed and said in words, and the leg's strongest reason for and against, a line each (why.py).
 
 Every expectation is worked out from the build's own files, so the test runs in any week:
   the Parlay Builder's data file (legs, each player's game log)  ->  which bars a card must draw and how many are green
@@ -10,7 +12,7 @@ The pages are opened at 390x844 in both themes with the outside world cut off.
 import asyncio, functools, http.server, json, math, os, re, sys, threading, urllib.parse
 from playwright.async_api import async_playwright
 HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."); sys.path.insert(0, HERE)
-import helmets as HM
+import helmets as HM, why as WHY
 ROOT = os.environ.get("SITE") or os.path.join(HERE, "site"); IN = os.path.join(HERE, "in"); SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 PORT = 8899; ok = [0, 0]
 def check(c, what): ok[0 if c else 1] += 1; print(("PASS " if c else "FAIL ") + what)
@@ -48,8 +50,10 @@ READ = """() => { var vis = function(e){ return !!(e && (e.offsetWidth || e.offs
       bar: br ? Math.round(br.width) : 0, baseW: base && br ? base.width / br.width * 100 : null, gapL: gap && br ? (gap.left - br.left) / br.width * 100 : null, gapW: gap && br ? gap.width / br.width * 100 : null,
       tickX: tick && br ? (tick.left + tick.width / 2 - br.left) / br.width * 100 : null, fdnIn: fdn ? (fdn.left >= ar.left - 0.5 && fdn.right <= ar.right + 0.5) : null, fdnMid: fdn && br ? (fdn.left + fdn.width / 2 - br.left) / br.width * 100 : null,
       h5: h5 ? {v: Array.from(h5.querySelectorAll('li .v')).map(function(e){ return e.textContent; }), ov: h5.querySelectorAll('li.ov').length, cap: h5.querySelector('p').textContent.replace(/\\s+/g, ' ').trim(), big: h5.querySelector('p b').textContent,
+                 ops: Array.from(h5.querySelectorAll('li i.hm')).map(function(i){ return i.getAttribute('data-hm'); }), same: h5.querySelectorAll('li.same').length, vs: (h5.querySelector('p small.vs') || {}).textContent || '', lnY: (function(){ var l = h5.querySelector('.ln'), bs = Array.from(h5.querySelectorAll('li .b')); if(!l || !bs.length) return null; var base = Math.max.apply(null, bs.map(function(e){ return e.getBoundingClientRect().bottom; })); return Math.round(base - l.getBoundingClientRect().top); })(),
                  hBar: Array.from(h5.querySelectorAll('li .b')).map(function(e){ return Math.round(e.getBoundingClientRect().height); }), lnVis: vis(h5.querySelector('.ln')), w: Math.round(h5.getBoundingClientRect().width), fits: h5.getBoundingClientRect().right <= ar.right + 0.5, aria: h5.getAttribute('aria-label') || ''} : null,
-      hist: (q('.hrow > .hist') || {}).textContent || '', slip: !!q('.hrow a.more'), fd: Array.from(a.querySelectorAll('.foot a.fdb')).filter(vis).length, h: Math.round(ar.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .foot')).every(function(e){ var r = e.getBoundingClientRect(); return r.left >= ar.left - 0.5 && r.right <= ar.right + 0.5; })}; })}; }"""
+      why: Array.from(a.querySelectorAll('.why li')).map(function(li){ return [li.className, li.querySelector('b').textContent, li.querySelector('span').textContent.replace(li.querySelector('b').textContent, '').trim()]; }), pill: !!q('.foot .hist'),
+      hist: (q('.hrow > .hist') || {}).textContent || '', slip: !!q('.hrow a.more'), fd: Array.from(a.querySelectorAll('.foot a.fdb')).filter(vis).length, h: Math.round(ar.height), inside: Array.from(a.querySelectorAll('.ptop, .what, .nums, .hrow, .foot')).concat(Array.from(a.querySelectorAll('.why'))).every(function(e){ var r = e.getBoundingClientRect(); return r.left >= ar.left - 0.5 && r.right <= ar.right + 0.5; })}; })}; }"""
 
 async def main():
     class H(http.server.SimpleHTTPRequestHandler):
@@ -98,11 +102,28 @@ async def main():
                     plain += 1
                     if c["h5"]: bad.append((c["name"], "bars with no log to draw"))
                     continue
-                drawn += 1; vals, hits, verb = ex
-                if not c["h5"] or c["h5"]["v"] != vals or c["h5"]["ov"] != hits or c["h5"]["big"] != f"{hits} of {len(vals)}" or verb not in c["h5"]["cap"] or not c["h5"]["lnVis"] or not c["h5"]["fits"] or min(c["h5"]["hBar"]) < 1 or ", ".join(vals) not in c["h5"]["aria"]:
+                drawn += 1; vals, hits, verb = ex; _l = LEGS[c["key"]]
+                _ops = [HM.ALIAS.get(str(g.get("opp") or ""), str(g.get("opp") or "")) for g in [g for g in BS["gl"][_l["pl"]] if g.get(_l["sk"]) is not None][:5][::-1]]
+                said = ", ".join(v + ((" vs " + o) if o else "") for v, o in zip(vals, _ops))   # the label read to a screen reader names each game's opponent (11/27 late)
+                if not c["h5"] or c["h5"]["v"] != vals or c["h5"]["ov"] != hits or c["h5"]["big"] != f"{hits} of {len(vals)}" or verb not in c["h5"]["cap"] or not c["h5"]["lnVis"] or not c["h5"]["fits"] or min(c["h5"]["hBar"]) < 1 or said not in c["h5"]["aria"]:
                     bad.append((c["name"], c["key"], c["h5"], vals, hits))
             check(not bad, f"[{theme}] the bars are his last games from the builder's own log, oldest first, green where the leg would have won, and the caption counts them ({drawn} cards with bars, {plain} without a log; first wrong: {bad[:1]})")
             check(all((c["hist"] == "") for c in cards if c["h5"]) and all(c["slip"] for c in cards), f"[{theme}] the season count rides under the caption when there are bars, and every card keeps its slip button")
+            # ---- 11/27 late: the opponents under the bars, and the reasons ----
+            al = lambda t: HM.ALIAS.get(str(t or ""), str(t or "")); bad, ringed, logod = [], 0, 0
+            for c in cards:
+                l = LEGS[c["key"]]
+                if not c["h5"] or expect_h5(l) is None: continue
+                gs = [g for g in BS["gl"][l["pl"]] if g.get(l["sk"]) is not None][:5][::-1]; ops = [al(g.get("opp")) for g in gs]; met = [g for g in gs if al(g.get("opp")) == al(l.get("opp"))]
+                if all(o in HM.TEAMS for o in ops):
+                    logod += 1; ringed += 1 if met else 0
+                    wantvs = (f'vs {al(l.get("opp"))} in Week {met[-1].get("w")}: {jr(met[-1][l["sk"]] or 0)}' if met else "")
+                    if c["h5"]["ops"] != ops or c["h5"]["same"] != len(met) or c["h5"]["vs"] != wantvs or not (c["h5"]["lnY"] is not None and 0 <= c["h5"]["lnY"] <= 34): bad.append((c["name"], c["h5"]["ops"], ops, c["h5"]["same"], c["h5"]["vs"], wantvs, c["h5"]["lnY"]))
+                elif c["h5"]["ops"]: bad.append((c["name"], "logos for a team the site has no logo for", c["h5"]["ops"]))
+            check(not bad, f"[{theme}] under each bar sits that game's opponent, a game against this week's opponent is ringed and said in words, and the dashed line still crosses the bars ({logod} cards with logos, {ringed} with a ringed game; first wrong: {bad[:1]})")
+            bad = [(c["name"], c["why"], WHY.reasons(LEGS[c["key"]], BS.get("pf"))) for c in cards if [tuple(w) for w in c["why"]] != [tuple(r) for r in WHY.reasons(LEGS[c["key"]], BS.get("pf"))]]
+            said = sum(1 for c in cards if c["why"])
+            check(not bad and all(len(c["why"]) <= 2 and not (c["why"] and c["pill"]) for c in cards), f"[{theme}] each card says the model's strongest reason for and against that leg, at most one of each, in place of the loose pill ({said} of {len(cards)} cards with a reason; first wrong: {bad[:1]})")
             # ---- jersey numbers and logos ----
             bad, worn = [], 0
             for c in cards:
@@ -113,7 +134,7 @@ async def main():
             check(all(c["logo"] == (LEGS[c["key"]].get("tm") or "") for c in cards if (LEGS[c["key"]].get("tm") or "") in HM.TEAMS), f"[{theme}] each card has its team's logo beside the matchup ({[(c['name'], c['logo']) for c in cards if c['logo'] != (LEGS[c['key']].get('tm') or '')][:2]})")
             check(s["over"] <= 0 and all(c["inside"] for c in cards) and not errs, f"[{theme}] nothing runs off the card or the page, no page errors ({s['over']}px; {[c['name'] for c in cards if not c['inside']][:2]}; {errs[:1]})")
             tall = max(c["h"] for c in cards)
-            check(tall <= 352, f"[{theme}] a card is at most {tall}px tall on a phone (limit 352: jersey row, bar, five bars, a pill and the book buttons)")
+            check(tall <= 460, f"[{theme}] a card is at most {tall}px tall on a phone (limit 460: jersey row, bar, five bars with logos, two reasons and the book buttons)")
             if SHOTS:
                 if ntabs: await pg.evaluate("document.querySelectorAll('#wktabs .tab')[0].click()"); await pg.wait_for_timeout(350)
                 await pg.evaluate("() => { var a = Array.from(document.querySelectorAll('article.play')).filter(function(e){ return e.offsetWidth; })[0]; if(a){ a.scrollIntoView(); window.scrollBy(0, -110); } }"); await pg.wait_for_timeout(300)
