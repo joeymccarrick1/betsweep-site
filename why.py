@@ -37,6 +37,10 @@ STAT = {"Rushing Yards": ("rush yds", "carries"), "Receiving Yards": ("rec yds",
 ALLSTAT = ("rush yds", "rec yds", "pass yds", "carries", "targets", "attempts", "catch")
 RUSHM = ("Rushing Yards", "Rush + Rec Yards", "Anytime TD", "2+ TD", "3+ TD", "First TD")
 PASSM = ("Receiving Yards", "Receptions", "Longest Reception", "Passing Yards", "Passing TDs")
+TDM = ("Anytime TD", "2+ TD", "3+ TD", "First TD")
+# the stat a consensus note names -> the markets it says something about (his own yards and catches also speak to his touchdown chance)
+CONS = {"rec yds": ("Receiving Yards", "Longest Reception", "Rush + Rec Yards", "Receptions") + TDM, "receptions": ("Receptions", "Receiving Yards") + TDM,
+        "rush yds": ("Rushing Yards", "Rush + Rec Yards") + TDM, "pass yds": ("Passing Yards",), "pass td": ("Passing TDs",), "rush td": TDM, "rec td": TDM}
 
 
 def norm(tag):
@@ -146,6 +150,11 @@ def _bears(key, txt, market, player_level):
         return market in RUSHM if run else market in PASSM
     if key in ("Rain = run game", "Wind = run game"): return market in RUSHM
     if key in ("Rain", "Wind", "QB out"): return market not in ("Rushing Yards",)
+    if key in ("Consensus", "Model disagrees with consensus"):
+        # the note names the one stat the two projections disagree on ("...Sleeper + ESPN: pass TD 1.3 vs 1.9 consensus"): it bears on legs
+        # in that stat, not on his others (11/28: a pass-TD note was showing against a passing-yards leg, a rush-TD note against catches)
+        m = re.search(r"espn: (.+?) -?[0-9.]+ vs", low)
+        if m and m.group(1).strip() in CONS: return market in CONS[m.group(1).strip()]
     named = [w for w in ALLSTAT if w in low]
     if key in ("Cold", "Hot", "Targets down", "Targets up", "Carries down", "Carries up", "Attempts down", "Attempts up", "Boom/bust", "Steady floor", "Quiet games", "One big game", "Consensus",
                "Model disagrees with consensus", "Fringe role", "Target squeeze", "Target competition", "Soft matchup here", "Tough matchup"):

@@ -28,16 +28,29 @@ def scoreboard():
 
 # the game so far: (team id, how it ended, scored?, description, quarter, plays in it); the last one is still on the field
 DRIVES = [("1", "TD", True, "8 plays, 75 yards, 4:12", 1, 8), ("2", "PUNT", False, "3 plays, 4 yards, 1:30", 1, 3), ("1", "INT", False, "5 plays, 22 yards, 2:10", 2, 5), ("2", "FG", True, "10 plays, 61 yards, 5:02", 2, 10), ("1", "", False, "1 play, 9 yards, 0:20", 2, 1)]
-def summary(points=None, drives=True):
-    """points = how many win-chance readings to send (default one per play). The home chance drifts from 50% to 36%."""
+# The same strip from the feed's other shapes (11/28, after reading an open-source ESPN parser's field list): the counts as two numbers
+# (offensivePlays, yards) with no sentence to read them from, a pick-six (points came of the drive, against the team that had the ball),
+# a missed kick, and a touchdown drive that carries no score flag and only the long result name.
+#          team, short result, long result, isScore (None = the key is absent), offensivePlays, yards, quarter
+DRIVES2 = [("1", "INT TD", "Interception Touchdown", True, 4, 18, 1), ("2", "", "Touchdown", None, 9, 80, 1), ("1", "MISSED FG", "Missed FG", False, 7, 41, 2), ("2", "PUNT", "Punt", False, 3, -2, 2), ("1", "", "", False, 2, 11, 2)]
+def summary(points=None, drives=True, alt=False):
+    """points = how many win-chance readings to send (default one per play). The home chance drifts from 50% to 36%.
+    alt = the DRIVES2 game: no drive sentence, counts as numbers"""
     prev, plays, n = [], [], 0
-    for i, (tid, res, sc, desc, q, np_) in enumerate(DRIVES):
+    for i, row in enumerate(DRIVES2 if alt else DRIVES):
+        if alt: tid, res, long_, sc, np_, yds, q = row; desc = ""
+        else: tid, res, sc, desc, q, np_ = row
         ps = []
         for j in range(np_):
             n += 1; ps.append({"id": f"p{n}", "text": f"Play {n}.", "scoringPlay": False, "period": {"number": q}, "clock": {"displayValue": "9:00"}, "start": {"shortDownDistanceText": "1st & 10"},
                                "end": {"yardLine": 40, "team": {"id": tid}, "down": 1, "distance": 10, "downDistanceText": "1st & 10 at the 40"}})
-        d = {"id": f"d{i}", "team": {"id": tid, "abbreviation": EA if tid == "1" else EH}, "description": desc, "start": {"yardLine": 75 if tid == "1" else 25}, "plays": ps, "isScore": sc}
-        if res: d["shortDisplayResult"] = res; d["displayResult"] = {"TD": "Touchdown", "PUNT": "Punt", "INT": "Interception", "FG": "Field Goal"}[res]
+        d = {"id": f"d{i}", "team": {"id": tid, "abbreviation": EA if tid == "1" else EH}, "description": desc, "start": {"yardLine": 75 if tid == "1" else 25}, "plays": ps}
+        if sc is not None: d["isScore"] = sc
+        if alt:
+            d["offensivePlays"] = np_; d["yards"] = yds
+            if res: d["shortDisplayResult"] = res
+            if long_: d["displayResult"] = long_
+        elif res: d["shortDisplayResult"] = res; d["displayResult"] = {"TD": "Touchdown", "PUNT": "Punt", "INT": "Interception", "FG": "Field Goal"}[res]
         prev.append(d); plays += ps
     cur = prev.pop()
     k = len(plays) if points is None else points
@@ -85,6 +98,12 @@ async def main():
             got = [(c["cls"], c["team"], c["res"], c["small"]) for c in (st or {}).get("chips", [])]
             check(bool(st) and got == want and "newest first" in st["aria"], f"[{theme}] the strip has every drive, newest first: whose it was (the site's own logo, whatever the feed calls the team), how it ended, plays and yards; scores and the giveaway are marked and the drive on the field says so ({got})")
             check(bool(st) and st["below"] and st["inside"] and st["firstX"] <= 2 and st["h"] <= 60 and all(c["caps"] == "none" for c in st["chips"]), f"[{theme}]   it sits under the field, inside the card, opens on the newest drive, and every chip's small print is plain text ({st and (st['below'], st['inside'], st['firstX'], st['h'])})")
+            # ---- the feed's other shapes: numbers for the counts, a pick-six, a missed kick, a touchdown with no score flag ----
+            pg2, ctx2, errs2, s2 = await visit(theme, summary(alt=True))
+            want2 = [("dvc", AWAY, "On the field", "2 plays · 11 yds"), ("", HOME, "PUNT", "3 plays · -2 yds"), ("dvt", AWAY, "MISSED FG", "7 plays · 41 yds"), ("dvs", HOME, "Touchdown", "9 plays · 80 yds"), ("dvt", AWAY, "INT TD", "4 plays · 18 yds")]
+            got2 = [(c["cls"], c["team"], c["res"], c["small"]) for c in ((s2 or {}).get("strip") or {}).get("chips", [])]
+            check(got2 == want2 and not errs2, f"[{theme}]   plays and yards come from the feed's own two numbers when there is no sentence; a pick-six and a missed kick are marked as the drive's failure, not its score; a touchdown with no score flag is still a score ({got2}; {errs2[:1]})")
+            await ctx2.close()
             check(bool(ln) and ln["pts"] == nplays and ln["dot"] == [100.0, 64.0] and abs(ln["last"][1] - 0.64 * 60) < 0.2 and ln["labels"] == [EH, EA] and ln["mid"] and ln["q"] == 1,
                   f"[{theme}] the line has one point a play ({ln and ln['pts']} of {nplays}), ends at the home side's 36% (dot {ln and ln['dot']}), names home at the top and away at the bottom, with the 50% rule and one rule where the second quarter begins ({ln and ln['q']})")
             check(bool(ln) and f"{EA} 64%" in ln["aria"] and f"{EH} 36%" in ln["aria"] and re.search(rf"{re.escape(EA)} 64%\s*·\s*{re.escape(EH)} 36%", s["wptext"]) is not None and len(set(ln["fills"])) == 2,

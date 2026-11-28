@@ -1141,8 +1141,13 @@ JS = r"""
     var dlist = prev.slice(); if(cur && (!dlist.length || dlist[dlist.length - 1].id !== cur.id)) dlist.push(cur);
     var drv = dlist.length ? '<div class="gc-drv" aria-label="Drives, newest first">' + dlist.slice().reverse().map(function(d){ var ab = d.team && d.team.abbreviation || idAb[d.team && d.team.id] || '', k = tcode(ab), isCur = !!(cur && d.id === cur.id);
         var res = String(d.shortDisplayResult || d.displayResult || d.result || '').trim(), live = isCur && !res, m = /(\d+)\s+plays?,\s*(-?\d+)\s+yards?/i.exec(d.description || '');
-        var kind = d.isScore ? 'dvs' : /INT|FUM|DOWNS|SAFETY|MISS|BLOCK/i.test(res) ? 'dvt' : '';   /* own names: plain ones (.sc, .to, .cur) are styled elsewhere on the site */
-        return '<span class="dv ' + kind + (live ? ' dvc' : '') + '">' + (k ? '<i class="hm" data-hm="' + k.toUpperCase() + '" role="img" aria-label="' + esc(ab) + '"></i>' : '<em>' + esc(ab) + '</em>') + '<b>' + esc(live ? 'On the field' : res || 'Drive') + '</b>' + (m ? '<small>' + m[1] + (m[1] === '1' ? ' play' : ' plays') + ' \u00b7 ' + m[2] + ' yds</small>' : '') + '</span>'; }).join('') + '</div>' : '';
+        /* plays and yards: the feed's own two numbers first (offensivePlays, yards), the sentence only when they are missing */
+        var np = d.offensivePlays != null && isFinite(+d.offensivePlays) ? +d.offensivePlays : m ? +m[1] : null, yd = d.yards != null && isFinite(+d.yards) ? +d.yards : m ? +m[2] : null;
+        /* a drive that ended in a giveaway is marked as one even when points came of it (a pick-six is the defense's score, not this team's);
+           a feed without the score flag is read from the result's words */
+        var give = /INT|FUM|DOWNS|SAFETY|MISS|BLOCK/i.test(res), scored = d.isScore != null ? !!d.isScore : /touchdown|field goal|^TD$|^FG$/i.test(res);
+        var kind = give ? 'dvt' : scored ? 'dvs' : '';   /* own names: plain ones (.sc, .to, .cur) are styled elsewhere on the site */
+        return '<span class="dv ' + kind + (live ? ' dvc' : '') + '">' + (k ? '<i class="hm" data-hm="' + k.toUpperCase() + '" role="img" aria-label="' + esc(ab) + '"></i>' : '<em>' + esc(ab) + '</em>') + '<b>' + esc(live ? 'On the field' : res || 'Drive') + '</b>' + (np != null && (np > 0 || yd) ? '<small>' + np + (np === 1 ? ' play' : ' plays') + ' \u00b7 ' + (yd || 0) + ' yds</small>' : '') + '</span>'; }).join('') + '</div>' : '';
     var dd = e.downDistanceText || (STATE[gid] && STATE[gid].dd) || '';
     var tick = all.slice(-6).reverse().map(function(p){ var t = p.text || '', to = /intercept|fumble/i.test(t) && /recovered by|intercepted/i.test(t); return '<span class="' + (p.scoringPlay ? 'td' : to ? 'to' : '') + '">' + esc((p.period ? 'Q' + p.period.number + ' ' : '') + (p.clock ? p.clock.displayValue + ' · ' : '') + (p.start && p.start.shortDownDistanceText ? p.start.shortDownDistanceText + ' · ' : '') + t) + '</span>'; }).join('');
     return '<div class="gcw"><div class="gc-top"><div class="gc-dd">' + (poss ? esc(poss) + ' ball' : 'Between plays') + (dd ? '<small>' + esc(dd) + '</small>' : '') + '</div>' +
