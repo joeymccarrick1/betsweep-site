@@ -1445,6 +1445,13 @@ for a, b, pl_all in blocks:
     if w and w["risk"] in ("HIGH", "MED"): summary_rows["wx"].append((w["risk"], f"{a}/{b}", f"wind {w['wind']:.0f} mph" + (f", gusts {w['gust']:.0f}" if w["gust"] else "") + (f", {w['ptype']}" if w["ptype"] not in ("none", "") else "")))
     _ko = kick_ms(a, b); _lr = lean_reads(a, b)
     cf = CF.assess(a, b, s[2] or 0, s[3] or 0)
+    # owner 11/27: a game with a stand-in quarterback is flagged for turnovers (the check is written up in flags.py). The wind line is
+    # added only with a stand-in: wind alone showed no lift. It adds a line to the card's flags; the confidence grade is not changed.
+    for _t, _o in ((a, b), (b, a)):
+        _tq = FE.backup_qb(_t, struggling=False)
+        if _tq:
+            _windy = bool(w and (w.get("wind") or 0) >= 12 and str(w.get("roof")) != "dome")
+            cf["flags"].append((2, "Turnover risk", f"{_tq['qb'] or 'A stand-in'} starts at quarterback for {_t} in place of {_tq['for']}. Since 2022 a defense facing a stand-in has scored a touchdown in 8.9% of games against 5.2% otherwise" + (f", and 11.7% with wind of 12+ mph (a small sample); the forecast has {w['wind']:.0f}" if _windy else "") + f". Be careful with {_t}'s touchdown legs."))
     _lean = sweep_lean(gid, a, b)
     # owner 11/16 (first Monday rebuild since the publish check was fixed): a game that has kicked off gets no best parlay. Its pre-game
     # prices are gone, and a slip for a finished game reads as broken (DET-NE "Under 50.5 + NE +2.5" sat on the card the morning after

@@ -262,7 +262,7 @@ class Engine:
         if name != last: return ("still-out", last) if name == leader else "backup"   # season starter missing another game: same stand-in as last week
         if leader != name and leader not in self.OUT and att_last.get(leader, -1) <= 0: return "fill-in"
         return "starter"
-    def backup_qb(self, team):
+    def backup_qb(self, team, struggling=True):
         """owner 11/9 (Carson Wentz for the Vikings on Monday night: "we shouldn't have had so much trust on a backup QB that's starting for
         an offense that was already not performing well"). Returns {"qb", "for", "starts", "ppg", "rank"} when BOTH hold, else None:
           - this week's quarterback is a stand-in: the projection tab's quarterback for the team (most projected passing yards, not OUT;
@@ -270,7 +270,9 @@ class Engine:
             three or fewer of them - after that the game log knows him and the projections already are his;
           - the offense was already struggling: bottom 12 of 32 in points per game before this week.
         Read from the game log, the projection tab and the schedule's scores - never from a depth chart or the order of the injury tab."""
-        if team in self._bqb: return self._bqb[team]
+        # struggling=False (11/27, the turnover-risk flag): any stand-in quarterback, whatever the offense's scoring rank
+        _key = team if struggling else (team, "any")
+        if _key in self._bqb: return self._bqb[_key]
         out = None
         try:
             wk = {}   # week -> (attempts, name) of the quarterback who threw the most for this team that week
@@ -285,13 +287,13 @@ class Engine:
                 last = wk[max(wk)][1]
                 now = max(proj)[1] if proj else (last if last not in self.OUT else None)
                 ppg, rank = self.PPG[team]
-                if now and now != leader and len(starts.get(now, [])) <= 3 and rank >= 21:
+                if now and now != leader and len(starts.get(now, [])) <= 3 and (rank >= 21 or not struggling):
                     out = {"qb": now, "for": leader, "starts": len(starts.get(now, [])), "ppg": ppg, "rank": rank}
-                elif now is None and rank >= 21 and any(team in k for k in self.TOTAL):
+                elif now is None and (rank >= 21 or not struggling) and any(team in k for k in self.TOTAL):
                     # nobody is projected and last week's starter is out (Arizona, Week 10: Brissett traded, Minshew doubtful): whoever starts is a stand-in
                     out = {"qb": None, "for": last, "starts": 0, "ppg": ppg, "rank": rank}
         except Exception: out = None
-        self._bqb[team] = out
+        self._bqb[_key] = out
         return out
     def avg(self, gs, c):
         v = [g[c] for g in gs if g.get(c) is not None]
@@ -800,6 +802,16 @@ class Engine:
                 _st = "his first start for them" if bq["starts"] == 0 else f"{bq['starts']} start{'s' if bq['starts'] != 1 else ''} for them this season"
                 _who = (f"{bq['qb']} is the projected quarterback in place of {bq['for']} ({_st})" if bq["qb"] else f"The quarterback is unsettled ({bq['for']} started last week and is out; no one is projected yet)")
                 fl.insert(0, {"k": "bad", "tag": "Backup QB", "txt": f"{_who}, and {_tm} is #{bq['rank']} of 32 in points per game ({bq['ppg']:g}). House rule: no trust in a stand-in quarterback on an offense that was already struggling - skip the overs on this passing game."})
+        # --- owner 11/27 (two defensive TDs in the Denver-Pittsburgh rain game: "something we probably could've thought of"). A stand-in
+        # quarterback raises the turnover count, and a turnover both ends a drive and can score for the other side. Checked on 2,508
+        # team-games, 2022-2026 (nflverse weekly team stats + the schedule file): with a stand-in the offense gives the ball away 1.35
+        # times a game against 1.14, runs in 0.79 TDs a game against 0.95, and the defense across from him scores in 8.9% of games
+        # against 5.2% - higher in every one of the five seasons. Wind alone showed nothing. A 'watch' flag on that team's running
+        # back and quarterback touchdown legs (receivers and tight ends already carry Backup QB when the offense was struggling).
+        if _tm and m in ("Anytime TD", "First TD", "2+ TD") and not any(f.get("tag") == "Backup QB" for f in fl):
+            tq = self.backup_qb(_tm, struggling=False)
+            if tq:
+                fl.insert(0, {"k": "watch", "tag": "Turnover risk", "txt": f"{tq['qb'] or 'A stand-in'} is at quarterback for {_tm} in place of {tq['for']}. Offenses with a stand-in quarterback give the ball away more (1.35 a game against 1.14) and run in fewer touchdowns (0.79 a game against 0.95), 2022-2026."})
         return fl
 
 def warn_text(fl): return "; ".join(f["txt"] for f in fl if f["k"] == "bad")

@@ -4256,3 +4256,13 @@ the typed price and our estimate go to the database (`fd_quote_add`), once per s
   7.5/6.7, 10.2/7.6, 8.0/4.1, 8.7/4.3, 11.4/2.4). Wind 12+ mph alone 6.1% (no real lift). Backup + wind 12+: 11.7% (n=60, thin).
   Per game, either defense: 11.3% overall, 13.3% with a backup starting, 17.3% backup + wind (n=52). No rain in the history file,
   so rain itself is untested. Not done: whether FanDuel's price already carries it (our feed has no D/ST TD market).
+
+## 11/27 7:45 PM: turnover-risk flag (owner: "Build 1 and 2"); wordmark pairs centred
+- `flags.Engine.backup_qb(team, struggling=False)` = any stand-in quarterback (same test as the Backup QB rule without the bottom-12
+  scoring condition). New 'watch' flag **Turnover risk** on Anytime / First / 2+ TD legs of a team with a stand-in (skipped where
+  Backup QB already sits). One watch point: it shows on the leg everywhere and counts toward the risk score; it does not by itself
+  make a leg "Some risk". Board card: a "Turnover risk" line in the confidence flags (wind sentence only with a stand-in and 12+ mph);
+  the confidence grade is not changed. **No probability was changed** - trimming the model's TD numbers needs its own graded check.
+- Week 12 as built: ten teams carry it (BAL, NE, LAC, SF, MIN, IND, MIA, LV, ARI, PIT; PHI on the board line) - checked against the
+  availability tab, the usual starters are OUT. Evidence in the 7:00 PM section and in flags.py.
+- Paired wordmarks are centred on each other (`align-self:center`, picture centred in its box).

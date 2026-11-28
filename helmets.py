@@ -104,6 +104,8 @@ def css():
     # mark's height sits halfway (geometric mean) between its own shape and the shared box, so no mark is pulled more than about 1.6x.
     out.append(".wmrow .wm[data-wm],h2.wmh .wm[data-wm]{background-size:100% 100%;-webkit-mask-size:100% 100%;mask-size:100% 100%;height:auto;aspect-ratio:var(--wmid, 4.2)}")
     out.append(".wmrow .wm[data-wm]{width:118px}")
+    # owner 6:39 PM: "Can the wordmarks just be centered? So the center of the broncos B and the Steelers S are equal."
+    out.append(".wmrow,.wmrow > span,h2.wmh{align-items:center} .wmrow .wm[data-wm],h2.wmh .wm[data-wm]{align-self:center;margin-top:0;margin-bottom:0;background-position:center;-webkit-mask-position:center;mask-position:center}")
     for t in TEAMS: out.append("[data-wm='%s']{--wmid:%.2f}" % (t, (WM_AR.get(t, 4.2) * 4.2) ** 0.5))
     # owner 11/27 5:47 PM, on a team page: "Maybe the logo and the watermark on the same line?" The logo sits beside the wordmark on
     # one row, at the same height; the record line and the buttons run full width under them.
