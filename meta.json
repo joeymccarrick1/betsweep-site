@@ -1,0 +1,154 @@
+{
+ "mirrored": "2026-11-28T14:42:33Z",
+ "carried": 38,
+ "files": {
+  "nba/scoreboard.json": {
+   "ok": true,
+   "n": 26,
+   "how": "one request a day (3 of 3 days answered)"
+  },
+  "nba/injuries.json": {
+   "ok": true,
+   "n": 100
+  },
+  "nba/box-401909326.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909327.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909328.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909329.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909330.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909331.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909332.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909333.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909334.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909335.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/box-401909336.json": {
+   "ok": true,
+   "stale": true,
+   "why": "final, kept from the last run"
+  },
+  "nba/depth.json": {
+   "ok": true,
+   "stale": true,
+   "why": "read every 6 hours"
+  },
+  "epl/scoreboard.json": {
+   "ok": true,
+   "n": 30,
+   "how": "one request a day (14 of 14 days answered)"
+  },
+  "epl/lineups.json": {
+   "ok": true,
+   "n": 3
+  },
+  "epl/fpl.json": {
+   "ok": true,
+   "n": 674
+  },
+  "cfb/scoreboard.json": {
+   "ok": true,
+   "n": 79,
+   "how": "one request a day (19 of 19 days answered)"
+  },
+  "bun/scoreboard.json": {
+   "ok": true,
+   "n": 18,
+   "how": "one request a day (14 of 14 days answered)"
+  },
+  "bun/lineups.json": {
+   "ok": true,
+   "n": 5
+  },
+  "bun/season.json": {
+   "ok": true,
+   "n": 91,
+   "with_players": 91
+  },
+  "lal/scoreboard.json": {
+   "ok": true,
+   "n": 22,
+   "how": "one request a day (14 of 14 days answered)"
+  },
+  "lal/lineups.json": {
+   "ok": true,
+   "n": 3
+  },
+  "lal/season.json": {
+   "ok": true,
+   "n": 130,
+   "with_players": 130
+  },
+  "sea/scoreboard.json": {
+   "ok": true,
+   "n": 20,
+   "how": "one request a day (14 of 14 days answered)"
+  },
+  "sea/lineups.json": {
+   "ok": true,
+   "n": 2
+  },
+  "sea/season.json": {
+   "ok": true,
+   "n": 121,
+   "with_players": 121
+  },
+  "mls/scoreboard.json": {
+   "ok": true,
+   "n": 16,
+   "how": "one request a day (14 of 14 days answered)"
+  },
+  "mls/lineups.json": {
+   "ok": true,
+   "n": 2
+  },
+  "mls/season.json": {
+   "ok": true,
+   "n": 522,
+   "with_players": 522
+  },
+  "epl/season.json": {
+   "ok": true,
+   "n": 111,
+   "with_players": 111
+  }
+ }
+}
