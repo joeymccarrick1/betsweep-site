@@ -134,8 +134,16 @@ def build(IN_=IN, OUT_=OUT):
                 f'<div><b>{rec["need"] * 100:.0f}%</b><span>what the price needed</span></div>'
                 f'<p>{rec["n"]:,} graded FanDuel legs on a 4-or-5-of-5 run, Weeks {rec["weeks"][0]}–{rec["weeks"][1]}. A unit on each returned {pm(rec["roi"] * 100)}%. '
                 f'The model\'s average on them was {rec["model"] * 100:.0f}%. 5-of-5 streaks hit {rec["hit5"] * 100:.0f}%.</p></div>')
-    groups = "".join(f'<div class="trgrp" data-tab="{gid}" data-label="{E(lab)}"><p class="nwcap">{E(cap)}</p><div class="plays trplays">{"".join(card(r) for r in by[gid])}</div>'
+    # 11/28: the page is built the way it opens - the first group that has a card on screen, twelve cards a group - instead of every
+    # card of every group, which the script then put away. The browser laid out and painted all 172 cards first: a third of a second
+    # of layout on a desktop processor, well over a second on a phone, and a long page that jumped shut. `trw` (waiting) is dropped by
+    # the script's first pass, which then shows and hides cards as before; with scripts off every card and every group shows.
+    assert f"PAGE = {PAGE}," in TRENDS_JS, "the page's script opens a group on a different number of cards than the build marks"
+    def waiting(h, i): return h.replace('<article class="', '<article class="trw ', 1) if i >= PAGE else h
+    first = next((gid for gid, _, _ in GROUPS if by[gid]), GROUPS[0][0])
+    groups = "".join(f'<div class="trgrp{"" if gid == first else " fxoff"}" data-tab="{gid}" data-label="{E(lab)}"><p class="nwcap">{E(cap)}</p><div class="plays trplays">{"".join(waiting(card(r), i) for i, r in enumerate(by[gid]))}</div>'
                      f'<p class="none tre" hidden>Nothing in this group for that filter.</p><button type="button" class="trmore" hidden></button></div>' for gid, lab, cap in GROUPS)
+    groups += '<noscript><style>.fxoff{display:block!important} .trplays .play.trw{display:revert}</style></noscript>'
     inner = (f'<section class="sec" id="trends" data-week="{E(str(W))}" data-built="{now_ms}">{base}<div id="wktabs"></div>'
              f'<div class="nwf trf" id="trs" aria-label="Stat"><button type="button" data-s="" class="on">All stats</button>{schips}</div>'
              f'<div class="nwf trf trg" id="trg" aria-label="Game"><button type="button" data-g="" class="on">All games</button>{gchips}</div>'
@@ -164,7 +172,7 @@ TRENDS_CSS = r"""
 .trf{padding-bottom:8px} .trf button{display:inline-flex;align-items:center;gap:5px} .trg button i.hm{height:18px;margin:0;vertical-align:0} .trg button.on i.hm{filter:none}
 .trgrp .nwcap{margin:2px 0 10px;color:var(--mute);font-size:12.5px;line-height:1.45;max-width:70ch}
 .trplays.plays{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
-.trplays .play[hidden]{display:none}
+.trplays .play[hidden],.trplays .play.trw{display:none}
 .play .ptop .trk{margin-left:auto;flex:none;align-self:flex-start;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--mute);white-space:nowrap}
 .play .ptop .trk.hi{border-color:var(--bad,#e07070);color:var(--bad,#e07070)}
 .trmore{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:12px;font:inherit;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
@@ -177,6 +185,7 @@ DOOR_CSS = r"""
 .trdoor .trd1 em{display:block;font-style:normal;font-size:14px;line-height:1.4;margin-top:3px} .trdoor .trd2{grid-column:1;font-size:12.5px;line-height:1.4;color:var(--mute)}
 .trdoor i{grid-column:2;grid-row:1 / span 2;font-style:normal;font-family:var(--display);font-weight:800;font-size:22px;color:var(--red)}
 """
+PAGE = 12   # cards a group opens on (the script's own PAGE; build() checks they agree)
 TRENDS_JS = r"""(function(){
   var sec = document.getElementById('trends'), host = document.getElementById('wktabs'); if(!sec || !host || !window.bsTabs) return;
   var grps = [].slice.call(sec.querySelectorAll('.trgrp')), fs = document.getElementById('trs'), fg = document.getElementById('trg'), none = document.getElementById('trnone');
@@ -186,7 +195,8 @@ TRENDS_JS = r"""(function(){
   function live(c){ return !c.classList.contains('started'); }
   function apply(keep){ if(!T) return; var total = 0, first = null, cur = T.cur(), curN = 0;
     grps.forEach(function(g){ var id = g.getAttribute('data-tab'), n = 0, shown = 0, cap = open[id] ? 1e9 : PAGE;
-      [].forEach.call(g.querySelectorAll('.trplays > .play'), function(c){ var on = live(c) && (!stat || c.getAttribute('data-st') === stat) && (!game || c.getAttribute('data-gid') === game);
+      [].forEach.call(g.querySelectorAll('.trplays > .play'), function(c){ c.classList.remove('trw');   /* as built: waiting beyond the first twelve */
+        var on = live(c) && (!stat || c.getAttribute('data-st') === stat) && (!game || c.getAttribute('data-gid') === game);
         if(on) n++; c.hidden = !(on && n <= cap); if(on && n <= cap) shown++; });
       var more = g.querySelector('.trmore'); more.hidden = n <= shown; more.textContent = 'Show all ' + n; more.setAttribute('data-n', n);
       g.querySelector('.tre').hidden = n > 0; T.count(id, n); var b = host.querySelector('[data-t="' + id + '"]'); if(b) b.classList.toggle('zero', !n);

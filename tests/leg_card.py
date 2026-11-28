@@ -169,6 +169,7 @@ async def main():
             await ctx.close()
             # ---- the builder's best-legs strip ----
             pg, ctx, errs = await open_("/build/", theme, early); await pg.wait_for_timeout(1500)
+            await pg.wait_for_function("() => { var u = document.getElementById('bql'); return !u || !u.hasAttribute('aria-busy'); }", timeout=15000)   # 11/28: the strip lands in batches
             bq = await pg.evaluate("""() => Array.from(document.querySelectorAll('#bql .bqc')).map(function(c){ var h = c.querySelector('.h5'), b = c.querySelector('button[data-i]'), r = c.getBoundingClientRect(), hr = h ? h.getBoundingClientRect() : null;
                 var lis = h ? Array.from(h.querySelectorAll('li')) : [], ln = h ? h.querySelector('.ln') : null, lnr = ln ? ln.getBoundingClientRect() : null;
                 return {i: b ? +b.getAttribute('data-i') : null, v: h ? Array.from(h.querySelectorAll('li .v')).map(function(e){ return e.textContent; }) : null, ov: h ? h.querySelectorAll('li.ov').length : null, big: h ? h.querySelector('p b').textContent : null, fits: hr ? (hr.left >= r.left - 0.5 && hr.right <= r.right + 0.5) : true, h: Math.round(r.height),

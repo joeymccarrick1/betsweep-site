@@ -92,6 +92,16 @@ async def main():
         print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(0)
     check(os.path.exists(page_file), "the page is built at /trends/")
     if not os.path.exists(page_file): print(f"{ok[0]} passed, {ok[1]} failed"); sys.exit(1)
+    # ---- 11/28: the page is built the way it opens. Every card of every group used to be in the page un-hidden until the script put all
+    # but twelve away, so the browser laid out and painted the lot first. Read off the file itself, before any script runs. ----
+    src = open(page_file, encoding="utf-8").read(); built = []
+    for m in re.finditer(r'<div class="trgrp( fxoff)?" data-tab="(\w+)"', src):
+        end = src.find('<button type="button" class="trmore"', m.end()); blk = src[m.end():end]
+        built.append({"id": m.group(2), "off": bool(m.group(1)), "open": len(re.findall(r'<article class="play trc"', blk)), "wait": len(re.findall(r'<article class="trw play trc"', blk))})
+    want_n = {g: sum(1 for x in EXP.values() if x["grp"] == g) for g in ("ok", "mid", "no")}; first_on = next((g for g in ("ok", "mid", "no") if want_n[g]), "ok")
+    check([b["id"] for b in built] == ["ok", "mid", "no"] and [b["id"] for b in built if not b["off"]] == [first_on] and all(b["open"] == min(12, want_n[b["id"]]) and b["wait"] == max(0, want_n[b["id"]] - 12) for b in built)
+          and ".play.trw{display:none}" in src.replace(" ", "") and "<noscript><style>.fxoff{display:block!important}" in src,
+          f"as built, before any script: one group on screen ({first_on}), twelve cards a group and the rest waiting, and everything shown when scripts are off ({built})")
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), functools.partial(H, directory=ROOT)); threading.Thread(target=srv.serve_forever, daemon=True).start()

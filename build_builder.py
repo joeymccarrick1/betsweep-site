@@ -2329,17 +2329,38 @@ BUILDER_JS = r"""
     box.innerHTML = '<div class="bqh"><b>Best legs near -110</b><small>the model\'s most likely first · swipe</small></div><div class="bqf" role="group" aria-label="Filter the best legs"><button type="button" data-side="over" class="on">Overs</button><button type="button" data-side="under">Unders</button><i></i><button type="button" data-pos="" class="on">All</button><button type="button" data-pos="QB">QB</button><button type="button" data-pos="RB">RB</button><button type="button" data-pos="WR">WR</button><button type="button" data-pos="TE">TE</button></div><div class="bql" id="bql"></div>';
     grid.parentNode.insertBefore(box, grid); var ul = box.querySelector('#bql');
     function out(l){ try { var v = window.BSRisk && BSRisk.verdict ? BSRisk.verdict(l.pl, l.m) : null; return !!(v && v.level === 'block'); } catch(e){ return false; } }
-    function paint(){ var x = ul.scrollLeft;
-      ul.innerHTML = S.map(function(s){ var i = KEYIDX[s[0]], l = i == null ? null : legs[i]; if(!l || started(l.g) || out(l) || (!!l.u) !== (side === 'under') || (pos && s[1] !== pos)) return '';
+    function cardHtml(s){ var i = KEYIDX[s[0]], l = i == null ? null : legs[i]; if(!l || started(l.g) || out(l) || (!!l.u) !== (side === 'under') || (pos && s[1] !== pos)) return '';
         var g = games[l.g] || {}, on = !!sel[i];
         var mu = s[2].map(function(m){ return '<span class="mup" title="' + esc(l.tm) + ' ' + s[1] + 's rank #' + m[1] + ' in ' + esc(m[0]) + ' produced; ' + esc(l.opp) + ' ranks #' + m[2] + ' allowed to ' + s[1] + 's"><i style="background:' + rankColor(l.u ? 33 - m[1] : m[1]) + '">' + esc(l.tm) + ' ' + s[1] + 's #' + m[1] + '</i><b>vs</b><i style="background:' + rankColor(l.u ? 33 - m[2] : m[2]) + '">' + esc(l.opp) + ' def #' + m[2] + '</i></span><em>' + esc(m[0]) + '</em>'; }).join('');
-        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + hmI(l.tm) + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small>' + h5(l) + '<div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }).join('') ||
-        '<p class="bqe">No ' + (side === 'under' ? 'under' : 'over') + (pos ? ' for a ' + pos : '') + ' near -110 clears 50% right now.</p>';
-      ul.scrollLeft = x; }
+        return '<div class="bqc' + (on ? ' on' : '') + '"><div class="t"><b>' + hmI(l.tm) + esc(l.pl) + '<i>' + s[1] + '</i></b><strong>' + pc(l.p) + '</strong></div><small>' + esc(isTD(l) ? l.ms : l.ms + ' ' + lnTxt(l)) + ' · ' + am(l.o) + '</small><small>' + esc(l.tm) + ' v ' + esc(l.opp) + (g.kick ? ' · ' + esc(g.kick) : '') + '</small>' + h5(l) + '<div class="mu">' + mu + '</div><button type="button" data-i="' + i + '" aria-pressed="' + on + '">' + (on ? 'In slip \u2713' : '+ Add to parlay') + '</button></div>'; }
+    function flip(c){ var b = c.querySelector('button[data-i]'), on = !!(b && sel[+b.getAttribute('data-i')]); if(!b || c.classList.contains('on') === on) return;
+      c.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = on ? 'In slip \u2713' : '+ Add to parlay'; }
+    /* 11/28: the strip is a sideways scroller with two cards in sight, yet all of them (about 150, each with bars, logos and pills) were
+       built in one go: a quarter of the page's work at load, and most of a second on a phone after a tap on a filter. The first cards
+       are drawn at once and the rest a batch at a time straight after (the list is aria-busy until the last batch); a batch checks the
+       slip again as it lands. paint(true) draws everything in one go and keeps the scroll place - for a strip redrawn under the reader. */
+    var FIRST = 6, BATCH = 24, job = 0;
+    function paint(all){ var x = ul.scrollLeft, my = ++job, list = S.map(cardHtml).filter(Boolean), n = all ? list.length : Math.min(FIRST, list.length);
+      if(!list.length){ ul.removeAttribute('aria-busy'); ul.innerHTML = '<p class="bqe">No ' + (side === 'under' ? 'under' : 'over') + (pos ? ' for a ' + pos : '') + ' near -110 clears 50% right now.</p>'; return; }
+      ul.innerHTML = list.slice(0, n).join(''); ul.scrollLeft = x;
+      if(n >= list.length){ ul.removeAttribute('aria-busy'); return; }
+      ul.setAttribute('aria-busy', 'true');
+      (function more(){ setTimeout(function(){ if(my !== job) return; var had = ul.children.length;
+        ul.insertAdjacentHTML('beforeend', list.slice(n, n + BATCH).join('')); n += BATCH;
+        for(var k = had; k < ul.children.length; k++) flip(ul.children[k]);
+        if(n < list.length) more(); else ul.removeAttribute('aria-busy'); }, 30); })(); }
     ul.addEventListener('click', function(e){ var b = e.target.closest('button[data-i]'); if(b) toggle(+b.getAttribute('data-i')); });
     box.querySelector('.bqf').addEventListener('click', function(e){ var b = e.target.closest('button'); if(!b) return; if(b.hasAttribute('data-side')) side = b.getAttribute('data-side'); else pos = b.getAttribute('data-pos');
       [].forEach.call(box.querySelectorAll('.bqf button'), function(x){ var on = x.hasAttribute('data-side') ? x.getAttribute('data-side') === side : x.getAttribute('data-pos') === pos; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); ul.scrollLeft = 0; paint(); });
-    document.addEventListener('bs-slip', paint); paint(); })();
+    /* 11/28: a slip change only flips the cards it touches. Every add or remove anywhere on the page used to redraw the whole strip
+       (about 150 cards, each with its bars and matchup pills) - most of the wait between a tap on "+ Add" and its answer on a phone.
+       The strip is still drawn whole when a filter changes, or when a card on it has kicked off or been ruled out since it was drawn. */
+    function sync(){ var stale = false;
+      [].forEach.call(ul.querySelectorAll('.bqc'), function(c){ var b = c.querySelector('button[data-i]'), i = b ? +b.getAttribute('data-i') : -1, l = legs[i];
+        if(!l || started(l.g) || out(l)){ stale = true; return; }
+        flip(c); });
+      if(stale) paint(true); }
+    document.addEventListener('bs-slip', sync); paint(); })();
   function toggle(i){ if(sel[i]) delete sel[i]; else { if(started(legs[i].g)) return; if(window.BSRisk && window.BSRisk.blockAdd(legs[i].pl, legs[i].m)) return; sel[i] = true; } syncSel(i); renderSlip(); }
   // ---- owner 11/1 ("Start with 1-4"): how the quick builds and the parlay generator choose legs. Graded Weeks 6-7 (3,298 legs):
   //  - heavy favorites (-250 and shorter) are left out unless the model's own % clears the book's by 3+ pts ("price too short" legs lost

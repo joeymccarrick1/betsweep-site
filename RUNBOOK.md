@@ -4601,3 +4601,31 @@ Not published yet when written: built and tested on a scratch build, waiting for
   the tests for the selector whose behaviour changed (here `.bsx`).**
 - Not built, said to the owner: the slip's chance on the home pages' betslip bar (it must be the builder's own same-game
   estimate, not a second one); the player sheet from the site search; favorite team beyond Today.
+
+## 11/28 3:30 AM: the builder's adds and the Trend check page answer faster (owner 1:18 AM: "anything else ... for a user anywhere on the site")
+Found by timing real taps and page loads the way a phone does them (scripts kept outside the repo: a touch tap, the browser's own
+script / style / layout counters before and after, the processor slowed four times). The Live page's one-second tap is the 3:00 AM
+section; these are the next two.
+- **An add on the Parlay Builder redrew the whole best-legs strip.** `renderSlip()` fires `bs-slip`, and the strip's listener was
+  its full `paint()`: about 150 cards, each with bars, logos and matchup pills, rebuilt on every add or remove anywhere on the
+  page. On the copy live before this an add cost about 100-120 ms of the browser's time on a desktop processor (script 15-26,
+  style 10-20, layout 28-36); now 30-55 (script 4-10, style 1-2, layout 3-9) - on a phone, roughly half a second down to under a
+  quarter. build_builder.py: the listener is `sync()`, which flips only the cards whose leg changed (`flip()`), and draws the strip
+  whole (`paint(true)`, scroll place kept) only if a card on it has kicked off or been ruled out since it was drawn.
+- **The strip is drawn six cards at once and the rest in batches of 24 straight after** (`FIRST`, `BATCH`; `#bql` is `aria-busy`
+  until the last batch; a batch checks the slip again as it lands). A sideways scroller with two cards in sight was built whole:
+  a quarter of the page's work at load, and one 110-160 ms block after a tap on a filter (most of a second on a phone). The work
+  is the same in total; it no longer stands between a tap and its answer. **A test that reads the strip waits for `aria-busy`
+  to clear** (tests/leg_card.py does; tests/builder_tap.py, new, port 8912, holds all of it: same nodes after an add, a leg added
+  from elsewhere flips its card, a filter and a kickoff still redraw, every card arrives in the builder's order, a leg added
+  before its card has arrived is marked when it does). Not done: skipping the layout of cards out of sight
+  (`content-visibility`) - the cards stretch to the tallest one in the row, so a placeholder height would make the strip jump.
+- **Trend check is built the way it opens.** Every card of every group (172 this week) was in the page un-hidden and the script
+  then put all but twelve away: the browser laid out and painted the lot first - about 200 ms of layout and 90 of style on a
+  desktop processor, a long page that jumped shut on a phone. build_trends.py now builds the first group that has a card on
+  screen and the others with `fxoff` (the tab helper's own convention, fantasy_nav.panels), and marks the cards past the twelfth
+  `trw` (waiting; the script's first pass drops the mark and takes over; with scripts off everything shows). Load: about 550 ms of
+  main-thread time down to about 280. `PAGE` in the build must equal the script's (build() asserts it).
+- Measured and left alone: Boards (about 450 ms, 64,000 nodes; its cards already skip layout out of sight), Today, Live, First TD
+  (360), every other page under 300. The weather rule that keeps a board wearing rain always drawn costs 10-25 ms with three
+  such boards.
